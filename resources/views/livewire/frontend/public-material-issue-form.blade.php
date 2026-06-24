@@ -143,30 +143,35 @@
                 <div class="md:pl-[8.5rem]">
                     <div class="bg-white/60 dark:bg-slate-900/40 backdrop-blur-3xl border border-white/60 dark:border-white/5 rounded-[2.5rem] p-6 sm:p-8 lg:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] transition-all hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)]">
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                            <div>
+                            <div class="min-w-0">
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2.5">Tanggal Pengajuan <span class="text-[#F47920]">*</span></label>
-                                <div class="relative">
+                                <div class="relative min-w-0">
                                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
                                         <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                     </div>
-                                    <input type="date" wire:model="tanggal" class="pl-12 w-full bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl py-4 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm [&::-webkit-calendar-picker-indicator]:hidden" required>
+                                    <input type="date" wire:model="tanggal" class="appearance-none block box-border min-w-0 max-w-full pl-12 w-full bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl py-4 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm [&::-webkit-calendar-picker-indicator]:hidden" required>
                                 </div>
                                 @error('tanggal') <span class="text-red-500 text-xs font-semibold mt-2 block">{{ $message }}</span> @enderror
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2.5">Cari & Pilih Nomor PO <span class="text-[#F47920]">*</span></label>
                                 <div class="relative rounded-2xl shadow-sm overflow-hidden border border-slate-200/80 dark:border-white/10 focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-blue-500 transition-all bg-white/50 dark:bg-black/20 backdrop-blur-md">
                                     <div class="absolute top-4 left-4 flex items-center pointer-events-none z-10">
                                         <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                     </div>
                                     <input type="text" wire:model.live.debounce.300ms="po_search" placeholder="Ketik No PO disini..." class="pl-12 w-full bg-transparent border-0 border-b border-slate-200/50 dark:border-white/5 text-slate-900 dark:text-white py-4 focus:ring-0 placeholder-slate-400">
-                                    <select wire:model.live="purchase_order_issued_id" class="w-full bg-transparent border-0 text-slate-900 dark:text-white py-2 focus:ring-0 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 outline-none" required size="4">
+                                    <div class="w-full h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 py-2">
                                         @forelse($available_pos as $po)
-                                            <option value="{{ $po->id }}" class="py-2.5 px-4 hover:bg-[#F47920]/10 hover:text-[#F47920] dark:hover:bg-[#F47920]/20 dark:hover:text-[#F47920] checked:bg-[#F47920] checked:text-white dark:checked:bg-[#F47920] dark:checked:text-white rounded-lg cursor-pointer mx-2 my-0.5 transition-colors font-medium">{{ $po->purchase_order_no }}</option>
+                                            <div>
+                                                <input type="radio" wire:model.live="purchase_order_issued_id" id="po_{{ $po->id }}" value="{{ $po->id }}" class="peer hidden">
+                                                <label for="po_{{ $po->id }}" class="block py-2.5 px-4 hover:bg-[#F47920]/10 hover:text-[#F47920] dark:hover:bg-[#F47920]/20 dark:hover:text-[#F47920] rounded-lg cursor-pointer mx-2 my-0.5 transition-colors font-medium peer-checked:bg-[#F47920] peer-checked:text-white dark:peer-checked:bg-[#F47920] dark:peer-checked:text-white">
+                                                    {{ $po->purchase_order_no }}
+                                                </label>
+                                            </div>
                                         @empty
-                                            <option disabled class="py-2.5 px-4 text-slate-400 italic mx-2">Ketik untuk mencari PO...</option>
+                                            <div class="py-2.5 px-4 text-slate-400 italic mx-2">Ketik untuk mencari PO...</div>
                                         @endforelse
-                                    </select>
+                                    </div>
                                 </div>
                                 @error('purchase_order_issued_id') <span class="text-red-500 text-xs font-semibold mt-2 block">{{ $message }}</span> @enderror
                             </div>
