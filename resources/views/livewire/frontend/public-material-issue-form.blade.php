@@ -162,10 +162,16 @@
                                     <input type="text" wire:model.live.debounce.300ms="po_search" placeholder="Ketik No PO disini..." class="pl-12 w-full bg-transparent border-0 border-b border-slate-200/50 dark:border-white/5 text-slate-900 dark:text-white py-4 focus:ring-0 placeholder-slate-400">
                                     <div class="w-full h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 py-2">
                                         @forelse($available_pos as $po)
+                                            @php $isSelected = (string)$purchase_order_issued_id === (string)$po->id; @endphp
                                             <div>
-                                                <input type="radio" wire:model.live="purchase_order_issued_id" id="po_{{ $po->id }}" value="{{ $po->id }}" class="peer hidden">
-                                                <label for="po_{{ $po->id }}" class="block py-2.5 px-4 hover:bg-[#F47920]/10 hover:text-[#F47920] dark:hover:bg-[#F47920]/20 dark:hover:text-[#F47920] rounded-lg cursor-pointer mx-2 my-0.5 transition-colors font-medium peer-checked:bg-[#F47920] peer-checked:text-white dark:peer-checked:bg-[#F47920] dark:peer-checked:text-white">
-                                                    {{ $po->purchase_order_no }}
+                                                <input type="radio" wire:model.live="purchase_order_issued_id" id="po_{{ $po->id }}" value="{{ $po->id }}" class="sr-only">
+                                                <label for="po_{{ $po->id }}" class="flex items-center justify-between py-2.5 px-4 rounded-lg cursor-pointer mx-2 my-0.5 transition-all font-medium {{ $isSelected ? 'bg-[#F47920] text-white shadow-md dark:bg-[#F47920] dark:text-white' : 'hover:bg-[#F47920]/10 hover:text-[#F47920] dark:hover:bg-[#F47920]/20 dark:hover:text-[#F47920]' }}">
+                                                    <span>{{ $po->purchase_order_no }}</span>
+                                                    @if($isSelected)
+                                                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                                                        </svg>
+                                                    @endif
                                                 </label>
                                             </div>
                                         @empty
