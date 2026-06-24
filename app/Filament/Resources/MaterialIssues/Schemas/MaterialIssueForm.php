@@ -216,15 +216,15 @@ class MaterialIssueForm
                                 TextInput::make('diterima_oleh')->label('Diterima Oleh'),
                             ]),
                             Grid::make(3)->schema([
-                                Placeholder::make('diminta_signature')
+                                TextEntry::make('diminta_signature')
                                     ->label('Tanda Tangan Peminta (Digital)')
-                                    ->content(fn ($record) => $record?->diminta_signature ? new \Illuminate\Support\HtmlString('<img src="'.$record->diminta_signature.'" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;">') : 'Tidak Ada Tanda Tangan Digital'),
-                                Placeholder::make('disetujui_signature')
+                                    ->state(fn($record) => $record?->diminta_signature ? new \Illuminate\Support\HtmlString('<img src="' . $record->diminta_signature . '" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;">') : 'Tidak Ada Tanda Tangan Digital'),
+                                TextEntry::make('disetujui_signature')
                                     ->label('Tanda Tangan ISTEK (Digital)')
-                                    ->content(fn ($record) => $record?->disetujui_signature ? new \Illuminate\Support\HtmlString('<img src="'.$record->disetujui_signature.'" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;">') : 'Tidak Ada Tanda Tangan Digital'),
-                                Placeholder::make('diserahkan_signature')
+                                    ->state(fn($record) => $record?->disetujui_signature ? new \Illuminate\Support\HtmlString('<img src="' . $record->disetujui_signature . '" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;">') : 'Tidak Ada Tanda Tangan Digital'),
+                                TextEntry::make('diserahkan_signature')
                                     ->label('Tanda Tangan Receiving (Digital)')
-                                    ->content(fn ($record) => $record?->diserahkan_signature ? new \Illuminate\Support\HtmlString('<img src="'.$record->diserahkan_signature.'" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;">') : 'Tidak Ada Tanda Tangan Digital'),
+                                    ->state(fn($record) => $record?->diserahkan_signature ? new \Illuminate\Support\HtmlString('<img src="' . $record->diserahkan_signature . '" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;">') : 'Tidak Ada Tanda Tangan Digital'),
                             ]),
                         ]),
                 ])->columnSpanFull(),
