@@ -60,7 +60,19 @@
             <table class="header-table">
                 <tr>
                     <td rowspan="6" class="text-center" style="width: 25%;">
-                        <img src="{{ public_path('images/logo/logodasar.png') }}" alt="Logo Pupuk Kaltim" style="width: 130px; margin-bottom: 4px;">
+                        @php
+                            $imagePath = public_path('images/logo/logodasar.png');
+                            $imageSrc = '';
+                            if(file_exists($imagePath)) {
+                                $imageData = base64_encode(file_get_contents($imagePath));
+                                $imageSrc = 'data:image/png;base64,' . $imageData;
+                            }
+                        @endphp
+                        @if($imageSrc)
+                            <img src="{{ $imageSrc }}" alt="Logo Pupuk Kaltim" style="width: 130px; margin-bottom: 4px;">
+                        @else
+                            <img src="{{ public_path('images/logo/logodasar.png') }}" alt="Logo Pupuk Kaltim" style="width: 130px; margin-bottom: 4px;">
+                        @endif
                         <br>
                         <span class="font-bold" style="font-size: 12px;">PT PUPUK KALTIM<br>BONTANG</span>
                     </td>
