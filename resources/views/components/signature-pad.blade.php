@@ -11,6 +11,15 @@
         this.ctx = canvas.getContext('2d');
         
         const resizeCanvas = () => {
+            // Jika ukuran tidak berubah, jangan lakukan apa-apa (mencegah canvas terhapus saat scroll HP)
+            if (canvas.width === canvas.offsetWidth && canvas.height === canvas.offsetHeight) {
+                return;
+            }
+
+            // Simpan gambar yang sudah ada
+            const savedImage = new Image();
+            savedImage.src = canvas.toDataURL();
+
             canvas.width = canvas.offsetWidth;
             canvas.height = canvas.offsetHeight;
             
@@ -20,6 +29,11 @@
             
             const isDark = document.documentElement.classList.contains('dark');
             this.ctx.strokeStyle = isDark ? '#FFFFFF' : '#0F172A';
+
+            // Kembalikan gambar setelah di-resize
+            savedImage.onload = () => {
+                this.ctx.drawImage(savedImage, 0, 0);
+            };
         };
         
         setTimeout(resizeCanvas, 100);
