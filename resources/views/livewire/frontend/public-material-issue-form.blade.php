@@ -164,7 +164,7 @@
                                         @forelse($available_pos as $po)
                                             @php $isSelected = (string)$purchase_order_issued_id === (string)$po->id; @endphp
                                             <div>
-                                                <input type="radio" wire:model.live="purchase_order_issued_id" id="po_{{ $po->id }}" value="{{ $po->id }}" class="sr-only">
+                                                <input type="radio" wire:model.live="purchase_order_issued_id" id="po_{{ $po->id }}" value="{{ $po->id }}" class="hidden">
                                                 <label for="po_{{ $po->id }}" class="flex items-center justify-between py-2.5 px-4 rounded-lg cursor-pointer mx-2 my-0.5 transition-all font-medium {{ $isSelected ? 'bg-[#F47920] text-white shadow-md dark:bg-[#F47920] dark:text-white' : 'hover:bg-[#F47920]/10 hover:text-[#F47920] dark:hover:bg-[#F47920]/20 dark:hover:text-[#F47920]' }}">
                                                     <span>{{ $po->purchase_order_no }}</span>
                                                     @if($isSelected)
