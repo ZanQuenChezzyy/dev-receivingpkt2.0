@@ -1,0 +1,117 @@
+<?php
+
+namespace App\Filament\Resources\MonitoringNpks;
+
+use App\Filament\Resources\MonitoringNpks\Pages\CreateMonitoringNpk;
+use App\Filament\Resources\MonitoringNpks\Pages\EditMonitoringNpk;
+use App\Filament\Resources\MonitoringNpks\Pages\ListMonitoringNpks;
+use App\Filament\Resources\MonitoringNpks\Pages\ViewMonitoringNpk;
+use App\Filament\Resources\MonitoringNpks\Schemas\MonitoringNpkForm;
+use App\Filament\Resources\MonitoringNpks\Schemas\MonitoringNpkInfolist;
+use App\Filament\Resources\MonitoringNpks\Tables\MonitoringNpksTable;
+use App\Models\MonitoringNpk;
+use App\Models\MonitoringNpkDetail;
+use App\Models\PurchaseOrderIssued;
+use BackedEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
+use UnitEnum;
+
+class MonitoringNpkResource extends Resource
+{
+    protected static ?string $model = MonitoringNpk::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Penerimaan Receiving';
+
+    protected static ?int $navigationSort = 4;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSparkles;
+
+    protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::Sparkles;
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Monitoring NPK';
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'Monitoring NPK';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Monitoring NPK';
+    }
+
+    public static function hitungSisaDbByItem(int $poTerbitId, ?int $currentMonitoringId): array
+    {
+        $poRow = PurchaseOrderIssued::query()
+            ->select(['id', 'purchase_order_no', 'item_no', 'qty_po', 'uoi'])
+            ->find($poTerbitId);
+
+        $poNo = (string) ($poRow?->purchase_order_no ?? '');
+        $itemNo = $poRow?->item_no;
+        $poQty = (float) ($poRow?->qty_po ?? 0);
+        $uoi = $poRow?->uoi;
+
+        if ($poNo === '' || $itemNo === null) {
+            return ['po' => 0.0, 'used_db' => 0.0, 'uoi' => $uoi, 'po_no' => $poNo, 'item_no' => $itemNo];
+        }
+
+        $matchingPoTerbitIds = PurchaseOrderIssued::query()
+            ->where('purchase_order_no', $poNo)
+            ->where('item_no', $itemNo)
+            ->pluck('id');
+
+        $usedDb = (float) MonitoringNpkDetail::query()
+            ->whereHas('monitoringNpk', function ($q) use ($matchingPoTerbitIds) {
+                $q->whereIn('purchase_order_terbit_id', $matchingPoTerbitIds);
+            })
+            ->where('item_no', $itemNo)
+            ->when($currentMonitoringId, fn ($q) => $q->where('monitoring_npk_id', '!=', $currentMonitoringId))
+            ->sum('quantity');
+
+        return [
+            'po' => $poQty,
+            'used_db' => $usedDb,
+            'uoi' => $uoi,
+            'po_no' => $poNo,
+            'item_no' => $itemNo,
+        ];
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return MonitoringNpkForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return MonitoringNpkInfolist::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return MonitoringNpksTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListMonitoringNpks::route('/'),
+            'create' => CreateMonitoringNpk::route('/create'),
+            'view' => ViewMonitoringNpk::route('/{record}'),
+            'edit' => EditMonitoringNpk::route('/{record}/edit'),
+        ];
+    }
+}
