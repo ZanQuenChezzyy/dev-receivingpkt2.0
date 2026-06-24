@@ -4,6 +4,7 @@ namespace App\Filament\Resources\DeliveryOrderReceipts\Tables;
 
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -428,6 +429,29 @@ class DeliveryOrderReceiptsTable
                     ->outlined(),
 
                 ActionGroup::make([
+                    Action::make('cetak_material')
+                        ->label('Label Material')
+                        ->icon('heroicon-m-tag')
+                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'material']))
+                        ->openUrlInNewTab(),
+                    Action::make('cetak_dokumen')
+                        ->label('Kode Dokumen')
+                        ->icon('heroicon-m-document-text')
+                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'document']))
+                        ->openUrlInNewTab(),
+                    Action::make('cetak_keduanya')
+                        ->label('Material & Dokumen')
+                        ->icon('heroicon-m-document-duplicate')
+                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'both']))
+                        ->openUrlInNewTab(),
+                ])
+                    ->label('Cetak Barcode')
+                    ->icon('heroicon-m-printer')
+                    ->color('info')
+                    ->button()
+                    ->outlined(),
+
+                ActionGroup::make([
                     ViewAction::make()
                         ->color('gray')
                         ->slideOver(),
@@ -445,6 +469,39 @@ class DeliveryOrderReceiptsTable
                     ->button(),
             ])
             ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkAction::make('bulk_cetak_material')
+                        ->label('Cetak Label Material')
+                        ->icon('heroicon-m-tag')
+                        ->color('gray')
+                        ->action(
+                            fn(\Illuminate\Support\Collection $records) =>
+                            redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'material']))
+                        )
+                        ->deselectRecordsAfterCompletion(),
+
+                    BulkAction::make('bulk_cetak_dokumen')
+                        ->label('Cetak Kode Dokumen')
+                        ->icon('heroicon-m-document-text')
+                        ->color('gray')
+                        ->action(
+                            fn(\Illuminate\Support\Collection $records) =>
+                            redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'document']))
+                        )
+                        ->deselectRecordsAfterCompletion(),
+
+                    BulkAction::make('bulk_cetak_keduanya')
+                        ->label('Cetak Keduanya')
+                        ->icon('heroicon-m-printer')
+                        ->color('gray')
+                        ->action(
+                            fn(\Illuminate\Support\Collection $records) =>
+                            redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'both']))
+                        )
+                        ->deselectRecordsAfterCompletion(),
+                ])
+                    ->label('Cetak Dipilih')
+                    ->icon(Heroicon::Printer),
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
