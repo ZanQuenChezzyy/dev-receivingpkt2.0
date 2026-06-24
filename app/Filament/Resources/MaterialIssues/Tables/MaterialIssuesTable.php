@@ -64,13 +64,6 @@ class MaterialIssuesTable
                         ->sortable()
                         ->toggleable(isToggledHiddenByDefault: true),
 
-                    TextColumn::make('materialIssueDetails.0.stage_when_issued')
-                        ->label('Stage Saat Diambil')
-                        ->badge()
-                        ->color('info')
-                        ->formatStateUsing(fn($state) => $state ?: 'Default')
-                        ->placeholder('Default'),
-
                     TextColumn::make('departemen')
                         ->label('Departemen')
                         ->icon('heroicon-m-building-office-2')
