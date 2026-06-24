@@ -68,7 +68,7 @@ class MaterialIssuesTable
                         ->label('Stage Saat Diambil')
                         ->badge()
                         ->color('info')
-                        ->formatStateUsing(fn ($state) => $state ?: 'Default')
+                        ->formatStateUsing(fn($state) => $state ?: 'Default')
                         ->placeholder('Default'),
 
                     TextColumn::make('departemen')
@@ -107,16 +107,18 @@ class MaterialIssuesTable
                 //
             ])
             ->recordActions([
+                Action::make('cetak_mir')
+                    ->label('Cetak')
+                    ->icon('heroicon-o-printer')
+                    ->button()
+                    ->outlined()
+                    ->color('success')
+                    ->url(fn(MaterialIssue $record): string => route('filament.admin.resources.material-issues.print', $record))
+                    ->openUrlInNewTab(),
                 ActionGroup::make([
                     ViewAction::make()
                         ->color('gray')
                         ->slideOver(),
-                    Action::make('cetak_mir')
-                        ->label('Cetak')
-                        ->icon('heroicon-o-printer')
-                        ->color('success')
-                        ->url(fn (MaterialIssue $record): string => route('filament.admin.resources.material-issues.print', $record))
-                        ->openUrlInNewTab(),
                     EditAction::make()
                         ->color('info')
                         ->slideOver(),
