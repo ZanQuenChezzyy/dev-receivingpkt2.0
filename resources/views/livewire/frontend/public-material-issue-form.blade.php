@@ -18,7 +18,7 @@
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#F47920]"></span>
                 </span>
-                <span class="text-xs font-bold tracking-widest uppercase text-slate-600 dark:text-[#F47920]">Portal Logistik Terpadu</span>
+                <span class="text-xs font-bold tracking-widest uppercase text-slate-600 dark:text-[#F47920]">Formulir Pengambilan Barang</span>
             </div>
             
             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-800 dark:text-white tracking-tight mb-6">
@@ -213,6 +213,40 @@
 
             <!-- STEP 3: Item Material -->
             @if($purchase_order_issued_id)
+            @php
+                $totalBoh = collect($available_po_items)->sum('combined_boh');
+                $selectedPo = collect($available_pos)->firstWhere('id', $purchase_order_issued_id);
+                $poNumber = $selectedPo ? $selectedPo->purchase_order_no : 'terpilih';
+            @endphp
+            
+            @if($totalBoh <= 0)
+                <div class="relative z-10 group/step animate-fade-in-up mb-12">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                        <div class="flex items-center gap-6">
+                            <div class="flex flex-col items-center justify-center w-24 h-24 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 shadow-sm shrink-0 relative overflow-hidden transition-all duration-500 group-hover/step:shadow-md group-hover/step:border-blue-500/30">
+                                <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover/step:opacity-100 transition-opacity duration-500"></div>
+                                <span class="text-3xl font-black text-slate-800 dark:text-white z-10">3</span>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white tracking-tight">Daftar Material</h3>
+                                <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1.5 font-medium">Pilih item dari PO dan tentukan jumlah pengambilan.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="md:pl-[8.5rem]">
+                        <div class="bg-blue-50/80 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 backdrop-blur-xl rounded-[2.5rem] p-8 flex items-center justify-center text-center shadow-sm">
+                            <div>
+                                <div class="w-16 h-16 bg-blue-100 dark:bg-blue-800/50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 dark:text-blue-400">
+                                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Semua Item Telah Diambil</h3>
+                                <p class="text-slate-500 dark:text-slate-400">Seluruh material pada PO <strong>{{ $poNumber }}</strong> sudah habis diambil (Stok BOH 0).</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @else
             <div class="relative z-10 group/step animate-fade-in-up">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div class="flex items-center gap-6">
@@ -226,10 +260,12 @@
                         </div>
                     </div>
                     <div class="md:pl-0 sm:self-center self-start pl-[5.5rem]">
+                        @if(count($details) < count($available_po_items))
                         <button type="button" wire:click="addDetail" class="group flex items-center gap-2.5 px-5 py-3 bg-white/80 dark:bg-white/5 hover:bg-green-50 dark:hover:bg-green-500/10 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 hover:border-green-400 dark:hover:border-green-500/50 rounded-2xl text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 font-bold transition-all shadow-sm">
                             <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
                             Tambah Item
                         </button>
+                        @endif
                     </div>
                 </div>
 
@@ -261,13 +297,21 @@
                                             <option value="">-- Item No --</option>
                                             @foreach($available_po_items as $item)
                                                 @php
+                                                    $itemId = is_array($item) ? $item['id'] : $item->id;
                                                     $itemNo = is_array($item) ? $item['item_no'] : $item->item_no;
                                                     $matCode = is_array($item) ? $item['material_code'] : $item->material_code;
+                                                    
+                                                    // Cek apakah item ini sudah dipilih di baris lain
+                                                    $isSelectedInOtherRow = collect($details)
+                                                        ->reject(fn($val, $key) => $key == $index)
+                                                        ->contains('delivery_order_receipt_detail_id', $itemId);
                                                 @endphp
-                                                <option value="{{ is_array($item) ? $item['id'] : $item->id }}">
+                                                @if(!$isSelectedInOtherRow)
+                                                <option value="{{ $itemId }}">
                                                     Item {{ $itemNo }}
                                                     @if($matCode) &middot; {{ $matCode }} @endif
                                                 </option>
+                                                @endif
                                             @endforeach
                                         </select>
                                         <div class="absolute inset-y-0 right-0 flex items-center px-5 pointer-events-none text-slate-400">
@@ -323,23 +367,22 @@
                     @endforeach
                 </div>
             </div>
-            @endif
 
             <!-- STEP 4: Tanda Tangan -->
-            <div class="relative z-10 md:pl-[8.5rem] mt-12 mb-8">
-                <!-- Timeline dot -->
-                <div class="hidden md:flex absolute left-8 top-0 w-12 h-12 bg-white dark:bg-slate-900 border-4 border-slate-100 dark:border-slate-800 rounded-full items-center justify-center shadow-lg z-10 text-[#F47920] font-black text-xl">
-                    4
-                </div>
-
-                <div class="mb-6 flex items-center justify-between">
+            <div class="relative z-10 mb-12 group/step animate-fade-in-up" style="animation-delay: 100ms;">
+                <div class="flex items-center gap-6 mb-6">
+                    <div class="flex flex-col items-center justify-center w-24 h-24 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 shadow-sm shrink-0 relative overflow-hidden transition-all duration-500 group-hover/step:shadow-md group-hover/step:border-purple-500/30">
+                        <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover/step:opacity-100 transition-opacity duration-500"></div>
+                        <span class="text-3xl font-black text-slate-800 dark:text-white z-10">4</span>
+                    </div>
                     <div>
-                        <h2 class="text-2xl font-black text-slate-800 dark:text-white">Persetujuan & Tanda Tangan</h2>
-                        <p class="text-slate-500 dark:text-slate-400 mt-1">Silakan berikan tanda tangan digital sebagai bukti pengambilan material fisik.</p>
+                        <h3 class="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white tracking-tight">Persetujuan & Tanda Tangan</h3>
+                        <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-1.5 font-medium">Silakan berikan tanda tangan digital sebagai bukti pengambilan material fisik.</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-1 gap-8">
+                <div class="md:pl-[8.5rem]">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Tanda Tangan Peminta (Wajib Selalu) -->
                     <div class="space-y-3">
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">
@@ -419,6 +462,7 @@
                         @error('diserahkan_signature') <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
                     </div>
                 </div>
+                </div>
             </div>
 
             <!-- Submit Area -->
@@ -462,6 +506,8 @@
                     </button>
                 </div>
             </div>
+            @endif
+            @endif
         </form>
     </div>
 

@@ -173,16 +173,18 @@ class PublicMaterialIssueForm extends Component
 
     public function addDetail()
     {
-        $this->details[] = [
-            'delivery_order_receipt_detail_id' => '',
-            'stock_no' => '',
-            'description' => '',
-            'location' => '',
-            'uoi' => '',
-            'diminta' => '',
-            'diserahkan' => '',
-            'boh' => 0,
-        ];
+        if (count($this->details) < count($this->available_po_items) || empty($this->available_po_items)) {
+            $this->details[] = [
+                'delivery_order_receipt_detail_id' => '',
+                'stock_no' => '',
+                'description' => '',
+                'location' => '',
+                'uoi' => '',
+                'diminta' => '',
+                'diserahkan' => '',
+                'boh' => 0,
+            ];
+        }
     }
     
     public function removeDetail($index)
@@ -229,7 +231,7 @@ class PublicMaterialIssueForm extends Component
             'diserahkan_oleh' => 'required|string',
             'diserahkan_npk' => 'required|string',
             'diserahkan_signature' => 'required|string',
-            'details.*.delivery_order_receipt_detail_id' => 'required',
+            'details.*.delivery_order_receipt_detail_id' => ['required', 'distinct'],
             'details.*.diminta' => [
                 'required',
                 'numeric',

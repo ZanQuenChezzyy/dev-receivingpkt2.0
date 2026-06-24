@@ -17,7 +17,7 @@ new class extends Component {
         if (empty($this->chats)) {
             $this->chats[] = [
                 'role' => 'assistant',
-                'content' => 'Halo! Saya AI Support Receiving 2.0. Ada yang bisa saya bantu terkait status PO, Delivery Order, atau pengecekan status material?'
+                'content' => 'Halo! Saya ALEX, Asisten AI Receiving. Ada yang bisa saya bantu terkait status PO, Delivery Order, atau pengecekan status material?'
             ];
         }
     }
@@ -247,7 +247,7 @@ Detail Barang:
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-8 scale-95"
-        class="absolute bottom-20 right-0 w-[340px] sm:w-[420px] bg-white/80 dark:bg-[#031525]/80 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_8px_40px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_40px_rgb(0,0,0,0.3)] border border-white/60 dark:border-white/10 overflow-hidden flex flex-col h-[38rem]">
+        class="fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:max-w-[380px] h-[100dvh] md:h-[38rem] bg-white/95 md:bg-white/80 dark:bg-[#031525]/95 md:dark:bg-[#031525]/80 backdrop-blur-3xl md:rounded-[2.5rem] shadow-[0_8px_40px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_40px_rgb(0,0,0,0.3)] md:border md:border-white/60 dark:border-white/10 overflow-hidden flex flex-col z-[100] md:z-auto">
 
         <!-- Header -->
         <div class="px-6 py-5 flex items-center justify-between border-b border-slate-200/50 dark:border-white/5 relative z-20 overflow-hidden bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
@@ -268,8 +268,8 @@ Detail Barang:
                         class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-[#031525] rounded-full shadow-sm"></span>
                 </div>
                 <div>
-                    <h3 class="text-[15px] font-bold text-slate-800 dark:text-white tracking-tight">AI Support</h3>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium tracking-wide mt-0.5">Portal Logistik Terpadu</p>
+                    <h3 class="text-[15px] font-bold text-slate-800 dark:text-white tracking-tight">ALEX</h3>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium tracking-wide mt-0.5">Asisten AI Receiving</p>
                 </div>
             </div>
 
@@ -342,7 +342,7 @@ Detail Barang:
 
         <!-- Input Area -->
         <form wire:submit="sendMessage"
-            class="p-5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-t border-slate-200/50 dark:border-white/5 relative z-20 rounded-b-[2.5rem]">
+            class="p-5 pb-8 md:pb-5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-t border-slate-200/50 dark:border-white/5 relative z-20 md:rounded-b-[2.5rem]">
             <div class="relative flex items-center bg-white/80 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 rounded-full focus-within:ring-2 focus-within:ring-[#F47920]/50 focus-within:border-[#F47920] transition-all duration-300 shadow-sm group">
 
                 <input wire:model="message" type="text" placeholder="Tanya DO, PO, atau MIR..."

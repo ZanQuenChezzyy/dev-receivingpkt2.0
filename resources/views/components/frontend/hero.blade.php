@@ -28,7 +28,7 @@
                     Otomasi Logistik <br class="hidden sm:block">
                     <span class="text-transparent bg-clip-text bg-linear-to-r from-[#F47920] to-[#ff9b52] relative inline-block">
                         Inventaris
-                        <svg class="absolute w-full h-2 sm:h-3 -bottom-2 left-0 text-[#0A4F86]/80" viewBox="0 0 100 10" preserveAspectRatio="none">
+                        <svg class="absolute w-full h-2 sm:h-3 -bottom-2 left-0 text-[#0A4F86]/80 dark:text-[#F47920]/80" viewBox="0 0 100 10" preserveAspectRatio="none">
                             <path d="M0 5 Q 50 10 100 5" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
                         </svg>
                     </span>
@@ -108,7 +108,7 @@
                                         <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">1,284</div>
                                         <div class="w-12 sm:w-20 h-1.5 mt-2 rounded-full bg-[#0A4F86]"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Total MIGO</p>
+                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Total Item</p>
                                 </div>
                                 <div class="h-24 sm:h-32 rounded-2xl bg-[#F47920]/10 border border-[#F47920]/30 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group shadow-[inset_0_0_20px_rgba(244,121,32,0.1)]">
                                     <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#F47920]/30 blur-xl rounded-full group-hover:bg-[#F47920]/50 transition-colors"></div>
@@ -116,7 +116,7 @@
                                         <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">856</div>
                                         <div class="w-12 sm:w-20 h-1.5 mt-2 rounded-full bg-[#F47920]"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-[#F47920] font-medium">Material Issued</p>
+                                    <p class="text-[10px] sm:text-xs text-[#F47920] font-medium">Sudah GRS</p>
                                 </div>
                                 <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between shadow-sm">
                                     <div>
