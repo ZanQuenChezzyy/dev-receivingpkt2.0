@@ -339,7 +339,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-1 gap-8">
                     <!-- Tanda Tangan Peminta (Wajib Selalu) -->
                     <div class="space-y-3">
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">
