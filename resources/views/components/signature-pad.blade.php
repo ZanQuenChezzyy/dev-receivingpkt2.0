@@ -1,6 +1,6 @@
 @props(['id' => 'signature', 'placeholder' => 'Tanda Tangan di sini'])
 
-<div x-data="{
+<div wire:ignore x-data="{
     value: @entangle($attributes->wire('model')),
     isDrawing: false,
     ctx: null,
