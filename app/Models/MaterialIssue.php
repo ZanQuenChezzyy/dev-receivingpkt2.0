@@ -30,6 +30,8 @@ class MaterialIssue extends Model
         'disetujui_signature',
         'diketahui_oleh',
         'diserahkan_oleh',
+        'diserahkan_npk',
+        'diserahkan_signature',
         'diterima_oleh',
         'created_by',
     ];

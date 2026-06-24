@@ -179,7 +179,7 @@
                     <td>Dept: {{ $record->departemen }}</td>
                     <td>Dept: {{ $record->disetujui_oleh || $record->disetujui_signature ? 'ISTEK' : '' }}</td>
                     <td>Dept:</td>
-                    <td>Dept:</td>
+                    <td>Dept: {{ $record->diserahkan_oleh || $record->diserahkan_signature ? 'Receiving' : '' }}</td>
                     <td>Dept: {{ $record->departemen }}</td>
                 </tr>
                 <tr>
@@ -198,7 +198,13 @@
                         @endif
                     </td>
                     <td>&nbsp;</td>
-                    <td>&nbsp;</td>
+                    <td style="height: 60px; vertical-align: middle; text-align: center;">
+                        @if($record->diserahkan_signature)
+                            <img src="{{ $record->diserahkan_signature }}" style="max-height: 55px; max-width: 100%; display: inline-block;">
+                        @else
+                            &nbsp;
+                        @endif
+                    </td>
                     <td style="height: 60px; vertical-align: middle; text-align: center;">
                         @if($record->diminta_signature)
                             <img src="{{ $record->diminta_signature }}" style="max-height: 55px; max-width: 100%; display: inline-block;">
@@ -218,7 +224,7 @@
                     <td>NPK: {{ $record->npk }}</td>
                     <td>NPK: {{ $record->disetujui_npk }}</td>
                     <td>NPK:</td>
-                    <td>NPK:</td>
+                    <td>NPK: {{ $record->diserahkan_npk }}</td>
                     <td>NPK: {{ $record->npk }}</td>
                 </tr>
             </table>

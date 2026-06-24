@@ -28,6 +28,10 @@ class PublicMaterialIssueForm extends Component
     public $disetujui_signature = null;
     public $requiresIstekSignature = false;
     
+    public $diserahkan_oleh = '';
+    public $diserahkan_npk = '';
+    public $diserahkan_signature = null;
+    
     public $tanggal = '';
     public $purchase_order_issued_id = '';
     public $no_reservasi = '';
@@ -222,6 +226,9 @@ class PublicMaterialIssueForm extends Component
             'digunakan_untuk' => 'required|string',
             'agreement' => 'accepted',
             'diminta_signature' => 'required|string',
+            'diserahkan_oleh' => 'required|string',
+            'diserahkan_npk' => 'required|string',
+            'diserahkan_signature' => 'required|string',
             'details.*.delivery_order_receipt_detail_id' => 'required',
             'details.*.diminta' => [
                 'required',
@@ -262,6 +269,9 @@ class PublicMaterialIssueForm extends Component
             'disetujui_oleh.required' => 'Nama ISTEK wajib diisi karena ada barang yang belum GRS.',
             'disetujui_npk.required' => 'NPK ISTEK wajib diisi.',
             'disetujui_signature.required' => 'Tanda tangan ISTEK wajib diisi karena ada barang yang belum GRS.',
+            'diserahkan_oleh.required' => 'Nama pihak Receiving wajib diisi.',
+            'diserahkan_npk.required' => 'NPK pihak Receiving wajib diisi.',
+            'diserahkan_signature.required' => 'Tanda tangan pihak Receiving wajib diisi.',
         ];
     }
 
@@ -298,6 +308,9 @@ class PublicMaterialIssueForm extends Component
                 'disetujui_oleh' => $this->requiresIstekSignature ? $this->disetujui_oleh : null,
                 'disetujui_npk' => $this->requiresIstekSignature ? $this->disetujui_npk : null,
                 'disetujui_signature' => $this->requiresIstekSignature ? $this->disetujui_signature : null,
+                'diserahkan_oleh' => $this->diserahkan_oleh,
+                'diserahkan_npk' => $this->diserahkan_npk,
+                'diserahkan_signature' => $this->diserahkan_signature,
                 'created_by' => null,
             ]);
 
@@ -350,6 +363,9 @@ class PublicMaterialIssueForm extends Component
             $this->disetujui_oleh = '';
             $this->disetujui_npk = '';
             $this->disetujui_signature = null;
+            $this->diserahkan_oleh = '';
+            $this->diserahkan_npk = '';
+            $this->diserahkan_signature = null;
             $this->agreement = false;
             $this->details = [];
             $this->addDetail();

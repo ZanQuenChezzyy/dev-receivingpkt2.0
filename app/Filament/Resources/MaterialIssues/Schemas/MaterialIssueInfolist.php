@@ -60,21 +60,25 @@ class MaterialIssueInfolist
                     Section::make('Tanda Tangan (Fisik / Digital)')
                         ->icon('heroicon-o-pencil')
                         ->schema([
-                            Grid::make(7)->schema([
+                            Grid::make(8)->schema([
                                 TextEntry::make('diminta_oleh')->label('Diminta Oleh'),
                                 TextEntry::make('npk')->label('NPK'),
                                 TextEntry::make('disetujui_oleh')->label('Disetujui Oleh (ISTEK)'),
                                 TextEntry::make('disetujui_npk')->label('NPK ISTEK'),
                                 TextEntry::make('diketahui_oleh')->label('Diketahui Oleh'),
                                 TextEntry::make('diserahkan_oleh')->label('Diserahkan Oleh'),
+                                TextEntry::make('diserahkan_npk')->label('NPK Receiving'),
                                 TextEntry::make('diterima_oleh')->label('Diterima Oleh'),
                             ]),
-                            Grid::make(2)->schema([
+                            Grid::make(3)->schema([
                                 \Filament\Infolists\Components\ViewEntry::make('diminta_signature')
                                     ->label('Tanda Tangan Peminta (Digital)')
                                     ->view('filament.infolists.components.signature-display'),
                                 \Filament\Infolists\Components\ViewEntry::make('disetujui_signature')
                                     ->label('Tanda Tangan ISTEK (Digital)')
+                                    ->view('filament.infolists.components.signature-display'),
+                                \Filament\Infolists\Components\ViewEntry::make('diserahkan_signature')
+                                    ->label('Tanda Tangan Receiving (Digital)')
                                     ->view('filament.infolists.components.signature-display'),
                             ]),
                         ]),
