@@ -309,7 +309,6 @@
                                                 @if(!$isSelectedInOtherRow)
                                                 <option value="{{ $itemId }}">
                                                     Item {{ $itemNo }}
-                                                    @if($matCode) &middot; {{ $matCode }} @endif
                                                 </option>
                                                 @endif
                                             @endforeach

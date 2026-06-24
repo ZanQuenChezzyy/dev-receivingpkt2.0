@@ -79,7 +79,7 @@ class BulkScanTransmittal extends Page implements HasForms
                         ->default(now())
                         ->native(false)
                         ->required()
-                        ->disabled(fn () => $this->transmittalId !== null)
+                        ->disabled(fn() => $this->transmittalId !== null)
                         ->live()
                         ->afterStateUpdated(function ($state) {
                             $this->resetScanState();
@@ -101,7 +101,7 @@ class BulkScanTransmittal extends Page implements HasForms
                         ->inline()
                         ->required()
                         ->default('Kirim')
-                        ->disabled(fn () => $this->transmittalId !== null)
+                        ->disabled(fn() => $this->transmittalId !== null)
                         ->live()
                         ->afterStateUpdated(function ($state) {
                             $this->resetScanState();
@@ -123,7 +123,7 @@ class BulkScanTransmittal extends Page implements HasForms
                         ->inline()
                         ->required()
                         ->default('ISTEK')
-                        ->disabled(fn () => $this->transmittalId !== null)
+                        ->disabled(fn() => $this->transmittalId !== null)
                         ->live()
                         ->afterStateUpdated(function ($state) {
                             $this->resetScanState();
@@ -168,11 +168,26 @@ class BulkScanTransmittal extends Page implements HasForms
             ->orWhere('document_code', $code) // Bisa scan nomor DO atau document code (QR Dokumen)
             ->first();
 
-        if (! $doReceipt) {
+        if (!$doReceipt) {
             $this->dispatch('play-error-sound');
             Notification::make()
                 ->title('Tidak ditemukan')
                 ->body("Dokumen dengan nomor {$code} tidak ditemukan.")
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        if ($this->data['type'] === 'Kirim' && is_null($doReceipt->post_103)) {
+            $detail = $doReceipt->deliveryOrderReceiptDetails()->first();
+            $po_no = $detail ? ($detail->purchaseOrderIssued->purchase_order_no ?? '') : '';
+            $displayNo = $po_no ?: ($doReceipt->delivery_oder_no ?? $code);
+
+            $this->dispatch('play-error-sound');
+            Notification::make()
+                ->title('Belum Post 103')
+                ->body("Dokumen PO {$displayNo} belum transaksi 103.")
                 ->danger()
                 ->send();
 
@@ -199,7 +214,7 @@ class BulkScanTransmittal extends Page implements HasForms
 
     public function submit103Scan()
     {
-        if ($this->step !== 2 || ! $this->pending_do_id) {
+        if ($this->step !== 2 || !$this->pending_do_id) {
             return;
         }
 
@@ -211,7 +226,7 @@ class BulkScanTransmittal extends Page implements HasForms
         }
 
         $doReceipt = DeliveryOrderReceipt::find($this->pending_do_id);
-        if (! $doReceipt) {
+        if (!$doReceipt) {
             $this->resetScanState();
 
             return;
@@ -245,13 +260,13 @@ class BulkScanTransmittal extends Page implements HasForms
             ->whereDate('created_at', $tanggal->toDateString())
             ->first();
 
-        if (! $transmittal) {
+        if (!$transmittal) {
             $transmittal = Transmittal::create([
                 'type' => $this->data['type'],
                 'destination' => $this->data['destination'],
                 'created_by' => Auth::user()->id ?? 1,
                 'created_at' => $tanggal->setTimeFrom(now()),
-                'transmittal_no' => 'TRM-'.$tanggal->format('Ymd').'-'.strtoupper(substr(uniqid(), -4)),
+                'transmittal_no' => 'TRM-' . $tanggal->format('Ymd') . '-' . strtoupper(substr(uniqid(), -4)),
             ]);
         }
 
@@ -341,8 +356,8 @@ class BulkScanTransmittal extends Page implements HasForms
                     $this->dispatch('focus-document-input');
                 }
             })
-            ->modalCancelAction(fn ($action) => $action->label('Batal'))
-            ->modalSubmitAction(fn ($action) => $action->label('Lanjutkan Transmittal'));
+            ->modalCancelAction(fn($action) => $action->label('Batal'))
+            ->modalSubmitAction(fn($action) => $action->label('Lanjutkan Transmittal'));
     }
 
     protected function resumeProcessTransmittal(DeliveryOrderReceipt $doReceipt, Transmittal $transmittal, ?string $reason = null)
@@ -359,7 +374,7 @@ class BulkScanTransmittal extends Page implements HasForms
             $destination = $this->data['type'] === 'Kembali' ? 'Receiving' : $this->data['destination'];
             $notes = "Di-scan melalui Transmittal {$this->data['type']} (Tujuan: {$destination})";
             if ($reason) {
-                $notes .= '<br>Alasan Pengajuan Ulang: '.$reason;
+                $notes .= '<br>Alasan Pengajuan Ulang: ' . $reason;
             }
 
             // Catat ke QcHistory
@@ -432,7 +447,7 @@ class BulkScanTransmittal extends Page implements HasForms
             ->whereDate('created_at', \Carbon\Carbon::parse($this->data['tanggal'])->toDateString())
             ->first();
 
-        if (! $transmittal) {
+        if (!$transmittal) {
             return [];
         }
 

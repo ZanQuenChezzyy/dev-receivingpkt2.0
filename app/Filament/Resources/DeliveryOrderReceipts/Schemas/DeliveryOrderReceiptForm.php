@@ -948,7 +948,8 @@ class DeliveryOrderReceiptForm
         if (!empty($parts)) {
             $joinedString = implode('-', $parts);
             $upperString = strtoupper($joinedString);
-            $finalDocumentCode = str_replace(' ', '', $upperString);
+            // Hanya sisakan huruf kapital, angka, strip (-), dan underscore (_). Hapus spasi, garis miring, dll.
+            $finalDocumentCode = preg_replace('/[^A-Z0-9\-_]/', '', $upperString);
             $set('document_code', $finalDocumentCode);
         } else {
             $set('document_code', null);

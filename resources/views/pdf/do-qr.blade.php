@@ -9,7 +9,7 @@
         }
         body {
             margin: 0;
-            padding: 4px 6px;
+            padding: 4px 6px 4px 24px;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 9px;
             color: black;
@@ -127,10 +127,8 @@
                     try { $tahun = \Carbon\Carbon::parse($do->received_date)->format('Y'); } catch (\Throwable $e) {}
                 }
                 
-                $mrpTypes = $do->deliveryOrderReceiptDetails->pluck('mrp_type')->filter()->unique()->values();
                 $mrpMap = ['INVESTASI' => 'INV', 'NONSTOCK' => 'NSTK', 'PD' => 'PD', 'V1' => 'V1'];
-                $mrpLabels = $mrpTypes->map(function ($type) use ($mrpMap) { return $mrpMap[$type] ?? $type; });
-                $mrpCombined = $mrpLabels->implode('/');
+                $mrpCombined = $mrpType !== '-' ? ($mrpMap[$mrpType] ?? $mrpType) : '-';
                 
                 $itemCombined = $itemNo . ' | ' . $mrpCombined;
                 $stockLabel = 'STOCK NO';
@@ -218,12 +216,14 @@
 
     @if($mode === 'document' || $mode === 'both')
         @php
-            $mrpTypes = $do->deliveryOrderReceiptDetails->pluck('mrp_type')->filter()->unique()->values();
+            $allMrpTypes = $do->deliveryOrderReceiptDetails->pluck('mrp_type')->filter();
             $mrpMap = ['INVESTASI' => 'INV', 'NONSTOCK' => 'NSTK', 'PD' => 'PD', 'V1' => 'V1'];
-            $mrpLabels = $mrpTypes->map(function ($type) use ($mrpMap) { return $mrpMap[$type] ?? $type; });
-            $dominantLabel = $mrpLabels->implode('/');
             
-            $hasNonStock = $mrpLabels->contains('NSTK');
+            $mrpCounts = $allMrpTypes->countBy();
+            $dominantType = $mrpCounts->sortDesc()->keys()->first();
+            $dominantLabel = $dominantType ? ($mrpMap[$dominantType] ?? $dominantType) : '-';
+            
+            $hasNonStock = $allMrpTypes->contains('NONSTOCK');
             $fontSize = $hasNonStock ? '14px' : '16px';
             
             $tahun = '-';

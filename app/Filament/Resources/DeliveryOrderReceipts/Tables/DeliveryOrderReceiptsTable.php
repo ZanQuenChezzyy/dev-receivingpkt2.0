@@ -29,6 +29,7 @@ class DeliveryOrderReceiptsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 // 📄 GRUP 1: INFORMASI DOKUMEN
                 ColumnGroup::make('Informasi Dokumen', [
@@ -445,7 +446,7 @@ class DeliveryOrderReceiptsTable
                         ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'both']))
                         ->openUrlInNewTab(),
                 ])
-                    ->label('Cetak Barcode')
+                    ->label('Cetak')
                     ->icon('heroicon-m-printer')
                     ->color('info')
                     ->button()

@@ -17,16 +17,64 @@ class CreateGrsRdtv extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $category = $data['category'] ?? 'GRS';
+        $invalidDocuments = [];
+
         // Pindahkan files (GRS) ke property sementara
         if (isset($data['files'])) {
             $this->uploadedFiles = $data['files'];
             unset($data['files']);
+
+            if ($category === 'GRS') {
+                foreach ($this->uploadedFiles as $file) {
+                    if ($file instanceof TemporaryUploadedFile) {
+                        $originalName = $file->getClientOriginalName();
+                        $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
+                        
+                        $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
+                        if ($do) {
+                            $latestQc = $do->qcHistories()->latest()->first();
+                            if (!$latestQc || $latestQc->status !== 'Kembali') {
+                                $invalidDocuments[] = $documentCode;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Pindahkan items (RDTV) ke property sementara
         if (isset($data['items'])) {
             $this->uploadedItems = $data['items'];
             unset($data['items']);
+
+            if ($category === 'RDTV') {
+                foreach ($this->uploadedItems as $item) {
+                    $file = is_array($item['file']) ? array_values($item['file'])[0] ?? null : $item['file'];
+                    if ($file instanceof TemporaryUploadedFile) {
+                        $originalName = $file->getClientOriginalName();
+                        $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
+                        
+                        $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
+                        if ($do) {
+                            $latestQc = $do->qcHistories()->latest()->first();
+                            if (!$latestQc || $latestQc->status !== 'Kembali') {
+                                $invalidDocuments[] = $documentCode;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!empty($invalidDocuments)) {
+            Notification::make()
+                ->title('Gagal Disimpan')
+                ->body('Terdapat dokumen yang belum diproses/kembali dari QC: ' . implode(', ', $invalidDocuments))
+                ->danger()
+                ->send();
+
+            $this->halt();
         }
 
         return $data;

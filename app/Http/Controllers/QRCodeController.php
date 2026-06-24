@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\DeliveryOrderReceipt;
+use App\Models\WarehouseTransmittal;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -17,22 +19,23 @@ class QRCodeController extends Controller
         $firstDetail = $do->deliveryOrderReceiptDetails->first();
         $nomorPo = optional(optional($firstDetail)->purchaseOrderIssued)->purchase_order_no ?? '-';
         $nomorDo = preg_replace('/[^A-Za-z0-9]/', '', (string) $do->delivery_oder_no); // Hapus "/", "\" dll
-        $tanggal = $do->received_date ? \Carbon\Carbon::parse($do->received_date)->format('dmY') : ''; // contoh: 15072025
+        $tanggal = $do->received_date ? Carbon::parse($do->received_date)->format('dmY') : ''; // contoh: 15072025
 
-        $qrContent = $nomorPo . $nomorDo . $tanggal; // Gabungan string
-        $qrDo = 'data:image/png;base64,' . base64_encode(QrCode::size(200)->generate($qrContent));
+        $qrContent = $nomorPo.$nomorDo.$tanggal; // Gabungan string
+        $qrDo = 'data:image/png;base64,'.base64_encode(QrCode::size(200)->generate($qrContent));
 
         $logoPath = public_path('images/logo/logo-pupuk-kaltim-hitam.png');
-        $logoBase64 = 'data:image/png;base64,' . base64_encode(@file_get_contents($logoPath) ?: '');
+        $logoBase64 = 'data:image/png;base64,'.base64_encode(@file_get_contents($logoPath) ?: '');
 
         // QR per item
         $items = collect();
         if (in_array($mode, ['material', 'both'])) {
             $items = $do->deliveryOrderReceiptDetails->map(function ($item) use ($do) {
                 $qr = base64_encode(QrCode::size(200)->generate("{$do->delivery_oder_no}-{$item->item_no}"));
+
                 return [
                     'label' => "Item {$item->item_no}",
-                    'qr' => 'data:image/png;base64,' . $qr,
+                    'qr' => 'data:image/png;base64,'.$qr,
                 ];
             });
         }
@@ -45,22 +48,30 @@ class QRCodeController extends Controller
             'logo' => $logoBase64,
         ])->setPaper([0, 0, 144, 216], 'landscape');
 
-        $filename = 'QR-DO-' . str_replace(['/', '\\'], '_', $do->delivery_oder_no);
+        $filename = 'QR-DO-'.str_replace(['/', '\\'], '_', $do->delivery_oder_no);
         if ($mode === 'material') {
             $filename .= '-Material';
         } elseif ($mode === 'document') {
             $filename .= '-Dokumen';
         }
 
-        return $pdf->stream($filename . '.pdf');
+        return $pdf->stream($filename.'.pdf');
     }
 
     public function bulkPrint(Request $request)
     {
         $mode = $request->get('mode', 'both');
-        $ids = array_filter(explode(',', (string) $request->get('ids')));
 
-        $dos = DeliveryOrderReceipt::with(['deliveryOrderReceiptDetails.purchaseOrderIssued', 'deliveryOrderReceiptDetails.locationReceiving', 'receivedBy'])->findMany($ids);
+        if ($request->has('transmittal')) {
+            $transmittalId = $request->get('transmittal');
+            $transmittal = WarehouseTransmittal::with('items.detail')->findOrFail($transmittalId);
+
+            $doIds = $transmittal->items->pluck('detail.delivery_order_receipt_id')->unique()->toArray();
+            $dos = DeliveryOrderReceipt::with(['deliveryOrderReceiptDetails.purchaseOrderIssued', 'deliveryOrderReceiptDetails.locationReceiving', 'deliveryOrderReceiptDetails.materialIssueDetails.materialIssue', 'receivedBy'])->findMany($doIds);
+        } else {
+            $ids = array_filter(explode(',', (string) $request->get('ids')));
+            $dos = DeliveryOrderReceipt::with(['deliveryOrderReceiptDetails.purchaseOrderIssued', 'deliveryOrderReceiptDetails.locationReceiving', 'deliveryOrderReceiptDetails.materialIssueDetails.materialIssue', 'receivedBy'])->findMany($ids);
+        }
 
         $data = [];
 
@@ -68,18 +79,19 @@ class QRCodeController extends Controller
             $firstDetail = $do->deliveryOrderReceiptDetails->first();
             $nomorPo = optional(optional($firstDetail)->purchaseOrderIssued)->purchase_order_no ?? '-';
             $nomorDo = preg_replace('/[^A-Za-z0-9]/', '', (string) $do->delivery_oder_no);
-            $tanggal = $do->received_date ? \Carbon\Carbon::parse($do->received_date)->format('dmY') : '';
+            $tanggal = $do->received_date ? Carbon::parse($do->received_date)->format('dmY') : '';
 
-            $qrContent = $nomorPo . $nomorDo . $tanggal;
-            $qrDo = 'data:image/png;base64,' . base64_encode(QrCode::size(200)->generate($qrContent));
+            $qrContent = $nomorPo.$nomorDo.$tanggal;
+            $qrDo = 'data:image/png;base64,'.base64_encode(QrCode::size(200)->generate($qrContent));
 
             $items = collect();
             if (in_array($mode, ['material', 'both'])) {
                 $items = $do->deliveryOrderReceiptDetails->map(function ($item) use ($do) {
                     $qr = base64_encode(QrCode::size(200)->generate("{$do->delivery_oder_no}-{$item->item_no}"));
+
                     return [
                         'label' => "Item {$item->item_no}",
-                        'qr' => 'data:image/png;base64,' . $qr,
+                        'qr' => 'data:image/png;base64,'.$qr,
                     ];
                 });
             }
@@ -92,7 +104,7 @@ class QRCodeController extends Controller
         }
 
         $logoPath = public_path('images/logo/logo-pupuk-kaltim-hitam.png');
-        $logoBase64 = 'data:image/png;base64,' . base64_encode(@file_get_contents($logoPath) ?: '');
+        $logoBase64 = 'data:image/png;base64,'.base64_encode(@file_get_contents($logoPath) ?: '');
 
         $pdf = Pdf::loadView('pdf.bulk-do-qr', [
             'mode' => $mode,
@@ -107,6 +119,6 @@ class QRCodeController extends Controller
             $filename .= '-Dokumen';
         }
 
-        return $pdf->stream($filename . '.pdf');
+        return $pdf->stream($filename.'.pdf');
     }
 }

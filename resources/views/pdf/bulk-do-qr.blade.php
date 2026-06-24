@@ -9,7 +9,7 @@
         }
         body {
             margin: 0;
-            padding: 4px 6px;
+            padding: 4px 6px 4px 24px;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 9px;
             color: black;
@@ -132,10 +132,14 @@
                         try { $tahun = \Carbon\Carbon::parse($do->received_date)->format('Y'); } catch (\Throwable $e) {}
                     }
                     
-                    $mrpTypes = $do->deliveryOrderReceiptDetails->pluck('mrp_type')->filter()->unique()->values();
+                    $mirQty = $detail ? $detail->materialIssueDetails->sum('qty') : 0;
+                    $mirNo = ($detail && $detail->materialIssueDetails->count() > 0) 
+                        ? $detail->materialIssueDetails->map(fn($d) => optional($d->materialIssue)->issue_no)->filter()->unique()->implode(', ')
+                        : '-';
+                    $sisaDikirim = $detail ? ($detail->qty - $mirQty) : '-';
+                    
                     $mrpMap = ['INVESTASI' => 'INV', 'NONSTOCK' => 'NSTK', 'PD' => 'PD', 'V1' => 'V1'];
-                    $mrpLabels = $mrpTypes->map(function ($type) use ($mrpMap) { return $mrpMap[$type] ?? $type; });
-                    $mrpCombined = $mrpLabels->implode('/');
+                    $mrpCombined = $mrpType !== '-' ? ($mrpMap[$mrpType] ?? $mrpType) : '-';
                     
                     $itemCombined = $itemNo . ' | ' . $mrpCombined;
                     $stockLabel = 'STOCK NO';
@@ -212,6 +216,16 @@
                             <td class="val" colspan="2">{{ $receivedBy }}</td>
                         </tr>
                         <tr>
+                            <td class="lbl">QTY MIR</td>
+                            <td class="colon">:</td>
+                            <td class="val" colspan="2">{{ $mirQty }} (Sisa Dikirim: {{ $sisaDikirim }})</td>
+                        </tr>
+                        <tr>
+                            <td class="lbl">EVIDENCE MIR</td>
+                            <td class="colon">:</td>
+                            <td class="val" colspan="2" style="max-width: 130px;">{{ $mirNo }}</td>
+                        </tr>
+                        <tr>
                             <td class="lbl">LOKASI</td>
                             <td class="colon">:</td>
                             <td class="val" colspan="2" style="max-width: 130px;">{{ $location }}</td>
@@ -228,12 +242,14 @@
                 $do = $record['do'];
                 $qrDo = $record['qrDo'];
             
-                $mrpTypes = $do->deliveryOrderReceiptDetails->pluck('mrp_type')->filter()->unique()->values();
+                $allMrpTypes = $do->deliveryOrderReceiptDetails->pluck('mrp_type')->filter();
                 $mrpMap = ['INVESTASI' => 'INV', 'NONSTOCK' => 'NSTK', 'PD' => 'PD', 'V1' => 'V1'];
-                $mrpLabels = $mrpTypes->map(function ($type) use ($mrpMap) { return $mrpMap[$type] ?? $type; });
-                $dominantLabel = $mrpLabels->implode('/');
                 
-                $hasNonStock = $mrpLabels->contains('NSTK');
+                $mrpCounts = $allMrpTypes->countBy();
+                $dominantType = $mrpCounts->sortDesc()->keys()->first();
+                $dominantLabel = $dominantType ? ($mrpMap[$dominantType] ?? $dominantType) : '-';
+                
+                $hasNonStock = $allMrpTypes->contains('NONSTOCK');
                 $fontSize = $hasNonStock ? '14px' : '16px';
                 
                 $tahun = '-';

@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'location_id',
     'is_different_location',
     'is_qty_tolerance',
+    'warehouse_destination_id',
 ])]
 class DeliveryOrderReceiptDetail extends Model
 {
@@ -59,6 +60,11 @@ class DeliveryOrderReceiptDetail extends Model
     public function locationReceiving(): BelongsTo
     {
         return $this->belongsTo(LocationReceiving::class, 'location_id');
+    }
+
+    public function warehouseDestination(): BelongsTo
+    {
+        return $this->belongsTo(WarehouseDestination::class, 'warehouse_destination_id');
     }
 
     public function materialIssueDetails()

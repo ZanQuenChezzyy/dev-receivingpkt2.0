@@ -20,6 +20,14 @@ Route::get('/admin/material-issues/{materialIssue}/print', [MaterialIssuePrintCo
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.material-issues.print');
 
+Route::get('/admin/warehouse-transmittals/{transmittal}/print', [\App\Http\Controllers\Admin\TransmittalPrintController::class, 'print'])
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.resources.warehouse-transmittals.print');
+
+Route::get('/admin/warehouse-transmittals/print-bulk', [\App\Http\Controllers\Admin\TransmittalPrintController::class, 'printBulk'])
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.resources.warehouse-transmittals.print_bulk');
+
 Route::get('/admin/print-bulk-do-qr', [QRCodeController::class, 'bulkPrint'])
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.delivery-order-receipts.bulk_print_qr');
