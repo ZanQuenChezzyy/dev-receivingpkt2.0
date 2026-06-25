@@ -21,6 +21,12 @@ class TransmittalForm
                             ->dehydrated(false) // Don't save it again if disabled, though not strictly necessary
                             ->columnSpanFull(),
 
+                        \Filament\Forms\Components\DatePicker::make('created_at')
+                            ->label('Tanggal Transmittal')
+                            ->default(now())
+                            ->native(false)
+                            ->required(),
+
                         Select::make('type')
                             ->label('Tipe Transmittal')
                             ->options([

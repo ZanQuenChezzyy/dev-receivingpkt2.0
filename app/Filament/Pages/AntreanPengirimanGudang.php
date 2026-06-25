@@ -2,13 +2,15 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Clusters\PengirimanGudang\PengirimanGudangCluster;
 use App\Models\DeliveryOrderReceiptDetail;
+use App\Models\PurchaseOrderIssued;
 use App\Models\WarehouseDestination;
 use App\Models\WarehouseTransmittal;
 use App\Models\WarehouseTransmittalItem;
+use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
-use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Enums\FontWeight;
@@ -28,19 +30,21 @@ class AntreanPengirimanGudang extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 
     protected static ?string $navigationLabel = 'Daftar Pengiriman Gudang';
 
     protected static ?string $title = 'Daftar Pengiriman Gudang';
 
-    protected static ?string $cluster = \App\Filament\Clusters\PengirimanGudang\PengirimanGudangCluster::class;
+    protected static ?string $cluster = PengirimanGudangCluster::class;
+
+    protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.pages.antrean-pengiriman-gudang';
 
     public function table(Table $table): Table
     {
-        return $table
+        $table
             ->query(
                 DeliveryOrderReceiptDetail::query()
                     ->whereHas('deliveryOrderReceipt', function ($query) {
@@ -62,7 +66,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->getStateUsing(fn($record) => $record->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
                         ->description(function ($record) {
                             $doNumber = $record->deliveryOrderReceipt?->delivery_oder_no ?? '-';
-                            $js = "event.stopPropagation(); event.preventDefault(); ";
+                            $js = 'event.stopPropagation(); event.preventDefault(); ';
                             $js .= "if(navigator.clipboard) { navigator.clipboard.writeText('{$doNumber}'); } else { let t = document.createElement('textarea'); t.value = '{$doNumber}'; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); } ";
                             $js .= "new FilamentNotification().title('Nomor DO disalin!').success().send();";
 
@@ -80,7 +84,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->copyMessage('Nomor PO disalin!')
                         ->sortable(query: function (Builder $query, string $direction) {
                             return $query->orderBy(
-                                \App\Models\PurchaseOrderIssued::select('purchase_order_no')
+                                PurchaseOrderIssued::select('purchase_order_no')
                                     ->whereColumn('purchase_order_issueds.id', 'delivery_order_receipt_details.purchase_order_issued_id'),
                                 $direction
                             );
@@ -128,6 +132,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->label('Sisa Dikirim')
                         ->state(function (DeliveryOrderReceiptDetail $record) {
                             $mirQty = $record->materialIssueDetails()->sum('diserahkan');
+
                             return max(0, $record->quantity - $mirQty);
                         })
                         ->numeric()
@@ -144,7 +149,9 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->sortable()
                         ->searchable(),
                 ]),
-            ])
+            ]);
+
+        return $table
             ->filters([
                 //
             ])
@@ -157,6 +164,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                     ->outlined()
                     ->url(function (DeliveryOrderReceiptDetail $record) {
                         $grsItem = $record->deliveryOrderReceipt->grsRdtvItems->first();
+
                         return $grsItem ? asset('storage/' . $grsItem->file_path) : '#';
                     })
                     ->openUrlInNewTab()

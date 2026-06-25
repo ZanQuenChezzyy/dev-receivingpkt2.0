@@ -30,58 +30,90 @@ class CreateGrsRdtv extends CreateRecord
     {
         $category = $data['category'] ?? 'GRS';
         $invalidDocuments = [];
+        $alreadyProcessed = [];
+        $duplicateDocuments = [];
+        $seen = [];
 
         // Pindahkan files (GRS) ke property sementara
         if (isset($data['files'])) {
-            $this->uploadedFiles = $data['files'];
-            unset($data['files']);
+            $uniqueFiles = [];
+            foreach ($data['files'] as $file) {
+                if ($file instanceof TemporaryUploadedFile) {
+                    $originalName = $file->getClientOriginalName();
+                    $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
 
-            if ($category === 'GRS') {
-                foreach ($this->uploadedFiles as $file) {
-                    if ($file instanceof TemporaryUploadedFile) {
-                        $originalName = $file->getClientOriginalName();
-                        $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
+                    if (in_array($documentCode, $seen)) {
+                        $duplicateDocuments[] = $documentCode;
+                        continue;
+                    }
+                    $seen[] = $documentCode;
 
-                        $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
-                        if ($do) {
-                            $latestQc = $do->qcHistories()->latest()->first();
-                            if (!$latestQc || $latestQc->status !== 'Kembali') {
-                                $invalidDocuments[] = $documentCode;
-                            }
+                    $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
+                    if ($do) {
+                        if ($do->status === 'GRS') {
+                            $alreadyProcessed[] = $documentCode;
+                        }
+
+                        $latestQc = $do->qcHistories()->latest()->first();
+                        if (!$latestQc || $latestQc->status !== 'Kembali') {
+                            $invalidDocuments[] = $documentCode;
                         }
                     }
+                    $uniqueFiles[] = $file;
                 }
             }
+            $this->uploadedFiles = $uniqueFiles;
+            unset($data['files']);
         }
 
         // Pindahkan items (RDTV) ke property sementara
         if (isset($data['items'])) {
-            $this->uploadedItems = $data['items'];
-            unset($data['items']);
+            $uniqueItems = [];
+            foreach ($data['items'] as $item) {
+                $file = is_array($item['file']) ? array_values($item['file'])[0] ?? null : $item['file'];
+                if ($file instanceof TemporaryUploadedFile) {
+                    $originalName = $file->getClientOriginalName();
+                    $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
 
-            if ($category === 'RDTV') {
-                foreach ($this->uploadedItems as $item) {
-                    $file = is_array($item['file']) ? array_values($item['file'])[0] ?? null : $item['file'];
-                    if ($file instanceof TemporaryUploadedFile) {
-                        $originalName = $file->getClientOriginalName();
-                        $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
+                    if (in_array($documentCode, $seen)) {
+                        $duplicateDocuments[] = $documentCode;
+                        continue;
+                    }
+                    $seen[] = $documentCode;
 
-                        $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
-                        if ($do) {
-                            $latestQc = $do->qcHistories()->latest()->first();
-                            if (!$latestQc || $latestQc->status !== 'Kembali') {
-                                $invalidDocuments[] = $documentCode;
-                            }
+                    $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
+                    if ($do) {
+                        if ($do->status === 'GRS') {
+                            $alreadyProcessed[] = $documentCode;
+                        }
+
+                        $latestQc = $do->qcHistories()->latest()->first();
+                        if (!$latestQc || $latestQc->status !== 'Kembali') {
+                            $invalidDocuments[] = $documentCode;
                         }
                     }
+                    $uniqueItems[] = $item;
                 }
             }
+            $this->uploadedItems = $uniqueItems;
+            unset($data['items']);
         }
 
+        $errors = [];
         if (!empty($invalidDocuments)) {
+            $errors[] = 'Belum kembali dari QC: ' . implode(', ', array_unique($invalidDocuments));
+        }
+        if (!empty($alreadyProcessed)) {
+            $errors[] = 'Sudah sukses diupload sebagai GRS sebelumnya: ' . implode(', ', array_unique($alreadyProcessed));
+        }
+        if (!empty($duplicateDocuments)) {
+            $errors[] = 'Terdeteksi duplikat file yang sama: ' . implode(', ', array_unique($duplicateDocuments));
+        }
+
+        if (!empty($errors)) {
             Notification::make()
                 ->title('Gagal Disimpan')
-                ->body('Terdapat dokumen yang belum diproses/kembali dari QC: ' . implode(', ', $invalidDocuments))
+                ->body(implode('<br>', $errors))
                 ->danger()
                 ->send();
 

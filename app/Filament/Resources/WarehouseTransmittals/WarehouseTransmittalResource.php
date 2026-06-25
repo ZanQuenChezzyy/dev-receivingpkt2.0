@@ -29,6 +29,8 @@ class WarehouseTransmittalResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'transmittal_no';
 
+    protected static ?int $navigationSort = 2;
+
     public static function form(Schema $schema): Schema
     {
         return WarehouseTransmittalForm::configure($schema);

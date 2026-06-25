@@ -15,6 +15,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -79,7 +80,6 @@ class BulkScanTransmittal extends Page implements HasForms
                         ->default(now())
                         ->native(false)
                         ->required()
-                        ->disabled(fn() => $this->transmittalId !== null)
                         ->live()
                         ->afterStateUpdated(function ($state) {
                             $this->resetScanState();
@@ -101,7 +101,6 @@ class BulkScanTransmittal extends Page implements HasForms
                         ->inline()
                         ->required()
                         ->default('Kirim')
-                        ->disabled(fn() => $this->transmittalId !== null)
                         ->live()
                         ->afterStateUpdated(function ($state) {
                             $this->resetScanState();
@@ -121,13 +120,14 @@ class BulkScanTransmittal extends Page implements HasForms
                             'PPE' => 'success',
                         ])
                         ->inline()
-                        ->required()
+                        ->required(fn(Get $get) => $get('type') !== 'Kembali')
+                        ->disabled(fn(Get $get) => $get('type') === 'Kembali')
+                        ->helperText(fn(Get $get) => $get('type') === 'Kembali' ? 'Tujuan dideteksi otomatis berdasarkan riwayat Kirim.' : '')
                         ->default('ISTEK')
-                        ->disabled(fn() => $this->transmittalId !== null)
                         ->live()
                         ->afterStateUpdated(function ($state) {
                             $this->resetScanState();
-                            if ($this->transmittalId) {
+                            if ($this->transmittalId && $this->data['type'] !== 'Kembali') {
                                 Transmittal::find($this->transmittalId)?->update(['destination' => $state]);
                             }
                         }),
@@ -245,17 +245,22 @@ class BulkScanTransmittal extends Page implements HasForms
         $this->dispatch('focus-document-input');
     }
 
-    protected function resolveTransmittal()
+    protected function resolveTransmittal($destination = null)
     {
+        $dest = $destination ?? $this->data['destination'];
+
         if ($this->transmittalId) {
-            return Transmittal::find($this->transmittalId);
+            $existing = Transmittal::find($this->transmittalId);
+            if ($existing && $existing->type === $this->data['type'] && $existing->destination === $dest) {
+                return $existing;
+            }
         }
 
         $tanggal = Carbon::parse($this->data['tanggal']);
 
         // Cari transmittal yang ada di tanggal tersebut
         $transmittal = Transmittal::where('type', $this->data['type'])
-            ->where('destination', $this->data['destination'])
+            ->where('destination', $dest)
             ->where('created_by', Auth::user()->id ?? 1)
             ->whereDate('created_at', $tanggal->toDateString())
             ->first();
@@ -263,7 +268,7 @@ class BulkScanTransmittal extends Page implements HasForms
         if (!$transmittal) {
             $transmittal = Transmittal::create([
                 'type' => $this->data['type'],
-                'destination' => $this->data['destination'],
+                'destination' => $dest,
                 'created_by' => Auth::user()->id ?? 1,
                 'created_at' => $tanggal->setTimeFrom(now()),
                 'transmittal_no' => 'TRM-' . $tanggal->format('Ymd') . '-' . strtoupper(substr(uniqid(), -4)),
@@ -271,24 +276,53 @@ class BulkScanTransmittal extends Page implements HasForms
         }
 
         $this->transmittalId = $transmittal->id;
+        $this->data['destination'] = $dest; // Update state UI agar Toggle mengikuti
 
         return $transmittal;
     }
 
     protected function processTransmittal(DeliveryOrderReceipt $doReceipt)
     {
-        if (empty($this->data['type']) || empty($this->data['destination']) || empty($this->data['tanggal'])) {
+        if (empty($this->data['type']) || empty($this->data['tanggal'])) {
             $this->dispatch('play-error-sound');
             Notification::make()
                 ->title('Terjadi Kesalahan Data')
-                ->body('Tipe, Tujuan, atau Tanggal kosong. Harap segarkan halaman (F5) dan coba lagi.')
+                ->body('Tipe atau Tanggal kosong. Harap segarkan halaman (F5) dan coba lagi.')
                 ->danger()
                 ->send();
 
             return;
         }
 
-        $transmittal = $this->resolveTransmittal();
+        $destination = $this->data['destination'] ?? null;
+
+        // Auto-detect destination for 'Kembali'
+        if ($this->data['type'] === 'Kembali') {
+            $lastKirim = TransmittalItem::where('delivery_order_receipt_id', $doReceipt->id)
+                ->where('status', 'Kirim')
+                ->latest()
+                ->first();
+
+            if ($lastKirim && $lastKirim->transmittal) {
+                $destination = $lastKirim->transmittal->destination;
+            } else {
+                $this->dispatch('play-error-sound');
+                Notification::make()
+                    ->title('Belum Pernah Dikirim')
+                    ->body("Dokumen {$doReceipt->delivery_oder_no} belum pernah di-Kirim. Sistem tidak tahu asal tujuannya.")
+                    ->danger()
+                    ->send();
+                return;
+            }
+        }
+
+        if (empty($destination)) {
+            $this->dispatch('play-error-sound');
+            Notification::make()->title('Tujuan Kosong')->danger()->send();
+            return;
+        }
+
+        $transmittal = $this->resolveTransmittal($destination);
 
         // Cek apakah item sudah ada di transmittal ini
         $exists = $transmittal->transmittalItems()->where('delivery_order_receipt_id', $doReceipt->id)->exists();
@@ -372,7 +406,7 @@ class BulkScanTransmittal extends Page implements HasForms
 
             // Siapkan catatan (notes)
             $destination = $this->data['type'] === 'Kembali' ? 'Receiving' : $this->data['destination'];
-            $notes = "Di-scan melalui Transmittal {$this->data['type']} (Tujuan: {$destination})";
+            $notes = "Di-scan melalui Transmittal {$this->data['type']} (Tujuan: {$destination}, No: {$transmittal->transmittal_no})";
             if ($reason) {
                 $notes .= '<br>Alasan Pengajuan Ulang: ' . $reason;
             }
@@ -382,6 +416,7 @@ class BulkScanTransmittal extends Page implements HasForms
                 'status' => $this->data['type'],
                 'notes' => $notes,
                 'created_by' => Auth::user()->id ?? 1,
+                'created_at' => \Carbon\Carbon::parse($this->data['tanggal'])->setTimeFrom(now()),
             ]);
 
             DB::commit();
@@ -437,18 +472,22 @@ class BulkScanTransmittal extends Page implements HasForms
             }
         }
 
-        if (empty($this->data['type']) || empty($this->data['destination']) || empty($this->data['tanggal'])) {
+        if (empty($this->data['type']) || empty($this->data['tanggal'])) {
             return collect(); // Return empty collection instead of array to prevent issues in blade if using collection methods
         }
 
+        $dest = $this->data['destination'] ?? null;
+        if (!$dest)
+            return collect();
+
         $transmittal = Transmittal::where('type', $this->data['type'])
-            ->where('destination', $this->data['destination'])
+            ->where('destination', $dest)
             ->where('created_by', Auth::user()->id ?? 1)
             ->whereDate('created_at', \Carbon\Carbon::parse($this->data['tanggal'])->toDateString())
             ->first();
 
         if (!$transmittal) {
-            return [];
+            return collect();
         }
 
         return $transmittal->transmittalItems()->with('deliveryOrderReceipt.deliveryOrderReceiptDetails.purchaseOrderIssued')->latest()->get();

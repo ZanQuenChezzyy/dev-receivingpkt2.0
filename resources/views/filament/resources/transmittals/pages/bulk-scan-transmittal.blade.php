@@ -19,7 +19,7 @@
     class="space-y-6">
 
         <!-- Form Pengaturan -->
-        <div class="p-6 fi-wi-widget rounded-2xl">
+        <div class="p-6 fi-wi-widget rounded-2xl relative z-10 overflow-visible">
             <form wire:submit.prevent>
                 {{ $this->form }}
             </form>
@@ -100,7 +100,7 @@
         </div>
 
         <!-- Tabel Riwayat Hari Ini -->
-        <div class="fi-wi-widget rounded-2xl overflow-hidden">
+        <div class="fi-wi-widget rounded-2xl overflow-hidden relative z-0">
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">
                     Riwayat Transmittal Hari Ini
