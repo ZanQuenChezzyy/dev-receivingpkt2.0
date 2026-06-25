@@ -92,6 +92,7 @@ class DeliveryOrderReceiptsTable
                                 return $detail->description;
                             })->toArray();
                         })
+                        ->toggleable(isToggledHiddenByDefault: true)
                         ->listWithLineBreaks() // Menampilkan data array berbaris ke bawah
                         ->bulleted() // Menambahkan titik (bullet)
                         ->limitList(2) // Batasi tampilan awal misal 2 baris agar tabel tidak terlalu panjang
@@ -211,6 +212,7 @@ class DeliveryOrderReceiptsTable
                         ->placeholder('Tidak Ada Tahapan')
                         ->badge()
                         ->default('')
+                        ->toggleable(isToggledHiddenByDefault: true)
                         // 🌟 TAMBAHKAN $record DI SINI
                         ->formatStateUsing(function ($state, $record) {
                             if (empty($state)) {
@@ -314,8 +316,8 @@ class DeliveryOrderReceiptsTable
             ->recordActions([
                 ActionGroup::make([
                     Action::make('post_103_action')
-                        ->label('Post 103')
-                        ->icon(Heroicon::DocumentCheck)
+                        ->label('Sudah Posting 103')
+                        ->icon(Heroicon::OutlinedDocumentCheck)
                         ->color('success')
                         ->outlined()
                         ->requiresConfirmation()
@@ -357,7 +359,7 @@ class DeliveryOrderReceiptsTable
                         }),
                     Action::make('pending_dokumen_action')
                         ->label('Pending Dokumen')
-                        ->icon(Heroicon::Clock)
+                        ->icon(Heroicon::OutlinedClock)
                         ->color('warning')
                         ->outlined()
                         ->schema([
@@ -424,7 +426,7 @@ class DeliveryOrderReceiptsTable
                         }),
                 ])
                     ->label('Tindakan')
-                    ->icon(Heroicon::QueueList)
+                    ->icon(Heroicon::OutlinedDocumentPlus)
                     ->color('primary')
                     ->button()
                     ->outlined(),
@@ -432,22 +434,22 @@ class DeliveryOrderReceiptsTable
                 ActionGroup::make([
                     Action::make('cetak_material')
                         ->label('Label Material')
-                        ->icon('heroicon-m-tag')
+                        ->icon(Heroicon::OutlinedTag)
                         ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'material']))
                         ->openUrlInNewTab(),
                     Action::make('cetak_dokumen')
                         ->label('Kode Dokumen')
-                        ->icon('heroicon-m-document-text')
+                        ->icon(Heroicon::OutlinedDocumentText)
                         ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'document']))
                         ->openUrlInNewTab(),
                     Action::make('cetak_keduanya')
                         ->label('Material & Dokumen')
-                        ->icon('heroicon-m-document-duplicate')
+                        ->icon(Heroicon::OutlinedDocumentDuplicate)
                         ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'both']))
                         ->openUrlInNewTab(),
                 ])
                     ->label('Cetak')
-                    ->icon('heroicon-m-printer')
+                    ->icon(Heroicon::OutlinedPrinter)
                     ->color('info')
                     ->button()
                     ->outlined(),
