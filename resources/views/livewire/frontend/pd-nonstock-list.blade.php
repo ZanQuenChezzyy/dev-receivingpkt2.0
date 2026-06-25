@@ -37,11 +37,11 @@
             <!-- Tabs -->
             <div class="glass-panel flex p-1 space-x-1 w-full md:w-auto">
                 <button wire:click="setTab('PD')" 
-                        class="flex-1 md:w-48 py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 {{ $activeTab === 'PD' ? 'bg-white dark:bg-[#0A4F86] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200' }}">
+                        class="flex-1 md:w-48 py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 {{ $activeTab === 'PD' ? 'bg-white/40 dark:bg-[#0A4F86]/60 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] border border-white/50 dark:border-white/10 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/20 dark:hover:bg-white/5 border border-transparent' }}">
                     Material PD
                 </button>
                 <button wire:click="setTab('NONSTOCK')" 
-                        class="flex-1 md:w-48 py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 {{ $activeTab === 'NONSTOCK' ? 'bg-white dark:bg-[#0A4F86] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200' }}">
+                        class="flex-1 md:w-48 py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 {{ $activeTab === 'NONSTOCK' ? 'bg-white/40 dark:bg-[#0A4F86]/60 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] border border-white/50 dark:border-white/10 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/20 dark:hover:bg-white/5 border border-transparent' }}">
                     Material Non-Stock
                 </button>
             </div>
