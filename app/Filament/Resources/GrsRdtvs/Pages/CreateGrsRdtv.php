@@ -15,6 +15,16 @@ class CreateGrsRdtv extends CreateRecord
     protected array $uploadedFiles = [];
     protected array $uploadedItems = [];
 
+    protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
+    {
+        return static::getModel()::firstOrCreate([
+            'transaction_date' => $data['transaction_date'],
+            'category' => $data['category'],
+        ], [
+            'created_by' => $data['created_by'] ?? auth()->id(),
+        ]);
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $category = $data['category'] ?? 'GRS';
