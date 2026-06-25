@@ -16,12 +16,7 @@ class QRCodeController extends Controller
         $mode = $request->get('mode', 'both'); // 'material', 'document', 'both'
         $do = DeliveryOrderReceipt::with(['deliveryOrderReceiptDetails.purchaseOrderIssued', 'deliveryOrderReceiptDetails.locationReceiving', 'receivedBy'])->findOrFail($id);
 
-        $firstDetail = $do->deliveryOrderReceiptDetails->first();
-        $nomorPo = optional(optional($firstDetail)->purchaseOrderIssued)->purchase_order_no ?? '-';
-        $nomorDo = preg_replace('/[^A-Za-z0-9]/', '', (string) $do->delivery_oder_no); // Hapus "/", "\" dll
-        $tanggal = $do->received_date ? Carbon::parse($do->received_date)->format('dmY') : ''; // contoh: 15072025
-
-        $qrContent = $nomorPo.$nomorDo.$tanggal; // Gabungan string
+        $qrContent = $do->document_code; // Ambil dari kolom document_code
         $qrDo = 'data:image/png;base64,'.base64_encode(QrCode::size(200)->generate($qrContent));
 
         $logoPath = public_path('images/logo/logo-pupuk-kaltim-hitam.png');
@@ -76,12 +71,7 @@ class QRCodeController extends Controller
         $data = [];
 
         foreach ($dos as $do) {
-            $firstDetail = $do->deliveryOrderReceiptDetails->first();
-            $nomorPo = optional(optional($firstDetail)->purchaseOrderIssued)->purchase_order_no ?? '-';
-            $nomorDo = preg_replace('/[^A-Za-z0-9]/', '', (string) $do->delivery_oder_no);
-            $tanggal = $do->received_date ? Carbon::parse($do->received_date)->format('dmY') : '';
-
-            $qrContent = $nomorPo.$nomorDo.$tanggal;
+            $qrContent = $do->document_code;
             $qrDo = 'data:image/png;base64,'.base64_encode(QrCode::size(200)->generate($qrContent));
 
             $items = collect();
