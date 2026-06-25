@@ -25,10 +25,7 @@ class WarehouseTransmittalResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Transmittal Gudang';
 
-    public static function getNavigationGroup(): ?string
-    {
-        return 'Warehouse';
-    }
+    protected static ?string $cluster = \App\Filament\Clusters\PengirimanGudang\PengirimanGudangCluster::class;
 
     protected static ?string $recordTitleAttribute = 'transmittal_no';
 

@@ -61,6 +61,14 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
             ])
+            ->navigationGroups([
+                'Halaman Utama',
+                'Penerimaan Receiving',
+                'Transaksi',
+                'Pengeluaran Material',
+                'Data Master',
+                'Kelola Pengguna',
+            ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 // AccountWidget::class,

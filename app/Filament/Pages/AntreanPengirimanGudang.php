@@ -34,7 +34,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
 
     protected static ?string $title = 'Daftar Pengiriman Gudang';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Warehouse';
+    protected static ?string $cluster = \App\Filament\Clusters\PengirimanGudang\PengirimanGudangCluster::class;
 
     protected string $view = 'filament.pages.antrean-pengiriman-gudang';
 

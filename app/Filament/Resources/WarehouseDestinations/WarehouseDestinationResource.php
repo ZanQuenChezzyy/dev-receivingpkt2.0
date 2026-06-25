@@ -24,7 +24,7 @@ class WarehouseDestinationResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Warehouse';
+        return 'Data Master';
     }
 
     protected static ?string $recordTitleAttribute = 'name';
