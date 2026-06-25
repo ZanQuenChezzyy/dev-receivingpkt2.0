@@ -435,7 +435,7 @@ class DeliveryOrderReceiptsTable
                 ])
                     ->label('Tindakan')
                     ->icon(Heroicon::OutlinedDocumentPlus)
-                    ->color('primary')
+                    ->color('info')
                     ->button()
                     ->outlined(),
 
@@ -458,7 +458,7 @@ class DeliveryOrderReceiptsTable
                 ])
                     ->label('Cetak')
                     ->icon(Heroicon::OutlinedPrinter)
-                    ->color('info')
+                    ->color('gray')
                     ->button()
                     ->outlined(),
 
