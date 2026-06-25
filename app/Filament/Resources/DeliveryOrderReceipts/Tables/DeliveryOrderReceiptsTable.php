@@ -63,7 +63,10 @@ class DeliveryOrderReceiptsTable
                         ->color('primary')
                         ->searchable()
                         ->copyable()
+                        ->copyableState(fn ($record) => $record->document_code)
                         ->weight(FontWeight::SemiBold)
+                        ->limit(10)
+                        ->tooltip(fn ($record) => $record->document_code)
                         ->copyMessage('Kode dokumen disalin!')
                         ->toggleable(isToggledHiddenByDefault: true),
 
