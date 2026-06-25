@@ -935,15 +935,14 @@ class DeliveryOrderReceiptForm
             ? Carbon::parse($get('received_date'))->format('dmY') : '';
 
         $details = $get('deliveryOrderReceiptDetails') ?? [];
-        $itemNo = '';
+        $itemCount = '';
         if (is_array($details) && count($details) > 0) {
-            $firstItem = reset($details);
-            $itemNo = $firstItem['item_no'] ?? '';
+            $itemCount = str_pad((string) count($details), 2, '0', STR_PAD_LEFT);
         }
 
         $stage = $get('stage');
 
-        $parts = array_filter([$poNo, $itemNo, $doNo, $date, $stage]);
+        $parts = array_filter([$poNo, $itemCount, $doNo, $date, $stage]);
 
         if (!empty($parts)) {
             $joinedString = implode('-', $parts);
