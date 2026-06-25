@@ -9,7 +9,7 @@
         }
         body {
             margin: 0;
-            padding: 4px 6px 4px 24px;
+            padding: 12px 6px 4px 24px;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 9px;
             color: black;

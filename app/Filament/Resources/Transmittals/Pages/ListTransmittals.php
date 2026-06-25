@@ -14,10 +14,10 @@ class ListTransmittals extends ListRecords
     {
         return [
             Action::make('bulk_scan')
-                ->label('Bulk Scan Transmittal')
+                ->label('Scan Transmittal QC')
                 ->icon('heroicon-o-qr-code')
                 ->color('primary')
-                ->url(fn (): string => TransmittalResource::getUrl('bulk-scan')),
+                ->url(fn(): string => TransmittalResource::getUrl('bulk-scan')),
         ];
     }
 }
