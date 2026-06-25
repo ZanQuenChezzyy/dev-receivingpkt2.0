@@ -1,5 +1,5 @@
 
-<footer class="relative z-10 py-6 border-t border-slate-200 dark:border-white/10 bg-white/50 dark:bg-[#031525]/50 backdrop-blur-md mt-auto">
+<footer class="glass-nav relative z-10 py-6 mt-auto">
     <div class="container mx-auto px-5 md:px-12 lg:px-24 flex flex-col md:flex-row items-center justify-between gap-4">
         <p class="text-xs text-slate-500 dark:text-slate-400 text-center md:text-left">
             &copy; {{ date('Y') }} Receiving PKT v2.0 By Andereyan Muhammat. All rights reserved.

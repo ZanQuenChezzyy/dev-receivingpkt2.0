@@ -45,7 +45,7 @@
                         Masuk Dashboard
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </a>
-                    <a href="{{ route('frontend.list-material') }}" wire:navigate class="w-full sm:w-auto flex items-center justify-center px-8 py-4 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 hover:border-white/20 transition-all duration-300">
+                    <a href="{{ route('frontend.list-material') }}" wire:navigate class="w-full sm:w-auto flex items-center justify-center px-8 py-4 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200 glass-btn rounded-2xl">
                         Daftar PD & Non-Stock
                     </a>
                 </div>
@@ -53,7 +53,7 @@
                 <!-- Glass Cards -->
                 <div class="mt-12 sm:mt-16 w-full grid grid-cols-3 gap-3 sm:gap-5 max-w-md">
                     <!-- Service Card 1 -->
-                    <div class="bg-slate-50 dark:bg-white/5 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:bg-slate-200 dark:hover:bg-white/10 transition-colors">
+                    <div class="glass-panel p-4 sm:p-5">
                         <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#0A4F86]/10 dark:bg-[#0A4F86]/50 border border-[#0A4F86]/20 dark:border-[#0A4F86] flex items-center justify-center mb-3">
                             <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#0A4F86] dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                         </div>
@@ -62,7 +62,7 @@
                     </div>
 
                     <!-- Service Card 2 -->
-                    <div class="bg-slate-50 dark:bg-white/5 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:bg-slate-200 dark:hover:bg-white/10 transition-colors">
+                    <div class="glass-panel p-4 sm:p-5">
                         <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#F47920]/10 dark:bg-[#F47920]/20 border border-[#F47920]/30 dark:border-[#F47920]/50 flex items-center justify-center mb-3">
                             <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </div>
@@ -71,7 +71,7 @@
                     </div>
 
                     <!-- Service Card 3 -->
-                    <div class="bg-slate-50 dark:bg-white/5 backdrop-blur-xl p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:bg-slate-200 dark:hover:bg-white/10 transition-colors">
+                    <div class="glass-panel p-4 sm:p-5">
                         <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#0A4F86]/10 dark:bg-[#0A4F86]/50 border border-[#0A4F86]/20 dark:border-[#0A4F86] flex items-center justify-center mb-3">
                             <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#0A4F86] dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                         </div>
@@ -86,7 +86,7 @@
                 <div class="relative w-full max-w-full sm:max-w-2xl mx-auto px-2 sm:px-0">
                     
                     <!-- Dark Glass Dashboard Frame -->
-                    <div class="relative bg-white/80 dark:bg-[#051F34]/60 backdrop-blur-2xl rounded-3xl sm:rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col transform perspective-1000 rotate-y-[-5deg] rotate-x-[2deg] transition-transform hover:rotate-y-0 hover:rotate-x-0 duration-700">
+                    <div class="relative glass-panel sm:rounded-[2rem] overflow-hidden flex flex-col transform perspective-1000 rotate-y-[-5deg] rotate-x-[2deg] transition-transform hover:rotate-y-0 hover:rotate-x-0 duration-700">
                         <!-- Header Bar -->
                         <div class="h-10 sm:h-14 bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10 flex items-center px-4 sm:px-6 gap-2">
                             <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/80"></div>
@@ -128,7 +128,7 @@
                             </div>
 
                             <!-- Main Chart Area -->
-                            <div class="flex-1 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-inner p-5 sm:p-6 flex flex-col min-h-36 sm:min-h-0 relative overflow-hidden">
+                            <div class="flex-1 glass-panel p-5 sm:p-6 flex flex-col min-h-36 sm:min-h-0 relative overflow-hidden">
                                 <div class="absolute bottom-0 left-0 w-full h-1/2 bg-linear-to-t from-[#0A4F86]/20 to-transparent"></div>
                                 
                                 <div class="flex justify-between items-center mb-6 relative z-10">
@@ -154,7 +154,7 @@
                     </div>
 
                     <!-- Floating Glass Widget 1 -->
-                    <div class="absolute -bottom-5 left-0 sm:-bottom-10 sm:-left-12 bg-white/90 dark:bg-[#051F34]/80 backdrop-blur-2xl p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xl dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-white/10 flex items-center gap-3 sm:gap-4 animate-bounce hover:scale-105 transition-transform" style="animation-duration: 4s;">
+                    <div class="absolute -bottom-5 left-0 sm:-bottom-10 sm:-left-12 glass-panel p-3 sm:p-5 sm:rounded-3xl flex items-center gap-3 sm:gap-4 animate-bounce hover:scale-105 transition-transform" style="animation-duration: 4s;">
                         <div class="relative flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-[#F47920]/10 dark:bg-[#F47920]/20 border border-[#F47920]/30 dark:border-[#F47920]/50">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-xl bg-[#F47920] opacity-30"></span>
                             <svg class="w-5 h-5 sm:w-7 sm:h-7 text-[#F47920]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
@@ -165,12 +165,6 @@
                             <p class="text-sm sm:text-base font-black text-slate-800 dark:text-white tracking-wide">Real-time SAP</p>
                             <p class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Sinkronisasi otomatis</p>
                         </div>
-                    </div>
-
-                    <!-- Floating Glass Widget 2 -->
-                    <div class="absolute -top-6 right-2 sm:top-10 sm:-right-10 bg-white/90 dark:bg-white/10 backdrop-blur-xl px-4 py-3 sm:px-6 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl border border-slate-200 dark:border-white/20 flex items-center gap-3 transform hover:-rotate-3 transition-transform z-20">
-                        <div class="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]"></div>
-                        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-white tracking-wider">MB51 Tracking Active</p>
                     </div>
 
                 </div>

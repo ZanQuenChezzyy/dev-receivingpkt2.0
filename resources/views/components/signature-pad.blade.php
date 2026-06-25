@@ -142,7 +142,7 @@
         this.ctx.clearRect(0, 0, canvas.width, canvas.height);
         this.value = null;
     }
-}" class="relative w-full border border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm group/sig">
+}" class="glass-panel relative w-full overflow-hidden group/sig">
     <canvas id="{{ $id }}" x-ref="canvas" 
         class="w-full h-48 cursor-crosshair touch-none" style="touch-action: none;"
         @mousedown="startDrawing($event)"

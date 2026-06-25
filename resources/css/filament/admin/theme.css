@@ -8,20 +8,21 @@
 
 /* Glassmorphism Styles */
 
-/* Sidebar */
+/* Sidebar - Liquid Glass Upgrade */
 .fi-sidebar {
-    @apply !bg-white/40 dark:!bg-gray-900/40 !backdrop-blur-md !border-r !border-white/20 dark:!border-white/10 !shadow-lg;
+    @apply !bg-white/30 dark:!bg-gray-900/40 !backdrop-blur-3xl !border-r !border-white/50 border-r-white/20 dark:!border-gray-700/50 dark:!border-r-gray-600/50 !shadow-[4px_0_24px_rgba(0,0,0,0.05)];
 }
 
 .fi-sidebar-header {
     @apply !bg-transparent;
 }
 
-/* Animasi Background Active pada Sidebar Navigasi */
+/* Navigasi Aktif (Liquid Glass Premium Style) */
 .fi-sidebar-item-btn[data-current] {
     background-color: transparent !important;
     position: relative;
     z-index: 1;
+    transform: translateY(-1px);
 }
 
 .fi-sidebar-item-btn[data-current]::before {
@@ -29,42 +30,59 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    /* Transparansi elegan agar tidak merusak glassmorphism sidebar */
-    @apply bg-black/5 dark:bg-white/10;
+    /* Efek Liquid Glass yang super premium (Jingga Siang) */
+    @apply bg-orange-500/10 backdrop-blur-xl border border-white/60 border-b-white/20 shadow-[0_8px_16px_rgba(249,115,22,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)];
     z-index: -1;
     
-    /* Animasi menyapu dari kiri ke kanan */
     transform-origin: left;
     animation: slideActiveNav 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Override secara eksplisit untuk Mode Malam (Biru) */
+.dark .fi-sidebar-item-btn[data-current]::before {
+    @apply bg-blue-500/20 border-white/10 border-t-white/20 shadow-[0_8px_16px_rgba(59,130,246,0.15),inset_0_1px_1px_rgba(255,255,255,0.15)];
+}
+
+/* Pantulan Cahaya Kaca (Static Shimmer / Glossy Highlight) */
+.fi-sidebar-item-btn[data-current]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.35) 50%, transparent 80%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Penyesuaian pantulan kaca untuk Mode Gelap */
+.dark .fi-sidebar-item-btn[data-current]::after {
+    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.08) 50%, transparent 80%);
+}
+
 @keyframes slideActiveNav {
-    0% {
-        transform: scaleX(0);
-        opacity: 0;
-    }
-    100% {
-        transform: scaleX(1);
-        opacity: 1;
-    }
+    0% { transform: scaleX(0); opacity: 0; }
+    100% { transform: scaleX(1); opacity: 1; }
 }
 
 /* Hover pada Sidebar Item yang Tidak Aktif (Menjaga efek Glassmorphism) */
 .fi-sidebar-item-btn {
-    @apply transition-colors duration-300;
+    @apply transition-all duration-300;
 }
 
 .fi-sidebar-item-btn:not([data-current]):hover {
-    background-color: rgba(0, 0, 0, 0.04) !important;
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    @apply backdrop-blur-sm shadow-sm;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
 }
 
 .dark .fi-sidebar-item-btn:not([data-current]):hover {
-    background-color: rgba(255, 255, 255, 0.06) !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Topbar */
+/* Topbar - Liquid Glass Upgrade */
 .fi-topbar {
-    @apply !bg-white/40 dark:!bg-gray-900/40 !backdrop-blur-md !border-b !border-white/20 dark:!border-white/10 !shadow-sm;
+    @apply !bg-white/30 dark:!bg-gray-900/40 !backdrop-blur-3xl !border-b !border-white/50 border-b-white/20 dark:!border-gray-700/50 dark:!border-b-gray-600/50 !shadow-[0_4px_24px_rgba(0,0,0,0.05)];
 }
 
 .fi-topbar nav {
@@ -108,9 +126,42 @@
 .fi-in-repeatable-item,
 .fi-sc-tabs.fi-contained,
 .fi-tabs.fi-contained,
-.fi-empty-state {
-    /* HANYA gunakan focus-within:!z-[90]. hover:!z-[90] DIBUANG agar dropdown tidak tertimpa saat mouse digeser */
-    @apply !bg-white/50 dark:!bg-gray-900/50 !backdrop-blur-lg !border !border-white/30 dark:!border-white/10 !shadow-xl !rounded-xl !relative focus-within:!z-[90];
+.fi-empty-state,
+.fi-user-card {
+    /* Liquid Glass Upgrade untuk Container/Card */
+    @apply !bg-white/30 dark:!bg-slate-900/30 !backdrop-blur-2xl !rounded-2xl !relative focus-within:!z-[90];
+    
+    /* Custom Border 3D effect (terang di kiri atas, redup di kanan bawah) */
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-top-color: rgba(255, 255, 255, 0.6) !important;
+    border-left-color: rgba(255, 255, 255, 0.5) !important;
+    
+    /* Inset shadow (kilap siku) & Drop shadow tebal */
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 8px 32px rgba(0,0,0,0.1) !important;
+    
+    /* Pantulan cahaya kaca statis di pojok kiri atas */
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%) !important;
+}
+
+/* Penyesuaian Liquid Glass untuk Mode Gelap */
+.dark .fi-wi-widget, 
+.dark .fi-wi-stats-overview-stat,
+.dark .fi-ta-ctn,
+.dark .fi-sc-ctn,
+.dark .fi-fieldset,
+.dark .fi-section,
+.dark .fi-rep-item,
+.dark .fi-in-repeatable-item,
+.dark .fi-sc-tabs.fi-contained,
+.dark .fi-tabs.fi-contained,
+.dark .fi-empty-state,
+.dark .fi-user-card {
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-top-color: rgba(255, 255, 255, 0.15) !important;
+    border-left-color: rgba(255, 255, 255, 0.15) !important;
+    
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 8px 32px rgba(0,0,0,0.2) !important;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 20%, transparent 40%) !important;
 }
 
 /* Hilangkan background dan border dari parent container Stats Overview 
@@ -136,19 +187,14 @@
     display: block !important;
 }
 
-/* Dropdown Panels & Popovers (Select, Actions, dll) */
-.fi-dropdown-panel {
-    /* Opacity diturunkan drastis agar blur tembus (Gaussian Blur) */
-    @apply !bg-white/30 dark:!bg-gray-900/30 !backdrop-blur-3xl !border !border-white/30 dark:!border-white/10 !shadow-2xl !z-[9999];
-}
+/* Dropdown section moved below */
 
 /* Pastikan latar belakang layout utama transparan agar gradient <body> terlihat */
 .fi-layout,
 .fi-simple-layout,
 .fi-auth-content-section,
 .fi-auth-form-container,
-.fi-main,
-.fi-sidebar {
+.fi-main {
     @apply !bg-transparent;
 }
 
@@ -171,11 +217,18 @@
     @apply !bg-white/20 dark:!bg-white/10;
 }
 
-/* Modals (Dipisah agar tidak menyebabkan overflow scroll kiri/kanan/atas/bawah) */
+/* Modals (Liquid Glass Premium) */
 .fi-modal-window {
-    @apply !bg-white/70 dark:!bg-gray-900/70 !backdrop-blur-2xl !shadow-2xl;
-    /* Kita menghapus !border dan !rounded-xl di sini karena komponen slide-over (seperti notifikasi) 
-       memiliki ukuran 100vh. Menambahkan border akan membuatnya menjadi 100vh + 2px sehingga muncul scrollbar. */
+    @apply !bg-white/50 dark:!bg-slate-900/50 !backdrop-blur-3xl;
+    /* Kita memakai inset shadow dan border via box-shadow/border-image atau custom border 
+       Jika slide-over bermasalah karena border, biarkan border 0 atau gunakan box-shadow inset */
+    box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.4), 0 32px 64px rgba(0,0,0,0.2) !important;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 20%, transparent 40%) !important;
+}
+
+.dark .fi-modal-window {
+    box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.1), 0 32px 64px rgba(0,0,0,0.4) !important;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 20%, transparent 40%) !important;
 }
 
 /* Efek Gelap dan Blur Kaca pada Latar Belakang Modal */
@@ -232,11 +285,26 @@ html.dark body {
     background-attachment: fixed;
 }
 
-/* Dropdown Panels, Popovers, & Global Search Results */
+/* Dropdown Panels, Popovers, & Global Search Results (Liquid Glass Premium) */
 .fi-dropdown-panel,
 .fi-popover,
 .fi-global-search-results-ctn {
-    @apply !bg-white/80 dark:!bg-gray-900/80 !backdrop-blur-xl !border !border-white/50 dark:!border-white/10 !shadow-2xl !rounded-xl !z-[9999];
+    @apply !bg-white/40 dark:!bg-slate-900/40 !backdrop-blur-3xl !rounded-xl !z-[9999];
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-top-color: rgba(255, 255, 255, 0.6) !important;
+    border-left-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 16px 48px rgba(0,0,0,0.15) !important;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%) !important;
+}
+
+.dark .fi-dropdown-panel,
+.dark .fi-popover,
+.dark .fi-global-search-results-ctn {
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-top-color: rgba(255, 255, 255, 0.15) !important;
+    border-left-color: rgba(255, 255, 255, 0.15) !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 16px 48px rgba(0,0,0,0.4) !important;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 20%, transparent 40%) !important;
 }
 
 /* Pastikan bagian dalam global search transparan */
@@ -246,67 +314,96 @@ html.dark body {
     @apply !bg-transparent;
 }
 
-/* Glassmorphism Buttons (Dynamic Liquid Glass with Smooth Animations) */
+/* Glassmorphism Buttons (Liquid Glass Premium) */
 .fi-btn {
-    --tw-bg-opacity: 0.8 !important;
-    /* Ubah durasi animasi menjadi lebih lama (500ms) dan lebih smooth (ease-out) */
-    @apply !backdrop-blur-xl !border !shadow-sm transition-all duration-500 ease-out;
+    --tw-bg-opacity: 0.6 !important; /* Transparansi untuk memunculkan blur */
+    @apply !backdrop-blur-xl transition-all duration-300 relative overflow-hidden;
     
-    /* GRADIENT ANIMATION HACK:
-       CSS tidak bisa menganimasi perubahan warna gradient secara mulus/halus langsung.
-       Oleh karena itu, kita membuat 1 gradient panjang berukuran 2x lipat (200%), 
-       lalu menggeser posisinya (background-position) saat di-hover. 
-       Ini membuat animasinya menjadi "butter smooth" 60fps! */
-    background-image: linear-gradient(to top, 
-        rgba(var(--c-600), var(--tw-bg-opacity, 1)) 0%, 
-        rgba(var(--c-400), var(--tw-bg-opacity, 1)) 50%,
-        rgba(var(--c-300), var(--tw-bg-opacity, 1)) 100%
-    ) !important;
-    background-size: 100% 200% !important;
-    background-position: bottom !important; /* Secara default (tidak dihover), tampilkan bagian bawah gradient (c-600 ke c-400) */
+    /* Tambahkan border khas kaca */
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-top-color: rgba(255, 255, 255, 0.8) !important;
     
-    border-color: rgba(255, 255, 255, 0.4) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 4px 6px rgba(0, 0, 0, 0.05) !important;
-}
-
-.dark .fi-btn {
-    --tw-bg-opacity: 0.7 !important;
-    /* Mode malam: 200% tinggi gradient dari c-700 sampai c-400 */
-    background-image: linear-gradient(to top, 
-        rgba(var(--c-700), var(--tw-bg-opacity, 1)) 0%, 
-        rgba(var(--c-500), var(--tw-bg-opacity, 1)) 50%,
-        rgba(var(--c-400), var(--tw-bg-opacity, 1)) 100%
-    ) !important;
-    border-color: rgba(255, 255, 255, 0.15) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+    /* Inset shadow untuk ketebalan */
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    
+    /* Lapisan putih kaca melintang langsung di button */
+    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 50%, transparent 80%) !important;
 }
 
 .fi-btn:hover {
-    --tw-bg-opacity: 0.95 !important;
-    /* Saat dihover, geser gradient ke atas (menampilkan bagian terang: c-400 ke c-300) secara sangat smooth */
-    background-position: top !important;
-    
-    transform: translateY(-2px);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 8px 12px rgba(0, 0, 0, 0.15) !important;
+    --tw-bg-opacity: 0.8 !important; /* Sedikit lebih solid saat hover */
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.5) 50%, transparent 80%) !important;
+}
+
+.dark .fi-btn {
+    --tw-bg-opacity: 0.3 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-top-color: rgba(255, 255, 255, 0.2) !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.08) 50%, transparent 80%) !important;
 }
 
 .dark .fi-btn:hover {
-    --tw-bg-opacity: 0.9 !important;
-    background-position: top !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 8px 12px rgba(0, 0, 0, 0.4) !important;
+    --tw-bg-opacity: 0.5 !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.15) 50%, transparent 80%) !important;
 }
 
-/* Inputs & Form Fields */
+/* Glassmorphism Active Tabs */
+.fi-tabs-item.fi-active {
+    @apply !bg-white/40 dark:!bg-slate-900/40 !backdrop-blur-xl relative overflow-hidden;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-bottom-color: transparent !important; /* Supaya menyatu dengan panel bawah */
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 50%, transparent 80%) !important;
+}
+
+.dark .fi-tabs-item.fi-active {
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-bottom-color: transparent !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.05) 50%, transparent 80%) !important;
+}
+
+/* Inputs & Form Fields (Liquid Glass Premium) */
 .fi-input-wrp, 
 .fi-select-wrp,
-.fi-textarea-wrp {
-    @apply !bg-white/40 dark:!bg-gray-900/40 !backdrop-blur-lg !border !shadow-inner transition-all duration-300 !relative focus-within:!z-[999] hover:!z-[999];
-    border-color: rgba(255, 255, 255, 0.5) !important;
+.fi-textarea-wrp,
+.fi-fo-date-time-picker-display-text-input-wrp {
+    @apply !bg-white/40 dark:!bg-slate-900/40 !backdrop-blur-xl !rounded-xl transition-all duration-300 !relative focus-within:!z-[999] hover:!z-[999];
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-top-color: rgba(255, 255, 255, 0.1) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.6) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 1px rgba(255, 255, 255, 0.5) !important;
 }
+
+.fi-input-wrp:focus-within,
+.fi-select-wrp:focus-within,
+.fi-textarea-wrp:focus-within,
+.fi-fo-date-time-picker-display-text-input-wrp:focus-within {
+    @apply !bg-white/60 dark:!bg-slate-800/60;
+    border-color: rgba(var(--c-500), 0.5) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02), 0 0 0 2px rgba(var(--c-500), 0.2) !important;
+}
+
 .dark .fi-input-wrp, 
 .dark .fi-select-wrp,
-.dark .fi-textarea-wrp {
-    border-color: rgba(255, 255, 255, 0.1) !important;
+.dark .fi-textarea-wrp,
+.dark .fi-fo-date-time-picker-display-text-input-wrp {
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-top-color: rgba(0, 0, 0, 0.2) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .fi-input-wrp:focus-within,
+.dark .fi-select-wrp:focus-within,
+.dark .fi-textarea-wrp:focus-within,
+.dark .fi-fo-date-time-picker-display-text-input-wrp:focus-within {
+    border-color: rgba(var(--c-500), 0.5) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(var(--c-500), 0.2) !important;
 }
 
 /* Pastikan opsi select tidak transparan */
@@ -314,23 +411,23 @@ html.dark body {
     @apply !bg-white dark:!bg-gray-900 !text-gray-900 dark:!text-gray-100;
 }
 
-/* Glassmorphism Badges */
+/* Glassmorphism Badges (Liquid Premium) */
 .fi-badge {
-    @apply !backdrop-blur-md !border !shadow-sm transition-all duration-300;
-    
-    /* Mode Siang: Gradient warna bawaan yang ditipiskan (70% opacity) agar membaur dengan latar */
-    background-image: linear-gradient(135deg, rgba(var(--c-100), 0.7) 0%, rgba(var(--c-200), 0.7) 100%) !important;
-    border-color: rgba(var(--c-400), 0.3) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
-    /* Hilangkan background color bawaan agar gradient bisa terlihat jelas */
+    @apply !backdrop-blur-xl transition-all duration-300;
     background-color: transparent !important;
+    
+    /* Gabungan gradient putih (kilap kaca melintang) dan gradient warna badge bawaan */
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%), linear-gradient(135deg, rgba(var(--c-100), 0.7) 0%, rgba(var(--c-200), 0.7) 100%) !important;
+    border: 1px solid rgba(var(--c-400), 0.3) !important;
+    border-top-color: rgba(255, 255, 255, 0.8) !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 2px 4px rgba(0,0,0,0.05) !important;
 }
 
 .dark .fi-badge {
-    /* Mode Malam: Warna lebih dalam (deep) dengan transparansi tinggi (15%-25%) */
-    background-image: linear-gradient(135deg, rgba(var(--c-500), 0.15) 0%, rgba(var(--c-600), 0.25) 100%) !important;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 20%, transparent 40%), linear-gradient(135deg, rgba(var(--c-500), 0.15) 0%, rgba(var(--c-600), 0.25) 100%) !important;
     border-color: rgba(var(--c-500), 0.3) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+    border-top-color: rgba(255, 255, 255, 0.15) !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0,0,0,0.2) !important;
 }
 
 /* Fix Chrome Autofill Background on Glassmorphism Inputs */
@@ -419,17 +516,8 @@ html.dark body {
 
 /* =========================================================
    D. STYLING INPUT AGAR LEBIH MENARIK (PREMIUM & GLASS)
+   Bagian ini sudah disatukan di atas.
    ========================================================= */
-
-/* Wadah Input (Input Wrapper) - Beri efek kaca transparan yang lembut */
-.fi-input-wrp {
-    @apply !bg-white/40 dark:!bg-gray-800/40 !backdrop-blur-md !border !border-white/40 dark:!border-white/10 !shadow-sm !rounded-xl transition-all duration-300;
-}
-
-/* Saat Input sedang aktif (fokus), beri cahaya/glowing glow yang mulus */
-.fi-input-wrp:focus-within {
-    @apply !ring-2 !ring-primary-500/50 !border-primary-500/50 !shadow-md !bg-white/60 dark:!bg-gray-800/60;
-}
 
 /* Pastikan background input aslinya transparan agar warna glass dari wrapper terlihat */
 .fi-input, 
@@ -459,4 +547,94 @@ html.dark body {
 .fi-dropdown-list-item:last-child,
 .fi-select-input-option:last-child {
     @apply mb-0;
+}
+
+/* =========================================================
+   F. STYLING SIDEBAR TEXT AGAR TIDAK TERLALU GELAP
+   ========================================================= */
+
+/* Menggunakan warna abu-abu untuk ikon navigasi, sementara teks tetap gelap pekat */
+.fi-sidebar-item-label {
+    @apply !text-gray-800 dark:!text-gray-200;
+}
+
+.fi-sidebar-item-icon {
+    @apply !text-gray-500 dark:!text-gray-500;
+}
+
+.fi-sidebar-group-label {
+    @apply !text-gray-500 dark:!text-gray-400 !font-semibold tracking-wide uppercase text-[11px];
+}
+
+/* Sidebar Group Header / Button */
+.fi-sidebar-group-btn {
+    @apply transition-all duration-300 relative rounded-lg py-1 px-2 -mx-2;
+}
+
+.fi-sidebar-group-btn:hover {
+    @apply bg-white/30 dark:bg-white/5;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.dark .fi-sidebar-group-btn:hover {
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Glass Highlight tipis pada saat kategori grup di-hover */
+.fi-sidebar-group-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.2) 50%, transparent 80%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.dark .fi-sidebar-group-btn::after {
+    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.05) 50%, transparent 80%);
+}
+
+.fi-sidebar-group-btn:hover::after {
+    opacity: 1;
+}
+
+/* Warna teks untuk menu yang sedang aktif (Active State) */
+.fi-sidebar-item-btn[data-current] .fi-sidebar-item-label,
+.fi-sidebar-item-btn[data-current] .fi-sidebar-item-icon {
+    @apply !text-primary-600 dark:!text-primary-400 !font-semibold;
+}
+
+/* =========================================================
+   G. STYLING NOTIFICATIONS (TOASTS) AGAR LIQUID GLASS
+   ========================================================= */
+
+.fi-no-notification {
+    @apply !bg-white/40 dark:!bg-slate-900/40 !backdrop-blur-3xl !rounded-2xl transition-all duration-300;
+    
+    /* 3D Border & Inset Shadow Premium */
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-top-color: rgba(255, 255, 255, 0.8) !important;
+    border-left-color: rgba(255, 255, 255, 0.5) !important;
+    
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 16px 32px rgba(0,0,0,0.1) !important;
+    
+    /* Kilap Kaca */
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%) !important;
+}
+
+.dark .fi-no-notification {
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-top-color: rgba(255, 255, 255, 0.15) !important;
+    border-left-color: rgba(255, 255, 255, 0.15) !important;
+    
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 16px 32px rgba(0,0,0,0.3) !important;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 20%, transparent 40%) !important;
+}
+
+/* Pastikan bagian dalam container transparan agar blur kaca membaur */
+.fi-no-notification-main,
+.fi-no-notification-content {
+    @apply !bg-transparent;
 }

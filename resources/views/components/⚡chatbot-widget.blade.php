@@ -219,7 +219,7 @@ Detail Barang:
             class="absolute -inset-2 bg-[#F47920] rounded-full blur-xl opacity-20 group-hover:opacity-40 transition duration-500 animate-pulse">
         </div>
         <button wire:click="toggleChat"
-            class="relative w-14 h-14 bg-white dark:bg-[#031525] hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(244,121,32,0.2)] flex items-center justify-center text-[#F47920] transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 border border-slate-200/80 dark:border-white/10 group-hover:border-[#F47920]/50">
+            class="glass-btn relative w-14 h-14 rounded-full flex items-center justify-center text-[#F47920] transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 group-hover:border-[#F47920]/50">
 
             <!-- Icon Chat (Tutup) -->
             <svg x-show="!$wire.isOpen" class="w-7 h-7 transition-transform duration-300 group-hover:animate-bounce" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -247,10 +247,10 @@ Detail Barang:
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-8 scale-95"
-        class="fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:max-w-[380px] h-[100dvh] md:h-[38rem] bg-white/95 md:bg-white/80 dark:bg-[#031525]/95 md:dark:bg-[#031525]/80 backdrop-blur-3xl md:rounded-[2.5rem] shadow-[0_8px_40px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_40px_rgb(0,0,0,0.3)] md:border md:border-white/60 dark:border-white/10 overflow-hidden flex flex-col z-[100] md:z-auto">
+        class="glass-panel fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:max-w-[380px] h-[100dvh] md:h-[38rem] md:rounded-[2.5rem] overflow-hidden flex flex-col z-[100] md:z-auto">
 
         <!-- Header -->
-        <div class="px-6 py-5 flex items-center justify-between border-b border-slate-200/50 dark:border-white/5 relative z-20 overflow-hidden bg-white/40 dark:bg-slate-900/40 backdrop-blur-md">
+        <div class="glass-nav px-6 py-5 flex items-center justify-between relative z-20 overflow-hidden">
             <div class="flex items-center gap-3.5 relative z-10">
                 <div class="relative group">
                     <div
@@ -342,8 +342,8 @@ Detail Barang:
 
         <!-- Input Area -->
         <form wire:submit="sendMessage"
-            class="p-5 pb-8 md:pb-5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-t border-slate-200/50 dark:border-white/5 relative z-20 md:rounded-b-[2.5rem]">
-            <div class="relative flex items-center bg-white/80 dark:bg-black/20 border border-slate-200/80 dark:border-white/10 rounded-full focus-within:ring-2 focus-within:ring-[#F47920]/50 focus-within:border-[#F47920] transition-all duration-300 shadow-sm group">
+            class="glass-nav p-5 pb-8 md:pb-5 relative z-20 md:rounded-b-[2.5rem]">
+            <div class="glass-input relative flex items-center rounded-full group">
 
                 <input wire:model="message" type="text" placeholder="Tanya DO, PO, atau MIR..."
                     class="w-full pl-6 pr-14 py-3.5 bg-transparent text-[13.5px] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-full font-medium"

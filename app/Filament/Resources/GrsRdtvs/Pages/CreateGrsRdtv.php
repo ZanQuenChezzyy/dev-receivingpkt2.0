@@ -6,6 +6,7 @@ use App\Filament\Resources\GrsRdtvs\GrsRdtvResource;
 use App\Models\DeliveryOrderReceipt;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class CreateGrsRdtv extends CreateRecord
@@ -21,7 +22,7 @@ class CreateGrsRdtv extends CreateRecord
             'transaction_date' => $data['transaction_date'],
             'category' => $data['category'],
         ], [
-            'created_by' => $data['created_by'] ?? auth()->id(),
+            'created_by' => $data['created_by'] ?? Auth::id(),
         ]);
     }
 
@@ -40,7 +41,7 @@ class CreateGrsRdtv extends CreateRecord
                     if ($file instanceof TemporaryUploadedFile) {
                         $originalName = $file->getClientOriginalName();
                         $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
-                        
+
                         $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                         if ($do) {
                             $latestQc = $do->qcHistories()->latest()->first();
@@ -64,7 +65,7 @@ class CreateGrsRdtv extends CreateRecord
                     if ($file instanceof TemporaryUploadedFile) {
                         $originalName = $file->getClientOriginalName();
                         $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
-                        
+
                         $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                         if ($do) {
                             $latestQc = $do->qcHistories()->latest()->first();
@@ -104,7 +105,7 @@ class CreateGrsRdtv extends CreateRecord
                 if ($file instanceof TemporaryUploadedFile) {
                     $originalName = $file->getClientOriginalName();
                     $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
-                    
+
                     $path = $file->storeAs('grs-rdtv-docs', $originalName, 'public');
                     $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
 
@@ -136,7 +137,7 @@ class CreateGrsRdtv extends CreateRecord
                 if ($file instanceof TemporaryUploadedFile) {
                     $originalName = $file->getClientOriginalName();
                     $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
-                    
+
                     $path = $file->storeAs('grs-rdtv-docs', $originalName, 'public');
                     $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
 

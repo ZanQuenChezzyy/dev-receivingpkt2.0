@@ -35,7 +35,7 @@
         <div class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
             
             <!-- Tabs -->
-            <div class="flex p-1 space-x-1 bg-slate-200/50 dark:bg-black/30 backdrop-blur-md rounded-2xl w-full md:w-auto">
+            <div class="glass-panel flex p-1 space-x-1 w-full md:w-auto">
                 <button wire:click="setTab('PD')" 
                         class="flex-1 md:w-48 py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 {{ $activeTab === 'PD' ? 'bg-white dark:bg-[#0A4F86] text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200' }}">
                     Material PD
@@ -54,7 +54,7 @@
                     </svg>
                 </div>
                 <input wire:model.live.debounce.300ms="search" type="text" 
-                       class="pl-11 w-full bg-white/70 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white rounded-2xl py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] transition-all shadow-sm" 
+                       class="glass-input pl-11 w-full text-slate-900 dark:text-white py-3" 
                        placeholder="Cari PO, Deskripsi, dll...">
             </div>
         </div>
@@ -62,7 +62,7 @@
         <!-- Data Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
             @forelse($this->items as $item)
-                <div class="bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-3xl p-6 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between h-full">
+                <div class="glass-panel p-6 hover:-translate-y-1 group flex flex-col justify-between h-full">
                     
                     <div>
                         <!-- Badge & Date -->
@@ -129,7 +129,7 @@
                     </div>
 
                     <!-- Action Button -->
-                    <a href="{{ route('frontend.mir.create', ['po' => $item->purchaseOrderIssued?->purchase_order_no]) }}" wire:navigate class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-linear-to-r from-[#0A4F86] to-blue-700 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-300">
+                    <a href="{{ route('frontend.mir.create', ['po' => $item->purchaseOrderIssued?->purchase_order_no]) }}" wire:navigate class="glass-btn bg-[#0A4F86] w-full flex items-center justify-center gap-2 py-3 px-4 text-white rounded-xl font-bold text-sm shadow-lg hover:-translate-y-0.5">
                         <span>Buat MIR Sekarang</span>
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>

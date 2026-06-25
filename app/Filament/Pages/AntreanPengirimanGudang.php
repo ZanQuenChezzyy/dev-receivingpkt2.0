@@ -7,16 +7,22 @@ use App\Models\WarehouseDestination;
 use App\Models\WarehouseTransmittal;
 use App\Models\WarehouseTransmittalItem;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Actions\BulkAction;
-use Filament\Actions\BulkActionGroup;
+use Filament\Support\Enums\FontWeight;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\ColumnGroup;
+use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 
 class AntreanPengirimanGudang extends Page implements HasTable
 {
@@ -41,53 +47,112 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         $query->whereHas('grsRdtvItems');
                     })
                     ->where('mrp_type', 'V1')
-                    ->whereNotIn('id', \App\Models\WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
+                    ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
             )
+            ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('deliveryOrderReceipt.delivery_oder_no')
-                    ->label('DO No')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('purchaseOrderIssued.purchase_order_no')
-                    ->label('PO No')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('material_code')
-                    ->label('Material No')
-                    ->searchable(),
-                TextColumn::make('description')
-                    ->label('Description')
-                    ->limit(30),
-                TextColumn::make('quantity')
-                    ->label('Qty DO')
-                    ->numeric(),
-                TextColumn::make('qty_mir')
-                    ->label('Qty MIR')
-                    ->state(function (DeliveryOrderReceiptDetail $record) {
-                        return $record->materialIssueDetails()->sum('diserahkan');
-                    })
-                    ->numeric(),
-                TextColumn::make('qty_sisa')
-                    ->label('Sisa Dikirim')
-                    ->state(function (DeliveryOrderReceiptDetail $record) {
-                        $mirQty = $record->materialIssueDetails()->sum('diserahkan');
+                // 📄 GRUP 1: INFORMASI DOKUMEN
+                ColumnGroup::make('Informasi Dokumen', [
+                    TextColumn::make('po_and_do')
+                        ->label('Nomor PO & DO')
+                        ->icon('heroicon-m-document-duplicate')
+                        ->iconColor('primary')
+                        ->color('primary')
+                        ->weight(FontWeight::Bold)
+                        ->getStateUsing(fn($record) => $record->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
+                        ->description(function ($record) {
+                            $doNumber = $record->deliveryOrderReceipt?->delivery_oder_no ?? '-';
+                            $js = "event.stopPropagation(); event.preventDefault(); ";
+                            $js .= "if(navigator.clipboard) { navigator.clipboard.writeText('{$doNumber}'); } else { let t = document.createElement('textarea'); t.value = '{$doNumber}'; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); } ";
+                            $js .= "new FilamentNotification().title('Nomor DO disalin!').success().send();";
 
-                        return $record->quantity - $mirQty;
-                    })
-                    ->numeric()
-                    ->color(fn($state) => $state > 0 ? 'success' : 'danger'),
-                \Filament\Tables\Columns\SelectColumn::make('warehouse_destination_id')
-                    ->label('Tujuan Gudang')
-                    ->options(WarehouseDestination::pluck('name', 'id'))
-                    ->sortable()
-                    ->searchable(),
+                            return new HtmlString("<span onclick=\"{$js}\" class='text-gray-500 font-medium cursor-pointer hover:text-primary-600 hover:underline transition' title='Klik untuk menyalin DO'>DO: {$doNumber}</span>");
+                        })
+                        ->searchable(query: function (Builder $query, string $search) {
+                            $query->whereHas('purchaseOrderIssued', function ($q) use ($search) {
+                                $q->where('purchase_order_no', 'like', "%{$search}%");
+                            })
+                                ->orWhereHas('deliveryOrderReceipt', function ($q) use ($search) {
+                                    $q->where('delivery_oder_no', 'like', "%{$search}%");
+                                });
+                        })
+                        ->copyable()
+                        ->copyMessage('Nomor PO disalin!')
+                        ->sortable(query: function (Builder $query, string $direction) {
+                            return $query->orderBy(
+                                \App\Models\PurchaseOrderIssued::select('purchase_order_no')
+                                    ->whereColumn('purchase_order_issueds.id', 'delivery_order_receipt_details.purchase_order_issued_id'),
+                                $direction
+                            );
+                        }),
+                ]),
+
+                // 📦 GRUP 2: DETAIL MATERIAL
+                ColumnGroup::make('Detail Material', [
+                    TextColumn::make('material_code')
+                        ->label('Material No')
+                        ->icon(Heroicon::Cube)
+                        ->iconColor('gray')
+                        ->weight(FontWeight::SemiBold)
+                        ->searchable()
+                        ->sortable()
+                        ->copyable()
+                        ->copyMessage('Material No disalin!'),
+
+                    TextColumn::make('description')
+                        ->label('Deskripsi')
+                        ->limit(40)
+                        ->tooltip(fn($record) => $record->description)
+                        ->searchable(),
+                ]),
+
+                // 📊 GRUP 3: KUANTITAS & PENGIRIMAN
+                ColumnGroup::make('Kuantitas & Pengiriman', [
+                    TextColumn::make('quantity')
+                        ->label('Qty DO')
+                        ->numeric()
+                        ->badge()
+                        ->color('gray')
+                        ->sortable(),
+
+                    TextColumn::make('qty_mir')
+                        ->label('Qty Diambil (MIR)')
+                        ->state(function (DeliveryOrderReceiptDetail $record) {
+                            return $record->materialIssueDetails()->sum('diserahkan');
+                        })
+                        ->numeric()
+                        ->badge()
+                        ->color('info'),
+
+                    TextColumn::make('qty_sisa')
+                        ->label('Sisa Dikirim')
+                        ->state(function (DeliveryOrderReceiptDetail $record) {
+                            $mirQty = $record->materialIssueDetails()->sum('diserahkan');
+                            return max(0, $record->quantity - $mirQty);
+                        })
+                        ->numeric()
+                        ->badge()
+                        ->color(fn($state) => $state > 0 ? 'warning' : 'success')
+                        ->icon(fn($state) => $state > 0 ? 'heroicon-m-exclamation-circle' : 'heroicon-m-check-circle'),
+                ]),
+
+                // 🎯 GRUP 4: TUJUAN PENGIRIMAN
+                ColumnGroup::make('Tujuan Pengiriman', [
+                    SelectColumn::make('warehouse_destination_id')
+                        ->label('Gudang Tujuan')
+                        ->options(WarehouseDestination::pluck('name', 'id'))
+                        ->sortable()
+                        ->searchable(),
+                ]),
+            ])
+            ->filters([
+                //
             ])
             ->recordActions([
                 Action::make('lihat_grs')
                     ->label('Lihat GRS')
                     ->icon('heroicon-o-eye')
-                    ->color('gray')
+                    ->color('info')
                     ->button()
                     ->outlined()
                     ->url(function (DeliveryOrderReceiptDetail $record) {
@@ -104,6 +169,10 @@ class AntreanPengirimanGudang extends Page implements HasTable
                     ->color('primary')
                     ->button()
                     ->outlined()
+                    ->requiresConfirmation()
+                    ->modalHeading('Generate Transmittal Gudang')
+                    ->modalDescription('Pastikan Anda telah memilih Gudang Tujuan pada baris tabel sebelum men-generate transmittal.')
+                    ->modalSubmitActionLabel('Ya, Generate')
                     ->action(function (Collection $records) {
                         $groupedRecords = $records->groupBy('warehouse_destination_id');
 
@@ -114,6 +183,10 @@ class AntreanPengirimanGudang extends Page implements HasTable
                             }
 
                             $destination = WarehouseDestination::find($destinationId);
+
+                            if (!$destination) {
+                                continue;
+                            }
 
                             // Check if there is an existing transmittal for this destination today
                             $transmittal = WarehouseTransmittal::where('warehouse_destination_id', $destination->id)
@@ -132,7 +205,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                                     'transmittal_no' => $transmittalNo,
                                     'warehouse_destination_id' => $destination->id,
                                     'tanggal' => now(),
-                                    'created_by' => auth()->id(),
+                                    'created_by' => Auth::id(),
                                 ]);
                             }
 
@@ -159,6 +232,9 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         }
                     })
                     ->deselectRecordsAfterCompletion(),
-            ]);
+            ])
+            ->emptyStateHeading('Belum ada Antrean Pengiriman')
+            ->emptyStateDescription('Daftar pengiriman gudang saat ini kosong.')
+            ->emptyStateIcon('heroicon-o-truck');
     }
 }

@@ -8,6 +8,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class WarehouseTransmittalsTable
 {
@@ -65,11 +66,11 @@ class WarehouseTransmittalsTable
             ])
             ->modifyQueryUsing(function ($query) {
                 // Jika user bukan super_admin atau Administrator, tampilkan yang ditugaskan kepadanya atau yang dia buat
-                if (!auth()->user()->hasRole(['super_admin', 'Administrator'])) {
+                if (!Auth::user()->hasRole(['super_admin', 'Administrator'])) {
                     $query->where(function ($q) {
                         $q->whereHas('destination', function ($q2) {
-                            $q2->where('pic_id', auth()->id());
-                        })->orWhere('created_by', auth()->id());
+                            $q2->where('pic_id', Auth::id());
+                        })->orWhere('created_by', Auth::id());
                     });
                 }
             });

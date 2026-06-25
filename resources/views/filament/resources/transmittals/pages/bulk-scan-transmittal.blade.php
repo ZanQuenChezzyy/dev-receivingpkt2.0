@@ -19,7 +19,7 @@
     class="space-y-6">
 
         <!-- Form Pengaturan -->
-        <div class="p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm">
+        <div class="p-6 fi-wi-widget rounded-2xl">
             <form wire:submit.prevent>
                 {{ $this->form }}
             </form>
@@ -34,7 +34,7 @@
             </div>
 
             <!-- Glass Card -->
-            <div class="relative max-w-md mx-auto backdrop-blur-xl bg-white/60 dark:bg-gray-900/60 border border-white/40 dark:border-gray-700/50 rounded-2xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] p-6 overflow-hidden transition-all duration-500"
+            <div class="relative max-w-md mx-auto fi-wi-widget rounded-2xl p-6 overflow-hidden transition-all duration-500"
                  :class="step === 1 ? 'ring-1 ring-primary-500/30' : 'ring-1 ring-amber-500/30'">
                  
                 <!-- Floating Badges -->
@@ -69,7 +69,7 @@
                             id="input-document"
                             wire:model="scanned_document" 
                             wire:keydown.enter="submitDocumentScan"
-                            class="w-full pl-10 pr-4 py-2 text-sm font-medium bg-white/50 dark:bg-gray-800/50 backdrop-blur-md border border-white/50 dark:border-gray-700/50 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 rounded-lg shadow-inner transition-all duration-300 uppercase placeholder:text-gray-400/70 text-gray-900 dark:text-white"
+                            class="fi-input-wrp w-full pl-10 pr-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 rounded-lg shadow-inner transition-all duration-300 uppercase placeholder:text-gray-400/70 text-gray-900 dark:text-white"
                             placeholder="KODE DOKUMEN..."
                             autofocus
                         >
@@ -85,7 +85,7 @@
                             id="input-103"
                             wire:model="scanned_103" 
                             wire:keydown.enter="submit103Scan"
-                            class="w-full pl-10 pr-10 py-2 text-sm font-medium bg-amber-50/50 dark:bg-amber-900/20 backdrop-blur-md border border-amber-200/50 dark:border-amber-700/50 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 rounded-lg shadow-inner transition-all duration-300 uppercase placeholder:text-amber-700/30 dark:placeholder:text-amber-500/30 text-amber-900 dark:text-amber-100"
+                            class="fi-input-wrp w-full pl-10 pr-10 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 rounded-lg shadow-inner transition-all duration-300 uppercase placeholder:text-amber-700/30 dark:placeholder:text-amber-500/30 text-amber-900 dark:text-amber-100"
                             placeholder="KODE 103..."
                         >
                         <div class="absolute inset-y-0 right-1 flex items-center">
@@ -100,7 +100,7 @@
         </div>
 
         <!-- Tabel Riwayat Hari Ini -->
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="fi-wi-widget rounded-2xl overflow-hidden">
             <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">
                     Riwayat Transmittal Hari Ini
