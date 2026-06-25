@@ -167,6 +167,12 @@
                         </div>
                     </div>
 
+                    <!-- Floating Glass Widget 2 -->
+                    <div class="absolute -top-6 right-2 sm:top-10 sm:-right-10 glass-panel px-4 py-3 sm:px-6 sm:py-4 sm:rounded-2xl flex items-center gap-3 transform hover:-rotate-3 transition-transform z-20">
+                        <div class="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]"></div>
+                        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-white tracking-wider">MB51 Tracking Active</p>
+                    </div>
+
                 </div>
             </div>
         </div>
