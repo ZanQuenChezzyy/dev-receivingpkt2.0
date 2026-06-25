@@ -41,7 +41,18 @@ class DeliveryOrderReceiptsTable
                         ->weight(FontWeight::Bold)
                         ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
                         ->description(function ($record) {
-                            $doInfo = "<span class='text-gray-500 font-medium'>DO: {$record->delivery_oder_no}</span>";
+                            $doInfo = "<span 
+                                x-data=\"{ copied: false }\" 
+                                x-on:click.prevent.stop=\"
+                                    if(navigator.clipboard) { navigator.clipboard.writeText('{$record->delivery_oder_no}'); } 
+                                    else { let t = document.createElement('textarea'); t.value = '{$record->delivery_oder_no}'; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); }
+                                    copied = true; setTimeout(() => copied = false, 2000);
+                                \" 
+                                class='font-medium cursor-pointer transition hover:underline'
+                                :class=\"copied ? 'text-success-600' : 'text-gray-500 hover:text-primary-600'\"
+                                title='Klik untuk menyalin DO'>
+                                <span x-text=\"copied ? 'DO Disalin!' : 'DO: {$record->delivery_oder_no}'\">DO: {$record->delivery_oder_no}</span>
+                            </span>";
                             $seqInfo = $record->arrival_sequence ? "<br><span class='text-blue-600 text-xs font-bold'>Kedatangan Ke-{$record->arrival_sequence}</span>" : '';
 
                             return new HtmlString($doInfo . $seqInfo);
@@ -63,10 +74,10 @@ class DeliveryOrderReceiptsTable
                         ->color('primary')
                         ->searchable()
                         ->copyable()
-                        ->copyableState(fn ($record) => $record->document_code)
+                        ->copyableState(fn($record) => $record->document_code)
                         ->weight(FontWeight::SemiBold)
                         ->limit(10)
-                        ->tooltip(fn ($record) => $record->document_code)
+                        ->tooltip(fn($record) => $record->document_code)
                         ->copyMessage('Kode dokumen disalin!')
                         ->toggleable(isToggledHiddenByDefault: true),
 
