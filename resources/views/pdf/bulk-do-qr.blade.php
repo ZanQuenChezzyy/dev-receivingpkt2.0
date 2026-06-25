@@ -132,12 +132,6 @@
                         try { $tahun = \Carbon\Carbon::parse($do->received_date)->format('Y'); } catch (\Throwable $e) {}
                     }
                     
-                    $mirQty = $detail ? $detail->materialIssueDetails->sum('qty') : 0;
-                    $mirNo = ($detail && $detail->materialIssueDetails->count() > 0) 
-                        ? $detail->materialIssueDetails->map(fn($d) => optional($d->materialIssue)->issue_no)->filter()->unique()->implode(', ')
-                        : '-';
-                    $sisaDikirim = $detail ? ($detail->qty - $mirQty) : '-';
-                    
                     $mrpMap = ['INVESTASI' => 'INV', 'NONSTOCK' => 'NSTK', 'PD' => 'PD', 'V1' => 'V1'];
                     $mrpCombined = $mrpType !== '-' ? ($mrpMap[$mrpType] ?? $mrpType) : '-';
                     
@@ -156,7 +150,7 @@
 
                     $rawDesc = (string) ($detail->description ?? '-');
                     $descFlat = preg_replace('/\s+/u', ' ', str_replace(["\r\n", "\n", "\r", "\t"], ' ', $rawDesc));
-                    $descOneLine = mb_substr($descFlat, 0, 40);
+                    $descOneLine = mb_substr($descFlat, 0, 40); // Allow slightly longer desc as it can wrap
                 @endphp
 
                 <div class="page">
@@ -214,16 +208,6 @@
                             <td class="lbl">DITERIMA OLEH</td>
                             <td class="colon">:</td>
                             <td class="val" colspan="2">{{ $receivedBy }}</td>
-                        </tr>
-                        <tr>
-                            <td class="lbl">QTY MIR</td>
-                            <td class="colon">:</td>
-                            <td class="val" colspan="2">{{ $mirQty }} (Sisa Dikirim: {{ $sisaDikirim }})</td>
-                        </tr>
-                        <tr>
-                            <td class="lbl">EVIDENCE MIR</td>
-                            <td class="colon">:</td>
-                            <td class="val" colspan="2" style="max-width: 130px;">{{ $mirNo }}</td>
                         </tr>
                         <tr>
                             <td class="lbl">LOKASI</td>
@@ -327,7 +311,7 @@
                             <img src="{{ $logo }}" style="height: 15px;">
                             <div style="font-size: 7px; margin-top: 2px;">
                                 QR Dicetak Menggunakan Sistem<br>
-                                ALEX MOKONDO (RECEIVING)
+                                MOKONDO v2.0 (Receiving)
                             </div>
                         </td>
                     </tr>
