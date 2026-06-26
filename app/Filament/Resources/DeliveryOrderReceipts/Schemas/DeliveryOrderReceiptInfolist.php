@@ -46,22 +46,82 @@ class DeliveryOrderReceiptInfolist
                                     ->icon('heroicon-m-truck')
                                     ->weight(FontWeight::Medium),
 
-                                TextEntry::make('received_date')
-                                    ->label('Tanggal Kedatangan')
-                                    ->icon('heroicon-m-calendar-days')
-                                    ->date('d F Y'),
+                                Grid::make(3)
+                                    ->schema([
+                                        TextEntry::make('received_date')
+                                            ->label('Tanggal Kedatangan')
+                                            ->icon('heroicon-m-calendar-days')
+                                            ->date('d F Y'),
 
-                                TextEntry::make('source_type')
-                                    ->label('Tipe Material')
-                                    ->badge()
-                                    ->color(fn (string $state): string => match ($state) {
-                                        'Bahan Baku NPK' => 'success',
-                                        'Chemical/Karung' => 'warning',
-                                        'Sparepart' => 'info',
-                                        default => 'gray',
-                                    }),
+                                        TextEntry::make('source_type')
+                                            ->label('Tipe Material')
+                                            ->badge()
+                                            ->color(fn(string $state): string => match ($state) {
+                                                'Bahan Baku NPK' => 'success',
+                                                'Chemical/Karung' => 'warning',
+                                                'Sparepart' => 'info',
+                                                default => 'gray',
+                                            }),
+
+                                        TextEntry::make('receipt_mode')
+                                            ->label('Mode Kedatangan')
+                                            ->icon('heroicon-m-truck')
+                                            ->badge()
+                                            ->color(fn(string $state): string => $state === 'Indent' ? 'warning' : 'success'),
+                                    ])->columnSpanFull(),
+
+                                Grid::make(2)
+                                    ->schema([
+                                        TextEntry::make('dof_number')
+                                            ->label('No. DOF')
+                                            ->icon('heroicon-m-document')
+                                            ->visible(fn($record) => !empty($record->dof_number)),
+
+                                        TextEntry::make('dof_date')
+                                            ->label('Tanggal DOF')
+                                            ->icon('heroicon-m-calendar')
+                                            ->date('d M Y')
+                                            ->visible(fn($record) => !empty($record->dof_date)),
+                                    ])->columnSpanFull(),
                             ]),
                         ]),
+
+                    Section::make('Informasi Kedatangan Material')
+                        ->icon('heroicon-o-truck')
+                        ->schema([
+                            Grid::make(3)->schema([
+                                TextEntry::make('is_physically_received')
+                                    ->label('Status Kedatangan')
+                                    ->badge()
+                                    ->formatStateUsing(fn($state, $record) => ($record->receipt_mode === 'Standard' || $state) ? 'Fisik Tiba' : 'Menunggu / Transit')
+                                    ->color(fn($state, $record) => ($record->receipt_mode === 'Standard' || $state) ? 'success' : 'warning')
+                                    ->icon(fn($state, $record) => ($record->receipt_mode === 'Standard' || $state) ? 'heroicon-m-check-badge' : 'heroicon-m-truck'),
+
+                                TextEntry::make('arrival_sequence')
+                                    ->label('Kedatangan Ke-')
+                                    ->visible(fn($record) => !empty($record->arrival_sequence)),
+
+                                TextEntry::make('physical_received_date')
+                                    ->label('Tgl Fisik Tiba')
+                                    ->date('d M Y')
+                                    ->visible(fn($record) => !empty($record->physical_received_date)),
+
+                                TextEntry::make('current_location')
+                                    ->label('Posisi Saat Ini')
+                                    ->visible(fn($record) => !empty($record->current_location)),
+
+                                TextEntry::make('incoterms')
+                                    ->label('Incoterms')
+                                    ->visible(fn($record) => !empty($record->incoterms)),
+
+                                TextEntry::make('eta_date')
+                                    ->label('Estimasi Tiba (ETA)')
+                                    ->date('d M Y')
+                                    ->visible(fn($record) => !empty($record->eta_date)),
+                            ]),
+                        ])
+                        ->collapsible()
+                        ->collapsed(fn($record) => $record->receipt_mode === 'Standard' && empty($record->arrival_sequence)),
 
                     Section::make('Dokumen GRS & RDTV Terkait')
                         ->icon(Heroicon::OutlinedDocumentCurrencyDollar)
@@ -73,7 +133,7 @@ class DeliveryOrderReceiptInfolist
                                         TextEntry::make('grsRdtv.category')
                                             ->label('Kategori')
                                             ->badge()
-                                            ->color(fn ($state) => match ($state) {
+                                            ->color(fn($state) => match ($state) {
                                                 'GRS' => 'success',
                                                 'RDTV' => 'warning',
                                                 default => 'gray',
@@ -83,8 +143,8 @@ class DeliveryOrderReceiptInfolist
                                             ->dateTime(),
                                         TextEntry::make('file_path')
                                             ->label('File Dokumen')
-                                            ->formatStateUsing(fn () => 'Lihat Dokumen')
-                                            ->url(fn ($record) => Storage::url($record->file_path))
+                                            ->formatStateUsing(fn() => 'Lihat Dokumen')
+                                            ->url(fn($record) => Storage::url($record->file_path))
                                             ->openUrlInNewTab()
                                             ->icon('heroicon-m-arrow-top-right-on-square')
                                             ->color('primary'),
@@ -92,12 +152,12 @@ class DeliveryOrderReceiptInfolist
                                             ->label('Diunggah Oleh'),
                                     ]),
                                 ])
-                                ->visible(fn ($record) => $record->grsRdtvItems()->exists()),
+                                ->visible(fn($record) => $record->grsRdtvItems()->exists()),
 
                             TextEntry::make('no_docs')
                                 ->hiddenLabel()
                                 ->placeholder('Belum ada dokumen GRS/RDTV yang ditautkan ke DO ini.')
-                                ->visible(fn ($record) => ! $record->grsRdtvItems()->exists()),
+                                ->visible(fn($record) => !$record->grsRdtvItems()->exists()),
                         ]),
 
                     // 📦 TABEL DETAIL MATERIAL (LENGKAP)
@@ -123,12 +183,12 @@ class DeliveryOrderReceiptInfolist
                                             ->label('Qty Aktual')
                                             ->weight(FontWeight::Bold)
                                             ->color('success')
-                                            ->suffix(fn ($record) => " {$record->uoi}")
-                                            ->formatStateUsing(fn ($state) => number_format($state, 0, ',', '.')),
+                                            ->suffix(fn($record) => " {$record->uoi}")
+                                            ->formatStateUsing(fn($state) => number_format($state, 0, ',', '.')),
                                     ]),
 
                                     // Baris 2: Lokasi & Status Toleransi
-                                    Grid::make(2)->schema([
+                                    Grid::make(4)->schema([
                                         TextEntry::make('locationReceiving.name')
                                             ->label('Lokasi Penyimpanan')
                                             ->icon('heroicon-m-map-pin')
@@ -136,14 +196,27 @@ class DeliveryOrderReceiptInfolist
                                             ->color('info')
                                             ->placeholder('Belum diatur'),
 
+                                        TextEntry::make('warehouseDestination.name')
+                                            ->label('Tujuan Gudang')
+                                            ->icon('heroicon-m-building-storefront')
+                                            ->badge()
+                                            ->color('primary')
+                                            ->placeholder('-'),
+
+                                        TextEntry::make('is_different_location')
+                                            ->label('Beda Lokasi?')
+                                            ->badge()
+                                            ->color(fn($state) => $state ? 'warning' : 'gray')
+                                            ->formatStateUsing(fn($state) => $state ? 'Ya' : 'Tidak'),
+
                                         TextEntry::make('is_qty_tolerance')
                                             ->label('Status Toleransi')
                                             ->badge()
-                                            ->color(fn ($state) => $state ? 'danger' : 'success')
-                                            ->icon(fn ($state) => $state ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check-circle')
+                                            ->color(fn($state) => $state ? 'danger' : 'success')
+                                            ->icon(fn($state) => $state ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check-circle')
                                             ->formatStateUsing(function ($state, $record) {
                                                 // 1. Jika False (Normal), tampilkan teks biasa
-                                                if (! $state) {
+                                                if (!$state) {
                                                     return 'Normal';
                                                 }
 
@@ -283,12 +356,12 @@ class DeliveryOrderReceiptInfolist
                                     foreach ($mirs as $m) {
                                         $stageLabel = $m['stage'] ?? 'Default';
                                         $html .= '<tr class="bg-white border-b dark:bg-transparent dark:border-white/5">
-                                            <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">'.$m['mir_number'].'</td>
-                                            <td class="px-4 py-3">'.Carbon::parse($m['tanggal'])->format('d M Y').'</td>
-                                            <td class="px-4 py-3">'.$m['peminta'].'</td>
-                                            <td class="px-4 py-3">'.$m['item'].'</td>
-                                            <td class="px-4 py-3 text-success-600 dark:text-success-400 font-bold">'.$m['qty'].' '.$m['uoi'].'</td>
-                                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-md dark:bg-blue-900/30 dark:text-blue-300">'.$stageLabel.'</span></td>
+                                            <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">' . $m['mir_number'] . '</td>
+                                            <td class="px-4 py-3">' . Carbon::parse($m['tanggal'])->format('d M Y') . '</td>
+                                            <td class="px-4 py-3">' . $m['peminta'] . '</td>
+                                            <td class="px-4 py-3">' . $m['item'] . '</td>
+                                            <td class="px-4 py-3 text-success-600 dark:text-success-400 font-bold">' . $m['qty'] . ' ' . $m['uoi'] . '</td>
+                                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-md dark:bg-blue-900/30 dark:text-blue-300">' . $stageLabel . '</span></td>
                                         </tr>';
                                     }
                                     $html .= '</tbody></table></div>';
@@ -304,37 +377,37 @@ class DeliveryOrderReceiptInfolist
                                 ->schema([
                                     TextEntry::make('status')
                                         ->badge()
-                                        ->color(fn (string $state): string => match ($state) {
+                                        ->color(fn(string $state): string => match ($state) {
                                             'Pending' => 'warning',
                                             'Diterima' => 'success',
                                             default => 'primary',
                                         }),
 
                                     TextEntry::make('delay_reason')
-                                        ->label(fn ($record) => $record->status === 'Pending' ? 'Alasan Pending' : 'Riwayat Pending (Alasan)')
+                                        ->label(fn($record) => $record->status === 'Pending' ? 'Alasan Pending' : 'Riwayat Pending (Alasan)')
                                         ->icon('heroicon-m-exclamation-triangle')
-                                        ->color(fn ($record) => $record->status === 'Pending' ? 'danger' : 'gray')
+                                        ->color(fn($record) => $record->status === 'Pending' ? 'danger' : 'gray')
                                         ->weight(FontWeight::Bold)
-                                        ->visible(fn ($record) => ! empty($record->delay_reason)),
+                                        ->visible(fn($record) => !empty($record->delay_reason)),
 
                                     TextEntry::make('pending_date')
                                         ->label('Tanggal Mulai Pending')
                                         ->dateTime('d M Y, H:i')
                                         ->color('gray')
                                         ->icon('heroicon-m-calendar')
-                                        ->visible(fn ($record) => ! empty($record->pending_date)),
+                                        ->visible(fn($record) => !empty($record->pending_date)),
 
                                     TextEntry::make('pending_resolved_date')
                                         ->label('Tanggal Selesai Pending')
                                         ->dateTime('d M Y, H:i')
                                         ->color('success')
                                         ->icon('heroicon-m-check-circle')
-                                        ->visible(fn ($record) => ! empty($record->pending_resolved_date)),
+                                        ->visible(fn($record) => !empty($record->pending_resolved_date)),
 
                                     TextEntry::make('delay_notes')
                                         ->label('Catatan Pending')
                                         ->color('gray')
-                                        ->visible(fn ($record) => ! empty($record->delay_notes)),
+                                        ->visible(fn($record) => !empty($record->delay_notes)),
 
                                     TextEntry::make('stage')
                                         ->label(function ($record) {
@@ -378,7 +451,7 @@ class DeliveryOrderReceiptInfolist
 
                                             // Jika mode SURAT DOF
                                             if (str_contains($upperState, 'DOF')) {
-                                                return 'Dari Surat DOF ('.$state.')';
+                                                return 'Dari Surat DOF (' . $state . ')';
                                             }
 
                                             // Jika mode TERMIN
@@ -404,17 +477,25 @@ class DeliveryOrderReceiptInfolist
                                     TextEntry::make('post_103')
                                         ->label('Status Post 103 (SAP)')
                                         ->placeholder('Belum Post 103')
-                                        ->formatStateUsing(fn ($state) => $state ? 'Sudah di-Post' : 'Belum Post')
-                                        ->icon(fn ($state) => $state ? 'heroicon-m-check-circle' : 'heroicon-m-clock')
-                                        ->color(fn ($state) => $state ? 'success' : 'gray')
-                                        ->weight(fn ($state) => $state ? FontWeight::Bold : FontWeight::Normal),
+                                        ->formatStateUsing(fn($state) => $state ? 'Sudah di-Post' : 'Belum Post')
+                                        ->icon(fn($state) => $state ? 'heroicon-m-check-circle' : 'heroicon-m-clock')
+                                        ->color(fn($state) => $state ? 'success' : 'gray')
+                                        ->weight(fn($state) => $state ? FontWeight::Bold : FontWeight::Normal),
 
                                     TextEntry::make('post_103_date')
                                         ->label('Waktu Post 103')
-                                        ->getStateUsing(fn ($record) => $record->post_103)
+                                        ->getStateUsing(fn($record) => $record->post_103)
                                         ->dateTime('l, d F Y')
-                                        ->visible(fn ($record) => $record->post_103 !== null)
+                                        ->visible(fn($record) => $record->post_103 !== null)
                                         ->color('gray'),
+
+                                    TextEntry::make('qr_103_code')
+                                        ->label('Kode 103')
+                                        ->icon('heroicon-m-qr-code')
+                                        ->copyable()
+                                        ->weight(FontWeight::Bold)
+                                        ->color('info')
+                                        ->visible(fn($record) => !empty($record->qr_103_code)),
                                 ]),
                         ]),
 
@@ -425,27 +506,27 @@ class DeliveryOrderReceiptInfolist
                                 ->schema([
                                     TextEntry::make('dikirim_ke_istek')
                                         ->label('Dikirim ke ISTEK')
-                                        ->getStateUsing(fn ($record) => $record->qcHistories()->where('status', 'Kirim')->latest()->first()?->created_at)
+                                        ->getStateUsing(fn($record) => $record->qcHistories()->where('status', 'Kirim')->latest()->first()?->created_at)
                                         ->dateTime('d F Y, H:i')
                                         ->placeholder('Belum Dikirim')
                                         ->icon('heroicon-m-paper-airplane')
-                                        ->color(fn ($state) => $state ? 'info' : 'gray'),
+                                        ->color(fn($state) => $state ? 'info' : 'gray'),
 
                                     TextEntry::make('kembali_dari_istek')
                                         ->label('Kembali dari ISTEK')
-                                        ->getStateUsing(fn ($record) => $record->qcHistories()->where('status', 'Kembali')->latest()->first()?->created_at)
+                                        ->getStateUsing(fn($record) => $record->qcHistories()->where('status', 'Kembali')->latest()->first()?->created_at)
                                         ->dateTime('d F Y, H:i')
                                         ->placeholder('Belum Kembali')
                                         ->icon('heroicon-m-arrow-uturn-left')
-                                        ->color(fn ($state) => $state ? 'success' : 'gray'),
+                                        ->color(fn($state) => $state ? 'success' : 'gray'),
 
                                     TextEntry::make('grs_rdtv_date')
                                         ->label('Tanggal GRS / RDTV')
-                                        ->getStateUsing(fn ($record) => $record->grsRdtvItems()->latest()->first()?->grsRdtv?->transaction_date)
+                                        ->getStateUsing(fn($record) => $record->grsRdtvItems()->latest()->first()?->grsRdtv?->transaction_date)
                                         ->date('d F Y')
                                         ->placeholder('Belum Diproses')
                                         ->icon('heroicon-m-document-check')
-                                        ->color(fn ($state) => $state ? 'primary' : 'gray'),
+                                        ->color(fn($state) => $state ? 'primary' : 'gray'),
                                 ]),
                         ])
                         ->collapsible(),
@@ -502,9 +583,9 @@ class DeliveryOrderReceiptInfolist
 
                                         // Kumpulkan, Grouping, dan Hitung jumlahnya
                                         $aacCounts = $details->groupBy('aac')
-                                            ->map(fn ($group) => $group->count())
+                                            ->map(fn($group) => $group->count())
                                             ->sortDesc(); // Urutkan dari yang terbanyak
-
+                            
                                         // Format menjadi list HTML
                                         $output = [];
                                         foreach ($aacCounts as $aac => $count) {
@@ -526,7 +607,7 @@ class DeliveryOrderReceiptInfolist
                                         }
 
                                         $abcCounts = $details->groupBy('abc_indicator')
-                                            ->map(fn ($group) => $group->count())
+                                            ->map(fn($group) => $group->count())
                                             ->sortDesc();
 
                                         $output = [];
@@ -561,9 +642,9 @@ class DeliveryOrderReceiptInfolist
 
                                         // Mengelompokkan berdasarkan mrp_type lalu MENJUMLAHKAN total_amount_snapshot
                                         $mrpSums = $details->groupBy('mrp_type')
-                                            ->map(fn ($group) => $group->sum('total_amount_snapshot'))
+                                            ->map(fn($group) => $group->sum('total_amount_snapshot'))
                                             ->sortDesc(); // Urutkan dari nilai Rupiah terbesar
-
+                            
                                         $output = [];
                                         foreach ($mrpSums as $mrp => $total) {
                                             // Lewati jika MRP Type kosong
@@ -572,7 +653,7 @@ class DeliveryOrderReceiptInfolist
                                             }
 
                                             // Format angka menjadi Rupiah (misal: Rp 1.500.000)
-                                            $fmtTotal = 'Rp '.number_format($total, 2, ',', '.');
+                                            $fmtTotal = 'Rp ' . number_format($total, 2, ',', '.');
 
                                             // Set warna teks standar menjadi abu-abu adaptif, dan warna Rupiah persis mengikuti ->color('success') Filament
                                             $output[] = "<span class='text-sm text-gray-500 dark:text-gray-400'>{$mrp}: <strong class='text-success-600 dark:text-success-400'>{$fmtTotal}</strong></span>";
@@ -629,15 +710,15 @@ class DeliveryOrderReceiptInfolist
                                 ->label('ID Monitoring NPK')
                                 ->icon('heroicon-m-link')
                                 ->placeholder('Tidak tertaut')
-                                ->url(fn ($record) => $record->npk_monitoring_id ? url('/admin/monitoring-npk/'.$record->npk_monitoring_id) : null, true)
-                                ->color(fn ($state) => $state ? 'primary' : 'gray'),
+                                ->url(fn($record) => $record->npk_monitoring_id ? url('/admin/monitoring-npk/' . $record->npk_monitoring_id) : null, true)
+                                ->color(fn($state) => $state ? 'primary' : 'gray'),
 
                             TextEntry::make('chemical_monitoring_id')
                                 ->label('ID Monitoring Chemical')
                                 ->icon('heroicon-m-link')
                                 ->placeholder('Tidak tertaut')
-                                ->url(fn ($record) => $record->chemical_monitoring_id ? url('/admin/monitoring-chemical/'.$record->chemical_monitoring_id) : null, true)
-                                ->color(fn ($state) => $state ? 'primary' : 'gray'),
+                                ->url(fn($record) => $record->chemical_monitoring_id ? url('/admin/monitoring-chemical/' . $record->chemical_monitoring_id) : null, true)
+                                ->color(fn($state) => $state ? 'primary' : 'gray'),
                         ])
                         ->collapsed(),
                 ]),
