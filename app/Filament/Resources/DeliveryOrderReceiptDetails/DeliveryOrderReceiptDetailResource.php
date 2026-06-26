@@ -64,7 +64,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                 ColumnGroup::make('Informasi Material', [
                     TextColumn::make('purchaseOrderIssued.purchase_order_no')
                         ->label('No. PO & Item')
-                        ->description(fn ($record) => 'Item No: '.$record->item_no)
+                        ->description(fn($record) => 'Item No: ' . $record->item_no)
                         ->searchable()
                         ->icon(Heroicon::DocumentText)
                         ->iconColor('primary')
@@ -73,11 +73,11 @@ class DeliveryOrderReceiptDetailResource extends Resource
 
                     TextColumn::make('description')
                         ->label('Material')
-                        ->description(fn ($record) => 'Stock No: '.(! empty($record->material_code) ? $record->material_code : 'None'))
+                        ->description(fn($record) => 'Stock No: ' . (!empty($record->material_code) ? $record->material_code : 'None'))
                         ->searchable(['description', 'material_code'])
                         ->weight(FontWeight::Bold)
                         ->icon('heroicon-m-cube')
-                        ->iconColor('primary')
+                        ->iconColor('gray')
                         ->limit(30),
                 ]),
 
@@ -86,7 +86,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                     TextColumn::make('quantity')
                         ->label('Qty Diterima')
                         ->numeric()
-                        ->suffix(fn ($record) => " {$record->uoi}")
+                        ->suffix(fn($record) => " {$record->uoi}")
                         ->badge() // Jadikan badge agar menonjol
                         ->color('success')
                         ->sortable(),
@@ -94,11 +94,11 @@ class DeliveryOrderReceiptDetailResource extends Resource
                     TextColumn::make('is_qty_tolerance')
                         ->label('Toleransi')
                         ->badge()
-                        ->color(fn ($state) => $state ? 'danger' : 'success')
-                        ->icon(fn ($state) => $state ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check-circle')
+                        ->color(fn($state) => $state ? 'danger' : 'success')
+                        ->icon(fn($state) => $state ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check-circle')
                         ->formatStateUsing(function ($state, $record) {
                             // 1. Jika False (Normal), tampilkan teks biasa
-                            if (! $state) {
+                            if (!$state) {
                                 return 'Normal';
                             }
 
@@ -143,15 +143,15 @@ class DeliveryOrderReceiptDetailResource extends Resource
                     TextColumn::make('locationReceiving.name')
                         ->label('Lokasi Penyimpanan')
                         ->icon('heroicon-m-map-pin')
-                        ->description(fn ($record) => $record->is_different_location ? 'Berbeda Lokasi' : 'Lokasi Utama')
-                        ->color(fn ($record) => $record->is_different_location ? 'warning' : 'gray')
+                        ->description(fn($record) => $record->is_different_location ? 'Berbeda Lokasi' : 'Lokasi Utama')
+                        ->color(fn($record) => $record->is_different_location ? 'warning' : 'gray')
                         ->searchable()
                         ->sortable(),
 
                     // Menggabungkan MRP & Material Type agar hemat kolom
                     TextColumn::make('mrp_type')
                         ->label('MRP / Mat. Type')
-                        ->description(fn ($record) => $record->material_type)
+                        ->description(fn($record) => $record->material_type)
                         ->badge()
                         ->color('info')
                         ->searchable(),
@@ -162,10 +162,10 @@ class DeliveryOrderReceiptDetailResource extends Resource
                         ->html() // Wajib agar HTML bisa dirender
                         ->getStateUsing(function ($record) {
                             // Ambil data ABC, jika kosong set jadi 'None'
-                            $abc = ! empty($record->abc_indicator) ? $record->abc_indicator : 'None';
+                            $abc = !empty($record->abc_indicator) ? $record->abc_indicator : 'None';
 
                             // Ambil data AAC, jika kosong set jadi '-'
-                            $aac = ! empty($record->aac) ? $record->aac : '-';
+                            $aac = !empty($record->aac) ? $record->aac : '-';
 
                             // Rangkai menjadi HTML dengan menambahkan prefix ABC dan AAC
                             return "

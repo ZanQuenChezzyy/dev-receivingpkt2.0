@@ -465,6 +465,7 @@ class DeliveryOrderReceiptsTable
                         ->toggleable(isToggledHiddenByDefault: true),
                 ]),
             ])
+            ->columnManagerColumns(4)
             ->filters([
                 //
             ])
@@ -560,7 +561,7 @@ class DeliveryOrderReceiptsTable
                     Action::make('undo_pending_action')
                         ->label('Batal Pending')
                         ->icon(Heroicon::ArrowUturnLeft)
-                        ->color('success')
+                        ->color('warning')
                         ->outlined()
                         ->requiresConfirmation()
                         ->modalHeading('Batalkan Status Pending')

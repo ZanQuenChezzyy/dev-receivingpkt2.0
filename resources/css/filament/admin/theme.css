@@ -307,12 +307,12 @@ html.dark body {
 .fi-dropdown-panel,
 .fi-popover,
 .fi-global-search-results-ctn {
-    @apply !bg-white/40 dark:!bg-slate-900/40 !backdrop-blur-3xl !rounded-xl !z-[9999];
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-top-color: rgba(255, 255, 255, 0.6) !important;
-    border-left-color: rgba(255, 255, 255, 0.5) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 16px 48px rgba(0,0,0,0.15) !important;
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%) !important;
+    @apply !bg-white/85 dark:!bg-slate-900/90 !backdrop-blur-lg !rounded-xl !z-[9999];
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-top-color: rgba(255, 255, 255, 0.7) !important;
+    border-left-color: rgba(255, 255, 255, 0.6) !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 16px 48px rgba(0,0,0,0.15) !important;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 20%, transparent 40%) !important;
 }
 
 .dark .fi-dropdown-panel,
@@ -561,7 +561,7 @@ html.dark body {
 
 /* Beri jarak/padding di dalam dropdown agar item tidak menempel ke tepi */
 .fi-dropdown-list {
-    @apply p-2;
+    @apply p-2 !bg-transparent;
 }
 
 /* Buat item di dalam dropdown (opsi) menjadi seperti pil/gelembung (rounded) */
