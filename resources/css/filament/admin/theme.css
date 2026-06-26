@@ -642,8 +642,27 @@ html.dark body {
     background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 20%, transparent 40%) !important;
 }
 
-/* Pastikan bagian dalam container transparan agar blur kaca membaur */
 .fi-no-notification-main,
 .fi-no-notification-content {
     @apply !bg-transparent;
+}
+
+/* =========================================================
+   H. FIX TABS ITEM AGAR TIDAK PENYET DI MOBILE
+   ========================================================= */
+@media (max-width: 768px) {
+    .fi-tabs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .fi-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    .fi-tabs-item {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        min-width: max-content !important;
+    }
 }

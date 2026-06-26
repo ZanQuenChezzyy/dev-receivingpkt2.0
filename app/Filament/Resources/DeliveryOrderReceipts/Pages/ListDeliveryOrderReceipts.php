@@ -28,19 +28,21 @@ class ListDeliveryOrderReceipts extends ListRecords
         return [
             'Semua' => Tab::make('Semua')
                 ->icon('heroicon-o-list-bullet'),
+            'Belum 103' => Tab::make('Belum 103')
+                ->modifyQueryUsing(fn(Builder $query) => $query->whereNull('post_103'))
+                ->icon('heroicon-o-document-minus')
+                ->badgeColor('info')
+                ->badge(DeliveryOrderReceipt::whereNull('post_103')->count()),
             'Pending Dokumen' => Tab::make('Pending Dokumen')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'Pending'))
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'Pending'))
                 ->icon('heroicon-o-clock')
                 ->badgeColor('danger')
                 ->badge(DeliveryOrderReceipt::where('status', 'Pending')->count()),
-            'Menunggu Kedatangan Fisik (Transit)' => Tab::make('Menunggu Kedatangan Fisik (Transit)')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('is_physically_received', false)->where('receipt_mode', '!=', 'Standard'))
+            'Menunggu Kedatangan' => Tab::make('Menunggu Kedatangan')
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('is_physically_received', false)->where('receipt_mode', '!=', 'Standard'))
                 ->icon('heroicon-o-truck')
                 ->badgeColor('warning')
                 ->badge(DeliveryOrderReceipt::where('is_physically_received', false)->where('receipt_mode', '!=', 'Standard')->count()),
-            'Fisik Sudah Tiba' => Tab::make('Fisik Sudah Tiba')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('is_physically_received', true))
-                ->icon('heroicon-o-check-badge'),
         ];
     }
 }
