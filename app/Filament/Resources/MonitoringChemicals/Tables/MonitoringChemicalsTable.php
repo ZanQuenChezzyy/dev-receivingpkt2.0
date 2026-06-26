@@ -49,7 +49,7 @@ class MonitoringChemicalsTable
                         ->icon(Heroicon::CalendarDays)
                         ->iconColor('gray')
                         ->date('d F Y')
-                        ->description(fn($record) => $record->received_date ? Carbon::parse($record->received_date)->translatedFormat('l') : '-')
+                        ->description(fn ($record) => $record->received_date ? Carbon::parse($record->received_date)->translatedFormat('l') : '-')
                         ->sortable(),
                 ]),
 
@@ -58,13 +58,13 @@ class MonitoringChemicalsTable
                     TextColumn::make('doc_status')
                         ->label('Status Dokumen')
                         ->badge()
-                        ->color(fn(?string $state): string => match (strtolower($state ?? '')) {
+                        ->color(fn (?string $state): string => match (strtolower($state ?? '')) {
                             'approved', 'selesai', 'diterima', 'completed' => 'success',
                             'pending', 'proses' => 'warning',
                             'rejected', 'ditolak' => 'danger',
                             default => 'gray',
                         })
-                        ->icon(fn(?string $state): string => match (strtolower($state ?? '')) {
+                        ->icon(fn (?string $state): string => match (strtolower($state ?? '')) {
                             'approved', 'selesai', 'diterima', 'completed' => 'heroicon-m-check-badge',
                             'pending', 'proses' => 'heroicon-m-clock',
                             'rejected', 'ditolak' => 'heroicon-m-x-circle',
@@ -75,8 +75,8 @@ class MonitoringChemicalsTable
                     TextColumn::make('qc_by')
                         ->label('Diperiksa Oleh (QC)')
                         ->icon('heroicon-m-shield-check')
-                        ->color(fn($state) => $state ? 'success' : 'warning')
-                        ->formatStateUsing(fn($state) => $state ?? 'Belum Diperiksa')
+                        ->color(fn ($state) => $state ? 'success' : 'warning')
+                        ->formatStateUsing(fn ($state) => $state ?? 'Belum Diperiksa')
                         ->badge()
                         ->searchable(),
                 ]),

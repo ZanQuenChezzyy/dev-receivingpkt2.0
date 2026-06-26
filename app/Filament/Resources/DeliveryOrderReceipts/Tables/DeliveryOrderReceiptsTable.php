@@ -22,6 +22,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 
 class DeliveryOrderReceiptsTable
@@ -39,17 +40,17 @@ class DeliveryOrderReceiptsTable
                         ->iconColor('primary')
                         ->color('primary')
                         ->weight(FontWeight::Bold)
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
                         ->description(function ($record) {
                             $doNumber = $record->delivery_oder_no;
-                            $js = "event.stopPropagation(); event.preventDefault(); ";
+                            $js = 'event.stopPropagation(); event.preventDefault(); ';
                             $js .= "if(navigator.clipboard) { navigator.clipboard.writeText('{$doNumber}'); } else { let t = document.createElement('textarea'); t.value = '{$doNumber}'; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); } ";
                             $js .= "new FilamentNotification().title('Nomor DO disalin!').success().send();";
 
                             $doInfo = "<span onclick=\"{$js}\" class='text-gray-500 font-medium cursor-pointer hover:text-primary-600 hover:underline transition' title='Klik untuk menyalin DO'>DO: {$doNumber}</span>";
                             $seqInfo = $record->arrival_sequence ? "<br><span class='text-blue-600 text-xs font-bold'>Kedatangan Ke-{$record->arrival_sequence}</span>" : '';
 
-                            return new HtmlString($doInfo . $seqInfo);
+                            return new HtmlString($doInfo.$seqInfo);
                         })
                         ->searchable(query: function (Builder $query, string $search) {
                             $query->where('delivery_oder_no', 'like', "%{$search}%")
@@ -68,10 +69,10 @@ class DeliveryOrderReceiptsTable
                         ->color('primary')
                         ->searchable()
                         ->copyable()
-                        ->copyableState(fn($record) => $record->document_code)
+                        ->copyableState(fn ($record) => $record->document_code)
                         ->weight(FontWeight::SemiBold)
                         ->limit(10)
-                        ->tooltip(fn($record) => $record->document_code)
+                        ->tooltip(fn ($record) => $record->document_code)
                         ->copyMessage('Kode dokumen disalin!')
                         ->toggleable(isToggledHiddenByDefault: true),
 
@@ -80,7 +81,7 @@ class DeliveryOrderReceiptsTable
                         ->icon(Heroicon::CalendarDays)
                         ->iconColor('gray')
                         ->date('d F Y')
-                        ->description(fn($record) => Carbon::parse($record->received_date)->translatedFormat('l')) // Nama hari di bawahnya
+                        ->description(fn ($record) => Carbon::parse($record->received_date)->translatedFormat('l')) // Nama hari di bawahnya
                         ->sortable(),
                 ]),
 
@@ -148,7 +149,7 @@ class DeliveryOrderReceiptsTable
                     TextColumn::make('lokasi')
                         ->label('Lokasi')
                         ->icon('heroicon-m-map-pin')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->first()?->locationReceiving?->name ?? 'Belum Diatur')
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->first()?->locationReceiving?->name ?? 'Belum Diatur')
                         ->badge()
                         ->color('info'),
 
@@ -195,7 +196,7 @@ class DeliveryOrderReceiptsTable
                         })
                         ->badge()
                         ->toggleable(isToggledHiddenByDefault: true)
-                        ->color(fn($state) => match ($state) {
+                        ->color(fn ($state) => match ($state) {
                             'Belum Diambil' => 'danger',
                             'Sebagian Diambil' => 'warning',
                             'Full Diambil' => 'success',
@@ -270,20 +271,20 @@ class DeliveryOrderReceiptsTable
                         ->label('Status POST 103')
                         ->badge()
                         ->default(false) // Wajib ditambah agar null tetap dirender sebagai 'Belum Post'
-                        ->formatStateUsing(fn($state) => $state ? 'Posted 103' : 'Belum Post')
-                        ->description(fn($record) => $record->post_103 ? Carbon::parse($record->post_103)->format('d M Y - H:i') : 'Menunggu aksi')
-                        ->color(fn($state) => $state ? 'success' : 'gray')
-                        ->icon(fn($state) => $state ? 'heroicon-m-check-badge' : 'heroicon-m-clock')
+                        ->formatStateUsing(fn ($state) => $state ? 'Posted 103' : 'Belum Post')
+                        ->description(fn ($record) => $record->post_103 ? Carbon::parse($record->post_103)->format('d M Y - H:i') : 'Menunggu aksi')
+                        ->color(fn ($state) => $state ? 'success' : 'gray')
+                        ->icon(fn ($state) => $state ? 'heroicon-m-check-badge' : 'heroicon-m-clock')
                         ->toggleable(isToggledHiddenByDefault: true)
                         ->sortable(),
 
                     TextColumn::make('is_physically_received')
                         ->label('Kedatangan Fisik')
-                        ->getStateUsing(fn($record) => $record->receipt_mode === 'Standard' ? true : $record->is_physically_received)
-                        ->formatStateUsing(fn($state) => $state ? 'Fisik Tiba' : 'Menunggu / Transit')
+                        ->getStateUsing(fn ($record) => $record->receipt_mode === 'Standard' ? true : $record->is_physically_received)
+                        ->formatStateUsing(fn ($state) => $state ? 'Fisik Tiba' : 'Menunggu / Transit')
                         ->badge()
-                        ->color(fn($state) => $state ? 'success' : 'warning')
-                        ->icon(fn($state) => $state ? 'heroicon-m-check-badge' : 'heroicon-m-truck')
+                        ->color(fn ($state) => $state ? 'success' : 'warning')
+                        ->icon(fn ($state) => $state ? 'heroicon-m-check-badge' : 'heroicon-m-truck')
                         ->description(function ($record) {
                             if ($record->receipt_mode === 'Standard' || $record->is_physically_received) {
                                 return null;
@@ -332,7 +333,7 @@ class DeliveryOrderReceiptsTable
                         ->modalHeading('Konfirmasi Post 103')
                         ->modalDescription('Apakah Anda yakin ingin melakukan Post 103 pada dokumen ini? Tanggal hari ini akan tercatat sebagai tanggal post.')
                         ->modalSubmitActionLabel('Ya, Post Sekarang')
-                        ->hidden(fn($record): bool => $record->post_103 !== null)
+                        ->hidden(fn ($record): bool => $record->post_103 !== null)
                         ->action(function ($record) {
                             $record->update([
                                 'post_103' => Carbon::now(),
@@ -353,7 +354,7 @@ class DeliveryOrderReceiptsTable
                         ->modalHeading('Batalkan Post 103')
                         ->modalDescription('Apakah Anda yakin ingin membatalkan Post 103? Data tanggal post sebelumnya akan dihapus dari dokumen ini.')
                         ->modalSubmitActionLabel('Ya, Batalkan')
-                        ->hidden(fn($record): bool => $record->post_103 === null)
+                        ->hidden(fn ($record): bool => $record->post_103 === null)
                         ->action(function ($record) {
                             $record->update([
                                 'post_103' => null,
@@ -388,13 +389,13 @@ class DeliveryOrderReceiptsTable
                                 ->placeholder('Masukkan Alasan Penundaan Lainnya')
                                 ->autosize()
                                 ->rows(3)
-                                ->visible(fn(Get $get) => $get('delay_reason') === 'Lainnya')
-                                ->required(fn(Get $get) => $get('delay_reason') === 'Lainnya'),
+                                ->visible(fn (Get $get) => $get('delay_reason') === 'Lainnya')
+                                ->required(fn (Get $get) => $get('delay_reason') === 'Lainnya'),
                         ])
                         ->modalHeading('Pending Dokumen')
                         ->modalDescription('Masukkan alasan penundaan proses dokumen ini.')
                         ->modalSubmitActionLabel('Simpan')
-                        ->hidden(fn($record): bool => $record->status === 'Pending')
+                        ->hidden(fn ($record): bool => $record->status === 'Pending')
                         ->action(function (array $data, $record) {
                             $record->update([
                                 'status' => 'Pending',
@@ -419,7 +420,7 @@ class DeliveryOrderReceiptsTable
                         ->modalHeading('Batalkan Status Pending')
                         ->modalDescription('Apakah Anda yakin ingin membatalkan status Pending pada dokumen ini? Dokumen akan kembali diproses seperti biasa.')
                         ->modalSubmitActionLabel('Ya, Batalkan')
-                        ->visible(fn($record): bool => $record->status === 'Pending')
+                        ->visible(fn ($record): bool => $record->status === 'Pending')
                         ->action(function ($record) {
                             $record->update([
                                 'status' => 'Diterima',
@@ -443,17 +444,17 @@ class DeliveryOrderReceiptsTable
                     Action::make('cetak_material')
                         ->label('Label Material')
                         ->icon(Heroicon::OutlinedTag)
-                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'material']))
+                        ->url(fn ($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'material']))
                         ->openUrlInNewTab(),
                     Action::make('cetak_dokumen')
                         ->label('Kode Dokumen')
                         ->icon(Heroicon::OutlinedDocumentText)
-                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'document']))
+                        ->url(fn ($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'document']))
                         ->openUrlInNewTab(),
                     Action::make('cetak_keduanya')
                         ->label('Material & Dokumen')
                         ->icon(Heroicon::OutlinedDocumentDuplicate)
-                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'both']))
+                        ->url(fn ($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'both']))
                         ->openUrlInNewTab(),
                 ])
                     ->label('Cetak')
@@ -486,8 +487,7 @@ class DeliveryOrderReceiptsTable
                         ->icon('heroicon-m-tag')
                         ->color('gray')
                         ->action(
-                            fn(\Illuminate\Support\Collection $records) =>
-                            redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'material']))
+                            fn (Collection $records) => redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'material']))
                         )
                         ->deselectRecordsAfterCompletion(),
 
@@ -496,8 +496,7 @@ class DeliveryOrderReceiptsTable
                         ->icon('heroicon-m-document-text')
                         ->color('gray')
                         ->action(
-                            fn(\Illuminate\Support\Collection $records) =>
-                            redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'document']))
+                            fn (Collection $records) => redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'document']))
                         )
                         ->deselectRecordsAfterCompletion(),
 
@@ -506,8 +505,7 @@ class DeliveryOrderReceiptsTable
                         ->icon('heroicon-m-printer')
                         ->color('gray')
                         ->action(
-                            fn(\Illuminate\Support\Collection $records) =>
-                            redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'both']))
+                            fn (Collection $records) => redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'both']))
                         )
                         ->deselectRecordsAfterCompletion(),
                 ])

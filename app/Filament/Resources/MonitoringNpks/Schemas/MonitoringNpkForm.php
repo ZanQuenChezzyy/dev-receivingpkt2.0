@@ -45,7 +45,7 @@ class MonitoringNpkForm
                                     ->relationship(
                                         name: 'purchaseOrderIssued',
                                         titleAttribute: 'purchase_order_no',
-                                        modifyQueryUsing: fn ($query) => $query
+                                        modifyQueryUsing: fn($query) => $query
                                             ->selectRaw('MIN(id) as id, purchase_order_no')
                                             ->groupBy('purchase_order_no')
                                             ->orderBy('purchase_order_no')
@@ -54,14 +54,14 @@ class MonitoringNpkForm
                                     ->live()
                                     ->required()
                                     ->afterStateUpdated(function (mixed $state, Set $set): void {
-                                        if (! $state) {
+                                        if (!$state) {
                                             $set('details', [[]]);
 
                                             return;
                                         }
 
                                         $anchor = PurchaseOrderIssued::find($state);
-                                        if (! $anchor) {
+                                        if (!$anchor) {
                                             $set('details', [[]]);
 
                                             return;
@@ -71,7 +71,7 @@ class MonitoringNpkForm
                                             ->orderBy('item_no')
                                             ->get(['id', 'item_no', 'material_code', 'description', 'qty_po', 'uoi']);
 
-                                        $set('details', $items->map(fn ($it) => [
+                                        $set('details', $items->map(fn($it) => [
                                             'purchase_order_issued_id' => $it->id,
                                             'item_no' => $it->item_no,
                                             'material_code' => $it->material_code,
@@ -87,9 +87,10 @@ class MonitoringNpkForm
                                     ->placeholder('Masukkan Nomor DO')
                                     ->maxLength(30)
                                     ->required()
-                                    ->rule(fn (Get $get, ?MonitoringNpk $record) => Rule::unique('monitoring_npks', 'delivery_oder_number')
-                                        ->where(fn ($q) => $q->where('purchase_order_terbit_id', (int) $get('purchase_order_terbit_id')))
-                                        ->ignore($record?->getKey())
+                                    ->rule(
+                                        fn(Get $get, ?MonitoringNpk $record) => Rule::unique('monitoring_npks', 'delivery_oder_number')
+                                            ->where(fn($q) => $q->where('purchase_order_terbit_id', (int) $get('purchase_order_terbit_id')))
+                                            ->ignore($record?->getKey())
                                     )
                                     ->dehydrateStateUsing(function (?string $state) {
                                         $s = trim((string) $state);
@@ -141,8 +142,8 @@ class MonitoringNpkForm
                                 DatePicker::make('received_date')
                                     ->label('Penerimaan (Actual)')
                                     ->placeholder('Pilih tanggal')
-                                    ->visible(fn (Get $get) => filled($get('delivery_oder_delivery_date')))
-                                    ->required(fn (Get $get) => filled($get('delivery_oder_delivery_date')))
+                                    ->visible(fn(Get $get) => filled($get('delivery_oder_delivery_date')))
+                                    ->required(fn(Get $get) => filled($get('delivery_oder_delivery_date')))
                                     ->native(false)
                                     ->helperText('Tanggal material fisik tiba di lokasi.')
                                     ->prefixIcon('heroicon-m-inbox-arrow-down')
@@ -182,8 +183,8 @@ class MonitoringNpkForm
                                     ->downloadable()
                                     ->openable()
                                     ->helperText('Unggah salinan dokumen COA sebagai bukti.')
-                                    ->visible(fn (Get $get) => filled($get('coa_date')))
-                                    ->required(fn (Get $get) => filled($get('coa_date')))
+                                    ->visible(fn(Get $get) => filled($get('coa_date')))
+                                    ->required(fn(Get $get) => filled($get('coa_date')))
                                     ->columnSpan(6),
                             ]),
                     ])->columnSpan(['lg' => 7]),
@@ -200,9 +201,9 @@ class MonitoringNpkForm
                                     ->addActionLabel('Tambah Item')
                                     ->defaultItems(1)
                                     ->minItems(1)
-                                    ->disabled(fn (Get $get) => blank($get('purchase_order_terbit_id')))
-                                    ->addable(fn (Get $get) => filled($get('purchase_order_terbit_id')))
-                                    ->deletable(fn (Get $get) => filled($get('purchase_order_terbit_id')))
+                                    ->disabled(fn(Get $get) => blank($get('purchase_order_terbit_id')))
+                                    ->addable(fn(Get $get) => filled($get('purchase_order_terbit_id')))
+                                    ->deletable(fn(Get $get) => filled($get('purchase_order_terbit_id')))
                                     ->schema([
                                         Grid::make(12)->schema([
                                             Select::make('purchase_order_issued_id')
@@ -210,18 +211,18 @@ class MonitoringNpkForm
                                                 ->placeholder('Pilih Item')
                                                 ->options(function (Get $get) {
                                                     $anchorId = $get('../../purchase_order_terbit_id');
-                                                    if (! $anchorId) {
+                                                    if (!$anchorId) {
                                                         return [];
                                                     }
                                                     $anchor = PurchaseOrderIssued::find($anchorId);
-                                                    if (! $anchor) {
+                                                    if (!$anchor) {
                                                         return [];
                                                     }
 
                                                     return PurchaseOrderIssued::where('purchase_order_no', $anchor->purchase_order_no)
                                                         ->orderBy('item_no')
                                                         ->get()
-                                                        ->mapWithKeys(fn ($r) => [
+                                                        ->mapWithKeys(fn($r) => [
                                                             $r->id => str_pad((string) $r->item_no, 2, '0', STR_PAD_LEFT),
                                                         ])->all();
                                                 })
@@ -266,15 +267,15 @@ class MonitoringNpkForm
                                             TextInput::make('quantity')
                                                 ->label('Quantity Aktual')
                                                 ->placeholder('0.00')
-                                                ->suffix(fn (Get $get) => $get('uoi') ?: null)
+                                                ->suffix(fn(Get $get) => $get('uoi') ?: null)
                                                 ->numeric()
                                                 ->minValue(0.01)
-                                                ->columnSpan(fn () => optional(Auth::user())->hasRole(['Developer', 'Super Admin', 'Staff', 'Admin']) ? 8 : 12)
+                                                ->columnSpan(fn() => optional(Auth::user())->hasRole(['Developer', 'Super Admin', 'Staff', 'Admin']) ? 8 : 12)
                                                 ->rules([
-                                                    fn (Get $get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                                    fn(Get $get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
                                                         $rowPoTerbitId = (int) ($get('purchase_order_issued_id') ?? 0);
                                                         $itemNo = $get('item_no');
-                                                        if (! $rowPoTerbitId || ! $itemNo) {
+                                                        if (!$rowPoTerbitId || !$itemNo) {
                                                             return;
                                                         }
 
@@ -289,11 +290,15 @@ class MonitoringNpkForm
                                                         $rows = $get('../../details') ?? [];
                                                         $inFormSum = collect($rows)
                                                             ->where('item_no', $itemNo)
-                                                            ->sum(fn ($r) => (float) ($r['quantity'] ?? 0));
+                                                            ->sum(fn($r) => (float) ($r['quantity'] ?? 0));
 
-                                                        if (! $isTolerance && ($usedDb + $inFormSum) > $poQty) {
+                                                        $maxAllowedWithTolerance = $poQty * 1.10; // 10% tolerance
+                                            
+                                                        if (!$isTolerance && ($usedDb + $inFormSum) > $poQty) {
                                                             $sisa = max(0, $poQty - $usedDb);
                                                             $fail("Kuantitas melebihi sisa {$sisa} {$uoi}. Aktifkan 'Toleransi Qty' bila lebih.");
+                                                        } elseif ($isTolerance && ($usedDb + $inFormSum) > $maxAllowedWithTolerance) {
+                                                            $fail('Kuantitas melebihi batas maksimal toleransi 10% dari PO (' . number_format($maxAllowedWithTolerance, 2, ',', '.') . " {$uoi}).");
                                                         }
 
                                                         if ((float) $value <= 0) {
@@ -307,7 +312,6 @@ class MonitoringNpkForm
                                                 ->inline(false)
                                                 ->onColor('danger')
                                                 ->live()
-                                                ->hidden(fn () => ! optional(Auth::user())->hasRole(['Developer', 'Super Admin', 'Staff', 'Admin']))
                                                 ->default(false)
                                                 ->dehydrated()
                                                 ->columnSpan(4),
@@ -327,7 +331,7 @@ class MonitoringNpkForm
                                                     $uoi = (string) ($h['uoi'] ?? '');
                                                     $sisa = max(0, $po - $usedDb);
 
-                                                    $sisaText = number_format($sisa, 2, ',', '.').' '.$uoi;
+                                                    $sisaText = number_format($sisa, 2, ',', '.') . ' ' . $uoi;
 
                                                     if ($sisa > 0) {
                                                         return new HtmlString("<span class='text-sm font-semibold text-danger-600'>Sisa: {$sisaText}</span> <span class='text-xs text-gray-500'>(Target PO: {$po} {$uoi})</span>");
@@ -372,15 +376,15 @@ class MonitoringNpkForm
                                         DatePicker::make('purchase_order_status_a_date')
                                             ->label('Tanggal Status A')
                                             ->native(false)
-                                            ->disabled(fn (Get $get) => blank($get('purchase_order_status')) || $get('purchase_order_status') === 'B')
-                                            ->required(fn (Get $get) => $get('purchase_order_status') === 'A')
+                                            ->disabled(fn(Get $get) => blank($get('purchase_order_status')) || $get('purchase_order_status') === 'B')
+                                            ->required(fn(Get $get) => $get('purchase_order_status') === 'A')
                                             ->columnSpan(6),
 
                                         DatePicker::make('purchase_order_status_b_date')
                                             ->label('Tanggal Status B')
                                             ->native(false)
-                                            ->disabled(fn (Get $get) => blank($get('purchase_order_status')) || $get('purchase_order_status') === 'A')
-                                            ->required(fn (Get $get) => $get('purchase_order_status') === 'B')
+                                            ->disabled(fn(Get $get) => blank($get('purchase_order_status')) || $get('purchase_order_status') === 'A')
+                                            ->required(fn(Get $get) => $get('purchase_order_status') === 'B')
                                             ->columnSpan(6),
 
                                         FileUpload::make('purchase_order_status_a_files')
@@ -389,15 +393,15 @@ class MonitoringNpkForm
                                             ->appendFiles()
                                             ->directory('monitoring-npk-docs')
                                             ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
-                                            ->disabled(fn (Get $get) => blank($get('purchase_order_status')) || $get('purchase_order_status') === 'B')
-                                            ->required(fn (Get $get) => $get('purchase_order_status') === 'A')
+                                            ->disabled(fn(Get $get) => blank($get('purchase_order_status')) || $get('purchase_order_status') === 'B')
+                                            ->required(fn(Get $get) => $get('purchase_order_status') === 'A')
                                             ->columnSpan(12),
                                     ])
                                     ->columnSpan(12),
                             ]),
 
                         Hidden::make('created_by')
-                            ->default(fn () => Auth::id() ?? 1)
+                            ->default(fn() => Auth::id() ?? 1)
                             ->required(),
                     ])->columnSpan(['lg' => 5]),
                 ])->columnSpanFull(),

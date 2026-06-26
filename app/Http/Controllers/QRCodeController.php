@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\WarehouseTransmittal;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -17,10 +16,10 @@ class QRCodeController extends Controller
         $do = DeliveryOrderReceipt::with(['deliveryOrderReceiptDetails.purchaseOrderIssued', 'deliveryOrderReceiptDetails.locationReceiving', 'receivedBy'])->findOrFail($id);
 
         $qrContent = $do->document_code; // Ambil dari kolom document_code
-        $qrDo = 'data:image/png;base64,' . base64_encode(QrCode::size(200)->generate($qrContent));
+        $qrDo = 'data:image/png;base64,'.base64_encode(QrCode::size(200)->generate($qrContent));
 
         $logoPath = public_path('images/logo/logo-pupuk-kaltim-hitam.png');
-        $logoBase64 = 'data:image/png;base64,' . base64_encode(@file_get_contents($logoPath) ?: '');
+        $logoBase64 = 'data:image/png;base64,'.base64_encode(@file_get_contents($logoPath) ?: '');
 
         // QR per item
         $items = collect();
@@ -30,7 +29,7 @@ class QRCodeController extends Controller
 
                 return [
                     'label' => "Item {$item->item_no}",
-                    'qr' => 'data:image/png;base64,' . $qr,
+                    'qr' => 'data:image/png;base64,'.$qr,
                 ];
             });
         }
@@ -43,14 +42,14 @@ class QRCodeController extends Controller
             'logo' => $logoBase64,
         ])->setPaper([0, 0, 144, 216], 'landscape');
 
-        $filename = 'QR-DO-' . str_replace(['/', '\\'], '_', $do->delivery_oder_no);
+        $filename = 'QR-DO-'.str_replace(['/', '\\'], '_', $do->delivery_oder_no);
         if ($mode === 'material') {
             $filename .= '-Material';
         } elseif ($mode === 'document') {
             $filename .= '-Dokumen';
         }
 
-        return $pdf->stream($filename . '.pdf');
+        return $pdf->stream($filename.'.pdf');
     }
 
     public function bulkPrint(Request $request)
@@ -72,7 +71,7 @@ class QRCodeController extends Controller
 
         foreach ($dos as $do) {
             $qrContent = $do->document_code;
-            $qrDo = 'data:image/png;base64,' . base64_encode(QrCode::size(200)->generate($qrContent));
+            $qrDo = 'data:image/png;base64,'.base64_encode(QrCode::size(200)->generate($qrContent));
 
             $items = collect();
             if (in_array($mode, ['material', 'both'])) {
@@ -81,7 +80,7 @@ class QRCodeController extends Controller
 
                     return [
                         'label' => "Item {$item->item_no}",
-                        'qr' => 'data:image/png;base64,' . $qr,
+                        'qr' => 'data:image/png;base64,'.$qr,
                     ];
                 });
             }
@@ -94,7 +93,7 @@ class QRCodeController extends Controller
         }
 
         $logoPath = public_path('images/logo/logo-pupuk-kaltim-hitam.png');
-        $logoBase64 = 'data:image/png;base64,' . base64_encode(@file_get_contents($logoPath) ?: '');
+        $logoBase64 = 'data:image/png;base64,'.base64_encode(@file_get_contents($logoPath) ?: '');
 
         $pdf = Pdf::loadView('pdf.bulk-do-qr', [
             'mode' => $mode,
@@ -109,6 +108,6 @@ class QRCodeController extends Controller
             $filename .= '-Dokumen';
         }
 
-        return $pdf->stream($filename . '.pdf');
+        return $pdf->stream($filename.'.pdf');
     }
 }

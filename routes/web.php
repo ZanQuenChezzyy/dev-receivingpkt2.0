@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\MaterialIssuePrintController;
+use App\Http\Controllers\Admin\TransmittalPrintController;
 use App\Http\Controllers\QRCodeController;
 use App\Livewire\Frontend\Home;
 use App\Livewire\Frontend\PdNonstockList;
@@ -20,11 +21,11 @@ Route::get('/admin/material-issues/{materialIssue}/print', [MaterialIssuePrintCo
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.material-issues.print');
 
-Route::get('/admin/warehouse-transmittals/{transmittal}/print', [\App\Http\Controllers\Admin\TransmittalPrintController::class, 'print'])
+Route::get('/admin/warehouse-transmittals/{transmittal}/print', [TransmittalPrintController::class, 'print'])
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.warehouse-transmittals.print');
 
-Route::get('/admin/warehouse-transmittals/print-bulk', [\App\Http\Controllers\Admin\TransmittalPrintController::class, 'printBulk'])
+Route::get('/admin/warehouse-transmittals/print-bulk', [TransmittalPrintController::class, 'printBulk'])
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.warehouse-transmittals.print_bulk');
 

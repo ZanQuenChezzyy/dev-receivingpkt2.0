@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Transmittals\Schemas;
 
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -21,7 +22,7 @@ class TransmittalForm
                             ->dehydrated(false) // Don't save it again if disabled, though not strictly necessary
                             ->columnSpanFull(),
 
-                        \Filament\Forms\Components\DatePicker::make('created_at')
+                        DatePicker::make('created_at')
                             ->label('Tanggal Transmittal')
                             ->default(now())
                             ->native(false)

@@ -106,7 +106,7 @@ class MaterialIssuesTable
                     ->button()
                     ->outlined()
                     ->color('success')
-                    ->url(fn(MaterialIssue $record): string => route('filament.admin.resources.material-issues.print', $record))
+                    ->url(fn (MaterialIssue $record): string => route('filament.admin.resources.material-issues.print', $record))
                     ->openUrlInNewTab(),
                 ActionGroup::make([
                     ViewAction::make()

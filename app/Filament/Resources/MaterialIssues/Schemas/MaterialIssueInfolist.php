@@ -4,6 +4,7 @@ namespace App\Filament\Resources\MaterialIssues\Schemas;
 
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -56,7 +57,7 @@ class MaterialIssueInfolist
                                     ]),
                                 ]),
                         ]),
-                        
+
                     Section::make('Tanda Tangan (Fisik / Digital)')
                         ->icon('heroicon-o-pencil')
                         ->schema([
@@ -71,13 +72,13 @@ class MaterialIssueInfolist
                                 TextEntry::make('diterima_oleh')->label('Diterima Oleh'),
                             ]),
                             Grid::make(3)->schema([
-                                \Filament\Infolists\Components\ViewEntry::make('diminta_signature')
+                                ViewEntry::make('diminta_signature')
                                     ->label('Tanda Tangan Peminta (Digital)')
                                     ->view('filament.infolists.components.signature-display'),
-                                \Filament\Infolists\Components\ViewEntry::make('disetujui_signature')
+                                ViewEntry::make('disetujui_signature')
                                     ->label('Tanda Tangan ISTEK (Digital)')
                                     ->view('filament.infolists.components.signature-display'),
-                                \Filament\Infolists\Components\ViewEntry::make('diserahkan_signature')
+                                ViewEntry::make('diserahkan_signature')
                                     ->label('Tanda Tangan Receiving (Digital)')
                                     ->view('filament.infolists.components.signature-display'),
                             ]),

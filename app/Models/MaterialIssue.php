@@ -72,7 +72,7 @@ class MaterialIssue extends Model
                     $parts = explode('/', $lastRecord->mir_number);
                     $nextId = (int) end($parts) + 1;
                 }
-                $model->mir_number = "MIR/{$month}/" . str_pad($nextId, 4, '0', STR_PAD_LEFT);
+                $model->mir_number = "MIR/{$month}/".str_pad($nextId, 4, '0', STR_PAD_LEFT);
             }
         });
     }

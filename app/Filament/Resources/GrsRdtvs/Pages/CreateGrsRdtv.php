@@ -6,6 +6,7 @@ use App\Filament\Resources\GrsRdtvs\GrsRdtvResource;
 use App\Models\DeliveryOrderReceipt;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -14,9 +15,10 @@ class CreateGrsRdtv extends CreateRecord
     protected static string $resource = GrsRdtvResource::class;
 
     protected array $uploadedFiles = [];
+
     protected array $uploadedItems = [];
 
-    protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
+    protected function handleRecordCreation(array $data): Model
     {
         return static::getModel()::firstOrCreate([
             'transaction_date' => $data['transaction_date'],
@@ -44,6 +46,7 @@ class CreateGrsRdtv extends CreateRecord
 
                     if (in_array($documentCode, $seen)) {
                         $duplicateDocuments[] = $documentCode;
+
                         continue;
                     }
                     $seen[] = $documentCode;
@@ -55,7 +58,7 @@ class CreateGrsRdtv extends CreateRecord
                         }
 
                         $latestQc = $do->qcHistories()->latest()->first();
-                        if (!$latestQc || $latestQc->status !== 'Kembali') {
+                        if (! $latestQc || $latestQc->status !== 'Kembali') {
                             $invalidDocuments[] = $documentCode;
                         }
                     }
@@ -77,6 +80,7 @@ class CreateGrsRdtv extends CreateRecord
 
                     if (in_array($documentCode, $seen)) {
                         $duplicateDocuments[] = $documentCode;
+
                         continue;
                     }
                     $seen[] = $documentCode;
@@ -88,7 +92,7 @@ class CreateGrsRdtv extends CreateRecord
                         }
 
                         $latestQc = $do->qcHistories()->latest()->first();
-                        if (!$latestQc || $latestQc->status !== 'Kembali') {
+                        if (! $latestQc || $latestQc->status !== 'Kembali') {
                             $invalidDocuments[] = $documentCode;
                         }
                     }
@@ -100,17 +104,17 @@ class CreateGrsRdtv extends CreateRecord
         }
 
         $errors = [];
-        if (!empty($invalidDocuments)) {
-            $errors[] = 'Belum kembali dari QC: ' . implode(', ', array_unique($invalidDocuments));
+        if (! empty($invalidDocuments)) {
+            $errors[] = 'Belum kembali dari QC: '.implode(', ', array_unique($invalidDocuments));
         }
-        if (!empty($alreadyProcessed)) {
-            $errors[] = 'Sudah sukses diupload sebagai GRS sebelumnya: ' . implode(', ', array_unique($alreadyProcessed));
+        if (! empty($alreadyProcessed)) {
+            $errors[] = 'Sudah sukses diupload sebagai GRS sebelumnya: '.implode(', ', array_unique($alreadyProcessed));
         }
-        if (!empty($duplicateDocuments)) {
-            $errors[] = 'Terdeteksi duplikat file yang sama: ' . implode(', ', array_unique($duplicateDocuments));
+        if (! empty($duplicateDocuments)) {
+            $errors[] = 'Terdeteksi duplikat file yang sama: '.implode(', ', array_unique($duplicateDocuments));
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             Notification::make()
                 ->title('Gagal Disimpan')
                 ->body(implode('<br>', $errors))
@@ -132,7 +136,7 @@ class CreateGrsRdtv extends CreateRecord
         $notFoundCount = 0;
 
         // --- Proses Dokumen GRS (Multiupload) ---
-        if ($category === 'GRS' && !empty($this->uploadedFiles)) {
+        if ($category === 'GRS' && ! empty($this->uploadedFiles)) {
             foreach ($this->uploadedFiles as $file) {
                 if ($file instanceof TemporaryUploadedFile) {
                     $originalName = $file->getClientOriginalName();
@@ -160,7 +164,7 @@ class CreateGrsRdtv extends CreateRecord
         }
 
         // --- Proses Dokumen RDTV (Repeater dengan alasan) ---
-        if ($category === 'RDTV' && !empty($this->uploadedItems)) {
+        if ($category === 'RDTV' && ! empty($this->uploadedItems)) {
             foreach ($this->uploadedItems as $item) {
                 // Ekstrak file dari Repeater
                 $file = is_array($item['file']) ? array_values($item['file'])[0] ?? null : $item['file'];
@@ -178,7 +182,7 @@ class CreateGrsRdtv extends CreateRecord
                         $do->update([
                             'status' => $category,
                             'delay_reason' => 'RDTV',
-                            'delay_notes' => $reason
+                            'delay_notes' => $reason,
                         ]);
                         $matchedCount++;
                     } else {

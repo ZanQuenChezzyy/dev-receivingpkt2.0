@@ -2,43 +2,61 @@
 
 namespace App\Livewire\Frontend;
 
-use Livewire\Component;
-use Livewire\Attributes\Url;
+use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\MaterialIssue;
 use App\Models\MaterialIssueDetail;
-use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\PurchaseOrderIssued;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Url;
+use Livewire\Component;
 
 class PublicMaterialIssueForm extends Component
 {
     // Form Properties
     public $diminta_oleh = '';
+
     public $npk = '';
+
     public $diterima_oleh = '';
+
     public $no_hp = '';
+
     public $departemen = '';
+
     public $bagian = '';
-    
+
     // Signatures
     public $diminta_signature = null;
+
     public $disetujui_oleh = '';
+
     public $disetujui_npk = '';
+
     public $disetujui_signature = null;
+
     public $requiresIstekSignature = false;
-    
+
     public $diserahkan_oleh = '';
+
     public $diserahkan_npk = '';
+
     public $diserahkan_signature = null;
-    
+
     public $tanggal = '';
+
     public $purchase_order_issued_id = '';
+
     public $no_reservasi = '';
+
     public $no_jor_wo = '';
+
     public $no_alat = '';
+
     public $kode_biaya = '';
+
     public $digunakan_untuk = '';
+
     public $agreement = false;
 
     public $details = [];
@@ -46,10 +64,13 @@ class PublicMaterialIssueForm extends Component
     // Search properties
     #[Url(as: 'po')]
     public $po_search = '';
+
     public $available_pos = [];
+
     public $available_po_items = [];
 
     public $showSuccessMessage = false;
+
     public $showConfirmModal = false;
 
     public function mount()
@@ -58,7 +79,7 @@ class PublicMaterialIssueForm extends Component
         $this->addDetail();
         $this->searchPOs();
 
-        if (!empty($this->po_search) && count($this->available_pos) > 0) {
+        if (! empty($this->po_search) && count($this->available_pos) > 0) {
             $matchedPo = collect($this->available_pos)->firstWhere('purchase_order_no', $this->po_search);
             if ($matchedPo) {
                 $this->purchase_order_issued_id = $matchedPo->id;
@@ -80,9 +101,9 @@ class PublicMaterialIssueForm extends Component
     public function searchPOs()
     {
         $query = PurchaseOrderIssued::whereHas('deliveryOrderReceiptDetails');
-        
-        if (!empty($this->po_search)) {
-            $query->where('purchase_order_no', 'like', '%' . $this->po_search . '%');
+
+        if (! empty($this->po_search)) {
+            $query->where('purchase_order_no', 'like', '%'.$this->po_search.'%');
         }
 
         $this->available_pos = $query->limit(20)->get()->unique('purchase_order_no');
@@ -97,20 +118,22 @@ class PublicMaterialIssueForm extends Component
                 $rawItems = DeliveryOrderReceiptDetail::with(['locationReceiving', 'deliveryOrderReceipt'])
                     ->whereIn('purchase_order_issued_id', $allPoItemIds)
                     ->get();
-                    
+
                 $this->available_po_items = $rawItems->groupBy('purchase_order_issued_id')->map(function ($group) {
                     $first = $group->first();
-                    
+
                     $combined_quantity = $group->sum('quantity');
-                    $combined_issued = $group->sum(function($item) { return $item->issued_quantity; });
+                    $combined_issued = $group->sum(function ($item) {
+                        return $item->issued_quantity;
+                    });
                     $combined_boh = $combined_quantity - $combined_issued;
-                    
-                    $locations = $group->map(fn($i) => $i->locationReceiving?->name)->filter()->unique()->implode(', ');
-                    
+
+                    $locations = $group->map(fn ($i) => $i->locationReceiving?->name)->filter()->unique()->implode(', ');
+
                     $has_non_grs = $group->contains(function ($item) {
                         return $item->deliveryOrderReceipt && $item->deliveryOrderReceipt->document_code !== '105';
                     });
-                    
+
                     return [
                         'id' => $first->purchase_order_issued_id, // Store as PO issued ID
                         'item_no' => $first->item_no,
@@ -145,9 +168,9 @@ class PublicMaterialIssueForm extends Component
             if ($field === 'delivery_order_receipt_detail_id') {
                 $detailId = $value;
                 if ($detailId) {
-                    $item = collect($this->available_po_items)->firstWhere('id', (int)$detailId) 
-                         ?? collect($this->available_po_items)->firstWhere('id', (string)$detailId);
-                         
+                    $item = collect($this->available_po_items)->firstWhere('id', (int) $detailId)
+                         ?? collect($this->available_po_items)->firstWhere('id', (string) $detailId);
+
                     if ($item) {
                         $this->details[$index]['stock_no'] = $item['material_code'];
                         $this->details[$index]['description'] = $item['description'];
@@ -167,7 +190,7 @@ class PublicMaterialIssueForm extends Component
                 $this->details[$index]['diserahkan'] = $value;
             }
         }
-        
+
         $this->checkIfIstekSignatureRequired();
     }
 
@@ -186,7 +209,7 @@ class PublicMaterialIssueForm extends Component
             ];
         }
     }
-    
+
     public function removeDetail($index)
     {
         if (count($this->details) > 1) {
@@ -195,17 +218,17 @@ class PublicMaterialIssueForm extends Component
             $this->checkIfIstekSignatureRequired();
         }
     }
-    
+
     protected function checkIfIstekSignatureRequired()
     {
         $requires = false;
         foreach ($this->details as $detail) {
             $detailId = $detail['delivery_order_receipt_detail_id'] ?? null;
             if ($detailId) {
-                $item = collect($this->available_po_items)->firstWhere('id', (int)$detailId) 
-                     ?? collect($this->available_po_items)->firstWhere('id', (string)$detailId);
-                     
-                if ($item && !empty($item['has_non_grs'])) {
+                $item = collect($this->available_po_items)->firstWhere('id', (int) $detailId)
+                     ?? collect($this->available_po_items)->firstWhere('id', (string) $detailId);
+
+                if ($item && ! empty($item['has_non_grs'])) {
                     $requires = true;
                     break;
                 }
@@ -248,13 +271,13 @@ class PublicMaterialIssueForm extends Component
             ],
             'details.*.diserahkan' => 'required|numeric',
         ];
-        
+
         if ($this->requiresIstekSignature) {
             $rules['disetujui_oleh'] = 'required|string';
             $rules['disetujui_npk'] = 'required|string';
             $rules['disetujui_signature'] = 'required|string';
         }
-        
+
         return $rules;
     }
 
@@ -289,7 +312,7 @@ class PublicMaterialIssueForm extends Component
 
         DB::beginTransaction();
         try {
-            $mirNumber = 'MIR-' . date('Ymd') . '-' . Str::upper(Str::random(4));
+            $mirNumber = 'MIR-'.date('Ymd').'-'.Str::upper(Str::random(4));
 
             $issue = MaterialIssue::create([
                 'mir_number' => $mirNumber,
@@ -319,20 +342,24 @@ class PublicMaterialIssueForm extends Component
             foreach ($this->details as $detailData) {
                 $poIssuedId = $detailData['delivery_order_receipt_detail_id']; // ini berisi purchase_order_issued_id sekarang
                 $diminta = (float) $detailData['diminta'];
-                
+
                 // Ambil semua DO receipts untuk PO item ini, prioritaskan yang BOH-nya lebih dari 0
                 $receipts = DeliveryOrderReceiptDetail::where('purchase_order_issued_id', $poIssuedId)
-                                ->orderBy('id', 'asc')
-                                ->get();
-                                
+                    ->orderBy('id', 'asc')
+                    ->get();
+
                 foreach ($receipts as $receipt) {
-                    if ($diminta <= 0) break;
-                    
+                    if ($diminta <= 0) {
+                        break;
+                    }
+
                     $receiptBoh = (float) $receipt->quantity - (float) $receipt->issued_quantity;
-                    if ($receiptBoh <= 0) continue;
-                    
+                    if ($receiptBoh <= 0) {
+                        continue;
+                    }
+
                     $take = min($receiptBoh, $diminta);
-                    
+
                     MaterialIssueDetail::create([
                         'material_issue_id' => $issue->id,
                         'delivery_order_receipt_detail_id' => $receipt->id,
@@ -340,7 +367,7 @@ class PublicMaterialIssueForm extends Component
                         'diserahkan' => $take, // Default diserahkan = diminta
                         'boh' => $receiptBoh,
                     ]);
-                    
+
                     $diminta -= $take;
                 }
             }
@@ -371,14 +398,14 @@ class PublicMaterialIssueForm extends Component
             $this->agreement = false;
             $this->details = [];
             $this->addDetail();
-            
+
             $this->showConfirmModal = false;
             $this->showSuccessMessage = true;
             $this->dispatch('mir-submitted');
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->addError('submit', 'Gagal menyimpan pengajuan: ' . $e->getMessage());
+            $this->addError('submit', 'Gagal menyimpan pengajuan: '.$e->getMessage());
         }
     }
 

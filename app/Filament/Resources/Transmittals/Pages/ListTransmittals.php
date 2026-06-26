@@ -17,7 +17,7 @@ class ListTransmittals extends ListRecords
                 ->label('Scan Transmittal QC')
                 ->icon('heroicon-o-qr-code')
                 ->color('primary')
-                ->url(fn(): string => TransmittalResource::getUrl('bulk-scan')),
+                ->url(fn (): string => TransmittalResource::getUrl('bulk-scan')),
         ];
     }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Frontend;
 
-use Livewire\Component;
 use Livewire\Attributes\Title;
+use Livewire\Component;
 
 #[Title('Welcome - Receiving PKT')]
 class Home extends Component

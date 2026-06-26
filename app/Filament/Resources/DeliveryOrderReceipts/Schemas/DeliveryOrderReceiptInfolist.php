@@ -315,26 +315,26 @@ class DeliveryOrderReceiptInfolist
                                         ->icon('heroicon-m-exclamation-triangle')
                                         ->color(fn ($record) => $record->status === 'Pending' ? 'danger' : 'gray')
                                         ->weight(FontWeight::Bold)
-                                        ->visible(fn ($record) => !empty($record->delay_reason)),
+                                        ->visible(fn ($record) => ! empty($record->delay_reason)),
 
                                     TextEntry::make('pending_date')
                                         ->label('Tanggal Mulai Pending')
                                         ->dateTime('d M Y, H:i')
                                         ->color('gray')
                                         ->icon('heroicon-m-calendar')
-                                        ->visible(fn ($record) => !empty($record->pending_date)),
+                                        ->visible(fn ($record) => ! empty($record->pending_date)),
 
                                     TextEntry::make('pending_resolved_date')
                                         ->label('Tanggal Selesai Pending')
                                         ->dateTime('d M Y, H:i')
                                         ->color('success')
                                         ->icon('heroicon-m-check-circle')
-                                        ->visible(fn ($record) => !empty($record->pending_resolved_date)),
+                                        ->visible(fn ($record) => ! empty($record->pending_resolved_date)),
 
                                     TextEntry::make('delay_notes')
                                         ->label('Catatan Pending')
                                         ->color('gray')
-                                        ->visible(fn ($record) => !empty($record->delay_notes)),
+                                        ->visible(fn ($record) => ! empty($record->delay_notes)),
 
                                     TextEntry::make('stage')
                                         ->label(function ($record) {

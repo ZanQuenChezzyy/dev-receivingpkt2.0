@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WarehouseTransmittals;
 
+use App\Filament\Clusters\PengirimanGudang\PengirimanGudangCluster;
 use App\Filament\Resources\WarehouseTransmittals\Pages\CreateWarehouseTransmittal;
 use App\Filament\Resources\WarehouseTransmittals\Pages\EditWarehouseTransmittal;
 use App\Filament\Resources\WarehouseTransmittals\Pages\ListWarehouseTransmittals;
@@ -25,7 +26,7 @@ class WarehouseTransmittalResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Transmittal Gudang';
 
-    protected static ?string $cluster = \App\Filament\Clusters\PengirimanGudang\PengirimanGudangCluster::class;
+    protected static ?string $cluster = PengirimanGudangCluster::class;
 
     protected static ?string $recordTitleAttribute = 'transmittal_no';
 

@@ -48,7 +48,7 @@ class GrsRdtvForm
                             ->live()
                             ->required(),
                         Hidden::make('created_by')
-                            ->default(fn() => Auth::id()),
+                            ->default(fn () => Auth::id()),
                     ])->columns(2),
 
                 Section::make('Unggah Dokumen')
@@ -60,11 +60,11 @@ class GrsRdtvForm
                             ->multiple()
                             ->acceptedFileTypes(['application/pdf'])
                             ->storeFiles(false)
-                            ->required(fn(Get $get) => $get('category') === 'GRS')
+                            ->required(fn (Get $get) => $get('category') === 'GRS')
                             ->helperText(str('**Format Nama File**: `5300057474-10-5208-17062026.pdf` (Harus persis sama dengan Kode Dokumen di Sistem)')
                                 ->inlineMarkdown()
                                 ->toHtmlString())
-                            ->visible(fn(Get $get) => $get('category') === 'GRS'),
+                            ->visible(fn (Get $get) => $get('category') === 'GRS'),
 
                         Repeater::make('items')
                             ->label('Unggah Dokumen RDTV & Alasan')
@@ -82,11 +82,11 @@ class GrsRdtvForm
                                     ->placeholder('Masukkan Alasan Penolakan Dokumen RDTV')
                                     ->autosize()
                                     ->required()
-                                    ->rows(1)
+                                    ->rows(1),
                             ])
-                            ->visible(fn(Get $get) => $get('category') === 'RDTV')
+                            ->visible(fn (Get $get) => $get('category') === 'RDTV')
                             ->defaultItems(1)
-                            ->addActionLabel('Tambah Dokumen Lainnya')
+                            ->addActionLabel('Tambah Dokumen Lainnya'),
                     ]),
             ]);
     }

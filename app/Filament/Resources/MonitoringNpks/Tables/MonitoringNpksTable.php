@@ -103,7 +103,7 @@ class MonitoringNpksTable
                     TextColumn::make('doc_status')
                         ->label('Status Dokumen')
                         ->badge()
-                        ->icon(fn(string $state): string => match (strtolower($state)) {
+                        ->icon(fn (string $state): string => match (strtolower($state)) {
                             'completed' => 'heroicon-m-check-badge',
                             'outstanding' => 'heroicon-m-clock',
                             default => 'heroicon-m-document',

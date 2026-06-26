@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Filament\Forms\Components\DatePicker;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\ServiceProvider;
@@ -23,8 +24,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
 
-
-        \Filament\Forms\Components\DatePicker::configureUsing(function (\Filament\Forms\Components\DatePicker $component) {
+        DatePicker::configureUsing(function (DatePicker $component) {
             $component->displayFormat('d F Y');
         });
 

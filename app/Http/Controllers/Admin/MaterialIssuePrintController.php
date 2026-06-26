@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\MaterialIssue;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
 class MaterialIssuePrintController extends Controller
@@ -28,21 +29,21 @@ class MaterialIssuePrintController extends Controller
 
     protected function generatePdf($records)
     {
-        if (!$records instanceof \Illuminate\Database\Eloquent\Collection) {
-            $records = \Illuminate\Database\Eloquent\Collection::make($records);
+        if (! $records instanceof Collection) {
+            $records = Collection::make($records);
         }
-        
+
         $records->load(['materialIssueDetails.deliveryOrderReceiptDetail', 'purchaseOrderIssued', 'createdBy']);
-        
+
         $pdf = Pdf::loadView('pdf.mir', [
             'records' => $records,
         ]);
-        
+
         // F4 size: 215 x 330 mm (609.45 x 935.43 pt)
         $pdf->setPaper([0, 0, 609.4488, 935.433], 'portrait');
-        
-        $filename = $records->count() === 1 
-            ? 'MIR-' . str_replace('/', '-', $records->first()->mir_number) . '.pdf'
+
+        $filename = $records->count() === 1
+            ? 'MIR-'.str_replace('/', '-', $records->first()->mir_number).'.pdf'
             : 'MIR-Bulk.pdf';
 
         return $pdf->stream($filename);
