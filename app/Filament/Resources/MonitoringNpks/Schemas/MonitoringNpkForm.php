@@ -331,7 +331,7 @@ class MonitoringNpkForm
                                                     $uoi = (string) ($h['uoi'] ?? '');
                                                     $sisa = max(0, $po - $usedDb);
 
-                                                    $sisaText = number_format($sisa, 2, ',', '.') . ' ' . $uoi;
+                                                    $sisaText = number_format($sisa, 0, ',', '.') . ' ' . $uoi;
 
                                                     if ($sisa > 0) {
                                                         return new HtmlString("<span class='text-sm font-semibold text-danger-600'>Sisa: {$sisaText}</span> <span class='text-xs text-gray-500'>(Target PO: {$po} {$uoi})</span>");
