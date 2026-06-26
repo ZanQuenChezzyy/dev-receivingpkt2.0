@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\DeliveryOrderReceiptDetail;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
@@ -10,10 +11,15 @@ use Illuminate\Support\HtmlString;
 
 class MaterialValueOverview extends BaseWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 1;
 
     protected function getStats(): array
     {
+        $month = $this->filters['month'] ?? now()->month;
+        $year = $this->filters['year'] ?? now()->year;
+
         // Daftar 4 MRPType secara spesifik sesuai permintaan:
         $mrpTypes = ['V1', 'PD', 'NONSTOCK', 'INVESTASI'];
 
@@ -31,9 +37,9 @@ class MaterialValueOverview extends BaseWidget
             $baseGrsQuery = DeliveryOrderReceiptDetail::query()
                 ->join('purchase_order_issueds', 'delivery_order_receipt_details.purchase_order_issued_id', '=', 'purchase_order_issueds.id')
                 ->where('purchase_order_issueds.mrp_type', $mrpType)
-                ->whereHas('deliveryOrderReceipt.grsRdtvItems.grsRdtv', function ($query) {
-                    $query->whereMonth('transaction_date', now()->month)
-                        ->whereYear('transaction_date', now()->year);
+                ->whereHas('deliveryOrderReceipt.grsRdtvItems.grsRdtv', function ($query) use ($month, $year) {
+                    $query->whereMonth('transaction_date', $month)
+                        ->whereYear('transaction_date', $year);
                 });
 
             $totalGrsBulanIni = (clone $baseGrsQuery)->sum('delivery_order_receipt_details.total_amount_snapshot');
@@ -42,9 +48,9 @@ class MaterialValueOverview extends BaseWidget
             $kedatanganMurni = DeliveryOrderReceiptDetail::query()
                 ->join('purchase_order_issueds', 'delivery_order_receipt_details.purchase_order_issued_id', '=', 'purchase_order_issueds.id')
                 ->where('purchase_order_issueds.mrp_type', $mrpType)
-                ->whereHas('deliveryOrderReceipt', function ($query) {
-                    $query->whereMonth('received_date', now()->month)
-                        ->whereYear('received_date', now()->year);
+                ->whereHas('deliveryOrderReceipt', function ($query) use ($month, $year) {
+                    $query->whereMonth('received_date', $month)
+                        ->whereYear('received_date', $year);
                 })
                 ->sum('delivery_order_receipt_details.total_amount_snapshot');
 
@@ -52,13 +58,13 @@ class MaterialValueOverview extends BaseWidget
             $kedatanganDanGrs = DeliveryOrderReceiptDetail::query()
                 ->join('purchase_order_issueds', 'delivery_order_receipt_details.purchase_order_issued_id', '=', 'purchase_order_issueds.id')
                 ->where('purchase_order_issueds.mrp_type', $mrpType)
-                ->whereHas('deliveryOrderReceipt', function ($query) {
-                    $query->whereMonth('received_date', now()->month)
-                        ->whereYear('received_date', now()->year);
+                ->whereHas('deliveryOrderReceipt', function ($query) use ($month, $year) {
+                    $query->whereMonth('received_date', $month)
+                        ->whereYear('received_date', $year);
                 })
-                ->whereHas('deliveryOrderReceipt.grsRdtvItems.grsRdtv', function ($query) {
-                    $query->whereMonth('transaction_date', now()->month)
-                        ->whereYear('transaction_date', now()->year);
+                ->whereHas('deliveryOrderReceipt.grsRdtvItems.grsRdtv', function ($query) use ($month, $year) {
+                    $query->whereMonth('transaction_date', $month)
+                        ->whereYear('transaction_date', $year);
                 })
                 ->sum('delivery_order_receipt_details.total_amount_snapshot');
 
@@ -73,9 +79,9 @@ class MaterialValueOverview extends BaseWidget
             $abcIndicators = DeliveryOrderReceiptDetail::query()
                 ->join('purchase_order_issueds', 'delivery_order_receipt_details.purchase_order_issued_id', '=', 'purchase_order_issueds.id')
                 ->where('purchase_order_issueds.mrp_type', $mrpType)
-                ->whereHas('deliveryOrderReceipt', function ($query) {
-                    $query->whereMonth('received_date', now()->month)
-                        ->whereYear('received_date', now()->year);
+                ->whereHas('deliveryOrderReceipt', function ($query) use ($month, $year) {
+                    $query->whereMonth('received_date', $month)
+                        ->whereYear('received_date', $year);
                 })
                 ->select('purchase_order_issueds.abc_indicator', DB::raw('SUM(delivery_order_receipt_details.total_amount_snapshot) as total'))
                 ->whereNotNull('purchase_order_issueds.abc_indicator')
