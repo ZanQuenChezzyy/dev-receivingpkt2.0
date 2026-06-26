@@ -616,34 +616,27 @@ html.dark body {
 }
 
 /* =========================================================
-   G. STYLING NOTIFICATIONS (TOASTS) AGAR LIQUID GLASS
+   G. STYLING NOTIFICATIONS (Premium Clean Glassmorphism)
    ========================================================= */
 
 .fi-no-notification {
-    @apply !bg-white/40 dark:!bg-slate-900/40 !backdrop-blur-3xl !rounded-2xl transition-all duration-300;
-    
-    /* 3D Border & Inset Shadow Premium */
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    border-top-color: rgba(255, 255, 255, 0.8) !important;
-    border-left-color: rgba(255, 255, 255, 0.5) !important;
-    
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 16px 32px rgba(0,0,0,0.1) !important;
-    
-    /* Kilap Kaca */
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%) !important;
+    @apply !bg-white/80 dark:!bg-slate-900/80 !backdrop-blur-2xl !rounded-2xl transition-all duration-300;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08) !important;
+    background-image: none !important; /* Menghilangkan kilap (liquid glass) */
 }
 
 .dark .fi-no-notification {
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    border-top-color: rgba(255, 255, 255, 0.15) !important;
-    border-left-color: rgba(255, 255, 255, 0.15) !important;
-    
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 16px 32px rgba(0,0,0,0.3) !important;
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 20%, transparent 40%) !important;
+    @apply !bg-gray-900/80;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3) !important;
+    background-image: none !important;
 }
 
+/* Pastikan isinya transparan agar tidak tumpang tindih dengan background container utama */
 .fi-no-notification-main,
-.fi-no-notification-content {
+.fi-no-notification-content,
+.fi-no-notification-unread-indicator {
     @apply !bg-transparent;
 }
 
