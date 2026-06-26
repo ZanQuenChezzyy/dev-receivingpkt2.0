@@ -68,10 +68,14 @@ class MaterialValueOverview extends BaseWidget
                 })
                 ->sum('delivery_order_receipt_details.total_amount_snapshot');
 
-            // 4. Belum GRS (Total seluruh antrean dari kapanpun yang belum di-GRS)
+            // 4. Belum GRS (Total barang tiba di bulan terkait yang belum di-GRS)
             $belumGrs = DeliveryOrderReceiptDetail::query()
                 ->join('purchase_order_issueds', 'delivery_order_receipt_details.purchase_order_issued_id', '=', 'purchase_order_issueds.id')
                 ->where('purchase_order_issueds.mrp_type', $mrpType)
+                ->whereHas('deliveryOrderReceipt', function ($query) use ($month, $year) {
+                    $query->whereMonth('received_date', $month)
+                        ->whereYear('received_date', $year);
+                })
                 ->whereDoesntHave('deliveryOrderReceipt.grsRdtvItems')
                 ->sum('delivery_order_receipt_details.total_amount_snapshot');
 
