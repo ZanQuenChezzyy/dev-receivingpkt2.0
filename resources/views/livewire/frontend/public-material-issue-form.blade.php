@@ -247,7 +247,7 @@
                     </div>
                 </div>
             @else
-            <div class="relative z-10 group/step animate-fade-in-up">
+            <div class="relative z-10 group/step animate-fade-in-up mb-12">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div class="flex items-center gap-6">
                         <div class="flex flex-col items-center justify-center w-24 h-24 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 shadow-sm shrink-0 relative overflow-hidden transition-all duration-500 group-hover/step:shadow-md group-hover/step:border-green-500/30">
