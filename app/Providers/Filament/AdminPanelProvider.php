@@ -7,6 +7,7 @@ use App\Filament\Pages\EditProfile;
 use App\Filament\Pages\Login;
 use Caresome\FilamentAuthDesigner\AuthDesignerPlugin;
 use Caresome\FilamentAuthDesigner\Enums\MediaPosition;
+use Caresome\FilamentAuthDesigner\View\AuthDesignerRenderHook;
 use Caresome\FilamentNeobrutalism\NeobrutalismeTheme;
 use Devonab\FilamentEasyFooter\EasyFooterPlugin;
 use Filament\Enums\ThemeMode;
@@ -76,7 +77,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->when(
                 $themePlugin,
-                fn (Panel $panel) => $panel->plugins([$themePlugin])
+                fn(Panel $panel) => $panel->plugins([$themePlugin])
             )
             // FOOTER PLUGIN
             ->plugins([
@@ -85,11 +86,12 @@ class AdminPanelProvider extends PanelProvider
                     ->withSentence('LaravelChezzy. All rights reserved.'),
                 AuthDesignerPlugin::make()
                     ->defaults(
-                        fn ($config) => $config
-                            ->media(asset('images/auth/background-auth.png'))
+                        fn($config) => $config
+                            ->media(asset('images/auth/background-auth-3.png'))
                             ->mediaPosition(MediaPosition::Left)
-                            ->blur(0)
+                            ->blur(2)
                             ->mediasize('70%')
+                            ->renderHook(AuthDesignerRenderHook::MediaOverlay, fn() => view('auth.motivator-quotes'))
                     )
                     ->themeToggle(),
                 // StickyTableHeaderPlugin::make()
