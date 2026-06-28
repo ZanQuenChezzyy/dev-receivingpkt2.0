@@ -65,7 +65,8 @@ class DelayLogsRelationManager extends RelationManager
                             ->placeholder('-')
                             ->columnSpanFull(),
                     ])
-                    ->columns(3),
+                    ->columns(3)
+                    ->columnSpanFull(),
             ]);
     }
 
