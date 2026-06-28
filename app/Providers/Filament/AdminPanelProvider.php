@@ -83,7 +83,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 EasyFooterPlugin::make()
                     ->withBorder()
-                    ->withSentence('LaravelChezzy. All rights reserved.'),
+                    ->withSentence('Receiving PKT v2.0 By Andereyan Muhammat. All rights reserved.'),
                 AuthDesignerPlugin::make()
                     ->defaults(
                         fn($config) => $config

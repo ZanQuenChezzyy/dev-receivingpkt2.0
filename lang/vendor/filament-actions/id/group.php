@@ -1,9 +1,8 @@
 <?php
 
 return [
-
-    'trigger' => [
-        'label' => 'Tindakan',
-    ],
-
+  'trigger' => 
+  [
+    'label' => 'Tindakan',
+  ],
 ];

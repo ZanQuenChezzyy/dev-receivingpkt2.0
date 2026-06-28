@@ -2,13 +2,16 @@
 
 namespace App\Filament\Resources\DeliveryOrderReceipts\Pages;
 
+use App\Filament\Exports\DeliveryOrderReceiptExporter;
 use App\Filament\Resources\DeliveryOrderReceipts\DeliveryOrderReceiptResource;
 use App\Models\DeliveryOrderReceipt;
 use Filament\Actions\CreateAction;
+use Filament\Actions\ExportAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
 class ListDeliveryOrderReceipts extends ListRecords
 {
@@ -17,6 +20,23 @@ class ListDeliveryOrderReceipts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            ExportAction::make()
+                ->exporter(DeliveryOrderReceiptExporter::class)
+                ->columnMappingColumns(4)
+                ->label('Ekspor Data Penerimaan')
+                ->color('gray')
+                ->icon(Heroicon::DocumentArrowDown)
+                ->modifyQueryUsing(function (Builder $query, ExportAction $action) {
+                    $data = $action->getData();
+                    if (!empty($data['created_at_range'])) {
+                        $dates = explode(' - ', $data['created_at_range']);
+                        if (count($dates) === 2) {
+                            $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->startOfDay();
+                            $endDate = Carbon::createFromFormat('d/m/Y', trim($dates[1]))->endOfDay();
+                            $query->whereBetween('created_at', [$startDate, $endDate]);
+                        }
+                    }
+                }),
             CreateAction::make()
                 ->label('Tambah Penerimaan DO')
                 ->icon(Heroicon::PlusCircle),

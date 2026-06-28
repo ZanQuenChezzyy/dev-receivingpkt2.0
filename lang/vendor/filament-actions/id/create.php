@@ -1,37 +1,30 @@
 <?php
 
 return [
-
-    'single' => [
-
-        'label' => 'Buat',
-
-        'modal' => [
-
-            'heading' => 'Buat :label',
-
-            'actions' => [
-
-                'create' => [
-                    'label' => 'Buat',
-                ],
-
-                'create_another' => [
-                    'label' => 'Buat & buat lainnya',
-                ],
-
-            ],
-
+  'single' => 
+  [
+    'label' => 'Buat',
+    'modal' => 
+    [
+      'heading' => 'Buat :label',
+      'actions' => 
+      [
+        'create' => 
+        [
+          'label' => 'Buat',
         ],
-
-        'notifications' => [
-
-            'created' => [
-                'title' => 'Data berhasil dibuat',
-            ],
-
+        'create_another' => 
+        [
+          'label' => 'Buat & buat lainnya',
         ],
-
+      ],
     ],
-
+    'notifications' => 
+    [
+      'created' => 
+      [
+        'title' => 'Data berhasil dibuat',
+      ],
+    ],
+  ],
 ];
