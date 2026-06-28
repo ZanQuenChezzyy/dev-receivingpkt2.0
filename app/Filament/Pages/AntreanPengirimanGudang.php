@@ -63,7 +63,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->iconColor('primary')
                         ->color('primary')
                         ->weight(FontWeight::Bold)
-                        ->getStateUsing(fn ($record) => $record->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
+                        ->getStateUsing(fn($record) => $record->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
                         ->description(function ($record) {
                             $doNumber = $record->deliveryOrderReceipt?->delivery_oder_no ?? '-';
                             $js = 'event.stopPropagation(); event.preventDefault(); ';
@@ -101,26 +101,29 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->searchable()
                         ->sortable()
                         ->copyable()
-                        ->copyMessage('Material No disalin!'),
+                        ->copyMessage('Material No disalin!')
+                        ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('description')
                         ->label('Deskripsi')
                         ->limit(40)
-                        ->tooltip(fn ($record) => $record->description)
-                        ->searchable(),
+                        ->tooltip(fn($record) => $record->description)
+                        ->searchable()
+                        ->toggleable(isToggledHiddenByDefault: true),
                 ]),
 
                 // 📊 GRUP 3: KUANTITAS & PENGIRIMAN
                 ColumnGroup::make('Kuantitas & Pengiriman', [
                     TextColumn::make('quantity')
-                        ->label('Qty DO')
+                        ->label('Diterima')
                         ->numeric()
                         ->badge()
                         ->color('gray')
-                        ->sortable(),
+                        ->sortable()
+                        ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('qty_mir')
-                        ->label('Qty Diambil (MIR)')
+                        ->label('Diambil (MIR)')
                         ->state(function (DeliveryOrderReceiptDetail $record) {
                             return $record->materialIssueDetails()->sum('diserahkan');
                         })
@@ -137,8 +140,8 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         })
                         ->numeric()
                         ->badge()
-                        ->color(fn ($state) => $state > 0 ? 'warning' : 'success')
-                        ->icon(fn ($state) => $state > 0 ? 'heroicon-m-exclamation-circle' : 'heroicon-m-check-circle'),
+                        ->color(fn($state) => $state > 0 ? 'warning' : 'success')
+                        ->icon(fn($state) => $state > 0 ? 'heroicon-m-exclamation-circle' : 'heroicon-m-check-circle'),
                 ]),
 
                 // 🎯 GRUP 4: TUJUAN PENGIRIMAN
@@ -165,34 +168,34 @@ class AntreanPengirimanGudang extends Page implements HasTable
                     ->url(function (DeliveryOrderReceiptDetail $record) {
                         $grsItem = $record->deliveryOrderReceipt->grsRdtvItems->first();
 
-                        return $grsItem ? asset('storage/'.$grsItem->file_path) : '#';
+                        return $grsItem ? asset('storage/' . $grsItem->file_path) : '#';
                     })
                     ->openUrlInNewTab()
-                    ->visible(fn (DeliveryOrderReceiptDetail $record) => $record->deliveryOrderReceipt->grsRdtvItems->isNotEmpty()),
+                    ->visible(fn(DeliveryOrderReceiptDetail $record) => $record->deliveryOrderReceipt->grsRdtvItems->isNotEmpty()),
             ])
             ->toolbarActions([
                 BulkAction::make('buat_transmittal')
-                    ->label('Generate Transmittal Gudang')
+                    ->label('Buat Transmittal Gudang')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('primary')
                     ->button()
                     ->outlined()
                     ->requiresConfirmation()
-                    ->modalHeading('Generate Transmittal Gudang')
-                    ->modalDescription('Pastikan Anda telah memilih Gudang Tujuan pada baris tabel sebelum men-generate transmittal.')
-                    ->modalSubmitActionLabel('Ya, Generate')
+                    ->modalHeading('Buat Transmittal Gudang')
+                    ->modalDescription('Pastikan Anda telah memilih Gudang Tujuan pada baris tabel sebelum men-Buat transmittal.')
+                    ->modalSubmitActionLabel('Ya, Buat')
                     ->action(function (Collection $records) {
                         $groupedRecords = $records->groupBy('warehouse_destination_id');
 
                         $count = 0;
                         foreach ($groupedRecords as $destinationId => $items) {
-                            if (! $destinationId) {
+                            if (!$destinationId) {
                                 continue;
                             }
 
                             $destination = WarehouseDestination::find($destinationId);
 
-                            if (! $destination) {
+                            if (!$destination) {
                                 continue;
                             }
 
@@ -201,12 +204,12 @@ class AntreanPengirimanGudang extends Page implements HasTable
                                 ->whereDate('created_at', now()->toDateString())
                                 ->first();
 
-                            if (! $transmittal) {
-                                // Generate Transmittal No
+                            if (!$transmittal) {
+                                // Buat Transmittal No
                                 $date = now()->format('Ymd');
                                 $lastTransmittal = WarehouseTransmittal::whereDate('created_at', now()->toDateString())->latest()->first();
                                 $sequence = $lastTransmittal ? (intval(substr($lastTransmittal->transmittal_no, -4)) + 1) : 1;
-                                $transmittalNo = 'TRG-'.$date.'-'.str_pad($sequence, 4, '0', STR_PAD_LEFT);
+                                $transmittalNo = 'TRG-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
 
                                 // Create Transmittal
                                 $transmittal = WarehouseTransmittal::create([
@@ -234,7 +237,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                                 ->send();
                         } else {
                             Notification::make()
-                                ->title('Pilih Tujuan Gudang terlebih dahulu pada baris tabel sebelum generate.')
+                                ->title('Pilih Tujuan Gudang terlebih dahulu pada baris tabel sebelum Buat.')
                                 ->warning()
                                 ->send();
                         }

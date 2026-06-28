@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Transmittals\Tables;
 
 use App\Filament\Resources\Transmittals\TransmittalResource;
 use App\Models\Transmittal;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -32,19 +33,19 @@ class TransmittalsTable
                         ->color('primary')
                         ->copyable()
                         ->copyMessage('Nomor disalin')
-                        ->description(fn (Transmittal $record): string => $record->created_at ? $record->created_at->format('d M Y, H:i') : '-'),
+                        ->description(fn(Transmittal $record): string => $record->created_at ? $record->created_at->format('d M Y, H:i') : '-'),
                 ]),
 
                 ColumnGroup::make('Status & Tujuan', [
                     TextColumn::make('type')
                         ->label('Tipe')
                         ->badge()
-                        ->color(fn ($state) => match ($state) {
+                        ->color(fn($state) => match ($state) {
                             'Kirim' => 'primary',
                             'Kembali' => 'warning',
                             default => 'gray',
                         })
-                        ->icon(fn ($state) => match ($state) {
+                        ->icon(fn($state) => match ($state) {
                             'Kirim' => 'heroicon-m-paper-airplane',
                             'Kembali' => 'heroicon-m-arrow-uturn-left',
                             default => 'heroicon-m-document',
@@ -52,14 +53,14 @@ class TransmittalsTable
 
                     TextColumn::make('destination')
                         ->label('Tujuan')
-                        ->formatStateUsing(fn ($state, Transmittal $record) => $record->type === 'Kembali' ? 'Receiving' : $state)
+                        ->formatStateUsing(fn($state, Transmittal $record) => $record->type === 'Kembali' ? 'Receiving' : $state)
                         ->badge()
-                        ->color(fn ($state, Transmittal $record) => $record->type === 'Kembali' ? 'warning' : match ($state) {
+                        ->color(fn($state, Transmittal $record) => $record->type === 'Kembali' ? 'warning' : match ($state) {
                             'ISTEK' => 'info',
                             'PPE' => 'success',
                             default => 'gray',
                         })
-                        ->icon(fn ($state, Transmittal $record) => $record->type === 'Kembali' ? 'heroicon-m-home-modern' : match ($state) {
+                        ->icon(fn($state, Transmittal $record) => $record->type === 'Kembali' ? 'heroicon-m-home-modern' : match ($state) {
                             'ISTEK' => 'heroicon-m-building-office',
                             'PPE' => 'heroicon-m-building-office-2',
                             default => 'heroicon-m-map-pin',
@@ -68,11 +69,11 @@ class TransmittalsTable
 
                 ColumnGroup::make('Statistik', [
                     TextColumn::make('total_documents')
-                        ->getStateUsing(fn ($record) => $record->transmittalItems()->count())
+                        ->getStateUsing(fn($record) => $record->transmittalItems()->count())
                         ->label('Total Dokumen')
                         ->badge()
                         ->color('gray')
-                        ->formatStateUsing(fn ($state) => new HtmlString("<strong>{$state}</strong> Dokumen"))
+                        ->formatStateUsing(fn($state) => new HtmlString("<strong>{$state}</strong> Dokumen"))
                         ->icon('heroicon-m-document-duplicate'),
                 ]),
 
@@ -103,11 +104,20 @@ class TransmittalsTable
             ->recordUrl(null)
             ->recordAction(ViewAction::class)
             ->recordActions([
+                Action::make('print')
+                    ->label('Cetak')
+                    ->icon('heroicon-m-printer')
+                    ->color('gray')
+                    ->button()
+                    ->outlined()
+                    ->visible(fn(Transmittal $record): bool => $record->type === 'Kirim')
+                    ->url(fn(Transmittal $record): string => route('filament.admin.resources.transmittals.print_qc', $record))
+                    ->openUrlInNewTab(),
                 ActionGroup::make([
                     ViewAction::make()
                         ->color('info'),
                     EditAction::make()
-                        ->url(fn (Transmittal $record): string => TransmittalResource::getUrl('bulk-scan', ['id' => $record->id]))
+                        ->url(fn(Transmittal $record): string => TransmittalResource::getUrl('bulk-scan', ['id' => $record->id]))
                         ->color('warning')
                         ->icon('heroicon-m-qr-code')
                         ->label('Lanjutkan Scan'),

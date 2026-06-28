@@ -17,13 +17,20 @@ Route::get('/admin/material-issues/print-bulk', [MaterialIssuePrintController::c
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.material-issues.print_bulk');
 
-Route::get('/admin/material-issues/{materialIssue}/print', [MaterialIssuePrintController::class, 'print'])
+Route::get('/admin/material-issues/{materialIssue:mir_number}/print', [MaterialIssuePrintController::class, 'print'])
+    ->where('materialIssue', '.*')
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.material-issues.print');
 
-Route::get('/admin/warehouse-transmittals/{transmittal}/print', [TransmittalPrintController::class, 'print'])
+Route::get('/admin/warehouse-transmittals/{transmittal:transmittal_no}/print', [TransmittalPrintController::class, 'print'])
+    ->where('transmittal', '.*')
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.warehouse-transmittals.print');
+
+Route::get('/admin/transmittals/{transmittal:transmittal_no}/print-qc', [\App\Http\Controllers\Admin\QCTransmittalPrintController::class, 'print'])
+    ->where('transmittal', '.*')
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.resources.transmittals.print_qc');
 
 Route::get('/admin/warehouse-transmittals/print-bulk', [TransmittalPrintController::class, 'printBulk'])
     ->middleware(['web', 'auth'])
@@ -33,6 +40,7 @@ Route::get('/admin/print-bulk-do-qr', [QRCodeController::class, 'bulkPrint'])
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.delivery-order-receipts.bulk_print_qr');
 
-Route::get('/admin/delivery-order-receipts/{id}/print-qr', [QRCodeController::class, 'print'])
+Route::get('/admin/delivery-order-receipts/{deliveryOrderReceipt:document_code}/print-qr', [QRCodeController::class, 'print'])
+    ->where('deliveryOrderReceipt', '.*')
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.delivery-order-receipts.print_qr');

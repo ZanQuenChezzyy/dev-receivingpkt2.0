@@ -162,15 +162,15 @@
                             </svg>
                         </div>
                         <div class="pr-2 sm:pr-4">
-                            <p class="text-sm sm:text-base font-black text-slate-800 dark:text-white tracking-wide">Real-time SAP</p>
-                            <p class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Sinkronisasi otomatis</p>
+                            <p class="text-sm sm:text-base font-black text-slate-800 dark:text-white tracking-wide">Integrasi SAP</p>
+                            <p class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Update data real-time</p>
                         </div>
                     </div>
 
                     <!-- Floating Glass Widget 2 -->
                     <div class="absolute -top-6 right-2 sm:top-10 sm:-right-10 glass-panel px-4 py-3 sm:px-6 sm:py-4 sm:rounded-2xl flex items-center gap-3 transform hover:-rotate-3 transition-transform z-20">
                         <div class="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]"></div>
-                        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-white tracking-wider">MB51 Tracking Active</p>
+                        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-white tracking-wider">Data Receiving Terpusat</p>
                     </div>
 
                 </div>

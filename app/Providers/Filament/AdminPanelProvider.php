@@ -83,7 +83,9 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 EasyFooterPlugin::make()
                     ->withBorder()
-                    ->withSentence('Receiving PKT v2.0 By Andereyan Muhammat. All rights reserved.'),
+                    ->withSentence('Receiving PKT v2.0 By Andereyan Muhammat. All rights reserved.')
+                    ->hiddenFromPages(['admin/login', 'admin/register', 'admin/forgot-password'])
+                    ->hiddenFromPagesEnabled(),
                 AuthDesignerPlugin::make()
                     ->defaults(
                         fn($config) => $config

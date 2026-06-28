@@ -1,6 +1,6 @@
 <style>
     @page mir-page {
-        size: 215mm 330mm portrait;
+        size: 210mm 330mm portrait;
     }
     .page-mir {
         width: 100%;
@@ -61,7 +61,7 @@
                     PERMINTAAN PENGELUARAN BARANG
                 </td>
                 <td colspan="2" style="width: 30%;">
-                    Tanggal &nbsp;&nbsp;&nbsp;: {{ $record->tanggal ? $record->tanggal->format('d M Y') : '' }}
+                    Tanggal &nbsp;&nbsp;&nbsp;: {{ $record->tanggal ? $record->tanggal->translatedFormat('d F Y') : '' }}
                 </td>
             </tr>
             <tr>
@@ -160,7 +160,7 @@
         </table>
 
         <!-- Signatures Block -->
-        <table class="mir-table footer-table">
+        <table class="mir-table footer-table text-center">
             <tr class="font-bold">
                 <td style="width: 20%; font-weight: bold;">Diminta</td>
                 <td style="width: 20%; font-weight: bold;">Disetujui</td>
@@ -169,11 +169,11 @@
                 <td style="width: 20%; font-weight: bold;">Diterima</td>
             </tr>
             <tr>
-                <td>Dept: {{ $record->departemen }}</td>
-                <td>Dept: {{ $record->disetujui_oleh || $record->disetujui_signature ? 'ISTEK' : '' }}</td>
-                <td>Dept:</td>
-                <td>Dept: {{ $record->diserahkan_oleh || $record->diserahkan_signature ? 'Receiving' : '' }}</td>
-                <td>Dept: {{ $record->departemen }}</td>
+                <td>{{ $record->departemen ?: '-' }}</td>
+                <td>{{ $record->disetujui_oleh || $record->disetujui_signature ? 'ISTEK' : '-' }}</td>
+                <td>-</td>
+                <td>{{ $record->diserahkan_oleh || $record->diserahkan_signature ? 'Receiving' : '-' }}</td>
+                <td>{{ $record->departemen ?: '-' }}</td>
             </tr>
             <tr>
                 <td style="height: 60px; vertical-align: middle; text-align: center;">
@@ -206,19 +206,19 @@
                     @endif
                 </td>
             </tr>
-            <tr>
-                <td>Nama: {{ $record->diminta_oleh }}</td>
-                <td>Nama: {{ $record->disetujui_oleh }}</td>
-                <td>Nama: {{ $record->diketahui_oleh }}</td>
-                <td>Nama: {{ $record->diserahkan_oleh }}</td>
-                <td>Nama: {{ $record->diterima_oleh }}</td>
+            <tr class="text-center">
+                <td>{{ $record->diminta_oleh ?: '-' }}</td>
+                <td>{{ $record->disetujui_oleh ?: '-' }}</td>
+                <td>{{ $record->diketahui_oleh ?: '-' }}</td>
+                <td>{{ $record->diserahkan_oleh ?: '-' }}</td>
+                <td>{{ $record->diterima_oleh ?: '-' }}</td>
             </tr>
-            <tr>
-                <td>NPK: {{ $record->npk }}</td>
-                <td>NPK: {{ $record->disetujui_npk }}</td>
-                <td>NPK:</td>
-                <td>NPK: {{ $record->diserahkan_npk }}</td>
-                <td>NPK: {{ $record->npk }}</td>
+            <tr class="text-center">
+                <td>{{ $record->npk ?: '-' }}</td>
+                <td>{{ $record->disetujui_npk ?: '-' }}</td>
+                <td>-</td>
+                <td>{{ $record->diserahkan_npk ?: '-' }}</td>
+                <td>{{ $record->npk ?: '-' }}</td>
             </tr>
         </table>
     </div>

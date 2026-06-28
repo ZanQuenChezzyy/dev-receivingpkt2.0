@@ -39,8 +39,8 @@ class MaterialIssuePrintController extends Controller
             'records' => $records,
         ]);
 
-        // F4 size: 215 x 330 mm (609.45 x 935.43 pt)
-        $pdf->setPaper([0, 0, 609.4488, 935.433], 'portrait');
+        // F4 size: 210 x 330 mm (595.276 x 935.433 pt)
+        $pdf->setPaper([0, 0, 595.276, 935.433], 'portrait');
 
         $filename = $records->count() === 1
             ? 'MIR-'.str_replace('/', '-', $records->first()->mir_number).'.pdf'

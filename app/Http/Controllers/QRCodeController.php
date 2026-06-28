@@ -10,10 +10,10 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class QRCodeController extends Controller
 {
-    public function print(Request $request, $id)
+    public function print(Request $request, DeliveryOrderReceipt $deliveryOrderReceipt)
     {
         $mode = $request->input('mode', 'both'); // 'material', 'document', 'both'
-        $do = DeliveryOrderReceipt::with(['deliveryOrderReceiptDetails.purchaseOrderIssued', 'deliveryOrderReceiptDetails.locationReceiving', 'receivedBy'])->findOrFail($id);
+        $do = $deliveryOrderReceipt->load(['deliveryOrderReceiptDetails.purchaseOrderIssued', 'deliveryOrderReceiptDetails.locationReceiving', 'receivedBy']);
 
         $qrContent = $do->document_code; // Ambil dari kolom document_code
         $qrDo = 'data:image/png;base64,'.base64_encode(QrCode::size(200)->generate($qrContent));

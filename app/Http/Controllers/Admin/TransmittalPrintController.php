@@ -28,26 +28,26 @@ class TransmittalPrintController extends Controller
         }
         $mirRecords = $mirRecords->unique('id')->values();
 
-        // Generate Transmittal PDF (A4 Landscape)
+        // Generate Transmittal PDF (F4 Portrait)
         $transmittalPdfStr = Pdf::loadView('pdf.transmittal', [
             'transmittal' => $transmittal,
-        ])->setPaper('a4', 'landscape')->output();
+        ])->setPaper([0, 0, 595.276, 935.433], 'portrait')->output();
 
         // If no MIR, just return Transmittal
         if ($mirRecords->isEmpty()) {
             return response($transmittalPdfStr, 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="Transmittal_'.$transmittal->transmittal_no.'.pdf"',
+                'Content-Disposition' => 'inline; filename="Transmittal_' . $transmittal->transmittal_no . '.pdf"',
             ]);
         }
 
         // Generate MIR PDF (F4 Portrait)
         $mirPdfStr = Pdf::loadView('pdf.mir', [
             'records' => $mirRecords,
-        ])->setPaper([0, 0, 609.4488, 935.433], 'portrait')->output();
+        ])->setPaper([0, 0, 595.276, 935.433], 'portrait')->output();
 
         // Merge PDFs
-        return $this->mergePdfs($transmittalPdfStr, $mirPdfStr, 'Transmittal_'.$transmittal->transmittal_no.'.pdf');
+        return $this->mergePdfs($transmittalPdfStr, $mirPdfStr, 'Transmittal_' . $transmittal->transmittal_no . '.pdf');
     }
 
     public function printBulk(Request $request)
@@ -83,10 +83,10 @@ class TransmittalPrintController extends Controller
         }
         $mirRecords = $mirRecords->unique('id')->values();
 
-        // Generate Bulk Transmittal PDF (A4 Landscape)
+        // Generate Bulk Transmittal PDF (F4 Portrait)
         $transmittalPdfStr = Pdf::loadView('pdf.transmittal_bulk', [
             'transmittals' => $transmittals,
-        ])->setPaper('a4', 'landscape')->output();
+        ])->setPaper([0, 0, 595.276, 935.433], 'portrait')->output();
 
         if ($mirRecords->isEmpty()) {
             return response($transmittalPdfStr, 200, [
@@ -98,7 +98,7 @@ class TransmittalPrintController extends Controller
         // Generate MIR PDF (F4 Portrait)
         $mirPdfStr = Pdf::loadView('pdf.mir', [
             'records' => $mirRecords,
-        ])->setPaper([0, 0, 609.4488, 935.433], 'portrait')->output();
+        ])->setPaper([0, 0, 595.276, 935.433], 'portrait')->output();
 
         return $this->mergePdfs($transmittalPdfStr, $mirPdfStr, 'Bulk_Transmittals.pdf');
     }
@@ -139,7 +139,7 @@ class TransmittalPrintController extends Controller
 
         return response($fpdi->Output('S'), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
         ]);
     }
 }

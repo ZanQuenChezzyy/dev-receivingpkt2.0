@@ -109,7 +109,7 @@
             background-color: #f1f5f9; /* Slate 100 for zebra */
         }
     </style>
-    <title>Transmittal {{ $transmittal->transmittal_no }}</title>
+    <title>Transmittal QC - {{ $printedAt->translatedFormat('d F Y, H:i') }}</title>
 </head>
 <body>
     <!-- Top Branding Line -->
@@ -125,12 +125,12 @@
             <tr>
                 <td style="width: 65%; vertical-align: bottom;">
 
-                    <div class="document-title">TRANSMITTAL PENGIRIMAN GUDANG</div>
-                    <div class="document-subtitle">Dokumen Pengiriman Barang Receiving Ke Gudang Penyimpanan</div>
+                    <div class="document-title">TRANSMITTAL QC</div>
+                    <div class="document-subtitle">Document Pengajuan Quality Control</div>
                 </td>
                 <td style="width: 35%; vertical-align: bottom; text-align: right;">
                     <div class="info-label">TANGGAL CETAK</div>
-                    <div class="info-value">{{ now()->translatedFormat('d F Y, H:i') }}</div>
+                    <div class="info-value">{{ $printedAt->translatedFormat('d F Y, H:i') }}</div>
                 </td>
             </tr>
         </table>
@@ -140,7 +140,7 @@
         <tr>
             <td style="width: 30%; vertical-align: top;">
                 <div class="info-label">DIKIRIM OLEH</div>
-                <div class="info-value">{{ $transmittal->destination->pic->name ?? '-' }}</div>
+                <div class="info-value">{{ $transmittal->createdBy->name ?? '-' }}</div>
             </td>
             <td style="width: 30%; vertical-align: top;">
                 <div class="info-label">DITERIMA OLEH</div>
@@ -150,10 +150,10 @@
                 <div class="destination-box text-right">
                     <div class="info-label">TUJUAN RECEIVING</div>
                     @php
-                        $dest = strtoupper($transmittal->destination->name ?? '-');
+                        $dest = strtoupper($transmittal->destination ?? '-');
                         if ($dest === 'ISTEK') $dest = 'INSPEKSI TEKNIK 2';
                     @endphp
-                    <div class="info-value pkt-orange">{{ $dest }}</div>
+                    <div class="info-value pkt-blue">{{ $dest }}</div>
                 </div>
             </td>
         </tr>
@@ -164,42 +164,52 @@
             <tr>
                 <th class="text-center" style="width: 3%; white-space: nowrap;">NO.</th>
                 <th class="text-center" style="width: 8%;">TGL KIRIM</th>
-                <th class="text-center" style="width: 9%;">NO. PO</th>
-                <th class="text-center" style="width: 5%;">ITEM</th>
+                <th class="text-center" style="width: 8%;">PO NO.</th>
+                <th class="text-center" style="width: 9%;">DOC GR</th>
+                <th class="text-center" style="width: 4%;">ITEM</th>
                 <th class="text-center" style="width: 9%;">MATERIAL</th>
                 <th class="text-left" style="width: 25%;">DESCRIPTION</th>
                 <th class="text-center" style="width: 6%;">QTY RCV</th>
-                <th class="text-center" style="width: 5%;">UOI</th>
-                <th class="text-center" style="width: 15%;">GUDANG TUJUAN</th>
-                <th class="text-center" style="width: 15%;">PENYIMPANAN 3P01</th>
+                <th class="text-center" style="width: 4%;">UOI</th>
+                <th class="text-center" style="width: 14%;">LOKASI</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($transmittal->items as $index => $item)
+            @php
+                $previousPoNo = null;
+                $no = 0;
+            @endphp
+            @foreach ($transmittal->transmittalItems as $item)
                 @php
-                    $detail = $item->detail;
-                    $poNo = optional($detail->purchaseOrderIssued)->purchase_order_no ?? '-';
-                    $storeArea = optional($detail->locationReceiving)->name ?? '-';
-                    if ($storeArea == '-' || empty($storeArea)) {
-                        $storeArea = 'FLOOR-E';
-                    }
+                    $receipt = $item->deliveryOrderReceipt;
+                    $details = $receipt?->deliveryOrderReceiptDetails ?? collect();
+                    $tanggalKirimFormat = $transmittal->created_at ? $transmittal->created_at->format('d/m/Y') : '-';
+                    $documentCode = $receipt?->document_code ?? '-';
                 @endphp
-                <tr>
-                    <td class="text-center font-bold" style="color: #475569;">{{ $index + 1 }}</td>
-                    <td class="text-center">{{ $transmittal->tanggal->format('d/m/Y') }}</td>
-                    <td class="text-center font-bold">{{ $poNo }}</td>
-                    <td class="text-center">{{ $detail->item_no ?? '-' }}</td>
-                    <td class="text-center">{{ $detail->material_code ?? '-' }}</td>
-                    <td class="text-left">{{ preg_replace('/\s+/', ' ', trim($detail->description ?? '-')) }}</td>
-                    <td class="text-center font-bold">{{ $detail->quantity !== null ? number_format((float) $detail->quantity) : '-' }}</td>
-                    <td class="text-center">{{ $detail->uoi ?? '-' }}</td>
+
+                @foreach ($details as $detail)
                     @php
-                        $destCol = strtoupper($transmittal->destination->name ?? '-');
-                        if ($destCol === 'ISTEK') $destCol = 'INSPEKSI TEKNIK 2';
+                        $poNo = $detail->purchaseOrderIssued?->purchase_order_no ?? '-';
+                        $location = $detail->locationReceiving?->name ?? '-';
+                        
+                        if ($poNo !== $previousPoNo) {
+                            $no++;
+                            $previousPoNo = $poNo;
+                        }
                     @endphp
-                    <td class="text-center" style="color: #475569;">{{ $destCol }}</td>
-                    <td class="text-center" style="color: #475569;">{{ strtoupper($storeArea) }}</td>
-                </tr>
+                    <tr>
+                        <td class="text-center font-bold" style="color: #475569;">{{ $no }}</td>
+                        <td class="text-center">{{ $tanggalKirimFormat }}</td>
+                        <td class="text-center font-bold">{{ $poNo }}</td>
+                        <td class="text-center">{{ substr($documentCode, 0, 10) }}</td>
+                        <td class="text-center">{{ $detail->item_no }}</td>
+                        <td class="text-center">{{ $detail->material_code ?? '-' }}</td>
+                        <td class="text-left">{{ preg_replace('/\s+/', ' ', trim($detail->description ?? '-')) }}</td>
+                        <td class="text-center font-bold">{{ number_format($detail->quantity ?? 0) }}</td>
+                        <td class="text-center">{{ $detail->uoi }}</td>
+                        <td class="text-center" style="color: #475569;">{{ $location }}</td>
+                    </tr>
+                @endforeach
             @endforeach
         </tbody>
     </table>

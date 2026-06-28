@@ -115,7 +115,10 @@ class PublicMaterialIssueForm extends Component
             $poItem = PurchaseOrderIssued::find($id);
             if ($poItem) {
                 $allPoItemIds = PurchaseOrderIssued::where('purchase_order_no', $poItem->purchase_order_no)->pluck('id');
-                $rawItems = DeliveryOrderReceiptDetail::with(['locationReceiving', 'deliveryOrderReceipt'])
+                $rawItems = DeliveryOrderReceiptDetail::with([
+                    'locationReceiving', 
+                    'deliveryOrderReceipt.grsRdtvItems.grsRdtv'
+                ])
                     ->whereIn('purchase_order_issued_id', $allPoItemIds)
                     ->get();
 
@@ -131,7 +134,15 @@ class PublicMaterialIssueForm extends Component
                     $locations = $group->map(fn ($i) => $i->locationReceiving?->name)->filter()->unique()->implode(', ');
 
                     $has_non_grs = $group->contains(function ($item) {
-                        return $item->deliveryOrderReceipt && $item->deliveryOrderReceipt->document_code !== '105';
+                        if (!$item->deliveryOrderReceipt) {
+                            return true;
+                        }
+                        
+                        $has_grs_category = $item->deliveryOrderReceipt->grsRdtvItems->contains(function($grsItem) {
+                            return $grsItem->grsRdtv && $grsItem->grsRdtv->category === 'GRS';
+                        });
+
+                        return !$has_grs_category;
                     });
 
                     return [

@@ -22,12 +22,12 @@ return [
     ],
     'select' => 
     [
-      'loading_message' => 'Loading...',
-      'no_options_message' => 'No options available.',
-      'no_search_results_message' => 'No options match your search.',
-      'placeholder' => 'Select an option',
-      'searching_message' => 'Searching...',
-      'search_prompt' => 'Start typing to search...',
+      'loading_message' => 'Memuat...',
+      'no_options_message' => 'Tidak ada opsi yang tersedia.',
+      'no_search_results_message' => 'Tidak ada opsi yang cocok dengan pencarian Anda.',
+      'placeholder' => 'Pilih opsi',
+      'searching_message' => 'Mencari...',
+      'search_prompt' => 'Mulai mengetik untuk mencari...',
     ],
   ],
   'fields' => 
@@ -104,7 +104,7 @@ return [
     ],
     'column_manager' => 
     [
-      'label' => 'Column manager',
+      'label' => 'Manajer kolom',
     ],
   ],
   'empty' => 
@@ -145,7 +145,7 @@ return [
       'placeholder' => 'Semua',
       'relationship' => 
       [
-        'empty_option_label' => 'None',
+        'empty_option_label' => 'Tidak ada',
       ],
     ],
     'trashed' => 
@@ -213,18 +213,18 @@ return [
   ],
   'column_manager' => 
   [
-    'heading' => 'Columns',
+    'heading' => 'Kolom',
     'actions' => 
     [
       'apply' => 
       [
-        'label' => 'Apply columns',
+        'label' => 'Terapkan kolom',
       ],
       'reset' => 
       [
-        'label' => 'Reset',
+        'label' => 'Atur ulang',
       ],
     ],
   ],
-  'default_model_label' => 'record',
+  'default_model_label' => 'data',
 ];

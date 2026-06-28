@@ -594,17 +594,17 @@ class DeliveryOrderReceiptsTable
                     Action::make('cetak_material')
                         ->label('Label Material')
                         ->icon(Heroicon::OutlinedTag)
-                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'material']))
+                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['deliveryOrderReceipt' => $record->document_code, 'mode' => 'material']))
                         ->openUrlInNewTab(),
                     Action::make('cetak_dokumen')
                         ->label('Kode Dokumen')
                         ->icon(Heroicon::OutlinedDocumentText)
-                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'document']))
+                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['deliveryOrderReceipt' => $record->document_code, 'mode' => 'document']))
                         ->openUrlInNewTab(),
                     Action::make('cetak_keduanya')
                         ->label('Material & Dokumen')
                         ->icon(Heroicon::OutlinedDocumentDuplicate)
-                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['id' => $record->id, 'mode' => 'both']))
+                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['deliveryOrderReceipt' => $record->document_code, 'mode' => 'both']))
                         ->openUrlInNewTab(),
                 ])
                     ->label('Cetak')

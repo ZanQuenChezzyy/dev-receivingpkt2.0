@@ -86,7 +86,7 @@ class WarehouseTransmittalsTable
                     ->color('success')
                     ->button()
                     ->outlined()
-                    ->url(fn ($record) => route('filament.admin.resources.warehouse-transmittals.print', ['transmittal' => $record->id]))
+                    ->url(fn ($record) => route('filament.admin.resources.warehouse-transmittals.print', ['transmittal' => $record->transmittal_no]))
                     ->openUrlInNewTab(),
             ])
             ->toolbarActions([
