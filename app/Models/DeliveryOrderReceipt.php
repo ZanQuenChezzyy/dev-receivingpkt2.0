@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 
 #[Fillable([
     'monitoring_npk_id',
@@ -98,5 +99,47 @@ class DeliveryOrderReceipt extends Model
     public function grsRdtvItems(): HasMany
     {
         return $this->hasMany(GrsRdtvItem::class);
+    }
+
+    public function delayLogs(): HasMany
+    {
+        return $this->hasMany(DeliveryOrderReceiptDelayLog::class);
+    }
+
+    protected static function booted()
+    {
+        static::updating(function ($record) {
+            // Auto-fill delay_notes if it's empty when delay_reason is set
+            if ($record->isDirty('delay_reason') && !empty($record->delay_reason) && empty($record->delay_notes)) {
+                $record->delay_notes = match ($record->delay_reason) {
+                    'PO Belum Confirm' => 'Menunggu konfirmasi lebih lanjut dari pihak pengadaan terkait status PO.',
+                    'Barang Diambil User Langsung (Tanpa Monitor)' => 'Barang telah diambil secara langsung oleh user ke lapangan sehingga proses monitoring terlewat.',
+                    'Fisik Kelebihan Kirim (Over-delivery)' => 'Terdapat selisih di mana kuantitas fisik barang yang datang lebih banyak daripada yang tertera di dokumen.',
+                    'Lainnya' => 'Penundaan karena alasan lain (catatan tidak disertakan oleh user).',
+                    default => 'Proses tertunda.',
+                };
+            }
+        });
+
+        static::updated(function ($record) {
+            // Check if delay_reason or delay_notes was changed
+            if ($record->wasChanged('delay_reason') || $record->wasChanged('delay_notes')) {
+                // If it's not simply clearing the reason, log it
+                if (!empty($record->delay_reason)) {
+                    $record->delayLogs()->create([
+                        'delay_reason' => $record->delay_reason,
+                        'delay_notes' => $record->delay_notes,
+                        'created_by' => Auth::id() ?? $record->created_by,
+                    ]);
+                } else {
+                    // If delay_reason is dirty and now empty, it means the pending status was cleared
+                    $record->delayLogs()->create([
+                        'delay_reason' => 'Penundaan Selesai (Clear)',
+                        'delay_notes' => 'Status pending telah dihapus / diselesaikan. Proses penerimaan dilanjutkan.',
+                        'created_by' => Auth::id() ?? $record->created_by,
+                    ]);
+                }
+            }
+        });
     }
 }

@@ -8,6 +8,7 @@ use App\Filament\Resources\DeliveryOrderReceipts\Pages\ListDeliveryOrderReceipts
 use App\Filament\Resources\DeliveryOrderReceipts\Pages\ViewDeliveryOrderReceipt;
 use App\Filament\Resources\DeliveryOrderReceipts\RelationManagers\QcHistoriesRelationManager;
 use App\Filament\Resources\DeliveryOrderReceipts\RelationManagers\TransmittalsRelationManager;
+use App\Filament\Resources\DeliveryOrderReceipts\RelationManagers\DelayLogsRelationManager;
 use App\Filament\Resources\DeliveryOrderReceipts\Schemas\DeliveryOrderReceiptForm;
 use App\Filament\Resources\DeliveryOrderReceipts\Schemas\DeliveryOrderReceiptInfolist;
 use App\Filament\Resources\DeliveryOrderReceipts\Tables\DeliveryOrderReceiptsTable;
@@ -66,6 +67,7 @@ class DeliveryOrderReceiptResource extends Resource
         return [
             QcHistoriesRelationManager::class,
             TransmittalsRelationManager::class,
+            DelayLogsRelationManager::class,
         ];
     }
 

@@ -574,6 +574,8 @@ class DeliveryOrderReceiptsTable
                         ->action(function ($record) {
                             $record->update([
                                 'status' => 'Diterima',
+                                'delay_reason' => null,
+                                'delay_notes' => null,
                                 'pending_resolved_date' => Carbon::now(),
                             ]);
 
