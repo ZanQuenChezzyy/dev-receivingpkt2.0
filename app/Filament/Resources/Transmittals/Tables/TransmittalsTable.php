@@ -27,7 +27,13 @@ class TransmittalsTable
                 ColumnGroup::make('Informasi Transmittal', [
                     TextColumn::make('transmittal_no')
                         ->label('Nomor & Tanggal')
-                        ->searchable()
+                        ->searchable(query: function (\Illuminate\Database\Eloquent\Builder $query, string $search): \Illuminate\Database\Eloquent\Builder {
+                            return $query
+                                ->where('transmittal_no', 'like', "%{$search}%")
+                                ->orWhereHas('transmittalItems.deliveryOrderReceipt.deliveryOrderReceiptDetails.purchaseOrderIssued', function ($q) use ($search) {
+                                    $q->where('purchase_order_no', 'like', "%{$search}%");
+                                });
+                        })
                         ->sortable()
                         ->weight(FontWeight::Bold)
                         ->color('primary')

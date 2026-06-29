@@ -44,6 +44,8 @@ class BulkScanTransmittal extends Page implements HasForms
 
     public ?int $transmittalId = null;
 
+    public bool $isEditMode = false;
+
     public function mount(): void
     {
         $id = request()->query('id');
@@ -51,6 +53,7 @@ class BulkScanTransmittal extends Page implements HasForms
             $transmittal = Transmittal::find($id);
             if ($transmittal) {
                 $this->transmittalId = $transmittal->id;
+                $this->isEditMode = true;
 
                 $this->form->fill([
                     'tanggal' => $transmittal->created_at->format('Y-m-d'),
@@ -80,11 +83,15 @@ class BulkScanTransmittal extends Page implements HasForms
                         ->default(now())
                         ->native(false)
                         ->required()
+                        ->disabled(fn () => $this->transmittalId !== null)
+                        ->dehydrated()
                         ->live()
                         ->afterStateUpdated(function ($state) {
                             $this->resetScanState();
-                            if ($this->transmittalId) {
+                            if ($this->isEditMode && $this->transmittalId) {
                                 Transmittal::find($this->transmittalId)?->update(['created_at' => \Carbon\Carbon::parse($state)->startOfDay()]);
+                            } else {
+                                $this->transmittalId = null;
                             }
                         }),
 
@@ -101,11 +108,15 @@ class BulkScanTransmittal extends Page implements HasForms
                         ->inline()
                         ->required()
                         ->default('Kirim')
+                        ->disabled(fn () => $this->transmittalId !== null)
+                        ->dehydrated()
                         ->live()
                         ->afterStateUpdated(function ($state) {
                             $this->resetScanState();
-                            if ($this->transmittalId) {
+                            if ($this->isEditMode && $this->transmittalId) {
                                 Transmittal::find($this->transmittalId)?->update(['type' => $state]);
+                            } else {
+                                $this->transmittalId = null;
                             }
                         }),
 
@@ -121,14 +132,17 @@ class BulkScanTransmittal extends Page implements HasForms
                         ])
                         ->inline()
                         ->required(fn (Get $get) => $get('type') !== 'Kembali')
-                        ->disabled(fn (Get $get) => $get('type') === 'Kembali')
+                        ->disabled(fn (Get $get) => $get('type') === 'Kembali' || $this->transmittalId !== null)
+                        ->dehydrated()
                         ->helperText(fn (Get $get) => $get('type') === 'Kembali' ? 'Tujuan dideteksi otomatis berdasarkan riwayat Kirim.' : '')
                         ->default('ISTEK')
                         ->live()
                         ->afterStateUpdated(function ($state) {
                             $this->resetScanState();
-                            if ($this->transmittalId && $this->data['type'] !== 'Kembali') {
+                            if ($this->isEditMode && $this->transmittalId && $this->data['type'] !== 'Kembali') {
                                 Transmittal::find($this->transmittalId)?->update(['destination' => $state]);
+                            } elseif (!$this->isEditMode) {
+                                $this->transmittalId = null;
                             }
                         }),
                 ]),

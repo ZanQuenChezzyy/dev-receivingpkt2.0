@@ -123,15 +123,14 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @forelse ($this->scannedItems as $item)
                             @php
+                                $detail = $item->deliveryOrderReceipt?->deliveryOrderReceiptDetails?->first();
+                                $poNumber = $detail?->purchaseOrderIssued?->purchase_order_no ?? '-';
+                                
+                                // Jika PO number tidak ditemukan dari relasi, dan QR code mengandung '-', coba ambil dari QR
                                 $qrCode = $item->deliveryOrderReceipt->qr_103_code ?? '';
-                                $poNumber = '-';
-                                if (!empty($qrCode)) {
+                                if ($poNumber === '-' && !empty($qrCode) && str_contains($qrCode, '-')) {
                                     $parts = explode('-', $qrCode);
                                     $poNumber = $parts[0] ?? '-';
-                                } else {
-                                    // Fallback jika QR 103 kosong, coba ambil dari detail DO
-                                    $detail = $item->deliveryOrderReceipt?->deliveryOrderReceiptDetails?->first();
-                                    $poNumber = $detail?->purchaseOrderIssued?->purchase_order_no ?? '-';
                                 }
                             @endphp
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
