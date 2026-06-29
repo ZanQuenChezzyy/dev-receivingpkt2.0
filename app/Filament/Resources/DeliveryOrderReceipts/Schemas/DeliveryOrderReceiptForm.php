@@ -305,7 +305,7 @@ class DeliveryOrderReceiptForm
                 ->placeholder('Pilih Tanggal')
                 ->native(false)
                 ->maxDate(now())
-                ->minDate(now()->addDays(-30))
+                // ->minDate(now()->addDays(-30))
                 ->disabled(fn(Get $get) => empty($get('search_po')))
                 ->live()
                 ->afterStateUpdated(function (Set $set, Get $get, $state) {
@@ -494,7 +494,7 @@ class DeliveryOrderReceiptForm
                         }
                     },
                 ])
-                ->dehydrateStateUsing(fn ($state) => (float) str_replace(',', '.', (string) $state))
+                ->dehydrateStateUsing(fn($state) => (float) str_replace(',', '.', (string) $state))
                 ->live(onBlur: true)
                 ->afterStateUpdated(function (Set $set, Get $get, $state) {
                     $valString = str_replace(',', '.', (string) $state);
