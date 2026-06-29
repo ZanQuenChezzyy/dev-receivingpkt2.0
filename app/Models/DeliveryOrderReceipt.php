@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\Auth;
     'arrival_sequence',
     'document_path',
     'description',
+    'termin_percentage',
 ])]
 class DeliveryOrderReceipt extends Model
 {
@@ -59,6 +60,7 @@ class DeliveryOrderReceipt extends Model
             'physical_received_date' => 'date',
             'pending_date' => 'datetime',
             'pending_resolved_date' => 'datetime',
+            'termin_percentage' => 'float',
         ];
     }
 

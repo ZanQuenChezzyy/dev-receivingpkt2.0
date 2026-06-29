@@ -68,6 +68,21 @@ class DeliveryOrderReceiptInfolist
                                             ->icon('heroicon-m-truck')
                                             ->badge()
                                             ->color(fn(string $state): string => $state === 'Indent' ? 'warning' : 'success'),
+
+                                        TextEntry::make('stage')
+                                            ->label('Termin / Tahapan')
+                                            ->icon('heroicon-m-tag')
+                                            ->badge()
+                                            ->formatStateUsing(function ($state, $record) {
+                                                if (empty($state)) return '-';
+                                                if (str_contains(strtoupper($state), 'TERMIN')) {
+                                                    $percentage = (float) $record->termin_percentage;
+                                                    return "{$state}: {$percentage}%";
+                                                }
+                                                return $state;
+                                            })
+                                            ->color('info')
+                                            ->visible(fn($record) => !empty($record->stage)),
                                     ])->columnSpanFull(),
 
                                 Grid::make(2)

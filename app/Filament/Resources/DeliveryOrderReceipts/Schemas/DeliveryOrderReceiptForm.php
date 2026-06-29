@@ -494,6 +494,7 @@ class DeliveryOrderReceiptForm
                         }
                     },
                 ])
+                ->dehydrateStateUsing(fn ($state) => (float) str_replace(',', '.', (string) $state))
                 ->live(onBlur: true)
                 ->afterStateUpdated(function (Set $set, Get $get, $state) {
                     $valString = str_replace(',', '.', (string) $state);
