@@ -29,17 +29,17 @@ class PurchaseOrderIssuedResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Purchase Order';
+        return 'Purchase Order Terbit';
     }
 
     public static function getModelLabel(): string
     {
-        return 'Purchase Order';
+        return 'Purchase Order Terbit';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Purchase Orders';
+        return 'Purchase Order Terbit';
     }
 
     protected static ?string $recordTitleAttribute = 'purchase_order_and_item';

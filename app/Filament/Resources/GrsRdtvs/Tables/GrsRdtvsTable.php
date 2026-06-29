@@ -27,18 +27,18 @@ class GrsRdtvsTable
                         ->color('primary')
                         ->weight(FontWeight::Bold)
                         ->date('d F Y')
-                        ->description(fn ($record) => Carbon::parse($record->transaction_date)->translatedFormat('l'))
+                        ->description(fn($record) => Carbon::parse($record->transaction_date)->translatedFormat('l'))
                         ->sortable(),
 
                     TextColumn::make('category')
                         ->label('Kategori')
                         ->badge()
-                        ->color(fn (string $state): string => match ($state) {
+                        ->color(fn(string $state): string => match ($state) {
                             'GRS' => 'success',
                             'RDTV' => 'warning',
                             default => 'gray',
                         })
-                        ->icon(fn (string $state): string => match ($state) {
+                        ->icon(fn(string $state): string => match ($state) {
                             'GRS' => 'heroicon-m-document-check',
                             'RDTV' => 'heroicon-m-arrow-path',
                             default => 'heroicon-m-document',
@@ -48,11 +48,12 @@ class GrsRdtvsTable
                 ColumnGroup::make('Detail Dokumen', [
                     TextColumn::make('po_numbers')
                         ->label('Nomor PO')
+                        ->placeholder('Tidak Ada PO Terkait')
                         ->icon('heroicon-m-document-duplicate')
                         ->iconColor('gray')
                         ->getStateUsing(function ($record) {
                             return $record->grsRdtvItems
-                                ->map(fn ($item) => $item->deliveryOrderReceipt?->deliveryOrderReceiptDetails?->first()?->purchaseOrderIssued?->purchase_order_no)
+                                ->map(fn($item) => $item->deliveryOrderReceipt?->deliveryOrderReceiptDetails?->first()?->purchaseOrderIssued?->purchase_order_no)
                                 ->filter()
                                 ->unique()
                                 ->toArray();

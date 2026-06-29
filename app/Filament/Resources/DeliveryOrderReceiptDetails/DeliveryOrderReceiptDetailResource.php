@@ -60,6 +60,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 ColumnGroup::make('Informasi Material', [
                     TextColumn::make('purchaseOrderIssued.purchase_order_no')
@@ -135,6 +136,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                         ->label('Total Nilai')
                         ->money('IDR', locale: 'id')
                         ->weight(FontWeight::SemiBold)
+                        ->toggleable(isToggledHiddenByDefault: true)
                         ->sortable(),
                 ]),
 
