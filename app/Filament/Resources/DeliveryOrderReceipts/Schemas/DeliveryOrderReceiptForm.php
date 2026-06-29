@@ -123,6 +123,15 @@ class DeliveryOrderReceiptForm
                     } else {
                         $set('is_physically_received', false);
                         $set('physical_received_date', null);
+                        
+                        $loc = \App\Models\LocationReceiving::firstOrCreate(['name' => 'BARANG BELUM DATANG']);
+                        $set('global_location_id', $loc->id);
+                        
+                        $details = $get('deliveryOrderReceiptDetails') ?? [];
+                        foreach ($details as $key => $detail) {
+                            $set("deliveryOrderReceiptDetails.{$key}.location_id", $loc->id);
+                            $set("deliveryOrderReceiptDetails.{$key}.is_different_location", false);
+                        }
                     }
 
                     // Logika Mode Penerimaan bawaanmu
@@ -240,6 +249,11 @@ class DeliveryOrderReceiptForm
                         $set('termin_percentage', null);
                     }
 
+                    if ($get('receipt_mode') !== 'Standard') {
+                        $loc = \App\Models\LocationReceiving::firstOrCreate(['name' => 'BARANG BELUM DATANG']);
+                        $set('global_location_id', $loc->id);
+                    }
+
                     $allPoItems = PurchaseOrderIssued::where('purchase_order_no', $state)->get();
                     $filteredItems = $allPoItems->map(function ($item) use ($get) {
                         [$qtyPo, $netSaved] = static::computeNetForItem((int) $item->id, (string) $item->item_no);
@@ -332,6 +346,7 @@ class DeliveryOrderReceiptForm
             Select::make('global_location_id')
                 ->label('Lokasi Receiving')
                 ->placeholder('Pilih Lokasi')
+                ->helperText(fn(Get $get) => $get('receipt_mode') !== 'Standard' ? 'Jika barang fisik belum tiba, pilih lokasi sementara (misal: Transit).' : '')
                 ->options(LocationReceiving::pluck('name', 'id'))
                 ->searchable()
                 ->preload()
@@ -388,6 +403,7 @@ class DeliveryOrderReceiptForm
 
             Toggle::make('is_physically_received')
                 ->label('Barang Fisik Sudah Tiba di Gudang?')
+                ->helperText('Aktifkan hanya jika barang fisik benar-benar sudah tiba. Biarkan nonaktif jika hanya menerima dokumen (DOF/Termin).')
                 ->live()
                 ->hidden(fn(Get $get) => $get('receipt_mode') === 'Standard')
                 ->dehydratedWhenHidden() // Memastikan nilai true yang di-set dari backend tetap tersimpan
@@ -418,6 +434,7 @@ class DeliveryOrderReceiptForm
 
             DatePicker::make('eta_date')
                 ->label('Estimasi Tanggal Tiba (ETA)')
+                ->helperText('Sesuaikan ETA berdasarkan informasi dari Dokumen Pengiriman (AWB/Shipping Doc), jangan hanya mengandalkan tanggal PO.')
                 ->native(false)
                 ->required(fn(Get $get) => $get('is_physically_received') === false && $get('receipt_mode') !== 'Standard')
                 ->visible(fn(Get $get) => $get('is_physically_received') === false && $get('receipt_mode') !== 'Standard')

@@ -19,7 +19,7 @@ class TransmittalForm
                         TextInput::make('transmittal_no')
                             ->label('Nomor Transmittal')
                             ->disabled()
-                            ->dehydrated(false) // Don't save it again if disabled, though not strictly necessary
+                            ->dehydrated(false)
                             ->columnSpanFull(),
 
                         DatePicker::make('created_at')

@@ -18,13 +18,26 @@ class WarehouseDestinationResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-home-modern';
 
-    protected static ?string $modelLabel = 'Gudang Tujuan';
-
-    protected static ?string $pluralModelLabel = 'Gudang Tujuan';
+    protected static string|\BackedEnum|null $activeNavigationIcon = 'heroicon-s-home-modern';
 
     public static function getNavigationGroup(): ?string
     {
         return 'Data Master';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Gudang Tujuan';
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'Gudang Tujuan';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Gudang Tujuan';
     }
 
     protected static ?string $recordTitleAttribute = 'name';

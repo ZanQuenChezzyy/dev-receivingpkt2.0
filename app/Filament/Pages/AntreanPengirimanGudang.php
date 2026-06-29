@@ -30,15 +30,23 @@ class AntreanPengirimanGudang extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-truck';
-
-    protected static ?string $navigationLabel = 'Daftar Pengiriman Gudang';
-
-    protected static ?string $title = 'Daftar Pengiriman Gudang';
-
     protected static ?string $cluster = PengirimanGudangCluster::class;
 
     protected static ?int $navigationSort = 1;
+
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-truck';
+
+    protected static string|BackedEnum|null $activeNavigationIcon = 'heroicon-s-truck';
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Daftar Pengiriman Gudang';
+    }
+
+    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return 'Daftar Pengiriman Gudang';
+    }
 
     protected string $view = 'filament.pages.antrean-pengiriman-gudang';
 

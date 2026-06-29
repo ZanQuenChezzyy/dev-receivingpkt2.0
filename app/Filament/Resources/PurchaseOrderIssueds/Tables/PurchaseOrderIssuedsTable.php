@@ -29,166 +29,189 @@ class PurchaseOrderIssuedsTable
             ->deferLoading()
             ->poll('10s')
             ->columns([
-                TextColumn::make('purchase_order_and_item')
-                    ->label('Purchase Order & Item')
-                    ->searchable()
-                    ->placeholder('None')
-                    ->color('warning'),
+                \Filament\Tables\Columns\ColumnGroup::make('Informasi PO', [
+                    TextColumn::make('purchase_order_and_item')
+                        ->label('Purchase Order & Item')
+                        ->searchable()
+                        ->placeholder('None')
+                        ->icon('heroicon-m-document-text')
+                        ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                        ->color('primary')
+                        ->copyable(),
 
-                TextColumn::make('purchase_order_no')
-                    ->label('Purchase Order')
-                    ->searchable()
-                    ->sortable()
-                    ->placeholder('None')
-                    ->color('primary'),
+                    TextColumn::make('purchase_order_no')
+                        ->label('Purchase Order')
+                        ->searchable()
+                        ->sortable()
+                        ->placeholder('None')
+                        ->color('primary')
+                        ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('item_no')
-                    ->label('Item')
-                    ->sortable()
-                    ->placeholder('None')
-                    ->alignCenter()
-                    ->color('gray'),
+                    TextColumn::make('item_no')
+                        ->label('Item')
+                        ->sortable()
+                        ->placeholder('None')
+                        ->alignCenter()
+                        ->color('gray')
+                        ->toggleable(isToggledHiddenByDefault: true),
+                ]),
 
-                TextColumn::make('material_code')
-                    ->label('Material Code')
-                    ->sortable()
-                    ->placeholder('None')
-                    ->color('gray'),
+                \Filament\Tables\Columns\ColumnGroup::make('Detail Material', [
+                    TextColumn::make('material_code')
+                        ->label('Kode Material')
+                        ->sortable()
+                        ->placeholder('None')
+                        ->icon('heroicon-m-cube')
+                        ->color('gray'),
 
-                TextColumn::make('material_type')
-                    ->label('Material Type')
-                    ->sortable()
-                    ->placeholder('None')
-                    ->color(fn ($state) => match ($state) {
-                        'ZSP' => 'warning',
-                        'ZFP', 'ZRM' => 'danger',
-                        'ZSM', 'ZPM' => 'info',
-                        default => 'warning',
-                    })
-                    ->badge(),
+                    TextColumn::make('description')
+                        ->label('Deskripsi')
+                        ->limit(20)
+                        ->wrap()
+                        ->placeholder('None')
+                        ->tooltip(fn ($record) => $record->description),
 
-                TextColumn::make('mrp_type')
-                    ->label('MRP Type')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'V1' => 'success',
-                        'PD' => 'warning',
-                        'INVESTASI' => 'info',
-                        'NONSTOCK' => 'danger',
-                        default => 'gray',
-                    })
-                    ->alignCenter()
-                    ->placeholder('None'),
+                    TextColumn::make('quantity_uoi')
+                        ->label('Kuantitas')
+                        ->getStateUsing(fn ($record) => $record->qty_po.' '.$record->uoi)
+                        ->sortable(query: fn (Builder $query, string $direction) => $query->orderBy('qty_po', $direction))
+                        ->badge()
+                        ->placeholder('None')
+                        ->color('info')
+                        ->alignRight(),
 
-                TextColumn::make('aac')
-                    ->label('AAC')
-                    ->sortable()
-                    ->placeholder('None')
-                    ->color('info')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    TextColumn::make('uoi')
+                        ->label('UoI')
+                        ->placeholder('None')
+                        ->toggleable(isToggledHiddenByDefault: true),
+                        
+                    TextColumn::make('material_type')
+                        ->label('Tipe Material')
+                        ->sortable()
+                        ->placeholder('None')
+                        ->color(fn ($state) => match ($state) {
+                            'ZSP' => 'warning',
+                            'ZFP', 'ZRM' => 'danger',
+                            'ZSM', 'ZPM' => 'info',
+                            default => 'warning',
+                        })
+                        ->badge()
+                        ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('abc_indicator')
-                    ->label('ABC')
-                    ->sortable()
-                    ->placeholder('None')
-                    ->color('success')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    TextColumn::make('mrp_type')
+                        ->label('MRP Type')
+                        ->badge()
+                        ->color(fn ($state) => match ($state) {
+                            'V1' => 'success',
+                            'PD' => 'warning',
+                            'INVESTASI' => 'info',
+                            'NONSTOCK' => 'danger',
+                            default => 'gray',
+                        })
+                        ->alignCenter()
+                        ->placeholder('None')
+                        ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('description')
-                    ->limit(15)
-                    ->wrap()
-                    ->placeholder('None')
-                    ->tooltip(fn ($record) => $record->description),
+                    TextColumn::make('aac')
+                        ->label('AAC')
+                        ->sortable()
+                        ->placeholder('None')
+                        ->color('info')
+                        ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('quantity_uoi')
-                    ->label('Quantity')
-                    ->getStateUsing(fn ($record) => $record->qty_po.' '.$record->uoi)
-                    ->sortable(query: fn (Builder $query, string $direction) => $query->orderBy('qty_po', $direction))
-                    ->badge()
-                    ->placeholder('None')
-                    ->color('info')
-                    ->alignRight(),
+                    TextColumn::make('abc_indicator')
+                        ->label('ABC')
+                        ->sortable()
+                        ->placeholder('None')
+                        ->color('success')
+                        ->toggleable(isToggledHiddenByDefault: true),
+                ]),
 
-                TextColumn::make('uoi')
-                    ->label('UoI')
-                    ->placeholder('None')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                \Filament\Tables\Columns\ColumnGroup::make('Komersial & Vendor', [
+                    TextColumn::make('vendor_name')
+                        ->label('Vendor')
+                        ->searchable()
+                        ->placeholder('None')
+                        ->icon('heroicon-m-building-storefront')
+                        ->tooltip(fn ($record) => $record->vendor_id_name)
+                        ->limit(15),
 
-                TextColumn::make('vendor_name')
-                    ->label('Vendor')
-                    ->searchable()
-                    ->placeholder('None')
-                    ->tooltip(fn ($record) => $record->vendor_id_name)
-                    ->limit(15),
+                    TextColumn::make('currency')
+                        ->label('Mata Uang')
+                        ->badge()
+                        ->sortable()
+                        ->placeholder('None')
+                        ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('date_create')
-                    ->label('Tanggal Rilis PO')
-                    ->date('d F Y')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    TextColumn::make('net_price')
+                        ->label('Net Price')
+                        ->money(fn($record) => $record->currency ?? 'IDR')
+                        ->sortable()
+                        ->placeholder('0')
+                        ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('delivery_date_po')
-                    ->label('Tgl Kirim PO')
-                    ->date('d F Y')
-                    ->sortable(),
+                    TextColumn::make('total_amount_in_lc')
+                        ->label('Total Amount in LC')
+                        ->money(fn($record) => $record->currency ?? 'IDR')
+                        ->sortable()
+                        ->placeholder('0')
+                        ->color('success')
+                        ->toggleable(isToggledHiddenByDefault: true),
+                        
+                    TextColumn::make('requisitioner')
+                        ->label('Requisitioner')
+                        ->placeholder('none')
+                        ->toggleable(isToggledHiddenByDefault: true),
+                        
+                    TextColumn::make('incoterm')
+                        ->label('Incoterm')
+                        ->tooltip(fn ($record) => $record->incoterm)
+                        ->limit(15)
+                        ->placeholder('None')
+                        ->toggleable(isToggledHiddenByDefault: true),
+                ]),
 
-                TextColumn::make('po_status')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'A' => 'success',
-                        'B' => 'warning',
-                        'C' => 'danger',
-                        default => 'gray',
-                    })
-                    ->alignCenter()
-                    ->placeholder('None'),
+                \Filament\Tables\Columns\ColumnGroup::make('Jadwal & Status', [
+                    TextColumn::make('po_status')
+                        ->label('Status')
+                        ->badge()
+                        ->color(fn ($state) => match ($state) {
+                            'A' => 'success',
+                            'B' => 'warning',
+                            'C' => 'danger',
+                            default => 'gray',
+                        })
+                        ->alignCenter()
+                        ->placeholder('None'),
 
-                TextColumn::make('incoterm')
-                    ->label('Incoterm')
-                    ->tooltip(fn ($record) => $record->incoterm)
-                    ->limit(15)
-                    ->placeholder('None'),
+                    TextColumn::make('delivery_date_po')
+                        ->label('Tgl Kirim PO')
+                        ->date('d F Y')
+                        ->icon('heroicon-m-truck')
+                        ->sortable(),
 
-                // Penambahan Currency & Net Price
-                TextColumn::make('currency')
-                    ->label('Mata Uang')
-                    ->sortable()
-                    ->placeholder('None')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    TextColumn::make('date_create')
+                        ->label('Tgl Rilis PO')
+                        ->date('d F Y')
+                        ->sortable()
+                        ->toggleable(isToggledHiddenByDefault: true),
+                ]),
 
-                TextColumn::make('net_price')
-                    ->label('Net Price')
-                    ->numeric()
-                    ->sortable()
-                    ->placeholder('0')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                \Filament\Tables\Columns\ColumnGroup::make('Sistem', [
+                    TextColumn::make('created_at')
+                        ->label('Dibuat')
+                        ->dateTime('d M Y H:i')
+                        ->sortable()
+                        ->placeholder('None')
+                        ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('total_amount_in_lc')
-                    ->label('Total Amount in LC')
-                    ->numeric() // Ditambahkan numeric untuk format angka otomatis
-                    ->sortable()
-                    ->placeholder('0')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('requisitioner')
-                    ->label('Requisitioner')
-                    ->placeholder('none')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->placeholder('None')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                TextColumn::make('updated_at')
-                    ->label('Update Terakhir')
-                    ->dateTime('d M Y H:i')
-                    ->sortable()
-                    ->placeholder('None')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    TextColumn::make('updated_at')
+                        ->label('Update Terakhir')
+                        ->dateTime('d M Y H:i')
+                        ->sortable()
+                        ->placeholder('None')
+                        ->toggleable(isToggledHiddenByDefault: true),
+                ]),
             ])
             ->filters([
                 SelectFilter::make('mrp_type')

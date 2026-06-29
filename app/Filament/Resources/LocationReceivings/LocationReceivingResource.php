@@ -10,11 +10,15 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use UnitEnum;
@@ -25,9 +29,9 @@ class LocationReceivingResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Data Master';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-map-pin';
 
-    protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::MapPin;
+    protected static string|BackedEnum|null $activeNavigationIcon = 'heroicon-s-map-pin';
 
     public static function getNavigationLabel(): string
     {
@@ -48,8 +52,16 @@ class LocationReceivingResource extends Resource
     {
         return $schema
             ->components([
-                TextInput::make('name')
-                    ->required(),
+                Section::make('Lokasi Receiving')
+                    ->description('Data master lokasi untuk proses receiving.')
+                    ->icon('heroicon-o-map-pin')
+                    ->schema([
+                        TextInput::make('name')
+                            ->label('Nama Lokasi')
+                            ->placeholder('Masukkan nama lokasi')
+                            ->required()
+                            ->maxLength(255),
+                    ]),
             ]);
     }
 
@@ -57,13 +69,23 @@ class LocationReceivingResource extends Resource
     {
         return $schema
             ->components([
-                TextEntry::make('name'),
-                TextEntry::make('created_at')
-                    ->dateTime()
-                    ->placeholder('-'),
-                TextEntry::make('updated_at')
-                    ->dateTime()
-                    ->placeholder('-'),
+                InfolistSection::make('Informasi Lokasi')
+                    ->icon('heroicon-o-map-pin')
+                    ->schema([
+                        TextEntry::make('name')
+                            ->label('Nama Lokasi')
+                            ->weight(FontWeight::Bold)
+                            ->color('primary')
+                            ->icon('heroicon-m-map-pin'),
+                        TextEntry::make('created_at')
+                            ->label('Dibuat Pada')
+                            ->dateTime()
+                            ->placeholder('-'),
+                        TextEntry::make('updated_at')
+                            ->label('Diperbarui Pada')
+                            ->dateTime()
+                            ->placeholder('-'),
+                    ])->columns(3),
             ]);
     }
 
@@ -71,16 +93,27 @@ class LocationReceivingResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                ColumnGroup::make('Informasi Lokasi', [
+                    TextColumn::make('name')
+                        ->label('Nama Lokasi')
+                        ->searchable()
+                        ->sortable()
+                        ->weight(FontWeight::Bold)
+                        ->icon('heroicon-m-map-pin')
+                        ->color('primary'),
+                ]),
+                ColumnGroup::make('Sistem', [
+                    TextColumn::make('created_at')
+                        ->label('Dibuat')
+                        ->dateTime()
+                        ->sortable()
+                        ->toggleable(isToggledHiddenByDefault: true),
+                    TextColumn::make('updated_at')
+                        ->label('Diperbarui')
+                        ->dateTime()
+                        ->sortable()
+                        ->toggleable(isToggledHiddenByDefault: true),
+                ]),
             ])
             ->filters([
                 //

@@ -13,6 +13,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ExportAction;
 use Filament\Actions\ExportBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -34,6 +35,8 @@ class DeliveryOrderReceiptsTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->persistColumnsInSession()
+            ->deferColumnManager(false)
             ->columns([
                 // 📄 GRUP 1: INFORMASI DOKUMEN
                 ColumnGroup::make('Informasi Dokumen', [
@@ -581,6 +584,52 @@ class DeliveryOrderReceiptsTable
                             Notification::make()
                                 ->title('Pending Dibatalkan!')
                                 ->body('Status dokumen telah kembali normal.')
+                                ->success()
+                                ->send();
+                        }),
+                    Action::make('barang_telah_tiba_action')
+                        ->label('Barang Telah Tiba')
+                        ->icon(Heroicon::CheckBadge)
+                        ->color('success')
+                        ->outlined()
+                        ->modalHeading('Konfirmasi Kedatangan Fisik Barang')
+                        ->modalDescription('Masukkan tanggal kedatangan fisik dan lokasi rak gudang yang sebenarnya.')
+                        ->modalSubmitActionLabel('Simpan')
+                        ->visible(fn($record): bool => $record->is_physically_received === false && in_array($record->receipt_mode, ['Termin', 'DOF_Incoterm']))
+                        ->schema([
+                            DatePicker::make('physical_received_date')
+                                ->label('Tanggal Barang Fisik Tiba')
+                                ->native(false)
+                                ->required()
+                                ->default(now())
+                                ->maxDate(now()),
+                            Select::make('location_id')
+                                ->label('Lokasi Rak Gudang (Aktual)')
+                                ->options(\App\Models\LocationReceiving::where('name', '!=', 'BARANG BELUM DATANG')->pluck('name', 'id'))
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+                        ])
+                        ->action(function (array $data, $record) {
+                            $location = \App\Models\LocationReceiving::find($data['location_id']);
+                            
+                            $record->update([
+                                'is_physically_received' => true,
+                                'physical_received_date' => $data['physical_received_date'],
+                                'current_location' => $location ? $location->name : 'Gudang',
+                            ]);
+
+                            // Update semua detail agar dipindah ke lokasi fisik aktual
+                            foreach ($record->deliveryOrderReceiptDetails as $detail) {
+                                $detail->update([
+                                    'location_id' => $data['location_id'],
+                                    'is_different_location' => false,
+                                ]);
+                            }
+
+                            Notification::make()
+                                ->title('Barang Telah Tiba!')
+                                ->body('Status kedatangan fisik barang dan lokasi berhasil diperbarui.')
                                 ->success()
                                 ->send();
                         }),

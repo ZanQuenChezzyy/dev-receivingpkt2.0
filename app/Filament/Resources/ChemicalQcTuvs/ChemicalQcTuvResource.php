@@ -10,12 +10,18 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\Grid as InfolistGrid;
+use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use UnitEnum;
@@ -26,9 +32,9 @@ class ChemicalQcTuvResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Data Master';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::ShieldCheck;
+    protected static string|BackedEnum|null $activeNavigationIcon = 'heroicon-s-shield-check';
 
     public static function getNavigationLabel(): string
     {
@@ -49,14 +55,26 @@ class ChemicalQcTuvResource extends Resource
     {
         return $schema
             ->components([
-                Select::make('purchase_order_issued_id')
-                    ->relationship('purchaseOrderIssued', 'id')
-                    ->required(),
-                TextInput::make('tahapan_name')
-                    ->required(),
-                TextInput::make('qty_qc_tuv')
-                    ->required()
-                    ->numeric(),
+                Section::make('Informasi QC TUV')
+                    ->description('Masukkan detail informasi QC TUV.')
+                    ->icon('heroicon-o-shield-check')
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Select::make('purchase_order_issued_id')
+                                ->relationship('purchaseOrderIssued', 'purchase_order_no')
+                                ->label('Purchase Order')
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+                            TextInput::make('tahapan_name')
+                                ->label('Tahapan')
+                                ->required(),
+                            TextInput::make('qty_qc_tuv')
+                                ->label('Kuantitas QC TUV')
+                                ->required()
+                                ->numeric(),
+                        ]),
+                    ]),
             ]);
     }
 
@@ -64,17 +82,32 @@ class ChemicalQcTuvResource extends Resource
     {
         return $schema
             ->components([
-                TextEntry::make('purchaseOrderIssued.id')
-                    ->label('Purchase order issued'),
-                TextEntry::make('tahapan_name'),
-                TextEntry::make('qty_qc_tuv')
-                    ->numeric(),
-                TextEntry::make('created_at')
-                    ->dateTime()
-                    ->placeholder('-'),
-                TextEntry::make('updated_at')
-                    ->dateTime()
-                    ->placeholder('-'),
+                InfolistSection::make('Detail QC TUV')
+                    ->icon('heroicon-o-shield-check')
+                    ->schema([
+                        InfolistGrid::make(2)->schema([
+                            TextEntry::make('purchaseOrderIssued.purchase_order_no')
+                                ->label('Purchase Order')
+                                ->weight(FontWeight::Bold)
+                                ->color('primary')
+                                ->copyable(),
+                            TextEntry::make('tahapan_name')
+                                ->label('Tahapan'),
+                            TextEntry::make('qty_qc_tuv')
+                                ->label('Kuantitas')
+                                ->numeric()
+                                ->badge()
+                                ->color('info'),
+                            TextEntry::make('created_at')
+                                ->label('Dibuat Pada')
+                                ->dateTime()
+                                ->placeholder('-'),
+                            TextEntry::make('updated_at')
+                                ->label('Diperbarui Pada')
+                                ->dateTime()
+                                ->placeholder('-'),
+                        ]),
+                    ]),
             ]);
     }
 
@@ -82,21 +115,36 @@ class ChemicalQcTuvResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('purchaseOrderIssued.id')
-                    ->searchable(),
-                TextColumn::make('tahapan_name')
-                    ->searchable(),
-                TextColumn::make('qty_qc_tuv')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                ColumnGroup::make('Informasi QC', [
+                    TextColumn::make('purchaseOrderIssued.purchase_order_no')
+                        ->label('Purchase Order')
+                        ->searchable()
+                        ->sortable()
+                        ->icon('heroicon-m-document-text')
+                        ->color('primary')
+                        ->weight(FontWeight::Bold),
+                    TextColumn::make('tahapan_name')
+                        ->label('Tahapan')
+                        ->searchable(),
+                    TextColumn::make('qty_qc_tuv')
+                        ->label('Kuantitas')
+                        ->numeric()
+                        ->badge()
+                        ->color('info')
+                        ->sortable(),
+                ]),
+                ColumnGroup::make('Sistem', [
+                    TextColumn::make('created_at')
+                        ->label('Dibuat')
+                        ->dateTime()
+                        ->sortable()
+                        ->toggleable(isToggledHiddenByDefault: true),
+                    TextColumn::make('updated_at')
+                        ->label('Diperbarui')
+                        ->dateTime()
+                        ->sortable()
+                        ->toggleable(isToggledHiddenByDefault: true),
+                ]),
             ])
             ->filters([
                 //

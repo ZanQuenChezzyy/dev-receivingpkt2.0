@@ -19,6 +19,7 @@ class PurchaseOrderIssuedForm
             ->components([
                 Section::make('Informasi PO')
                     ->description('Masukkan informasi umum tentang Purchase Order')
+                    ->icon('heroicon-o-document-text')
                     ->schema([
                         Grid::make(2)->schema([
                             TextInput::make('purchase_order_no')
@@ -232,6 +233,7 @@ class PurchaseOrderIssuedForm
                     ->schema([
                         Section::make('Vendor & Pengiriman')
                             ->description('Informasi vendor dan tanggal pengiriman')
+                            ->icon('heroicon-o-truck')
                             ->schema([
                                 Grid::make(2)->schema([
                                     TextInput::make('vendor_id')
@@ -265,6 +267,7 @@ class PurchaseOrderIssuedForm
                             ])->columnSpan(1),
 
                         Section::make('Lainnya')
+                            ->icon('heroicon-o-cog')
                             ->schema([
                                 Grid::make(2)->schema([
                                     Select::make('po_status')

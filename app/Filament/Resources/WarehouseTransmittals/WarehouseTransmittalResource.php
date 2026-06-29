@@ -20,17 +20,30 @@ class WarehouseTransmittalResource extends Resource
 {
     protected static ?string $model = WarehouseTransmittal::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
-
-    protected static ?string $modelLabel = 'Transmittal Gudang';
-
-    protected static ?string $pluralModelLabel = 'Transmittal Gudang';
-
     protected static ?string $cluster = PengirimanGudangCluster::class;
 
-    protected static ?string $recordTitleAttribute = 'transmittal_no';
-
     protected static ?int $navigationSort = 2;
+
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
+
+    protected static string|\BackedEnum|null $activeNavigationIcon = 'heroicon-s-document-text';
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Transmittal Gudang';
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'Transmittal Gudang';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Transmittal Gudang';
+    }
+
+    protected static ?string $recordTitleAttribute = 'transmittal_no';
 
     public static function form(Schema $schema): Schema
     {
