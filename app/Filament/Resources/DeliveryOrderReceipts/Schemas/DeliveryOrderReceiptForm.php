@@ -727,7 +727,7 @@ class DeliveryOrderReceiptForm
 
                                         if ($totalAkanDiterima > $qtyPo) {
                                             $selisih = $totalAkanDiterima - $qtyPo;
-                                            $fmtSelisih = number_format($selisih, 0, '.', ',');
+                                            $fmtSelisih = rtrim(rtrim(number_format($selisih, 4, ',', '.'), '0'), ',');
                                             $fail("Input tidak valid! Kelebihan {$fmtSelisih} {$uoi}. Aktifkan 'Toleransi Qty' atau kurangi angka.");
                                         }
                                     },
@@ -758,9 +758,9 @@ class DeliveryOrderReceiptForm
                                     $totalAkanDiterima = $netSaved + $currentInput;
                                     $sisaSetelahInput = $qtyPo - $totalAkanDiterima;
 
-                                    $fmtQtyPo = number_format($qtyPo);
-                                    $fmtTotalAkanDiterima = number_format($totalAkanDiterima);
-                                    $fmtSisaAbsolut = number_format(abs($sisaSetelahInput));
+                                    $fmtQtyPo = rtrim(rtrim(number_format($qtyPo, 4, ',', '.'), '0'), ',');
+                                    $fmtTotalAkanDiterima = rtrim(rtrim(number_format($totalAkanDiterima, 4, ',', '.'), '0'), ',');
+                                    $fmtSisaAbsolut = rtrim(rtrim(number_format(abs($sisaSetelahInput), 4, ',', '.'), '0'), ',');
 
                                     if ($get('is_qty_tolerance') && $sisaSetelahInput < 0) {
                                         $statusInfo = "<span style='color: #d97706; font-weight: bold;'>Toleransi Aktif: {$fmtSisaAbsolut} {$uoi}</span>";

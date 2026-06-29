@@ -33,6 +33,12 @@ use Illuminate\Support\Facades\Auth;
     'delay_notes',
     'pending_date',
     'pending_resolved_date',
+    'incoterms',
+    'current_location',
+    'eta_date',
+    'arrival_sequence',
+    'document_path',
+    'description',
 ])]
 class DeliveryOrderReceipt extends Model
 {

@@ -26,7 +26,7 @@ class ChemicalQcTuv extends Model
     protected function casts(): array
     {
         return [
-            'qty_qc_tuv' => 'decimal:0',
+            'qty_qc_tuv' => 'float',
         ];
     }
 

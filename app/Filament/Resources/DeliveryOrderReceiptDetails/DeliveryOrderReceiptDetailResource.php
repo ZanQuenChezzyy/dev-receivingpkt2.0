@@ -122,7 +122,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                                 // Jika benar-benar berlebih, tampilkan angkanya
                                 if ($lebihan > 0) {
                                     // Format angka agar rapi (misal: +1.500 EA)
-                                    $fmtLebihan = number_format($lebihan, 0, ',', '.');
+                                    $fmtLebihan = rtrim(rtrim(number_format($lebihan, 4, ',', '.'), '0'), ',');
 
                                     return "Toleransi (+{$fmtLebihan} {$record->uoi})";
                                 }

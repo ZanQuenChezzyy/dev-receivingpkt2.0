@@ -46,9 +46,9 @@ class PurchaseOrderIssued extends Model
             'date_create' => 'date',
             'delivery_date_po' => 'date',
             'item_no' => 'integer',
-            'qty_po' => 'decimal:0',
-            'net_price' => 'decimal:0',
-            'total_amount_in_lc' => 'decimal:0',
+            'qty_po' => 'float',
+            'net_price' => 'float',
+            'total_amount_in_lc' => 'float',
         ];
     }
 

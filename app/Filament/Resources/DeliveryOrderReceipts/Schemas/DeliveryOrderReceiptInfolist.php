@@ -184,7 +184,7 @@ class DeliveryOrderReceiptInfolist
                                             ->weight(FontWeight::Bold)
                                             ->color('success')
                                             ->suffix(fn($record) => " {$record->uoi}")
-                                            ->formatStateUsing(fn($state) => number_format($state, 0, ',', '.')),
+                                            ->formatStateUsing(fn($state) => rtrim(rtrim(number_format($state, 4, ',', '.'), '0'), ',')),
                                     ]),
 
                                     // Baris 2: Lokasi & Status Toleransi
@@ -240,7 +240,7 @@ class DeliveryOrderReceiptInfolist
                                                     // Jika benar-benar berlebih, tampilkan angkanya
                                                     if ($lebihan > 0) {
                                                         // Format angka agar rapi (misal: +1.500 EA)
-                                                        $fmtLebihan = number_format($lebihan, 0, ',', '.');
+                                                        $fmtLebihan = rtrim(rtrim(number_format($lebihan, 4, ',', '.'), '0'), ',');
 
                                                         return "Toleransi (+{$fmtLebihan} {$record->uoi})";
                                                     }
@@ -331,7 +331,7 @@ class DeliveryOrderReceiptInfolist
                                                 'tanggal' => $mid->materialIssue->tanggal,
                                                 'peminta' => $mid->materialIssue->diminta_oleh,
                                                 'item' => $d->description,
-                                                'qty' => number_format((float) $mid->diserahkan, 0, ',', '.'),
+                                                'qty' => rtrim(rtrim(number_format((float) $mid->diserahkan, 4, ',', '.'), '0'), ','),
                                                 'stage' => $mid->stage_when_issued,
                                                 'uoi' => $d->uoi,
                                             ];

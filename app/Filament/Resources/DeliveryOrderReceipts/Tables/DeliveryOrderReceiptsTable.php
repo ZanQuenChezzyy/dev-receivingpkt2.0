@@ -173,7 +173,7 @@ class DeliveryOrderReceiptsTable
                             }
 
                             return $details->map(function ($detail) {
-                                $qty = number_format($detail->quantity, 0, ',', '.');
+                                $qty = rtrim(rtrim(number_format($detail->quantity, 4, ',', '.'), '0'), ',');
 
                                 return "{$qty} {$detail->uoi}";
                             })->toArray();

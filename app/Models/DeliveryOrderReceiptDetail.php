@@ -40,8 +40,8 @@ class DeliveryOrderReceiptDetail extends Model
     {
         return [
             'item_no' => 'integer',
-            'quantity' => 'decimal:0',
-            'total_amount_snapshot' => 'decimal:0',
+            'quantity' => 'float',
+            'total_amount_snapshot' => 'float',
             'is_different_location' => 'boolean',
             'is_qty_tolerance' => 'boolean',
         ];
