@@ -51,9 +51,8 @@ class DeliveryOrderReceiptsTable
                             $js .= "new FilamentNotification().title('Nomor DO disalin!').success().send();";
 
                             $doInfo = "<span onclick=\"{$js}\" class='text-gray-500 font-medium cursor-pointer hover:text-primary-600 hover:underline transition' title='Klik untuk menyalin DO'>DO: {$doNumber}</span>";
-                            $seqInfo = $record->arrival_sequence ? "<br><span class='text-blue-600 text-xs font-bold'>Kedatangan Ke-{$record->arrival_sequence}</span>" : '';
 
-                            return new HtmlString($doInfo . $seqInfo);
+                            return new HtmlString($doInfo);
                         })
                         ->searchable(query: function (Builder $query, string $search) {
                             $query->where('delivery_oder_no', 'like', "%{$search}%")
