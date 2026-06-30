@@ -184,7 +184,7 @@
                     $receipt = $item->deliveryOrderReceipt;
                     $details = $receipt?->deliveryOrderReceiptDetails ?? collect();
                     $tanggalKirimFormat = $transmittal->created_at ? $transmittal->created_at->format('d/m/Y') : '-';
-                    $documentCode = $receipt?->document_code ?? '-';
+                    $documentCode = $receipt?->qr_103_code ?? '-';
                 @endphp
 
                 @foreach ($details as $detail)
