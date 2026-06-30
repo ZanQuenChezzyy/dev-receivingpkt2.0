@@ -10,11 +10,10 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
-use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
@@ -69,7 +68,7 @@ class LocationReceivingResource extends Resource
     {
         return $schema
             ->components([
-                InfolistSection::make('Informasi Lokasi')
+                Section::make('Informasi Lokasi')
                     ->icon('heroicon-o-map-pin')
                     ->schema([
                         TextEntry::make('name')

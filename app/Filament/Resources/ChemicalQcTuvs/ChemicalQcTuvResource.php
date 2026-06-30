@@ -10,14 +10,12 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Infolists\Components\Grid as InfolistGrid;
-use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
@@ -82,10 +80,10 @@ class ChemicalQcTuvResource extends Resource
     {
         return $schema
             ->components([
-                InfolistSection::make('Detail QC TUV')
+                Section::make('Detail QC TUV')
                     ->icon('heroicon-o-shield-check')
                     ->schema([
-                        InfolistGrid::make(2)->schema([
+                        Grid::make(2)->schema([
                             TextEntry::make('purchaseOrderIssued.purchase_order_no')
                                 ->label('Purchase Order')
                                 ->weight(FontWeight::Bold)
