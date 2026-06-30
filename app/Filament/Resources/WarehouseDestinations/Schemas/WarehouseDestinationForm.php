@@ -31,7 +31,7 @@ class WarehouseDestinationForm
                                 ->preload()
                                 ->label('PIC Gudang'),
                         ]),
-                    ]),
+                    ])->columnSpanFull(),
             ]);
     }
 }

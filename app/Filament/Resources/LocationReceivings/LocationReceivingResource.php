@@ -60,7 +60,7 @@ class LocationReceivingResource extends Resource
                             ->placeholder('Masukkan nama lokasi')
                             ->required()
                             ->maxLength(255),
-                    ]),
+                    ])->columnSpanFull(),
             ]);
     }
 
