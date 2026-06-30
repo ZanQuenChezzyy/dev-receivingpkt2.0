@@ -168,7 +168,7 @@
                 <th class="text-center" style="width: 9%;">DOC GR</th>
                 <th class="text-center" style="width: 4%;">ITEM</th>
                 <th class="text-center" style="width: 9%;">MATERIAL</th>
-                <th class="text-left" style="width: 25%;">DESCRIPTION</th>
+                <th class="text-left" style="width: 25%;">DESKRIPSI</th>
                 <th class="text-center" style="width: 6%;">QTY RCV</th>
                 <th class="text-center" style="width: 4%;">UOI</th>
                 <th class="text-center" style="width: 14%;">LOKASI</th>

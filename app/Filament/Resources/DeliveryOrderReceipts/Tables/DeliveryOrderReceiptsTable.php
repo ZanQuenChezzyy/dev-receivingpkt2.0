@@ -379,7 +379,7 @@ class DeliveryOrderReceiptsTable
                         ->badge()
                         ->default(false) // Wajib ditambah agar null tetap dirender sebagai 'Belum Post'
                         ->formatStateUsing(fn($state) => $state ? 'Posted 103' : 'Belum Post')
-                        ->description(fn($record) => $record->post_103 ? Carbon::parse($record->post_103)->format('d M Y - H:i') : 'Menunggu aksi')
+                        ->description(fn($record) => $record->post_103 ? Carbon::parse($record->post_103)->translatedFormat('d F Y H:i') : 'Menunggu aksi')
                         ->color(fn($state) => $state ? 'success' : 'gray')
                         ->icon(fn($state) => $state ? 'heroicon-m-check-badge' : 'heroicon-m-clock')
                         ->toggleable(isToggledHiddenByDefault: true)
@@ -612,7 +612,7 @@ class DeliveryOrderReceiptsTable
                         ])
                         ->action(function (array $data, $record) {
                             $location = \App\Models\LocationReceiving::find($data['location_id']);
-                            
+
                             $record->update([
                                 'is_physically_received' => true,
                                 'physical_received_date' => $data['physical_received_date'],

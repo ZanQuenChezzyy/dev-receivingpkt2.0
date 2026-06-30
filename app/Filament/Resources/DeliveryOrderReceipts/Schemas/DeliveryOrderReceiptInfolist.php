@@ -74,7 +74,8 @@ class DeliveryOrderReceiptInfolist
                                             ->icon('heroicon-m-tag')
                                             ->badge()
                                             ->formatStateUsing(function ($state, $record) {
-                                                if (empty($state)) return '-';
+                                                if (empty($state))
+                                                    return '-';
                                                 if (str_contains(strtoupper($state), 'TERMIN')) {
                                                     $percentage = (float) $record->termin_percentage;
                                                     return "{$state}: {$percentage}%";
@@ -735,6 +736,7 @@ class DeliveryOrderReceiptInfolist
                                 ->url(fn($record) => $record->chemical_monitoring_id ? url('/admin/monitoring-chemical/' . $record->chemical_monitoring_id) : null, true)
                                 ->color(fn($state) => $state ? 'primary' : 'gray'),
                         ])
+                        ->columns(2)
                         ->collapsed(),
                 ]),
             ]);
