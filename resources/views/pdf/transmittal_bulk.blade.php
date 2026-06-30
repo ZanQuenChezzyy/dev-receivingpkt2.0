@@ -197,7 +197,7 @@
                             <td class="text-center">{{ $detail->item_no ?? '-' }}</td>
                             <td class="text-center">{{ $detail->material_code ?? '-' }}</td>
                             <td class="text-left">{{ preg_replace('/\s+/', ' ', trim($detail->description ?? '-')) }}</td>
-                            <td class="text-center font-bold">{{ $detail->quantity !== null ? number_format((float) $detail->quantity) : '-' }}</td>
+                            <td class="text-center font-bold">{{ $detail->quantity !== null ? rtrim(rtrim(number_format((float) $detail->quantity, 3, ',', '.'), '0'), ',') : '-' }}</td>
                             <td class="text-center">{{ $detail->uoi ?? '-' }}</td>
                             @php
                                 $destCol = strtoupper($transmittal->destination->name ?? '-');
