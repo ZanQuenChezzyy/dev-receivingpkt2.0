@@ -123,10 +123,10 @@ class DeliveryOrderReceiptForm
                     } else {
                         $set('is_physically_received', false);
                         $set('physical_received_date', null);
-                        
-                        $loc = \App\Models\LocationReceiving::firstOrCreate(['name' => 'BARANG BELUM DATANG']);
+
+                        $loc = LocationReceiving::firstOrCreate(['name' => 'BARANG BELUM DATANG']);
                         $set('global_location_id', $loc->id);
-                        
+
                         $details = $get('deliveryOrderReceiptDetails') ?? [];
                         foreach ($details as $key => $detail) {
                             $set("deliveryOrderReceiptDetails.{$key}.location_id", $loc->id);
@@ -250,7 +250,7 @@ class DeliveryOrderReceiptForm
                     }
 
                     if ($get('receipt_mode') !== 'Standard') {
-                        $loc = \App\Models\LocationReceiving::firstOrCreate(['name' => 'BARANG BELUM DATANG']);
+                        $loc = LocationReceiving::firstOrCreate(['name' => 'BARANG BELUM DATANG']);
                         $set('global_location_id', $loc->id);
                     }
 
