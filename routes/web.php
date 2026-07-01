@@ -40,6 +40,7 @@ Route::get('/admin/print-bulk-do-qr', [QRCodeController::class, 'bulkPrint'])
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.delivery-order-receipts.bulk_print_qr');
 
-Route::get('/admin/delivery-order-receipts/{deliveryOrderReceipt}/print-qr', [QRCodeController::class, 'print'])
+Route::get('/admin/delivery-order-receipts/{deliveryOrderReceipt:document_code}/print-qr', [QRCodeController::class, 'print'])
+    ->where('deliveryOrderReceipt', '.*')
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.delivery-order-receipts.print_qr');
