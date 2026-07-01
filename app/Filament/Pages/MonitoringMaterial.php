@@ -129,7 +129,7 @@ class MonitoringMaterial extends Page implements HasTable
                         ->weight(FontWeight::SemiBold)
                         ->searchable(['material_code', 'description'])
                         ->getStateUsing(fn($record) => $record->material_code ?: str($record->description)->limit(40))
-                        ->description(fn($record) => $record->material_code ? str($record->description)->limit(40) : ['NONSTOCK', 'INVESTASI'])
+                        ->description(fn($record) => $record->material_code ? str($record->description)->limit(40) : (string) $record->mrp_type)
                         ->sortable(),
                 ]),
                 ColumnGroup::make('Kuantitas', [
