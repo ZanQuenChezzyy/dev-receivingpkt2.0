@@ -579,18 +579,18 @@ class DeliveryOrderReceiptForm
                     ->relationship('createdBy', 'name')
                     ->default(Auth::id())
                     ->dehydrated()
-                    ->disabled(fn() => Auth::user()->hasRole('Developer') !== false),
+                    ->visible(fn() => Auth::user()->hasRole(['Developer', 'AVP Receiving'])),
 
                 DatePicker::make('post_103')
                     ->label('Tanggal Post 103 (SAP)')
                     ->placeholder('Belum di-Post')
                     ->native(false)
-                    ->disabled(fn() => Auth::user()->hasRole('Developer') !== false),
+                    ->visible(fn() => Auth::user()->hasRole(['Developer', 'AVP Receiving'])),
 
                 TextInput::make('qr_103_code')
                     ->label('Kode QR 103')
                     ->placeholder('Akan terisi otomatis saat scan')
-                    ->readOnly()
+                    ->readOnly(fn() => !Auth::user()->hasRole(['Developer', 'AVP Receiving']))
                     ->columnSpan(1),
 
                 Select::make('delay_reason')
@@ -604,7 +604,7 @@ class DeliveryOrderReceiptForm
                         'Lainnya' => 'Lainnya',
                     ])
                     ->live()
-                    ->disabled(fn() => Auth::user()->hasRole('Developer') !== false),
+                    ->disabled(fn() => !Auth::user()->hasRole(['Developer', 'AVP Receiving'])),
 
                 Textarea::make('delay_notes')
                     ->label('Catatan Penundaan (Lainnya)')
@@ -613,7 +613,7 @@ class DeliveryOrderReceiptForm
                     ->columnSpanFull()
                     ->visible(fn(Get $get) => $get('delay_reason') === 'Lainnya')
                     ->required(fn(Get $get) => $get('delay_reason') === 'Lainnya')
-                    ->disabled(fn() => Auth::user()->hasRole('Developer') !== false),
+                    ->disabled(fn() => !Auth::user()->hasRole(['Developer', 'AVP Receiving'])),
 
                 Grid::make(2)->schema([
                     TextEntry::make('document_code_view')

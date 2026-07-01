@@ -14,6 +14,8 @@ use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\TextSize;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 class DeliveryOrderReceiptInfolist
@@ -543,6 +545,60 @@ class DeliveryOrderReceiptInfolist
                                         ->placeholder('Belum Diproses')
                                         ->icon('heroicon-m-document-check')
                                         ->color(fn($state) => $state ? 'primary' : 'gray'),
+
+                                    TextEntry::make('vendor_wait_time')
+                                        ->label('Total Waktu Tunggu Vendor')
+                                        ->getStateUsing(function ($record) {
+                                            $details = self::calculateLeadTimeDetails($record);
+                                            return $details ? $details['totalVendorDays'] . ' Hari' : null;
+                                        })
+                                        ->visible(function ($record) {
+                                            $details = self::calculateLeadTimeDetails($record);
+                                            return $details && $details['totalVendorDays'] > 0;
+                                        })
+                                        ->badge()
+                                        ->color('warning')
+                                        ->icon('heroicon-m-pause-circle'),
+
+                                    TextEntry::make('qc_wait_time')
+                                        ->label('Total Waktu QC / ISTEK')
+                                        ->getStateUsing(function ($record) {
+                                            $details = self::calculateLeadTimeDetails($record);
+                                            return $details ? $details['totalQcDays'] . ' Hari' : null;
+                                        })
+                                        ->visible(function ($record) {
+                                            $details = self::calculateLeadTimeDetails($record);
+                                            return $details && $details['totalQcDays'] > 0;
+                                        })
+                                        ->badge()
+                                        ->color('info')
+                                        ->icon('heroicon-m-beaker'),
+
+                                    TextEntry::make('lead_time')
+                                        ->label('Lead Time GRS / RDTV')
+                                        ->getStateUsing(function ($record) {
+                                            $details = self::calculateLeadTimeDetails($record);
+                                            if (!$details)
+                                                return 'Belum GRS / RDTV';
+                                            return $details['initialLeadTime'] . ' Hari';
+                                        })
+                                        ->badge()
+                                        ->color(fn($state) => ($state === 'Belum GRS / RDTV') ? 'gray' : ((int) $state > 3 ? 'danger' : 'success'))
+                                        ->icon('heroicon-m-check-badge'),
+
+                                    TextEntry::make('lead_time_resubmission')
+                                        ->label('Lead Time GRS / RDTV (Pengajuan Ulang)')
+                                        ->getStateUsing(function ($record) {
+                                            $details = self::calculateLeadTimeDetails($record);
+                                            return $details ? $details['resubmissionLeadTime'] . ' Hari' : null;
+                                        })
+                                        ->visible(function ($record) {
+                                            $details = self::calculateLeadTimeDetails($record);
+                                            return $details && $details['hasRdtv'];
+                                        })
+                                        ->badge()
+                                        ->color(fn($state) => ((int) $state > 3 ? 'danger' : 'success'))
+                                        ->icon('heroicon-m-arrow-path'),
                                 ]),
                         ])
                         ->collapsible(),
@@ -740,5 +796,148 @@ class DeliveryOrderReceiptInfolist
                         ->collapsed(),
                 ]),
             ]);
+    }
+
+    public static function calculateLeadTimeDetails($record)
+    {
+        $receivedDate = $record->received_date;
+        $grsDate = $record->grsRdtvItems()->latest()->first()?->grsRdtv?->transaction_date;
+
+        if (!$receivedDate || !$grsDate) {
+            return null;
+        }
+
+        $getWorkingDays = function ($start, $end) {
+            if (!$start || !$end)
+                return 0;
+            $s = \Carbon\Carbon::parse($start)->startOfDay();
+            $e = \Carbon\Carbon::parse($end)->startOfDay();
+            if ($e->lessThan($s))
+                return 0;
+
+            $holidays = \Illuminate\Support\Facades\Cache::remember('national_holidays', 86400, function () {
+                try {
+                    $response = \Illuminate\Support\Facades\Http::timeout(5)->get('https://libur.deno.dev/api');
+                    if ($response->successful()) {
+                        return collect($response->json())
+                            ->filter(fn($h) => isset($h['is_national_holiday']) && $h['is_national_holiday'] === true)
+                            ->pluck('date')
+                            ->toArray();
+                    }
+                } catch (\Exception $e) {
+                }
+                return [];
+            });
+
+            $days = 0;
+            $current = $s->copy()->addDay();
+            while ($current->lessThanOrEqualTo($e)) {
+                if (!$current->isWeekend() && !in_array($current->format('Y-m-d'), $holidays)) {
+                    $days++;
+                }
+                $current->addDay();
+            }
+            return $days;
+        };
+
+        $totalDays = $getWorkingDays($receivedDate, $grsDate);
+        $events = [];
+
+        if ($record->relationLoaded('qcHistories') || $record->qcHistories()->exists()) {
+            foreach ($record->qcHistories as $qc) {
+                if (in_array($qc->status, ['Kirim', 'Kembali'])) {
+                    $events[] = [
+                        'type' => $qc->status === 'Kirim' ? 'QC_START' : 'QC_END',
+                        'date' => \Carbon\Carbon::parse($qc->created_at)
+                    ];
+                }
+            }
+        }
+
+        if ($record->relationLoaded('grsRdtvItems') || $record->grsRdtvItems()->exists()) {
+            foreach ($record->grsRdtvItems as $item) {
+                if (in_array($item->status, ['RDTV', 'GRS'])) {
+                    $tDate = $item->grsRdtv->transaction_date ?? $item->created_at;
+                    $events[] = [
+                        'type' => $item->status === 'RDTV' ? 'VENDOR_START' : 'GRS_END',
+                        'date' => \Carbon\Carbon::parse($tDate)
+                    ];
+                }
+            }
+        }
+
+        usort($events, fn($a, $b) => $a['date']->timestamp <=> $b['date']->timestamp);
+
+        $totalQcDays = 0;
+        $totalQcDays = 0;
+        $totalVendorDays = 0;
+        $initialLeadTime = 0;
+        $resubmissionLeadTime = 0;
+        $hasRdtv = false;
+
+        $inQc = false;
+        $inVendor = false;
+        $currentStart = \Carbon\Carbon::parse($receivedDate);
+
+        foreach ($events as $event) {
+            $eventDate = $event['date'];
+            $days = $getWorkingDays($currentStart, $eventDate);
+
+            if ($inQc) {
+                $totalQcDays += $days;
+            } elseif ($inVendor) {
+                $totalVendorDays += $days;
+            } else {
+                if ($hasRdtv) {
+                    $resubmissionLeadTime += $days;
+                } else {
+                    $initialLeadTime += $days;
+                }
+            }
+
+            if ($event['type'] === 'QC_START') {
+                $inQc = true;
+                $inVendor = false;
+            } elseif ($event['type'] === 'QC_END') {
+                $inQc = false;
+            } elseif ($event['type'] === 'VENDOR_START') {
+                $inVendor = true;
+                $inQc = false;
+                $hasRdtv = true;
+            } elseif ($event['type'] === 'GRS_END') {
+                $inVendor = false;
+                $inQc = false;
+            }
+
+            $currentStart = $eventDate;
+        }
+
+        $grsCarbon = \Carbon\Carbon::parse($grsDate);
+        if ($currentStart->lessThan($grsCarbon)) {
+            $days = $getWorkingDays($currentStart, $grsCarbon);
+            if ($inQc) {
+                $totalQcDays += $days;
+            } elseif ($inVendor) {
+                $totalVendorDays += $days;
+            } else {
+                if ($hasRdtv) {
+                    $resubmissionLeadTime += $days;
+                } else {
+                    $initialLeadTime += $days;
+                }
+            }
+        }
+
+        $leadTime = $initialLeadTime + $resubmissionLeadTime;
+
+        return [
+            'totalDays' => $totalDays,
+            'totalQcDays' => $totalQcDays,
+            'totalVendorDays' => $totalVendorDays,
+            'initialLeadTime' => $initialLeadTime,
+            'resubmissionLeadTime' => $resubmissionLeadTime,
+            'leadTime' => $leadTime,
+            'hasRdtv' => $hasRdtv,
+        ];
     }
 }
