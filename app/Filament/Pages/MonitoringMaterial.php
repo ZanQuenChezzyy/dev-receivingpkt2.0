@@ -80,9 +80,19 @@ class MonitoringMaterial extends Page implements HasTable
             )
             ->modifyQueryUsing(fn (Builder $query) => $this->modifyQueryWithActiveTab($query))
             ->defaultSort(function (Builder $query) {
-                // Di urutkan berdasarkan data yang masih berjalan atau belum GRS/RDTV paling atas
-                $query->orderByRaw("CASE WHEN delivery_order_receipts.status IN ('GRS', 'RDTV') THEN 1 ELSE 0 END")
-                    ->orderBy('delivery_order_receipts.created_at', 'desc');
+                // Urutan:
+                // 1. Barang diterima dan belum post 103
+                // 2. Pengajuan QC yang belum kembali (Kirim)
+                // 3. Pengajuan QC yang sudah kirim dan kembali tapi belum GRS/RDTV
+                // 4. Terakhir yang sudah GRS/RDTV
+                $query->orderByRaw("
+                    CASE 
+                        WHEN delivery_order_receipts.status IN ('GRS', 'RDTV') THEN 4
+                        WHEN delivery_order_receipts.post_103 IS NULL THEN 1
+                        WHEN (SELECT status FROM transmittal_items WHERE transmittal_items.delivery_order_receipt_id = delivery_order_receipts.id ORDER BY created_at DESC, id DESC LIMIT 1) = 'Kirim' THEN 2
+                        ELSE 3
+                    END ASC
+                ")->orderBy('delivery_order_receipts.created_at', 'desc');
             })
             ->columns([
                 ColumnGroup::make('Informasi PO & DO', [
@@ -153,14 +163,34 @@ class MonitoringMaterial extends Page implements HasTable
                 ]),
                 ColumnGroup::make('Status', [
                     TextColumn::make('status_grs')
-                        ->label('Status GRS')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceipt?->status ?? 'Menunggu')
+                        ->label('Status')
+                        ->getStateUsing(function ($record) {
+                            $doReceipt = $record->deliveryOrderReceipt;
+                            if (!$doReceipt) return 'Belum Diketahui';
+                            
+                            if (in_array($doReceipt->status, ['GRS', 'RDTV'])) {
+                                return $doReceipt->status;
+                            }
+                            
+                            if (is_null($doReceipt->post_103)) {
+                                return 'Menunggu Post 103';
+                            }
+                            
+                            $latestTransmittal = $doReceipt->transmittalItems()->latest()->first();
+                            if ($latestTransmittal && $latestTransmittal->status === 'Kirim') {
+                                return 'Pengajuan QC';
+                            }
+                            
+                            return 'Menunggu GRS / RDTV';
+                        })
                         ->badge()
                         ->color(fn(string $state): string => match ($state) {
                             'GRS' => 'success',
                             'RDTV' => 'warning',
-                            'Menunggu' => 'gray',
-                            default => 'primary',
+                            'Menunggu Post 103' => 'danger',
+                            'Pengajuan QC' => 'warning',
+                            'Menunggu GRS / RDTV' => 'info',
+                            default => 'gray',
                         }),
                     TextColumn::make('lokasi')
                         ->label('Lokasi Terkini')
