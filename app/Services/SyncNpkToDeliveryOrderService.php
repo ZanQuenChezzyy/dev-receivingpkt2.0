@@ -53,11 +53,43 @@ class SyncNpkToDeliveryOrderService
                 'received_date' => $recDate,
                 'stage' => $stage,
                 'source_type' => 'Bahan Baku NPK',
-                'status' => $dor->getAttribute('status') ?? 'Draft', // initial status
+                'status' => $dor->getAttribute('status') ?? 'Diterima', // initial status
                 'post_103' => $tgl103 ? Carbon::parse($tgl103)->startOfDay() : null,
                 'received_by' => $dor->getAttribute('received_by') ?? $actorId,
                 'created_by' => $dor->getAttribute('created_by') ?? $actorId,
+                'incoterms' => $anchor->getAttribute('incoterm') ?? $dor->getAttribute('incoterms'),
+                'eta_date' => $anchor->getAttribute('delivery_date_po') ?? $dor->getAttribute('eta_date'),
             ];
+
+            if (!$dor->exists) {
+                $receiptMode = 'Standard';
+                $isPhysicallyReceived = true;
+                $physicalReceivedDate = $recDate;
+                $stageUpper = strtoupper((string) $stage);
+
+                if (str_contains($stageUpper, 'TERMIN')) {
+                    $receiptMode = 'Termin';
+                    $isPhysicallyReceived = false;
+                    $physicalReceivedDate = null;
+                } elseif (str_contains($stageUpper, 'DOF')) {
+                    $receiptMode = 'DOF_Incoterm';
+                    $isPhysicallyReceived = false;
+                    $physicalReceivedDate = null;
+                }
+
+                $payload['receipt_mode'] = $receiptMode;
+                $payload['is_physically_received'] = $isPhysicallyReceived;
+                $payload['physical_received_date'] = $physicalReceivedDate;
+
+                if ($poNo) {
+                    $receiptQuery = DeliveryOrderReceipt::whereHas('deliveryOrderReceiptDetails.purchaseOrderIssued', function ($q) use ($poNo) {
+                        $q->where('purchase_order_no', $poNo);
+                    });
+                    $payload['arrival_sequence'] = $receiptQuery->count() + 1;
+                } else {
+                    $payload['arrival_sequence'] = 1;
+                }
+            }
 
             $dor->fill($payload)->save();
 
@@ -84,9 +116,14 @@ class SyncNpkToDeliveryOrderService
                     'item_no' => $poItemNo,
                 ]);
 
+                // Calculate total amount
+                $quantity = (float) str_replace(',', '.', (string) $d->getAttribute('quantity'));
+                $unitPrice = ($po->qty_po > 0) ? ((float) $po->total_amount_in_lc / (float) $po->qty_po) : (float) $po->net_price;
+                $totalAmountSnapshot = $quantity * $unitPrice;
+
                 $detail->fill([
                     'purchase_order_issued_id' => $po->id,
-                    'quantity' => (string) $d->getAttribute('quantity'),
+                    'quantity' => (string) $quantity,
                     'material_code' => $po->getAttribute('material_code'),
                     'description' => $po->getAttribute('description'),
                     'uoi' => $po->getAttribute('uoi'),
@@ -97,6 +134,8 @@ class SyncNpkToDeliveryOrderService
                     'requisitioner' => $po->getAttribute('requisitioner'),
                     'location_id' => $npk->getAttribute('location_id'),
                     'is_qty_tolerance' => $d->getAttribute('is_qty_tolerance') ?? false,
+                    'total_amount_snapshot' => $totalAmountSnapshot,
+                    'is_different_location' => false,
                 ])->save();
             }
 

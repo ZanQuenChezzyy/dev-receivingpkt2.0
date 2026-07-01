@@ -24,6 +24,12 @@ class EditMonitoringChemical extends EditRecord
     {
         $record = $this->record;
 
+        if ($record->isDone()) {
+            $record->update(['doc_status' => 'Completed']);
+        } else {
+            $record->update(['doc_status' => 'Outstanding']);
+        }
+
         // Sync ke Delivery Order Receipt
         app(SyncChemicalToDeliveryOrderService::class)->sync($record);
     }

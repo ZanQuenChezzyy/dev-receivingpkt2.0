@@ -53,14 +53,56 @@ class AntreanPengirimanGudang extends Page implements HasTable
     public function table(Table $table): Table
     {
         $table
-            ->query(
-                DeliveryOrderReceiptDetail::query()
+            ->query(function () {
+                $user = Auth::user();
+                return DeliveryOrderReceiptDetail::query()
                     ->whereHas('deliveryOrderReceipt', function ($query) {
                         $query->whereHas('grsRdtvItems');
                     })
-                    ->where('mrp_type', 'V1')
                     ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
-            )
+                    ->where(function (Builder $q) use ($user) {
+                        if ($user->hasAnyRole(['Developer', 'AVP Receiving'])) {
+                            $q->whereIn('mrp_type', ['V1', 'NONSTOCK']);
+                            return;
+                        }
+
+                        $hasMatchedRole = false;
+
+                        if ($user->hasRole('Admin Sparepart')) {
+                            $hasMatchedRole = true;
+                            $q->orWhere(function ($sub) {
+                                $sub->where('mrp_type', 'V1')->where('material_type', 'ZSP');
+                            });
+                        }
+
+                        if ($user->hasRole('Admin Chemical')) {
+                            $hasMatchedRole = true;
+                            $q->orWhere(function ($sub) {
+                                $sub->where('mrp_type', 'V1')->where('material_type', 'ZSM');
+                            });
+                        }
+
+                        if ($user->hasRole('Admin Bahan Baku')) {
+                            $hasMatchedRole = true;
+                            $q->orWhere(function ($sub) {
+                                $sub->where('mrp_type', 'V1')->where('material_type', 'ZRM');
+                            })->orWhere(function ($sub) {
+                                $sub->whereIn('mrp_type', ['V1', 'NONSTOCK'])
+                                    ->whereIn('material_type', ['ZSP', 'ZSM'])
+                                    ->where(function ($desc) {
+                                        $desc->where('description', 'like', '%HELIUM%')
+                                            ->orWhere('description', 'like', '%ARGON%')
+                                            ->orWhere('description', 'like', '%METHANOL%')
+                                            ->orWhere('description', 'like', '%DIESEL%');
+                                    });
+                            });
+                        }
+
+                        if (!$hasMatchedRole) {
+                            $q->whereRaw('1 = 0');
+                        }
+                    });
+            })
             ->defaultSort('created_at', 'desc')
             ->columns([
                 // 📄 GRUP 1: INFORMASI DOKUMEN
