@@ -578,13 +578,14 @@ class DeliveryOrderReceiptForm
                     ->label('Dibuat Oleh')
                     ->relationship('createdBy', 'name')
                     ->default(Auth::id())
-                    ->dehydrated()
+                    ->dehydratedWhenHidden()
                     ->visible(fn() => Auth::user()->hasRole(['Developer', 'AVP Receiving'])),
 
                 DatePicker::make('post_103')
                     ->label('Tanggal Post 103 (SAP)')
                     ->placeholder('Belum di-Post')
                     ->native(false)
+                    ->dehydratedWhenHidden()
                     ->visible(fn() => Auth::user()->hasRole(['Developer', 'AVP Receiving'])),
 
                 TextInput::make('qr_103_code')
