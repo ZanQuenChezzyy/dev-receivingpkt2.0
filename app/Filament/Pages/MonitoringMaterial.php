@@ -78,7 +78,7 @@ class MonitoringMaterial extends Page implements HasTable
                     ->leftJoin('delivery_order_receipts', 'delivery_order_receipt_details.delivery_order_receipt_id', '=', 'delivery_order_receipts.id')
                     ->select('delivery_order_receipt_details.*')
             )
-            ->modifyQueryUsing(fn (Builder $query) => $this->modifyQueryWithActiveTab($query))
+            ->modifyQueryUsing(fn(Builder $query) => $this->modifyQueryWithActiveTab($query))
             ->defaultSort(function (Builder $query) {
                 // Urutan:
                 // 1. Barang diterima dan belum post 103
@@ -127,8 +127,9 @@ class MonitoringMaterial extends Page implements HasTable
                         ->icon(Heroicon::Cube)
                         ->iconColor('gray')
                         ->weight(FontWeight::SemiBold)
-                        ->searchable()
-                        ->description(fn($record) => str($record->description)->limit(40))
+                        ->searchable(['material_code', 'description'])
+                        ->getStateUsing(fn($record) => $record->material_code ?: str($record->description)->limit(40))
+                        ->description(fn($record) => $record->material_code ? str($record->description)->limit(40) : ['NONSTOCK', 'INVESTASI'])
                         ->sortable(),
                 ]),
                 ColumnGroup::make('Kuantitas', [
@@ -166,21 +167,22 @@ class MonitoringMaterial extends Page implements HasTable
                         ->label('Status')
                         ->getStateUsing(function ($record) {
                             $doReceipt = $record->deliveryOrderReceipt;
-                            if (!$doReceipt) return 'Belum Diketahui';
-                            
+                            if (!$doReceipt)
+                                return 'Belum Diketahui';
+
                             if (in_array($doReceipt->status, ['GRS', 'RDTV'])) {
                                 return $doReceipt->status;
                             }
-                            
+
                             if (is_null($doReceipt->post_103)) {
                                 return 'Menunggu Post 103';
                             }
-                            
+
                             $latestTransmittal = $doReceipt->transmittalItems()->latest()->first();
                             if ($latestTransmittal && $latestTransmittal->status === 'Kirim') {
                                 return 'Pengajuan QC';
                             }
-                            
+
                             return 'Menunggu GRS / RDTV';
                         })
                         ->badge()
