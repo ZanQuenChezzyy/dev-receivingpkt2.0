@@ -24,13 +24,34 @@ class SyncNpkToDeliveryOrderService
             $dor = DeliveryOrderReceipt::where('monitoring_npk_id', $npk->id)->first() ?? new DeliveryOrderReceipt;
 
             $tgl103 = $npk->getAttribute('purchase_order_103_date');
+            
+            // Calculate document_code
+            $details = $npk->details()->get();
+            $itemCountStr = '';
+            if ($details && $details->count() > 0) {
+                $itemCountStr = str_pad((string) $details->count(), 2, '0', STR_PAD_LEFT);
+            }
+            $poNo = $anchor->purchase_order_no;
+            $doNo = $npk->getAttribute('delivery_oder_number');
+            $recDate = $npk->getAttribute('received_date');
+            $dateStr = $recDate ? Carbon::parse($recDate)->format('dmY') : '';
+            $stage = $npk->getAttribute('stage');
+
+            $parts = array_filter([$poNo, $itemCountStr, $doNo, $dateStr, $stage]);
+            $documentCode = null;
+            if (!empty($parts)) {
+                $joinedString = implode('-', $parts);
+                $upperString = strtoupper($joinedString);
+                $documentCode = preg_replace('/[^A-Z0-9\-_]/', '', $upperString);
+            }
 
             $payload = [
                 'monitoring_npk_id' => $npk->id,
-                'delivery_oder_no' => $npk->getAttribute('delivery_oder_number'),
+                'delivery_oder_no' => $doNo,
+                'document_code' => $documentCode, // Ensure document_code is saved
                 'location_id' => $npk->getAttribute('location_id'),
-                'received_date' => $npk->getAttribute('received_date'),
-                'stage' => $npk->getAttribute('stage'),
+                'received_date' => $recDate,
+                'stage' => $stage,
                 'source_type' => 'Bahan Baku NPK',
                 'status' => $dor->getAttribute('status') ?? 'Draft', // initial status
                 'post_103' => $tgl103 ? Carbon::parse($tgl103)->startOfDay() : null,
