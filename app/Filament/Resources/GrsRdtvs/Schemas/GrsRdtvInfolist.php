@@ -14,8 +14,8 @@ class GrsRdtvInfolist
     {
         return $schema
             ->components([
-                Section::make('Detail Informasi Eksekusi')
-                    ->description('Rincian informasi mengenai eksekusi GRS & RDTV ini.')
+                Section::make('Detail Informasi Transaksi')
+                    ->description('Rincian informasi mengenai Transaksi GRS & RDTV ini.')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
                         Grid::make(3)->schema([
@@ -28,19 +28,19 @@ class GrsRdtvInfolist
                             TextEntry::make('category')
                                 ->label('Kategori Dokumen')
                                 ->badge()
-                                ->color(fn (string $state): string => match ($state) {
+                                ->color(fn(string $state): string => match ($state) {
                                     'GRS' => 'success',
                                     'RDTV' => 'warning',
                                     default => 'gray',
                                 })
-                                ->icon(fn (string $state): string => match ($state) {
+                                ->icon(fn(string $state): string => match ($state) {
                                     'GRS' => 'heroicon-m-document-check',
                                     'RDTV' => 'heroicon-m-arrow-path',
                                     default => 'heroicon-m-document',
                                 }),
 
                             TextEntry::make('createdBy.name')
-                                ->label('Dieksekusi Oleh')
+                                ->label('DiTransaksi Oleh')
                                 ->icon('heroicon-m-user-circle'),
                         ]),
                     ]),

@@ -43,7 +43,7 @@ class DeliveryOrderReceiptInfolist
                                     ->placeholder('Tidak ada PO terkait')
                                     ->weight(FontWeight::Medium),
 
-                                TextEntry::make('delivery_oder_no')
+                                TextEntry::make('delivery_order_no')
                                     ->label('No. Surat Jalan (DO)')
                                     ->icon('heroicon-m-truck')
                                     ->weight(FontWeight::Medium),
@@ -206,7 +206,7 @@ class DeliveryOrderReceiptInfolist
                                     ]),
 
                                     // Baris 2: Lokasi & Status Toleransi
-                                    Grid::make(4)->schema([
+                                    Grid::make(['default' => 1, 'sm' => 2])->schema([
                                         TextEntry::make('locationReceiving.name')
                                             ->label('Lokasi Penyimpanan')
                                             ->icon('heroicon-m-map-pin')

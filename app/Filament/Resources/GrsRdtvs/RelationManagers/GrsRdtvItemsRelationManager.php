@@ -73,7 +73,7 @@ class GrsRdtvItemsRelationManager extends RelationManager
                             $q->where('purchase_order_no', 'like', "%{$search}%");
                         });
                     }),
-                TextColumn::make('deliveryOrderReceipt.delivery_oder_no')
+                TextColumn::make('deliveryOrderReceipt.delivery_order_no')
                     ->label('No. DO')
                     ->icon('heroicon-m-document-text')
                     ->iconColor('gray')

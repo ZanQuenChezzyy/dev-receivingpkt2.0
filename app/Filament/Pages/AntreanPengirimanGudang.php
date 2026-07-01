@@ -115,7 +115,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->weight(FontWeight::Bold)
                         ->getStateUsing(fn($record) => $record->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
                         ->description(function ($record) {
-                            $doNumber = $record->deliveryOrderReceipt?->delivery_oder_no ?? '-';
+                            $doNumber = $record->deliveryOrderReceipt?->delivery_order_no ?? '-';
                             $js = 'event.stopPropagation(); event.preventDefault(); ';
                             $js .= "if(navigator.clipboard) { navigator.clipboard.writeText('{$doNumber}'); } else { let t = document.createElement('textarea'); t.value = '{$doNumber}'; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); } ";
                             $js .= "new FilamentNotification().title('Nomor DO disalin!').success().send();";
@@ -127,7 +127,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                                 $q->where('purchase_order_no', 'like', "%{$search}%");
                             })
                                 ->orWhereHas('deliveryOrderReceipt', function ($q) use ($search) {
-                                    $q->where('delivery_oder_no', 'like', "%{$search}%");
+                                    $q->where('delivery_order_no', 'like', "%{$search}%");
                                 });
                         })
                         ->copyable()

@@ -47,7 +47,7 @@ class SyncNpkToDeliveryOrderService
 
             $payload = [
                 'monitoring_npk_id' => $npk->id,
-                'delivery_oder_no' => $doNo,
+                'delivery_order_no' => $doNo,
                 'document_code' => $documentCode, // Ensure document_code is saved
                 'location_id' => $npk->getAttribute('location_id'),
                 'received_date' => $recDate,

@@ -26,7 +26,7 @@ class ItemsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('id')
             ->columns([
-                TextColumn::make('detail.deliveryOrderReceipt.delivery_oder_no')
+                TextColumn::make('detail.deliveryOrderReceipt.delivery_order_no')
                     ->label('DO No'),
                 TextColumn::make('detail.purchaseOrderIssued.purchase_order_no')
                     ->label('PO No'),

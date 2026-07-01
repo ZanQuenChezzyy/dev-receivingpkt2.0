@@ -65,7 +65,7 @@ new class extends Component {
                     if (strlen($term) < 3)
                         continue;
 
-                    $q->orWhere('delivery_oder_no', 'LIKE', "%{$term}%")
+                    $q->orWhere('delivery_order_no', 'LIKE', "%{$term}%")
                         ->orWhereHas('deliveryOrderReceiptDetails', function ($qDetail) use ($term) {
                             $qDetail->where('material_code', 'LIKE', "%{$term}%")
                                 ->orWhereHas('purchaseOrderIssued', function ($qPo) use ($term) {
@@ -136,7 +136,7 @@ new class extends Component {
                 $grsRdtvInfo = "Status GRS/RDTV: Belum ada riwayat GRS atau RDTV.";
             }
 
-            return "DO No: {$receipt->delivery_oder_no} | Status Utama: {$receipt->status} {$pendingInfo} | Tanggal Terima: {$receipt->received_date->isoFormat('D MMMM YYYY')}
+            return "DO No: {$receipt->delivery_order_no} | Status Utama: {$receipt->status} {$pendingInfo} | Tanggal Terima: {$receipt->received_date->isoFormat('D MMMM YYYY')}
 {$grsRdtvInfo}
 Posisi/Status Dokumen (Transmittal): {$transmittalInfo}
 Histori QC & Masalah:

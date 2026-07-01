@@ -65,7 +65,7 @@ class TransmittalInfolist
                                 ->hiddenLabel()
                                 ->schema([
                                     Grid::make(3)->schema([
-                                        TextEntry::make('deliveryOrderReceipt.delivery_oder_no')
+                                        TextEntry::make('deliveryOrderReceipt.delivery_order_no')
                                             ->label('No. Surat Jalan (DO)')
                                             ->weight(FontWeight::Bold)
                                             ->color('gray'),

@@ -46,7 +46,7 @@ class SyncChemicalToDeliveryOrderService
 
             $payload = [
                 'monitoring_chemical_id' => $chemical->id,
-                'delivery_oder_no' => $doNo,
+                'delivery_order_no' => $doNo,
                 'document_code' => $documentCode,
                 'location_id' => $mainLocationId,
                 'received_date' => $recDate,

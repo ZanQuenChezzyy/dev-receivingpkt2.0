@@ -300,7 +300,7 @@ class DeliveryOrderReceiptForm
                     }
                 }),
 
-            TextInput::make('delivery_oder_no')
+            TextInput::make('delivery_order_no')
                 ->label('No. Surat Jalan / Nomor DO')
                 ->placeholder('Masukkan No. Surat Jalan / Memo')
                 ->maxLength(25) // Disesuaikan dengan DB
@@ -948,7 +948,7 @@ class DeliveryOrderReceiptForm
     public static function updateDocumentCode(Set $set, Get $get): void
     {
         $poNo = $get('search_po');
-        $doNo = $get('delivery_oder_no');
+        $doNo = $get('delivery_order_no');
 
         $date = $get('received_date')
             ? Carbon::parse($get('received_date'))->format('dmY') : '';

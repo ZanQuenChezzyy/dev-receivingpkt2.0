@@ -48,7 +48,7 @@ class DeliveryOrderReceiptsTable
                         ->weight(FontWeight::Bold)
                         ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
                         ->description(function ($record) {
-                            $doNumber = $record->delivery_oder_no;
+                            $doNumber = $record->delivery_order_no;
                             $js = 'event.stopPropagation(); event.preventDefault(); ';
                             $js .= "if(navigator.clipboard) { navigator.clipboard.writeText('{$doNumber}'); } else { let t = document.createElement('textarea'); t.value = '{$doNumber}'; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); } ";
                             $js .= "new FilamentNotification().title('Nomor DO disalin!').success().send();";
@@ -58,7 +58,7 @@ class DeliveryOrderReceiptsTable
                             return new HtmlString($doInfo);
                         })
                         ->searchable(query: function (Builder $query, string $search) {
-                            $query->where('delivery_oder_no', 'like', "%{$search}%")
+                            $query->where('delivery_order_no', 'like', "%{$search}%")
                                 ->orWhereHas('deliveryOrderReceiptDetails.purchaseOrderIssued', function ($q) use ($search) {
                                     $q->where('purchase_order_no', 'like', "%{$search}%");
                                 });

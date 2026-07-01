@@ -2,11 +2,15 @@
 
 namespace App\Filament\Resources\GrsRdtvs\Tables;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Size;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -21,7 +25,7 @@ class GrsRdtvsTable
             ->columns([
                 ColumnGroup::make('Informasi GRS & RDTV', [
                     TextColumn::make('transaction_date')
-                        ->label('Tanggal Eksekusi')
+                        ->label('Tanggal Transaksi')
                         ->icon('heroicon-m-calendar-days')
                         ->iconColor('primary')
                         ->color('primary')
@@ -77,7 +81,7 @@ class GrsRdtvsTable
                         ->icon('heroicon-m-document-duplicate'),
 
                     TextColumn::make('createdBy.name')
-                        ->label('Eksekutor')
+                        ->label('Dibuat Oleh')
                         ->icon('heroicon-m-user-circle')
                         ->color('gray')
                         ->sortable(),
@@ -93,8 +97,21 @@ class GrsRdtvsTable
                 //
             ])
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make()
+                        ->label('Lanjutkan GRS/RDTV')
+                        ->icon('heroicon-o-document-plus')
+                        ->color('warning'),
+                    DeleteAction::make()
+                        ->requiresConfirmation(),
+                ])
+                    ->label('')
+                    ->icon(Heroicon::EllipsisHorizontal)
+                    ->size(Size::Small)
+                    ->color('info')
+                    ->outlined()
+                    ->button(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

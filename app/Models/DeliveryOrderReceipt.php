@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 #[Fillable([
     'monitoring_npk_id',
     'monitoring_chemical_id',
-    'delivery_oder_no',
+    'delivery_order_no',
     'received_date',
     'received_by',
     'created_by',

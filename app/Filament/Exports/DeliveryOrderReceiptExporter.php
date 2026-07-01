@@ -24,7 +24,7 @@ class DeliveryOrderReceiptExporter extends Exporter
         return [
             ExportColumn::make('monitoringNpk.id')->label('ID Monitoring NPK'),
             ExportColumn::make('monitoringChemical.id')->label('ID Monitoring Chemical'),
-            ExportColumn::make('delivery_oder_no')->label('No. DO'),
+            ExportColumn::make('delivery_order_no')->label('No. DO'),
             ExportColumn::make('received_date')->label('Tanggal Terima'),
             ExportColumn::make('received_by')->label('Diterima Oleh'),
             ExportColumn::make('created_by')->label('Dibuat Oleh'),

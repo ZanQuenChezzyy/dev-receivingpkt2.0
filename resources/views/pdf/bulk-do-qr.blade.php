@@ -286,7 +286,7 @@
                                 <tr>
                                     <td style="padding: 2px; vertical-align: top;">NOMOR DO</td>
                                     <td style="text-align: center; padding: 2px; vertical-align: top;">:</td>
-                                    <td style="padding: 2px; word-break: break-word; vertical-align: top;">{{ $do->delivery_oder_no }}</td>
+                                    <td style="padding: 2px; word-break: break-word; vertical-align: top;">{{ $do->delivery_order_no }}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding: 2px; vertical-align: top;">TANGGAL TERIMA</td>

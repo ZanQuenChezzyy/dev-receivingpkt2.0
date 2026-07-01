@@ -25,7 +25,7 @@ class QRCodeController extends Controller
         $items = collect();
         if (in_array($mode, ['material', 'both'])) {
             $items = $do->deliveryOrderReceiptDetails->map(function ($item) use ($do) {
-                $qr = base64_encode(QrCode::size(200)->generate("{$do->delivery_oder_no}-{$item->item_no}"));
+                $qr = base64_encode(QrCode::size(200)->generate("{$do->delivery_order_no}-{$item->item_no}"));
 
                 return [
                     'label' => "Item {$item->item_no}",
@@ -42,7 +42,7 @@ class QRCodeController extends Controller
             'logo' => $logoBase64,
         ])->setPaper([0, 0, 144, 216], 'landscape');
 
-        $filename = 'QR-DO-'.str_replace(['/', '\\'], '_', $do->delivery_oder_no);
+        $filename = 'QR-DO-'.str_replace(['/', '\\'], '_', $do->delivery_order_no);
         if ($mode === 'material') {
             $filename .= '-Material';
         } elseif ($mode === 'document') {
@@ -76,7 +76,7 @@ class QRCodeController extends Controller
             $items = collect();
             if (in_array($mode, ['material', 'both'])) {
                 $items = $do->deliveryOrderReceiptDetails->map(function ($item) use ($do) {
-                    $qr = base64_encode(QrCode::size(200)->generate("{$do->delivery_oder_no}-{$item->item_no}"));
+                    $qr = base64_encode(QrCode::size(200)->generate("{$do->delivery_order_no}-{$item->item_no}"));
 
                     return [
                         'label' => "Item {$item->item_no}",

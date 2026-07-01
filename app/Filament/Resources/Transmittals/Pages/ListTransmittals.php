@@ -27,12 +27,12 @@ class ListTransmittals extends ListRecords
     {
         return [
             'Semua' => Tab::make()
-                ->icon(Heroicon::ListBullet),
+                ->icon(Heroicon::OutlinedListBullet),
             'Kirim' => Tab::make()
-                ->icon(Heroicon::PaperAirplane)
+                ->icon(Heroicon::OutlinedPaperAirplane)
                 ->modifyQueryUsing(fn($query) => $query->where('type', 'Kirim')),
             'Kembali' => Tab::make()
-                ->icon(Heroicon::ArrowUturnLeft)
+                ->icon(Heroicon::OutlinedArrowUturnLeft)
                 ->modifyQueryUsing(fn($query) => $query->where('type', 'Kembali')),
         ];
     }

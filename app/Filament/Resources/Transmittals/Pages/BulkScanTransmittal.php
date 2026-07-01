@@ -178,7 +178,7 @@ class BulkScanTransmittal extends Page implements HasForms
             return;
         }
 
-        $doReceipt = DeliveryOrderReceipt::where('delivery_oder_no', $code)
+        $doReceipt = DeliveryOrderReceipt::where('delivery_order_no', $code)
             ->orWhere('document_code', $code) // Bisa scan nomor DO atau document code (QR Dokumen)
             ->first();
 
@@ -196,7 +196,7 @@ class BulkScanTransmittal extends Page implements HasForms
         if ($this->data['type'] === 'Kirim' && is_null($doReceipt->post_103)) {
             $detail = $doReceipt->deliveryOrderReceiptDetails()->first();
             $po_no = $detail ? ($detail->purchaseOrderIssued->purchase_order_no ?? '') : '';
-            $displayNo = $po_no ?: ($doReceipt->delivery_oder_no ?? $code);
+            $displayNo = $po_no ?: ($doReceipt->delivery_order_no ?? $code);
 
             $this->dispatch('play-error-sound');
             Notification::make()
@@ -218,7 +218,7 @@ class BulkScanTransmittal extends Page implements HasForms
             // Ambil nomor PO dari relasi
             $detail = $doReceipt->deliveryOrderReceiptDetails()->first();
             $po_no = $detail ? ($detail->purchaseOrderIssued->purchase_order_no ?? '') : '';
-            $this->pending_do_no = $po_no ?: ($doReceipt->delivery_oder_no ?? $code);
+            $this->pending_do_no = $po_no ?: ($doReceipt->delivery_order_no ?? $code);
 
             $this->step = 2; // Lanjut ke step 2 (Scan 103)
             $this->dispatch('play-success-sound'); // Sound success untuk step 1
@@ -323,7 +323,7 @@ class BulkScanTransmittal extends Page implements HasForms
                 $this->dispatch('play-error-sound');
                 Notification::make()
                     ->title('Belum Pernah Dikirim')
-                    ->body("Dokumen {$doReceipt->delivery_oder_no} belum pernah di-Kirim. Sistem tidak tahu asal tujuannya.")
+                    ->body("Dokumen {$doReceipt->delivery_order_no} belum pernah di-Kirim. Sistem tidak tahu asal tujuannya.")
                     ->danger()
                     ->send();
 
@@ -347,7 +347,7 @@ class BulkScanTransmittal extends Page implements HasForms
             $this->dispatch('play-error-sound');
             Notification::make()
                 ->title('Sudah di-scan')
-                ->body("Dokumen {$doReceipt->delivery_oder_no} sudah ada di Transmittal {$this->data['type']} ke {$this->data['destination']} hari ini.")
+                ->body("Dokumen {$doReceipt->delivery_order_no} sudah ada di Transmittal {$this->data['type']} ke {$this->data['destination']} hari ini.")
                 ->warning()
                 ->send();
 
@@ -440,7 +440,7 @@ class BulkScanTransmittal extends Page implements HasForms
             $this->dispatch('play-success-sound');
             Notification::make()
                 ->title('Berhasil')
-                ->body("Dokumen {$doReceipt->delivery_oder_no} berhasil ditambahkan.")
+                ->body("Dokumen {$doReceipt->delivery_order_no} berhasil ditambahkan.")
                 ->success()
                 ->send();
 

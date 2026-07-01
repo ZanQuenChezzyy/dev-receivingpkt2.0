@@ -60,7 +60,7 @@ class GrsRdtvForm
                             ->multiple()
                             ->acceptedFileTypes(['application/pdf'])
                             ->storeFiles(false)
-                            ->required(fn (Get $get) => $get('category') === 'GRS')
+                            ->required(fn (Get $get, string $operation) => $get('category') === 'GRS' && $operation === 'create')
                             ->helperText(str('**Format Nama File**: `5300057474-10-5208-17062026.pdf` (Harus persis sama dengan Kode Dokumen di Sistem)')
                                 ->inlineMarkdown()
                                 ->toHtmlString())
@@ -73,7 +73,7 @@ class GrsRdtvForm
                                     ->label('Pilih File PDF')
                                     ->acceptedFileTypes(['application/pdf'])
                                     ->storeFiles(false)
-                                    ->required()
+                                    ->required(fn (string $operation) => $operation === 'create')
                                     ->helperText(str('**Format Nama File**: `5300057474-10-5208-17062026.pdf` (Harus persis sama dengan Kode Dokumen di Sistem)')
                                         ->inlineMarkdown()
                                         ->toHtmlString()),
@@ -85,7 +85,7 @@ class GrsRdtvForm
                                     ->rows(1),
                             ])
                             ->visible(fn (Get $get) => $get('category') === 'RDTV')
-                            ->defaultItems(1)
+                            ->defaultItems(fn (string $operation) => $operation === 'create' ? 1 : 0)
                             ->addActionLabel('Tambah Dokumen Lainnya'),
                     ]),
             ]);

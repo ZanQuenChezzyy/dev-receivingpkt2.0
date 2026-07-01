@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('monitoring_npk_id')->nullable()->unique()->constrained('monitoring_npks')->cascadeOnDelete();
             $table->foreignId('monitoring_chemical_id')->nullable()->unique()->constrained('monitoring_chemicals')->cascadeOnDelete();
-            $table->string('delivery_oder_no', 25)->comment('Bisa diisi nomor DOF/Memo jika DO asli belum ada');
+            $table->string('delivery_order_no', 25)->comment('Bisa diisi nomor DOF/Memo jika DO asli belum ada');
             $table->date('received_date')->comment('Tanggal terima di sistem (Sesuai surat DOF / AWB)');
             $table->foreignId('received_by')->constrained('users');
             $table->foreignId('created_by')->constrained('users');
