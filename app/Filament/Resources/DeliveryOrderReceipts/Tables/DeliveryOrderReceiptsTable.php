@@ -645,7 +645,7 @@ class DeliveryOrderReceiptsTable
                         ->label('Label Material')
                         ->icon(Heroicon::OutlinedTag)
                         ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', [
-                            $record->document_code ?: ($record->id ?: '0'),
+                            'deliveryOrderReceipt' => $record,
                             'mode' => 'material'
                         ]))
                         ->openUrlInNewTab(),
@@ -653,7 +653,7 @@ class DeliveryOrderReceiptsTable
                         ->label('Kode Dokumen')
                         ->icon(Heroicon::OutlinedDocumentText)
                         ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', [
-                            $record->document_code ?: ($record->id ?: '0'),
+                            'deliveryOrderReceipt' => $record,
                             'mode' => 'document'
                         ]))
                         ->openUrlInNewTab(),
@@ -661,7 +661,7 @@ class DeliveryOrderReceiptsTable
                         ->label('Material & Dokumen')
                         ->icon(Heroicon::OutlinedDocumentDuplicate)
                         ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', [
-                            $record->document_code ?: ($record->id ?: '0'),
+                            'deliveryOrderReceipt' => $record,
                             'mode' => 'both'
                         ]))
                         ->openUrlInNewTab(),
