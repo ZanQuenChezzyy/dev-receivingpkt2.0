@@ -34,6 +34,7 @@ class CreateGrsRdtv extends CreateRecord
         $invalidDocuments = [];
         $alreadyProcessed = [];
         $duplicateDocuments = [];
+        $unposted103Documents = [];
         $seen = [];
 
         // Pindahkan files (GRS) ke property sementara
@@ -57,9 +58,16 @@ class CreateGrsRdtv extends CreateRecord
                             $alreadyProcessed[] = $documentCode;
                         }
 
-                        $latestQc = $do->qcHistories()->latest()->first();
-                        if (! $latestQc || $latestQc->status !== 'Kembali') {
-                            $invalidDocuments[] = $documentCode;
+                        if (is_null($do->post_103)) {
+                            $unposted103Documents[] = $documentCode;
+                        } else {
+                            $isZrmOrZsm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM'])->exists();
+                            if (!$isZrmOrZsm) {
+                                $latestQc = $do->qcHistories()->latest()->first();
+                                if (! $latestQc || $latestQc->status !== 'Kembali') {
+                                    $invalidDocuments[] = $documentCode;
+                                }
+                            }
                         }
                     }
                     $uniqueFiles[] = $file;
@@ -91,9 +99,16 @@ class CreateGrsRdtv extends CreateRecord
                             $alreadyProcessed[] = $documentCode;
                         }
 
-                        $latestQc = $do->qcHistories()->latest()->first();
-                        if (! $latestQc || $latestQc->status !== 'Kembali') {
-                            $invalidDocuments[] = $documentCode;
+                        if (is_null($do->post_103)) {
+                            $unposted103Documents[] = $documentCode;
+                        } else {
+                            $isZrmOrZsm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM'])->exists();
+                            if (!$isZrmOrZsm) {
+                                $latestQc = $do->qcHistories()->latest()->first();
+                                if (! $latestQc || $latestQc->status !== 'Kembali') {
+                                    $invalidDocuments[] = $documentCode;
+                                }
+                            }
                         }
                     }
                     $uniqueItems[] = $item;
@@ -104,6 +119,9 @@ class CreateGrsRdtv extends CreateRecord
         }
 
         $errors = [];
+        if (! empty($unposted103Documents)) {
+            $errors[] = 'Belum Post 103: '.implode(', ', array_unique($unposted103Documents));
+        }
         if (! empty($invalidDocuments)) {
             $errors[] = 'Belum kembali dari QC: '.implode(', ', array_unique($invalidDocuments));
         }
