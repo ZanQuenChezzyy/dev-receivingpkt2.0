@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\GrsRdtvs\Pages;
 
 use App\Filament\Resources\GrsRdtvs\GrsRdtvResource;
+use App\Models\GrsRdtvItem;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -26,15 +27,15 @@ class ListGrsRdtvs extends ListRecords
         return [
             'semua' => Tab::make('Semua')
                 ->icon(Heroicon::OutlinedListBullet)
-                ->badge($this->getModel()::count()),
+                ->badge(GrsRdtvItem::count()),
             'grs' => Tab::make('GRS')
                 ->icon(Heroicon::OutlinedDocumentCheck)
                 ->modifyQueryUsing(fn($query) => $query->where('category', 'GRS'))
-                ->badge($this->getModel()::where('category', 'GRS')->count()),
+                ->badge(GrsRdtvItem::whereHas('grsRdtv', fn($q) => $q->where('category', 'GRS'))->count()),
             'rdtv' => Tab::make('RDTV')
                 ->icon(Heroicon::OutlinedArrowPath)
                 ->modifyQueryUsing(fn($query) => $query->where('category', 'RDTV'))
-                ->badge($this->getModel()::where('category', 'RDTV')->count()),
+                ->badge(GrsRdtvItem::whereHas('grsRdtv', fn($q) => $q->where('category', 'RDTV'))->count()),
         ];
     }
 }
