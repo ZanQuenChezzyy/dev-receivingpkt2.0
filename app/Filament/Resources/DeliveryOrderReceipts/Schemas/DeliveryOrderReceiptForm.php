@@ -685,6 +685,7 @@ class DeliveryOrderReceiptForm
                     ->deletable(true)
                     ->schema([
                         Grid::make(12)->schema([
+                            Hidden::make('id'),
                             Hidden::make('purchase_order_issued_id'),
                             Hidden::make('item_no'),
                             Hidden::make('mrp_type'),
@@ -853,6 +854,7 @@ class DeliveryOrderReceiptForm
                         $quantity = (float) str_replace(',', '.', (string) ($data['quantity'] ?? 0));
                         $poId = $data['purchase_order_issued_id'] ?? null;
                         $itemNo = $data['item_no'] ?? null;
+                        $isToleranceActive = (bool) ($data['is_qty_tolerance'] ?? false);
 
                         if ($poId && $itemNo) {
                             $poItem = PurchaseOrderIssued::find($poId);
@@ -862,7 +864,7 @@ class DeliveryOrderReceiptForm
                             [$qtyPo, $netSaved] = static::computeNetForItem((int) $poId, (string) $itemNo);
                             $sisaKuota = $qtyPo - $netSaved;
 
-                            if ($quantity > $sisaKuota) {
+                            if (!$isToleranceActive && $quantity > $sisaKuota) {
                                 $qtyBisaDibayar = max(0, $sisaKuota);
                                 $data['total_amount_snapshot'] = $qtyBisaDibayar * $unitPrice;
                             } else {
@@ -884,6 +886,7 @@ class DeliveryOrderReceiptForm
                         $poId = $data['purchase_order_issued_id'] ?? null;
                         $itemNo = $data['item_no'] ?? null;
                         $excludeId = $record ? $record->id : null;
+                        $isToleranceActive = (bool) ($data['is_qty_tolerance'] ?? false);
 
                         if ($poId && $itemNo) {
                             $poItem = PurchaseOrderIssued::find($poId);
@@ -896,7 +899,7 @@ class DeliveryOrderReceiptForm
                             [$qtyPo, $netSaved] = static::computeNetForItem((int) $poId, (string) $itemNo, $excludeId);
                             $sisaKuota = $qtyPo - $netSaved;
 
-                            if ($quantity > $sisaKuota) {
+                            if (!$isToleranceActive && $quantity > $sisaKuota) {
                                 $qtyBisaDibayar = max(0, $sisaKuota);
                                 $data['total_amount_snapshot'] = $qtyBisaDibayar * $unitPrice;
                             } else {
