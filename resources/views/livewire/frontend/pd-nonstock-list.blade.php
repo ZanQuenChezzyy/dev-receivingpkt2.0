@@ -46,19 +46,34 @@
                 </button>
             </div>
 
-            <!-- Search -->
-            <div class="relative w-full md:w-80 group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-20">
-                    <svg class="h-5 w-5 text-slate-400 group-focus-within:text-[#F47920] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <!-- Search -->
+                <div class="relative flex-1 md:w-80 group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-20">
+                        <svg class="h-5 w-5 text-slate-400 group-focus-within:text-[#F47920] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input wire:model.live.debounce.300ms="search" type="text" 
+                           class="glass-input pl-11 w-full text-slate-900 dark:text-white py-3" 
+                           placeholder="Cari PO, Deskripsi, dll...">
                 </div>
-                <input wire:model.live.debounce.300ms="search" type="text" 
-                       class="glass-input pl-11 w-full text-slate-900 dark:text-white py-3" 
-                       placeholder="Cari PO, Deskripsi, dll...">
+
+                <!-- Layout Toggle -->
+                <div class="glass-panel flex p-1 rounded-xl">
+                    <button wire:click="$set('layout', 'grid')" title="Tampilan Grid"
+                            class="p-2.5 rounded-lg transition-all duration-300 {{ $layout === 'grid' ? 'bg-white/40 dark:bg-white/10 shadow-sm text-slate-800 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300' }}">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    </button>
+                    <button wire:click="$set('layout', 'table')" title="Tampilan Tabel"
+                            class="p-2.5 rounded-lg transition-all duration-300 {{ $layout === 'table' ? 'bg-white/40 dark:bg-white/10 shadow-sm text-slate-800 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300' }}">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    </button>
+                </div>
             </div>
         </div>
 
+        @if($layout === 'grid')
         <!-- Data Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
             @forelse($this->items as $item)
@@ -148,6 +163,114 @@
                 </div>
             @endforelse
         </div>
+        @else
+        <!-- Data Table -->
+        <div class="glass-panel overflow-hidden relative z-10 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm backdrop-blur-xl bg-white/40 dark:bg-black/20">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-max">
+                    <thead>
+                        <tr class="bg-white/40 dark:bg-white/5 border-b border-slate-200/50 dark:border-white/10 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            <th class="p-4 font-bold">PO / Tipe</th>
+                            <th class="p-4 font-bold max-w-md">Material Info</th>
+                            <th class="p-4 font-bold">Requisitioner</th>
+                            <th class="p-4 font-bold">Status / Tgl Kedatangan</th>
+                            <th class="p-4 font-bold text-center">Tiba</th>
+                            <th class="p-4 font-bold text-center">Sisa</th>
+                            <th class="p-4 font-bold text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200/50 dark:divide-white/5">
+                        @forelse($this->items as $item)
+                            <tr class="hover:bg-white/60 dark:hover:bg-white/10 transition-colors group">
+                                <td class="p-4 align-top">
+                                    <div class="font-black text-slate-800 dark:text-white text-sm mb-1">{{ $item->purchaseOrderIssued?->purchase_order_no ?? '-' }}</div>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold {{ $activeTab === 'PD' ? 'bg-[#0A4F86]/10 text-[#0A4F86] dark:bg-[#0A4F86]/30 dark:text-blue-300 border border-[#0A4F86]/20' : 'bg-[#F47920]/10 text-[#F47920] dark:bg-[#F47920]/30 dark:text-orange-300 border border-[#F47920]/20' }}">
+                                        {{ $activeTab === 'PD' ? 'PD' : 'NON-STOCK' }}
+                                    </span>
+                                </td>
+                                <td class="p-4 align-top max-w-sm whitespace-normal">
+                                    <p class="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-2" title="{{ $item->description }}">
+                                        {{ $item->description }}
+                                    </p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                        Kode: <span class="font-semibold">{{ $item->material_code ?? '-' }}</span>
+                                    </p>
+                                </td>
+                                <td class="p-4 align-top">
+                                    <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ $item->purchaseOrderIssued?->requisitioner ?? '-' }}</span>
+                                </td>
+                                <td class="p-4 align-top">
+                                    @if($item->deliveryOrderReceipt)
+                                    @php
+                                        $isPending = $item->deliveryOrderReceipt->status === 'Pending';
+                                        $docStatus = $isPending ? 'Pending' : ($item->deliveryOrderReceipt->stage ?: $item->deliveryOrderReceipt->status);
+                                        
+                                        $dateSource = $isPending && $item->deliveryOrderReceipt->pending_date 
+                                            ? $item->deliveryOrderReceipt->pending_date 
+                                            : $item->deliveryOrderReceipt->updated_at;
+                                            
+                                        $statusDate = $dateSource ? \Carbon\Carbon::parse($dateSource)->translatedFormat('d M Y') : '';
+                                        
+                                        $badgeColor = $isPending 
+                                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400 border-red-200 dark:border-red-500/20' 
+                                            : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300 border-slate-200/50 dark:border-white/10';
+                                    @endphp
+                                    <div class="flex flex-col items-start gap-1">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border {{ $badgeColor }}">
+                                            {{ $docStatus }}
+                                        </span>
+                                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
+                                            Tiba: {{ $item->deliveryOrderReceipt?->received_date ? \Carbon\Carbon::parse($item->deliveryOrderReceipt->received_date)->translatedFormat('d M Y') : '-' }}
+                                        </span>
+                                        @if($statusDate && $docStatus !== 'Pending')
+                                            <span class="text-[10px] text-slate-400">Upd: {{ $statusDate }}</span>
+                                        @endif
+                                    </div>
+                                    @else
+                                    <span class="text-slate-400">-</span>
+                                    @endif
+                                </td>
+                                <td class="p-4 align-middle text-center">
+                                    <div class="inline-flex items-baseline gap-1.5 bg-slate-100 dark:bg-slate-800/50 rounded-full px-3 py-1 border border-slate-200 dark:border-slate-700">
+                                        <span class="text-sm font-black text-slate-800 dark:text-slate-200">{{ number_format($item->quantity, 0, ',', '.') }}</span>
+                                        <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">{{ $item->uoi }}</span>
+                                    </div>
+                                </td>
+                                <td class="p-4 align-middle text-center">
+                                    <div class="inline-flex items-baseline gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-full px-3 py-1 border border-emerald-200 dark:border-emerald-500/20">
+                                        <span class="text-sm font-black text-emerald-700 dark:text-emerald-400">{{ number_format($item->quantity - $item->issued_quantity, 0, ',', '.') }}</span>
+                                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-500/80 uppercase">{{ $item->uoi }}</span>
+                                    </div>
+                                </td>
+                                <td class="p-4 align-middle text-center">
+                                    <a href="{{ route('frontend.mir.create', ['po' => $item->purchaseOrderIssued?->purchase_order_no]) }}" wire:navigate class="inline-flex items-center justify-center gap-1.5 bg-[#0A4F86] hover:bg-[#083A63] text-white py-2 px-4 rounded-xl font-bold text-xs shadow-lg transition-transform hover:-translate-y-0.5 whitespace-nowrap">
+                                        <span>Buat MIR</span>
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="p-16 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <div class="w-16 h-16 mb-4 rounded-full bg-slate-200/50 dark:bg-white/5 flex items-center justify-center border border-slate-300 dark:border-white/10">
+                                            <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-lg font-black text-slate-800 dark:text-white mb-2">Tidak Ada Data</h3>
+                                        <p class="text-slate-500 dark:text-slate-400 text-sm max-w-sm">
+                                            Belum ada material {{ $activeTab === 'PD' ? 'PD' : 'Non-Stock' }} yang tersedia di gudang receiving, atau mungkin tidak cocok dengan pencarian Anda.
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
 
         <!-- Pagination -->
         <div class="mt-8 relative z-10">
