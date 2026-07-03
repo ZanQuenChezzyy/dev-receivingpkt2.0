@@ -151,7 +151,10 @@ class MaterialValueOverview extends BaseWidget
             $color = $uiConfig[$mrpType]['color'] ?? 'primary';
             $icon = $uiConfig[$mrpType]['icon'] ?? 'heroicon-m-chart-bar';
 
-            $stats[] = Stat::make('Total GRS ' . $mrpType, 'Rp' . number_format($totalGrsBulanIni, 0, ',', '.'))
+            $exactTotal = number_format($totalGrsBulanIni, 0, ',', '.');
+            $htmlValue = new HtmlString('<span class="text-xl xl:text-lg 2xl:text-xl font-bold tracking-tight">Rp' . $exactTotal . '</span>');
+
+            $stats[] = Stat::make('Total GRS ' . $mrpType, $htmlValue)
                 ->description(new HtmlString($descriptionHtml))
                 ->color($color);
         }

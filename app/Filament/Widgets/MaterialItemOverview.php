@@ -152,7 +152,10 @@ class MaterialItemOverview extends BaseWidget
 
             $title = "Total Material {$mrpType}";
 
-            $stats[] = Stat::make($title, number_format($totalGrsBulanIni, 0, ',', '.') . ' Item')
+            $exactTotal = number_format($totalGrsBulanIni, 0, ',', '.');
+            $htmlValue = new HtmlString('<span class="text-xl xl:text-lg 2xl:text-xl font-bold tracking-tight">' . $exactTotal . ' Item</span>');
+
+            $stats[] = Stat::make($title, $htmlValue)
                 ->description(new HtmlString($descriptionHtml))
                 ->color($color);
         }
