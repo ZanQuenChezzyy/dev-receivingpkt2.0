@@ -235,6 +235,7 @@ class MonitoringNpkForm
                                                     $set('material_code', $po?->material_code);
                                                     $set('description', $po?->description);
                                                     $set('uoi', $po?->uoi);
+                                                    $set('is_qty_tolerance', false);
                                                     if ($po?->qty_po) {
                                                         $set('quantity', $po->qty_po);
                                                     }
@@ -272,7 +273,7 @@ class MonitoringNpkForm
                                                 ->minValue(0.01)
                                                 ->columnSpan(fn () => optional(Auth::user())->hasRole(['Developer', 'Super Admin', 'Staff', 'Admin']) ? 8 : 12)
                                                 ->rules([
-                                                    fn (Get $get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                                    fn (Get $get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
                                                         $rowPoTerbitId = (int) ($get('purchase_order_issued_id') ?? 0);
                                                         $itemNo = $get('item_no');
                                                         if (! $rowPoTerbitId || ! $itemNo) {
@@ -312,6 +313,9 @@ class MonitoringNpkForm
                                                 ->inline(false)
                                                 ->onColor('danger')
                                                 ->live()
+                                                ->afterStateUpdated(function (Set $set, Get $get) {
+                                                    $set('quantity', $get('quantity'));
+                                                })
                                                 ->default(false)
                                                 ->dehydrated()
                                                 ->columnSpan(4),
@@ -403,11 +407,10 @@ class MonitoringNpkForm
                         Hidden::make('created_by')
                             ->default(fn () => Auth::id() ?? 1)
                             ->required(),
-                            
+
                         Hidden::make('id')->dehydrated(false),
                     ])->columnSpan(['lg' => 5]),
                 ])->columnSpanFull(),
             ]);
     }
 }
-
