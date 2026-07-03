@@ -121,7 +121,7 @@ class MaterialItemOverview extends BaseWidget
 
             // Baris: Datang & Selesai GRS (Warna Hijau)
             $descriptionHtml .= '<div class="flex items-start justify-between gap-2 font-medium text-success-600 dark:text-success-400">';
-            $descriptionHtml .= '  <span class="flex items-center gap-1.5 leading-tight"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Selesai</span>';
+            $descriptionHtml .= '  <span class="flex items-center gap-1.5 leading-tight"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> GRS</span>';
             $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">' . number_format($kedatanganDanGrs, 0, ',', '.') . ' Item</span>';
             $descriptionHtml .= '</div>';
 
