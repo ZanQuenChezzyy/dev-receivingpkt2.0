@@ -47,6 +47,9 @@ class PdNonstockList extends Component
                         ->orWhereNull('material_type');
                 }
             })
+            ->whereDoesntHave('deliveryOrderReceipt', function ($q) {
+                $q->where('status', 'RDTV');
+            })
             ->whereRaw('quantity > (SELECT COALESCE(SUM(diserahkan), 0) FROM material_issue_details WHERE material_issue_details.delivery_order_receipt_detail_id = delivery_order_receipt_details.id)');
 
         if (!empty($this->search)) {
