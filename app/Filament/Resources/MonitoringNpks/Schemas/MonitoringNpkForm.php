@@ -281,7 +281,7 @@ class MonitoringNpkForm
 
                                                         $isTolerance = (bool) ($get('is_qty_tolerance') ?? false);
 
-                                                        $currentMonitoringId = $record?->getAttribute('monitoring_npk_id');
+                                                        $currentMonitoringId = $get('../../id');
                                                         $h = MonitoringNpkResource::hitungSisaDbByItem($rowPoTerbitId, $currentMonitoringId);
                                                         $poQty = (float) ($h['po'] ?? 0);
                                                         $usedDb = (float) ($h['used_db'] ?? 0);
@@ -323,7 +323,7 @@ class MonitoringNpkForm
                                                     if ($rowPoTerbitId === 0) {
                                                         return '-';
                                                     }
-                                                    $currentMonitoringId = $record?->getAttribute('monitoring_npk_id');
+                                                    $currentMonitoringId = $get('../../id');
                                                     $h = MonitoringNpkResource::hitungSisaDbByItem($rowPoTerbitId, $currentMonitoringId);
 
                                                     $po = (float) ($h['po'] ?? 0);
@@ -403,8 +403,11 @@ class MonitoringNpkForm
                         Hidden::make('created_by')
                             ->default(fn () => Auth::id() ?? 1)
                             ->required(),
+                            
+                        Hidden::make('id')->dehydrated(false),
                     ])->columnSpan(['lg' => 5]),
                 ])->columnSpanFull(),
             ]);
     }
 }
+
