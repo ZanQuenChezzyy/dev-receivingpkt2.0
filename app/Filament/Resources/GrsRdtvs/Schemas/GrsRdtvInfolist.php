@@ -40,7 +40,7 @@ class GrsRdtvInfolist
                                 }),
 
                             TextEntry::make('createdBy.name')
-                                ->label('DiTransaksi Oleh')
+                                ->label('Di Transaksi Oleh')
                                 ->icon('heroicon-m-user-circle'),
                         ]),
                     ]),
