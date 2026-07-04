@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Filament\Clusters\PengirimanGudang\PengirimanGudangCluster;
 use App\Models\DeliveryOrderReceipt;
+use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\PurchaseOrderIssued;
 use App\Models\WarehouseDestination;
 use App\Models\WarehouseTransmittal;
@@ -24,6 +25,8 @@ use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
@@ -104,7 +107,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                                     });
                                 }
 
-                                if (! $hasMatchedRole) {
+                                if (!$hasMatchedRole) {
                                     $q->whereRaw('1 = 0');
                                 }
                             });
@@ -119,7 +122,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->iconColor('primary')
                         ->color('primary')
                         ->weight(FontWeight::Bold)
-                        ->getStateUsing(fn (DeliveryOrderReceipt $record) => $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
+                        ->getStateUsing(fn(DeliveryOrderReceipt $record) => $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
                         ->description(function (DeliveryOrderReceipt $record) {
                             $doNumber = $record->delivery_order_no ?? '-';
                             $js = 'event.stopPropagation(); event.preventDefault(); ';
@@ -148,9 +151,9 @@ class AntreanPengirimanGudang extends Page implements HasTable
 
                     TextColumn::make('total_items')
                         ->label('Total Item')
-                        ->getStateUsing(fn (DeliveryOrderReceipt $record) => $record->deliveryOrderReceiptDetails()
+                        ->getStateUsing(fn(DeliveryOrderReceipt $record) => $record->deliveryOrderReceiptDetails()
                             ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
-                            ->count().' Item')
+                            ->count() . ' Item')
                         ->badge()
                         ->color('info')
                         ->icon('heroicon-m-cube'),
@@ -187,7 +190,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
 
                             $htmlList = '';
                             foreach ($details->pluck('material_code') as $index => $code) {
-                                if (! $code) {
+                                if (!$code) {
                                     continue;
                                 }
                                 $number = $index + 1;
@@ -243,8 +246,47 @@ class AntreanPengirimanGudang extends Page implements HasTable
                 ]),
             ])
             ->filters([
-                //
-            ])
+                SelectFilter::make('material_type')
+                    ->label('Material Type')
+                    ->placeholder('Pilih Tipe Material')
+                    ->native(false)
+                    ->options(function () {
+                        return DeliveryOrderReceiptDetail::select('material_type')
+                            ->whereNotNull('material_type')
+                            ->where('material_type', '!=', '')
+                            ->distinct()
+                            ->pluck('material_type', 'material_type')
+                            ->toArray();
+                    })
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['value'])) {
+                            $query->whereHas('deliveryOrderReceiptDetails', function ($q) use ($data) {
+                                $q->where('material_type', $data['value']);
+                            });
+                        }
+                    }),
+
+                SelectFilter::make('mrp_type')
+                    ->label('MRP Type')
+                    ->placeholder('Pilih Tipe MRP')
+                    ->native(false)
+                    ->options(function () {
+                        return DeliveryOrderReceiptDetail::select('mrp_type')
+                            ->whereNotNull('mrp_type')
+                            ->where('mrp_type', '!=', '')
+                            ->distinct()
+                            ->pluck('mrp_type', 'mrp_type')
+                            ->toArray();
+                    })
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['value'])) {
+                            $query->whereHas('deliveryOrderReceiptDetails', function ($q) use ($data) {
+                                $q->where('mrp_type', $data['value']);
+                            });
+                        }
+                    }),
+            ], FiltersLayout::AboveContent)
+            ->filtersFormColumns(2)
             ->recordActions([
                 Action::make('buat_transmittal_row')
                     ->label('Buat Transmittal')
@@ -263,12 +305,12 @@ class AntreanPengirimanGudang extends Page implements HasTable
                     ->modalHeading('Buat Transmittal Gudang')
                     ->modalDescription('Semua item dari PO ini akan dikirimkan ke gudang yang sama.')
                     ->modalSubmitActionLabel('Ya, Buat Transmittal')
-                    ->modalSubmitAction(fn ($action) => $action->color('primary'))
+                    ->modalSubmitAction(fn($action) => $action->color('primary'))
                     ->action(function (DeliveryOrderReceipt $record, array $data) {
                         $destinationId = $data['warehouse_destination_id'];
                         $destination = WarehouseDestination::find($destinationId);
 
-                        if (! $destination) {
+                        if (!$destination) {
                             return;
                         }
 
@@ -276,11 +318,11 @@ class AntreanPengirimanGudang extends Page implements HasTable
                             ->whereDate('created_at', now()->toDateString())
                             ->first();
 
-                        if (! $transmittal) {
+                        if (!$transmittal) {
                             $date = now()->format('Ymd');
                             $lastTransmittal = WarehouseTransmittal::whereDate('created_at', now()->toDateString())->latest()->first();
                             $sequence = $lastTransmittal ? (intval(substr($lastTransmittal->transmittal_no, -4)) + 1) : 1;
-                            $transmittalNo = 'TRG-'.$date.'-'.str_pad($sequence, 4, '0', STR_PAD_LEFT);
+                            $transmittalNo = 'TRG-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
 
                             $transmittal = WarehouseTransmittal::create([
                                 'transmittal_no' => $transmittalNo,
@@ -334,7 +376,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                                     });
                                 }
 
-                                if (! $hasMatchedRole) {
+                                if (!$hasMatchedRole) {
                                     $q->whereRaw('1 = 0');
                                 }
                             })
@@ -350,7 +392,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
 
                         if ($countItems > 0) {
                             Notification::make()
-                                ->title("Berhasil diproses! $countItems item dimasukkan ke transmittal tujuan ".$destination->name.'.')
+                                ->title("Berhasil diproses! $countItems item dimasukkan ke transmittal tujuan " . $destination->name . '.')
                                 ->success()
                                 ->send();
                         } else {
@@ -388,14 +430,14 @@ class AntreanPengirimanGudang extends Page implements HasTable
 
                                         TextEntry::make('qty_mir')
                                             ->label('Diambil (MIR)')
-                                            ->state(fn ($record) => $record->materialIssueDetails()->sum('diserahkan'))
+                                            ->state(fn($record) => $record->materialIssueDetails()->sum('diserahkan'))
                                             ->badge()
                                             ->color('warning'),
                                     ]),
                                 ])
                                 ->columnSpanFull(),
                         ])
-                        ->modalHeading(fn (DeliveryOrderReceipt $record) => 'Daftar Item: '.$record->delivery_order_no)
+                        ->modalHeading(fn(DeliveryOrderReceipt $record) => 'Daftar Item: ' . $record->delivery_order_no)
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Tutup'),
 
@@ -406,10 +448,10 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->url(function (DeliveryOrderReceipt $record) {
                             $grsItem = $record->grsRdtvItems->first();
 
-                            return $grsItem ? asset('storage/'.$grsItem->file_path) : '#';
+                            return $grsItem ? asset('storage/' . $grsItem->file_path) : '#';
                         })
                         ->openUrlInNewTab()
-                        ->visible(fn (DeliveryOrderReceipt $record) => $record->grsRdtvItems->isNotEmpty()),
+                        ->visible(fn(DeliveryOrderReceipt $record) => $record->grsRdtvItems->isNotEmpty()),
                 ])
                     ->label('')
                     ->icon(Heroicon::EllipsisHorizontal)
@@ -439,7 +481,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         $destinationId = $data['warehouse_destination_id'];
                         $destination = WarehouseDestination::find($destinationId);
 
-                        if (! $destination) {
+                        if (!$destination) {
                             return;
                         }
 
@@ -448,12 +490,12 @@ class AntreanPengirimanGudang extends Page implements HasTable
                             ->whereDate('created_at', now()->toDateString())
                             ->first();
 
-                        if (! $transmittal) {
+                        if (!$transmittal) {
                             // Buat Transmittal No
                             $date = now()->format('Ymd');
                             $lastTransmittal = WarehouseTransmittal::whereDate('created_at', now()->toDateString())->latest()->first();
                             $sequence = $lastTransmittal ? (intval(substr($lastTransmittal->transmittal_no, -4)) + 1) : 1;
-                            $transmittalNo = 'TRG-'.$date.'-'.str_pad($sequence, 4, '0', STR_PAD_LEFT);
+                            $transmittalNo = 'TRG-' . $date . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
 
                             // Create Transmittal
                             $transmittal = WarehouseTransmittal::create([
@@ -472,48 +514,48 @@ class AntreanPengirimanGudang extends Page implements HasTable
                             $items = $doRecord->deliveryOrderReceiptDetails()
                                 ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
                                 ->where(function (Builder $q) use ($user) {
-                                    if ($user->hasAnyRole(['Developer', 'AVP Receiving'])) {
-                                        $q->whereIn('mrp_type', ['V1', 'NONSTOCK']);
+                                if ($user->hasAnyRole(['Developer', 'AVP Receiving'])) {
+                                    $q->whereIn('mrp_type', ['V1', 'NONSTOCK']);
 
-                                        return;
-                                    }
+                                    return;
+                                }
 
-                                    $hasMatchedRole = false;
+                                $hasMatchedRole = false;
 
-                                    if ($user->hasRole('Admin Sparepart')) {
-                                        $hasMatchedRole = true;
-                                        $q->orWhere(function ($sub) {
-                                            $sub->where('mrp_type', 'V1')->where('material_type', 'ZSP');
-                                        });
-                                    }
+                                if ($user->hasRole('Admin Sparepart')) {
+                                    $hasMatchedRole = true;
+                                    $q->orWhere(function ($sub) {
+                                        $sub->where('mrp_type', 'V1')->where('material_type', 'ZSP');
+                                    });
+                                }
 
-                                    if ($user->hasRole('Admin Chemical')) {
-                                        $hasMatchedRole = true;
-                                        $q->orWhere(function ($sub) {
-                                            $sub->where('mrp_type', 'V1')->where('material_type', 'ZSM');
-                                        });
-                                    }
+                                if ($user->hasRole('Admin Chemical')) {
+                                    $hasMatchedRole = true;
+                                    $q->orWhere(function ($sub) {
+                                        $sub->where('mrp_type', 'V1')->where('material_type', 'ZSM');
+                                    });
+                                }
 
-                                    if ($user->hasRole('Admin Bahan Baku')) {
-                                        $hasMatchedRole = true;
-                                        $q->orWhere(function ($sub) {
-                                            $sub->where('mrp_type', 'V1')->where('material_type', 'ZRM');
-                                        })->orWhere(function ($sub) {
-                                            $sub->whereIn('mrp_type', ['V1', 'NONSTOCK'])
-                                                ->whereIn('material_type', ['ZSP', 'ZSM'])
-                                                ->where(function ($desc) {
-                                                    $desc->where('description', 'like', '%HELIUM%')
-                                                        ->orWhere('description', 'like', '%ARGON%')
-                                                        ->orWhere('description', 'like', '%METHANOL%')
-                                                        ->orWhere('description', 'like', '%DIESEL%');
-                                                });
-                                        });
-                                    }
+                                if ($user->hasRole('Admin Bahan Baku')) {
+                                    $hasMatchedRole = true;
+                                    $q->orWhere(function ($sub) {
+                                        $sub->where('mrp_type', 'V1')->where('material_type', 'ZRM');
+                                    })->orWhere(function ($sub) {
+                                        $sub->whereIn('mrp_type', ['V1', 'NONSTOCK'])
+                                            ->whereIn('material_type', ['ZSP', 'ZSM'])
+                                            ->where(function ($desc) {
+                                                $desc->where('description', 'like', '%HELIUM%')
+                                                    ->orWhere('description', 'like', '%ARGON%')
+                                                    ->orWhere('description', 'like', '%METHANOL%')
+                                                    ->orWhere('description', 'like', '%DIESEL%');
+                                            });
+                                    });
+                                }
 
-                                    if (! $hasMatchedRole) {
-                                        $q->whereRaw('1 = 0');
-                                    }
-                                })
+                                if (!$hasMatchedRole) {
+                                    $q->whereRaw('1 = 0');
+                                }
+                            })
                                 ->get();
 
                             foreach ($items as $item) {
@@ -527,7 +569,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
 
                         if ($countItems > 0) {
                             Notification::make()
-                                ->title("Berhasil diproses! $countItems item dimasukkan ke transmittal tujuan ".$destination->name.'.')
+                                ->title("Berhasil diproses! $countItems item dimasukkan ke transmittal tujuan " . $destination->name . '.')
                                 ->success()
                                 ->send();
                         } else {
