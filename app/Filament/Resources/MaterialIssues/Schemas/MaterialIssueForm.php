@@ -214,6 +214,14 @@ class MaterialIssueForm
                                 ->placeholder('Otomatis')
                                 ->disabled()
                                 ->dehydrated(false)
+                                ->afterStateHydrated(function (TextInput $component, $state, Get $get) {
+                                    if (! $state && $get('delivery_order_receipt_detail_id')) {
+                                        $detail = DeliveryOrderReceiptDetail::find($get('delivery_order_receipt_detail_id'));
+                                        if ($detail) {
+                                            $component->state($detail->material_code);
+                                        }
+                                    }
+                                })
                                 ->columnSpan(3),
 
                             TextInput::make('location')
@@ -222,6 +230,14 @@ class MaterialIssueForm
                                 ->disabled()
                                 ->dehydrated(false)
                                 ->prefixIcon('heroicon-m-map-pin')
+                                ->afterStateHydrated(function (TextInput $component, $state, Get $get) {
+                                    if (! $state && $get('delivery_order_receipt_detail_id')) {
+                                        $detail = DeliveryOrderReceiptDetail::with('locationReceiving')->find($get('delivery_order_receipt_detail_id'));
+                                        if ($detail) {
+                                            $component->state($detail->locationReceiving?->name);
+                                        }
+                                    }
+                                })
                                 ->columnSpan(4),
 
                             TextInput::make('description')
@@ -229,10 +245,27 @@ class MaterialIssueForm
                                 ->placeholder('Nama Material')
                                 ->disabled()
                                 ->dehydrated(false)
+                                ->afterStateHydrated(function (TextInput $component, $state, Get $get) {
+                                    if (! $state && $get('delivery_order_receipt_detail_id')) {
+                                        $detail = DeliveryOrderReceiptDetail::find($get('delivery_order_receipt_detail_id'));
+                                        if ($detail) {
+                                            $component->state($detail->description);
+                                        }
+                                    }
+                                })
                                 ->columnSpanFull(),
 
                             // Hidden UOI untuk kebutuhan suffix
-                            Hidden::make('uoi')->dehydrated(false),
+                            Hidden::make('uoi')
+                                ->dehydrated(false)
+                                ->afterStateHydrated(function (Hidden $component, $state, Get $get) {
+                                    if (! $state && $get('delivery_order_receipt_detail_id')) {
+                                        $detail = DeliveryOrderReceiptDetail::find($get('delivery_order_receipt_detail_id'));
+                                        if ($detail) {
+                                            $component->state($detail->uoi);
+                                        }
+                                    }
+                                }),
 
                             TextInput::make('diminta')
                                 ->label('Qty Diminta')

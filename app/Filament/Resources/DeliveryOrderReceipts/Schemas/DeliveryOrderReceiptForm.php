@@ -789,7 +789,7 @@ class DeliveryOrderReceiptForm
                                         $colorSisa = $sisaSetelahInput < 0 ? '#dc2626' : ($sisaSetelahInput == 0 ? '#6b7280' : '#f59e0b');
                                         $statusLabel = $sisaSetelahInput < 0 ? 'OVER LIMIT' : 'Quantity Tersisa';
                                         $rawToleransi = json_encode($get('is_qty_tolerance'));
-                                        $statusInfo = "<span style='color: {$colorSisa}; font-weight: bold;'>{$statusLabel}: {$fmtSisaAbsolut} {$uoi} (Toggle State: {$rawToleransi})</span>";
+                                        $statusInfo = "<span style='color: {$colorSisa}; font-weight: bold;'>{$statusLabel}: {$fmtSisaAbsolut} {$uoi}</span>";
                                     }
 
                                     $colorAkanDiterima = ($totalAkanDiterima >= $qtyPo) ? '#16a34a' : ($totalAkanDiterima > 0 ? '#16a34a' : '#6b7280');
