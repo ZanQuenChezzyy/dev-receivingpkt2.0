@@ -99,20 +99,18 @@
 @keyframes pageLoadTransition {
     0% {
         opacity: 0;
-        transform: translateY(15px) scale(0.995);
+        /* Hapus transform pada animasi karena di Safari iOS, animasi transform (meski berakhir di 'none') 
+           tetap menjebak elemen fixed seperti dropdown. */
     }
     100% {
         opacity: 1;
-        transform: none; /* INI KUNCI UTAMANYA: Harus 'none' agar tidak menjebak ukuran overlay (fixed element) */
     }
 }
 
 /* Terapkan ke semua elemen anak langsung di dalam fi-main. 
    Saat wire:navigate mengganti halaman, elemen baru akan ter-render dan memicu animasi ini. */
 .fi-main > * {
-    /* Tentukan state akhir secara manual sebagai default agar kita tidak butuh 'forwards' */
     opacity: 1;
-    transform: none;
     animation: pageLoadTransition 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -130,7 +128,8 @@
 .fi-empty-state,
 .fi-user-card {
     /* Liquid Glass Upgrade untuk Container/Card */
-    @apply !bg-white/30 dark:!bg-slate-900/30 !backdrop-blur-2xl !rounded-2xl !relative focus-within:!z-[90];
+    /* !backdrop-blur-2xl DIPINDAHKAN ke ::before agar tidak menjebak dropdown (bug Safari iOS) */
+    @apply !bg-white/30 dark:!bg-slate-900/30 !rounded-2xl !relative focus-within:!z-[90];
     
     /* Custom Border 3D effect (terang di kiri atas, redup di kanan bawah) */
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -142,6 +141,30 @@
     
     /* Pantulan cahaya kaca statis di pojok kiri atas */
     background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%) !important;
+}
+
+/* FIX BUG SAFARI iOS: Pindahkan backdrop-filter ke pseudo-element ::before.
+   Safari mengubah elemen dengan backdrop-filter menjadi 'containing block' untuk elemen fixed.
+   Akibatnya, dropdown/popover yang dihitung dari layar malah bergeser menjauh. */
+.fi-wi-widget::before, 
+.fi-wi-stats-overview-stat::before,
+.fi-ta-ctn::before,
+.fi-sc-ctn::before,
+.fi-fieldset::before,
+.fi-section::before,
+.fi-rep-item::before,
+.fi-in-repeatable-item::before,
+.fi-sc-tabs.fi-contained::before,
+.fi-tabs.fi-contained::before,
+.fi-empty-state::before,
+.fi-user-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    @apply backdrop-blur-2xl;
+    z-index: -1;
+    pointer-events: none;
 }
 
 /* Penyesuaian Liquid Glass untuk Mode Gelap */
@@ -165,14 +188,17 @@
     background-image: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 20%, transparent 40%) !important;
 }
 
-/* Hilangkan background dan border dari parent container Stats Overview 
-   agar kotak stats benar-benar melayang terpisah dan tidak ada garis yang menyambungkannya */
+/* Hilangkan background, border, dan ::before dari parent container Stats Overview */
 .fi-wi-widget:has(.fi-wi-stats-overview-stat),
 .fi-section:has(.fi-wi-stats-overview-stat) {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
+}
+.fi-wi-widget:has(.fi-wi-stats-overview-stat)::before,
+.fi-section:has(.fi-wi-stats-overview-stat)::before {
+    display: none !important;
 }
 
 /* Khusus wadah Login, buat opacity background-nya 0 agar murni blur tanpa warna susu */
@@ -400,11 +426,25 @@ html.dark body {
 .fi-select-wrp,
 .fi-textarea-wrp,
 .fi-fo-date-time-picker-display-text-input-wrp {
-    @apply !bg-white/40 dark:!bg-slate-900/40 !backdrop-blur-xl !rounded-xl transition-all duration-300 !relative focus-within:!z-[999] hover:!z-[999];
+    /* Hapus !backdrop-blur-xl untuk Safari iOS, dipindah ke ::before */
+    @apply !bg-white/40 dark:!bg-slate-900/40 !rounded-xl transition-all duration-300 !relative focus-within:!z-[999] hover:!z-[999];
     border: 1px solid rgba(255, 255, 255, 0.4) !important;
     border-top-color: rgba(255, 255, 255, 0.1) !important;
     border-bottom-color: rgba(255, 255, 255, 0.6) !important;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+}
+
+.fi-input-wrp::before, 
+.fi-select-wrp::before,
+.fi-textarea-wrp::before,
+.fi-fo-date-time-picker-display-text-input-wrp::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    @apply backdrop-blur-xl;
+    z-index: -1;
+    pointer-events: none;
 }
 
 .fi-input-wrp:focus-within,
