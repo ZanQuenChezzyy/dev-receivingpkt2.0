@@ -23,16 +23,17 @@ class EditProfile extends BaseEditProfile
                         Tab::make('Informasi Pribadi')
                             ->schema([
                                 FileUpload::make('avatar_url')
-                                    ->label(__('filament-panels::pages/auth/edit-profile.form.avatar.label'))
+                                    ->label(__('user.avatar'))
+                                    ->helperText(__('user.avatar_helper'))
                                     ->image()
                                     ->imageEditor()
-                                    ->imageEditorAspectRatios([
+                                    ->imageEditorAspectRatioOptions([
                                         '1:1',
                                     ])
-                                    ->imageCropAspectRatio('1:1')
+                                    ->disk('public')
+                                    ->imageAspectRatio('1:1')
                                     ->directory('avatar_upload')
                                     ->visibility('public')
-                                    ->helperText(__('filament-panels::pages/auth/edit-profile.form.avatar.helper'))
                                     ->columnSpanFull(),
 
                                 TextInput::make('name')
@@ -69,8 +70,8 @@ class EditProfile extends BaseEditProfile
                                     ->revealable(filament()->arePasswordsRevealable())
                                     ->rule(Password::default())
                                     ->autocomplete('new-password')
-                                    ->dehydrated(fn ($state): bool => filled($state))
-                                    ->dehydrateStateUsing(fn ($state): string => Hash::make($state))
+                                    ->dehydrated(fn($state): bool => filled($state))
+                                    ->dehydrateStateUsing(fn($state): string => Hash::make($state))
                                     ->live(debounce: 500)
                                     ->same('passwordConfirmation'),
 
@@ -80,7 +81,7 @@ class EditProfile extends BaseEditProfile
                                     ->password()
                                     ->revealable(filament()->arePasswordsRevealable())
                                     ->required()
-                                    ->visible(fn (Get $get): bool => filled($get('password')))
+                                    ->visible(fn(Get $get): bool => filled($get('password')))
                                     ->dehydrated(false),
                             ]),
                     ]),
