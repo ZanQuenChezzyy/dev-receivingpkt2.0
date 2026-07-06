@@ -649,7 +649,24 @@
                                                 <option value="Lainnya">Lainnya...</option>
                                             </select>
                                         </div>
-                                        <div>
+                                        @if ($pilihan_istek === 'Lainnya')
+                                            <div class="mb-4">
+                                                <label
+                                                    class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                                    Nama Pihak ISTEK (Penyetuju) <span
+                                                        class="text-red-500">*</span>
+                                                </label>
+                                                <input type="text" wire:model="disetujui_oleh"
+                                                    class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm"
+                                                    placeholder="Masukkan nama User/ISTEK...">
+                                                @error('disetujui_oleh')
+                                                    <span
+                                                        class="text-red-500 text-xs font-bold">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                        @endif
+
+                                        <div class="mb-4">
                                             <label
                                                 class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                                 NPK Pihak ISTEK <span class="text-red-500">*</span>
@@ -661,25 +678,6 @@
                                                 <span class="text-red-500 text-xs font-bold">{{ $message }}</span>
                                             @enderror
                                         </div>
-                                        @if ($pilihan_istek === 'Lainnya')
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
-                                                <div>
-                                                    <label
-                                                        class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                                        Nama Pihak ISTEK (Penyetuju) <span
-                                                            class="text-red-500">*</span>
-                                                    </label>
-                                                    <input type="text" wire:model="disetujui_oleh"
-                                                        class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm"
-                                                        placeholder="Masukkan nama User/ISTEK...">
-                                                    @error('disetujui_oleh')
-                                                        <span
-                                                            class="text-red-500 text-xs font-bold">{{ $message }}</span>
-                                                    @enderror
-                                                </div>
-
-                                            </div>
-                                        @endif
 
                                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mt-4">
                                             Tanda Tangan ISTEK <span class="text-red-500">*</span>
@@ -717,7 +715,23 @@
                                             <option value="Lainnya">Lainnya...</option>
                                         </select>
                                     </div>
-                                    <div>
+                                    @if ($pilihan_receiving === 'Lainnya')
+                                        <div class="mb-4">
+                                            <label
+                                                class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                                Nama Pihak Receiving <span class="text-red-500">*</span>
+                                            </label>
+                                            <input type="text" wire:model="diserahkan_oleh"
+                                                class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm"
+                                                placeholder="Masukkan nama pihak receiving...">
+                                            @error('diserahkan_oleh')
+                                                <span
+                                                    class="text-red-500 text-xs font-bold">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+                                    @endif
+
+                                    <div class="mb-4">
                                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                             NPK Pihak Receiving <span class="text-red-500">*</span>
                                         </label>
@@ -728,23 +742,6 @@
                                             <span class="text-red-500 text-xs font-bold">{{ $message }}</span>
                                         @enderror
                                     </div>
-                                    @if ($pilihan_receiving === 'Lainnya')
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
-                                            <div>
-                                                <label
-                                                    class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                                    Nama Pihak Receiving <span class="text-red-500">*</span>
-                                                </label>
-                                                <input type="text" wire:model="diserahkan_oleh"
-                                                    class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm"
-                                                    placeholder="Masukkan nama pihak receiving...">
-                                                @error('diserahkan_oleh')
-                                                    <span
-                                                        class="text-red-500 text-xs font-bold">{{ $message }}</span>
-                                                @enderror
-                                            </div>
-                                        </div>
-                                    @endif
 
                                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mt-4">
                                         Tanda Tangan Receiving <span class="text-red-500">*</span>
