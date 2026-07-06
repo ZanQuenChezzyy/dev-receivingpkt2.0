@@ -71,6 +71,13 @@ class UserForm
                             ->maxLength(45)
                             ->autofocus(),
 
+                        TextInput::make('npk')
+                            ->label('NPK')
+                            ->placeholder('Masukkan NPK')
+                            ->inlineLabel()
+                            ->columnSpanFull()
+                            ->maxLength(20),
+
                         TextInput::make('email')
                             ->label(__('user.email'))
                             ->placeholder(__('user.email_placeholder'))

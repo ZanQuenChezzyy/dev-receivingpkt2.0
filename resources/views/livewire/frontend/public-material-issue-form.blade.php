@@ -403,19 +403,31 @@
                             <span class="text-xs font-bold">Barang Belum GRS (Butuh Izin)</span>
                         </div>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-1 gap-4 mb-3">
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                Pilih Pihak ISTEK <span class="text-red-500">*</span>
+                            </label>
+                            <select wire:model.live="pilihan_istek" class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm">
+                                <option value="">-- Pilih --</option>
+                                <option value="Pasarela">Pasarela</option>
+                                <option value="Joko">Joko</option>
+                                <option value="Lainnya">Lainnya...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                             <div>
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                     Nama Pihak ISTEK (Penyetuju) <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" wire:model="disetujui_oleh" class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm" placeholder="Masukkan nama User/ISTEK...">
+                                <input type="text" wire:model="disetujui_oleh" class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm disabled:opacity-60" placeholder="Masukkan nama User/ISTEK..." {{ $pilihan_istek !== 'Lainnya' ? 'readonly' : '' }}>
                                 @error('disetujui_oleh') <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                     NPK Pihak ISTEK <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" wire:model="disetujui_npk" class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm" placeholder="NPK User/ISTEK...">
+                                <input type="text" wire:model="disetujui_npk" class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm disabled:opacity-60" placeholder="NPK User/ISTEK..." {{ $pilihan_istek !== 'Lainnya' ? 'readonly' : '' }}>
                                 @error('disetujui_npk') <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -437,19 +449,32 @@
                             <span class="text-xs font-bold">Pihak Gudang (Receiving)</span>
                         </div>
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-1 gap-4 mb-3">
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                Pilih Pihak Receiving <span class="text-red-500">*</span>
+                            </label>
+                            <select wire:model.live="pilihan_receiving" class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm">
+                                <option value="">-- Pilih --</option>
+                                @foreach($receiving_users as $user)
+                                    <option value="{{ $user['id'] }}">{{ $user['name'] }}</option>
+                                @endforeach
+                                <option value="Lainnya">Lainnya...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                             <div>
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                     Nama Pihak Receiving <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" wire:model="diserahkan_oleh" class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm" placeholder="Masukkan nama pihak receiving...">
+                                <input type="text" wire:model="diserahkan_oleh" class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm disabled:opacity-60" placeholder="Masukkan nama pihak receiving..." {{ $pilihan_receiving !== 'Lainnya' ? 'readonly' : '' }}>
                                 @error('diserahkan_oleh') <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                     NPK Pihak Receiving <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" wire:model="diserahkan_npk" class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm" placeholder="NPK pihak receiving...">
+                                <input type="text" wire:model="diserahkan_npk" class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm disabled:opacity-60" placeholder="NPK pihak receiving..." {{ $pilihan_receiving !== 'Lainnya' ? 'readonly' : '' }}>
                                 @error('diserahkan_npk') <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
                             </div>
                         </div>

@@ -61,6 +61,13 @@ class PublicMaterialIssueForm extends Component
 
     public $details = [];
 
+    // Custom Options
+    public $pilihan_istek = '';
+
+    public $pilihan_receiving = '';
+
+    public $receiving_users = [];
+
     // Search properties
     #[Url(as: 'po')]
     public $po_search = '';
@@ -78,6 +85,10 @@ class PublicMaterialIssueForm extends Component
         $this->tanggal = now()->format('Y-m-d');
         $this->addDetail();
         $this->searchPOs();
+        
+        $this->receiving_users = \App\Models\User::whereDoesntHave('roles', function($q) { 
+            $q->where('name', 'AVP Receiving'); 
+        })->get(['id', 'name', 'npk'])->toArray();
 
         if (! empty($this->po_search) && count($this->available_pos) > 0) {
             $matchedPo = collect($this->available_pos)->firstWhere('purchase_order_no', $this->po_search);
@@ -91,6 +102,34 @@ class PublicMaterialIssueForm extends Component
     public function updatedDimintaOleh($value)
     {
         $this->diterima_oleh = $value;
+    }
+
+    public function updatedPilihanIstek($value)
+    {
+        if ($value === 'Pasarela') {
+            $this->disetujui_oleh = 'Pasarela';
+            $this->disetujui_npk = '4124213';
+        } elseif ($value === 'Joko') {
+            $this->disetujui_oleh = 'Joko';
+            $this->disetujui_npk = 'KNEB22684';
+        } else {
+            $this->disetujui_oleh = '';
+            $this->disetujui_npk = '';
+        }
+    }
+
+    public function updatedPilihanReceiving($value)
+    {
+        if ($value && $value !== 'Lainnya') {
+            $user = collect($this->receiving_users)->firstWhere('id', (int) $value);
+            if ($user) {
+                $this->diserahkan_oleh = $user['name'];
+                $this->diserahkan_npk = $user['npk'] ?? '';
+            }
+        } else {
+            $this->diserahkan_oleh = '';
+            $this->diserahkan_npk = '';
+        }
     }
 
     public function updatedPoSearch()
