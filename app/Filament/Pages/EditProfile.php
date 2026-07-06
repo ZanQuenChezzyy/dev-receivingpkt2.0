@@ -43,6 +43,13 @@ class EditProfile extends BaseEditProfile
                                     ->maxLength(255)
                                     ->autofocus(),
 
+                                TextInput::make('npk')
+                                    ->label('NPK')
+                                    ->placeholder('Masukkan NPK Anda')
+                                    ->inlineLabel()
+                                    ->required()
+                                    ->maxLength(255),
+
                                 TextInput::make('email')
                                     ->label(__('filament-panels::pages/auth/edit-profile.form.email.label'))
                                     ->placeholder(__('filament-panels::pages/auth/edit-profile.form.email.placeholder'))
@@ -78,5 +85,10 @@ class EditProfile extends BaseEditProfile
                             ]),
                     ]),
             ]);
+    }
+
+    protected function getRedirectUrl(): ?string
+    {
+        return filament()->getHomeUrl();
     }
 }

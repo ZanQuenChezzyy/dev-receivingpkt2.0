@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\EditProfile;
 use App\Filament\Pages\Login;
+use App\Http\Middleware\EnsureNpkIsFilled;
 use Caresome\FilamentAuthDesigner\AuthDesignerPlugin;
 use Caresome\FilamentAuthDesigner\Enums\MediaPosition;
 use Caresome\FilamentAuthDesigner\View\AuthDesignerRenderHook;
@@ -77,7 +78,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->when(
                 $themePlugin,
-                fn(Panel $panel) => $panel->plugins([$themePlugin])
+                fn (Panel $panel) => $panel->plugins([$themePlugin])
             )
             // FOOTER PLUGIN
             ->plugins([
@@ -88,12 +89,12 @@ class AdminPanelProvider extends PanelProvider
                     ->hiddenFromPagesEnabled(),
                 AuthDesignerPlugin::make()
                     ->defaults(
-                        fn($config) => $config
+                        fn ($config) => $config
                             ->media(asset('images/auth/background-auth-3.png'))
                             ->mediaPosition(MediaPosition::Left)
                             ->blur(2)
                             ->mediasize('70%')
-                            ->renderHook(AuthDesignerRenderHook::MediaOverlay, fn() => view('auth.motivator-quotes'))
+                            ->renderHook(AuthDesignerRenderHook::MediaOverlay, fn () => view('auth.motivator-quotes'))
                     )
                     ->themeToggle(),
                 // StickyTableHeaderPlugin::make()
@@ -112,6 +113,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                EnsureNpkIsFilled::class,
             ]);
     }
 
