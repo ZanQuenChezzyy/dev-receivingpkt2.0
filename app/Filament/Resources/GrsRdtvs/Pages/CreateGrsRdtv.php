@@ -61,10 +61,10 @@ class CreateGrsRdtv extends CreateRecord
                         if (is_null($do->post_103)) {
                             $unposted103Documents[] = $documentCode;
                         } else {
-                            $isZrmOrZsm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM'])->exists();
-                            if (!$isZrmOrZsm) {
+                            $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
+                            if (!$isZrmZsmOrZpm) {
                                 $latestQc = $do->qcHistories()->latest()->first();
-                                if (! $latestQc || $latestQc->status !== 'Kembali') {
+                                if (!$latestQc || $latestQc->status !== 'Kembali') {
                                     $invalidDocuments[] = $documentCode;
                                 }
                             }
@@ -102,10 +102,10 @@ class CreateGrsRdtv extends CreateRecord
                         if (is_null($do->post_103)) {
                             $unposted103Documents[] = $documentCode;
                         } else {
-                            $isZrmOrZsm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM'])->exists();
-                            if (!$isZrmOrZsm) {
+                            $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
+                            if (!$isZrmZsmOrZpm) {
                                 $latestQc = $do->qcHistories()->latest()->first();
-                                if (! $latestQc || $latestQc->status !== 'Kembali') {
+                                if (!$latestQc || $latestQc->status !== 'Kembali') {
                                     $invalidDocuments[] = $documentCode;
                                 }
                             }
@@ -119,20 +119,20 @@ class CreateGrsRdtv extends CreateRecord
         }
 
         $errors = [];
-        if (! empty($unposted103Documents)) {
-            $errors[] = 'Belum Post 103: '.implode(', ', array_unique($unposted103Documents));
+        if (!empty($unposted103Documents)) {
+            $errors[] = 'Belum Post 103: ' . implode(', ', array_unique($unposted103Documents));
         }
-        if (! empty($invalidDocuments)) {
-            $errors[] = 'Belum kembali dari QC: '.implode(', ', array_unique($invalidDocuments));
+        if (!empty($invalidDocuments)) {
+            $errors[] = 'Belum kembali dari QC: ' . implode(', ', array_unique($invalidDocuments));
         }
-        if (! empty($alreadyProcessed)) {
-            $errors[] = 'Sudah sukses diupload sebagai GRS sebelumnya: '.implode(', ', array_unique($alreadyProcessed));
+        if (!empty($alreadyProcessed)) {
+            $errors[] = 'Sudah sukses diupload sebagai GRS sebelumnya: ' . implode(', ', array_unique($alreadyProcessed));
         }
-        if (! empty($duplicateDocuments)) {
-            $errors[] = 'Terdeteksi duplikat file yang sama: '.implode(', ', array_unique($duplicateDocuments));
+        if (!empty($duplicateDocuments)) {
+            $errors[] = 'Terdeteksi duplikat file yang sama: ' . implode(', ', array_unique($duplicateDocuments));
         }
 
-        if (! empty($errors)) {
+        if (!empty($errors)) {
             Notification::make()
                 ->title('Gagal Disimpan')
                 ->body(implode('<br>', $errors))
@@ -154,7 +154,7 @@ class CreateGrsRdtv extends CreateRecord
         $notFoundCount = 0;
 
         // --- Proses Dokumen GRS (Multiupload) ---
-        if ($category === 'GRS' && ! empty($this->uploadedFiles)) {
+        if ($category === 'GRS' && !empty($this->uploadedFiles)) {
             foreach ($this->uploadedFiles as $file) {
                 if ($file instanceof TemporaryUploadedFile) {
                     $originalName = $file->getClientOriginalName();
@@ -182,7 +182,7 @@ class CreateGrsRdtv extends CreateRecord
         }
 
         // --- Proses Dokumen RDTV (Repeater dengan alasan) ---
-        if ($category === 'RDTV' && ! empty($this->uploadedItems)) {
+        if ($category === 'RDTV' && !empty($this->uploadedItems)) {
             foreach ($this->uploadedItems as $item) {
                 // Ekstrak file dari Repeater
                 $file = is_array($item['file']) ? array_values($item['file'])[0] ?? null : $item['file'];
