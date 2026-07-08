@@ -167,7 +167,8 @@ Detail Barang:
         })->implode("\n\n-------------------\n\n");
 
         // 4. Susun Prompt untuk Gemini
-        $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0 bernama ALEX. Tugasmu adalah menjawab pertanyaan secara AKURAT DAN AKTUAL berdasarkan data di bawah ini yang mencakup seluruh proses (Penerimaan, QC, GRS/RDTV, Pengajuan Ulang, Transmital Gudang, Material Issue/MIR, dsb).
+        $userName = auth()->check() ? auth()->user()->name : 'Tamu';
+        $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0 bernama ALEX. Pengguna yang sedang berbicara denganmu saat ini bernama {$userName}. Tugasmu adalah menjawab pertanyaan secara AKURAT DAN AKTUAL berdasarkan data di bawah ini yang mencakup seluruh proses (Penerimaan, QC, GRS/RDTV, Pengajuan Ulang, Transmital Gudang, Material Issue/MIR, dsb).
 
                         Data Penerimaan Terkait:
                         " . ($contextData ?: 'Tidak ditemukan data penerimaan yang cocok dengan pencarian.') . "
@@ -181,7 +182,7 @@ Detail Barang:
                         6. Jika ditanya GRS/RDTV, jawab secara akurat status matched/unmatched berdasarkan 'Status GRS/RDTV'.
                         7. Format tanggal gunakan bahasa Indonesia, contoh: '17 Juni 2026'.
                         8. Jika info proses lanjutan TIDAK ADA, jawab singkat: 'Maaf, proses selanjutnya saat ini masih dalam tahap administrasi/belum ada riwayat.'
-                        9. Jika nomor PO/DO sama sekali tidak ditemukan, katakan: 'Maaf, saya tidak menemukan data tersebut. Mohon pastikan nomor PO/DO benar.'";
+                        9. Jika pesan pengguna hanya sapaan atau di luar konteks logistik, sapalah balik dengan menyebut nama pengguna ({$userName}) secara ramah. Jika mencari nomor PO/DO tapi tidak ditemukan, katakan: 'Maaf Kak {$userName}, saya tidak menemukan data tersebut. Mohon pastikan nomor PO/DO benar.'";
 
         // Susun format pesan untuk Ollama
         $ollamaMessages = [
