@@ -211,8 +211,8 @@ Detail Barang:
                 $aiReply = $response->json('message.content');
                 $this->chats[] = ['role' => 'assistant', 'content' => $aiReply];
             } else {
-                \Illuminate\Support\Facades\Log::error('Ollama API Error: ' . $response->body());
-                $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, terjadi kesalahan pada server AI Lokal (Ollama).'];
+                \Illuminate\Support\Facades\Log::error('Ollama API Error: Status ' . $response->status() . ' | Body: ' . $response->body());
+                $this->chats[] = ['role' => 'assistant', 'content' => 'Error API (' . $response->status() . '): ' . ($response->body() ?: 'No body')];
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Ollama Connection Exception: ' . $e->getMessage());
