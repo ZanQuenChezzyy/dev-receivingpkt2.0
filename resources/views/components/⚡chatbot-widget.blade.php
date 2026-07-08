@@ -167,7 +167,7 @@ Detail Barang:
         })->implode("\n\n-------------------\n\n");
 
         // 4. Susun Prompt untuk Gemini
-        $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0. Tugasmu adalah menjawab pertanyaan secara AKURAT DAN AKTUAL berdasarkan data di bawah ini yang mencakup seluruh proses (Penerimaan, QC, GRS/RDTV, Pengajuan Ulang, Transmital Gudang, Material Issue/MIR, dsb).
+        $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0 bernama ALEX. Tugasmu adalah menjawab pertanyaan secara AKURAT DAN AKTUAL berdasarkan data di bawah ini yang mencakup seluruh proses (Penerimaan, QC, GRS/RDTV, Pengajuan Ulang, Transmital Gudang, Material Issue/MIR, dsb).
 
                         Data Penerimaan Terkait:
                         " . ($contextData ?: 'Tidak ditemukan data penerimaan yang cocok dengan pencarian.') . "
@@ -211,12 +211,12 @@ Detail Barang:
                 $aiReply = $response->json('message.content');
                 $this->chats[] = ['role' => 'assistant', 'content' => $aiReply];
             } else {
-                \Illuminate\Support\Facades\Log::error('Ollama API Error: Status ' . $response->status() . ' | Body: ' . $response->body());
-                $this->chats[] = ['role' => 'assistant', 'content' => 'Error API (' . $response->status() . '): ' . ($response->body() ?: 'No body')];
+                \Illuminate\Support\Facades\Log::error('Ollama API Error: ' . $response->body());
+                $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, AI dalam mode tidur, silahkan besok pagi di jam kerja'];
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Ollama Connection Exception: ' . $e->getMessage());
-            $this->chats[] = ['role' => 'assistant', 'content' => 'Error: Gagal menghubungi AI. Pastikan aplikasi Ollama sedang berjalan di background.'];
+            $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, AI dalam mode tidur, silahkan besok pagi di jam kerja'];
         }
 
         // 4. Matikan indikator loading setelah mendapatkan balasan
