@@ -72,6 +72,11 @@ class DeliveryOrderReceiptDetail extends Model
         return $this->hasMany(MaterialIssueDetail::class);
     }
 
+    public function warehouseTransmittalItems()
+    {
+        return $this->hasMany(WarehouseTransmittalItem::class);
+    }
+
     public function getIssuedQuantityAttribute()
     {
         return $this->materialIssueDetails()->sum('diserahkan');

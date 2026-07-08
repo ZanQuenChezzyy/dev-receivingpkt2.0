@@ -51,9 +51,11 @@ new class extends Component {
         $query = DeliveryOrderReceipt::with([
             'deliveryOrderReceiptDetails.purchaseOrderIssued', 
             'deliveryOrderReceiptDetails.materialIssueDetails.materialIssue',
+            'deliveryOrderReceiptDetails.warehouseTransmittalItems.transmittal',
             'qcHistories', 
             'transmittals',
-            'grsRdtvItems.grsRdtv'
+            'grsRdtvItems.grsRdtv',
+            'delayLogs'
         ]);
 
         // 2. Filter dinamis berdasarkan pesan user
@@ -96,7 +98,18 @@ new class extends Component {
                     $mirInfo = " | Riwayat Pengambilan: {$mirs}";
                 }
 
-                return "- Item: {$detail->description} ({$detail->material_code}) | Qty: " . (float)$detail->quantity . " {$detail->uoi} | PO: {$poNumber}{$mirInfo}";
+                $warehouseInfo = "";
+                if ($detail->warehouseTransmittalItems && $detail->warehouseTransmittalItems->isNotEmpty()) {
+                    $whMirs = $detail->warehouseTransmittalItems->map(function ($wh) {
+                        $trans = $wh->transmittal;
+                        return $trans ? "Transmital Gudang No: {$trans->transmittal_no} (Tipe: {$trans->type}) ke {$trans->destination} pd " . ($trans->created_at ? \Carbon\Carbon::parse($trans->created_at)->isoFormat('D MMM YYYY') : '-') : '';
+                    })->filter()->implode(", ");
+                    if ($whMirs) {
+                        $warehouseInfo = " | Kirim ke Gudang: {$whMirs}";
+                    }
+                }
+
+                return "- Item: {$detail->description} ({$detail->material_code}) | Qty: " . (float)$detail->quantity . " {$detail->uoi} | PO: {$poNumber}{$mirInfo}{$warehouseInfo}";
             })->implode("\n");
 
             // Info Transmittal (Posisi Dokumen)
@@ -116,10 +129,18 @@ new class extends Component {
 
             // Info Pending/Delay
             $pendingInfo = "";
-            if ($receipt->status === 'Pending') {
-                $pendingInfo = "\nKendala Saat Ini (Pending): " . ($receipt->delay_reason ?? 'Tidak ada alasan') . " | Catatan: " . ($receipt->delay_notes ?? '-');
+            if ($receipt->status === 'Pending' || $receipt->status === 'Pending (Menunggu Pengajuan Ulang)') {
+                $pendingInfo = "\nKendala Saat Ini (Pending): " . ($receipt->delay_reason ?? 'Menunggu Pengajuan Ulang/Revisi') . " | Catatan: " . ($receipt->delay_notes ?? '-');
             } elseif ($receipt->delay_reason) {
                 $pendingInfo = "\nRiwayat Kendala Sebelumnya (Sudah Resolusi): " . $receipt->delay_reason;
+            }
+
+            // Info Riwayat Kendala/Pengajuan Ulang
+            if ($receipt->delayLogs && $receipt->delayLogs->isNotEmpty()) {
+                $delayHistories = $receipt->delayLogs->map(function ($log) {
+                    return "- [{$log->created_at->isoFormat('D MMMM YYYY HH:mm')}] Alasan: {$log->delay_reason} | Catatan: {$log->delay_notes}";
+                })->implode("\n");
+                $pendingInfo .= "\nRiwayat Kendala / Pengajuan Ulang:\n" . $delayHistories;
             }
 
             // Info GRS dan RDTV dari tabel GRSRDTV
@@ -146,20 +167,21 @@ Detail Barang:
         })->implode("\n\n-------------------\n\n");
 
         // 4. Susun Prompt untuk Gemini
-        $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0. Tugasmu adalah menjawab pertanyaan terkait status penerimaan barang, posisi dokumen, masalah QC, dan riwayat pengambilan barang (MIR) berdasarkan data database berikut.
+        $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0. Tugasmu adalah menjawab pertanyaan secara AKURAT DAN AKTUAL berdasarkan data di bawah ini yang mencakup seluruh proses (Penerimaan, QC, GRS/RDTV, Pengajuan Ulang, Transmital Gudang, Material Issue/MIR, dsb).
 
                         Data Penerimaan Terkait:
                         " . ($contextData ?: 'Tidak ditemukan data penerimaan yang cocok dengan pencarian.') . "
 
                         Instruksi Menjawab:
-                        1. Jawablah dengan sangat rapi, terstruktur, ramah, dan ringkas. Gunakan Markdown (seperti **bold**, *italic*, atau list bullet) agar informasi mudah dibaca dan poin-poinnya jelas.
-                        2. Jika user bertanya tentang status dokumen/posisi dokumen, periksa bagian 'Posisi/Status Dokumen (Transmittal)' dan beritahu mereka ke mana dokumen tersebut terakhir dikirim atau dikembalikan.
-                        3. Jika user bertanya mengenai 'kenapa status pending', periksa bagian 'Status Pending/Kendala' serta 'Histori QC & Masalah'. Jelaskan alasan dan catatannya secara detail.
-                        4. Jika user bertanya tentang pengambilan barang atau MIR (diambil oleh siapa, dsb), periksa bagian 'Riwayat Pengambilan' di Detail Barang.
-                        5. Jika user bertanya apakah dokumen sudah GRS atau alasan RDTV, periksa bagian 'Status GRS/RDTV' yang ditarik dari tabel GRSRDTV. Beritahu statusnya (contoh: Unmatched/Matched) beserta tanggalnya sesuai dengan kategori (GRS atau RDTV).
-                        6. Pastikan semua format tanggal yang kamu sebutkan menggunakan format bahasa Indonesia yang rapi, contoh: '17 Juni 2026'.
-                        7. Jika user menanyakan proses lanjutan yang datanya TIDAK ADA dalam teks di atas, berikan jawaban sopan: 'Mohon maaf, untuk proses selanjutnya saat ini masih dalam tahap administrasi.'
-                        8. Jika nomor PO/DO sama sekali tidak ditemukan, katakan: 'Maaf, saya tidak dapat menemukan data tersebut di riwayat penerimaan terbaru. Mohon pastikan nomor PO atau DO sudah benar.'";
+                        1. Jawablah dengan SANGAT SINGKAT, to the point, dan akurat tanpa basa-basi. Pahami seluruh siklus receiving mulai dari barang diterima, dikirim QC, revisi/pengajuan ulang, GRS/RDTV, sampai diambil/diserahkan ke gudang.
+                        2. Contoh jawaban ideal jika ditanya kedatangan PO/material: 'Iya, barang tersebut sudah diterima tanggal xx/xx/xxxx dan sekarang statusnya [Status Utama].'
+                        3. Jika ditanya status dokumen/posisi dokumen QC, beritahu secara singkat ke mana dokumen terakhir dikirim/dikembalikan berdasarkan 'Posisi/Status Dokumen (Transmittal)'.
+                        4. Jika ditanya mengenai pending, revisi, atau pengajuan ulang, bacakan info dari 'Kendala Saat Ini' atau 'Riwayat Kendala / Pengajuan Ulang' maupun dari 'Histori QC & Masalah'.
+                        5. Jika ditanya pengambilan barang atau pengiriman ke gudang, sebutkan secara singkat berdasarkan 'Riwayat Pengambilan' atau 'Kirim ke Gudang' di detail item.
+                        6. Jika ditanya GRS/RDTV, jawab secara akurat status matched/unmatched berdasarkan 'Status GRS/RDTV'.
+                        7. Format tanggal gunakan bahasa Indonesia, contoh: '17 Juni 2026'.
+                        8. Jika info proses lanjutan TIDAK ADA, jawab singkat: 'Maaf, proses selanjutnya saat ini masih dalam tahap administrasi/belum ada riwayat.'
+                        9. Jika nomor PO/DO sama sekali tidak ditemukan, katakan: 'Maaf, saya tidak menemukan data tersebut. Mohon pastikan nomor PO/DO benar.'";
 
         $geminiChatHistory = [];
         foreach ($this->chats as $chat) {
