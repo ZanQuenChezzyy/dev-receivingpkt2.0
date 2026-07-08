@@ -200,10 +200,13 @@ Detail Barang:
             $ollamaUrl = config('services.ollama.url') . '/api/chat';
             $ollamaModel = config('services.ollama.model');
 
-            // Mengatur timeout menjadi 120 detik dan memaksa penggunaan IPv4
+            // Mengatur timeout menjadi 120 detik dan memaksa penggunaan IPv4 serta membypass DNS (cURL error 6)
             $response = Http::withOptions([
                 'curl' => [
                     CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                    CURLOPT_RESOLVE => [
+                        "ai.receivingpkt.com:443:104.21.73.54"
+                    ]
                 ]
             ])
             ->connectTimeout(30)
