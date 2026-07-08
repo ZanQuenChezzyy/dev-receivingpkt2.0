@@ -42,9 +42,19 @@ new class extends Component {
     #[On('process-ai-response')]
     public function fetchAiResponse(string $userMessage)
     {
-        // 1. Ekstrak potensi nomor (PO/DO) atau teks dari pesan user
-        // Regex ini akan mengambil semua deretan angka (misal: 5300057474) atau kata dari pesan
-        preg_match_all('/\b[A-Za-z0-9-]+\b/', $userMessage, $matches);
+        // 1. Ekstrak potensi nomor (PO/DO) atau teks dari riwayat pesan user
+        // Ambil dari 3 pesan terakhir user agar AI tidak lupa nomor PO jika user melakukan follow-up
+        $contextText = '';
+        $historyCount = count($this->chats);
+        $messagesToCheck = min(6, $historyCount); // Cek 6 baris terakhir (3 pasang user-ai)
+        for ($i = $historyCount - 1; $i >= $historyCount - $messagesToCheck; $i--) {
+            if (isset($this->chats[$i]) && $this->chats[$i]['role'] === 'user') {
+                $contextText .= ' ' . $this->chats[$i]['content'];
+            }
+        }
+        
+        // Regex ini akan mengambil semua deretan angka atau kata dari gabungan pesan user
+        preg_match_all('/\b[A-Za-z0-9-]+\b/', $contextText, $matches);
         $searchTerms = $matches[0];
 
         // Mulai Query Dasar
@@ -156,8 +166,9 @@ new class extends Component {
             } else {
                 $grsRdtvInfo = "Status GRS/RDTV: Belum ada riwayat GRS atau RDTV.";
             }
+            $post103Date = $receipt->post_103 ? \Carbon\Carbon::parse($receipt->post_103)->isoFormat('D MMMM YYYY') : 'Belum Posting 103';
 
-            return "DO No: {$receipt->delivery_order_no} | Status Utama: {$receipt->status} {$pendingInfo} | Tanggal Terima: {$receipt->received_date->isoFormat('D MMMM YYYY')}
+            return "DO No: {$receipt->delivery_order_no} | Status Utama: {$receipt->status} {$pendingInfo} | Tanggal Terima: {$receipt->received_date->isoFormat('D MMMM YYYY')} | Tgl Posting 103: {$post103Date}
 {$grsRdtvInfo}
 Posisi/Status Dokumen (Transmittal): {$transmittalInfo}
 Histori QC & Masalah:
@@ -168,7 +179,13 @@ Detail Barang:
 
         // 4. Susun Prompt untuk Gemini
         $userName = auth()->check() ? auth()->user()->name : 'Tamu';
-        $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0 bernama ALEX. Pengguna yang sedang berbicara denganmu saat ini bernama {$userName}. Tugasmu adalah menjawab pertanyaan secara AKURAT DAN AKTUAL berdasarkan data di bawah ini yang mencakup seluruh proses (Penerimaan, QC, GRS/RDTV, Pengajuan Ulang, Transmital Gudang, Material Issue/MIR, dsb).
+        $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0 bernama ALEX. Pengguna yang sedang berbicara denganmu saat ini bernama {$userName}. Tugasmu adalah memandu dan menjawab pertanyaan secara AKURAT DAN AKTUAL berdasarkan data dan PANDUAN WORKFLOW di bawah ini.
+
+                        PANDUAN WORKFLOW RECEIVING (WAJIB DIPAHAMI):
+                        - TAHAP 1 (PENERIMAAN & POST 103): Barang fisik diterima. Setelah sesuai, dilakukan MIGO 103 (Tgl Posting 103). Jika belum Post 103, proses QC belum bisa berjalan.
+                        - TAHAP 2 (PENGAJUAN QC / TRANSMITTAL): Setelah Post 103, dokumen dikirim ke tim QC (Transmittal Kirim). Setelah diinspeksi, dokumen dikembalikan (Transmittal Kembali) dengan hasil Passed/Rejected.
+                        - TAHAP 3 (GRS & RDTV): Jika Passed, dibuat GRS (tanda terima final untuk penagihan vendor). Jika Rejected, dibuat RDTV (retur barang).
+                        - TAHAP 4 (PENGELUARAN BARANG): Material Issued Request (MIR) untuk barang yang diambil langsung oleh user (bisa Pre-QC, On-QC, atau Post-GRS). Transmittal Gudang untuk transfer sisa barang ke Gudang Tujuan.
 
                         Data Penerimaan Terkait:
                         " . ($contextData ?: 'Tidak ditemukan data penerimaan yang cocok dengan pencarian.') . "
@@ -182,7 +199,8 @@ Detail Barang:
                         6. Jika ditanya GRS/RDTV, jawab secara akurat status matched/unmatched berdasarkan 'Status GRS/RDTV'.
                         7. Format tanggal gunakan bahasa Indonesia, contoh: '17 Juni 2026'.
                         8. Jika info proses lanjutan TIDAK ADA, jawab singkat: 'Maaf, proses selanjutnya saat ini masih dalam tahap administrasi/belum ada riwayat.'
-                        9. Jika pesan pengguna hanya sapaan atau di luar konteks logistik, sapalah balik dengan menyebut nama pengguna ({$userName}) secara ramah. Jika mencari nomor PO/DO tapi tidak ditemukan, katakan: 'Maaf Kak {$userName}, saya tidak menemukan data tersebut. Mohon pastikan nomor PO/DO benar.'";
+                        9. Jika pesan pengguna hanya sapaan atau di luar konteks logistik, sapalah balik dengan menyebut nama pengguna ({$userName}) secara ramah. Jika mencari nomor PO/DO tapi tidak ditemukan, katakan: 'Maaf Kak {$userName}, saya tidak menemukan data tersebut. Mohon pastikan nomor PO/DO benar.'
+                        10. Jika pengguna bertanya kapan pengajuan QC, perhatikan info 'Tgl Posting 103'. Jika sudah posting 103, jawab 'Saat ini status [Status Utama], dan sudah posting 103 pada tanggal [Tgl Posting 103], pengajuan QC akan dilakukan besok'. Jika belum posting 103, jawab 'Saat ini status [Status Utama] dan belum Posting 103, pengajuan QC akan dilakukan setelah proses posting 103 selesai.'";
 
         // Susun format pesan untuk Ollama
         $ollamaMessages = [
