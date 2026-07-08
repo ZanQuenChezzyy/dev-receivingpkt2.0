@@ -183,48 +183,40 @@ Detail Barang:
                         8. Jika info proses lanjutan TIDAK ADA, jawab singkat: 'Maaf, proses selanjutnya saat ini masih dalam tahap administrasi/belum ada riwayat.'
                         9. Jika nomor PO/DO sama sekali tidak ditemukan, katakan: 'Maaf, saya tidak menemukan data tersebut. Mohon pastikan nomor PO/DO benar.'";
 
-        $geminiChatHistory = [];
-        foreach ($this->chats as $chat) {
-            // Mapping role 'assistant' ke 'model' agar sesuai dengan standar Gemini API
-            $role = $chat['role'] === 'assistant' ? 'model' : 'user';
+        // Susun format pesan untuk Ollama
+        $ollamaMessages = [
+            ['role' => 'system', 'content' => $systemPrompt]
+        ];
 
-            $geminiChatHistory[] = [
-                'role' => $role,
-                'parts' => [
-                    ['text' => $chat['content']]
-                ]
+        foreach ($this->chats as $chat) {
+            $ollamaMessages[] = [
+                'role' => $chat['role'], // Ollama menggunakan 'assistant' dan 'user'
+                'content' => $chat['content']
             ];
         }
 
-        // 3. Hit API Gemini
+        // Hit API Ollama Lokal (Bisa dikonfigurasi via .env)
         try {
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])
-                ->withoutVerifying() // Nonaktifkan verifikasi SSL (Gunakan hanya untuk local development)
-                ->timeout(60)        // Tambahkan batas waktu koneksi menjadi 60 detik
-                // UPDATE: Menggunakan endpoint model gemini-3.1-flash-lite
-                ->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=" . config('services.gemini.api_key'), [
-                    'system_instruction' => [
-                        'parts' => [
-                            ['text' => $systemPrompt]
-                        ]
-                    ],
-                    'contents' => $geminiChatHistory
-                ]);
+            $ollamaUrl = config('services.ollama.url') . '/api/chat';
+            $ollamaModel = config('services.ollama.model');
+
+            // Mengatur timeout menjadi 120 detik karena LLM lokal butuh waktu berpikir
+            $response = Http::timeout(120)->post($ollamaUrl, [
+                'model' => $ollamaModel,
+                'messages' => $ollamaMessages,
+                'stream' => false,
+            ]);
 
             if ($response->successful()) {
-                $aiReply = $response->json('candidates.0.content.parts.0.text');
+                $aiReply = $response->json('message.content');
                 $this->chats[] = ['role' => 'assistant', 'content' => $aiReply];
             } else {
-                // Jika API membalas tapi dengan status error (misal: 400 Bad Request / 403 Forbidden)
-                \Illuminate\Support\Facades\Log::error('Gemini API Error: ' . $response->body());
-                $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, terjadi gangguan dari server AI. Coba lagi nanti.'];
+                \Illuminate\Support\Facades\Log::error('Ollama API Error: ' . $response->body());
+                $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, terjadi kesalahan pada server AI Lokal (Ollama).'];
             }
         } catch (\Exception $e) {
-            // Jika koneksi internet putus, timeout, atau masalah SSL
-            \Illuminate\Support\Facades\Log::error('Gemini Connection Exception: ' . $e->getMessage());
-            $this->chats[] = ['role' => 'assistant', 'content' => 'Error koneksi jaringan: Gagal menghubungi AI.'];
+            \Illuminate\Support\Facades\Log::error('Ollama Connection Exception: ' . $e->getMessage());
+            $this->chats[] = ['role' => 'assistant', 'content' => 'Error: Gagal menghubungi AI. Pastikan aplikasi Ollama sedang berjalan di background.'];
         }
 
         // 4. Matikan indikator loading setelah mendapatkan balasan
