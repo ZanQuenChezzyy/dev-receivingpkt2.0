@@ -200,8 +200,15 @@ Detail Barang:
             $ollamaUrl = config('services.ollama.url') . '/api/chat';
             $ollamaModel = config('services.ollama.model');
 
-            // Mengatur timeout menjadi 120 detik karena LLM lokal butuh waktu berpikir
-            $response = Http::timeout(120)->post($ollamaUrl, [
+            // Mengatur timeout menjadi 120 detik dan memaksa penggunaan IPv4
+            $response = Http::withOptions([
+                'curl' => [
+                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                ]
+            ])
+            ->connectTimeout(30)
+            ->timeout(120)
+            ->post($ollamaUrl, [
                 'model' => $ollamaModel,
                 'messages' => $ollamaMessages,
                 'stream' => false,
