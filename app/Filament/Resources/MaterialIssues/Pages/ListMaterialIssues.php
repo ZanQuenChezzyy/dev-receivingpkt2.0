@@ -6,7 +6,9 @@ use App\Filament\Resources\MaterialIssues\MaterialIssueResource;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListMaterialIssues extends ListRecords
 {
@@ -15,14 +17,23 @@ class ListMaterialIssues extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('view_manual_mirs')
-                ->label('Lihat Daftar MIR Manual')
-                ->icon(Heroicon::ClipboardDocumentList)
-                ->color('gray')
-                ->url(fn() => \App\Filament\Resources\ManualMirs\ManualMirResource::getUrl('index')),
             CreateAction::make()
                 ->label('Tambah Material Issue')
                 ->icon(Heroicon::PlusCircle),
+        ];
+    }
+
+    public function getTabs(): array
+    {
+        return [
+            'semua' => Tab::make('Semua')
+                ->icon(Heroicon::OutlinedListBullet),
+            'digital' => Tab::make('Digital')
+                ->icon(Heroicon::OutlinedComputerDesktop)
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('jenis_mir', 'digital')),
+            'manual' => Tab::make('Manual')
+                ->icon(Heroicon::OutlinedDocumentArrowUp)
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('jenis_mir', 'manual')),
         ];
     }
 }

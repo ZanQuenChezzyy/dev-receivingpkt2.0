@@ -11,6 +11,10 @@ class MaterialIssue extends Model
     use HasFactory;
 
     protected $fillable = [
+        'jenis_mir',
+        'image_path',
+        'po_number',
+        'delivery_order_receipt_id',
         'mir_number',
         'tanggal',
         'purchase_order_issued_id',
@@ -64,7 +68,7 @@ class MaterialIssue extends Model
                 $model->created_by = Auth::id();
             }
 
-            if (empty($model->mir_number)) {
+            if (empty($model->mir_number) && $model->jenis_mir === 'digital') {
                 $month = date('Ym');
                 $lastRecord = self::where('mir_number', 'LIKE', "MIR/{$month}/%")->orderBy('id', 'desc')->first();
                 $nextId = 1;
@@ -75,5 +79,10 @@ class MaterialIssue extends Model
                 $model->mir_number = "MIR/{$month}/".str_pad($nextId, 4, '0', STR_PAD_LEFT);
             }
         });
+    }
+
+    public function deliveryOrderReceipt()
+    {
+        return $this->belongsTo(DeliveryOrderReceipt::class);
     }
 }

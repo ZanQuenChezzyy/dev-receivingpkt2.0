@@ -5,11 +5,13 @@ namespace App\Filament\Resources\MaterialIssues\Schemas;
 use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\PurchaseOrderIssued;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\EmptyState;
 use Filament\Schemas\Components\Grid;
@@ -28,10 +30,68 @@ class MaterialIssueForm
         return $schema
             ->components([
                 Group::make([
+                    self::getJenisMirSection(),
                     self::getInformasiUtamaSection(),
                 ]),
+                self::getManualMirSection(),
                 self::getDetailMaterialSection(),
                 self::getTandaTanganSection()
+                    ->columnSpanFull(),
+            ]);
+    }
+
+    protected static function getJenisMirSection(): Section
+    {
+        return Section::make('Tipe Formulir MIR')
+            ->schema([
+                ToggleButtons::make('jenis_mir')
+                    ->label('Jenis MIR')
+                    ->options([
+                        'digital' => 'MIR Digital (Otomatis)',
+                        'manual' => 'MIR Manual (Upload File)',
+                    ])
+                    ->icons([
+                        'digital' => Heroicon::ComputerDesktop,
+                        'manual' => Heroicon::DocumentArrowUp,
+                    ])
+                    ->colors([
+                        'digital' => 'primary',
+                        'manual' => 'warning',
+                    ])
+                    ->inline()
+                    ->required()
+                    ->default('digital')
+                    ->live()
+            ]);
+    }
+
+    protected static function getManualMirSection(): Section
+    {
+        return Section::make('Data MIR Manual')
+            ->icon(Heroicon::OutlinedDocumentArrowUp)
+            ->description('Unggah dokumen MIR yang sudah ditandatangani secara fisik.')
+            ->visible(fn(Get $get): bool => $get('jenis_mir') === 'manual')
+            ->schema([
+                Grid::make(2)->schema([
+                    TextInput::make('po_number')
+                        ->label('Nomor PO')
+                        ->placeholder('Masukkan Nomor PO')
+                        ->required(fn(Get $get): bool => $get('jenis_mir') === 'manual'),
+
+                    Select::make('delivery_order_receipt_id')
+                        ->label('Referensi Penerimaan DO (Opsional)')
+                        ->relationship('deliveryOrderReceipt', 'document_code')
+                        ->searchable()
+                        ->preload()
+                        ->nullable(),
+                ]),
+                FileUpload::make('image_path')
+                    ->label('Gambar/Dokumen MIR')
+                    ->image()
+                    ->disk('public')
+                    ->directory('manual-mirs')
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'application/pdf'])
+                    ->required(fn(Get $get): bool => $get('jenis_mir') === 'manual')
                     ->columnSpanFull(),
             ]);
     }
@@ -41,6 +101,7 @@ class MaterialIssueForm
         return Section::make('Informasi Utama MIR')
             ->icon(Heroicon::OutlinedDocumentText)
             ->description('Lengkapi data utama formulir Material Issued Request (MIR) di bawah ini.')
+            ->visible(fn(Get $get): bool => $get('jenis_mir') === 'digital')
             ->schema([
                 Grid::make(2)->schema([
                     TextInput::make('mir_number')
@@ -139,6 +200,7 @@ class MaterialIssueForm
     {
         return Section::make('Daftar Barang yang Diambil')
             ->icon(Heroicon::OutlinedCube)
+            ->visible(fn(Get $get): bool => $get('jenis_mir') === 'digital')
             ->description(function (Get $get) {
                 $poId = $get('purchase_order_issued_id');
                 if ($poId) {
@@ -324,6 +386,7 @@ class MaterialIssueForm
     {
         return Section::make('Tanda Tangan (Fisik & Digital)')
             ->icon(Heroicon::OutlinedPencilSquare)
+            ->visible(fn(Get $get): bool => $get('jenis_mir') === 'digital')
             ->description('Catat nama pihak yang bertanda tangan di formulir fisik atau lihat tanda tangan digital MIR.')
             ->schema([
                 Grid::make(4)->schema([

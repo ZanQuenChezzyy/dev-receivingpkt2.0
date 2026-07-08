@@ -15,9 +15,11 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColumnGroup;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Storage;
 
 class MaterialIssuesTable
 {
@@ -26,6 +28,16 @@ class MaterialIssuesTable
         return $table
             ->columns([
                 ColumnGroup::make('Informasi Dokumen', [
+                    TextColumn::make('jenis_mir')
+                        ->label('Jenis')
+                        ->badge()
+                        ->color(fn(string $state): string => match ($state) {
+                            'digital' => 'primary',
+                            'manual' => 'warning',
+                            default => 'gray',
+                        })
+                        ->formatStateUsing(fn(string $state): string => ucfirst($state)),
+
                     TextColumn::make('mir_number')
                         ->label('No. MIR')
                         ->icon('heroicon-m-document-duplicate')
@@ -34,23 +46,31 @@ class MaterialIssuesTable
                         ->weight(FontWeight::Bold)
                         ->searchable()
                         ->copyable()
-                        ->sortable(),
+                        ->sortable()
+                        ->formatStateUsing(fn($state, $record) => $record->jenis_mir === 'manual' ? 'MIR Manual' : $state),
 
                     TextColumn::make('tanggal')
                         ->label('Tanggal')
                         ->icon(Heroicon::CalendarDays)
                         ->iconColor('gray')
                         ->date('d F Y')
-                        ->sortable(),
+                        ->sortable()
+                        ->formatStateUsing(fn($state, $record) => $record->jenis_mir === 'manual' ? $record->created_at->format('d F Y') : $state),
                 ]),
 
                 ColumnGroup::make('Detail Permintaan', [
-                    TextColumn::make('purchaseOrderIssued.purchase_order_no')
+                    TextColumn::make('purchase_order_issued_id')
                         ->label('Nomor PO')
                         ->icon('heroicon-m-shopping-cart')
                         ->weight(FontWeight::SemiBold)
-                        ->searchable()
-                        ->sortable(),
+                        ->searchable(query: function ($query, $search) {
+                            $query->where('po_number', 'like', "%{$search}%")
+                                ->orWhereHas('purchaseOrderIssued', function ($q) use ($search) {
+                                    $q->where('purchase_order_no', 'like', "%{$search}%");
+                                });
+                        })
+                        ->sortable()
+                        ->getStateUsing(fn($record) => $record->jenis_mir === 'manual' ? $record->po_number : $record->purchaseOrderIssued?->purchase_order_no),
 
                     TextColumn::make('diminta_oleh')
                         ->label('Diminta Oleh')
@@ -100,14 +120,25 @@ class MaterialIssuesTable
                 //
             ])
             ->recordActions([
+                Action::make('lihat_dokumen')
+                    ->label('Lihat Dokumen')
+                    ->icon('heroicon-o-document-text')
+                    ->button()
+                    ->outlined()
+                    ->color('warning')
+                    ->url(fn(MaterialIssue $record): string => Storage::disk('public')->url($record->image_path))
+                    ->openUrlInNewTab()
+                    ->visible(fn($record) => $record->jenis_mir === 'manual' && !empty($record->image_path)),
+
                 Action::make('cetak_mir')
                     ->label('Cetak')
                     ->icon('heroicon-o-printer')
                     ->button()
                     ->outlined()
                     ->color('success')
-                    ->url(fn (MaterialIssue $record): string => route('filament.admin.resources.material-issues.print', $record))
-                    ->openUrlInNewTab(),
+                    ->url(fn(MaterialIssue $record): string => route('filament.admin.resources.material-issues.print', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn($record) => $record->jenis_mir === 'digital'),
                 ActionGroup::make([
                     ViewAction::make()
                         ->color('gray')
