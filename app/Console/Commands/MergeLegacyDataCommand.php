@@ -34,6 +34,12 @@ class MergeLegacyDataCommand extends Command
         try {
             DB::beginTransaction();
 
+            // Auto cleanup duplicates (if the script was previously run multiple times without checks)
+            $this->info('Cleaning up any accidentally duplicated details from previous runs...');
+            DB::statement('DELETE t1 FROM delivery_order_receipt_details t1 INNER JOIN delivery_order_receipt_details t2 WHERE t1.id > t2.id AND t1.delivery_order_receipt_id = t2.delivery_order_receipt_id AND t1.item_no = t2.item_no AND t1.purchase_order_issued_id = t2.purchase_order_issued_id');
+            DB::statement('DELETE t1 FROM material_issue_details t1 INNER JOIN material_issue_details t2 WHERE t1.id > t2.id AND t1.material_issue_id = t2.material_issue_id AND t1.delivery_order_receipt_detail_id = t2.delivery_order_receipt_detail_id');
+            DB::statement('DELETE t1 FROM transmittal_items t1 INNER JOIN transmittal_items t2 WHERE t1.id > t2.id AND t1.transmittal_id = t2.transmittal_id AND t1.delivery_order_receipt_id = t2.delivery_order_receipt_id');
+
             $this->mergeUsers($oldDb);
             $this->mergeLocationReceivings($oldDb);
             $this->mergePurchaseOrders($oldDb);
@@ -209,6 +215,17 @@ class MergeLegacyDataCommand extends Command
                 $parentDorOld = $oldDb->table('delivery_order_receipts')->where('id', $detail->delivery_order_receipt_id)->first();
                 if ($parentDorOld && isset($this->mapPo[$parentDorOld->purchase_order_terbit_id])) {
                     $poId = $this->mapPo[$parentDorOld->purchase_order_terbit_id];
+                }
+
+                $existingDetail = DB::table('delivery_order_receipt_details')
+                    ->where('delivery_order_receipt_id', $parentDorId)
+                    ->where('item_no', $detail->item_no ?? 1)
+                    ->where('purchase_order_issued_id', $poId)
+                    ->first();
+                
+                if ($existingDetail) {
+                    $this->mapDoDetails[$detail->id] = $existingDetail->id;
+                    continue;
                 }
                 
                 $locId = $this->mapLocations[$detail->location_id ?? 1] ?? 1;
