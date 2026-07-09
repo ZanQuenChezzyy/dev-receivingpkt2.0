@@ -393,13 +393,13 @@ Detail Barang:
                     <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center mt-1 animate-pulse border border-slate-300/50 dark:border-white/5">
                         <span class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full"></span>
                     </div>
-                    <div class="bg-white dark:bg-slate-800/80 px-5 py-3.5 rounded-[1.5rem] rounded-tl-sm shadow-sm border border-slate-200/60 dark:border-white/5 flex flex-col justify-center gap-2 backdrop-blur-md min-w-[200px]">
-                        <span class="text-[11.5px] font-semibold text-[#F47920] animate-pulse tracking-wide" x-text="texts[currentIndex]">Berpikir...</span>
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></span>
-                            <span class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
-                            <span class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                    <div class="flex flex-col gap-1.5">
+                        <div class="bg-white dark:bg-slate-800/80 px-5 py-4 rounded-[1.5rem] rounded-tl-sm shadow-sm border border-slate-200/60 dark:border-white/5 flex items-center gap-1.5 backdrop-blur-md w-fit">
+                            <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce"></span>
+                            <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
+                            <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
                         </div>
+                        <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400 animate-pulse ml-2 tracking-wide" x-text="texts[currentIndex]">Berpikir...</span>
                     </div>
                 </div>
             @endif
