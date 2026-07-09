@@ -181,7 +181,20 @@ Detail Barang:
         // 4. Susun Prompt untuk Gemini
         $userName = auth()->check() ? auth()->user()->name : 'Tamu';
         $sapaan = auth()->check() ? "Kak {$userName}" : "Kak";
-        $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0 bernama ALEX. Pengguna yang sedang berbicara denganmu saat ini bernama {$userName}. Tugasmu adalah memandu dan menjawab pertanyaan secara AKURAT DAN AKTUAL berdasarkan data dan PANDUAN WORKFLOW di bawah ini.
+        
+        $hour = now()->format('H');
+        if ($hour < 11) {
+            $waktu = 'pagi';
+        } elseif ($hour < 15) {
+            $waktu = 'siang';
+        } elseif ($hour < 18) {
+            $waktu = 'sore';
+        } else {
+            $waktu = 'malam';
+        }
+        $currentTime = now()->isoFormat('D MMMM YYYY, HH:mm');
+
+        $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0 bernama ALEX. Pengguna yang sedang berbicara denganmu saat ini bernama {$userName}. Waktu saat ini adalah {$currentTime} (waktu {$waktu}). Tugasmu adalah memandu dan menjawab pertanyaan secara AKURAT DAN AKTUAL berdasarkan data dan PANDUAN WORKFLOW di bawah ini.
 
                         PANDUAN WORKFLOW RECEIVING (WAJIB DIPAHAMI):
                         - TAHAP 1 (PENERIMAAN & POST 103): Barang fisik diterima. Setelah sesuai, dilakukan MIGO 103 (Tgl Posting 103). Jika belum Post 103, proses QC belum bisa berjalan.
