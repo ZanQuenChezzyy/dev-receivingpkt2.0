@@ -80,7 +80,12 @@ class MaterialIssueForm
 
                     Select::make('delivery_order_receipt_id')
                         ->label('Referensi Penerimaan DO (Opsional)')
-                        ->relationship('deliveryOrderReceipt', 'document_code')
+                        ->options(function () {
+                            return \App\Models\DeliveryOrderReceipt::whereNotNull('document_code')
+                                ->where('document_code', '!=', '')
+                                ->pluck('document_code', 'id')
+                                ->toArray();
+                        })
                         ->searchable()
                         ->preload()
                         ->nullable(),
@@ -135,6 +140,7 @@ class MaterialIssueForm
                         ->required()
                         ->getSearchResultsUsing(function (string $search) {
                             return PurchaseOrderIssued::whereHas('deliveryOrderReceiptDetails')
+                                ->whereNotNull('purchase_order_no')
                                 ->where('purchase_order_no', 'like', "%{$search}%")
                                 ->limit(50)
                                 ->get()
@@ -143,7 +149,7 @@ class MaterialIssueForm
                                 ->toArray();
                         })
                         ->columnSpanFull()
-                        ->getOptionLabelUsing(fn($value): ?string => PurchaseOrderIssued::find($value)?->purchase_order_no)
+                        ->getOptionLabelUsing(fn($value): string => PurchaseOrderIssued::find($value)?->purchase_order_no ?? '-')
                         ->live()
                         ->afterStateUpdated(fn(Set $set) => $set('materialIssueDetails', [])),
                 ]),
