@@ -95,18 +95,26 @@ class MergeLegacyDataCommand extends Command
         });
     }
 
+    private $existingPosCache = null;
+
     private function mergePurchaseOrders($oldDb)
     {
         $this->info('Merging Purchase Orders...');
+
+        if ($this->existingPosCache === null) {
+            $this->info('Caching existing POs for faster duplicate checking...');
+            $existing = DB::table('purchase_order_issueds')->select('id', 'purchase_order_no', 'item_no')->get();
+            $this->existingPosCache = [];
+            foreach ($existing as $e) {
+                $this->existingPosCache[$e->purchase_order_no . '-' . $e->item_no] = $e->id;
+            }
+        }
+
         $oldDb->table('purchase_order_terbits')->orderBy('id')->chunk(500, function ($pos) {
             foreach ($pos as $po) {
-                $existing = DB::table('purchase_order_issueds')
-                    ->where('purchase_order_no', $po->purchase_order_no)
-                    ->where('item_no', $po->item_no)
-                    ->first();
-                    
-                if ($existing) {
-                    $this->mapPo[$po->id] = $existing->id;
+                $cacheKey = $po->purchase_order_no . '-' . $po->item_no;
+                if (isset($this->existingPosCache[$cacheKey])) {
+                    $this->mapPo[$po->id] = $this->existingPosCache[$cacheKey];
                 } else {
                     $newId = DB::table('purchase_order_issueds')->insertGetId([
                         'purchase_order_and_item' => $po->purchase_order_and_item,
@@ -134,6 +142,7 @@ class MergeLegacyDataCommand extends Command
                         'updated_at' => $po->updated_at,
                     ]);
                     $this->mapPo[$po->id] = $newId;
+                    $this->existingPosCache[$cacheKey] = $newId;
                 }
             }
         });
