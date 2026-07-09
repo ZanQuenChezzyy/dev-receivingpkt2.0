@@ -7,6 +7,8 @@ use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\PurchaseOrderIssued;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -16,6 +18,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Size;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColumnGroup;
@@ -333,7 +336,16 @@ class DeliveryOrderReceiptDetailResource extends Resource
                     ->label('Filter'),
             )
             ->recordActions([
-                //
+                ActionGroup::make([
+                    EditAction::make()
+                        ->color('info'),
+                ])
+                    ->label('')
+                    ->icon(Heroicon::EllipsisHorizontal)
+                    ->size(Size::Small)
+                    ->color('info')
+                    ->outlined()
+                    ->button(),
             ])
             ->toolbarActions([
                 //
