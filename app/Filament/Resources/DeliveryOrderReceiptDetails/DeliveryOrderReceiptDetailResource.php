@@ -67,7 +67,12 @@ class DeliveryOrderReceiptDetailResource extends Resource
                         Grid::make(2)->schema([
                             Select::make('purchase_order_issued_id')
                                 ->label('No. PO')
-                                ->relationship('purchaseOrderIssued', 'purchase_order_no')
+                                ->options(function () {
+                                    return PurchaseOrderIssued::whereNotNull('purchase_order_no')
+                                        ->where('purchase_order_no', '!=', '')
+                                        ->pluck('purchase_order_no', 'id')
+                                        ->toArray();
+                                })
                                 ->searchable()
                                 ->preload()
                                 ->required(),
@@ -104,7 +109,12 @@ class DeliveryOrderReceiptDetailResource extends Resource
                                 ->dehydrated(false),
                             Select::make('delivery_order_receipt_id')
                                 ->label('Referensi DO')
-                                ->relationship('deliveryOrderReceipt', 'document_code')
+                                ->options(function () {
+                                    return \App\Models\DeliveryOrderReceipt::whereNotNull('document_code')
+                                        ->where('document_code', '!=', '')
+                                        ->pluck('document_code', 'id')
+                                        ->toArray();
+                                })
                                 ->searchable()
                                 ->preload(),
                         ]),
@@ -116,7 +126,12 @@ class DeliveryOrderReceiptDetailResource extends Resource
                         Grid::make(2)->schema([
                             Select::make('location_id')
                                 ->label('Lokasi Penyimpanan')
-                                ->relationship('locationReceiving', 'name')
+                                ->options(function () {
+                                    return \App\Models\LocationReceiving::whereNotNull('name')
+                                        ->where('name', '!=', '')
+                                        ->pluck('name', 'id')
+                                        ->toArray();
+                                })
                                 ->searchable()
                                 ->preload(),
                             Toggle::make('is_different_location')
@@ -301,12 +316,22 @@ class DeliveryOrderReceiptDetailResource extends Resource
             ->filters([
                 SelectFilter::make('purchase_order_issued_id')
                     ->label('Nomor PO')
-                    ->relationship('purchaseOrderIssued', 'purchase_order_no')
+                    ->options(function () {
+                        return \App\Models\PurchaseOrderIssued::whereNotNull('purchase_order_no')
+                            ->where('purchase_order_no', '!=', '')
+                            ->pluck('purchase_order_no', 'id')
+                            ->toArray();
+                    })
                     ->searchable()
                     ->preload(),
                 SelectFilter::make('location_id')
                     ->label('Lokasi Penyimpanan')
-                    ->relationship('locationReceiving', 'name')
+                    ->options(function () {
+                        return \App\Models\LocationReceiving::whereNotNull('name')
+                            ->where('name', '!=', '')
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })
                     ->searchable()
                     ->preload(),
                 TernaryFilter::make('is_qty_tolerance')
@@ -344,6 +369,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                     ->icon(Heroicon::EllipsisHorizontal)
                     ->size(Size::Small)
                     ->color('info')
+                    ->visible(Auth::user()->hasRole('Developer'))
                     ->outlined()
                     ->button(),
             ])
