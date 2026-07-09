@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\MaterialIssues\Tables;
 
+use App\Filament\Exports\MaterialIssueExporter;
 use App\Models\MaterialIssue;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -10,6 +11,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ExportBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
@@ -167,6 +169,8 @@ class MaterialIssuesTable
 
                             return redirect()->route('filament.admin.resources.material-issues.print_bulk', ['ids' => $ids]);
                         }),
+                    ExportBulkAction::make()
+                        ->exporter(MaterialIssueExporter::class),
                     DeleteBulkAction::make(),
                 ]),
             ])

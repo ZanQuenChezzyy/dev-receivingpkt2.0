@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\MaterialIssues\Pages;
 
+use App\Filament\Exports\MaterialIssueExporter;
 use App\Filament\Resources\MaterialIssues\MaterialIssueResource;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
+use Filament\Actions\ExportAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Icons\Heroicon;
@@ -17,6 +19,10 @@ class ListMaterialIssues extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            ExportAction::make()
+                ->exporter(MaterialIssueExporter::class)
+                ->icon(Heroicon::ArrowDownTray)
+                ->color('success'),
             CreateAction::make()
                 ->label('Tambah Material Issue')
                 ->icon(Heroicon::PlusCircle),
