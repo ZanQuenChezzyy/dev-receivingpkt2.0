@@ -189,7 +189,7 @@ Detail Barang:
                         - TAHAP 4 (PENGELUARAN BARANG): Material Issued Request (MIR) untuk barang yang diambil langsung oleh user (bisa Pre-QC, On-QC, atau Post-GRS). Transmittal Gudang untuk transfer sisa barang ke Gudang Tujuan.
 
                         Data Penerimaan Terkait:
-                        " . ($contextData ?: 'Tidak ditemukan data penerimaan yang cocok dengan pencarian.') . "
+                        " . ($contextData ?: '(Data tidak ditemukan. JIKA USER HANYA MENYAPA, abaikan informasi ini)') . "
 
                         Instruksi Menjawab:
                         1. Jawablah dengan SANGAT SINGKAT, to the point, dan akurat tanpa basa-basi. Pahami seluruh siklus receiving mulai dari barang diterima, dikirim QC, revisi/pengajuan ulang, GRS/RDTV, sampai diambil/diserahkan ke gudang.
@@ -200,7 +200,7 @@ Detail Barang:
                         6. Jika ditanya GRS/RDTV, jawab secara akurat status matched/unmatched berdasarkan 'Status GRS/RDTV'.
                         7. Format tanggal gunakan bahasa Indonesia, contoh: '17 Juni 2026'.
                         8. Jika info proses lanjutan TIDAK ADA, jawab singkat: 'Maaf, proses selanjutnya saat ini masih dalam tahap administrasi/belum ada riwayat.'
-                        9. Jika pesan pengguna hanya sapaan atau di luar konteks logistik, sapalah balik dengan menyebut nama pengguna ({$userName}) secara ramah. Jika mencari nomor PO/DO tapi tidak ditemukan, katakan: 'Maaf Kak {$userName}, saya tidak menemukan data tersebut. Mohon pastikan nomor PO/DO benar.'
+                        9. Jika pesan pengguna HANYA sapaan (seperti halo, hai, lex, pagi, dsb), JANGAN membahas soal data tidak ditemukan. Cukup balas sapaan tersebut dengan ramah, sebutkan namanya ({$userName}), dan tanyakan apa yang bisa dibantu. Namun jika user jelas MENCARI nomor PO/DO dan datanya kosong, barulah katakan: 'Maaf Kak {$userName}, saya tidak menemukan data tersebut. Mohon pastikan nomor PO/DO benar.'
                         10. Jika pengguna bertanya kapan pengajuan QC, perhatikan info 'Tgl Posting 103'. Jika sudah posting 103, jawab 'Saat ini status [Status Utama], dan sudah posting 103 pada tanggal [Tgl Posting 103], pengajuan QC akan dilakukan besok'. Jika belum posting 103, jawab 'Saat ini status [Status Utama] dan belum Posting 103, pengajuan QC akan dilakukan setelah proses posting 103 selesai.'
                         11. Jika pengguna memanggilmu dengan sapaan akrab seperti 'Lex' atau menggunakan gaya bahasa yang santai/akrab, ubah gaya bahasamu menjadi lebih santai, seru, dan bersahabat (misal menggunakan sapaan bro, kak, atau bahasa kasual) namun tetap informatif dan akurat terkait data logistik.";
 
