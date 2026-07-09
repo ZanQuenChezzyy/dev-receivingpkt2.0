@@ -308,7 +308,7 @@ Detail Barang:
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-8 scale-95"
-        class="glass-panel fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:max-w-[380px] h-[100dvh] md:h-[38rem] md:rounded-[2.5rem] overflow-hidden flex flex-col z-[100] md:z-auto">
+        class="glass-panel fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:max-w-[380px] h-[100dvh] md:h-[38rem] md:rounded-[1.5rem] overflow-hidden flex flex-col z-[100] md:z-auto">
 
         <!-- Header -->
         <div class="glass-nav px-6 py-5 flex items-center justify-between relative z-20 overflow-hidden">
@@ -423,7 +423,7 @@ Detail Barang:
 
         <!-- Input Area -->
         <form wire:submit="sendMessage"
-            class="glass-nav p-5 pb-8 md:pb-5 relative z-20 md:rounded-b-[2.5rem]">
+            class="glass-nav p-5 pb-8 md:pb-5 relative z-20 md:rounded-b-[1.5rem]">
             <div class="glass-input relative flex items-center rounded-full group">
 
                 <input wire:model="message" type="text" placeholder="Tanya DO, PO, atau MIR..."
