@@ -137,14 +137,46 @@ class DeliveryOrderReceiptDetailResource extends Resource
                             Toggle::make('is_different_location')
                                 ->label('Berbeda Lokasi?')
                                 ->inline(false),
-                            TextInput::make('mrp_type')
-                                ->label('MRP Type'),
-                            TextInput::make('material_type')
-                                ->label('Material Type'),
-                            TextInput::make('abc_indicator')
-                                ->label('ABC Indicator'),
-                            TextInput::make('aac')
-                                ->label('AAC Indicator'),
+                            Select::make('mrp_type')
+                                ->label('MRP Type')
+                                ->options([
+                                    'V1' => 'V1',
+                                    'PD' => 'PD',
+                                    'INVESTASI' => 'INVESTASI',
+                                    'NONSTOCK' => 'NONSTOCK',
+                                    'NOT FOUND' => 'NOT FOUND',
+                                ])
+                                ->searchable(),
+                            Select::make('material_type')
+                                ->label('Material Type')
+                                ->options([
+                                    'ZSP' => 'ZSP',
+                                    'ZFP' => 'ZFP',
+                                    'ZRM' => 'ZRM',
+                                    'ZSM' => 'ZSM',
+                                    'ZPM' => 'ZPM',
+                                ])
+                                ->searchable(),
+                            Select::make('abc_indicator')
+                                ->label('ABC Indicator')
+                                ->options(function () {
+                                    return \App\Models\DeliveryOrderReceiptDetail::whereNotNull('abc_indicator')
+                                        ->where('abc_indicator', '!=', '')
+                                        ->distinct()
+                                        ->pluck('abc_indicator', 'abc_indicator')
+                                        ->toArray();
+                                })
+                                ->searchable(),
+                            Select::make('aac')
+                                ->label('AAC Indicator')
+                                ->options(function () {
+                                    return \App\Models\DeliveryOrderReceiptDetail::whereNotNull('aac')
+                                        ->where('aac', '!=', '')
+                                        ->distinct()
+                                        ->pluck('aac', 'aac')
+                                        ->toArray();
+                                })
+                                ->searchable(),
                         ]),
                     ]),
 
