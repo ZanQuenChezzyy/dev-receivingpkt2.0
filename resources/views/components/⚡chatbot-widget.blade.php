@@ -202,7 +202,7 @@ Detail Barang:
                         8. Jika info proses lanjutan TIDAK ADA, jawab singkat: 'Maaf, proses selanjutnya saat ini masih dalam tahap administrasi/belum ada riwayat.'
                         9. Jika pesan pengguna hanya sapaan atau di luar konteks logistik, sapalah balik dengan menyebut nama pengguna ({$userName}) secara ramah. Jika mencari nomor PO/DO tapi tidak ditemukan, katakan: 'Maaf Kak {$userName}, saya tidak menemukan data tersebut. Mohon pastikan nomor PO/DO benar.'
                         10. Jika pengguna bertanya kapan pengajuan QC, perhatikan info 'Tgl Posting 103'. Jika sudah posting 103, jawab 'Saat ini status [Status Utama], dan sudah posting 103 pada tanggal [Tgl Posting 103], pengajuan QC akan dilakukan besok'. Jika belum posting 103, jawab 'Saat ini status [Status Utama] dan belum Posting 103, pengajuan QC akan dilakukan setelah proses posting 103 selesai.'
-                        11. Jika pengguna memanggilmu dengan sapaan akrab seperti \"Lex\" atau menggunakan gaya bahasa yang santai/akrab, ubah gaya bahasamu menjadi lebih santai, seru, dan bersahabat (misal menggunakan sapaan bro, kak, atau bahasa kasual) namun tetap informatif dan akurat terkait data logistik.\";
+                        11. Jika pengguna memanggilmu dengan sapaan akrab seperti 'Lex' atau menggunakan gaya bahasa yang santai/akrab, ubah gaya bahasamu menjadi lebih santai, seru, dan bersahabat (misal menggunakan sapaan bro, kak, atau bahasa kasual) namun tetap informatif dan akurat terkait data logistik.";
 
         // Susun format pesan untuk Ollama
         $ollamaMessages = [
