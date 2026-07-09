@@ -153,6 +153,16 @@ class MergeLegacyDataCommand extends Command
 
                 if ($existing) {
                     $this->mapDo[$dor->id] = $existing->id;
+                    
+                    // Update if missing in production
+                    if (empty($existing->post_103) && !empty($dor->post_103) || empty($existing->description) && !empty($dor->keterangan)) {
+                        DB::table('delivery_order_receipts')
+                            ->where('id', $existing->id)
+                            ->update([
+                                'post_103' => $dor->post_103 ?? $existing->post_103,
+                                'description' => $dor->keterangan ?? $existing->description,
+                            ]);
+                    }
                 } else {
                     $receivedBy = $this->mapUsers[$dor->received_by ?? 1] ?? 1;
                     $createdBy = $this->mapUsers[$dor->created_by ?? 1] ?? 1;
@@ -165,6 +175,8 @@ class MergeLegacyDataCommand extends Command
                         'created_by' => $createdBy,
                         'stage' => $dor->tahapan ?? null,
                         'status' => 'Diterima',
+                        'post_103' => $dor->post_103 ?? null,
+                        'description' => $dor->keterangan ?? null,
                         'created_at' => $dor->created_at ?? null,
                         'updated_at' => $dor->updated_at ?? null,
                     ]);
