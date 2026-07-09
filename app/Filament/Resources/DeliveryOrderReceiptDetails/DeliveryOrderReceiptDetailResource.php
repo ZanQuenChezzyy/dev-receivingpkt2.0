@@ -6,13 +6,26 @@ use App\Filament\Resources\DeliveryOrderReceiptDetails\Pages\ManageDeliveryOrder
 use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\PurchaseOrderIssued;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
+use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 class DeliveryOrderReceiptDetailResource extends Resource
 {
@@ -45,7 +58,86 @@ class DeliveryOrderReceiptDetailResource extends Resource
     {
         return $schema
             ->components([
-                //
+                Section::make('Informasi Material')
+                    ->icon(Heroicon::OutlinedCube)
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Select::make('purchase_order_issued_id')
+                                ->label('No. PO')
+                                ->relationship('purchaseOrderIssued', 'purchase_order_no')
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+                            TextInput::make('item_no')
+                                ->label('Item No.')
+                                ->numeric()
+                                ->required(),
+                            TextInput::make('material_code')
+                                ->label('Material Code / Stock No.'),
+                            Textarea::make('description')
+                                ->label('Material Description')
+                                ->columnSpanFull(),
+                        ]),
+                    ]),
+
+                Section::make('Data Penerimaan')
+                    ->icon(Heroicon::OutlinedDocumentCheck)
+                    ->schema([
+                        Grid::make(2)->schema([
+                            TextInput::make('quantity')
+                                ->label('Qty Diterima')
+                                ->numeric()
+                                ->required(),
+                            TextInput::make('uoi')
+                                ->label('Unit of Issue (UoI)'),
+                            Toggle::make('is_qty_tolerance')
+                                ->label('Toleransi Qty Aktif?')
+                                ->inline(false),
+                            TextInput::make('total_amount_snapshot')
+                                ->label('Total Nilai (Snapshot)')
+                                ->numeric()
+                                ->prefix('Rp')
+                                ->disabled()
+                                ->dehydrated(false),
+                            Select::make('delivery_order_receipt_id')
+                                ->label('Referensi DO')
+                                ->relationship('deliveryOrderReceipt', 'document_code')
+                                ->searchable()
+                                ->preload(),
+                        ]),
+                    ]),
+
+                Section::make('Penyimpanan & Spesifikasi')
+                    ->icon(Heroicon::OutlinedMapPin)
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Select::make('location_id')
+                                ->label('Lokasi Penyimpanan')
+                                ->relationship('locationReceiving', 'name')
+                                ->searchable()
+                                ->preload(),
+                            Toggle::make('is_different_location')
+                                ->label('Berbeda Lokasi?')
+                                ->inline(false),
+                            TextInput::make('mrp_type')
+                                ->label('MRP Type'),
+                            TextInput::make('material_type')
+                                ->label('Material Type'),
+                            TextInput::make('abc_indicator')
+                                ->label('ABC Indicator'),
+                            TextInput::make('aac')
+                                ->label('AAC Indicator'),
+                        ]),
+                    ]),
+
+                Section::make('Log Sistem')
+                    ->icon(Heroicon::OutlinedCog)
+                    ->schema([
+                        TextInput::make('requisitioner')
+                            ->label('Requisitioner'),
+                    ])
+                    ->collapsible()
+                    ->collapsed(),
             ]);
     }
 
@@ -204,14 +296,53 @@ class DeliveryOrderReceiptDetailResource extends Resource
                 ]),
             ])
             ->filters([
-                //
-            ])
+                SelectFilter::make('purchase_order_issued_id')
+                    ->label('Nomor PO')
+                    ->relationship('purchaseOrderIssued', 'purchase_order_no')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('location_id')
+                    ->label('Lokasi Penyimpanan')
+                    ->relationship('locationReceiving', 'name')
+                    ->searchable()
+                    ->preload(),
+                TernaryFilter::make('is_qty_tolerance')
+                    ->label('Status Toleransi')
+                    ->placeholder('Semua Data')
+                    ->trueLabel('Hanya Toleransi')
+                    ->falseLabel('Normal (Tanpa Toleransi)'),
+                SelectFilter::make('mrp_type')
+                    ->label('MRP Type')
+                    ->options([
+                        'V1' => 'V1',
+                        'PD' => 'PD',
+                        'INVESTASI' => 'INVESTASI',
+                        'NONSTOCK' => 'NONSTOCK',
+                        'NOT FOUND' => 'NOT FOUND',
+                    ])
+                    ->native(false),
+                DateRangeFilter::make('created_at')
+                    ->label('Tgl Dibuat')
+                    ->placeholder('Pilih rentang tanggal'),
+            ], layout: FiltersLayout::Dropdown)
+            ->filtersFormWidth(Width::FourExtraLarge)
+            ->filtersFormColumns(3)
+            ->filtersTriggerAction(
+                fn(Action $action) => $action
+                    ->button()
+                    ->label('Filter'),
+            )
             ->recordActions([
                 //
             ])
             ->toolbarActions([
                 //
             ]);
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return Auth::user()->hasRole('Developer');
     }
 
     public static function getPages(): array
