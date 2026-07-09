@@ -21,8 +21,8 @@ class ListMaterialIssues extends ListRecords
         return [
             ExportAction::make()
                 ->exporter(MaterialIssueExporter::class)
-                ->icon(Heroicon::ArrowDownTray)
-                ->color('success'),
+                ->icon(Heroicon::ArrowUpTray)
+                ->color('gray'),
             CreateAction::make()
                 ->label('Tambah Material Issue')
                 ->icon(Heroicon::PlusCircle),

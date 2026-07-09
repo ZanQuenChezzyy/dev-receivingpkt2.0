@@ -170,7 +170,9 @@ class MaterialIssuesTable
                             return redirect()->route('filament.admin.resources.material-issues.print_bulk', ['ids' => $ids]);
                         }),
                     ExportBulkAction::make()
-                        ->exporter(MaterialIssueExporter::class),
+                        ->exporter(MaterialIssueExporter::class)
+                        ->icon(Heroicon::ArrowUpTray)
+                        ->color('gray'),
                     DeleteBulkAction::make(),
                 ]),
             ])
