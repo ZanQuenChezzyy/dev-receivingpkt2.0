@@ -69,12 +69,12 @@ class PurchaseOrderIssuedsTable
                         ->limit(20)
                         ->wrap()
                         ->placeholder('None')
-                        ->tooltip(fn ($record) => $record->description),
+                        ->tooltip(fn($record) => $record->description),
 
                     TextColumn::make('quantity_uoi')
                         ->label('Kuantitas')
-                        ->getStateUsing(fn ($record) => $record->qty_po.' '.$record->uoi)
-                        ->sortable(query: fn (Builder $query, string $direction) => $query->orderBy('qty_po', $direction))
+                        ->getStateUsing(fn($record) => $record->qty_po . ' ' . $record->uoi)
+                        ->sortable(query: fn(Builder $query, string $direction) => $query->orderBy('qty_po', $direction))
                         ->badge()
                         ->placeholder('None')
                         ->color('info')
@@ -84,12 +84,12 @@ class PurchaseOrderIssuedsTable
                         ->label('UoI')
                         ->placeholder('None')
                         ->toggleable(isToggledHiddenByDefault: true),
-                        
+
                     TextColumn::make('material_type')
                         ->label('Tipe Material')
                         ->sortable()
                         ->placeholder('None')
-                        ->color(fn ($state) => match ($state) {
+                        ->color(fn($state) => match ($state) {
                             'ZSP' => 'warning',
                             'ZFP', 'ZRM' => 'danger',
                             'ZSM', 'ZPM' => 'info',
@@ -101,7 +101,7 @@ class PurchaseOrderIssuedsTable
                     TextColumn::make('mrp_type')
                         ->label('MRP Type')
                         ->badge()
-                        ->color(fn ($state) => match ($state) {
+                        ->color(fn($state) => match ($state) {
                             'V1' => 'success',
                             'PD' => 'warning',
                             'INVESTASI' => 'info',
@@ -133,7 +133,7 @@ class PurchaseOrderIssuedsTable
                         ->searchable()
                         ->placeholder('None')
                         ->icon('heroicon-m-building-storefront')
-                        ->tooltip(fn ($record) => $record->vendor_id_name)
+                        ->tooltip(fn($record) => $record->vendor_id_name)
                         ->limit(15),
 
                     TextColumn::make('currency')
@@ -157,15 +157,15 @@ class PurchaseOrderIssuedsTable
                         ->placeholder('0')
                         ->color('success')
                         ->toggleable(isToggledHiddenByDefault: true),
-                        
+
                     TextColumn::make('requisitioner')
                         ->label('Requisitioner')
                         ->placeholder('none')
                         ->toggleable(isToggledHiddenByDefault: true),
-                        
+
                     TextColumn::make('incoterm')
                         ->label('Incoterm')
-                        ->tooltip(fn ($record) => $record->incoterm)
+                        ->tooltip(fn($record) => $record->incoterm)
                         ->limit(15)
                         ->placeholder('None')
                         ->toggleable(isToggledHiddenByDefault: true),
@@ -175,7 +175,7 @@ class PurchaseOrderIssuedsTable
                     TextColumn::make('po_status')
                         ->label('Status')
                         ->badge()
-                        ->color(fn ($state) => match ($state) {
+                        ->color(fn($state) => match ($state) {
                             'A' => 'success',
                             'B' => 'warning',
                             'C' => 'danger',
@@ -222,6 +222,7 @@ class PurchaseOrderIssuedsTable
                         'PD' => 'PD',
                         'INVESTASI' => 'INVESTASI',
                         'NONSTOCK' => 'NONSTOCK',
+                        'NOT FOUND' => 'NOT FOUND',
                     ])
                     ->native(false),
                 DateRangeFilter::make('date_create')
@@ -236,7 +237,7 @@ class PurchaseOrderIssuedsTable
             ->filtersFormWidth(Width::FourExtraLarge)
             ->filtersFormColumns(3)
             ->filtersTriggerAction(
-                fn (Action $action) => $action
+                fn(Action $action) => $action
                     ->button()
                     ->label('Filter'),
             )
