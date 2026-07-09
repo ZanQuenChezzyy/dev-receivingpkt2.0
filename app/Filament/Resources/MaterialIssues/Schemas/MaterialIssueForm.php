@@ -87,8 +87,7 @@ class MaterialIssueForm
                         )
                         ->getOptionLabelFromRecordUsing(fn($record) => $record->document_code ?? '-')
                         ->searchable()
-                        ->preload()
-                        ->nullables(),
+                        ->preload(),
                 ]),
                 FileUpload::make('image_path')
                     ->label('Gambar/Dokumen MIR')
