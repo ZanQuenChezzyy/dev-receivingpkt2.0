@@ -398,33 +398,63 @@ class MergeLegacyDataCommand extends Command
                         }
                     }
 
-                    $newId = DB::table('monitoring_npks')->insertGetId([
+                    $existing = DB::table('monitoring_npks')
+                        ->where('created_at', $row->created_at)
+                        ->where('delivery_oder_number', $row->nomor_do)
+                        ->first();
+
+                    $data = [
                         'purchase_order_terbit_id' => $poId,
-                        'location_id' => 1,
+                        'location_id' => $this->mapLocations[$row->location_id ?? 1] ?? 1,
+                        'delivery_oder_number' => $row->nomor_do ?? null,
+                        'sample_receivied_date' => $row->tanggal_kedatangan_sample ?? null,
+                        'stage' => $row->tahapan ?? null,
+                        'delivery_oder_delivery_date' => $row->tanggal_do_dikirim ?? null,
+                        'purchase_order_103_date' => $row->tanggal_103 ?? null,
+                        'received_date' => $row->tanggal_penerimaan ?? null,
+                        'purchase_order_status' => $row->status_po ?? null,
+                        'purchase_order_status_a_date' => $row->status_po_date ?? null,
+                        'purchase_order_status_b_date' => $row->status_po_b_date ?? null,
+                        'purchase_order_status_a_files' => $row->status_po_files ?? null,
+                        'laprima_date' => $row->tanggal_laprima ?? null,
+                        'coa_date' => $row->tanggal_coa ?? null,
+                        'coa_files' => $row->coa_files ?? null,
                         'doc_status' => 'Outstanding',
                         'created_by' => $this->mapUsers[$row->created_by ?? 1] ?? 1,
                         'created_at' => $row->created_at ?? null,
                         'updated_at' => $row->updated_at ?? null,
-                    ]);
+                    ];
+
+                    if ($existing) {
+                        DB::table('monitoring_npks')->where('id', $existing->id)->update($data);
+                        $newId = $existing->id;
+                    } else {
+                        $newId = DB::table('monitoring_npks')->insertGetId($data);
+                    }
 
                     if (Schema::connection('mysql_old')->hasTable('npk_monitoring_details')) {
                         $details = $oldDb->table('npk_monitoring_details')->where('npk_monitoring_id', $row->id)->get();
-                        $insertData = [];
                         foreach ($details as $d) {
-                            $insertData[] = [
-                                'monitoring_npk_id' => $newId,
-                                'item_no' => $d->item_no ?? 1,
-                                'material_code' => $d->material_code ?? null,
-                                'description' => $d->description ?? null,
-                                'quantity' => floatval($d->qty ?? 0),
-                                'uoi' => $d->uoi ?? null,
-                                'location_id' => 1,
-                                'is_qty_tolerance' => $d->is_qty_tolerance ?? 0,
-                                'created_at' => $d->created_at ?? null,
-                                'updated_at' => $d->updated_at ?? null,
-                            ];
+                            $existingDetail = DB::table('monitoring_npk_details')
+                                ->where('monitoring_npk_id', $newId)
+                                ->where('item_no', $d->item_no ?? 1)
+                                ->first();
+
+                            if (!$existingDetail) {
+                                DB::table('monitoring_npk_details')->insert([
+                                    'monitoring_npk_id' => $newId,
+                                    'item_no' => $d->item_no ?? 1,
+                                    'material_code' => $d->material_code ?? null,
+                                    'description' => $d->description ?? null,
+                                    'quantity' => floatval($d->qty ?? 0),
+                                    'uoi' => $d->uoi ?? null,
+                                    'location_id' => 1,
+                                    'is_qty_tolerance' => $d->is_qty_tolerance ?? 0,
+                                    'created_at' => $d->created_at ?? null,
+                                    'updated_at' => $d->updated_at ?? null,
+                                ]);
+                            }
                         }
-                        if (count($insertData) > 0) DB::table('monitoring_npk_details')->insert($insertData);
                     }
                 }
             });
