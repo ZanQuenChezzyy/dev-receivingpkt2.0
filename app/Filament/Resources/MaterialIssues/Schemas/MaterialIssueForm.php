@@ -80,15 +80,15 @@ class MaterialIssueForm
 
                     Select::make('delivery_order_receipt_id')
                         ->label('Referensi Penerimaan DO (Opsional)')
-                        ->options(function () {
-                            return \App\Models\DeliveryOrderReceipt::whereNotNull('document_code')
-                                ->where('document_code', '!=', '')
-                                ->pluck('document_code', 'id')
-                                ->toArray();
-                        })
+                        ->relationship(
+                            name: 'deliveryOrderReceipt',
+                            titleAttribute: 'document_code',
+                            modifyQueryUsing: fn($query) => $query->whereNotNull('document_code')
+                        )
+                        ->getOptionLabelFromRecordUsing(fn($record) => $record->document_code ?? '-')
                         ->searchable()
                         ->preload()
-                        ->nullable(),
+                        ->nullables(),
                 ]),
                 FileUpload::make('image_path')
                     ->label('Gambar/Dokumen MIR')
