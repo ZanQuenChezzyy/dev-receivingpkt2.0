@@ -89,9 +89,10 @@ new class extends Component {
             });
         }
 
-        // 3. Tarik Konteks Data dari Database (Batas 10 data spesifik atau terbaru)
+        // 3. Tarik Konteks Data dari Database (Batas 3 data spesifik atau terbaru)
+        // Kurangi dari 10 ke 3 agar tidak terlalu berat membebani memori AI
         $recentReceipts = $query->latest('received_date')
-            ->take(10)
+            ->take(3)
             ->get();
 
         \Carbon\Carbon::setLocale('id');
@@ -178,7 +179,7 @@ Detail Barang:
         })->implode("\n\n-------------------\n\n");
 
         // 4. Susun Prompt untuk Gemini
-        $userName = auth()->check() ? auth()->user()->name : 'Tamu';
+        $userName = auth()->check() ? auth()->user()->name : 'User';
         $systemPrompt = "Kamu adalah Asisten Logistik cerdas untuk aplikasi Receiving 2.0 bernama ALEX. Pengguna yang sedang berbicara denganmu saat ini bernama {$userName}. Tugasmu adalah memandu dan menjawab pertanyaan secara AKURAT DAN AKTUAL berdasarkan data dan PANDUAN WORKFLOW di bawah ini.
 
                         PANDUAN WORKFLOW RECEIVING (WAJIB DIPAHAMI):
@@ -200,7 +201,8 @@ Detail Barang:
                         7. Format tanggal gunakan bahasa Indonesia, contoh: '17 Juni 2026'.
                         8. Jika info proses lanjutan TIDAK ADA, jawab singkat: 'Maaf, proses selanjutnya saat ini masih dalam tahap administrasi/belum ada riwayat.'
                         9. Jika pesan pengguna hanya sapaan atau di luar konteks logistik, sapalah balik dengan menyebut nama pengguna ({$userName}) secara ramah. Jika mencari nomor PO/DO tapi tidak ditemukan, katakan: 'Maaf Kak {$userName}, saya tidak menemukan data tersebut. Mohon pastikan nomor PO/DO benar.'
-                        10. Jika pengguna bertanya kapan pengajuan QC, perhatikan info 'Tgl Posting 103'. Jika sudah posting 103, jawab 'Saat ini status [Status Utama], dan sudah posting 103 pada tanggal [Tgl Posting 103], pengajuan QC akan dilakukan besok'. Jika belum posting 103, jawab 'Saat ini status [Status Utama] dan belum Posting 103, pengajuan QC akan dilakukan setelah proses posting 103 selesai.'";
+                        10. Jika pengguna bertanya kapan pengajuan QC, perhatikan info 'Tgl Posting 103'. Jika sudah posting 103, jawab 'Saat ini status [Status Utama], dan sudah posting 103 pada tanggal [Tgl Posting 103], pengajuan QC akan dilakukan besok'. Jika belum posting 103, jawab 'Saat ini status [Status Utama] dan belum Posting 103, pengajuan QC akan dilakukan setelah proses posting 103 selesai.'
+                        11. Jika pengguna memanggilmu dengan sapaan akrab seperti \"Lex\" atau menggunakan gaya bahasa yang santai/akrab, ubah gaya bahasamu menjadi lebih santai, seru, dan bersahabat (misal menggunakan sapaan bro, kak, atau bahasa kasual) namun tetap informatif dan akurat terkait data logistik.\";
 
         // Susun format pesan untuk Ollama
         $ollamaMessages = [
@@ -370,14 +372,34 @@ Detail Barang:
 
             <!-- Loading Indicator -->
             @if($isTyping)
-                <div class="flex items-start gap-3 max-w-[85%]">
+                <div class="flex items-start gap-3 max-w-[85%]" x-data="{
+                    texts: [
+                        'Menganalisis pertanyaan...',
+                        'Mencari data PO/DO terkait...',
+                        'Menyusun riwayat pergerakan material...',
+                        'ALEX sedang mengetik balasan...'
+                    ],
+                    currentIndex: 0,
+                    interval: null,
+                    init() {
+                        this.interval = setInterval(() => {
+                            this.currentIndex = (this.currentIndex + 1) % this.texts.length;
+                        }, 2500);
+                    },
+                    destroy() {
+                        if (this.interval) clearInterval(this.interval);
+                    }
+                }">
                     <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center mt-1 animate-pulse border border-slate-300/50 dark:border-white/5">
                         <span class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full"></span>
                     </div>
-                    <div class="bg-white dark:bg-slate-800/80 px-5 py-4 rounded-[1.5rem] rounded-tl-sm shadow-sm border border-slate-200/60 dark:border-white/5 flex items-center gap-1.5 backdrop-blur-md">
-                        <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce"></span>
-                        <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
-                        <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                    <div class="bg-white dark:bg-slate-800/80 px-5 py-3.5 rounded-[1.5rem] rounded-tl-sm shadow-sm border border-slate-200/60 dark:border-white/5 flex flex-col justify-center gap-2 backdrop-blur-md min-w-[200px]">
+                        <span class="text-[11.5px] font-semibold text-[#F47920] animate-pulse tracking-wide" x-text="texts[currentIndex]">Berpikir...</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce"></span>
+                            <span class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
+                            <span class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                        </div>
                     </div>
                 </div>
             @endif
