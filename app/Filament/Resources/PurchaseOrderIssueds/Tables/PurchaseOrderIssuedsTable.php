@@ -68,6 +68,7 @@ class PurchaseOrderIssuedsTable
                         ->label('Deskripsi')
                         ->limit(20)
                         ->wrap()
+                        ->searchable()
                         ->placeholder('None')
                         ->tooltip(fn($record) => $record->description),
 
