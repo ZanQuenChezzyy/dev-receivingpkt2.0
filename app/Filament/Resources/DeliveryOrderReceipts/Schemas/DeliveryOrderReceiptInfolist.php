@@ -555,6 +555,107 @@ class DeliveryOrderReceiptInfolist
                     Section::make('Timeline & Riwayat Pemeriksaan')
                         ->icon('heroicon-o-clock')
                         ->schema([
+                            TextEntry::make('timeline_view')
+                                ->hiddenLabel()
+                                ->columnSpanFull()
+                                ->html()
+                                ->getStateUsing(function ($record) {
+                                    $events = [];
+
+                                    if ($record->physical_received_date) {
+                                        $events[] = [
+                                            'date' => Carbon::parse($record->physical_received_date),
+                                            'title' => 'Kedatangan Fisik Barang',
+                                            'desc' => 'Tiba di Gudang/Lokasi Penerimaan',
+                                            'color' => 'bg-green-500',
+                                        ];
+                                    } elseif ($record->received_date) {
+                                        $events[] = [
+                                            'date' => Carbon::parse($record->received_date),
+                                            'title' => 'Kedatangan Barang (Sistem)',
+                                            'desc' => 'Dicatat di sistem',
+                                            'color' => 'bg-green-500',
+                                        ];
+                                    }
+
+                                    foreach ($record->qcHistories as $qc) {
+                                        $events[] = [
+                                            'date' => Carbon::parse($qc->created_at),
+                                            'title' => $qc->status === 'Kirim' ? 'Dikirim ke ISTEK / QC' : ($qc->status === 'Kembali' ? 'Kembali dari ISTEK / QC' : 'Status QC: ' . $qc->status),
+                                            'desc' => 'Oleh: ' . ($qc->createdBy->name ?? 'Sistem'),
+                                            'color' => $qc->status === 'Kirim' ? 'bg-blue-500' : 'bg-purple-500',
+                                        ];
+                                    }
+
+                                    foreach ($record->grsRdtvItems as $item) {
+                                        if ($item->grsRdtv && $item->grsRdtv->transaction_date) {
+                                            $events[] = [
+                                                'date' => Carbon::parse($item->grsRdtv->transaction_date),
+                                                'title' => 'Dokumen ' . $item->grsRdtv->category . ' Terbit',
+                                                'desc' => 'No: ' . $item->grsRdtv->document_number,
+                                                'color' => 'bg-orange-500',
+                                            ];
+                                        }
+                                    }
+
+                                    if ($record->post_103) {
+                                        $events[] = [
+                                            'date' => Carbon::parse($record->post_103),
+                                            'title' => 'Post 103 (SAP)',
+                                            'desc' => $record->qr_103_code ? 'Kode: ' . $record->qr_103_code : 'Telah di-post 103',
+                                            'color' => 'bg-indigo-500',
+                                        ];
+                                    }
+
+                                    if ($record->pending_date) {
+                                        $events[] = [
+                                            'date' => Carbon::parse($record->pending_date),
+                                            'title' => 'Status Pending',
+                                            'desc' => 'Alasan: ' . $record->delay_reason,
+                                            'color' => 'bg-red-500',
+                                        ];
+                                    }
+
+                                    if ($record->pending_resolved_date) {
+                                        $events[] = [
+                                            'date' => Carbon::parse($record->pending_resolved_date),
+                                            'title' => 'Pending Diselesaikan',
+                                            'desc' => 'Proses dilanjutkan',
+                                            'color' => 'bg-emerald-500',
+                                        ];
+                                    }
+
+                                    usort($events, fn($a, $b) => $a['date'] <=> $b['date']);
+
+                                    if (empty($events)) {
+                                        return '<span class="text-gray-500 italic">Belum ada riwayat timeline.</span>';
+                                    }
+
+                                    $html = '<div class="p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 mb-6">';
+                                    $html .= '<ol class="relative border-l-2 border-gray-200 dark:border-gray-700 ml-3 mt-2">';
+                                    foreach ($events as $index => $event) {
+                                        $isLast = $index === count($events) - 1;
+                                        $mbClass = $isLast ? '' : 'mb-6';
+                                        
+                                        $dateStr = $event['date']->format('d M Y, H:i');
+                                        $title = $event['title'];
+                                        $desc = $event['desc'] ?? '';
+                                        $color = $event['color'] ?? 'bg-gray-400';
+
+                                        $html .= '<li class="' . $mbClass . ' ml-6">';
+                                        $html .= '<div class="absolute w-4 h-4 ' . $color . ' rounded-full -left-[9px] border-2 border-white dark:border-gray-900 mt-1.5 shadow"></div>';
+                                        $html .= '<time class="mb-1 text-xs font-normal leading-none text-gray-500 dark:text-gray-400">' . $dateStr . '</time>';
+                                        $html .= '<h3 class="text-sm font-semibold text-gray-900 dark:text-white">' . $title . '</h3>';
+                                        if ($desc) {
+                                            $html .= '<p class="text-xs font-normal text-gray-500 dark:text-gray-400 mt-1">' . $desc . '</p>';
+                                        }
+                                        $html .= '</li>';
+                                    }
+                                    $html .= '</ol></div>';
+
+                                    return $html;
+                                }),
+                            
                             Grid::make(3)
                                 ->schema([
                                     TextEntry::make('dikirim_ke_istek')
