@@ -57,7 +57,12 @@ class MaterialIssuesTable
                         ->iconColor('gray')
                         ->date('d F Y')
                         ->sortable()
-                        ->formatStateUsing(fn($state, $record) => $record->jenis_mir === 'manual' ? $record->created_at->format('d F Y') : $state),
+                        ->formatStateUsing(function ($state, $record) {
+                            if ($record->jenis_mir === 'manual') {
+                                return $record->created_at?->format('d F Y');
+                            }
+                            return $state ? \Carbon\Carbon::parse($state)->format('d F Y') : null;
+                        }),
                 ]),
 
                 ColumnGroup::make('Detail Permintaan', [
