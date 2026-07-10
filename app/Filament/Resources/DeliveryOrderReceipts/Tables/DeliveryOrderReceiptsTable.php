@@ -47,7 +47,7 @@ class DeliveryOrderReceiptsTable
                         ->iconColor('primary')
                         ->color('primary')
                         ->weight(FontWeight::Bold)
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
+                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? 'TIDAK ADA PO')
                         ->description(function ($record) {
                             $doNumber = $record->delivery_order_no;
                             $js = 'event.stopPropagation(); event.preventDefault(); ';
@@ -191,7 +191,7 @@ class DeliveryOrderReceiptsTable
                     TextColumn::make('lokasi')
                         ->label('Lokasi')
                         ->icon('heroicon-m-map-pin')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->first()?->locationReceiving?->name ?? 'Belum Diatur')
+                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->first()?->locationReceiving?->name ?? 'BELUM DITENTUKAN')
                         ->badge()
                         ->color('info'),
 
