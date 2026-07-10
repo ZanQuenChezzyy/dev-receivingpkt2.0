@@ -27,6 +27,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
 
 class DeliveryOrderReceiptsTable
@@ -712,6 +713,31 @@ class DeliveryOrderReceiptsTable
                     ->label('Cetak Dipilih')
                     ->icon(Heroicon::Printer),
                 BulkActionGroup::make([
+                    BulkAction::make('bulk_post_103')
+                        ->label('Bulk Post 103')
+                        ->icon(Heroicon::OutlinedDocumentCheck)
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading('Konfirmasi Bulk Post 103')
+                        ->modalDescription('Apakah Anda yakin ingin melakukan Post 103 pada dokumen yang dipilih? Tanggal post akan mengikuti tanggal penerimaan barang masing-masing dokumen.')
+                        ->modalSubmitActionLabel('Ya, Post Sekarang')
+                        ->visible(fn() => Auth::user()->hasRole('Developer'))
+                        ->action(function (Collection $records) {
+                            foreach ($records as $record) {
+                                if ($record->post_103 === null) {
+                                    $record->update([
+                                        'post_103' => $record->received_date,
+                                    ]);
+                                }
+                            }
+
+                            Notification::make()
+                                ->title('Berhasil!')
+                                ->body('Tanggal Post 103 berhasil dicatat untuk dokumen terpilih.')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ])
