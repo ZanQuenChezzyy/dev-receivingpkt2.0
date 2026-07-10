@@ -342,22 +342,55 @@ class DeliveryOrderReceiptInfolist
                                 ->getStateUsing(function ($record) {
                                     $details = $record->deliveryOrderReceiptDetails()->with('materialIssueDetails.materialIssue')->get();
                                     $mirs = [];
+                                    
+                                    // 1. MIR Digital
                                     foreach ($details as $d) {
                                         foreach ($d->materialIssueDetails as $mid) {
                                             $mirs[] = [
+                                                'jenis' => 'digital',
                                                 'mir_number' => $mid->materialIssue->mir_number,
                                                 'tanggal' => $mid->materialIssue->tanggal,
                                                 'peminta' => $mid->materialIssue->diminta_oleh,
                                                 'item' => $d->description,
-                                                'qty' => rtrim(rtrim(number_format((float) $mid->diserahkan, 4, ',', '.'), '0'), ','),
-                                                'stage' => $mid->stage_when_issued,
-                                                'uoi' => $d->uoi,
+                                                'qty' => rtrim(rtrim(number_format((float) $mid->diserahkan, 4, ',', '.'), '0'), ',') . ' ' . $d->uoi,
+                                                'stage' => $mid->stage_when_issued ?? 'Default',
                                             ];
                                         }
                                     }
+
+                                    // 2. MIR Manual
+                                    $manualMirs = \App\Models\MaterialIssue::where('delivery_order_receipt_id', $record->id)
+                                        ->where('jenis_mir', 'manual')
+                                        ->get();
+                                        
+                                    foreach ($manualMirs as $manual) {
+                                        $dokumenLink = '';
+                                        if ($manual->image_path) {
+                                            $url = Storage::disk('public')->url($manual->image_path);
+                                            $dokumenLink = '<a href="' . $url . '" target="_blank" class="text-primary-600 hover:underline">Lihat Bukti Fisik</a>';
+                                        } else {
+                                            $dokumenLink = '<span class="text-gray-400">Tanpa Bukti</span>';
+                                        }
+
+                                        $mirs[] = [
+                                            'jenis' => 'manual',
+                                            'mir_number' => '<span class="text-warning-600 font-bold">MIR Manual</span>',
+                                            'tanggal' => $manual->tanggal ?? $manual->created_at,
+                                            'peminta' => $manual->diminta_oleh ?? '-',
+                                            'item' => $dokumenLink,
+                                            'qty' => '-',
+                                            'stage' => '-',
+                                        ];
+                                    }
+
                                     if (empty($mirs)) {
                                         return '<p class="text-sm text-gray-500 dark:text-gray-400">Belum ada barang yang diambil.</p>';
                                     }
+
+                                    // Urutkan riwayat berdasarkan tanggal terbaru
+                                    usort($mirs, function($a, $b) {
+                                        return Carbon::parse($b['tanggal']) <=> Carbon::parse($a['tanggal']);
+                                    });
 
                                     $html = '<div class="relative overflow-x-auto rounded-lg border border-gray-200 dark:border-white/10"><table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-white/5 dark:text-gray-300">
@@ -365,21 +398,23 @@ class DeliveryOrderReceiptInfolist
                                                 <th class="px-4 py-3">No. MIR</th>
                                                 <th class="px-4 py-3">Tanggal</th>
                                                 <th class="px-4 py-3">Peminta</th>
-                                                <th class="px-4 py-3">Item</th>
+                                                <th class="px-4 py-3">Item / Dokumen</th>
                                                 <th class="px-4 py-3">Qty Diambil</th>
                                                 <th class="px-4 py-3">Stage Saat Diambil</th>
                                             </tr>
                                         </thead>
                                         <tbody>';
                                     foreach ($mirs as $m) {
-                                        $stageLabel = $m['stage'] ?? 'Default';
+                                        $stageHtml = $m['jenis'] === 'manual' ? '-' : '<span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-md dark:bg-blue-900/30 dark:text-blue-300">' . $m['stage'] . '</span>';
+                                        $qtyHtml = $m['jenis'] === 'manual' ? '-' : '<span class="text-success-600 dark:text-success-400 font-bold">' . $m['qty'] . '</span>';
+
                                         $html .= '<tr class="bg-white border-b dark:bg-transparent dark:border-white/5">
                                             <td class="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">' . $m['mir_number'] . '</td>
                                             <td class="px-4 py-3">' . Carbon::parse($m['tanggal'])->format('d M Y') . '</td>
                                             <td class="px-4 py-3">' . $m['peminta'] . '</td>
                                             <td class="px-4 py-3">' . $m['item'] . '</td>
-                                            <td class="px-4 py-3 text-success-600 dark:text-success-400 font-bold">' . $m['qty'] . ' ' . $m['uoi'] . '</td>
-                                            <td class="px-4 py-3"><span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-md dark:bg-blue-900/30 dark:text-blue-300">' . $stageLabel . '</span></td>
+                                            <td class="px-4 py-3">' . $qtyHtml . '</td>
+                                            <td class="px-4 py-3">' . $stageHtml . '</td>
                                         </tr>';
                                     }
                                     $html .= '</tbody></table></div>';
