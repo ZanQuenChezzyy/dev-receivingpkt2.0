@@ -113,7 +113,7 @@ class MonitoringChemicalForm
                         $cat = $get('material_category');
                         $query = PurchaseOrderIssued::query();
                         if ($cat === 'Karung' || $cat === 'Chemical') {
-                            $query->whereIn('material_type', ['ZSM', 'Chemical', 'CHEMICAL', 'CHM']);
+                            $query->where('material_type', '!=', 'ZSP');
                         }
 
                         return $query->select('purchase_order_no')

@@ -133,7 +133,7 @@ class MaterialIssuesTable
                     ->button()
                     ->outlined()
                     ->color('warning')
-                    ->url(fn(MaterialIssue $record): string => Storage::disk('public')->url($record->image_path))
+                    ->url(fn(MaterialIssue $record): ?string => ($record->jenis_mir === 'manual' && !empty($record->image_path)) ? Storage::disk('public')->url($record->image_path) : null)
                     ->openUrlInNewTab()
                     ->visible(fn($record) => $record->jenis_mir === 'manual' && !empty($record->image_path)),
 
@@ -143,7 +143,7 @@ class MaterialIssuesTable
                     ->button()
                     ->outlined()
                     ->color('success')
-                    ->url(fn(MaterialIssue $record): string => route('filament.admin.resources.material-issues.print', $record))
+                    ->url(fn(MaterialIssue $record): ?string => $record->jenis_mir === 'digital' ? route('filament.admin.resources.material-issues.print', $record) : null)
                     ->openUrlInNewTab()
                     ->visible(fn($record) => $record->jenis_mir === 'digital'),
                 ActionGroup::make([

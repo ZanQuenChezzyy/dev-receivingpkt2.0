@@ -19,7 +19,8 @@ class EditMaterialIssue extends EditRecord
                 ->label('Cetak MIR')
                 ->icon('heroicon-o-printer')
                 ->color('success')
-                ->url(fn (MaterialIssue $record): string => route('filament.admin.resources.material-issues.print', $record))
+                ->url(fn (MaterialIssue $record): ?string => $record->jenis_mir === 'digital' ? route('filament.admin.resources.material-issues.print', $record) : null)
+                ->visible(fn (MaterialIssue $record): bool => $record->jenis_mir === 'digital')
                 ->openUrlInNewTab(),
             DeleteAction::make(),
         ];
