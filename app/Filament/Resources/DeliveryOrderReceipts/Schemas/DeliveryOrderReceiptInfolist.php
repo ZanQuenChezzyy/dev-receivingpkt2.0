@@ -608,10 +608,15 @@ class DeliveryOrderReceiptInfolist
                                     }
 
                                     if ($record->pending_date) {
+                                        $descPending = 'Alasan: ' . $record->delay_reason;
+                                        if ($record->delay_notes) {
+                                            $descPending .= ' - ' . $record->delay_notes;
+                                        }
+
                                         $events[] = [
                                             'date' => Carbon::parse($record->pending_date),
                                             'title' => 'Status Pending',
-                                            'desc' => 'Alasan: ' . $record->delay_reason,
+                                            'desc' => $descPending,
                                             'color' => 'bg-red-500',
                                         ];
                                     }
