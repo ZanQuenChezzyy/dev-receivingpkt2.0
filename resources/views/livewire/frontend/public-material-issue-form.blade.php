@@ -490,14 +490,14 @@
                                                                 ? $item['material_code']
                                                                 : $item->material_code;
 
-                                                            // Cek apakah item ini sudah dipilih di baris lain
                                                             $isSelectedInOtherRow = collect($details)
                                                                 ->reject(fn($val, $key) => $key == $index)
                                                                 ->contains('delivery_order_receipt_detail_id', $itemId);
+                                                            $itemDesc = is_array($item) ? ($item['description'] ?? '') : ($item->description ?? '');
                                                         @endphp
                                                         @if (!$isSelectedInOtherRow)
                                                             <option value="{{ $itemId }}">
-                                                                Item {{ $itemNo }}
+                                                                Item {{ $itemNo }} - {{ \Illuminate\Support\Str::limit($itemDesc, 50) }}
                                                             </option>
                                                         @endif
                                                     @endforeach

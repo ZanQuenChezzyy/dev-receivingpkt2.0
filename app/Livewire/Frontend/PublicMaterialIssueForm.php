@@ -161,7 +161,7 @@ class PublicMaterialIssueForm extends Component
                     ->whereIn('purchase_order_issued_id', $allPoItemIds)
                     ->get();
 
-                $this->available_po_items = $rawItems->groupBy('purchase_order_issued_id')->map(function ($group) {
+                $this->available_po_items = $rawItems->groupBy('item_no')->map(function ($group) {
                     $first = $group->first();
 
                     $combined_quantity = $group->sum('quantity');
@@ -185,7 +185,7 @@ class PublicMaterialIssueForm extends Component
                     });
 
                     return [
-                        'id' => $first->purchase_order_issued_id, // Store as PO issued ID
+                        'id' => $first->item_no, // Gunakan item_no sebagai ID di frontend
                         'item_no' => $first->item_no,
                         'material_code' => $first->material_code,
                         'description' => $first->description,
@@ -194,7 +194,7 @@ class PublicMaterialIssueForm extends Component
                         'combined_locations' => $locations ?: 'Belum Diatur',
                         'has_non_grs' => $has_non_grs,
                     ];
-                })->values()->toArray();
+                })->sortBy('item_no')->values()->toArray();
             } else {
                 $this->available_po_items = [];
             }
@@ -389,12 +389,17 @@ class PublicMaterialIssueForm extends Component
                 'created_by' => null,
             ]);
 
+            $parentPoItem = PurchaseOrderIssued::find($this->purchase_order_issued_id);
+            $poNo = $parentPoItem ? $parentPoItem->purchase_order_no : null;
+            $allPoItemIds = $poNo ? PurchaseOrderIssued::where('purchase_order_no', $poNo)->pluck('id') : collect([]);
+
             foreach ($this->details as $detailData) {
-                $poIssuedId = $detailData['delivery_order_receipt_detail_id']; // ini berisi purchase_order_issued_id sekarang
+                $itemNo = $detailData['delivery_order_receipt_detail_id']; // ini berisi item_no sekarang
                 $diminta = (float) $detailData['diminta'];
 
                 // Ambil semua DO receipts untuk PO item ini, prioritaskan yang BOH-nya lebih dari 0
-                $receipts = DeliveryOrderReceiptDetail::where('purchase_order_issued_id', $poIssuedId)
+                $receipts = DeliveryOrderReceiptDetail::whereIn('purchase_order_issued_id', $allPoItemIds)
+                    ->where('item_no', $itemNo)
                     ->orderBy('id', 'asc')
                     ->get();
 
