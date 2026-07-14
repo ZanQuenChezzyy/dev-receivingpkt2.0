@@ -352,7 +352,7 @@ Detail Barang:
                                 </div>
                             </div>
                             <div
-                                class="bg-white dark:bg-slate-800/80 px-5 py-4 rounded-[1.5rem] rounded-tl-sm shadow-sm border border-slate-200/60 dark:border-white/5 text-[13.5px] text-slate-700 dark:text-slate-300 leading-relaxed ai-markdown-content transition-shadow duration-300 backdrop-blur-md">
+                                class="bg-white dark:bg-slate-800/80 px-5 py-4 rounded-[1.5rem] rounded-tl-sm shadow-sm border border-slate-200/60 dark:border-white/5 text-[13.5px] text-slate-700 dark:text-slate-300 leading-relaxed ai-markdown-content transition-shadow duration-300 backdrop-blur-md min-w-0 overflow-hidden">
                                 {!! str($chat['content'])->markdown([
                                     'html_input' => 'escape',
                                     'allow_unsafe_links' => false,
@@ -454,6 +454,9 @@ Detail Barang:
         .ai-markdown-content {
             font-size: 13.5px;
             line-height: 1.6;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .ai-markdown-content p {
