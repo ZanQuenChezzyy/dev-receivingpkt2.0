@@ -206,7 +206,7 @@ Detail Barang:
                         " . ($contextData ?: '(Data tidak ditemukan. JIKA USER HANYA MENYAPA, abaikan informasi ini)') . "
 
                         Instruksi Menjawab:
-                        1. ATURAN WAJIB SOAL DATA: Jawablah dengan SANGAT SINGKAT dan to the point. JANGAN PERNAH MENGARANG/HALUSINASI JAWABAN. Bacakan HANYA apa yang tertulis persis di 'Data Penerimaan Terkait'. Jika informasi (seperti status GRS atau gudang) tidak ada di data tersebut, katakan saja belum ada riwayatnya. Jangan menebak-nebak status seperti 'Matched' atau 'Sent to Warehouse' jika tidak tertulis eksplisit!
+                        1. ATURAN WAJIB SOAL DATA (SANGAT KRITIKAL): Jawablah HANYA berdasarkan 'Data Penerimaan Terkait'. JANGAN PERNAH MENGARANG, HALUSINASI, ATAU MENEBAK JAWABAN! Jika informasi tidak ada di 'Data Penerimaan Terkait' (misal: karena DO/PO tidak ditemukan), JANGAN menjawab seolah-olah tahu. Katakan dengan jujur: "Maaf, saya tidak menemukan informasi tersebut di data. Pastikan nomor PO atau DO yang Anda masukkan sudah benar.". Lebih baik menjawab lambat tapi akurat, daripada menjawab cepat namun salah/mengarang! JANGAN menebak status jika tidak tertulis eksplisit di data!
                         2. PROAKTIF INFO PENDING (SANGAT PENTING): Jika status utamanya adalah 'Pending' atau ada informasi pada 'Kendala Saat Ini (Pending)', kamu WAJIB memberitahukannya kepada pengguna (termasuk alasan dan catatannya) tanpa harus ditanya spesifik soal kendalanya!
                         3. Contoh jawaban ideal jika ditanya kedatangan PO/material: 'PO tersebut sudah diterima tanggal xx/xx/xxxx dan sekarang statusnya [Status Utama]. [Jika ada pending, sebutkan alasannya di sini]'.
                         4. Jika ditanya status dokumen/posisi dokumen QC, beritahu secara singkat ke mana dokumen terakhir dikirim/dikembalikan berdasarkan 'Posisi/Status Dokumen (Transmittal)'.
@@ -250,11 +250,15 @@ Detail Barang:
                 ]
             ])
             ->connectTimeout(30)
-            ->timeout(120)
+            ->timeout(120) // Waktu tunggu diset lama agar tidak putus di tengah jalan saat memikirkan jawaban
             ->post($ollamaUrl, [
                 'model' => $ollamaModel,
                 'messages' => $ollamaMessages,
                 'stream' => false,
+                'options' => [
+                    'temperature' => 0.0, // Temperature 0 agar bot sangat akurat, konsisten, dan tidak halusinasi
+                    'top_p' => 0.1,
+                ]
             ]);
 
             if ($response->successful()) {
@@ -262,11 +266,11 @@ Detail Barang:
                 $this->chats[] = ['role' => 'assistant', 'content' => $aiReply];
             } else {
                 \Illuminate\Support\Facades\Log::error('Ollama API Error: ' . $response->body());
-                $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, AI dalam mode tidur, silahkan besok pagi di jam kerja'];
+                $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, AI dalam mode tidur, silahkan dicoba lagi nanti'];
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Ollama Connection Exception: ' . $e->getMessage());
-            $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, AI dalam mode tidur, silahkan besok pagi di jam kerja'];
+            $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, AI dalam mode tidur, silahkan dicoba lagi nanti'];
         }
 
         // 4. Matikan indikator loading setelah mendapatkan balasan
@@ -428,7 +432,7 @@ Detail Barang:
             <div class="glass-input relative flex items-center rounded-full group">
 
                 <input wire:model="message" type="text" placeholder="Tanya DO, PO, atau MIR..."
-                    class="w-full pl-6 pr-14 py-3.5 bg-transparent text-[13.5px] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-full font-medium"
+                    class="w-full pl-6 pr-14 py-3.5 bg-transparent text-[16px] md:text-[13.5px] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-full font-medium"
                     required autocomplete="off" @disabled($isTyping)>
 
                 <button type="submit"
