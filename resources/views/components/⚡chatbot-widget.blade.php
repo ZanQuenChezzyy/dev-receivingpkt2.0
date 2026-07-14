@@ -512,12 +512,14 @@ Detail Barang:
         /* Mencegah link panjang keluar dari bubble chat */
         .ai-markdown-content a {
             word-break: break-all;
-            color: #2563eb; /* Warna biru untuk link (bisa disesuaikan) */
+            color: #F47920; /* Warna jingga (orange) untuk link sesuai tema aplikasi */
             text-decoration: underline;
+            text-underline-offset: 2px;
+            font-weight: 600;
         }
 
         .dark .ai-markdown-content a {
-            color: #60a5fa;
+            color: #F89B53;
         }
     </style>
 </div>
