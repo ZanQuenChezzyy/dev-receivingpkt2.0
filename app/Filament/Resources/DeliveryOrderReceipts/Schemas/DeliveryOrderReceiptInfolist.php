@@ -445,14 +445,14 @@ class DeliveryOrderReceiptInfolist
 
                                     TextEntry::make('pending_date')
                                         ->label('Tanggal Mulai Pending')
-                                        ->dateTime('d M Y, H:i')
+                                        ->dateTime('d M Y')
                                         ->color('gray')
                                         ->icon('heroicon-m-calendar')
                                         ->visible(fn($record) => !empty($record->pending_date)),
 
                                     TextEntry::make('pending_resolved_date')
                                         ->label('Tanggal Selesai Pending')
-                                        ->dateTime('d M Y, H:i')
+                                        ->dateTime('d M Y')
                                         ->color('success')
                                         ->icon('heroicon-m-check-circle')
                                         ->visible(fn($record) => !empty($record->pending_resolved_date)),
@@ -592,7 +592,7 @@ class DeliveryOrderReceiptInfolist
                                             $events[] = [
                                                 'date' => Carbon::parse($item->grsRdtv->transaction_date)->endOfDay(),
                                                 'title' => 'Dokumen ' . $item->grsRdtv->category . ' Terbit',
-                                                'desc' => 'No: ' . $item->grsRdtv->document_number,
+                                                'desc' => 'Dibuat oleh: ' . ($item->grsRdtv->createdBy->name ?? 'Sistem'),
                                                 'color' => 'bg-orange-500',
                                             ];
                                         }
@@ -642,7 +642,7 @@ class DeliveryOrderReceiptInfolist
                                         $isLast = $index === count($events) - 1;
                                         $mbClass = $isLast ? '' : 'mb-6';
                                         
-                                        $dateStr = $event['date']->format('d M Y, H:i');
+                                        $dateStr = $event['date']->format('d M Y');
                                         $title = $event['title'];
                                         $desc = $event['desc'] ?? '';
                                         $color = $event['color'] ?? 'bg-gray-400';
@@ -666,7 +666,7 @@ class DeliveryOrderReceiptInfolist
                                     TextEntry::make('dikirim_ke_istek')
                                         ->label('Dikirim ke ISTEK')
                                         ->getStateUsing(fn($record) => $record->qcHistories()->where('status', 'Kirim')->latest()->first()?->created_at)
-                                        ->dateTime('d F Y, H:i')
+                                        ->dateTime('d F Y')
                                         ->placeholder('Belum Dikirim')
                                         ->icon('heroicon-m-paper-airplane')
                                         ->color(fn($state) => $state ? 'info' : 'gray'),
@@ -674,7 +674,7 @@ class DeliveryOrderReceiptInfolist
                                     TextEntry::make('kembali_dari_istek')
                                         ->label('Kembali dari ISTEK')
                                         ->getStateUsing(fn($record) => $record->qcHistories()->where('status', 'Kembali')->latest()->first()?->created_at)
-                                        ->dateTime('d F Y, H:i')
+                                        ->dateTime('d F Y')
                                         ->placeholder('Belum Kembali')
                                         ->icon('heroicon-m-arrow-uturn-left')
                                         ->color(fn($state) => $state ? 'success' : 'gray'),
