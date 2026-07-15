@@ -342,7 +342,7 @@ class DeliveryOrderReceiptInfolist
                                 ->getStateUsing(function ($record) {
                                     $details = $record->deliveryOrderReceiptDetails()->with('materialIssueDetails.materialIssue')->get();
                                     $mirs = [];
-                                    
+
                                     // 1. MIR Digital
                                     foreach ($details as $d) {
                                         foreach ($d->materialIssueDetails as $mid) {
@@ -362,7 +362,7 @@ class DeliveryOrderReceiptInfolist
                                     $manualMirs = \App\Models\MaterialIssue::where('delivery_order_receipt_id', $record->id)
                                         ->where('jenis_mir', 'manual')
                                         ->get();
-                                        
+
                                     foreach ($manualMirs as $manual) {
                                         $dokumenLink = '';
                                         if ($manual->image_path) {
@@ -388,7 +388,7 @@ class DeliveryOrderReceiptInfolist
                                     }
 
                                     // Urutkan riwayat berdasarkan tanggal terbaru
-                                    usort($mirs, function($a, $b) {
+                                    usort($mirs, function ($a, $b) {
                                         return Carbon::parse($b['tanggal']) <=> Carbon::parse($a['tanggal']);
                                     });
 
@@ -592,7 +592,7 @@ class DeliveryOrderReceiptInfolist
                                             $events[] = [
                                                 'date' => Carbon::parse($item->grsRdtv->transaction_date)->endOfDay(),
                                                 'title' => 'Dokumen ' . $item->grsRdtv->category . ' Terbit',
-                                                'desc' => 'Dibuat oleh: ' . ($item->grsRdtv->createdBy->name ?? 'Sistem'),
+                                                'desc' => 'Oleh: ' . ($item->grsRdtv->createdBy->name ?? 'Sistem'),
                                                 'color' => 'bg-orange-500',
                                             ];
                                         }
@@ -641,7 +641,7 @@ class DeliveryOrderReceiptInfolist
                                     foreach ($events as $index => $event) {
                                         $isLast = $index === count($events) - 1;
                                         $mbClass = $isLast ? '' : 'mb-6';
-                                        
+
                                         $dateStr = $event['date']->format('d M Y');
                                         $title = $event['title'];
                                         $desc = $event['desc'] ?? '';
@@ -660,7 +660,7 @@ class DeliveryOrderReceiptInfolist
 
                                     return $html;
                                 }),
-                            
+
                             Grid::make(3)
                                 ->schema([
                                     TextEntry::make('dikirim_ke_istek')
