@@ -590,7 +590,7 @@ class DeliveryOrderReceiptInfolist
                                     foreach ($record->grsRdtvItems as $item) {
                                         if ($item->grsRdtv && $item->grsRdtv->transaction_date) {
                                             $events[] = [
-                                                'date' => Carbon::parse($item->grsRdtv->transaction_date),
+                                                'date' => Carbon::parse($item->grsRdtv->transaction_date)->endOfDay(),
                                                 'title' => 'Dokumen ' . $item->grsRdtv->category . ' Terbit',
                                                 'desc' => 'No: ' . $item->grsRdtv->document_number,
                                                 'color' => 'bg-orange-500',
