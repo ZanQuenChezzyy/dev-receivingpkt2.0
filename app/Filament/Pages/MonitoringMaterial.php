@@ -127,7 +127,7 @@ class MonitoringMaterial extends Page implements HasTable
                         ->icon(Heroicon::Cube)
                         ->iconColor('gray')
                         ->weight(FontWeight::SemiBold)
-                        ->searchable(['material_code', 'description'])
+                        ->searchable(['delivery_order_receipt_details.material_code', 'delivery_order_receipt_details.description'])
                         ->getStateUsing(fn($record) => $record->material_code ?: str($record->description)->limit(40))
                         ->description(fn($record) => $record->material_code ? str($record->description)->limit(40) : (string) $record->mrp_type)
                         ->sortable(),
