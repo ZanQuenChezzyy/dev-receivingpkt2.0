@@ -85,7 +85,7 @@ class MonitoringNpkForm
                                 TextInput::make('delivery_oder_number')
                                     ->label('Nomor DO')
                                     ->placeholder('Masukkan Nomor DO')
-                                    ->maxLength(30)
+                                    ->maxLength(50)
                                     ->required()
                                     ->rule(
                                         fn (Get $get, ?MonitoringNpk $record) => Rule::unique('monitoring_npks', 'delivery_oder_number')
