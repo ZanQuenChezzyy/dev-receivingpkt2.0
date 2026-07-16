@@ -62,6 +62,8 @@ new class extends Component {
             'deliveryOrderReceiptDetails.purchaseOrderIssued', 
             'deliveryOrderReceiptDetails.materialIssueDetails.materialIssue',
             'deliveryOrderReceiptDetails.warehouseTransmittalItems.transmittal',
+            'deliveryOrderReceiptDetails.locationReceiving',
+            'deliveryOrderReceiptDetails.warehouseDestination',
             'qcHistories', 
             'transmittals',
             'grsRdtvItems.grsRdtv',
@@ -120,7 +122,19 @@ new class extends Component {
                     }
                 }
 
-                return "- Item: {$detail->description} ({$detail->material_code}) | Qty: " . (float)$detail->quantity . " {$detail->uoi} | PO: {$poNumber}{$mirInfo}{$warehouseInfo}";
+                $locationStr = "";
+                $locs = [];
+                if ($detail->locationReceiving) {
+                    $locs[] = "Receiving: " . $detail->locationReceiving->name;
+                }
+                if ($detail->warehouseDestination) {
+                    $locs[] = "Gudang: " . $detail->warehouseDestination->name;
+                }
+                if (!empty($locs)) {
+                    $locationStr = " | Lokasi Penyimpanan: " . implode(' / ', $locs);
+                }
+
+                return "- Item: {$detail->description} ({$detail->material_code}) | Qty: " . (float)$detail->quantity . " {$detail->uoi} | PO: {$poNumber}{$locationStr}{$mirInfo}{$warehouseInfo}";
             })->implode("\n");
 
             // Info Transmittal (Posisi Dokumen)
