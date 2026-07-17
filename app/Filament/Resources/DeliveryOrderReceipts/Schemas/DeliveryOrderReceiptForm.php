@@ -136,13 +136,11 @@ class DeliveryOrderReceiptForm
 
                     // Logika Mode Penerimaan bawaanmu
                     if ($state === 'Termin') {
-                        $set('stage', 'TERMIN 1');
-                        $set('termin_percentage', null);
+                        $set('stage', null); // Stage induk tidak dipakai lagi untuk Termin
                         $set('dof_number', null);
                         $set('dof_date', null);
                         self::updateDocumentCode($set, $get);
                     } else {
-                        $set('termin_percentage', null);
                         if ($state === 'DOF_Incoterm') {
                             $set('stage', 'SURAT-DOF');
                         } else {
@@ -241,12 +239,10 @@ class DeliveryOrderReceiptForm
                         }
 
                         $set('is_mode_locked', true);
-                        $set('termin_percentage', null);
                     } else {
                         $set('receipt_mode', 'Standard');
                         $set('is_mode_locked', false);
                         $set('stage', null);
-                        $set('termin_percentage', null);
                     }
 
                     if ($get('receipt_mode') !== 'Standard') {
@@ -446,101 +442,132 @@ class DeliveryOrderReceiptForm
     protected static function getTerminGroup(): Group
     {
         return Group::make()->schema([
-            Select::make('stage')
-                ->label('Pilih Termin')
-                ->placeholder('Pilih Termin')
-                ->options(function () {
-                    $options = [];
-                    for ($i = 1; $i <= 20; $i++) {
-                        $options["TERMIN {$i}"] = "TERMIN {$i}";
-                    }
+            Repeater::make('termins')
+                ->label('Riwayat Termin')
+                ->relationship('termins')
+                ->schema([
+                    Select::make('stage')
+                        ->label('Tahapan Termin')
+                        ->placeholder('Pilih Termin')
+                        ->options(function () {
+                            $options = [];
+                            for ($i = 1; $i <= 20; $i++) {
+                                $options["TERMIN {$i}"] = "TERMIN {$i}";
+                            }
+                            return $options;
+                        })
+                        ->native(false)
+                        ->searchable()
+                        ->required()
+                        ->live(),
 
-                    return $options;
-                })
-                ->native(false)
-                ->searchable()
-                ->required()
-                ->live()
-                ->afterStateUpdated(fn(Set $set, Get $get) => self::updateDocumentCode($set, $get)),
+                    TextInput::make('percentage')
+                        ->label('Persentase Qty (%)')
+                        ->numeric()
+                        ->suffix('%')
+                        ->minValue(1)
+                        ->maxValue(100)
+                        ->placeholder('Contoh: 20')
+                        ->required()
+                        ->rules([
+                            fn(Get $get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                $valString = str_replace(',', '.', (string) $value);
+                                if (!is_numeric($valString)) {
+                                    $fail('Format persentase tidak valid. Masukkan angka.');
+                                    return;
+                                }
 
-            TextInput::make('termin_percentage')
-                ->label('Persentase Qty (%)')
-                ->numeric()
-                ->suffix('%')
-                ->minValue(1)
-                ->maxValue(100)
-                ->placeholder('Contoh: 20')
-                ->required()
-                ->rules([
-                    fn(Get $get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
-                        $valString = str_replace(',', '.', (string) $value);
+                                // Ambil semua termin dari repeater root
+                                $allTermins = $get('../../termins') ?? [];
+                                $totalPercentage = 0;
+                                
+                                // ID item repeater yang sedang diketik
+                                $currentItemId = explode('.', $attribute)[1] ?? null;
 
-                        if (!is_numeric($valString)) {
-                            $fail('Format persentase tidak valid. Masukkan angka (contoh: 15,5).');
+                                foreach ($allTermins as $key => $terminData) {
+                                    if ($key === $currentItemId) {
+                                        $totalPercentage += (float) $valString;
+                                    } else {
+                                        $totalPercentage += (float) str_replace(',', '.', (string) ($terminData['percentage'] ?? 0));
+                                    }
+                                }
 
-                            return;
-                        }
+                                if ($totalPercentage <= 0 || $totalPercentage > 100) {
+                                    $fail("Total persentase termin tidak boleh melebihi 100%. Total saat ini: {$totalPercentage}%.");
+                                    return;
+                                }
 
-                        $percentageInput = (float) $valString;
+                                $details = $get('../../deliveryOrderReceiptDetails') ?? [];
+                                foreach ($details as $detail) {
+                                    $poId = $detail['purchase_order_issued_id'] ?? null;
+                                    $itemNo = $detail['item_no'] ?? null;
+                                    $detailId = $detail['id'] ?? null;
 
-                        if ($percentageInput <= 0 || $percentageInput > 100) {
-                            $fail('Persentase harus antara 0.01 hingga 100%.');
+                                    if ($poId && $itemNo) {
+                                        [$qtyPo, $netSaved] = static::computeNetForItem((int) $poId, (string) $itemNo, $detailId);
 
-                            return;
-                        }
+                                        // Total quantity yg direquest oleh semua termin di dokumen ini
+                                        $qtyYangDiminta = ($qtyPo * $totalPercentage) / 100;
+                                        
+                                        // Sisa quantity yang boleh diambil oleh dokumen ini (Net Saved adalah penerimaan di dokumen LAIN)
+                                        $sisaQty = $qtyPo - $netSaved; 
 
-                        $details = $get('deliveryOrderReceiptDetails') ?? [];
+                                        if ($qtyYangDiminta > $sisaQty) {
+                                            $maxPercent = round(($sisaQty / $qtyPo) * 100, 2);
+                                            $matCode = $detail['material_code'] ?? 'Item ini';
+                                            $fail("Gagal! Termin {$matCode} melebihi batas. Sisa maksimal untuk dokumen ini hanya {$maxPercent}%.");
+                                            break;
+                                        }
+                                    }
+                                }
+                            },
+                        ])
+                        ->dehydrateStateUsing(fn($state) => (float) str_replace(',', '.', (string) $state))
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                            $allTermins = $get('../../termins') ?? [];
+                            $totalPercentage = 0;
 
-                        foreach ($details as $detail) {
-                            $poId = $detail['purchase_order_issued_id'] ?? null;
-                            $itemNo = $detail['item_no'] ?? null;
-                            $detailId = $detail['id'] ?? null;
+                            foreach ($allTermins as $terminData) {
+                                $totalPercentage += (float) str_replace(',', '.', (string) ($terminData['percentage'] ?? 0));
+                            }
 
-                            if ($poId && $itemNo) {
-                                [$qtyPo, $netSaved] = static::computeNetForItem((int) $poId, (string) $itemNo, $detailId);
+                            if ($totalPercentage <= 0) return;
 
-                                $sisaQty = $qtyPo - $netSaved;
-                                $qtyYangDiminta = ($qtyPo * $percentageInput) / 100;
+                            $details = $get('../../deliveryOrderReceiptDetails') ?? [];
+                            foreach ($details as $key => $detail) {
+                                $poId = $detail['purchase_order_issued_id'] ?? null;
+                                if ($poId) {
+                                    $poItem = PurchaseOrderIssued::find($poId);
+                                    if ($poItem) {
+                                        $qtyPo = (float) $poItem->qty_po;
+                                        $calcQty = ($qtyPo * $totalPercentage) / 100;
 
-                                if ($qtyYangDiminta > $sisaQty) {
-                                    $maxPercent = round(($sisaQty / $qtyPo) * 100, 2);
-                                    $matCode = $detail['material_code'] ?? 'Item ini';
-                                    $fail("Gagal! Termin {$matCode} melebihi batas. Sisa maksimal hanya {$maxPercent}%.");
-                                    break;
+                                        $set("../../deliveryOrderReceiptDetails.{$key}.quantity", $calcQty);
+
+                                        $unitPrice = (float) ($detail['unit_price'] ?? 0);
+                                        $set("../../deliveryOrderReceiptDetails.{$key}.total_amount_snapshot", $calcQty * $unitPrice);
+                                    }
                                 }
                             }
-                        }
-                    },
+                        }),
+
+                    DatePicker::make('post_103')
+                        ->label('Tanggal Post 103 (SAP)')
+                        ->placeholder('Belum di-Post')
+                        ->native(false)
+                        ->visible(fn() => Auth::user()->hasRole(['Developer', 'AVP Receiving'])),
+
+                    TextInput::make('qr_103_code')
+                        ->label('Kode QR 103')
+                        ->placeholder('Akan terisi otomatis saat scan')
+                        ->readOnly(fn() => !Auth::user()->hasRole(['Developer', 'AVP Receiving'])),
                 ])
-                ->dehydrateStateUsing(fn($state) => (float) str_replace(',', '.', (string) $state))
-                ->live(onBlur: true)
-                ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                    $valString = str_replace(',', '.', (string) $state);
-                    $percentage = (float) $valString;
-
-                    if ($percentage <= 0) {
-                        return;
-                    }
-
-                    $details = $get('deliveryOrderReceiptDetails') ?? [];
-                    foreach ($details as $key => $detail) {
-                        $poId = $detail['purchase_order_issued_id'] ?? null;
-                        if ($poId) {
-                            $poItem = PurchaseOrderIssued::find($poId);
-                            if ($poItem) {
-                                $qtyPo = (float) $poItem->qty_po;
-                                $calcQty = ($qtyPo * $percentage) / 100;
-
-                                $set("deliveryOrderReceiptDetails.{$key}.quantity", $calcQty);
-
-                                $unitPrice = (float) ($detail['unit_price'] ?? 0);
-                                $set("deliveryOrderReceiptDetails.{$key}.total_amount_snapshot", $calcQty * $unitPrice);
-                            }
-                        }
-                    }
-                }),
+                ->columns(2)
+                ->defaultItems(1)
+                ->addActionLabel('Tambah Termin Lanjutan')
+                ->itemLabel(fn (array $state): ?string => $state['stage'] ?? null),
         ])
-            ->columns(2)
             ->columnSpanFull()
             ->disabled(fn(Get $get) => empty($get('search_po')))
             ->visible(fn(Get $get) => $get('receipt_mode') === 'Termin');
@@ -588,12 +615,13 @@ class DeliveryOrderReceiptForm
                     ->placeholder('Belum di-Post')
                     ->native(false)
                     ->dehydratedWhenHidden()
-                    ->visible(fn() => Auth::user()->hasRole(['Developer', 'AVP Receiving'])),
+                    ->visible(fn(Get $get) => Auth::user()->hasRole(['Developer', 'AVP Receiving']) && $get('receipt_mode') !== 'Termin'),
 
                 TextInput::make('qr_103_code')
                     ->label('Kode QR 103')
                     ->placeholder('Akan terisi otomatis saat scan')
                     ->readOnly(fn() => !Auth::user()->hasRole(['Developer', 'AVP Receiving']))
+                    ->visible(fn(Get $get) => $get('receipt_mode') !== 'Termin')
                     ->columnSpan(1),
 
                 Select::make('delay_reason')

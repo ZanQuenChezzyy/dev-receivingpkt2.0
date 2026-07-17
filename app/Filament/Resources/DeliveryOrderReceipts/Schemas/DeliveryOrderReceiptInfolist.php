@@ -75,17 +75,21 @@ class DeliveryOrderReceiptInfolist
                                             ->label('Termin / Tahapan')
                                             ->icon('heroicon-m-tag')
                                             ->badge()
-                                            ->formatStateUsing(function ($state, $record) {
-                                                if (empty($state))
-                                                    return '-';
-                                                if (str_contains(strtoupper($state), 'TERMIN')) {
-                                                    $percentage = (float) $record->termin_percentage;
-                                                    return "{$state}: {$percentage}%";
+                                            ->getStateUsing(function ($record) {
+                                                if ($record->receipt_mode === 'Termin') {
+                                                    if ($record->termins->isEmpty()) {
+                                                        return ['Belum Ada Termin'];
+                                                    }
+                                                    return $record->termins->map(function ($termin) {
+                                                        $percentage = (float) $termin->percentage;
+                                                        return "{$termin->stage}: {$percentage}%";
+                                                    })->toArray();
                                                 }
-                                                return $state;
+                                                return empty($record->stage) ? ['-'] : [$record->stage];
                                             })
+                                            ->listWithLineBreaks()
                                             ->color('info')
-                                            ->visible(fn($record) => !empty($record->stage)),
+                                            ->visible(fn($record) => $record->receipt_mode === 'Termin' || !empty($record->stage)),
                                     ])->columnSpanFull(),
 
                                 Grid::make(2)
@@ -140,6 +144,41 @@ class DeliveryOrderReceiptInfolist
                         ])
                         ->collapsible()
                         ->collapsed(fn($record) => $record->receipt_mode === 'Standard' && empty($record->arrival_sequence)),
+
+                    Section::make('Riwayat Termin')
+                        ->icon('heroicon-o-bars-3-bottom-left')
+                        ->schema([
+                            RepeatableEntry::make('termins')
+                                ->hiddenLabel()
+                                ->schema([
+                                    Grid::make(4)->schema([
+                                        TextEntry::make('stage')
+                                            ->label('Tahapan')
+                                            ->weight(FontWeight::Bold)
+                                            ->color('primary'),
+
+                                        TextEntry::make('percentage')
+                                            ->label('Persentase')
+                                            ->formatStateUsing(fn($state) => (float) $state . '%')
+                                            ->weight(FontWeight::Bold),
+
+                                        TextEntry::make('post_103')
+                                            ->label('Tanggal Post 103')
+                                            ->dateTime('d M Y H:i')
+                                            ->placeholder('Belum Post')
+                                            ->icon(fn($state) => $state ? 'heroicon-m-check-circle' : 'heroicon-m-clock')
+                                            ->color(fn($state) => $state ? 'success' : 'gray'),
+
+                                        TextEntry::make('qr_103_code')
+                                            ->label('Kode QR 103')
+                                            ->placeholder('Belum ada kode')
+                                            ->icon('heroicon-m-qr-code')
+                                            ->copyable()
+                                            ->color('info'),
+                                    ])
+                                ])
+                        ])
+                        ->visible(fn($record) => $record->receipt_mode === 'Termin'),
 
                     Section::make('Dokumen GRS & RDTV Terkait')
                         ->icon(Heroicon::OutlinedDocumentCurrencyDollar)
@@ -525,7 +564,8 @@ class DeliveryOrderReceiptInfolist
                                         })
                                         // Placeholder digunakan ketika formatStateUsing mengembalikan string kosong
                                         // (namun logika di atas sudah menangani empty state, ini hanya lapisan keamanan ganda)
-                                        ->placeholder('Tidak Ada Tahapan'),
+                                        ->placeholder('Tidak Ada Tahapan')
+                                        ->hidden(fn($record) => $record->receipt_mode === 'Termin'),
 
                                     TextEntry::make('post_103')
                                         ->label('Status Post 103 (SAP)')
@@ -533,13 +573,14 @@ class DeliveryOrderReceiptInfolist
                                         ->formatStateUsing(fn($state) => $state ? 'Sudah di-Post' : 'Belum Post')
                                         ->icon(fn($state) => $state ? 'heroicon-m-check-circle' : 'heroicon-m-clock')
                                         ->color(fn($state) => $state ? 'success' : 'gray')
-                                        ->weight(fn($state) => $state ? FontWeight::Bold : FontWeight::Normal),
+                                        ->weight(fn($state) => $state ? FontWeight::Bold : FontWeight::Normal)
+                                        ->hidden(fn($record) => $record->receipt_mode === 'Termin'),
 
                                     TextEntry::make('post_103_date')
                                         ->label('Waktu Post 103')
                                         ->getStateUsing(fn($record) => $record->post_103)
                                         ->dateTime('l, d F Y')
-                                        ->visible(fn($record) => $record->post_103 !== null)
+                                        ->visible(fn($record) => $record->post_103 !== null && $record->receipt_mode !== 'Termin')
                                         ->color('gray'),
 
                                     TextEntry::make('qr_103_code')
@@ -548,7 +589,7 @@ class DeliveryOrderReceiptInfolist
                                         ->copyable()
                                         ->weight(FontWeight::Bold)
                                         ->color('info')
-                                        ->visible(fn($record) => !empty($record->qr_103_code)),
+                                        ->visible(fn($record) => !empty($record->qr_103_code) && $record->receipt_mode !== 'Termin'),
                                 ]),
                         ]),
 
@@ -598,13 +639,26 @@ class DeliveryOrderReceiptInfolist
                                         }
                                     }
 
-                                    if ($record->post_103) {
-                                        $events[] = [
-                                            'date' => Carbon::parse($record->post_103),
-                                            'title' => 'Post 103 (SAP)',
-                                            'desc' => $record->qr_103_code ? 'Kode: ' . $record->qr_103_code : 'Telah di-post 103',
-                                            'color' => 'bg-indigo-500',
-                                        ];
+                                    if ($record->receipt_mode === 'Termin') {
+                                        foreach ($record->termins as $termin) {
+                                            if ($termin->post_103) {
+                                                $events[] = [
+                                                    'date' => Carbon::parse($termin->post_103),
+                                                    'title' => 'Post 103 (SAP) - ' . $termin->stage,
+                                                    'desc' => $termin->qr_103_code ? 'Kode: ' . $termin->qr_103_code : 'Telah di-post 103',
+                                                    'color' => 'bg-indigo-500',
+                                                ];
+                                            }
+                                        }
+                                    } else {
+                                        if ($record->post_103) {
+                                            $events[] = [
+                                                'date' => Carbon::parse($record->post_103),
+                                                'title' => 'Post 103 (SAP)',
+                                                'desc' => $record->qr_103_code ? 'Kode: ' . $record->qr_103_code : 'Telah di-post 103',
+                                                'color' => 'bg-indigo-500',
+                                            ];
+                                        }
                                     }
 
                                     if ($record->pending_date) {

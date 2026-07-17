@@ -109,6 +109,11 @@ class DeliveryOrderReceipt extends Model
         return $this->hasMany(GrsRdtvItem::class);
     }
 
+    public function termins(): HasMany
+    {
+        return $this->hasMany(DeliveryOrderReceiptTermin::class);
+    }
+
     public function delayLogs(): HasMany
     {
         return $this->hasMany(DeliveryOrderReceiptDelayLog::class);

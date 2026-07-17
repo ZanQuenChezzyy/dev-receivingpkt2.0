@@ -330,61 +330,87 @@ class DeliveryOrderReceiptsTable
                         ->badge()
                         ->default('')
                         ->toggleable(isToggledHiddenByDefault: true)
-                        // 🌟 TAMBAHKAN $record DI SINI
-                        ->formatStateUsing(function ($state, $record) {
+                        ->getStateUsing(function ($record) {
+                            if ($record->receipt_mode === 'Termin') {
+                                if ($record->termins->isEmpty()) {
+                                    return ['Belum Ada Termin'];
+                                }
+                                return $record->termins->map(function ($termin) {
+                                    $percentage = (float) $termin->percentage;
+                                    return "{$termin->stage}: {$percentage}%";
+                                })->toArray();
+                            }
+                            
+                            $state = $record->stage;
                             if (empty($state)) {
-                                return 'Default';
+                                return ['Default'];
                             }
                             if (str_contains(strtoupper($state), 'DOF')) {
-                                return 'Surat DOF';
+                                return ['Surat DOF'];
                             }
-                            if (str_contains(strtoupper($state), 'TERMIN')) {
-                                // Ambil nilai persentase, gunakan (float) agar angka 15.00 menjadi 15 (lebih rapi)
-                                $percentage = (float) $record->termin_percentage;
-
-                                return "{$state}: {$percentage}%";
-                            }
-
-                            return $state;
+                            
+                            return [$state];
                         })
+                        ->listWithLineBreaks()
                         ->color(function ($state) {
-                            if (empty($state)) {
-                                return 'success';
-                            }
-                            if (str_contains(strtoupper($state), 'DOF')) {
-                                return 'info';
-                            }
-                            if (str_contains(strtoupper($state), 'TERMIN')) {
-                                return 'warning';
-                            }
-
+                            if ($state === 'Default') return 'success';
+                            if ($state === 'Surat DOF') return 'info';
+                            if (str_contains(strtoupper((string) $state), 'TERMIN')) return 'warning';
+                            if ($state === 'Belum Ada Termin') return 'danger';
                             return 'gray';
                         })
                         ->icon(function ($state) {
-                            if (empty($state)) {
-                                return 'heroicon-m-check-circle';
-                            }
-                            if (str_contains(strtoupper($state), 'DOF')) {
-                                return 'heroicon-m-document-duplicate';
-                            }
-                            if (str_contains(strtoupper($state), 'TERMIN')) {
-                                return 'heroicon-m-chart-pie';
-                            }
-
+                            if ($state === 'Default') return 'heroicon-m-check-circle';
+                            if ($state === 'Surat DOF') return 'heroicon-m-document-duplicate';
+                            if (str_contains(strtoupper((string) $state), 'TERMIN')) return 'heroicon-m-chart-pie';
                             return 'heroicon-m-tag';
                         })
-                        ->searchable(),
+                        ->searchable(query: function (Builder $query, string $search) {
+                            $query->where('stage', 'like', "%{$search}%")
+                                ->orWhereHas('termins', function ($q) use ($search) {
+                                    $q->where('stage', 'like', "%{$search}%");
+                                });
+                        }),
 
                     TextColumn::make('post_103')
                         ->label('Status POST 103')
                         ->badge()
                         ->default(false) // Wajib ditambah agar null tetap dirender sebagai 'Belum Post'
-                        ->formatStateUsing(fn($state) => $state ? 'Posted 103' : 'Belum Post')
-                        ->description(fn($record) => $record->post_103 ? Carbon::parse($record->post_103)->translatedFormat('d F Y H:i') : 'Menunggu aksi')
-                        ->color(fn($state) => $state ? 'success' : 'gray')
-                        ->icon(fn($state) => $state ? 'heroicon-m-check-badge' : 'heroicon-m-clock')
+                        ->getStateUsing(function ($record) {
+                            if ($record->receipt_mode === 'Termin') {
+                                if ($record->termins->isEmpty()) {
+                                    return ['Belum Ada Termin'];
+                                }
+                                return $record->termins->map(function ($termin) {
+                                    if ($termin->post_103) {
+                                        $date = Carbon::parse($termin->post_103)->translatedFormat('d M Y');
+                                        return "{$termin->stage}: Posted ({$date})";
+                                    }
+                                    return "{$termin->stage}: Belum Post";
+                                })->toArray();
+                            }
+                            
+                            if ($record->post_103) {
+                                $date = Carbon::parse($record->post_103)->translatedFormat('d M Y');
+                                return ["Posted 103 ({$date})"];
+                            }
+                            return ['Belum Post'];
+                        })
+                        ->listWithLineBreaks()
+                        ->color(function ($state) {
+                            if (str_contains((string) $state, 'Posted')) return 'success';
+                            if (str_contains((string) $state, 'Belum Post')) return 'gray';
+                            return 'gray';
+                        })
+                        ->icon(function ($state) {
+                            if (str_contains((string) $state, 'Posted')) return 'heroicon-m-check-badge';
+                            if (str_contains((string) $state, 'Belum Post')) return 'heroicon-m-clock';
+                            return 'heroicon-m-clock';
+                        })
                         ->toggleable(isToggledHiddenByDefault: true)
-                        ->sortable(),
+                        ->sortable(query: function (Builder $query, string $direction): Builder {
+                            return $query->orderBy('post_103', $direction);
+                        }),
 
                     TextColumn::make('is_physically_received')
                         ->label('Kedatangan Fisik')
@@ -482,15 +508,42 @@ class DeliveryOrderReceiptsTable
                         ->icon(Heroicon::OutlinedDocumentCheck)
                         ->color('success')
                         ->outlined()
-                        ->requiresConfirmation()
+                        ->form(function ($record) {
+                            if ($record->receipt_mode === 'Termin') {
+                                return [
+                                    Select::make('termin_id')
+                                        ->label('Pilih Termin yang di-Post')
+                                        ->options(function () use ($record) {
+                                            return $record->termins()->whereNull('post_103')->pluck('stage', 'id');
+                                        })
+                                        ->required()
+                                ];
+                            }
+                            return [];
+                        })
+                        ->requiresConfirmation(fn($record) => $record->receipt_mode !== 'Termin')
                         ->modalHeading('Konfirmasi Post 103')
                         ->modalDescription('Apakah Anda yakin ingin melakukan Post 103 pada dokumen ini? Tanggal hari ini akan tercatat sebagai tanggal post.')
                         ->modalSubmitActionLabel('Ya, Post Sekarang')
-                        ->hidden(fn($record): bool => $record->post_103 !== null)
-                        ->action(function ($record) {
-                            $record->update([
-                                'post_103' => Carbon::now(),
-                            ]);
+                        ->hidden(function ($record): bool {
+                            if ($record->receipt_mode === 'Termin') {
+                                return $record->termins()->whereNull('post_103')->count() === 0;
+                            }
+                            return $record->post_103 !== null;
+                        })
+                        ->action(function (array $data, $record) {
+                            if ($record->receipt_mode === 'Termin') {
+                                $termin = $record->termins()->find($data['termin_id']);
+                                if ($termin) {
+                                    $termin->update([
+                                        'post_103' => Carbon::now(),
+                                    ]);
+                                }
+                            } else {
+                                $record->update([
+                                    'post_103' => Carbon::now(),
+                                ]);
+                            }
 
                             Notification::make()
                                 ->title('Berhasil!')
@@ -503,15 +556,42 @@ class DeliveryOrderReceiptsTable
                         ->icon(Heroicon::ArrowUturnLeft)
                         ->color('danger')
                         ->outlined()
-                        ->requiresConfirmation()
+                        ->form(function ($record) {
+                            if ($record->receipt_mode === 'Termin') {
+                                return [
+                                    Select::make('termin_id')
+                                        ->label('Pilih Termin yang Dibatalkan')
+                                        ->options(function () use ($record) {
+                                            return $record->termins()->whereNotNull('post_103')->pluck('stage', 'id');
+                                        })
+                                        ->required()
+                                ];
+                            }
+                            return [];
+                        })
+                        ->requiresConfirmation(fn($record) => $record->receipt_mode !== 'Termin')
                         ->modalHeading('Batalkan Post 103')
                         ->modalDescription('Apakah Anda yakin ingin membatalkan Post 103? Data tanggal post sebelumnya akan dihapus dari dokumen ini.')
                         ->modalSubmitActionLabel('Ya, Batalkan')
-                        ->hidden(fn($record): bool => $record->post_103 === null)
-                        ->action(function ($record) {
-                            $record->update([
-                                'post_103' => null,
-                            ]);
+                        ->hidden(function ($record): bool {
+                            if ($record->receipt_mode === 'Termin') {
+                                return $record->termins()->whereNotNull('post_103')->count() === 0;
+                            }
+                            return $record->post_103 === null;
+                        })
+                        ->action(function (array $data, $record) {
+                            if ($record->receipt_mode === 'Termin') {
+                                $termin = $record->termins()->find($data['termin_id']);
+                                if ($termin) {
+                                    $termin->update([
+                                        'post_103' => null,
+                                    ]);
+                                }
+                            } else {
+                                $record->update([
+                                    'post_103' => null,
+                                ]);
+                            }
 
                             Notification::make()
                                 ->title('Dibatalkan!')
@@ -724,10 +804,19 @@ class DeliveryOrderReceiptsTable
                         ->visible(fn() => Auth::user()->hasRole('Developer'))
                         ->action(function (Collection $records) {
                             foreach ($records as $record) {
-                                if ($record->post_103 === null) {
-                                    $record->update([
-                                        'post_103' => $record->received_date,
-                                    ]);
+                                if ($record->receipt_mode === 'Termin') {
+                                    $unpostedTermins = $record->termins()->whereNull('post_103')->get();
+                                    foreach ($unpostedTermins as $termin) {
+                                        $termin->update([
+                                            'post_103' => $record->received_date,
+                                        ]);
+                                    }
+                                } else {
+                                    if ($record->post_103 === null) {
+                                        $record->update([
+                                            'post_103' => $record->received_date,
+                                        ]);
+                                    }
                                 }
                             }
 

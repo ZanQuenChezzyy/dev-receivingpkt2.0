@@ -193,19 +193,34 @@ class BulkScanTransmittal extends Page implements HasForms
             return;
         }
 
-        if ($this->data['type'] === 'Kirim' && is_null($doReceipt->post_103)) {
-            $detail = $doReceipt->deliveryOrderReceiptDetails()->first();
-            $po_no = $detail ? ($detail->purchaseOrderIssued->purchase_order_no ?? '') : '';
-            $displayNo = $po_no ?: ($doReceipt->delivery_order_no ?? $code);
+        if ($this->data['type'] === 'Kirim') {
+            $isPost103Null = false;
+            
+            if ($doReceipt->receipt_mode === 'Termin') {
+                $latestTermin = $doReceipt->termins()->latest('id')->first();
+                if (!$latestTermin || is_null($latestTermin->post_103)) {
+                    $isPost103Null = true;
+                }
+            } else {
+                if (is_null($doReceipt->post_103)) {
+                    $isPost103Null = true;
+                }
+            }
 
-            $this->dispatch('play-error-sound');
-            Notification::make()
-                ->title('Belum Post 103')
-                ->body("Dokumen PO {$displayNo} belum transaksi 103.")
-                ->danger()
-                ->send();
+            if ($isPost103Null) {
+                $detail = $doReceipt->deliveryOrderReceiptDetails()->first();
+                $po_no = $detail ? ($detail->purchaseOrderIssued->purchase_order_no ?? '') : '';
+                $displayNo = $po_no ?: ($doReceipt->delivery_order_no ?? $code);
 
-            return;
+                $this->dispatch('play-error-sound');
+                Notification::make()
+                    ->title('Belum Post 103')
+                    ->body("Dokumen PO {$displayNo} belum transaksi 103 (Tanggal Post 103 belum diisi).")
+                    ->danger()
+                    ->send();
+
+                return;
+            }
         }
 
         // Jika tipe Kembali, langsung proses tanpa perlu scan 103
@@ -247,9 +262,18 @@ class BulkScanTransmittal extends Page implements HasForms
         }
 
         // Update QR 103
-        $doReceipt->update([
-            'qr_103_code' => $code103,
-        ]);
+        if ($doReceipt->receipt_mode === 'Termin') {
+            $latestTermin = $doReceipt->termins()->latest('id')->first();
+            if ($latestTermin) {
+                $latestTermin->update([
+                    'qr_103_code' => $code103,
+                ]);
+            }
+        } else {
+            $doReceipt->update([
+                'qr_103_code' => $code103,
+            ]);
+        }
 
         // Proses Transmittal
         $this->processTransmittal($doReceipt);
