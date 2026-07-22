@@ -302,7 +302,6 @@ class DeliveryOrderReceiptForm
                 ->placeholder('Masukkan No. Surat Jalan / Memo')
                 ->maxLength(25) // Disesuaikan dengan DB
                 ->minLength(3)
-                ->unique(ignoreRecord: true)
                 ->disabled(fn(Get $get) => empty($get('search_po')))
                 ->live(onBlur: true)
                 ->afterStateUpdated(fn(Set $set, Get $get) => self::updateDocumentCode($set, $get))
@@ -581,7 +580,8 @@ class DeliveryOrderReceiptForm
 
                 Hidden::make('arrival_sequence'),
                 Hidden::make('source_type'),
-                Hidden::make('document_code'),
+                Hidden::make('document_code')
+                    ->unique(ignoreRecord: true, message: 'Kombinasi PO dan DO ini sudah pernah diinput sebelumnya (Duplikat).'),
                 Hidden::make('status')
                     ->default('Diterima'), // Disesuaikan dengan DB default
 
