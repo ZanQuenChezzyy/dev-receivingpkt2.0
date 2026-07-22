@@ -72,7 +72,13 @@
             </div>
         @endif
 
-        <form wire:submit.prevent="confirmSubmit" class="relative">
+        <form wire:submit.prevent="confirmSubmit" class="relative" x-data="{
+            diminta_oleh: $persist(@entangle('diminta_oleh').live).as('mi_diminta_oleh'),
+            npk: $persist(@entangle('npk')).as('mi_npk'),
+            no_hp: $persist(@entangle('no_hp')).as('mi_no_hp'),
+            departemen: $persist(@entangle('departemen')).as('mi_departemen'),
+            bagian: $persist(@entangle('bagian')).as('mi_bagian')
+        }">
             <!-- Vertical Connecting Line (Desktop Only) -->
             <div
                 class="absolute left-[2.75rem] top-12 bottom-32 w-0.5 bg-gradient-to-b from-slate-200 via-slate-200 to-transparent dark:from-slate-800 dark:via-slate-800 dark:to-transparent hidden md:block z-0">
@@ -113,7 +119,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <input type="text" wire:model.live.debounce.300ms="diminta_oleh"
+                                    <input type="text" x-model.debounce.300ms="diminta_oleh"
                                         class="glass-input pl-12 w-full text-slate-900 dark:text-white py-4 placeholder-slate-400"
                                         required placeholder="Contoh: John Doe">
                                 </div>
@@ -136,7 +142,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <input type="text" wire:model="npk"
+                                    <input type="text" x-model="npk"
                                         class="glass-input pl-12 w-full text-slate-900 dark:text-white py-4 placeholder-slate-400"
                                         required placeholder="Contoh: 123456">
                                 </div>
@@ -160,7 +166,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <input type="text" wire:model="no_hp"
+                                    <input type="text" x-model="no_hp"
                                         class="glass-input pl-12 w-full text-slate-900 dark:text-white py-4 placeholder-slate-400"
                                         required placeholder="0812...">
                                 </div>
@@ -182,7 +188,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <input type="text" wire:model="departemen"
+                                    <input type="text" x-model="departemen"
                                         class="glass-input pl-12 w-full text-slate-900 dark:text-white py-4 placeholder-slate-400"
                                         required placeholder="Nama Departemen">
                                 </div>
@@ -203,7 +209,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <input type="text" wire:model="bagian"
+                                    <input type="text" x-model="bagian"
                                         class="glass-input pl-12 w-full text-slate-900 dark:text-white py-4 placeholder-slate-400"
                                         required placeholder="Sub-bagian">
                                 </div>

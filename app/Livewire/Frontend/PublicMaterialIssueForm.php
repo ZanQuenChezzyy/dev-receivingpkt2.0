@@ -430,12 +430,7 @@ class PublicMaterialIssueForm extends Component
             DB::commit();
 
             // Reset specific fields
-            $this->diminta_oleh = '';
-            $this->npk = '';
             $this->diterima_oleh = '';
-            $this->no_hp = '';
-            $this->departemen = '';
-            $this->bagian = '';
             $this->purchase_order_issued_id = '';
             $this->po_search = '';
             $this->no_reservasi = '';
