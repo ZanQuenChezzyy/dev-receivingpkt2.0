@@ -661,14 +661,17 @@ class DeliveryOrderReceiptInfolist
                                         }
                                     }
 
-                                    if ($record->pending_date) {
-                                        $descPending = 'Alasan: ' . $record->delay_reason;
+                                    if ($record->pending_date || !empty($record->delay_reason)) {
+                                        $reason = !empty($record->delay_reason) ? $record->delay_reason : 'Tidak diketahui';
+                                        $descPending = 'Alasan: ' . $reason;
                                         if ($record->delay_notes) {
                                             $descPending .= ' - ' . $record->delay_notes;
                                         }
 
+                                        $pendingDate = $record->pending_date ?? $record->pending_resolved_date ?? $record->updated_at;
+
                                         $events[] = [
-                                            'date' => Carbon::parse($record->pending_date),
+                                            'date' => Carbon::parse($pendingDate),
                                             'title' => 'Status Pending',
                                             'desc' => $descPending,
                                             'color' => 'bg-red-500',

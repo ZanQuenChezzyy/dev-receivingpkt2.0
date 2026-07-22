@@ -54,18 +54,42 @@ class CreateGrsRdtv extends CreateRecord
 
                     $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                     if ($do) {
-                        if ($do->status === 'GRS') {
-                            $alreadyProcessed[] = $documentCode;
-                        }
+                        if ($do->receipt_mode === 'Termin') {
+                            $totalTermins = $do->termins()->count();
+                            $postedTermins = $do->termins()->whereNotNull('post_103')->count();
+                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn($q) => $q->where('category', 'GRS'))->count();
 
-                        if (is_null($do->post_103)) {
-                            $unposted103Documents[] = $documentCode;
+                            if ($grsCount >= $totalTermins) {
+                                $alreadyProcessed[] = $documentCode;
+                            } else {
+                                if ($postedTermins <= $grsCount) {
+                                    $unposted103Documents[] = $documentCode;
+                                } else {
+                                    $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
+                                    if (!$isZrmZsmOrZpm) {
+                                        $qcKembaliCount = $do->qcHistories()->where('status', 'Kembali')->count();
+                                        if ($qcKembaliCount <= $grsCount) {
+                                            $invalidDocuments[] = $documentCode;
+                                        }
+                                    }
+                                }
+                            }
                         } else {
-                            $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
-                            if (!$isZrmZsmOrZpm) {
-                                $latestQc = $do->qcHistories()->latest()->first();
-                                if (!$latestQc || $latestQc->status !== 'Kembali') {
-                                    $invalidDocuments[] = $documentCode;
+                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn($q) => $q->where('category', 'GRS'))->count();
+
+                            if ($grsCount >= 1) {
+                                $alreadyProcessed[] = $documentCode;
+                            }
+
+                            if (is_null($do->post_103)) {
+                                $unposted103Documents[] = $documentCode;
+                            } else {
+                                $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
+                                if (!$isZrmZsmOrZpm) {
+                                    $latestQc = $do->qcHistories()->latest()->first();
+                                    if (!$latestQc || $latestQc->status !== 'Kembali') {
+                                        $invalidDocuments[] = $documentCode;
+                                    }
                                 }
                             }
                         }
@@ -95,18 +119,42 @@ class CreateGrsRdtv extends CreateRecord
 
                     $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                     if ($do) {
-                        if ($do->status === 'GRS') {
-                            $alreadyProcessed[] = $documentCode;
-                        }
+                        if ($do->receipt_mode === 'Termin') {
+                            $totalTermins = $do->termins()->count();
+                            $postedTermins = $do->termins()->whereNotNull('post_103')->count();
+                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn($q) => $q->where('category', 'GRS'))->count();
 
-                        if (is_null($do->post_103)) {
-                            $unposted103Documents[] = $documentCode;
+                            if ($grsCount >= $totalTermins) {
+                                $alreadyProcessed[] = $documentCode;
+                            } else {
+                                if ($postedTermins <= $grsCount) {
+                                    $unposted103Documents[] = $documentCode;
+                                } else {
+                                    $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
+                                    if (!$isZrmZsmOrZpm) {
+                                        $qcKembaliCount = $do->qcHistories()->where('status', 'Kembali')->count();
+                                        if ($qcKembaliCount <= $grsCount) {
+                                            $invalidDocuments[] = $documentCode;
+                                        }
+                                    }
+                                }
+                            }
                         } else {
-                            $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
-                            if (!$isZrmZsmOrZpm) {
-                                $latestQc = $do->qcHistories()->latest()->first();
-                                if (!$latestQc || $latestQc->status !== 'Kembali') {
-                                    $invalidDocuments[] = $documentCode;
+                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn($q) => $q->where('category', 'GRS'))->count();
+
+                            if ($grsCount >= 1) {
+                                $alreadyProcessed[] = $documentCode;
+                            }
+
+                            if (is_null($do->post_103)) {
+                                $unposted103Documents[] = $documentCode;
+                            } else {
+                                $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
+                                if (!$isZrmZsmOrZpm) {
+                                    $latestQc = $do->qcHistories()->latest()->first();
+                                    if (!$latestQc || $latestQc->status !== 'Kembali') {
+                                        $invalidDocuments[] = $documentCode;
+                                    }
                                 }
                             }
                         }
