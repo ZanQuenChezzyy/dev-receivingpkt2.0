@@ -709,13 +709,8 @@ class DeliveryOrderReceiptForm
                     ->relationship('deliveryOrderReceiptDetails')
                     ->itemLabel(fn($state) => $state['description'] ?? 'Item')
                     ->minItems(1)
-                    ->hidden(fn(Get $get): bool => empty($get('deliveryOrderReceiptDetails')))
-                    ->addable(false)
-                    ->reorderable(false)
-                    ->deletable(true)
                     ->schema([
                         Grid::make(12)->schema([
-                            Hidden::make('id'),
                             Hidden::make('purchase_order_issued_id'),
                             Hidden::make('item_no'),
                             Hidden::make('mrp_type'),
@@ -753,7 +748,7 @@ class DeliveryOrderReceiptForm
                                 ->readOnly(fn(Get $get): bool => $get('../../receipt_mode') === 'Termin')
                                 ->hint(fn(Get $get) => $get('../../receipt_mode') === 'Termin' ? 'Otomatis' : null)
                                 ->rules([
-                                    fn(Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                    fn(Get $get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
                                         $isToleranceActive = (bool) ($get('is_qty_tolerance') ?? false);
 
                                         $poId = $get('purchase_order_issued_id');
@@ -763,7 +758,7 @@ class DeliveryOrderReceiptForm
                                             return;
                                         }
 
-                                        $detailId = $get('id');
+                                        $detailId = $record?->id;
 
                                         [$qtyPo, $netSaved] = static::computeNetForItem((int) $poId, (string) $itemNo, $detailId);
 
