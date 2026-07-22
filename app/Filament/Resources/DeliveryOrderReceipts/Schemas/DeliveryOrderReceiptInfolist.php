@@ -661,30 +661,57 @@ class DeliveryOrderReceiptInfolist
                                         }
                                     }
 
-                                    if ($record->pending_date || !empty($record->delay_reason)) {
-                                        $reason = !empty($record->delay_reason) ? $record->delay_reason : 'Tidak diketahui';
-                                        $descPending = 'Alasan: ' . $reason;
-                                        if ($record->delay_notes) {
-                                            $descPending .= ' - ' . $record->delay_notes;
+                                    if ($record->delayLogs && $record->delayLogs->isNotEmpty()) {
+                                        foreach ($record->delayLogs as $log) {
+                                            if ($log->delay_reason === 'Penundaan Selesai (Clear)') {
+                                                $events[] = [
+                                                    'date' => Carbon::parse($log->created_at),
+                                                    'title' => 'Pending Diselesaikan',
+                                                    'desc' => 'Proses dilanjutkan' . ($log->createdBy ? ' (Oleh: ' . $log->createdBy->name . ')' : ''),
+                                                    'color' => 'bg-emerald-500',
+                                                ];
+                                            } else {
+                                                $desc = 'Alasan: ' . $log->delay_reason;
+                                                if ($log->delay_notes) {
+                                                    $desc .= ' - ' . $log->delay_notes;
+                                                }
+                                                $desc .= ($log->createdBy ? ' (Oleh: ' . $log->createdBy->name . ')' : '');
+
+                                                $events[] = [
+                                                    'date' => Carbon::parse($log->created_at),
+                                                    'title' => 'Status Pending',
+                                                    'desc' => $desc,
+                                                    'color' => 'bg-red-500',
+                                                ];
+                                            }
+                                        }
+                                    } else {
+                                        // Legacy Fallback
+                                        if ($record->pending_date || !empty($record->delay_reason)) {
+                                            $reason = !empty($record->delay_reason) ? $record->delay_reason : 'Tidak diketahui';
+                                            $descPending = 'Alasan: ' . $reason;
+                                            if ($record->delay_notes) {
+                                                $descPending .= ' - ' . $record->delay_notes;
+                                            }
+
+                                            $pendingDate = $record->pending_date ?? $record->pending_resolved_date ?? $record->updated_at;
+
+                                            $events[] = [
+                                                'date' => Carbon::parse($pendingDate),
+                                                'title' => 'Status Pending',
+                                                'desc' => $descPending,
+                                                'color' => 'bg-red-500',
+                                            ];
                                         }
 
-                                        $pendingDate = $record->pending_date ?? $record->pending_resolved_date ?? $record->updated_at;
-
-                                        $events[] = [
-                                            'date' => Carbon::parse($pendingDate),
-                                            'title' => 'Status Pending',
-                                            'desc' => $descPending,
-                                            'color' => 'bg-red-500',
-                                        ];
-                                    }
-
-                                    if ($record->pending_resolved_date) {
-                                        $events[] = [
-                                            'date' => Carbon::parse($record->pending_resolved_date),
-                                            'title' => 'Pending Diselesaikan',
-                                            'desc' => 'Proses dilanjutkan',
-                                            'color' => 'bg-emerald-500',
-                                        ];
+                                        if ($record->pending_resolved_date) {
+                                            $events[] = [
+                                                'date' => Carbon::parse($record->pending_resolved_date),
+                                                'title' => 'Pending Diselesaikan',
+                                                'desc' => 'Proses dilanjutkan',
+                                                'color' => 'bg-emerald-500',
+                                            ];
+                                        }
                                     }
 
                                     usort($events, fn($a, $b) => $a['date'] <=> $b['date']);
