@@ -581,7 +581,8 @@ class DeliveryOrderReceiptForm
                 Hidden::make('arrival_sequence'),
                 Hidden::make('source_type'),
                 Hidden::make('document_code')
-                    ->unique(ignoreRecord: true, message: 'Kombinasi PO dan DO ini sudah pernah diinput sebelumnya (Duplikat).'),
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages(['unique' => 'Kombinasi PO dan DO ini sudah pernah diinput sebelumnya (Duplikat).']),
                 Hidden::make('status')
                     ->default('Diterima'), // Disesuaikan dengan DB default
 
