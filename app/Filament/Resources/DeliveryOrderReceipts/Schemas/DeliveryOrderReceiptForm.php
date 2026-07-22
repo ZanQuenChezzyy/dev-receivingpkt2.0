@@ -742,10 +742,9 @@ class DeliveryOrderReceiptForm
 
                             TextInput::make('quantity')
                                 ->label('Quantity Diterima')
-                                ->numeric()
                                 ->required()
-                                ->mask(RawJs::make('$money($input)'))
-                                ->stripCharacters(',')
+                                ->mask(RawJs::make("\$money(\$input, ',', '.', 3)"))
+                                ->stripCharacters(['.'])
                                 ->readOnly(fn(Get $get): bool => $get('../../receipt_mode') === 'Termin')
                                 ->hint(fn(Get $get) => $get('../../receipt_mode') === 'Termin' ? 'Otomatis' : null)
                                 ->rules([
@@ -763,7 +762,8 @@ class DeliveryOrderReceiptForm
 
                                         [$qtyPo, $netSaved] = static::computeNetForItem((int) $poId, (string) $itemNo, $detailId);
 
-                                        $currentInput = (float) $value;
+                                        $valString = str_replace(',', '.', (string) $value);
+                                        $currentInput = (float) $valString;
                                         $totalAkanDiterima = $netSaved + $currentInput;
                                         $uoi = $get('uoi') ?? '';
 
@@ -783,7 +783,7 @@ class DeliveryOrderReceiptForm
                                 ->columnSpan(8)
                                 ->suffix(fn(Get $get): string => $get('uoi') ?? '')
                                 ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                    $quantity = (float) $state;
+                                    $quantity = (float) str_replace(',', '.', (string) $state);
                                     $unitPrice = (float) ($get('unit_price') ?? 0);
                                     $newTotalAmount = $quantity * $unitPrice;
                                     $set('total_amount_snapshot', $newTotalAmount);
@@ -798,9 +798,9 @@ class DeliveryOrderReceiptForm
                                     }
 
                                     [$qtyPo, $netSaved] = static::computeNetForItem((int) $poId, (string) $itemNo, $record?->id);
-                                    $currentInput = (float) str_replace(',', '', (string) ($get('quantity') ?? 0));
+                                    $currentInput = (float) str_replace(',', '.', (string) ($get('quantity') ?? 0));
 
-                                    $fmtNetSaved = number_format($netSaved);
+                                    $fmtNetSaved = number_format($netSaved, 3, ',', '.');
                                     $totalAkanDiterima = $netSaved + $currentInput;
                                     $sisaSetelahInput = $qtyPo - $totalAkanDiterima;
 

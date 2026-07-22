@@ -228,7 +228,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                 ColumnGroup::make('Data Penerimaan', [
                     TextColumn::make('quantity')
                         ->label('Qty Diterima')
-                        ->numeric()
+                        ->formatStateUsing(fn($state) => rtrim(rtrim(number_format($state, 3, ',', '.'), '0'), ','))
                         ->suffix(fn($record) => " {$record->uoi}")
                         ->badge() // Jadikan badge agar menonjol
                         ->color('success')
@@ -265,7 +265,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                                 // Jika benar-benar berlebih, tampilkan angkanya
                                 if ($lebihan > 0) {
                                     // Format angka agar rapi (misal: +1.500 EA)
-                                    $fmtLebihan = rtrim(rtrim(number_format($lebihan, 4, ',', '.'), '0'), ',');
+                                    $fmtLebihan = rtrim(rtrim(number_format($lebihan, 3, ',', '.'), '0'), ',');
 
                                     return "Toleransi (+{$fmtLebihan} {$record->uoi})";
                                 }

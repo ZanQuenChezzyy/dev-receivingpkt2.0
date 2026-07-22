@@ -176,7 +176,7 @@ class DeliveryOrderReceiptsTable
                             }
 
                             return $details->map(function ($detail) {
-                                $qty = rtrim(rtrim(number_format($detail->quantity, 4, ',', '.'), '0'), ',');
+                                $qty = rtrim(rtrim(number_format($detail->quantity, 3, ',', '.'), '0'), ',');
 
                                 return "{$qty} {$detail->uoi}";
                             })->toArray();
@@ -234,7 +234,10 @@ class DeliveryOrderReceiptsTable
                             }
                             $percentage = round(($totalIssued / $totalReceived) * 100);
 
-                            return "{$percentage}% ({$totalIssued} dari {$totalReceived})";
+                            $fmtIssued = rtrim(rtrim(number_format($totalIssued, 3, ',', '.'), '0'), ',');
+                            $fmtReceived = rtrim(rtrim(number_format($totalReceived, 3, ',', '.'), '0'), ',');
+
+                            return "{$percentage}% ({$fmtIssued} dari {$fmtReceived})";
                         })
                         ->badge()
                         ->toggleable(isToggledHiddenByDefault: true)
