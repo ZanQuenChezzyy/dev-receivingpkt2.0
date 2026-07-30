@@ -112,7 +112,7 @@
             <tbody>
                 @php
                     $groupedDetails = $record->materialIssueDetails->groupBy(function($detail) {
-                        return $detail->deliveryOrderReceiptDetail?->purchase_order_issued_id;
+                        return $detail->delivery_order_receipt_detail_id;
                     })->map(function($group) {
                         $first = $group->first();
                         $locations = $group->map(fn($d) => $d->deliveryOrderReceiptDetail?->locationReceiving?->name)->filter()->unique()->implode(', ');
