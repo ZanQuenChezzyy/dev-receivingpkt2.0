@@ -85,12 +85,12 @@ class PublicMaterialIssueForm extends Component
         $this->tanggal = now()->format('Y-m-d');
         $this->addDetail();
         $this->searchPOs();
-        
-        $this->receiving_users = \App\Models\User::whereDoesntHave('roles', function($q) { 
-            $q->where('name', 'AVP Receiving'); 
+
+        $this->receiving_users = \App\Models\User::whereDoesntHave('roles', function ($q) {
+            $q->where('name', 'AVP Receiving');
         })->get(['id', 'name', 'npk'])->toArray();
 
-        if (! empty($this->po_search) && count($this->available_pos) > 0) {
+        if (!empty($this->po_search) && count($this->available_pos) > 0) {
             $matchedPo = collect($this->available_pos)->firstWhere('purchase_order_no', $this->po_search);
             if ($matchedPo) {
                 $this->purchase_order_issued_id = $matchedPo->id;
@@ -141,8 +141,8 @@ class PublicMaterialIssueForm extends Component
     {
         $query = PurchaseOrderIssued::whereHas('deliveryOrderReceiptDetails');
 
-        if (! empty($this->po_search)) {
-            $query->where('purchase_order_no', 'like', '%'.$this->po_search.'%');
+        if (!empty($this->po_search)) {
+            $query->where('purchase_order_no', 'like', '%' . $this->po_search . '%');
         }
 
         $this->available_pos = $query->limit(20)->get()->unique('purchase_order_no');
@@ -155,7 +155,7 @@ class PublicMaterialIssueForm extends Component
             if ($poItem) {
                 $allPoItemIds = PurchaseOrderIssued::where('purchase_order_no', $poItem->purchase_order_no)->pluck('id');
                 $rawItems = DeliveryOrderReceiptDetail::with([
-                    'locationReceiving', 
+                    'locationReceiving',
                     'deliveryOrderReceipt.grsRdtvItems.grsRdtv'
                 ])
                     ->whereIn('purchase_order_issued_id', $allPoItemIds)
@@ -170,14 +170,14 @@ class PublicMaterialIssueForm extends Component
                     });
                     $combined_boh = $combined_quantity - $combined_issued;
 
-                    $locations = $group->map(fn ($i) => $i->locationReceiving?->name)->filter()->unique()->implode(', ');
+                    $locations = $group->map(fn($i) => $i->locationReceiving?->name)->filter()->unique()->implode(', ');
 
                     $has_non_grs = $group->contains(function ($item) {
                         if (!$item->deliveryOrderReceipt) {
                             return true;
                         }
-                        
-                        $has_grs_category = $item->deliveryOrderReceipt->grsRdtvItems->contains(function($grsItem) {
+
+                        $has_grs_category = $item->deliveryOrderReceipt->grsRdtvItems->contains(function ($grsItem) {
                             return $grsItem->grsRdtv && $grsItem->grsRdtv->category === 'GRS';
                         });
 
@@ -219,7 +219,7 @@ class PublicMaterialIssueForm extends Component
                 $detailId = $value;
                 if ($detailId) {
                     $item = collect($this->available_po_items)->firstWhere('id', (int) $detailId)
-                         ?? collect($this->available_po_items)->firstWhere('id', (string) $detailId);
+                        ?? collect($this->available_po_items)->firstWhere('id', (string) $detailId);
 
                     if ($item) {
                         $this->details[$index]['stock_no'] = $item['material_code'];
@@ -276,9 +276,9 @@ class PublicMaterialIssueForm extends Component
             $detailId = $detail['delivery_order_receipt_detail_id'] ?? null;
             if ($detailId) {
                 $item = collect($this->available_po_items)->firstWhere('id', (int) $detailId)
-                     ?? collect($this->available_po_items)->firstWhere('id', (string) $detailId);
+                    ?? collect($this->available_po_items)->firstWhere('id', (string) $detailId);
 
-                if ($item && ! empty($item['has_non_grs'])) {
+                if ($item && !empty($item['has_non_grs'])) {
                     $requires = true;
                     break;
                 }
@@ -352,17 +352,29 @@ class PublicMaterialIssueForm extends Component
 
     public function confirmSubmit()
     {
-        $this->validate();
+        $this->diterima_oleh = $this->diminta_oleh;
+        try {
+            $this->validate();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->dispatch('validation-failed');
+            throw $e;
+        }
         $this->showConfirmModal = true;
     }
 
     public function submit()
     {
-        $this->validate();
+        $this->diterima_oleh = $this->diminta_oleh;
+        try {
+            $this->validate();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->dispatch('validation-failed');
+            throw $e;
+        }
 
         DB::beginTransaction();
         try {
-            $mirNumber = 'MIR-'.date('Ymd').'-'.Str::upper(Str::random(4));
+            $mirNumber = 'MIR-' . date('Ymd') . '-' . Str::upper(Str::random(4));
 
             $issue = MaterialIssue::create([
                 'mir_number' => $mirNumber,
@@ -439,9 +451,11 @@ class PublicMaterialIssueForm extends Component
             $this->kode_biaya = '';
             $this->digunakan_untuk = '';
             $this->diminta_signature = null;
+            $this->pilihan_istek = '';
             $this->disetujui_oleh = '';
             $this->disetujui_npk = '';
             $this->disetujui_signature = null;
+            $this->pilihan_receiving = '';
             $this->diserahkan_oleh = '';
             $this->diserahkan_npk = '';
             $this->diserahkan_signature = null;
@@ -455,7 +469,7 @@ class PublicMaterialIssueForm extends Component
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->addError('submit', 'Gagal menyimpan pengajuan: '.$e->getMessage());
+            $this->addError('submit', 'Gagal menyimpan pengajuan: ' . $e->getMessage());
         }
     }
 

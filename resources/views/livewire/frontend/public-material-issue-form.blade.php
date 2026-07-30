@@ -45,40 +45,19 @@
             </p>
         </div>
 
-        @if ($showSuccessMessage)
-            <div x-data x-init="window.scrollTo({ top: 0, behavior: 'smooth' })"
-                class="bg-green-500/10 border border-green-500/20 backdrop-blur-xl rounded-3xl p-6 sm:p-8 mb-12 flex items-start gap-5 animate-fade-in-up shadow-lg shadow-green-500/5">
-                <div
-                    class="bg-gradient-to-br from-green-400 to-green-600 rounded-2xl p-3 flex-shrink-0 shadow-md shadow-green-500/20">
-                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7">
-                        </path>
-                    </svg>
-                </div>
-                <div class="flex-1 pt-1">
-                    <h4 class="text-xl font-bold text-green-800 dark:text-green-400 mb-2 tracking-tight">Pengajuan
-                        Berhasil!</h4>
-                    <p class="text-green-700/80 dark:text-green-300/80 leading-relaxed">Material Issue Request Anda
-                        telah direkam ke dalam sistem dan akan segera divalidasi oleh tim gudang. Anda dapat melacak
-                        statusnya melalui dashboard.</p>
-                </div>
-                <button wire:click="$set('showSuccessMessage', false)"
-                    class="text-green-600/50 hover:text-green-800 dark:text-green-500/50 dark:hover:text-green-300 transition-colors pt-1">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-        @endif
-
         <form wire:submit.prevent="confirmSubmit" class="relative" x-data="{
             diminta_oleh: $persist(@entangle('diminta_oleh').live).as('mi_diminta_oleh'),
             npk: $persist(@entangle('npk')).as('mi_npk'),
             no_hp: $persist(@entangle('no_hp')).as('mi_no_hp'),
             departemen: $persist(@entangle('departemen')).as('mi_departemen'),
             bagian: $persist(@entangle('bagian')).as('mi_bagian')
-        }">
+        }"
+        @validation-failed.window="setTimeout(() => {
+            const firstError = document.querySelector('.text-red-500.text-xs');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100)">
             <!-- Vertical Connecting Line (Desktop Only) -->
             <div
                 class="absolute left-[2.75rem] top-12 bottom-32 w-0.5 bg-gradient-to-b from-slate-200 via-slate-200 to-transparent dark:from-slate-800 dark:via-slate-800 dark:to-transparent hidden md:block z-0">
@@ -798,7 +777,7 @@
                                 &larr; Kembali ke Beranda
                             </a>
 
-                            <button type="submit"
+                            <button type="button" wire:click="confirmSubmit"
                                 class="w-full sm:w-auto group relative inline-flex items-center justify-center px-12 py-4 text-lg font-black text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-2xl overflow-hidden transition-all duration-300 shadow-[0_10px_20px_rgba(244,121,32,0.2)] hover:shadow-[0_15px_30px_rgba(244,121,32,0.4)] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                                 <span
                                     class="absolute inset-0 w-0 bg-white/20 transition-all duration-500 ease-out group-hover:w-full"></span>
@@ -887,6 +866,49 @@
                             <span wire:loading wire:target="submit">Memproses...</span>
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Success Modal -->
+    @if ($showSuccessMessage)
+        <div class="fixed inset-0 z-[100] flex items-center justify-center px-4 overflow-hidden" x-data="{ show: false }" x-init="setTimeout(() => show = true, 50)">
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+                wire:click="$set('showSuccessMessage', false)"></div>
+
+            <!-- Modal Content -->
+            <div
+                class="relative bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden animate-fade-in-up border border-slate-200/50 dark:border-white/10 text-center">
+                <div class="relative p-8 sm:p-10">
+                    <!-- Checkmark Animation -->
+                    <div class="w-24 h-24 mx-auto mb-6 relative">
+                        <div class="absolute inset-0 bg-green-100 dark:bg-green-900/30 rounded-full animate-ping opacity-75"></div>
+                        <div class="relative flex items-center justify-center w-24 h-24 bg-green-500 rounded-full shadow-lg shadow-green-500/30 text-white transform transition-all duration-500 scale-100">
+                            <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path class="animate-[dash_0.5s_ease-out_forwards]" stroke-dasharray="30" stroke-dashoffset="30" d="M5 13l4 4L19 7" style="animation: dash 0.5s ease-out forwards;"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <style>
+                        @keyframes dash {
+                            to {
+                                stroke-dashoffset: 0;
+                            }
+                        }
+                    </style>
+
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-3">Berhasil!</h3>
+                    <p class="text-slate-500 dark:text-slate-400 mb-8 font-medium">
+                        Material Issue Request Anda telah direkam ke dalam sistem dan akan segera divalidasi oleh tim gudang.
+                    </p>
+
+                    <button type="button" wire:click="$set('showSuccessMessage', false)"
+                        class="w-full px-6 py-3.5 text-sm font-bold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all shadow-lg shadow-green-500/30">
+                        Selesai
+                    </button>
                 </div>
             </div>
         </div>
