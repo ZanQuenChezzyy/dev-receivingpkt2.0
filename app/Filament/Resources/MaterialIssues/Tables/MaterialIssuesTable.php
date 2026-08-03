@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\MaterialIssues\Tables;
 
+use App\Filament\Exports\ExportMaterialIssueBulkAction;
 use App\Filament\Exports\MaterialIssueExporter;
 use App\Models\MaterialIssue;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -11,13 +13,11 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ExportBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColumnGroup;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
@@ -33,12 +33,12 @@ class MaterialIssuesTable
                     TextColumn::make('jenis_mir')
                         ->label('Jenis')
                         ->badge()
-                        ->color(fn(string $state): string => match ($state) {
+                        ->color(fn (string $state): string => match ($state) {
                             'digital' => 'primary',
                             'manual' => 'warning',
                             default => 'gray',
                         })
-                        ->formatStateUsing(fn(string $state): string => ucfirst($state)),
+                        ->formatStateUsing(fn (string $state): string => ucfirst($state)),
 
                     TextColumn::make('mir_number')
                         ->label('No. MIR')
@@ -49,7 +49,7 @@ class MaterialIssuesTable
                         ->searchable()
                         ->copyable()
                         ->sortable()
-                        ->formatStateUsing(fn($state, $record) => $record->jenis_mir === 'manual' ? 'MIR Manual' : $state),
+                        ->formatStateUsing(fn ($state, $record) => $record->jenis_mir === 'manual' ? 'MIR Manual' : $state),
 
                     TextColumn::make('tanggal')
                         ->label('Tanggal')
@@ -61,7 +61,8 @@ class MaterialIssuesTable
                             if ($record->jenis_mir === 'manual') {
                                 return $record->created_at?->format('d F Y');
                             }
-                            return $state ? \Carbon\Carbon::parse($state)->format('d F Y') : null;
+
+                            return $state ? Carbon::parse($state)->format('d F Y') : null;
                         }),
                 ]),
 
@@ -77,7 +78,7 @@ class MaterialIssuesTable
                                 });
                         })
                         ->sortable()
-                        ->getStateUsing(fn($record) => $record->jenis_mir === 'manual' ? $record->po_number : $record->purchaseOrderIssued?->purchase_order_no),
+                        ->getStateUsing(fn ($record) => $record->jenis_mir === 'manual' ? $record->po_number : $record->purchaseOrderIssued?->purchase_order_no),
 
                     TextColumn::make('diminta_oleh')
                         ->label('Diminta Oleh')
@@ -133,9 +134,9 @@ class MaterialIssuesTable
                     ->button()
                     ->outlined()
                     ->color('warning')
-                    ->url(fn(MaterialIssue $record): ?string => ($record->jenis_mir === 'manual' && !empty($record->image_path)) ? Storage::disk('public')->url($record->image_path) : null)
+                    ->url(fn (MaterialIssue $record): ?string => ($record->jenis_mir === 'manual' && ! empty($record->image_path)) ? Storage::disk('public')->url($record->image_path) : null)
                     ->openUrlInNewTab()
-                    ->visible(fn($record) => $record->jenis_mir === 'manual' && !empty($record->image_path)),
+                    ->visible(fn ($record) => $record->jenis_mir === 'manual' && ! empty($record->image_path)),
 
                 Action::make('cetak_mir')
                     ->label('Cetak')
@@ -143,9 +144,9 @@ class MaterialIssuesTable
                     ->button()
                     ->outlined()
                     ->color('success')
-                    ->url(fn(MaterialIssue $record): ?string => $record->jenis_mir === 'digital' ? route('filament.admin.resources.material-issues.print', $record) : null)
+                    ->url(fn (MaterialIssue $record): ?string => $record->jenis_mir === 'digital' ? route('filament.admin.resources.material-issues.print', $record) : null)
                     ->openUrlInNewTab()
-                    ->visible(fn($record) => $record->jenis_mir === 'digital'),
+                    ->visible(fn ($record) => $record->jenis_mir === 'digital'),
                 ActionGroup::make([
                     ViewAction::make()
                         ->color('gray')
@@ -174,7 +175,7 @@ class MaterialIssuesTable
 
                             return redirect()->route('filament.admin.resources.material-issues.print_bulk', ['ids' => $ids]);
                         }),
-                    ExportBulkAction::make()
+                    ExportMaterialIssueBulkAction::make()
                         ->exporter(MaterialIssueExporter::class)
                         ->icon(Heroicon::ArrowUpTray)
                         ->color('gray'),

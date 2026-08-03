@@ -3,6 +3,7 @@
 namespace App\Filament\Exports;
 
 use App\Models\MaterialIssue;
+use App\Models\MaterialIssueDetail;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
@@ -16,145 +17,119 @@ use OpenSpout\Writer\XLSX\Writer;
 
 class MaterialIssueExporter extends Exporter
 {
-    protected static ?string $model = MaterialIssue::class;
+    protected static ?string $model = MaterialIssueDetail::class;
 
     public static function modifyQuery(Builder $query): Builder
     {
+        if ($query->getModel() instanceof MaterialIssue) {
+            $materialIssueIdsQuery = (clone $query)->reorder()->select($query->getModel()->getQualifiedKeyName());
+
+            return MaterialIssueDetail::query()
+                ->whereIn('material_issue_id', $materialIssueIdsQuery)
+                ->with([
+                    'materialIssue.purchaseOrderIssued',
+                    'materialIssue.deliveryOrderReceipt',
+                    'materialIssue.createdBy',
+                    'deliveryOrderReceiptDetail.locationReceiving',
+                    'deliveryOrderReceiptDetail.warehouseDestination',
+                ]);
+        }
+
         return $query->with([
-            'purchaseOrderIssued',
-            'deliveryOrderReceipt',
-            'createdBy',
-            'materialIssueDetails.deliveryOrderReceiptDetail.locationReceiving',
-            'materialIssueDetails.deliveryOrderReceiptDetail.warehouseDestination',
+            'materialIssue.purchaseOrderIssued',
+            'materialIssue.deliveryOrderReceipt',
+            'materialIssue.createdBy',
+            'deliveryOrderReceiptDetail.locationReceiving',
+            'deliveryOrderReceiptDetail.warehouseDestination',
         ]);
     }
 
     public static function getColumns(): array
     {
         return [
-            ExportColumn::make('id')
-                ->label('ID'),
-            ExportColumn::make('jenis_mir')
+            ExportColumn::make('materialIssue.id')
+                ->label('ID MIR'),
+            ExportColumn::make('materialIssue.jenis_mir')
                 ->label('Jenis MIR'),
-            ExportColumn::make('mir_number')
+            ExportColumn::make('materialIssue.mir_number')
                 ->label('No. MIR'),
-            ExportColumn::make('tanggal')
+            ExportColumn::make('materialIssue.tanggal')
                 ->label('Tanggal'),
-            ExportColumn::make('po_number')
+            ExportColumn::make('materialIssue.po_number')
                 ->label('Nomor PO Manual'),
-            ExportColumn::make('purchaseOrderIssued.purchase_order_no')
+            ExportColumn::make('materialIssue.purchaseOrderIssued.purchase_order_no')
                 ->label('Nomor PO Digital'),
-            ExportColumn::make('deliveryOrderReceipt.delivery_order_no')
+            ExportColumn::make('materialIssue.deliveryOrderReceipt.delivery_order_no')
                 ->label('Nomor DO'),
-            ExportColumn::make('item_no')
+            ExportColumn::make('deliveryOrderReceiptDetail.item_no')
                 ->label('Item No')
-                ->state(function (MaterialIssue $record): string {
-                    return $record->materialIssueDetails
-                        ->map(fn ($detail) => $detail->deliveryOrderReceiptDetail?->item_no ?: '-')
-                        ->implode("\n");
-                }),
-            ExportColumn::make('material_code')
+                ->state(fn (MaterialIssueDetail $record): string => (string) ($record->deliveryOrderReceiptDetail?->item_no ?: '-')),
+            ExportColumn::make('deliveryOrderReceiptDetail.material_code')
                 ->label('Kode Material')
-                ->state(function (MaterialIssue $record): string {
-                    return $record->materialIssueDetails
-                        ->map(fn ($detail) => $detail->deliveryOrderReceiptDetail?->material_code ?: '-')
-                        ->implode("\n");
-                }),
-            ExportColumn::make('description')
+                ->state(fn (MaterialIssueDetail $record): string => (string) ($record->deliveryOrderReceiptDetail?->material_code ?: '-')),
+            ExportColumn::make('deliveryOrderReceiptDetail.description')
                 ->label('Deskripsi Material')
-                ->state(function (MaterialIssue $record): string {
-                    return $record->materialIssueDetails
-                        ->map(fn ($detail) => $detail->deliveryOrderReceiptDetail?->description ?: '-')
-                        ->implode("\n");
-                }),
-            ExportColumn::make('uoi')
+                ->state(fn (MaterialIssueDetail $record): string => (string) ($record->deliveryOrderReceiptDetail?->description ?: '-')),
+            ExportColumn::make('deliveryOrderReceiptDetail.uoi')
                 ->label('Satuan (UOI)')
-                ->state(function (MaterialIssue $record): string {
-                    return $record->materialIssueDetails
-                        ->map(fn ($detail) => $detail->deliveryOrderReceiptDetail?->uoi ?: '-')
-                        ->implode("\n");
-                }),
-            ExportColumn::make('qty_total')
+                ->state(fn (MaterialIssueDetail $record): string => (string) ($record->deliveryOrderReceiptDetail?->uoi ?: '-')),
+            ExportColumn::make('deliveryOrderReceiptDetail.quantity')
                 ->label('Qty Total DO')
-                ->state(function (MaterialIssue $record): string {
-                    return $record->materialIssueDetails
-                        ->map(fn ($detail) => $detail->deliveryOrderReceiptDetail?->quantity ?? '-')
-                        ->implode("\n");
-                }),
-            ExportColumn::make('qty_diminta')
+                ->state(fn (MaterialIssueDetail $record): string => (string) ($record->deliveryOrderReceiptDetail?->quantity ?? '-')),
+            ExportColumn::make('diminta')
                 ->label('Qty Diminta')
-                ->state(function (MaterialIssue $record): string {
-                    return $record->materialIssueDetails
-                        ->map(fn ($detail) => $detail->diminta ?? '-')
-                        ->implode("\n");
-                }),
-            ExportColumn::make('qty_diambil')
+                ->state(fn (MaterialIssueDetail $record): string => (string) ($record->diminta ?? '-')),
+            ExportColumn::make('diserahkan')
                 ->label('Qty Diambil (Diserahkan)')
-                ->state(function (MaterialIssue $record): string {
-                    return $record->materialIssueDetails
-                        ->map(fn ($detail) => $detail->diserahkan ?? '-')
-                        ->implode("\n");
-                }),
+                ->state(fn (MaterialIssueDetail $record): string => (string) ($record->diserahkan ?? '-')),
             ExportColumn::make('boh')
                 ->label('Sisa BOH')
-                ->state(function (MaterialIssue $record): string {
-                    return $record->materialIssueDetails
-                        ->map(fn ($detail) => $detail->boh ?? '-')
-                        ->implode("\n");
-                }),
+                ->state(fn (MaterialIssueDetail $record): string => (string) ($record->boh ?? '-')),
             ExportColumn::make('location_name')
                 ->label('Lokasi')
-                ->state(function (MaterialIssue $record): string {
-                    return $record->materialIssueDetails
-                        ->map(fn ($detail) => $detail->deliveryOrderReceiptDetail?->locationReceiving?->name ?: ($detail->deliveryOrderReceiptDetail?->warehouseDestination?->name ?: '-'))
-                        ->implode("\n");
-                }),
+                ->state(fn (MaterialIssueDetail $record): string => (string) ($record->deliveryOrderReceiptDetail?->locationReceiving?->name ?: ($record->deliveryOrderReceiptDetail?->warehouseDestination?->name ?: '-'))),
             ExportColumn::make('stage_when_issued')
                 ->label('Stage Saat Diambil')
-                ->state(function (MaterialIssue $record): string {
-                    return $record->materialIssueDetails
-                        ->map(fn ($detail) => $detail->stage_when_issued ?: '-')
-                        ->implode("\n");
-                }),
-            ExportColumn::make('no_hp')
+                ->state(fn (MaterialIssueDetail $record): string => (string) ($record->stage_when_issued ?: '-')),
+            ExportColumn::make('materialIssue.no_hp')
                 ->label('No. HP'),
-            ExportColumn::make('no_reservasi')
+            ExportColumn::make('materialIssue.no_reservasi')
                 ->label('No. Reservasi'),
-            ExportColumn::make('departemen')
+            ExportColumn::make('materialIssue.departemen')
                 ->label('Departemen'),
-            ExportColumn::make('bagian')
+            ExportColumn::make('materialIssue.bagian')
                 ->label('Bagian'),
-            ExportColumn::make('no_jor_wo')
+            ExportColumn::make('materialIssue.no_jor_wo')
                 ->label('No. JOR/WO'),
-            ExportColumn::make('digunakan_untuk')
+            ExportColumn::make('materialIssue.digunakan_untuk')
                 ->label('Digunakan Untuk'),
-            ExportColumn::make('no_alat')
+            ExportColumn::make('materialIssue.no_alat')
                 ->label('No. Alat'),
-            ExportColumn::make('kode_biaya')
+            ExportColumn::make('materialIssue.kode_biaya')
                 ->label('Kode Biaya/Cost Center'),
-            ExportColumn::make('diminta_oleh')
+            ExportColumn::make('materialIssue.diminta_oleh')
                 ->label('Diminta Oleh'),
-            ExportColumn::make('npk')
+            ExportColumn::make('materialIssue.npk')
                 ->label('NPK'),
-            ExportColumn::make('disetujui_oleh')
+            ExportColumn::make('materialIssue.disetujui_oleh')
                 ->label('Disetujui Oleh'),
-            ExportColumn::make('disetujui_npk')
+            ExportColumn::make('materialIssue.disetujui_npk')
                 ->label('NPK Disetujui')
                 ->enabledByDefault(false),
-            ExportColumn::make('diketahui_oleh')
+            ExportColumn::make('materialIssue.diketahui_oleh')
                 ->label('Diketahui Oleh'),
-            ExportColumn::make('diserahkan_oleh')
+            ExportColumn::make('materialIssue.diserahkan_oleh')
                 ->label('Diserahkan Oleh'),
-            ExportColumn::make('diserahkan_npk')
+            ExportColumn::make('materialIssue.diserahkan_npk')
                 ->label('NPK Diserahkan')
                 ->enabledByDefault(false),
-            ExportColumn::make('diterima_oleh')
+            ExportColumn::make('materialIssue.diterima_oleh')
                 ->label('Diterima Oleh'),
-            ExportColumn::make('createdBy.name')
+            ExportColumn::make('materialIssue.createdBy.name')
                 ->label('Dibuat Oleh'),
-            ExportColumn::make('created_at')
+            ExportColumn::make('materialIssue.created_at')
                 ->label('Tgl Dibuat'),
-            ExportColumn::make('updated_at')
+            ExportColumn::make('materialIssue.updated_at')
                 ->label('Tgl Diperbarui'),
         ];
     }
