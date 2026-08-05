@@ -717,13 +717,13 @@ class DeliveryOrderReceiptForm
                     ->schema([
                         Grid::make(12)->schema([
                             Select::make('purchase_order_issued_id')
-                                ->label('Pilih Material dari PO')
+                                ->label('Pilih Item No. PO')
                                 ->placeholder('Pilih Item dari PO...')
                                 ->required()
                                 ->searchable()
                                 ->preload()
                                 ->native(false)
-                                ->columnSpan(12)
+                                ->columnSpan(4)
                                 ->getOptionLabelUsing(function ($value): ?string {
                                     $item = PurchaseOrderIssued::find($value);
 
@@ -817,18 +817,18 @@ class DeliveryOrderReceiptForm
 
                             Hidden::make('uoi'),
 
+                            TextInput::make('description')
+                                ->label('Deskripsi')
+                                ->disabled()
+                                ->dehydrated()
+                                ->columnSpan(8),
+
                             TextInput::make('material_code')
                                 ->label('Kode Material')
                                 ->placeholder('Kode Material')
                                 ->disabled()
                                 ->dehydrated()
                                 ->columnSpan(4),
-
-                            TextInput::make('description')
-                                ->label('Deskripsi')
-                                ->disabled()
-                                ->dehydrated()
-                                ->columnSpan(8),
 
                             TextInput::make('quantity')
                                 ->label('Quantity Diterima')
@@ -934,7 +934,7 @@ class DeliveryOrderReceiptForm
                                     $set('quantity', $get('quantity'));
                                 })
                                 ->default(false)
-                                ->columnSpan(4)
+                                ->columnSpan(3)
                                 ->inline(false)
                                 ->dehydrated(),
 
@@ -942,7 +942,7 @@ class DeliveryOrderReceiptForm
                                 ->label('Beda Lokasi?')
                                 ->live()
                                 ->inline(false)
-                                ->columnSpan(4)
+                                ->columnSpan(3)
                                 ->afterStateUpdated(function (Set $set, Get $get, $state) {
                                     if (! $state) {
                                         $globalLoc = $get('../../global_location_id');
@@ -959,7 +959,7 @@ class DeliveryOrderReceiptForm
                                 ->preload()
                                 ->required()
                                 ->live()
-                                ->columnSpan(8)
+                                ->columnSpan(6)
                                 ->hidden(fn (Get $get): bool => ! ($get('is_different_location') ?? false))
                                 ->dehydratedWhenHidden()
                                 ->afterStateUpdated(function (Set $set, Get $get, $state) {
