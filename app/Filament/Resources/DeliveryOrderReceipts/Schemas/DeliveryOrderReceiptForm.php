@@ -748,7 +748,7 @@ class DeliveryOrderReceiptForm
                                         ->orderBy('item_no')
                                         ->get()
                                         ->mapWithKeys(function ($item) {
-                                            return [$item->id => "Item {$item->item_no} - {$item->material_code} ({$item->description})"];
+                                            return [$item->id => "Item {$item->item_no}"];
                                         })
                                         ->toArray();
                                 })
