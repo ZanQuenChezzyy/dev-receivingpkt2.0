@@ -13,7 +13,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\EmptyState;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -53,16 +53,16 @@ class MonitoringNpkForm
                                     ->searchable()
                                     ->live()
                                     ->required()
-                                    ->afterStateUpdated(function (mixed $state, Set $set): void {
+                                    ->afterStateUpdated(function (mixed $state, Set $set, Get $get): void {
                                         if (! $state) {
-                                            $set('details', [[]]);
+                                            $set('details', []);
 
                                             return;
                                         }
 
                                         $anchor = PurchaseOrderIssued::find($state);
                                         if (! $anchor) {
-                                            $set('details', [[]]);
+                                            $set('details', []);
 
                                             return;
                                         }
@@ -71,14 +71,30 @@ class MonitoringNpkForm
                                             ->orderBy('item_no')
                                             ->get(['id', 'item_no', 'material_code', 'description', 'qty_po', 'uoi']);
 
-                                        $set('details', $items->map(fn ($it) => [
-                                            'purchase_order_issued_id' => $it->id,
-                                            'item_no' => $it->item_no,
-                                            'material_code' => $it->material_code,
-                                            'description' => $it->description,
-                                            'quantity' => $it->qty_po,
-                                            'uoi' => $it->uoi,
-                                        ])->toArray());
+                                        $currentMonitoringId = (int) ($get('id') ?? 0);
+
+                                        $filteredItems = $items->map(function ($it) use ($currentMonitoringId) {
+                                            $h = MonitoringNpkResource::hitungSisaDbByItem((int) $it->id, $currentMonitoringId > 0 ? $currentMonitoringId : null);
+                                            $poQty = (float) ($h['po'] ?? 0);
+                                            $usedDb = (float) ($h['used_db'] ?? 0);
+                                            $sisa = $poQty - $usedDb;
+
+                                            if ($sisa <= 0) {
+                                                return null;
+                                            }
+
+                                            return [
+                                                'purchase_order_issued_id' => $it->id,
+                                                'item_no' => $it->item_no,
+                                                'material_code' => $it->material_code,
+                                                'description' => $it->description,
+                                                'quantity' => $sisa,
+                                                'uoi' => $it->uoi,
+                                                'is_qty_tolerance' => false,
+                                            ];
+                                        })->filter()->values()->toArray();
+
+                                        $set('details', ! empty($filteredItems) ? $filteredItems : []);
                                     })
                                     ->columnSpan(6),
 
@@ -199,11 +215,22 @@ class MonitoringNpkForm
                                     ->hiddenLabel()
                                     ->relationship('details')
                                     ->addActionLabel('Tambah Item')
-                                    ->defaultItems(1)
+                                    ->defaultItems(0)
                                     ->minItems(1)
                                     ->disabled(fn (Get $get) => blank($get('purchase_order_terbit_id')))
                                     ->addable(fn (Get $get) => filled($get('purchase_order_terbit_id')))
                                     ->deletable(fn (Get $get) => filled($get('purchase_order_terbit_id')))
+                                    ->mutateRelationshipDataBeforeCreateUsing(function (array $data): array {
+                                        $data['quantity'] = (float) str_replace(',', '.', (string) ($data['quantity'] ?? 0));
+                                        unset($data['id']);
+
+                                        return $data;
+                                    })
+                                    ->mutateRelationshipDataBeforeSaveUsing(function (array $data, $record): array {
+                                        $data['quantity'] = (float) str_replace(',', '.', (string) ($data['quantity'] ?? 0));
+
+                                        return $data;
+                                    })
                                     ->schema([
                                         Grid::make(12)->schema([
                                             Select::make('purchase_order_issued_id')
@@ -226,19 +253,54 @@ class MonitoringNpkForm
                                                             $r->id => str_pad((string) $r->item_no, 2, '0', STR_PAD_LEFT),
                                                         ])->all();
                                                 })
+                                                ->afterStateHydrated(function (Select $component, $state, Get $get, $record) {
+                                                    if (! $state && $record && $record->item_no) {
+                                                        $anchorId = $get('../../purchase_order_terbit_id');
+                                                        if ($anchorId) {
+                                                            $anchor = PurchaseOrderIssued::find($anchorId);
+                                                            if ($anchor) {
+                                                                $poItem = PurchaseOrderIssued::where('purchase_order_no', $anchor->purchase_order_no)
+                                                                    ->where('item_no', $record->item_no)
+                                                                    ->first();
+                                                                if ($poItem) {
+                                                                    $component->state($poItem->id);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                })
                                                 ->searchable()
                                                 ->live()
                                                 ->columnSpan(4)
-                                                ->afterStateUpdated(function ($state, Set $set) {
-                                                    $po = PurchaseOrderIssued::find($state);
-                                                    $set('item_no', $po?->item_no);
-                                                    $set('material_code', $po?->material_code);
-                                                    $set('description', $po?->description);
-                                                    $set('uoi', $po?->uoi);
-                                                    $set('is_qty_tolerance', false);
-                                                    if ($po?->qty_po) {
-                                                        $set('quantity', $po->qty_po);
+                                                ->afterStateUpdated(function (Set $set, Get $get, $state, $record) {
+                                                    if (! $state) {
+                                                        $set('item_no', null);
+                                                        $set('material_code', null);
+                                                        $set('description', null);
+                                                        $set('uoi', null);
+                                                        $set('quantity', null);
+                                                        $set('is_qty_tolerance', false);
+
+                                                        return;
                                                     }
+
+                                                    $po = PurchaseOrderIssued::find($state);
+                                                    if (! $po) {
+                                                        return;
+                                                    }
+
+                                                    $currentMonitoringId = $get('../../id');
+                                                    $h = MonitoringNpkResource::hitungSisaDbByItem((int) $po->id, $currentMonitoringId);
+                                                    $poQty = (float) ($h['po'] ?? 0);
+                                                    $usedDb = (float) ($h['used_db'] ?? 0);
+                                                    $sisa = max(0, $poQty - $usedDb);
+
+                                                    $set('item_no', $po->item_no);
+                                                    $set('material_code', $po->material_code);
+                                                    $set('description', $po->description);
+                                                    $set('uoi', $po->uoi);
+                                                    $set('quantity', $sisa);
+                                                    $set('is_qty_tolerance', false);
                                                 })
                                                 ->rule(function (Get $get) {
                                                     return function (string $attribute, $value, \Closure $fail) use ($get) {
@@ -267,46 +329,94 @@ class MonitoringNpkForm
 
                                             TextInput::make('quantity')
                                                 ->label('Quantity Aktual')
-                                                ->placeholder('0.00')
-                                                ->suffix(fn (Get $get) => $get('uoi') ?: null)
-                                                ->numeric()
-                                                ->minValue(0.01)
+                                                ->required()
+                                                ->dehydrateStateUsing(fn ($state): ?float => $state !== null && $state !== '' ? (float) str_replace(',', '.', (string) $state) : null)
+                                                ->suffix(fn (Get $get): ?string => $get('uoi') ?: null)
                                                 ->columnSpan(fn () => optional(Auth::user())->hasRole(['Developer', 'Super Admin', 'Staff', 'Admin']) ? 8 : 12)
+                                                ->validationAttribute('Quantity')
+                                                ->live(onBlur: true)
                                                 ->rules([
                                                     fn (Get $get, $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                                        $valString = str_replace(',', '.', (string) $value);
+
+                                                        if (! is_numeric($valString) || (float) $valString <= 0) {
+                                                            $fail('Format kuantitas harus berupa angka positif (gunakan titik atau koma untuk desimal).');
+
+                                                            return;
+                                                        }
+
+                                                        $isToleranceActive = (bool) ($get('is_qty_tolerance') ?? false);
                                                         $rowPoTerbitId = (int) ($get('purchase_order_issued_id') ?? 0);
                                                         $itemNo = $get('item_no');
+
                                                         if (! $rowPoTerbitId || ! $itemNo) {
                                                             return;
                                                         }
 
-                                                        $isTolerance = (bool) ($get('is_qty_tolerance') ?? false);
-
                                                         $currentMonitoringId = $get('../../id');
                                                         $h = MonitoringNpkResource::hitungSisaDbByItem($rowPoTerbitId, $currentMonitoringId);
-                                                        $poQty = (float) ($h['po'] ?? 0);
-                                                        $usedDb = (float) ($h['used_db'] ?? 0);
+                                                        $qtyPo = (float) ($h['po'] ?? 0);
+                                                        $netSaved = (float) ($h['used_db'] ?? 0);
                                                         $uoi = (string) ($h['uoi'] ?? '');
 
-                                                        $rows = $get('../../details') ?? [];
-                                                        $inFormSum = collect($rows)
-                                                            ->where('item_no', $itemNo)
-                                                            ->sum(fn ($r) => (float) ($r['quantity'] ?? 0));
+                                                        $currentInput = (float) $valString;
+                                                        $totalAkanDiterima = $netSaved + $currentInput;
 
-                                                        $maxAllowedWithTolerance = $poQty * 1.10; // 10% tolerance
+                                                        $maxAllowedWithTolerance = $qtyPo * 1.10; // 10% tolerance
 
-                                                        if (! $isTolerance && ($usedDb + $inFormSum) > $poQty) {
-                                                            $sisa = max(0, $poQty - $usedDb);
-                                                            $fail("Kuantitas melebihi sisa {$sisa} {$uoi}. Aktifkan 'Toleransi Qty' bila lebih.");
-                                                        } elseif ($isTolerance && ($usedDb + $inFormSum) > $maxAllowedWithTolerance) {
+                                                        if (! $isToleranceActive && $totalAkanDiterima > $qtyPo) {
+                                                            $selisih = $totalAkanDiterima - $qtyPo;
+                                                            $fmtSelisih = rtrim(rtrim(number_format($selisih, 4, ',', '.'), '0'), ',');
+                                                            $fail("Input tidak valid! Kelebihan {$fmtSelisih} {$uoi}. Aktifkan 'Toleransi Qty' atau kurangi angka.");
+                                                        } elseif ($isToleranceActive && $totalAkanDiterima > $maxAllowedWithTolerance) {
                                                             $fail('Kuantitas melebihi batas maksimal toleransi 10% dari PO ('.number_format($maxAllowedWithTolerance, 2, ',', '.')." {$uoi}).");
                                                         }
-
-                                                        if ((float) $value <= 0) {
-                                                            $fail('Quantity harus lebih dari 0.');
-                                                        }
                                                     },
-                                                ]),
+                                                ])
+                                                ->helperText(function (Get $get, $record) {
+                                                    $rowPoTerbitId = (int) ($get('purchase_order_issued_id') ?? 0);
+                                                    $itemNo = $get('item_no');
+
+                                                    if (! $rowPoTerbitId || ! $itemNo) {
+                                                        return null;
+                                                    }
+
+                                                    $currentMonitoringId = $get('../../id');
+                                                    $h = MonitoringNpkResource::hitungSisaDbByItem($rowPoTerbitId, $currentMonitoringId);
+                                                    $qtyPo = (float) ($h['po'] ?? 0);
+                                                    $netSaved = (float) ($h['used_db'] ?? 0);
+                                                    $uoi = (string) ($h['uoi'] ?? 'EA');
+
+                                                    $currentInput = (float) str_replace(',', '.', (string) ($get('quantity') ?? 0));
+
+                                                    $fmtNetSaved = number_format($netSaved, 3, ',', '.');
+                                                    $totalAkanDiterima = $netSaved + $currentInput;
+                                                    $sisaSetelahInput = $qtyPo - $totalAkanDiterima;
+
+                                                    $fmtQtyPo = rtrim(rtrim(number_format($qtyPo, 4, ',', '.'), '0'), ',');
+                                                    $fmtTotalAkanDiterima = rtrim(rtrim(number_format($totalAkanDiterima, 4, ',', '.'), '0'), ',');
+                                                    $fmtSisaAbsolut = rtrim(rtrim(number_format(abs($sisaSetelahInput), 4, ',', '.'), '0'), ',');
+
+                                                    if ($get('is_qty_tolerance') && $sisaSetelahInput < 0) {
+                                                        $statusInfo = "<span style='color: #d97706; font-weight: bold;'>Toleransi Aktif: {$fmtSisaAbsolut} {$uoi}</span>";
+                                                    } else {
+                                                        $colorSisa = $sisaSetelahInput < 0 ? '#dc2626' : ($sisaSetelahInput == 0 ? '#6b7280' : '#f59e0b');
+                                                        $statusLabel = $sisaSetelahInput < 0 ? 'OVER LIMIT' : 'Quantity Tersisa';
+                                                        $statusInfo = "<span style='color: {$colorSisa}; font-weight: bold;'>{$statusLabel}: {$fmtSisaAbsolut} {$uoi}</span>";
+                                                    }
+
+                                                    $colorAkanDiterima = ($totalAkanDiterima >= $qtyPo) ? '#16a34a' : ($totalAkanDiterima > 0 ? '#16a34a' : '#6b7280');
+                                                    $colorRiwayat = ($netSaved > 0) ? '#4090ff' : '#4b5563';
+
+                                                    return new HtmlString("
+                                                        <ul class='list-disc pl-5 space-y-1 text-xs text-gray-500'>
+                                                            <li>PO Terbit: <b class='text-gray-700'>{$fmtQtyPo} {$uoi}</b></li>
+                                                            <li style='color: {$colorRiwayat};'>Riwayat Terima: <b>{$fmtNetSaved} {$uoi}</b></li>
+                                                            <li style='color: {$colorAkanDiterima}; font-weight: 600;'>Riwayat + Input Saat Ini: <b>{$fmtTotalAkanDiterima} {$uoi}</b></li>
+                                                            <li>{$statusInfo}</li>
+                                                        </ul>
+                                                    ");
+                                                }),
 
                                             Toggle::make('is_qty_tolerance')
                                                 ->label('Toleransi Qty?')
@@ -318,36 +428,23 @@ class MonitoringNpkForm
                                                 })
                                                 ->default(false)
                                                 ->dehydrated()
+                                                ->visible(fn () => optional(Auth::user())->hasRole(['Developer', 'Super Admin', 'Staff', 'Admin']))
                                                 ->columnSpan(4),
-
-                                            TextEntry::make('sisa_info')
-                                                ->hiddenLabel()
-                                                ->state(function (Get $get, $record) {
-                                                    $rowPoTerbitId = (int) ($get('purchase_order_issued_id') ?? 0);
-                                                    if ($rowPoTerbitId === 0) {
-                                                        return '-';
-                                                    }
-                                                    $currentMonitoringId = $get('../../id');
-                                                    $h = MonitoringNpkResource::hitungSisaDbByItem($rowPoTerbitId, $currentMonitoringId);
-
-                                                    $po = (float) ($h['po'] ?? 0);
-                                                    $usedDb = (float) ($h['used_db'] ?? 0);
-                                                    $uoi = (string) ($h['uoi'] ?? '');
-                                                    $sisa = max(0, $po - $usedDb);
-
-                                                    $sisaText = rtrim(rtrim(number_format($sisa, 4, ',', '.'), '0'), ',').' '.$uoi;
-
-                                                    if ($sisa > 0) {
-                                                        return new HtmlString("<span class='text-sm font-semibold text-danger-600'>Sisa: {$sisaText}</span> <span class='text-xs text-gray-500'>(Target PO: {$po} {$uoi})</span>");
-                                                    }
-
-                                                    return new HtmlString("<span class='text-sm font-semibold text-success-600'>Kuota PO Terpenuhi</span>");
-                                                })
-                                                ->html()
-                                                ->columnSpan(12),
                                         ]),
                                     ])
                                     ->columnSpanFull(),
+
+                                EmptyState::make('Belum ada Nomor PO yang dipilih')
+                                    ->description('Silakan cari dan pilih Nomor PO terlebih dahulu untuk menampilkan detail item.')
+                                    ->icon('heroicon-o-cursor-arrow-rays')
+                                    ->contained(true)
+                                    ->visible(fn (Get $get, $record): bool => filled($get('purchase_order_terbit_id')) === false && $record === null),
+
+                                EmptyState::make('Semua item dalam PO ini sudah diterima sepenuhnya.')
+                                    ->description('Tidak ada sisa kuota material yang tersedia untuk diproses pada nomor PO ini.')
+                                    ->icon('heroicon-o-check-circle')
+                                    ->contained(true)
+                                    ->visible(fn (Get $get): bool => filled($get('purchase_order_terbit_id')) && empty($get('details'))),
                             ]),
 
                         Section::make('Status Purchase Order')
