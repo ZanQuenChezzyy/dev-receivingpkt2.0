@@ -9,6 +9,7 @@ use App\Filament\Resources\MonitoringNpks\Pages\ViewMonitoringNpk;
 use App\Filament\Resources\MonitoringNpks\Schemas\MonitoringNpkForm;
 use App\Filament\Resources\MonitoringNpks\Schemas\MonitoringNpkInfolist;
 use App\Filament\Resources\MonitoringNpks\Tables\MonitoringNpksTable;
+use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\MonitoringNpk;
 use App\Models\MonitoringNpkDetail;
 use App\Models\PurchaseOrderIssued;
@@ -58,7 +59,7 @@ class MonitoringNpkResource extends Resource
         $uoi = $poRow?->uoi;
 
         if ($poNo === '' || $itemNo === null) {
-            return ['po' => 0.0, 'used_db' => 0.0, 'uoi' => $uoi, 'po_no' => $poNo, 'item_no' => $itemNo];
+            return ['po' => 0.0, 'used_db' => 0.0, 'qty_ditolak' => 0.0, 'uoi' => $uoi, 'po_no' => $poNo, 'item_no' => $itemNo];
         }
 
         $matchingPoTerbitIds = PurchaseOrderIssued::query()
@@ -74,9 +75,24 @@ class MonitoringNpkResource extends Resource
             ->when($currentMonitoringId, fn ($q) => $q->where('monitoring_npk_id', '!=', $currentMonitoringId))
             ->sum('quantity');
 
+        $qtyDitolak = (float) DeliveryOrderReceiptDetail::query()
+            ->whereIn('purchase_order_issued_id', $matchingPoTerbitIds)
+            ->where('item_no', $itemNo)
+            ->whereHas('deliveryOrderReceipt', function ($q) {
+                $q->where('status', 'RDTV')
+                    ->orWhereHas('grsRdtvItems', function ($itemQuery) {
+                        $itemQuery->where('status', 'RDTV')
+                            ->orWhereHas('grsRdtv', fn ($grsQuery) => $grsQuery->where('category', 'RDTV'));
+                    });
+            })
+            ->sum('quantity');
+
+        $actualUsedDb = max(0.0, $usedDb - $qtyDitolak);
+
         return [
             'po' => $poQty,
-            'used_db' => $usedDb,
+            'used_db' => $actualUsedDb,
+            'qty_ditolak' => $qtyDitolak,
             'uoi' => $uoi,
             'po_no' => $poNo,
             'item_no' => $itemNo,

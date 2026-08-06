@@ -894,7 +894,7 @@ class DeliveryOrderReceiptForm
                                         return null;
                                     }
 
-                                    [$qtyPo, $netSaved] = static::computeNetForItem((int) $poId, (string) $itemNo, $record?->id);
+                                    [$qtyPo, $netSaved, $qtyDitolak] = static::computeNetForItem((int) $poId, (string) $itemNo, $record?->id);
                                     $currentInput = (float) str_replace(',', '.', (string) ($get('quantity') ?? 0));
 
                                     $fmtNetSaved = number_format($netSaved, 3, ',', '.');
@@ -916,11 +916,13 @@ class DeliveryOrderReceiptForm
 
                                     $colorAkanDiterima = ($totalAkanDiterima >= $qtyPo) ? '#16a34a' : ($totalAkanDiterima > 0 ? '#16a34a' : '#6b7280');
                                     $colorRiwayat = ($netSaved > 0) ? '#4090ff' : '#4b5563';
+                                    $liRdtv = $qtyDitolak > 0 ? "<li style='color: #d97706;'>Qty Ditolak (RDTV Dikembalikan): <b>".rtrim(rtrim(number_format($qtyDitolak, 4, ',', '.'), '0'), ',')." {$uoi}</b></li>" : '';
 
                                     return new HtmlString("
                                             <ul class='list-disc pl-5 space-y-1 text-xs text-gray-500'>
                                                 <li>PO Terbit: <b class='text-gray-700'>{$fmtQtyPo} {$uoi}</b></li>
                                                 <li style='color: {$colorRiwayat};'>Riwayat Terima: <b>{$fmtNetSaved} {$uoi}</b></li>
+                                                {$liRdtv}
                                                 <li style='color: {$colorAkanDiterima}; font-weight: 600;'>Riwayat + Input Saat Ini: <b>{$fmtTotalAkanDiterima} {$uoi}</b></li>
                                                 <li>{$statusInfo}</li>
                                             </ul>
@@ -1072,12 +1074,26 @@ class DeliveryOrderReceiptForm
 
         $qtyPo = (float) $poItem->qty_po;
 
-        $netSaved = (float) DeliveryOrderReceiptDetail::where('purchase_order_issued_id', $poIssuedId)
+        $totalSaved = (float) DeliveryOrderReceiptDetail::where('purchase_order_issued_id', $poIssuedId)
             ->where('item_no', $itemNo)
             ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
             ->sum('quantity');
 
-        return [$qtyPo, $netSaved];
+        $qtyDitolak = (float) DeliveryOrderReceiptDetail::where('purchase_order_issued_id', $poIssuedId)
+            ->where('item_no', $itemNo)
+            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+            ->whereHas('deliveryOrderReceipt', function ($q) {
+                $q->where('status', 'RDTV')
+                    ->orWhereHas('grsRdtvItems', function ($itemQuery) {
+                        $itemQuery->where('status', 'RDTV')
+                            ->orWhereHas('grsRdtv', fn ($grsQuery) => $grsQuery->where('category', 'RDTV'));
+                    });
+            })
+            ->sum('quantity');
+
+        $netSaved = max(0.0, $totalSaved - $qtyDitolak);
+
+        return [$qtyPo, $netSaved, $qtyDitolak, 0];
     }
 
     public static function updateDocumentCode(Set $set, Get $get): void

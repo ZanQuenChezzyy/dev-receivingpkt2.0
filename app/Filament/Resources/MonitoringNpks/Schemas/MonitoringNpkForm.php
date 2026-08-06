@@ -332,7 +332,7 @@ class MonitoringNpkForm
                                                 ->required()
                                                 ->dehydrateStateUsing(fn ($state): ?float => $state !== null && $state !== '' ? (float) str_replace(',', '.', (string) $state) : null)
                                                 ->suffix(fn (Get $get): ?string => $get('uoi') ?: null)
-                                                ->columnSpan(fn () => optional(Auth::user())->hasRole(['Developer', 'Super Admin', 'Staff', 'Admin']) ? 8 : 12)
+                                                ->columnSpan(8)
                                                 ->validationAttribute('Quantity')
                                                 ->live(onBlur: true)
                                                 ->rules([
@@ -385,6 +385,7 @@ class MonitoringNpkForm
                                                     $h = MonitoringNpkResource::hitungSisaDbByItem($rowPoTerbitId, $currentMonitoringId);
                                                     $qtyPo = (float) ($h['po'] ?? 0);
                                                     $netSaved = (float) ($h['used_db'] ?? 0);
+                                                    $qtyDitolak = (float) ($h['qty_ditolak'] ?? 0);
                                                     $uoi = (string) ($h['uoi'] ?? 'EA');
 
                                                     $currentInput = (float) str_replace(',', '.', (string) ($get('quantity') ?? 0));
@@ -407,11 +408,13 @@ class MonitoringNpkForm
 
                                                     $colorAkanDiterima = ($totalAkanDiterima >= $qtyPo) ? '#16a34a' : ($totalAkanDiterima > 0 ? '#16a34a' : '#6b7280');
                                                     $colorRiwayat = ($netSaved > 0) ? '#4090ff' : '#4b5563';
+                                                    $liRdtv = $qtyDitolak > 0 ? "<li style='color: #d97706;'>Qty Ditolak (RDTV Dikembalikan): <b>".rtrim(rtrim(number_format($qtyDitolak, 4, ',', '.'), '0'), ',')." {$uoi}</b></li>" : '';
 
                                                     return new HtmlString("
                                                         <ul class='list-disc pl-5 space-y-1 text-xs text-gray-500'>
                                                             <li>PO Terbit: <b class='text-gray-700'>{$fmtQtyPo} {$uoi}</b></li>
                                                             <li style='color: {$colorRiwayat};'>Riwayat Terima: <b>{$fmtNetSaved} {$uoi}</b></li>
+                                                            {$liRdtv}
                                                             <li style='color: {$colorAkanDiterima}; font-weight: 600;'>Riwayat + Input Saat Ini: <b>{$fmtTotalAkanDiterima} {$uoi}</b></li>
                                                             <li>{$statusInfo}</li>
                                                         </ul>
@@ -428,7 +431,6 @@ class MonitoringNpkForm
                                                 })
                                                 ->default(false)
                                                 ->dehydrated()
-                                                ->visible(fn () => optional(Auth::user())->hasRole(['Developer', 'Super Admin', 'Staff', 'Admin']))
                                                 ->columnSpan(4),
                                         ]),
                                     ])
