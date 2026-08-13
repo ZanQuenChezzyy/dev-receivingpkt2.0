@@ -57,7 +57,7 @@ class CreateGrsRdtv extends CreateRecord
                         if ($do->receipt_mode === 'Termin') {
                             $totalTermins = $do->termins()->count();
                             $postedTermins = $do->termins()->whereNotNull('post_103')->count();
-                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn($q) => $q->where('category', 'GRS'))->count();
+                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count();
 
                             if ($grsCount >= $totalTermins) {
                                 $alreadyProcessed[] = $documentCode;
@@ -66,7 +66,7 @@ class CreateGrsRdtv extends CreateRecord
                                     $unposted103Documents[] = $documentCode;
                                 } else {
                                     $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
-                                    if (!$isZrmZsmOrZpm) {
+                                    if (! $isZrmZsmOrZpm) {
                                         $qcKembaliCount = $do->qcHistories()->where('status', 'Kembali')->count();
                                         if ($qcKembaliCount <= $grsCount) {
                                             $invalidDocuments[] = $documentCode;
@@ -75,7 +75,7 @@ class CreateGrsRdtv extends CreateRecord
                                 }
                             }
                         } else {
-                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn($q) => $q->where('category', 'GRS'))->count();
+                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count();
 
                             if ($grsCount >= 1) {
                                 $alreadyProcessed[] = $documentCode;
@@ -85,9 +85,9 @@ class CreateGrsRdtv extends CreateRecord
                                 $unposted103Documents[] = $documentCode;
                             } else {
                                 $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
-                                if (!$isZrmZsmOrZpm) {
+                                if (! $isZrmZsmOrZpm) {
                                     $latestQc = $do->qcHistories()->latest()->first();
-                                    if (!$latestQc || $latestQc->status !== 'Kembali') {
+                                    if (! $latestQc || $latestQc->status !== 'Kembali') {
                                         $invalidDocuments[] = $documentCode;
                                     }
                                 }
@@ -122,7 +122,7 @@ class CreateGrsRdtv extends CreateRecord
                         if ($do->receipt_mode === 'Termin') {
                             $totalTermins = $do->termins()->count();
                             $postedTermins = $do->termins()->whereNotNull('post_103')->count();
-                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn($q) => $q->where('category', 'GRS'))->count();
+                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count();
 
                             if ($grsCount >= $totalTermins) {
                                 $alreadyProcessed[] = $documentCode;
@@ -131,7 +131,7 @@ class CreateGrsRdtv extends CreateRecord
                                     $unposted103Documents[] = $documentCode;
                                 } else {
                                     $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
-                                    if (!$isZrmZsmOrZpm) {
+                                    if (! $isZrmZsmOrZpm) {
                                         $qcKembaliCount = $do->qcHistories()->where('status', 'Kembali')->count();
                                         if ($qcKembaliCount <= $grsCount) {
                                             $invalidDocuments[] = $documentCode;
@@ -140,7 +140,7 @@ class CreateGrsRdtv extends CreateRecord
                                 }
                             }
                         } else {
-                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn($q) => $q->where('category', 'GRS'))->count();
+                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count();
 
                             if ($grsCount >= 1) {
                                 $alreadyProcessed[] = $documentCode;
@@ -150,9 +150,9 @@ class CreateGrsRdtv extends CreateRecord
                                 $unposted103Documents[] = $documentCode;
                             } else {
                                 $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
-                                if (!$isZrmZsmOrZpm) {
+                                if (! $isZrmZsmOrZpm) {
                                     $latestQc = $do->qcHistories()->latest()->first();
-                                    if (!$latestQc || $latestQc->status !== 'Kembali') {
+                                    if (! $latestQc || $latestQc->status !== 'Kembali') {
                                         $invalidDocuments[] = $documentCode;
                                     }
                                 }
@@ -167,20 +167,20 @@ class CreateGrsRdtv extends CreateRecord
         }
 
         $errors = [];
-        if (!empty($unposted103Documents)) {
-            $errors[] = 'Belum Post 103: ' . implode(', ', array_unique($unposted103Documents));
+        if (! empty($unposted103Documents)) {
+            $errors[] = 'Belum Post 103: '.implode(', ', array_unique($unposted103Documents));
         }
-        if (!empty($invalidDocuments)) {
-            $errors[] = 'Belum kembali dari QC: ' . implode(', ', array_unique($invalidDocuments));
+        if (! empty($invalidDocuments)) {
+            $errors[] = 'Belum kembali dari QC: '.implode(', ', array_unique($invalidDocuments));
         }
-        if (!empty($alreadyProcessed)) {
-            $errors[] = 'Sudah sukses diupload sebagai GRS sebelumnya: ' . implode(', ', array_unique($alreadyProcessed));
+        if (! empty($alreadyProcessed)) {
+            $errors[] = 'Sudah sukses diupload sebagai GRS sebelumnya: '.implode(', ', array_unique($alreadyProcessed));
         }
-        if (!empty($duplicateDocuments)) {
-            $errors[] = 'Terdeteksi duplikat file yang sama: ' . implode(', ', array_unique($duplicateDocuments));
+        if (! empty($duplicateDocuments)) {
+            $errors[] = 'Terdeteksi duplikat file yang sama: '.implode(', ', array_unique($duplicateDocuments));
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             Notification::make()
                 ->title('Gagal Disimpan')
                 ->body(implode('<br>', $errors))
@@ -198,11 +198,11 @@ class CreateGrsRdtv extends CreateRecord
         $grsRdtv = $this->record;
         $category = $grsRdtv->category;
 
-        $matchedCount = 0;
-        $notFoundCount = 0;
+        $matchedDocs = [];
+        $notFoundDocs = [];
 
         // --- Proses Dokumen GRS (Multiupload) ---
-        if ($category === 'GRS' && !empty($this->uploadedFiles)) {
+        if ($category === 'GRS' && ! empty($this->uploadedFiles)) {
             foreach ($this->uploadedFiles as $file) {
                 if ($file instanceof TemporaryUploadedFile) {
                     $originalName = $file->getClientOriginalName();
@@ -213,9 +213,9 @@ class CreateGrsRdtv extends CreateRecord
 
                     if ($do) {
                         $do->update(['status' => $category]);
-                        $matchedCount++;
+                        $matchedDocs[] = $documentCode;
                     } else {
-                        $notFoundCount++;
+                        $notFoundDocs[] = $documentCode;
                     }
 
                     $grsRdtv->grsRdtvItems()->create([
@@ -230,7 +230,7 @@ class CreateGrsRdtv extends CreateRecord
         }
 
         // --- Proses Dokumen RDTV (Repeater dengan alasan) ---
-        if ($category === 'RDTV' && !empty($this->uploadedItems)) {
+        if ($category === 'RDTV' && ! empty($this->uploadedItems)) {
             foreach ($this->uploadedItems as $item) {
                 // Ekstrak file dari Repeater
                 $file = is_array($item['file']) ? array_values($item['file'])[0] ?? null : $item['file'];
@@ -250,9 +250,9 @@ class CreateGrsRdtv extends CreateRecord
                             'delay_reason' => 'RDTV',
                             'delay_notes' => $reason,
                         ]);
-                        $matchedCount++;
+                        $matchedDocs[] = $documentCode;
                     } else {
-                        $notFoundCount++;
+                        $notFoundDocs[] = $documentCode;
                     }
 
                     $grsRdtv->grsRdtvItems()->create([
@@ -266,9 +266,19 @@ class CreateGrsRdtv extends CreateRecord
             }
         }
 
+        $body = "Dokumen {$category} selesai diproses.<br>";
+
+        if (! empty($matchedDocs)) {
+            $body .= '<br><b>Berhasil (Matched - '.count($matchedDocs).'):</b><br>&bull; '.implode('<br>&bull; ', $matchedDocs);
+        }
+
+        if (! empty($notFoundDocs)) {
+            $body .= '<br><br><b>Tidak Ditemukan (Not Found - '.count($notFoundDocs).'):</b><br>&bull; '.implode('<br>&bull; ', $notFoundDocs);
+        }
+
         Notification::make()
             ->title('Proses Selesai')
-            ->body("Berhasil memproses dokumen {$category}. Matched: {$matchedCount}, Not Found: {$notFoundCount}")
+            ->body($body)
             ->success()
             ->send();
     }
