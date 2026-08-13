@@ -35,6 +35,8 @@ class CreateGrsRdtv extends CreateRecord
         $alreadyProcessed = [];
         $duplicateDocuments = [];
         $unposted103Documents = [];
+        $readyDocuments = [];
+        $notFoundDocuments = [];
         $seen = [];
 
         // Pindahkan files (GRS) ke property sementara
@@ -54,6 +56,7 @@ class CreateGrsRdtv extends CreateRecord
 
                     $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                     if ($do) {
+                        $hasError = false;
                         if ($do->receipt_mode === 'Termin') {
                             $totalTermins = $do->termins()->count();
                             $postedTermins = $do->termins()->whereNotNull('post_103')->count();
@@ -61,15 +64,18 @@ class CreateGrsRdtv extends CreateRecord
 
                             if ($grsCount >= $totalTermins) {
                                 $alreadyProcessed[] = $documentCode;
+                                $hasError = true;
                             } else {
                                 if ($postedTermins <= $grsCount) {
                                     $unposted103Documents[] = $documentCode;
+                                    $hasError = true;
                                 } else {
                                     $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
                                     if (! $isZrmZsmOrZpm) {
                                         $qcKembaliCount = $do->qcHistories()->where('status', 'Kembali')->count();
                                         if ($qcKembaliCount <= $grsCount) {
                                             $invalidDocuments[] = $documentCode;
+                                            $hasError = true;
                                         }
                                     }
                                 }
@@ -79,20 +85,29 @@ class CreateGrsRdtv extends CreateRecord
 
                             if ($grsCount >= 1) {
                                 $alreadyProcessed[] = $documentCode;
+                                $hasError = true;
                             }
 
                             if (is_null($do->post_103)) {
                                 $unposted103Documents[] = $documentCode;
+                                $hasError = true;
                             } else {
                                 $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
                                 if (! $isZrmZsmOrZpm) {
                                     $latestQc = $do->qcHistories()->latest()->first();
                                     if (! $latestQc || $latestQc->status !== 'Kembali') {
                                         $invalidDocuments[] = $documentCode;
+                                        $hasError = true;
                                     }
                                 }
                             }
                         }
+
+                        if (! $hasError) {
+                            $readyDocuments[] = $documentCode;
+                        }
+                    } else {
+                        $notFoundDocuments[] = $documentCode;
                     }
                     $uniqueFiles[] = $file;
                 }
@@ -119,6 +134,7 @@ class CreateGrsRdtv extends CreateRecord
 
                     $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                     if ($do) {
+                        $hasError = false;
                         if ($do->receipt_mode === 'Termin') {
                             $totalTermins = $do->termins()->count();
                             $postedTermins = $do->termins()->whereNotNull('post_103')->count();
@@ -126,15 +142,18 @@ class CreateGrsRdtv extends CreateRecord
 
                             if ($grsCount >= $totalTermins) {
                                 $alreadyProcessed[] = $documentCode;
+                                $hasError = true;
                             } else {
                                 if ($postedTermins <= $grsCount) {
                                     $unposted103Documents[] = $documentCode;
+                                    $hasError = true;
                                 } else {
                                     $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
                                     if (! $isZrmZsmOrZpm) {
                                         $qcKembaliCount = $do->qcHistories()->where('status', 'Kembali')->count();
                                         if ($qcKembaliCount <= $grsCount) {
                                             $invalidDocuments[] = $documentCode;
+                                            $hasError = true;
                                         }
                                     }
                                 }
@@ -144,20 +163,29 @@ class CreateGrsRdtv extends CreateRecord
 
                             if ($grsCount >= 1) {
                                 $alreadyProcessed[] = $documentCode;
+                                $hasError = true;
                             }
 
                             if (is_null($do->post_103)) {
                                 $unposted103Documents[] = $documentCode;
+                                $hasError = true;
                             } else {
                                 $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
                                 if (! $isZrmZsmOrZpm) {
                                     $latestQc = $do->qcHistories()->latest()->first();
                                     if (! $latestQc || $latestQc->status !== 'Kembali') {
                                         $invalidDocuments[] = $documentCode;
+                                        $hasError = true;
                                     }
                                 }
                             }
                         }
+
+                        if (! $hasError) {
+                            $readyDocuments[] = $documentCode;
+                        }
+                    } else {
+                        $notFoundDocuments[] = $documentCode;
                     }
                     $uniqueItems[] = $item;
                 }
@@ -168,22 +196,38 @@ class CreateGrsRdtv extends CreateRecord
 
         $errors = [];
         if (! empty($unposted103Documents)) {
-            $errors[] = 'Belum Post 103: '.implode(', ', array_unique($unposted103Documents));
+            $unposted103Unique = array_unique($unposted103Documents);
+            $errors[] = '<b>Belum Post 103 ('.count($unposted103Unique).'):</b><br>&bull; '.implode('<br>&bull; ', $unposted103Unique);
         }
         if (! empty($invalidDocuments)) {
-            $errors[] = 'Belum kembali dari QC: '.implode(', ', array_unique($invalidDocuments));
+            $invalidUnique = array_unique($invalidDocuments);
+            $errors[] = '<b>Belum kembali dari QC ('.count($invalidUnique).'):</b><br>&bull; '.implode('<br>&bull; ', $invalidUnique);
         }
         if (! empty($alreadyProcessed)) {
-            $errors[] = 'Sudah sukses diupload sebagai GRS sebelumnya: '.implode(', ', array_unique($alreadyProcessed));
+            $alreadyProcessedUnique = array_unique($alreadyProcessed);
+            $errors[] = '<b>Sudah sukses diupload sebagai GRS sebelumnya ('.count($alreadyProcessedUnique).'):</b><br>&bull; '.implode('<br>&bull; ', $alreadyProcessedUnique);
         }
         if (! empty($duplicateDocuments)) {
-            $errors[] = 'Terdeteksi duplikat file yang sama: '.implode(', ', array_unique($duplicateDocuments));
+            $duplicateUnique = array_unique($duplicateDocuments);
+            $errors[] = '<b>Terdeteksi duplikat file yang sama ('.count($duplicateUnique).'):</b><br>&bull; '.implode('<br>&bull; ', $duplicateUnique);
         }
 
         if (! empty($errors)) {
+            $infoMessages = [];
+            if (! empty($readyDocuments)) {
+                $readyUnique = array_unique($readyDocuments);
+                $infoMessages[] = '<b>Siap Diproses / Belum Terupload di GRS dan RDTV ('.count($readyUnique).'):</b><br>&bull; '.implode('<br>&bull; ', $readyUnique);
+            }
+            if (! empty($notFoundDocuments)) {
+                $notFoundUnique = array_unique($notFoundDocuments);
+                $infoMessages[] = '<b>Tidak Ditemukan di Sistem ('.count($notFoundUnique).'):</b><br>&bull; '.implode('<br>&bull; ', $notFoundUnique);
+            }
+
+            $allMessages = array_merge($errors, $infoMessages);
+
             Notification::make()
                 ->title('Gagal Disimpan')
-                ->body(implode('<br>', $errors))
+                ->body(implode('<br><br>', $allMessages))
                 ->danger()
                 ->send();
 
