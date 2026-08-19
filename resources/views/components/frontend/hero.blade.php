@@ -314,6 +314,12 @@
             text-shadow: none !important;
             box-shadow: 0 4px 10px rgba(244, 121, 32, 0.3) !important;
             transition: all 0.3s ease !important;
+            cursor: pointer !important;
+            touch-action: manipulation !important;
+            -webkit-appearance: none !important;
+            pointer-events: auto !important;
+            z-index: 1000001 !important;
+            position: relative !important;
         }
 
         .driverjs-theme button.driver-popover-next-btn:hover,
@@ -333,6 +339,12 @@
             font-weight: 600 !important;
             text-shadow: none !important;
             transition: all 0.3s ease !important;
+            cursor: pointer !important;
+            touch-action: manipulation !important;
+            -webkit-appearance: none !important;
+            pointer-events: auto !important;
+            z-index: 1000001 !important;
+            position: relative !important;
         }
 
         .dark .driverjs-theme button.driver-popover-prev-btn {
