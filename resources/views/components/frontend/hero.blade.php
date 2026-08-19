@@ -188,14 +188,14 @@
         @endphp
 
         <!-- AI Notification Modal -->
-        <div x-data="{ open: true }" x-show="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm" x-transition.opacity style="display: none;">
-            <div @click.away="open = false" class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-lg w-full mx-4 shadow-2xl relative border border-slate-200 dark:border-slate-700" x-transition.scale.origin.bottom>
+        <div x-data="{ open: true }" x-show="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-0" x-transition.opacity style="display: none;">
+            <div @click.away="open = false" class="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-8 max-w-lg w-full mx-auto shadow-2xl relative border border-slate-200 dark:border-slate-700 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600" x-transition.scale.origin.bottom>
                 <!-- Close Button -->
                 <button @click="open = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
                 
-                <div class="flex items-center gap-4 mb-6">
+                <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                     @if($aiSettingActive)
                         <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -215,13 +215,32 @@
                     @endif
                 </div>
 
-                <p class="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
+                <div class="text-slate-600 dark:text-slate-300 mb-6 sm:mb-8 leading-relaxed">
                     @if($aiSettingActive)
-                        Mokondo AI Receiving PKT v2.0 saat ini telah aktif! Asisten chatbot cerdas kami siap membantu Anda mengecek status barang dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.
+                        <p class="text-sm sm:text-base">Mokondo AI Receiving PKT v2.0 saat ini telah aktif! Asisten chatbot cerdas kami siap membantu Anda mengecek status barang dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.</p>
+
+                        <div class="mt-4 sm:mt-6 relative group overflow-hidden rounded-2xl">
+                            <!-- Animated Glow Background -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-[#F47920]/20 via-amber-400/20 to-[#0A4F86]/20 blur-xl group-hover:blur-2xl transition-all duration-500"></div>
+                            
+                            <div class="relative p-4 sm:p-6 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-slate-200/50 dark:border-white/10 flex flex-col items-center justify-center text-center rounded-2xl shadow-lg">
+                                <div class="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-[#F47920]/20 to-transparent border border-[#F47920]/30 rounded-2xl flex items-center justify-center mb-2 sm:mb-4 transform group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                                    <svg class="w-5 h-5 sm:w-7 sm:h-7 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                                </div>
+                                <h4 class="text-sm sm:text-lg font-black text-slate-800 dark:text-white mb-1.5 sm:mb-2 tracking-tight">Baru Pertama Kali?</h4>
+                                <p class="text-[11px] sm:text-sm text-slate-600 dark:text-slate-300 mb-4 sm:mb-6 max-w-sm">
+                                    Ikuti panduan interaktif singkat untuk mengetahui cara mudah melacak material Anda dengan asisten cerdas ALEX.
+                                </p>
+                                <button @click="open = false; startAiTour()" class="flex items-center justify-center w-full sm:w-auto gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] text-white text-xs sm:text-sm font-bold rounded-xl shadow-[0_8px_20px_-6px_rgba(244,121,32,0.6)] hover:shadow-[0_12px_25px_-6px_rgba(244,121,32,0.8)] transition-all hover:-translate-y-1">
+                                    <span>Mulai Panduan Interaktif</span>
+                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                                </button>
+                            </div>
+                        </div>
                     @else
-                        Mokondo AI Receiving PKT v2.0 saat ini sedang dalam masa pemeliharaan dan pelatihan Model (Training). Layanan chatbot cerdas untuk pengecekan status dan pengambilan barang sementara tidak dapat digunakan. Kami mohon maaf atas ketidaknyamanan ini.
+                        <p class="text-sm sm:text-base">Mokondo AI Receiving PKT v2.0 saat ini sedang dalam masa pemeliharaan dan pelatihan Model (Training). Layanan chatbot cerdas untuk pengecekan status dan pengambilan barang sementara tidak dapat digunakan. Kami mohon maaf atas ketidaknyamanan ini.</p>
                     @endif
-                </p>
+                </div>
 
                 <button @click="open = false" class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold rounded-xl transition-colors">
                     Mengerti
@@ -229,3 +248,199 @@
             </div>
         </div>
     </main>
+
+    <!-- Driver.js for Interactive Tour -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <style>
+        /* Custom Driver.js Theme */
+        .driverjs-theme {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(244, 121, 32, 0.2) !important;
+            border-radius: 1.25rem !important;
+            padding: 1.5rem !important;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1), 0 0 20px rgba(244, 121, 32, 0.1) !important;
+            color: #1e293b !important;
+            font-family: inherit !important;
+        }
+
+        .dark .driverjs-theme {
+            background: rgba(30, 41, 59, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #f8fafc !important;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5), 0 0 20px rgba(244, 121, 32, 0.15) !important;
+        }
+
+        .driverjs-theme .driver-popover-title {
+            font-size: 1.125rem !important;
+            font-weight: 800 !important;
+            color: #F47920 !important;
+            margin-bottom: 0.5rem !important;
+        }
+
+        .driverjs-theme .driver-popover-description {
+            font-size: 0.875rem !important;
+            line-height: 1.5 !important;
+            color: #475569 !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .dark .driverjs-theme .driver-popover-description {
+            color: #cbd5e1 !important;
+        }
+
+        .driverjs-theme .driver-popover-footer {
+            margin-top: 1rem !important;
+        }
+
+        .driverjs-theme .driver-popover-progress-text {
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+            color: #94a3b8 !important;
+        }
+
+        .driverjs-theme button.driver-popover-next-btn, 
+        .driverjs-theme button.driver-popover-next-btn:focus,
+        .driverjs-theme button.driver-popover-done-btn,
+        .driverjs-theme button.driver-popover-done-btn:focus {
+            background: linear-gradient(to right, #F47920, #BE5A27) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 0.75rem !important;
+            padding: 0.5rem 1rem !important;
+            font-size: 0.875rem !important;
+            font-weight: 700 !important;
+            text-shadow: none !important;
+            box-shadow: 0 4px 10px rgba(244, 121, 32, 0.3) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .driverjs-theme button.driver-popover-next-btn:hover,
+        .driverjs-theme button.driver-popover-done-btn:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 15px rgba(244, 121, 32, 0.4) !important;
+        }
+
+        .driverjs-theme button.driver-popover-prev-btn,
+        .driverjs-theme button.driver-popover-prev-btn:focus {
+            background: transparent !important;
+            color: #64748b !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.75rem !important;
+            padding: 0.5rem 1rem !important;
+            font-size: 0.875rem !important;
+            font-weight: 600 !important;
+            text-shadow: none !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .dark .driverjs-theme button.driver-popover-prev-btn {
+            color: #cbd5e1 !important;
+            border-color: #475569 !important;
+        }
+
+        .driverjs-theme button.driver-popover-prev-btn:hover {
+            background: #f1f5f9 !important;
+            color: #1e293b !important;
+        }
+
+        .dark .driverjs-theme button.driver-popover-prev-btn:hover {
+            background: rgba(255,255,255,0.1) !important;
+            color: white !important;
+        }
+        
+        /* Driver.js close button */
+        .driverjs-theme button.driver-popover-close-btn {
+            color: #94a3b8 !important;
+            transition: color 0.3s !important;
+        }
+        
+        .driverjs-theme button.driver-popover-close-btn:hover {
+            color: #F47920 !important;
+        }
+
+        /* Mobile Adjustments for Driver.js */
+        @media (max-width: 640px) {
+            .driverjs-theme {
+                padding: 1rem !important;
+                max-width: calc(100vw - 2rem) !important;
+            }
+            .driverjs-theme .driver-popover-title {
+                font-size: 1rem !important;
+            }
+            .driverjs-theme .driver-popover-description {
+                font-size: 0.8125rem !important;
+            }
+            .driverjs-theme button.driver-popover-next-btn,
+            .driverjs-theme button.driver-popover-done-btn,
+            .driverjs-theme button.driver-popover-prev-btn {
+                padding: 0.4rem 0.75rem !important;
+                font-size: 0.75rem !important;
+            }
+        }
+    </style>
+    <script>
+        function startAiTour() {
+            const driver = window.driver.js.driver;
+            const driverObj = driver({
+                popoverClass: 'driverjs-theme',
+                showProgress: true,
+                animate: true,
+                nextBtnText: 'Lanjut',
+                prevBtnText: 'Kembali',
+                doneBtnText: 'Selesai',
+                steps: [
+                    {
+                        element: '#tour-chatbot-button',
+                        popover: {
+                            title: '1. Buka Chatbot',
+                            description: 'Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela Asisten AI.',
+                            side: 'left',
+                            align: 'end'
+                        }
+                    },
+                    {
+                        element: '#tour-chatbot-input',
+                        popover: {
+                            title: '2. Ketik Pertanyaan',
+                            description: 'Ketikkan nomor PO, DO, atau MIR di sini, lalu tekan Enter atau klik tombol kirim.',
+                            side: 'top',
+                            align: 'center'
+                        },
+                        onHighlightStarted: (element) => {
+                            // Buka chat window jika belum terbuka
+                            const chatBtn = document.querySelector('#tour-chatbot-button button');
+                            const chatWindow = document.querySelector('#tour-chatbot-window');
+                            if (chatBtn && chatWindow && chatWindow.style.display === 'none') {
+                                chatBtn.click();
+                            }
+                        }
+                    },
+                    {
+                        element: '#tour-chatbot-window',
+                        popover: {
+                            title: '3. Jawaban AI',
+                            description: 'AI akan mencari data di sistem SAP/Gudang dan memberikan status material secara real-time di sini.',
+                            side: 'left',
+                            align: 'start'
+                        }
+                    }
+                ],
+                onDestroyStarted: () => {
+                    // Tutup chat window setelah tour selesai
+                    const chatBtn = document.querySelector('#tour-chatbot-button button');
+                    const chatWindow = document.querySelector('#tour-chatbot-window');
+                    if (chatBtn && chatWindow && chatWindow.style.display !== 'none') {
+                        chatBtn.click();
+                    }
+                    driverObj.destroy();
+                }
+            });
+            
+            // Sedikit delay agar modal tertutup sempurna sebelum animasi Driver.js dimulai
+            setTimeout(() => {
+                driverObj.drive();
+            }, 300);
+        }
+    </script>

@@ -10,6 +10,31 @@ new class extends Component {
     public string $message = '';
     public array $chats = [];
     public bool $isTyping = false; // Tambahkan state untuk animasi loading AI
+    public array $suggestedQuestions = [];
+
+    public function mount()
+    {
+        $this->generateSuggestions();
+    }
+
+    public function generateSuggestions()
+    {
+        $pool = [
+            "Cek status Penerimaan untuk PO 53000XXXXX",
+            "Cari Material Issue untuk PO 53000XXXXX",
+            "Cek status Penerimaan Material yang memiliki SN 60XXXXX",
+            "Cek riwayat pengambilan barang PO 53000XXXXX"
+        ];
+        shuffle($pool);
+        // Ambil 2 atau 3 saran pertanyaan secara acak
+        $this->suggestedQuestions = array_slice($pool, 0, rand(2, 3));
+    }
+
+    public function useSuggestedMessage($text)
+    {
+        $this->message = $text;
+        // Hanya memasukkan teks ke input, user harus tekan kirim sendiri
+    }
 
     public function toggleChat()
     {
@@ -268,13 +293,14 @@ Detail Barang:
 
         // 4. Matikan indikator loading setelah mendapatkan balasan
         $this->isTyping = false;
+        $this->generateSuggestions();
     }
 };
 ?>
 
 <div class="fixed bottom-6 right-6 z-50 font-sans">
     <!-- Tombol Chat (Floating) -->
-    <div class="relative group">
+    <div class="relative group" id="tour-chatbot-button">
         <!-- Efek Glow Oranye di belakang tombol -->
         <div x-show="!$wire.isOpen"
             class="absolute -inset-2 bg-[#F47920] rounded-full blur-xl opacity-20 group-hover:opacity-40 transition duration-500 animate-pulse">
@@ -306,7 +332,7 @@ Detail Barang:
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-8 scale-95"
-        class="glass-panel fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:max-w-[380px] h-[100dvh] md:h-[38rem] md:rounded-[1.5rem] overflow-hidden flex flex-col z-[100] md:z-auto">
+        class="glass-panel fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:max-w-[380px] h-[100dvh] md:h-[38rem] md:rounded-[1.5rem] overflow-hidden flex flex-col z-[100] md:z-auto" id="tour-chatbot-window">
 
         <!-- Header -->
         <div class="glass-nav px-6 py-5 flex items-center justify-between relative z-20 overflow-hidden">
@@ -417,32 +443,63 @@ Detail Barang:
                     </div>
                 </div>
             @endif
+
+            <!-- Saran Pertanyaan -->
+            @if(!$isTyping && !empty($suggestedQuestions))
+                <div class="flex flex-wrap gap-2 mt-2 mb-2 animate-fade-in-up">
+                    @foreach($suggestedQuestions as $suggestion)
+                        <button wire:click="useSuggestedMessage('{{ $suggestion }}')"
+                            class="px-3 py-1.5 bg-white/50 dark:bg-slate-800/50 border border-[#F47920]/40 rounded-full text-[11.5px] font-semibold text-[#F47920] dark:text-[#F89B53] hover:bg-[#F47920] hover:text-white dark:hover:text-white transition-all duration-300 shadow-sm backdrop-blur-sm text-left max-w-full hover:-translate-y-0.5 hover:shadow-md">
+                            {{ $suggestion }}
+                        </button>
+                    @endforeach
+                </div>
+            @endif
         </div>
 
         <!-- Input Area -->
         <form wire:submit="sendMessage"
-            class="glass-nav p-5 pb-8 md:pb-5 relative z-20 md:rounded-b-[1.5rem]">
-            <div class="glass-input relative flex items-center rounded-full group">
+            class="glass-nav p-5 pb-8 md:pb-5 relative z-20 md:rounded-b-[1.5rem]" id="tour-chatbot-input">
+            <div class="glass-input relative flex flex-col rounded-[1.5rem] group p-1.5 pl-4"
+                 x-data="{ 
+                    resize() { 
+                        $refs.input.style.height = 'auto'; 
+                        $refs.input.style.height = Math.min($refs.input.scrollHeight, 120) + 'px'; 
+                    } 
+                 }"
+                 x-init="$watch('$wire.message', () => { setTimeout(() => resize(), 10) })"
+            >
 
-                <input wire:model="message" type="text" placeholder="Tanya DO, PO, atau MIR..."
-                    class="w-full pl-6 pr-14 py-3.5 bg-transparent text-[16px] md:text-[13.5px] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-full font-medium"
-                    required autocomplete="off" @disabled($isTyping)>
+                <textarea wire:model="message" x-ref="input" placeholder="Tanya DO, PO, atau MIR..."
+                    class="w-full pt-3 pb-2 pr-2 bg-transparent text-[16px] md:text-[13.5px] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed font-medium resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 max-h-[120px] leading-relaxed"
+                    required autocomplete="off" @disabled($isTyping)
+                    @input="resize()"
+                    @keydown.enter.prevent="if(!$event.shiftKey && $wire.message.trim() !== '') { $wire.sendMessage(); $refs.input.style.height = 'auto'; }"
+                    rows="1"></textarea>
 
-                <button type="submit"
-                    class="absolute right-1.5 w-10 h-10 bg-[#F47920] hover:bg-[#E06714] rounded-full flex items-center justify-center text-white shadow-md hover:shadow-[#F47920]/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
-                    @disabled($isTyping)>
-                    <svg class="w-4 h-4 translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                        stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path>
-                    </svg>
-                </button>
-            </div>
+                <div class="flex justify-between items-center w-full mt-1 pr-0.5 mb-0.5">
+                    <!-- Branding (Left) -->
+                    <div class="flex items-center gap-1.5 ml-1">
+                        <div class="relative flex items-center justify-center group-hover:animate-pulse">
+                            <div class="absolute w-3 h-3 bg-[#F47920] rounded-full blur-[3px] opacity-60"></div>
+                            <svg class="w-3 h-3 text-[#F47920] relative z-10 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">Alex Mokondo AI <span class="text-[#F47920]">2.1</span> Pro</span>
+                    </div>
 
-            <!-- Footer Branding -->
-            <div class="text-center mt-3.5 flex justify-center items-center gap-1.5">
-                <div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"></div>
-                <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 tracking-widest uppercase">Powered by <span class="text-[#F47920]">Mokondo AI</span></span>
+                    <!-- Button (Right) -->
+                    <button type="submit"
+                        class="w-9 h-9 bg-[#F47920] hover:bg-[#E06714] rounded-full flex items-center justify-center text-white shadow-md hover:shadow-[#F47920]/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+                        @disabled($isTyping)>
+                        <svg class="w-4 h-4 translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -534,6 +591,21 @@ Detail Barang:
 
         .dark .ai-markdown-content a {
             color: #F89B53;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.4s ease-out forwards;
         }
     </style>
 </div>
