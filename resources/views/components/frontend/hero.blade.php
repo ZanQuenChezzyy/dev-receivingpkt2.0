@@ -217,9 +217,9 @@
 
                 <p class="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
                     @if($aiSettingActive)
-                        Sistem Artificial Intelligence ReceivingPKT v2.0 saat ini telah terhubung dan dapat digunakan untuk membantu proses otomasi dan analisis logistik Anda. Nikmati kemudahan dalam mengelola data gudang dengan bantuan AI.
+                        Mokondo AI Receiving PKT v2.0 saat ini telah aktif! Asisten chatbot cerdas kami siap membantu Anda mengecek status barang dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.
                     @else
-                        Sistem Artificial Intelligence ReceivingPKT v2.0 saat ini sedang dalam masa pemeliharaan dan pelatihan model (training). Beberapa fitur cerdas mungkin tidak tersedia untuk sementara waktu. Kami mohon maaf atas ketidaknyamanan ini.
+                        Mokondo AI Receiving PKT v2.0 saat ini sedang dalam masa pemeliharaan dan pelatihan Model (Training). Layanan chatbot cerdas untuk pengecekan status dan pengambilan barang sementara tidak dapat digunakan. Kami mohon maaf atas ketidaknyamanan ini.
                     @endif
                 </p>
 
