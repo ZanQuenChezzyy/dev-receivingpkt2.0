@@ -433,7 +433,19 @@
                             title: '1. Buka Chatbot',
                             description: 'Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela Asisten AI.',
                             side: 'left',
-                            align: 'end'
+                            align: 'end',
+                            onNextClick: () => {
+                                // Buka chat window sebelum lanjut ke step 2
+                                const chatBtn = document.querySelector('#tour-chatbot-button button');
+                                const chatWindow = document.querySelector('#tour-chatbot-window');
+                                if (chatBtn && chatWindow && chatWindow.style.display === 'none') {
+                                    chatBtn.click();
+                                }
+                                // Beri jeda animasi Livewire/Alpine 400ms sebelum sorotan pindah
+                                setTimeout(() => {
+                                    driverObj.moveNext();
+                                }, 400);
+                            }
                         }
                     },
                     {
@@ -442,14 +454,17 @@
                             title: '2. Ketik Pertanyaan',
                             description: 'Ketikkan nomor PO, DO, atau MIR di sini, lalu tekan Enter atau klik tombol kirim.',
                             side: 'top',
-                            align: 'center'
-                        },
-                        onHighlightStarted: (element) => {
-                            // Buka chat window jika belum terbuka
-                            const chatBtn = document.querySelector('#tour-chatbot-button button');
-                            const chatWindow = document.querySelector('#tour-chatbot-window');
-                            if (chatBtn && chatWindow && chatWindow.style.display === 'none') {
-                                chatBtn.click();
+                            align: 'center',
+                            onPrevClick: () => {
+                                // Tutup chat window saat kembali ke step 1
+                                const chatBtn = document.querySelector('#tour-chatbot-button button');
+                                const chatWindow = document.querySelector('#tour-chatbot-window');
+                                if (chatBtn && chatWindow && chatWindow.style.display !== 'none') {
+                                    chatBtn.click();
+                                }
+                                setTimeout(() => {
+                                    driverObj.movePrevious();
+                                }, 400);
                             }
                         }
                     },
