@@ -420,24 +420,6 @@
                 nextBtnText: 'Lanjut',
                 prevBtnText: 'Kembali',
                 doneBtnText: 'Selesai',
-                onPopoverRender: (popover, { config, state }) => {
-                    // PENDEKATAN BARU: Bypass CSS bug di iOS Safari dengan JavaScript murni.
-                    // Mengikat event 'touchstart' (sentuhan HP) langsung ke elemen tombol saat dirender.
-                    const nextBtn = popover.wrapper.querySelector('.driver-popover-next-btn');
-                    const prevBtn = popover.wrapper.querySelector('.driver-popover-prev-btn');
-                    const doneBtn = popover.wrapper.querySelector('.driver-popover-done-btn');
-                    const closeBtn = popover.wrapper.querySelector('.driver-popover-close-btn');
-
-                    const handleTouch = function(e) {
-                        e.preventDefault(); // Mencegah bug "ghost click" atau klik ganda di iOS
-                        this.click();       // Paksa trigger event klik bawaan Driver.js
-                    };
-
-                    if (nextBtn) nextBtn.addEventListener('touchstart', handleTouch, { passive: false });
-                    if (prevBtn) prevBtn.addEventListener('touchstart', handleTouch, { passive: false });
-                    if (doneBtn) doneBtn.addEventListener('touchstart', handleTouch, { passive: false });
-                    if (closeBtn) closeBtn.addEventListener('touchstart', handleTouch, { passive: false });
-                },
                 steps: [
                     {
                         element: '#tour-chatbot-button',
