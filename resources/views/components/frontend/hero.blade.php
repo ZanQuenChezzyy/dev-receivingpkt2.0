@@ -390,6 +390,7 @@
                 padding: 1rem !important;
                 max-width: calc(100vw - 2rem) !important;
                 pointer-events: auto !important;
+                z-index: 2147483647 !important;
             }
             .driverjs-theme .driver-popover-title {
                 font-size: 1rem !important;
@@ -400,7 +401,7 @@
             .driverjs-theme .driver-popover-footer {
                 pointer-events: auto !important;
                 position: relative !important;
-                z-index: 1000000 !important;
+                z-index: 2147483647 !important;
                 display: flex !important;
                 gap: 0.5rem !important;
             }
@@ -411,7 +412,7 @@
                 font-size: 0.75rem !important;
                 pointer-events: auto !important;
                 position: relative !important;
-                z-index: 1000001 !important;
+                z-index: 2147483647 !important;
             }
         }
     </style>
