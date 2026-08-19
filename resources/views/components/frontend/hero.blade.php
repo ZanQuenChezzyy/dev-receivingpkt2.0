@@ -425,7 +425,7 @@
                         element: '#tour-chatbot-button',
                         popover: {
                             title: '1. Buka Chatbot',
-                            description: 'Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela Asisten AI.',
+                            description: 'Klik area mana saja untuk membuka jendela Asisten AI.',
                             side: 'left',
                             align: 'end',
                             onNextClick: () => {
@@ -452,6 +452,41 @@
                                 } else {
                                     driverObj.moveNext();
                                 }
+                            }
+                        },
+                        onHighlighted: () => {
+                            // Fungsi untuk maju otomatis saat klik di mana saja (di luar popover)
+                            const advanceStep1 = (e) => {
+                                // Jika yang diklik adalah bagian dalam popover (misal tombol close), abaikan
+                                if (e.target.closest('.driver-popover')) return;
+
+                                // Hapus listener agar tidak dijalankan dua kali
+                                document.removeEventListener('click', advanceStep1, true);
+                                document.removeEventListener('touchstart', advanceStep1, true);
+
+                                // Simulasikan menekan tombol Lanjut
+                                const nextBtn = document.querySelector('.driver-popover-next-btn');
+                                if (nextBtn) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    nextBtn.click();
+                                }
+                            };
+
+                            // Beri sedikit jeda agar klik untuk memulai tour tidak ikut terdeteksi
+                            setTimeout(() => {
+                                document.addEventListener('click', advanceStep1, true);
+                                document.addEventListener('touchstart', advanceStep1, { capture: true, passive: false });
+                            }, 100);
+
+                            // Simpan referensi fungsi di window agar bisa dihapus nanti
+                            window._tourAdvanceStep1 = advanceStep1;
+                        },
+                        onDeselected: () => {
+                            if (window._tourAdvanceStep1) {
+                                document.removeEventListener('click', window._tourAdvanceStep1, true);
+                                document.removeEventListener('touchstart', window._tourAdvanceStep1, true);
+                                delete window._tourAdvanceStep1;
                             }
                         }
                     },
