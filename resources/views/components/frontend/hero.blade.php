@@ -176,4 +176,56 @@
                 </div>
             </div>
         </div>
+
+        @php
+            $aiSettingActive = false;
+            try {
+                $setting = \App\Models\Setting::where('key', 'ai_system_active')->first();
+                $aiSettingActive = $setting ? $setting->value === '1' : false;
+            } catch (\Exception $e) {
+                $aiSettingActive = false;
+            }
+        @endphp
+
+        <!-- AI Notification Modal -->
+        <div x-data="{ open: true }" x-show="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm" x-transition.opacity style="display: none;">
+            <div @click.away="open = false" class="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-lg w-full mx-4 shadow-2xl relative border border-slate-200 dark:border-slate-700" x-transition.scale.origin.bottom>
+                <!-- Close Button -->
+                <button @click="open = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <div class="flex items-center gap-4 mb-6">
+                    @if($aiSettingActive)
+                        <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">Sistem AI Aktif</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm">Sistem AI sudah dapat digunakan</p>
+                        </div>
+                    @else
+                        <div class="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">Sistem AI Sedang Maintenance</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm">Sedang dalam masa training</p>
+                        </div>
+                    @endif
+                </div>
+
+                <p class="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
+                    @if($aiSettingActive)
+                        Sistem Artificial Intelligence ReceivingPKT v2.0 saat ini telah terhubung dan dapat digunakan untuk membantu proses otomasi dan analisis logistik Anda. Nikmati kemudahan dalam mengelola data gudang dengan bantuan AI.
+                    @else
+                        Sistem Artificial Intelligence ReceivingPKT v2.0 saat ini sedang dalam masa pemeliharaan dan pelatihan model (training). Beberapa fitur cerdas mungkin tidak tersedia untuk sementara waktu. Kami mohon maaf atas ketidaknyamanan ini.
+                    @endif
+                </p>
+
+                <button @click="open = false" class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold rounded-xl transition-colors">
+                    Mengerti
+                </button>
+            </div>
+        </div>
     </main>
