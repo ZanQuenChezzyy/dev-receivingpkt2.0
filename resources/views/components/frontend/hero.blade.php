@@ -250,8 +250,8 @@
     </main>
 
     <!-- Shepherd.js for Interactive Tour -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/css/shepherd.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/js/shepherd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/shepherd.js@11.0.1/dist/css/shepherd.css"/>
+    <script src="https://unpkg.com/shepherd.js@11.0.1/dist/js/shepherd.min.js"></script>
     <style>
         /* Custom styling untuk Shepherd.js */
         .shepherd-theme {
