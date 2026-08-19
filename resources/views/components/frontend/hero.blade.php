@@ -314,6 +314,8 @@
             padding: 0.5rem 1rem !important;
             font-size: 0.875rem !important;
             font-weight: 700 !important;
+            text-shadow: none !important;
+            box-shadow: 0 4px 10px rgba(244, 121, 32, 0.3) !important;
             transition: all 0.3s ease !important;
             cursor: pointer !important;
             touch-action: manipulation !important;
@@ -341,6 +343,7 @@
             padding: 0.5rem 1rem !important;
             font-size: 0.875rem !important;
             font-weight: 600 !important;
+            text-shadow: none !important;
             transition: all 0.3s ease !important;
             cursor: pointer !important;
             touch-action: manipulation !important;
