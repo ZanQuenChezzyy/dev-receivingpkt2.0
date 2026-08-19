@@ -464,10 +464,10 @@
 
             tour.addStep({
                 id: 'step-2',
-                title: '2. Ketik Pertanyaan',
-                text: 'Ketikkan nomor PO, DO, atau MIR di sini, lalu tekan Enter atau klik tombol kirim.',
+                title: '2. Saran Pertanyaan',
+                text: 'Pilih salah satu saran ini untuk bertanya secara cepat tanpa perlu mengetik.',
                 attachTo: {
-                    element: '#tour-chatbot-input',
+                    element: '#tour-chatbot-suggestions',
                     on: 'top'
                 },
                 buttons: [
@@ -507,7 +507,29 @@
 
             tour.addStep({
                 id: 'step-3',
-                title: '3. Jawaban AI',
+                title: '3. Ketik Pertanyaan',
+                text: 'Atau ketikkan nomor PO, DO, atau MIR di sini, lalu tekan Enter.',
+                attachTo: {
+                    element: '#tour-chatbot-input',
+                    on: 'top'
+                },
+                buttons: [
+                    {
+                        text: 'Kembali',
+                        classes: 'shepherd-button-secondary',
+                        action: tour.back
+                    },
+                    {
+                        text: 'Lanjut',
+                        classes: 'shepherd-button-primary',
+                        action: tour.next
+                    }
+                ]
+            });
+
+            tour.addStep({
+                id: 'step-4',
+                title: '4. Jawaban AI',
                 text: 'AI akan mencari data di sistem SAP/Gudang dan memberikan status material secara real-time di sini.',
                 attachTo: {
                     element: '#tour-chatbot-window',

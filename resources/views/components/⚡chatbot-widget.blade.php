@@ -446,7 +446,7 @@ Detail Barang:
 
             <!-- Saran Pertanyaan -->
             @if(!$isTyping && !empty($suggestedQuestions))
-                <div class="mt-2 mb-2 animate-fade-in-up">
+                <div id="tour-chatbot-suggestions" class="mt-2 mb-2 animate-fade-in-up">
                     <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 ml-1">Saran:</p>
                     <div class="flex flex-col gap-2">
                         @foreach($suggestedQuestions as $suggestion)
