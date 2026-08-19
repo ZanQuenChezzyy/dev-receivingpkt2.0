@@ -530,7 +530,7 @@
             tour.addStep({
                 id: 'step-4',
                 title: '4. Jawaban AI',
-                text: 'AI akan mencari data di sistem SAP/Gudang dan memberikan status material secara real-time di sini.',
+                text: 'AI akan mencari data di sistem Receiving dan memberikan status material secara real-time di sini.',
                 attachTo: {
                     element: '#tour-chatbot-window',
                     on: 'left'
