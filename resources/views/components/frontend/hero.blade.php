@@ -435,16 +435,29 @@
                             side: 'left',
                             align: 'end',
                             onNextClick: () => {
-                                // Buka chat window sebelum lanjut ke step 2
                                 const chatBtn = document.querySelector('#tour-chatbot-button button');
                                 const chatWindow = document.querySelector('#tour-chatbot-window');
                                 if (chatBtn && chatWindow && chatWindow.style.display === 'none') {
-                                    chatBtn.click();
-                                }
-                                // Beri jeda animasi Livewire/Alpine 400ms sebelum sorotan pindah
-                                setTimeout(() => {
+                                    chatBtn.click(); // Memicu request Livewire ke server
+                                    
+                                    // Polling untuk menunggu sampai Livewire selesai dan elemen muncul
+                                    let attempts = 0;
+                                    let checkExist = setInterval(() => {
+                                        attempts++;
+                                        if (chatWindow.style.display !== 'none') {
+                                            clearInterval(checkExist);
+                                            // Beri jeda 450ms untuk animasi slide-up AlpineJS selesai bergerak
+                                            setTimeout(() => {
+                                                driverObj.moveNext();
+                                            }, 450);
+                                        } else if (attempts > 50) { // Maksimal tunggu 5 detik
+                                            clearInterval(checkExist);
+                                            driverObj.moveNext();
+                                        }
+                                    }, 100);
+                                } else {
                                     driverObj.moveNext();
-                                }, 400);
+                                }
                             }
                         }
                     },
@@ -456,15 +469,27 @@
                             side: 'top',
                             align: 'center',
                             onPrevClick: () => {
-                                // Tutup chat window saat kembali ke step 1
                                 const chatBtn = document.querySelector('#tour-chatbot-button button');
                                 const chatWindow = document.querySelector('#tour-chatbot-window');
                                 if (chatBtn && chatWindow && chatWindow.style.display !== 'none') {
                                     chatBtn.click();
-                                }
-                                setTimeout(() => {
+                                    
+                                    let attempts = 0;
+                                    let checkExist = setInterval(() => {
+                                        attempts++;
+                                        if (chatWindow.style.display === 'none') {
+                                            clearInterval(checkExist);
+                                            setTimeout(() => {
+                                                driverObj.movePrevious();
+                                            }, 450);
+                                        } else if (attempts > 50) {
+                                            clearInterval(checkExist);
+                                            driverObj.movePrevious();
+                                        }
+                                    }, 100);
+                                } else {
                                     driverObj.movePrevious();
-                                }, 400);
+                                }
                             }
                         }
                     },
@@ -479,7 +504,6 @@
                     }
                 ],
                 onDestroyStarted: () => {
-                    // Tutup chat window setelah tour selesai
                     const chatBtn = document.querySelector('#tour-chatbot-button button');
                     const chatWindow = document.querySelector('#tour-chatbot-window');
                     if (chatBtn && chatWindow && chatWindow.style.display !== 'none') {
@@ -489,7 +513,6 @@
                 }
             });
             
-            // Sedikit delay agar modal tertutup sempurna sebelum animasi Driver.js dimulai
             setTimeout(() => {
                 driverObj.drive();
             }, 300);
