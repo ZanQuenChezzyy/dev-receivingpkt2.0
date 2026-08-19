@@ -380,7 +380,31 @@
 
         @media (max-width: 640px) {
             .shepherd-theme {
-                max-width: calc(100vw - 3rem) !important; /* Beri sedikit jarak di mobile */
+                max-width: 250px !important; /* Sangat ringkas di mobile */
+                border-radius: 1rem !important;
+            }
+            .shepherd-theme .shepherd-header { 
+                padding: 0.75rem 0.75rem 0.25rem 0.75rem !important; 
+            }
+            .shepherd-theme .shepherd-title { 
+                font-size: 0.875rem !important; 
+            }
+            .shepherd-theme .shepherd-text { 
+                padding: 0 0.75rem 0.5rem 0.75rem !important;
+                font-size: 0.75rem !important; 
+                line-height: 1.4 !important;
+            }
+            .shepherd-theme .shepherd-footer { 
+                padding: 0 0.75rem 0.75rem 0.75rem !important; 
+            }
+            .shepherd-theme .shepherd-button-primary,
+            .shepherd-theme .shepherd-button-secondary {
+                padding: 0.3rem 0.6rem !important;
+                font-size: 0.7rem !important;
+                border-radius: 0.4rem !important;
+            }
+            .shepherd-theme .shepherd-button-secondary {
+                margin-right: 0.35rem !important;
             }
         }
     </style>
