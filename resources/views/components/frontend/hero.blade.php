@@ -253,16 +253,19 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     <style>
-        /* Custom Driver.js Theme */
+        /* Custom styling untuk Driver.js */
         .driverjs-theme {
             background: rgba(255, 255, 255, 0.95) !important;
-            backdrop-filter: blur(12px) !important;
-            border: 1px solid rgba(244, 121, 32, 0.2) !important;
-            border-radius: 1.25rem !important;
-            padding: 1.5rem !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border-radius: 1rem !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
             box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1), 0 0 20px rgba(244, 121, 32, 0.1) !important;
-            color: #1e293b !important;
             font-family: inherit !important;
+            color: #334155 !important;
+            padding: 1.25rem !important;
+            max-width: 320px !important;
+            z-index: 2147483647 !important;
         }
 
         .dark .driverjs-theme {
@@ -311,14 +314,15 @@
             padding: 0.5rem 1rem !important;
             font-size: 0.875rem !important;
             font-weight: 700 !important;
-            text-shadow: none !important;
-            box-shadow: 0 4px 10px rgba(244, 121, 32, 0.3) !important;
             transition: all 0.3s ease !important;
             cursor: pointer !important;
             touch-action: manipulation !important;
             -webkit-appearance: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-tap-highlight-color: transparent !important;
             pointer-events: auto !important;
-            z-index: 1000001 !important;
+            z-index: 2147483647 !important;
             position: relative !important;
         }
 
@@ -337,13 +341,15 @@
             padding: 0.5rem 1rem !important;
             font-size: 0.875rem !important;
             font-weight: 600 !important;
-            text-shadow: none !important;
             transition: all 0.3s ease !important;
             cursor: pointer !important;
             touch-action: manipulation !important;
             -webkit-appearance: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-tap-highlight-color: transparent !important;
             pointer-events: auto !important;
-            z-index: 1000001 !important;
+            z-index: 2147483647 !important;
             position: relative !important;
         }
 
@@ -366,6 +372,9 @@
         .driverjs-theme button.driver-popover-close-btn {
             color: #94a3b8 !important;
             transition: color 0.3s !important;
+            cursor: pointer !important;
+            touch-action: manipulation !important;
+            z-index: 2147483647 !important;
         }
         
         .driverjs-theme button.driver-popover-close-btn:hover {
