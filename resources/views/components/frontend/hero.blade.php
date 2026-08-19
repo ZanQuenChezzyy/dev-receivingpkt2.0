@@ -188,10 +188,23 @@
         @endphp
 
         <!-- AI Notification Modal -->
-        <div x-data="{ open: true }" x-show="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-0" x-transition.opacity style="display: none;">
-            <div @click.away="open = false" class="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-8 max-w-lg w-full mx-auto shadow-2xl relative border border-slate-200 dark:border-slate-700 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600" x-transition.scale.origin.bottom>
+        <div x-data="{ 
+                open: false,
+                currentStatus: '{{ $aiSettingActive ? 'active' : 'maintenance' }}',
+                init() {
+                    if (localStorage.getItem('aiModalStatusSeen') !== this.currentStatus) {
+                        this.open = true;
+                    }
+                },
+                closeModal() {
+                    this.open = false;
+                    localStorage.setItem('aiModalStatusSeen', this.currentStatus);
+                }
+             }" 
+             x-show="open" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 sm:p-0" x-transition.opacity style="display: none;">
+            <div @click.away="closeModal()" class="bg-white dark:bg-slate-800 rounded-3xl p-4 sm:p-8 max-w-lg w-full mx-auto shadow-2xl relative border border-slate-200 dark:border-slate-700 max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600" x-transition.scale.origin.bottom>
                 <!-- Close Button -->
-                <button @click="open = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <button @click="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
                 
@@ -231,7 +244,7 @@
                                 <p class="text-[11px] sm:text-sm text-slate-600 dark:text-slate-300 mb-4 sm:mb-6 max-w-sm">
                                     Ikuti panduan interaktif singkat untuk mengetahui cara mudah melacak material Anda dengan asisten cerdas ALEX.
                                 </p>
-                                <button @click="open = false; startAiTour()" class="flex items-center justify-center w-full sm:w-auto gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] text-white text-xs sm:text-sm font-bold rounded-xl shadow-[0_8px_20px_-6px_rgba(244,121,32,0.6)] hover:shadow-[0_12px_25px_-6px_rgba(244,121,32,0.8)] transition-all hover:-translate-y-1">
+                                <button @click="closeModal(); startAiTour()" class="flex items-center justify-center w-full sm:w-auto gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] text-white text-xs sm:text-sm font-bold rounded-xl shadow-[0_8px_20px_-6px_rgba(244,121,32,0.6)] hover:shadow-[0_12px_25px_-6px_rgba(244,121,32,0.8)] transition-all hover:-translate-y-1">
                                     <span>Mulai Panduan Interaktif</span>
                                     <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                                 </button>
@@ -242,7 +255,7 @@
                     @endif
                 </div>
 
-                <button @click="open = false" class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold rounded-xl transition-colors">
+                <button @click="closeModal()" class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold rounded-xl transition-colors">
                     Mengerti
                 </button>
             </div>
