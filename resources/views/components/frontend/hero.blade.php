@@ -389,8 +389,6 @@
             .driverjs-theme {
                 padding: 1rem !important;
                 max-width: calc(100vw - 2rem) !important;
-                pointer-events: auto !important;
-                z-index: 2147483647 !important;
             }
             .driverjs-theme .driver-popover-title {
                 font-size: 1rem !important;
@@ -399,20 +397,13 @@
                 font-size: 0.8125rem !important;
             }
             .driverjs-theme .driver-popover-footer {
-                pointer-events: auto !important;
-                position: relative !important;
-                z-index: 2147483647 !important;
-                display: flex !important;
-                gap: 0.5rem !important;
+                margin-top: 0.75rem !important;
             }
             .driverjs-theme button.driver-popover-next-btn,
             .driverjs-theme button.driver-popover-done-btn,
             .driverjs-theme button.driver-popover-prev-btn {
                 padding: 0.5rem 0.8rem !important;
                 font-size: 0.75rem !important;
-                pointer-events: auto !important;
-                position: relative !important;
-                z-index: 2147483647 !important;
             }
         }
     </style>
