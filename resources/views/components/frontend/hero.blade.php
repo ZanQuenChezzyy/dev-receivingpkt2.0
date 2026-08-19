@@ -249,12 +249,12 @@
         </div>
     </main>
 
-    <!-- Driver.js for Interactive Tour -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <!-- Shepherd.js for Interactive Tour -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/css/shepherd.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@13.0.0/dist/js/shepherd.min.js"></script>
     <style>
-        /* Custom styling untuk Driver.js */
-        .driverjs-theme {
+        /* Custom styling untuk Shepherd.js */
+        .shepherd-theme {
             background: rgba(255, 255, 255, 0.95) !important;
             backdrop-filter: blur(16px) !important;
             -webkit-backdrop-filter: blur(16px) !important;
@@ -263,53 +263,57 @@
             box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1), 0 0 20px rgba(244, 121, 32, 0.1) !important;
             font-family: inherit !important;
             color: #334155 !important;
-            padding: 1.25rem !important;
             max-width: 320px !important;
             z-index: 2147483647 !important;
-            pointer-events: auto !important;
-            transform: translateZ(0) !important; /* Force iOS Safari compositing layer */
-            -webkit-transform: translateZ(0) !important;
         }
 
-        .dark .driverjs-theme {
+        .dark .shepherd-theme {
             background: rgba(30, 41, 59, 0.95) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             color: #f8fafc !important;
             box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5), 0 0 20px rgba(244, 121, 32, 0.15) !important;
         }
 
-        .driverjs-theme .driver-popover-title {
+        .shepherd-theme .shepherd-header {
+            background: transparent !important;
+            border-bottom: none !important;
+            padding: 1.25rem 1.25rem 0.5rem 1.25rem !important;
+        }
+
+        .shepherd-theme .shepherd-title {
             font-size: 1.125rem !important;
             font-weight: 800 !important;
             color: #F47920 !important;
-            margin-bottom: 0.5rem !important;
         }
 
-        .driverjs-theme .driver-popover-description {
+        .shepherd-theme .shepherd-cancel-icon {
+            color: #94a3b8 !important;
+            transition: color 0.3s !important;
+        }
+        
+        .shepherd-theme .shepherd-cancel-icon:hover {
+            color: #F47920 !important;
+        }
+
+        .shepherd-theme .shepherd-text {
+            padding: 0 1.25rem 1rem 1.25rem !important;
             font-size: 0.875rem !important;
             line-height: 1.5 !important;
             color: #475569 !important;
-            margin-bottom: 1rem !important;
         }
 
-        .dark .driverjs-theme .driver-popover-description {
+        .dark .shepherd-theme .shepherd-text {
             color: #cbd5e1 !important;
         }
 
-        .driverjs-theme .driver-popover-footer {
-            margin-top: 1rem !important;
+        .shepherd-theme .shepherd-footer {
+            padding: 0 1.25rem 1.25rem 1.25rem !important;
+            background: transparent !important;
+            border-top: none !important;
         }
 
-        .driverjs-theme .driver-popover-progress-text {
-            font-size: 0.75rem !important;
-            font-weight: 600 !important;
-            color: #94a3b8 !important;
-        }
-
-        .driverjs-theme button.driver-popover-next-btn, 
-        .driverjs-theme button.driver-popover-next-btn:focus,
-        .driverjs-theme button.driver-popover-done-btn,
-        .driverjs-theme button.driver-popover-done-btn:focus {
+        /* Tombol Next / Done */
+        .shepherd-theme .shepherd-button-primary {
             background: linear-gradient(to right, #F47920, #BE5A27) !important;
             color: white !important;
             border: none !important;
@@ -317,28 +321,17 @@
             padding: 0.5rem 1rem !important;
             font-size: 0.875rem !important;
             font-weight: 700 !important;
-            text-shadow: none !important;
             box-shadow: 0 4px 10px rgba(244, 121, 32, 0.3) !important;
             transition: all 0.3s ease !important;
-            cursor: pointer !important;
-            touch-action: manipulation !important;
-            -webkit-appearance: none !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            -webkit-tap-highlight-color: transparent !important;
-            pointer-events: auto !important;
-            z-index: 2147483647 !important;
-            position: relative !important;
         }
 
-        .driverjs-theme button.driver-popover-next-btn:hover,
-        .driverjs-theme button.driver-popover-done-btn:hover {
+        .shepherd-theme .shepherd-button-primary:hover {
             transform: translateY(-2px) !important;
             box-shadow: 0 6px 15px rgba(244, 121, 32, 0.4) !important;
         }
 
-        .driverjs-theme button.driver-popover-prev-btn,
-        .driverjs-theme button.driver-popover-prev-btn:focus {
+        /* Tombol Back */
+        .shepherd-theme .shepherd-button-secondary {
             background: transparent !important;
             color: #64748b !important;
             border: 1px solid #cbd5e1 !important;
@@ -346,65 +339,33 @@
             padding: 0.5rem 1rem !important;
             font-size: 0.875rem !important;
             font-weight: 600 !important;
-            text-shadow: none !important;
             transition: all 0.3s ease !important;
-            cursor: pointer !important;
-            touch-action: manipulation !important;
-            -webkit-appearance: none !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            -webkit-tap-highlight-color: transparent !important;
-            pointer-events: auto !important;
-            z-index: 2147483647 !important;
-            position: relative !important;
+            margin-right: 0.5rem !important;
         }
 
-        .dark .driverjs-theme button.driver-popover-prev-btn {
+        .dark .shepherd-theme .shepherd-button-secondary {
             color: #cbd5e1 !important;
             border-color: #475569 !important;
         }
 
-        .driverjs-theme button.driver-popover-prev-btn:hover {
+        .shepherd-theme .shepherd-button-secondary:hover {
             background: #f1f5f9 !important;
             color: #1e293b !important;
         }
 
-        .dark .driverjs-theme button.driver-popover-prev-btn:hover {
+        .dark .shepherd-theme .shepherd-button-secondary:hover {
             background: rgba(255,255,255,0.1) !important;
             color: white !important;
         }
-        
-        /* Driver.js close button */
-        .driverjs-theme button.driver-popover-close-btn {
-            color: #94a3b8 !important;
-            transition: color 0.3s !important;
-            cursor: pointer !important;
-            touch-action: manipulation !important;
-            z-index: 2147483647 !important;
-        }
-        
-        .driverjs-theme button.driver-popover-close-btn:hover {
-            color: #F47920 !important;
-        }
 
-        /* Mobile Adjustments for Driver.js */
         @media (max-width: 640px) {
-            .driverjs-theme {
-                padding: 1rem !important;
+            .shepherd-theme {
                 max-width: calc(100vw - 2rem) !important;
             }
-            .driverjs-theme .driver-popover-title {
-                font-size: 1rem !important;
-            }
-            .driverjs-theme .driver-popover-description {
-                font-size: 0.8125rem !important;
-            }
-            .driverjs-theme .driver-popover-footer {
-                margin-top: 0.75rem !important;
-            }
-            .driverjs-theme button.driver-popover-next-btn,
-            .driverjs-theme button.driver-popover-done-btn,
-            .driverjs-theme button.driver-popover-prev-btn {
+            .shepherd-theme .shepherd-title { font-size: 1rem !important; }
+            .shepherd-theme .shepherd-text { font-size: 0.8125rem !important; }
+            .shepherd-theme .shepherd-button-primary,
+            .shepherd-theme .shepherd-button-secondary {
                 padding: 0.5rem 0.8rem !important;
                 font-size: 0.75rem !important;
             }
@@ -412,127 +373,137 @@
     </style>
     <script>
         function startAiTour() {
-            const driver = window.driver.js.driver;
-            const driverObj = driver({
-                popoverClass: 'driverjs-theme',
-                showProgress: true,
-                animate: true,
-                nextBtnText: 'Lanjut',
-                prevBtnText: 'Kembali',
-                doneBtnText: 'Selesai',
-                steps: [
-                    {
-                        element: '#tour-chatbot-button',
-                        popover: {
-                            title: '1. Buka Chatbot',
-                            description: 'Klik area mana saja untuk membuka jendela Asisten AI.',
-                            side: 'left',
-                            align: 'end',
-                            onNextClick: () => {
-                                const chatBtn = document.querySelector('#tour-chatbot-button button');
-                                const chatWindow = document.querySelector('#tour-chatbot-window');
-                                if (chatBtn && chatWindow && chatWindow.style.display === 'none') {
-                                    chatBtn.click(); // Memicu request Livewire ke server
-                                    
-                                    // Polling untuk menunggu sampai Livewire selesai dan elemen muncul
-                                    let attempts = 0;
-                                    let checkExist = setInterval(() => {
-                                        attempts++;
-                                        if (chatWindow.style.display !== 'none') {
-                                            clearInterval(checkExist);
-                                            // Beri jeda 450ms untuk animasi slide-up AlpineJS selesai bergerak
-                                            setTimeout(() => {
-                                                driverObj.moveNext();
-                                            }, 450);
-                                        } else if (attempts > 50) { // Maksimal tunggu 5 detik
-                                            clearInterval(checkExist);
-                                            driverObj.moveNext();
-                                        }
-                                    }, 100);
-                                } else {
-                                    driverObj.moveNext();
-                                }
-                            }
-                        },
-                        onHighlighted: (element) => {
-                            // Tangkap klik KHUSUS pada elemen yang disorot (tombol chatbot)
-                            if (element) {
-                                const advanceStep = () => {
-                                    element.removeEventListener('click', advanceStep);
-                                    element.removeEventListener('touchstart', advanceStep);
-                                    const nextBtn = document.querySelector('.driver-popover-next-btn');
-                                    if (nextBtn) nextBtn.click();
-                                };
-                                setTimeout(() => {
-                                    element.addEventListener('click', advanceStep);
-                                    element.addEventListener('touchstart', advanceStep, { passive: true });
-                                }, 100);
-                            }
-                        }
-                    },
-                    {
-                        element: '#tour-chatbot-input',
-                        popover: {
-                            title: '2. Ketik Pertanyaan',
-                            description: 'Ketikkan nomor PO, DO, atau MIR di sini, lalu tekan Enter atau klik tombol kirim.',
-                            side: 'top',
-                            align: 'center',
-                            onPrevClick: () => {
-                                const chatBtn = document.querySelector('#tour-chatbot-button button');
-                                const chatWindow = document.querySelector('#tour-chatbot-window');
-                                if (chatBtn && chatWindow && chatWindow.style.display !== 'none') {
-                                    chatBtn.click();
-                                    
-                                    let attempts = 0;
-                                    let checkExist = setInterval(() => {
-                                        attempts++;
-                                        if (chatWindow.style.display === 'none') {
-                                            clearInterval(checkExist);
-                                            setTimeout(() => {
-                                                driverObj.movePrevious();
-                                            }, 450);
-                                        } else if (attempts > 50) {
-                                            clearInterval(checkExist);
-                                            driverObj.movePrevious();
-                                        }
-                                    }, 100);
-                                } else {
-                                    driverObj.movePrevious();
-                                }
-                            }
-                        }
-                    },
-                    {
-                        element: '#tour-chatbot-window',
-                        popover: {
-                            title: '3. Jawaban AI',
-                            description: 'AI akan mencari data di sistem SAP/Gudang dan memberikan status material secara real-time di sini.',
-                            side: 'left',
-                            align: 'start'
-                        }
+            if (typeof Shepherd === 'undefined') return;
+            
+            const tour = new Shepherd.Tour({
+                useModalOverlay: true,
+                defaultStepOptions: {
+                    classes: 'shepherd-theme',
+                    scrollTo: true,
+                    cancelIcon: {
+                        enabled: true
                     }
-                ],
-                onDestroyStarted: () => {
-                    // Jika user klik area overlay (di luar popover) pada Step 1, paksa lanjut!
-                    if (driverObj.hasNextStep() && driverObj.getActiveIndex() === 0) {
-                        const nextBtn = document.querySelector('.driver-popover-next-btn');
-                        if (nextBtn) {
-                            nextBtn.click();
-                            return; // Batalkan proses penutupan tour
-                        }
-                    }
-
-                    const chatBtn = document.querySelector('#tour-chatbot-button button');
-                    const chatWindow = document.querySelector('#tour-chatbot-window');
-                    if (chatBtn && chatWindow && chatWindow.style.display !== 'none') {
-                        chatBtn.click();
-                    }
-                    driverObj.destroy();
                 }
             });
+
+            tour.addStep({
+                id: 'step-1',
+                title: '1. Buka Chatbot',
+                text: 'Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela Asisten AI.',
+                attachTo: {
+                    element: '#tour-chatbot-button',
+                    on: 'left'
+                },
+                buttons: [
+                    {
+                        text: 'Lanjut',
+                        classes: 'shepherd-button-primary',
+                        action: function() {
+                            const chatBtn = document.querySelector('#tour-chatbot-button button');
+                            const chatWindow = document.querySelector('#tour-chatbot-window');
+                            
+                            if (chatBtn && chatWindow && chatWindow.style.display === 'none') {
+                                chatBtn.click(); // Memicu request Livewire ke server
+                                
+                                // Polling untuk menunggu sampai Livewire selesai dan elemen muncul
+                                let attempts = 0;
+                                let checkExist = setInterval(() => {
+                                    attempts++;
+                                    if (chatWindow.style.display !== 'none') {
+                                        clearInterval(checkExist);
+                                        setTimeout(() => tour.next(), 450);
+                                    } else if (attempts > 50) { // Maksimal tunggu 5 detik
+                                        clearInterval(checkExist);
+                                        tour.next();
+                                    }
+                                }, 100);
+                            } else {
+                                tour.next();
+                            }
+                        }
+                    }
+                ]
+            });
+
+            tour.addStep({
+                id: 'step-2',
+                title: '2. Ketik Pertanyaan',
+                text: 'Ketikkan nomor PO, DO, atau MIR di sini, lalu tekan Enter atau klik tombol kirim.',
+                attachTo: {
+                    element: '#tour-chatbot-input',
+                    on: 'top'
+                },
+                buttons: [
+                    {
+                        text: 'Kembali',
+                        classes: 'shepherd-button-secondary',
+                        action: function() {
+                            const chatBtn = document.querySelector('#tour-chatbot-button button');
+                            const chatWindow = document.querySelector('#tour-chatbot-window');
+                            
+                            if (chatBtn && chatWindow && chatWindow.style.display !== 'none') {
+                                chatBtn.click(); // Tutup jendela
+                                
+                                let attempts = 0;
+                                let checkExist = setInterval(() => {
+                                    attempts++;
+                                    if (chatWindow.style.display === 'none') {
+                                        clearInterval(checkExist);
+                                        setTimeout(() => tour.back(), 450);
+                                    } else if (attempts > 50) {
+                                        clearInterval(checkExist);
+                                        tour.back();
+                                    }
+                                }, 100);
+                            } else {
+                                tour.back();
+                            }
+                        }
+                    },
+                    {
+                        text: 'Lanjut',
+                        classes: 'shepherd-button-primary',
+                        action: tour.next
+                    }
+                ]
+            });
+
+            tour.addStep({
+                id: 'step-3',
+                title: '3. Jawaban AI',
+                text: 'AI akan mencari data di sistem SAP/Gudang dan memberikan status material secara real-time di sini.',
+                attachTo: {
+                    element: '#tour-chatbot-window',
+                    on: 'left'
+                },
+                buttons: [
+                    {
+                        text: 'Kembali',
+                        classes: 'shepherd-button-secondary',
+                        action: tour.back
+                    },
+                    {
+                        text: 'Selesai',
+                        classes: 'shepherd-button-primary',
+                        action: tour.complete
+                    }
+                ]
+            });
             
+            // Handle cleanup saat ditutup atau selesai
+            const closeTour = () => {
+                const chatBtn = document.querySelector('#tour-chatbot-button button');
+                const chatWindow = document.querySelector('#tour-chatbot-window');
+                if (chatBtn && chatWindow && chatWindow.style.display !== 'none') {
+                    chatBtn.click();
+                }
+            };
+            
+            tour.on('cancel', closeTour);
+            tour.on('complete', closeTour);
+
             setTimeout(() => {
-                driverObj.drive();
+                tour.start();
             }, 300);
         }
     </script>
