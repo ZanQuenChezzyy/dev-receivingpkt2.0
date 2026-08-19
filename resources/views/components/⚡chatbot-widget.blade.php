@@ -446,13 +446,19 @@ Detail Barang:
 
             <!-- Saran Pertanyaan -->
             @if(!$isTyping && !empty($suggestedQuestions))
-                <div class="flex flex-wrap gap-2 mt-2 mb-2 animate-fade-in-up">
-                    @foreach($suggestedQuestions as $suggestion)
-                        <button wire:click="useSuggestedMessage('{{ $suggestion }}')"
-                            class="px-3 py-1.5 bg-white/50 dark:bg-slate-800/50 border border-[#F47920]/40 rounded-full text-[11.5px] font-semibold text-[#F47920] dark:text-[#F89B53] hover:bg-[#F47920] hover:text-white dark:hover:text-white transition-all duration-300 shadow-sm backdrop-blur-sm text-left max-w-full hover:-translate-y-0.5 hover:shadow-md">
-                            {{ $suggestion }}
-                        </button>
-                    @endforeach
+                <div class="mt-2 mb-2 animate-fade-in-up">
+                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 ml-1">Saran:</p>
+                    <div class="flex flex-col gap-2">
+                        @foreach($suggestedQuestions as $suggestion)
+                            <button wire:click="useSuggestedMessage('{{ $suggestion }}')"
+                                class="px-3.5 py-2.5 bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-white/5 rounded-xl text-[11.5px] font-medium text-slate-700 dark:text-slate-300 hover:bg-[#F47920]/10 hover:border-[#F47920]/30 hover:text-[#F47920] dark:hover:text-[#F89B53] transition-all duration-300 shadow-sm backdrop-blur-sm text-left w-full hover:-translate-y-0.5 group flex items-start gap-2.5">
+                                <svg class="w-3.5 h-3.5 text-[#F47920] opacity-70 group-hover:opacity-100 flex-shrink-0 mt-[2px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                                </svg>
+                                <span>{{ $suggestion }}</span>
+                            </button>
+                        @endforeach
+                    </div>
                 </div>
             @endif
         </div>
