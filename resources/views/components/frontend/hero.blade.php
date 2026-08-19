@@ -254,50 +254,70 @@
     <script src="https://unpkg.com/shepherd.js@11.0.1/dist/js/shepherd.min.js"></script>
     <style>
         /* Custom styling untuk Shepherd.js */
+        
+        /* Animasi Pop-In yang lebih smooth */
+        @keyframes shepherdPop {
+            0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
         .shepherd-theme {
-            background: rgba(255, 255, 255, 0.95) !important;
-            backdrop-filter: blur(16px) !important;
-            -webkit-backdrop-filter: blur(16px) !important;
-            border-radius: 1rem !important;
-            border: 1px solid rgba(255,255,255,0.2) !important;
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1), 0 0 20px rgba(244, 121, 32, 0.1) !important;
+            background: rgba(255, 255, 255, 0.90) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border-radius: 1.25rem !important;
+            border: 1px solid rgba(255,255,255,0.5) !important;
+            box-shadow: 0 20px 40px -8px rgba(0,0,0,0.1), 0 0 20px rgba(244, 121, 32, 0.1) !important;
             font-family: inherit !important;
             color: #334155 !important;
-            max-width: 320px !important;
+            max-width: 280px !important; /* Ukuran lebih ringkas */
             z-index: 2147483647 !important;
+            animation: shepherdPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
         }
 
         .dark .shepherd-theme {
-            background: rgba(30, 41, 59, 0.95) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            background: rgba(30, 41, 59, 0.90) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
             color: #f8fafc !important;
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5), 0 0 20px rgba(244, 121, 32, 0.15) !important;
+            box-shadow: 0 20px 40px -8px rgba(0,0,0,0.5), 0 0 20px rgba(244, 121, 32, 0.15) !important;
+        }
+
+        /* Menyatu-kan Arrow dengan panel Glassmorphism */
+        .shepherd-theme .shepherd-arrow:before {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 1px solid rgba(255,255,255,0.5) !important;
+        }
+        
+        .dark .shepherd-theme .shepherd-arrow:before {
+            background: rgba(30, 41, 59, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
         }
 
         .shepherd-theme .shepherd-header {
             background: transparent !important;
             border-bottom: none !important;
-            padding: 1.25rem 1.25rem 0.5rem 1.25rem !important;
+            padding: 1rem 1rem 0.25rem 1rem !important; /* Padding lebih kecil */
         }
 
         .shepherd-theme .shepherd-title {
-            font-size: 1.125rem !important;
+            font-size: 1rem !important; /* Font judul lebih kecil */
             font-weight: 800 !important;
             color: #F47920 !important;
         }
 
         .shepherd-theme .shepherd-cancel-icon {
             color: #94a3b8 !important;
-            transition: color 0.3s !important;
+            transition: all 0.3s !important;
         }
         
         .shepherd-theme .shepherd-cancel-icon:hover {
             color: #F47920 !important;
+            transform: rotate(90deg) !important; /* Tambahan animasi close */
         }
 
         .shepherd-theme .shepherd-text {
-            padding: 0 1.25rem 1rem 1.25rem !important;
-            font-size: 0.875rem !important;
+            padding: 0 1rem 0.75rem 1rem !important;
+            font-size: 0.8125rem !important; /* Teks lebih kecil */
             line-height: 1.5 !important;
             color: #475569 !important;
         }
@@ -307,7 +327,7 @@
         }
 
         .shepherd-theme .shepherd-footer {
-            padding: 0 1.25rem 1.25rem 1.25rem !important;
+            padding: 0 1rem 1rem 1rem !important;
             background: transparent !important;
             border-top: none !important;
         }
@@ -317,16 +337,16 @@
             background: linear-gradient(to right, #F47920, #BE5A27) !important;
             color: white !important;
             border: none !important;
-            border-radius: 0.75rem !important;
-            padding: 0.5rem 1rem !important;
-            font-size: 0.875rem !important;
+            border-radius: 0.5rem !important; /* Radius lebih dinamis */
+            padding: 0.4rem 0.875rem !important; /* Padding lebih ramping */
+            font-size: 0.75rem !important; /* Teks tombol dikecilkan */
             font-weight: 700 !important;
             box-shadow: 0 4px 10px rgba(244, 121, 32, 0.3) !important;
-            transition: all 0.3s ease !important;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
 
         .shepherd-theme .shepherd-button-primary:hover {
-            transform: translateY(-2px) !important;
+            transform: translateY(-2px) scale(1.05) !important; /* Efek pop saat hover */
             box-shadow: 0 6px 15px rgba(244, 121, 32, 0.4) !important;
         }
 
@@ -335,9 +355,9 @@
             background: transparent !important;
             color: #64748b !important;
             border: 1px solid #cbd5e1 !important;
-            border-radius: 0.75rem !important;
-            padding: 0.5rem 1rem !important;
-            font-size: 0.875rem !important;
+            border-radius: 0.5rem !important;
+            padding: 0.4rem 0.875rem !important;
+            font-size: 0.75rem !important;
             font-weight: 600 !important;
             transition: all 0.3s ease !important;
             margin-right: 0.5rem !important;
@@ -360,14 +380,7 @@
 
         @media (max-width: 640px) {
             .shepherd-theme {
-                max-width: calc(100vw - 2rem) !important;
-            }
-            .shepherd-theme .shepherd-title { font-size: 1rem !important; }
-            .shepherd-theme .shepherd-text { font-size: 0.8125rem !important; }
-            .shepherd-theme .shepherd-button-primary,
-            .shepherd-theme .shepherd-button-secondary {
-                padding: 0.5rem 0.8rem !important;
-                font-size: 0.75rem !important;
+                max-width: calc(100vw - 3rem) !important; /* Beri sedikit jarak di mobile */
             }
         }
     </style>
