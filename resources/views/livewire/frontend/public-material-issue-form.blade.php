@@ -1000,12 +1000,23 @@
     </div>
 
     <!-- Floating Guide Button -->
-    <button type="button" @click="startTour()" class="fixed bottom-8 left-8 z-[90] flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-[#cf6935] text-white rounded-full shadow-[0_8px_20px_rgba(244,121,32,0.3)] hover:shadow-[0_12px_25px_rgba(244,121,32,0.4)] hover:-translate-y-1 transition-all duration-300 group">
-        <svg class="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span class="font-bold text-sm tracking-wide">Panduan Pengisian</span>
-    </button>
+    <div x-data="{ isChatOpen: false }"
+         @chat-toggled.window="isChatOpen = $event.detail.isOpen"
+         x-show="!isChatOpen"
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+         x-transition:leave-end="opacity-0 translate-y-8 scale-95"
+         class="fixed bottom-6 left-6 md:bottom-8 md:left-8 z-[99]" style="transform: translateZ(0);">
+        <button type="button" @click.prevent="startTour()" class="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-[#cf6935] text-white rounded-full shadow-[0_8px_20px_rgba(244,121,32,0.3)] hover:shadow-[0_12px_25px_rgba(244,121,32,0.4)] active:scale-95 transition-all duration-300 group cursor-pointer" style="-webkit-tap-highlight-color: transparent;">
+            <svg class="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="font-bold text-sm tracking-wide">Panduan Pengisian</span>
+        </button>
+    </div>
 
     <style>
         .shepherd-element {

@@ -45,6 +45,7 @@ new class extends Component {
                 'content' => 'Halo! Saya ALEX, Asisten AI Receiving. Ada yang bisa saya bantu terkait status PO, Delivery Order, atau pengecekan status material?'
             ];
         }
+        $this->dispatch('chat-toggled', isOpen: $this->isOpen);
     }
 
     public function sendMessage()
