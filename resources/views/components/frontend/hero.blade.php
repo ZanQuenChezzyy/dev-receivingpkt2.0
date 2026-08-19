@@ -266,6 +266,9 @@
             padding: 1.25rem !important;
             max-width: 320px !important;
             z-index: 2147483647 !important;
+            pointer-events: auto !important;
+            transform: translateZ(0) !important; /* Force iOS Safari compositing layer */
+            -webkit-transform: translateZ(0) !important;
         }
 
         .dark .driverjs-theme {
