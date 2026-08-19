@@ -454,39 +454,19 @@
                                 }
                             }
                         },
-                        onHighlighted: () => {
-                            // Fungsi untuk maju otomatis saat klik di mana saja (di luar popover)
-                            const advanceStep1 = (e) => {
-                                // Jika yang diklik adalah bagian dalam popover (misal tombol close), abaikan
-                                if (e.target.closest('.driver-popover')) return;
-
-                                // Hapus listener agar tidak dijalankan dua kali
-                                document.removeEventListener('click', advanceStep1, true);
-                                document.removeEventListener('touchstart', advanceStep1, true);
-
-                                // Simulasikan menekan tombol Lanjut
-                                const nextBtn = document.querySelector('.driver-popover-next-btn');
-                                if (nextBtn) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    nextBtn.click();
-                                }
-                            };
-
-                            // Beri sedikit jeda agar klik untuk memulai tour tidak ikut terdeteksi
-                            setTimeout(() => {
-                                document.addEventListener('click', advanceStep1, true);
-                                document.addEventListener('touchstart', advanceStep1, { capture: true, passive: false });
-                            }, 100);
-
-                            // Simpan referensi fungsi di window agar bisa dihapus nanti
-                            window._tourAdvanceStep1 = advanceStep1;
-                        },
-                        onDeselected: () => {
-                            if (window._tourAdvanceStep1) {
-                                document.removeEventListener('click', window._tourAdvanceStep1, true);
-                                document.removeEventListener('touchstart', window._tourAdvanceStep1, true);
-                                delete window._tourAdvanceStep1;
+                        onHighlighted: (element) => {
+                            // Tangkap klik KHUSUS pada elemen yang disorot (tombol chatbot)
+                            if (element) {
+                                const advanceStep = () => {
+                                    element.removeEventListener('click', advanceStep);
+                                    element.removeEventListener('touchstart', advanceStep);
+                                    const nextBtn = document.querySelector('.driver-popover-next-btn');
+                                    if (nextBtn) nextBtn.click();
+                                };
+                                setTimeout(() => {
+                                    element.addEventListener('click', advanceStep);
+                                    element.addEventListener('touchstart', advanceStep, { passive: true });
+                                }, 100);
                             }
                         }
                     },
@@ -533,6 +513,15 @@
                     }
                 ],
                 onDestroyStarted: () => {
+                    // Jika user klik area overlay (di luar popover) pada Step 1, paksa lanjut!
+                    if (driverObj.hasNextStep() && driverObj.getActiveIndex() === 0) {
+                        const nextBtn = document.querySelector('.driver-popover-next-btn');
+                        if (nextBtn) {
+                            nextBtn.click();
+                            return; // Batalkan proses penutupan tour
+                        }
+                    }
+
                     const chatBtn = document.querySelector('#tour-chatbot-button button');
                     const chatWindow = document.querySelector('#tour-chatbot-window');
                     if (chatBtn && chatWindow && chatWindow.style.display !== 'none') {
