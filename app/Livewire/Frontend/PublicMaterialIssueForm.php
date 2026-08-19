@@ -8,77 +8,79 @@ use App\Models\MaterialIssueDetail;
 use App\Models\PurchaseOrderIssued;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class PublicMaterialIssueForm extends Component
 {
     // Form Properties
-    public $diminta_oleh = '';
+    public string $diminta_oleh = '';
 
-    public $npk = '';
+    public string $npk = '';
 
-    public $diterima_oleh = '';
+    public string $diterima_oleh = '';
 
-    public $no_hp = '';
+    public string $no_hp = '';
 
-    public $departemen = '';
+    public string $departemen = '';
 
-    public $bagian = '';
+    public string $bagian = '';
 
     // Signatures
-    public $diminta_signature = null;
+    public ?string $diminta_signature = null;
 
-    public $disetujui_oleh = '';
+    public string $disetujui_oleh = '';
 
-    public $disetujui_npk = '';
+    public string $disetujui_npk = '';
 
-    public $disetujui_signature = null;
+    public ?string $disetujui_signature = null;
 
-    public $requiresIstekSignature = false;
+    public bool $requiresIstekSignature = false;
 
-    public $diserahkan_oleh = '';
+    public string $diserahkan_oleh = '';
 
-    public $diserahkan_npk = '';
+    public string $diserahkan_npk = '';
 
-    public $diserahkan_signature = null;
+    public ?string $diserahkan_signature = null;
 
-    public $tanggal = '';
+    public string $tanggal = '';
 
-    public $purchase_order_issued_id = '';
+    public string|int $purchase_order_issued_id = '';
 
-    public $no_reservasi = '';
+    public string $no_reservasi = '';
 
-    public $no_jor_wo = '';
+    public string $no_jor_wo = '';
 
-    public $no_alat = '';
+    public string $no_alat = '';
 
-    public $kode_biaya = '';
+    public string $kode_biaya = '';
 
-    public $digunakan_untuk = '';
+    public string $digunakan_untuk = '';
 
-    public $agreement = false;
+    public bool $agreement = false;
 
-    public $details = [];
+    public array $details = [];
 
     // Custom Options
-    public $pilihan_istek = '';
+    public string $pilihan_istek = '';
 
-    public $pilihan_receiving = '';
+    public string $pilihan_receiving = '';
 
-    public $receiving_users = [];
+    public array $receiving_users = [];
 
     // Search properties
     #[Url(as: 'po')]
-    public $po_search = '';
+    public string $po_search = '';
+    public string $search_mode = 'po'; // 'po' or 'sn'
 
-    public $available_pos = [];
+    public mixed $available_pos = [];
 
-    public $available_po_items = [];
+    public array $available_po_items = [];
 
-    public $showSuccessMessage = false;
+    public bool $showSuccessMessage = false;
 
-    public $showConfirmModal = false;
+    public bool $showConfirmModal = false;
 
     public function mount()
     {
@@ -99,12 +101,12 @@ class PublicMaterialIssueForm extends Component
         }
     }
 
-    public function updatedDimintaOleh($value)
+    public function updatedDimintaOleh(string $value)
     {
         $this->diterima_oleh = $value;
     }
 
-    public function updatedPilihanIstek($value)
+    public function updatedPilihanIstek(string $value)
     {
         if ($value === 'Pasarela') {
             $this->disetujui_oleh = 'Pasarela';
@@ -118,7 +120,7 @@ class PublicMaterialIssueForm extends Component
         }
     }
 
-    public function updatedPilihanReceiving($value)
+    public function updatedPilihanReceiving(string $value)
     {
         if ($value && $value !== 'Lainnya') {
             $user = collect($this->receiving_users)->firstWhere('id', (int) $value);
@@ -137,18 +139,30 @@ class PublicMaterialIssueForm extends Component
         $this->searchPOs();
     }
 
+    public function updatedSearchMode()
+    {
+        $this->po_search = '';
+        $this->available_pos = [];
+    }
+
     public function searchPOs()
     {
         $query = PurchaseOrderIssued::whereHas('deliveryOrderReceiptDetails');
 
         if (!empty($this->po_search)) {
-            $query->where('purchase_order_no', 'like', '%' . $this->po_search . '%');
+            if ($this->search_mode === 'po') {
+                $query->where('purchase_order_no', 'like', '%' . $this->po_search . '%');
+            } else {
+                $query->whereHas('deliveryOrderReceiptDetails', function ($q2) {
+                    $q2->where('material_code', 'like', '%' . $this->po_search . '%');
+                });
+            }
         }
 
         $this->available_pos = $query->limit(20)->get()->unique('purchase_order_no');
     }
 
-    public function updatedPurchaseOrderIssuedId($id)
+    public function updatedPurchaseOrderIssuedId(mixed $id)
     {
         if ($id) {
             $poItem = PurchaseOrderIssued::find($id);
@@ -207,7 +221,7 @@ class PublicMaterialIssueForm extends Component
         $this->addDetail();
     }
 
-    public function updatedDetails($value, $key)
+    public function updatedDetails(mixed $value, string $key)
     {
         // $key looks like "0.delivery_order_receipt_detail_id" or "0.diminta"
         $parts = explode('.', $key);
@@ -244,7 +258,7 @@ class PublicMaterialIssueForm extends Component
         $this->checkIfIstekSignatureRequired();
     }
 
-    public function addDetail()
+    public function addDetail($showToast = false)
     {
         if (count($this->details) < count($this->available_po_items) || empty($this->available_po_items)) {
             $this->details[] = [
@@ -257,15 +271,20 @@ class PublicMaterialIssueForm extends Component
                 'diserahkan' => '',
                 'boh' => 0,
             ];
+
+            if ($showToast) {
+                $this->dispatch('item-added');
+            }
         }
     }
 
-    public function removeDetail($index)
+    public function removeDetail(int $index)
     {
         if (count($this->details) > 1) {
             unset($this->details[$index]);
             $this->details = array_values($this->details);
             $this->checkIfIstekSignatureRequired();
+            $this->dispatch('item-removed');
         }
     }
 
@@ -473,8 +492,9 @@ class PublicMaterialIssueForm extends Component
         }
     }
 
+    #[Layout('components.layouts.frontend')]
     public function render()
     {
-        return view('livewire.frontend.public-material-issue-form')->layout('components.layouts.frontend');
+        return view('livewire.frontend.public-material-issue-form');
     }
 }

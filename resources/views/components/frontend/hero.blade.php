@@ -266,72 +266,89 @@
     <link rel="stylesheet" href="https://unpkg.com/shepherd.js@11.0.1/dist/css/shepherd.css"/>
     <script src="https://unpkg.com/shepherd.js@11.0.1/dist/js/shepherd.min.js"></script>
     <style>
-        /* Custom styling untuk Shepherd.js */
-        
-        /* Animasi Pop-In yang lebih smooth */
+        /* Custom styling untuk Shepherd.js konsisten dengan form */
         @keyframes shepherdPop {
-            0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+            0% { opacity: 0; transform: scale(0.9) translateY(10px); }
             100% { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         .shepherd-theme {
-            background: rgba(255, 255, 255, 0.90) !important;
-            backdrop-filter: blur(20px) !important;
-            -webkit-backdrop-filter: blur(20px) !important;
-            border-radius: 1.25rem !important;
-            border: 1px solid rgba(255,255,255,0.5) !important;
-            box-shadow: 0 20px 40px -8px rgba(0,0,0,0.1), 0 0 20px rgba(244, 121, 32, 0.1) !important;
+            background: rgba(255, 255, 255, 0.98) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border-radius: 1.5rem !important;
+            border: 1px solid rgba(244, 121, 32, 0.2) !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
             font-family: inherit !important;
             color: #334155 !important;
-            max-width: 280px !important; /* Ukuran lebih ringkas */
+            max-width: 350px !important;
             z-index: 2147483647 !important;
-            animation: shepherdPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+            animation: shepherdPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
         }
 
         .dark .shepherd-theme {
-            background: rgba(30, 41, 59, 0.90) !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            background: rgba(15, 23, 42, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
             color: #f8fafc !important;
-            box-shadow: 0 20px 40px -8px rgba(0,0,0,0.5), 0 0 20px rgba(244, 121, 32, 0.15) !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px 0 rgba(244, 121, 32, 0.1) !important;
         }
 
-        /* Menyatu-kan Arrow dengan panel Glassmorphism */
         .shepherd-theme .shepherd-arrow:before {
-            background: rgba(255, 255, 255, 0.95) !important;
-            border: 1px solid rgba(255,255,255,0.5) !important;
+            background: #fff !important;
+            border: 1px solid rgba(244, 121, 32, 0.2) !important;
         }
         
         .dark .shepherd-theme .shepherd-arrow:before {
-            background: rgba(30, 41, 59, 0.95) !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            background: #0f172a !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
         }
 
         .shepherd-theme .shepherd-header {
             background: transparent !important;
-            border-bottom: none !important;
-            padding: 1rem 1rem 0.25rem 1rem !important; /* Padding lebih kecil */
+            border-bottom: 1px solid rgba(244, 121, 32, 0.1) !important;
+            padding: 1.25rem 1.5rem 0.75rem !important;
+        }
+        
+        .dark .shepherd-theme .shepherd-header {
+            border-bottom-color: rgba(255, 255, 255, 0.05) !important;
         }
 
         .shepherd-theme .shepherd-title {
-            font-size: 1rem !important; /* Font judul lebih kecil */
-            font-weight: 800 !important;
-            color: #F47920 !important;
+            font-size: 1.15rem !important;
+            font-weight: 900 !important;
+            color: #1e293b !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.6rem !important;
+        }
+        
+        .dark .shepherd-theme .shepherd-title {
+            color: #f8fafc !important;
+        }
+
+        .shepherd-theme .shepherd-title::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 20px;
+            background: linear-gradient(to bottom, #F47920, #BE5A27);
+            border-radius: 4px;
         }
 
         .shepherd-theme .shepherd-cancel-icon {
             color: #94a3b8 !important;
-            transition: all 0.3s !important;
+            transition: all 0.2s !important;
         }
         
         .shepherd-theme .shepherd-cancel-icon:hover {
-            color: #F47920 !important;
-            transform: rotate(90deg) !important; /* Tambahan animasi close */
+            color: #ef4444 !important;
+            transform: rotate(90deg) !important;
         }
 
         .shepherd-theme .shepherd-text {
-            padding: 0 1rem 0.75rem 1rem !important;
-            font-size: 0.8125rem !important; /* Teks lebih kecil */
-            line-height: 1.5 !important;
+            padding: 1rem 1.5rem !important;
+            font-size: 0.95rem !important;
+            line-height: 1.6 !important;
             color: #475569 !important;
         }
 
@@ -340,84 +357,76 @@
         }
 
         .shepherd-theme .shepherd-footer {
-            padding: 0 1rem 1rem 1rem !important;
+            padding: 0.5rem 1.5rem 1.5rem !important;
             background: transparent !important;
             border-top: none !important;
         }
 
-        /* Tombol Next / Done */
+        /* Tombol */
+        .shepherd-theme .shepherd-button {
+            border-radius: 0.75rem !important;
+            font-weight: 700 !important;
+            padding: 0.6rem 1.25rem !important;
+            transition: all 0.2s !important;
+            font-size: 0.875rem !important;
+        }
+
         .shepherd-theme .shepherd-button-primary {
             background: linear-gradient(to right, #F47920, #BE5A27) !important;
             color: white !important;
             border: none !important;
-            border-radius: 0.5rem !important; /* Radius lebih dinamis */
-            padding: 0.4rem 0.875rem !important; /* Padding lebih ramping */
-            font-size: 0.75rem !important; /* Teks tombol dikecilkan */
-            font-weight: 700 !important;
-            box-shadow: 0 4px 10px rgba(244, 121, 32, 0.3) !important;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            box-shadow: 0 4px 6px -1px rgba(244, 121, 32, 0.2), 0 2px 4px -1px rgba(244, 121, 32, 0.1) !important;
         }
 
         .shepherd-theme .shepherd-button-primary:hover {
-            transform: translateY(-2px) scale(1.05) !important; /* Efek pop saat hover */
-            box-shadow: 0 6px 15px rgba(244, 121, 32, 0.4) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 8px -1px rgba(244, 121, 32, 0.3), 0 4px 6px -1px rgba(244, 121, 32, 0.2) !important;
         }
 
-        /* Tombol Back */
         .shepherd-theme .shepherd-button-secondary {
-            background: transparent !important;
-            color: #64748b !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 0.5rem !important;
-            padding: 0.4rem 0.875rem !important;
-            font-size: 0.75rem !important;
-            font-weight: 600 !important;
-            transition: all 0.3s ease !important;
+            background-color: #f1f5f9 !important;
+            color: #475569 !important;
+            border: 1px solid #e2e8f0 !important;
             margin-right: 0.5rem !important;
         }
-
-        .dark .shepherd-theme .shepherd-button-secondary {
-            color: #cbd5e1 !important;
-            border-color: #475569 !important;
-        }
-
+        
         .shepherd-theme .shepherd-button-secondary:hover {
-            background: #f1f5f9 !important;
+            background-color: #e2e8f0 !important;
             color: #1e293b !important;
         }
 
+        .dark .shepherd-theme .shepherd-button-secondary {
+            background-color: #1e293b !important;
+            color: #cbd5e1 !important;
+            border-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
         .dark .shepherd-theme .shepherd-button-secondary:hover {
-            background: rgba(255,255,255,0.1) !important;
-            color: white !important;
+            background-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        /* Highlight Target */
+        .shepherd-target.shepherd-enabled {
+            box-shadow: 0 0 0 4px rgba(244, 121, 32, 0.3) !important;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            z-index: 10000 !important;
+            position: relative;
         }
 
         @media (max-width: 640px) {
             .shepherd-theme {
-                max-width: 250px !important; /* Sangat ringkas di mobile */
-                border-radius: 1rem !important;
+                max-width: 320px !important; 
             }
             .shepherd-theme .shepherd-header { 
-                padding: 0.75rem 0.75rem 0.25rem 0.75rem !important; 
-            }
-            .shepherd-theme .shepherd-title { 
-                font-size: 0.875rem !important; 
+                padding: 1rem 1.25rem 0.5rem !important; 
             }
             .shepherd-theme .shepherd-text { 
-                padding: 0 0.75rem 0.5rem 0.75rem !important;
-                font-size: 0.75rem !important; 
-                line-height: 1.4 !important;
+                padding: 0.75rem 1.25rem !important;
             }
             .shepherd-theme .shepherd-footer { 
-                padding: 0 0.75rem 0.75rem 0.75rem !important; 
-            }
-            .shepherd-theme .shepherd-button-primary,
-            .shepherd-theme .shepherd-button-secondary {
-                padding: 0.3rem 0.6rem !important;
-                font-size: 0.7rem !important;
-                border-radius: 0.4rem !important;
-            }
-            .shepherd-theme .shepherd-button-secondary {
-                margin-right: 0.35rem !important;
+                padding: 0.5rem 1.25rem 1.25rem !important; 
             }
         }
     </style>

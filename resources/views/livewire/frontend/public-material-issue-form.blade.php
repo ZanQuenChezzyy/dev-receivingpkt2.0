@@ -1,5 +1,10 @@
 <div
+    x-data="tourGuide()"
     class="min-h-screen bg-slate-50 dark:bg-[#031525] transition-colors duration-500 pt-28 pb-24 font-sans relative overflow-hidden">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/css/shepherd.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/js/shepherd.min.js"></script>
+
     <!-- Sophisticated Abstract Background -->
     <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center">
         <div
@@ -40,7 +45,7 @@
             <p
                 class="text-base sm:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
                 Formulir resmi permintaan pengambilan barang. Pastikan kuantitas yang diminta tidak melebihi <span
-                    class="text-slate-800 dark:text-slate-200 font-bold border-b border-[#F47920]/30 pb-0.5">stok gudang
+                    class="text-slate-800 dark:text-slate-200 font-bold border-b border-[#F47920]/30 pb-0.5">stok gudang Receiving
                     (BOH)</span> yang tersedia.
             </p>
         </div>
@@ -85,7 +90,7 @@
                     <div class="glass-panel p-6 sm:p-8 lg:p-10 hover:-translate-y-0.5">
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                             <!-- Nama Peminta -->
-                            <div>
+                            <div data-tour="nama-peminta">
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2.5">Nama
                                     Peminta <span class="text-[#F47920]">*</span></label>
                                 <div class="relative">
@@ -100,7 +105,7 @@
                                     </div>
                                     <input type="text" x-model.debounce.300ms="diminta_oleh"
                                         class="glass-input pl-12 w-full text-slate-900 dark:text-white py-4 placeholder-slate-400"
-                                        required placeholder="Contoh: John Doe">
+                                        required placeholder="Contoh: Budi Santoso">
                                 </div>
                                 @error('diminta_oleh')
                                     <span class="text-red-500 text-xs font-semibold mt-2 block">{{ $message }}</span>
@@ -108,7 +113,7 @@
                             </div>
 
                             <!-- NPK -->
-                            <div>
+                            <div data-tour="npk">
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2.5">NPK
                                     <span class="text-[#F47920]">*</span></label>
                                 <div class="relative">
@@ -123,7 +128,7 @@
                                     </div>
                                     <input type="text" x-model="npk"
                                         class="glass-input pl-12 w-full text-slate-900 dark:text-white py-4 placeholder-slate-400"
-                                        required placeholder="Contoh: 123456">
+                                        required placeholder="Contoh: 4095624">
                                 </div>
                                 @error('npk')
                                     <span class="text-red-500 text-xs font-semibold mt-2 block">{{ $message }}</span>
@@ -132,7 +137,7 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-                            <div>
+                            <div data-tour="no-hp">
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2.5">No. HP
                                     <span class="text-[#F47920]">*</span></label>
                                 <div class="relative">
@@ -147,13 +152,13 @@
                                     </div>
                                     <input type="text" x-model="no_hp"
                                         class="glass-input pl-12 w-full text-slate-900 dark:text-white py-4 placeholder-slate-400"
-                                        required placeholder="0812...">
+                                        required placeholder="Contoh: 081234567890">
                                 </div>
                                 @error('no_hp')
                                     <span class="text-red-500 text-xs font-semibold mt-2 block">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div>
+                            <div data-tour="departemen">
                                 <label
                                     class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2.5">Departemen
                                     <span class="text-[#F47920]">*</span></label>
@@ -169,13 +174,13 @@
                                     </div>
                                     <input type="text" x-model="departemen"
                                         class="glass-input pl-12 w-full text-slate-900 dark:text-white py-4 placeholder-slate-400"
-                                        required placeholder="Nama Departemen">
+                                        required placeholder="Contoh: PP&P">
                                 </div>
                                 @error('departemen')
                                     <span class="text-red-500 text-xs font-semibold mt-2 block">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div>
+                            <div data-tour="bagian">
                                 <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2.5">Bagian
                                     <span class="text-[#F47920]">*</span></label>
                                 <div class="relative">
@@ -190,7 +195,7 @@
                                     </div>
                                     <input type="text" x-model="bagian"
                                         class="glass-input pl-12 w-full text-slate-900 dark:text-white py-4 placeholder-slate-400"
-                                        required placeholder="Sub-bagian">
+                                        required placeholder="Contoh: Receiving">
                                 </div>
                                 @error('bagian')
                                     <span class="text-red-500 text-xs font-semibold mt-2 block">{{ $message }}</span>
@@ -222,7 +227,7 @@
                 <div class="md:pl-[8.5rem]">
                     <div class="glass-panel p-6 sm:p-8 lg:p-10 hover:-translate-y-0.5">
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                            <div class="min-w-0">
+                            <div class="min-w-0" data-tour="tanggal">
                                 <label
                                     class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2.5">Tanggal
                                     Pengajuan <span class="text-[#F47920]">*</span></label>
@@ -245,9 +250,20 @@
                                 @enderror
                             </div>
                             <div class="min-w-0">
-                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2.5">Cari &
-                                    Pilih Nomor PO <span class="text-[#F47920]">*</span></label>
-                                <div
+                                <div class="flex flex-col gap-3 mb-4" data-tour="search-mode">
+                                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">Cari Berdasarkan <span class="text-[#F47920]">*</span></label>
+                                    <div class="flex w-full items-center bg-slate-100/90 dark:bg-slate-800/90 rounded-2xl p-1.5 backdrop-blur-md border border-slate-200/60 dark:border-white/5 shadow-inner">
+                                        <button type="button" wire:click="$set('search_mode', 'po')" 
+                                            class="flex-1 flex justify-center items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 {{ $search_mode === 'po' ? 'bg-white dark:bg-[#F47920] shadow-[0_2px_10px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_15px_rgba(244,121,32,0.3)] text-[#F47920] dark:text-white scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50' }}">
+                                            Nomor PO
+                                        </button>
+                                        <button type="button" wire:click="$set('search_mode', 'sn')" 
+                                            class="flex-1 flex justify-center items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 {{ $search_mode === 'sn' ? 'bg-white dark:bg-[#F47920] shadow-[0_2px_10px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_15px_rgba(244,121,32,0.3)] text-[#F47920] dark:text-white scale-[1.02]' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50' }}">
+                                            Stock Number
+                                        </button>
+                                    </div>
+                                </div>
+                                <div data-tour="po"
                                     class="relative rounded-2xl shadow-sm overflow-hidden border border-slate-200/80 dark:border-white/10 focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-blue-500 transition-all bg-white/50 dark:bg-black/20 backdrop-blur-md">
                                     <div class="absolute top-4 left-4 flex items-center pointer-events-none z-10">
                                         <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24"
@@ -257,7 +273,7 @@
                                         </svg>
                                     </div>
                                     <input type="text" wire:model.live.debounce.300ms="po_search"
-                                        placeholder="Ketik No PO disini..."
+                                        placeholder="{{ $search_mode === 'po' ? 'Contoh: 5300064524' : 'Contoh: 6000000' }}"
                                         class="pl-12 w-full bg-transparent border-0 border-b border-slate-200/50 dark:border-white/5 text-slate-900 dark:text-white py-4 focus:ring-0 placeholder-slate-400">
                                     <div
                                         class="w-full h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 py-2">
@@ -282,7 +298,7 @@
                                             </div>
                                         @empty
                                             <div class="py-2.5 px-4 text-slate-400 italic mx-2">Ketik untuk mencari
-                                                PO...</div>
+                                                {{ $search_mode === 'po' ? 'PO' : 'Stock Number' }}...</div>
                                         @endforelse
                                     </div>
                                 </div>
@@ -293,37 +309,37 @@
                         </div>
 
                         <div class="grid grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6 mb-8">
-                            <div>
+                            <div data-tour="reservasi">
                                 <label
                                     class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2.5 uppercase tracking-wider">No.
                                     Reservasi</label>
-                                <input type="text" wire:model="no_reservasi" placeholder="Misal: RES-12345"
+                                <input type="text" wire:model="no_reservasi" placeholder="Contoh: 578837291"
                                     class="glass-input w-full text-slate-900 dark:text-white py-3.5 px-4 placeholder-slate-400">
                             </div>
-                            <div>
+                            <div data-tour="jor">
                                 <label
                                     class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2.5 uppercase tracking-wider">No.
                                     JOR/WO</label>
-                                <input type="text" wire:model="no_jor_wo" placeholder="Misal: JOR-9876"
+                                <input type="text" wire:model="no_jor_wo" placeholder="Contoh: 578837291"
                                     class="glass-input w-full text-slate-900 dark:text-white py-3.5 px-4 placeholder-slate-400">
                             </div>
-                            <div>
+                            <div data-tour="alat">
                                 <label
                                     class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2.5 uppercase tracking-wider">No.
                                     Alat</label>
-                                <input type="text" wire:model="no_alat" placeholder="Misal: ALT-001"
+                                <input type="text" wire:model="no_alat" placeholder="Contoh: PL-01"
                                     class="glass-input w-full text-slate-900 dark:text-white py-3.5 px-4 placeholder-slate-400">
                             </div>
-                            <div>
+                            <div data-tour="kode-biaya">
                                 <label
                                     class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2.5 uppercase tracking-wider">Kode
                                     Biaya</label>
-                                <input type="text" wire:model="kode_biaya" placeholder="Misal: CC-500"
+                                <input type="text" wire:model="kode_biaya" placeholder="Contoh: 51000"
                                     class="glass-input w-full text-slate-900 dark:text-white py-3.5 px-4 placeholder-slate-400">
                             </div>
                         </div>
 
-                        <div>
+                        <div data-tour="kegunaan">
                             <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2.5">Digunakan
                                 Untuk <span class="text-[#F47920]">*</span></label>
                             <textarea wire:model="digunakan_untuk" rows="3"
@@ -410,7 +426,7 @@
                             </div>
                             <div class="md:pl-0 sm:self-center self-start pl-[5.5rem]">
                                 @if (count($details) < count($available_po_items))
-                                    <button type="button" wire:click="addDetail"
+                                    <button type="button" wire:click="addDetail(true)" data-tour="tambah-item"
                                         class="glass-btn flex items-center gap-2.5 px-5 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 font-bold transition-all shadow-sm group">
                                         <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none"
                                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -455,7 +471,7 @@
 
                                     <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
                                         <!-- Pilih Item -->
-                                        <div class="xl:col-span-3">
+                                        <div class="xl:col-span-3" @if($loop->first) data-tour="pilih-item" @endif>
                                             <label
                                                 class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2.5 uppercase tracking-wider">Pilih
                                                 Item <span class="text-red-500">*</span></label>
@@ -503,7 +519,7 @@
                                         </div>
 
                                         <!-- Deskripsi -->
-                                        <div class="xl:col-span-6">
+                                        <div class="xl:col-span-6" @if($loop->first) data-tour="deskripsi" @endif>
                                             <label
                                                 class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2.5 uppercase tracking-wider">Deskripsi</label>
                                             <input type="text" value="{{ $details[$index]['description'] }}"
@@ -512,7 +528,7 @@
                                         </div>
 
                                         <!-- Stock No -->
-                                        <div class="xl:col-span-3">
+                                        <div class="xl:col-span-3" @if($loop->first) data-tour="stock-no" @endif>
                                             <label
                                                 class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2.5 uppercase tracking-wider">Stock
                                                 No.</label>
@@ -527,11 +543,11 @@
                                                 class="bg-gradient-to-r from-slate-50 to-white dark:from-white/5 dark:to-transparent border border-slate-200/60 dark:border-white/5 rounded-3xl p-5 sm:p-6 flex flex-col md:flex-row items-center gap-6 md:gap-8 shadow-sm">
 
                                                 <!-- BOH Panel -->
-                                                <div
+                                                <div @if($loop->first) data-tour="boh" @endif
                                                     class="flex flex-col items-center justify-center p-4 px-8 bg-white dark:bg-[#051F34]/80 rounded-2xl shadow-[0_4px_15px_rgb(0,0,0,0.05)] border border-slate-100 dark:border-white/5 min-w-[160px]">
                                                     <span
                                                         class="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Stok
-                                                        Gudang (BOH)</span>
+                                                        Gudang Receiving (BOH)</span>
                                                     <div class="flex items-baseline gap-1.5">
                                                         <span
                                                             class="text-3xl font-black text-slate-800 dark:text-slate-200">{{ $details[$index]['boh'] !== '' ? $details[$index]['boh'] : '-' }}</span>
@@ -544,7 +560,7 @@
                                                 </div>
 
                                                 <!-- Input Qty -->
-                                                <div class="flex-1 w-full">
+                                                <div class="flex-1 w-full" @if($loop->first) data-tour="qty" @endif>
                                                     <label
                                                         class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Jumlah
                                                         Pengambilan <span class="text-[#F47920]">*</span></label>
@@ -594,7 +610,7 @@
                         <div class="md:pl-[8.5rem]">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <!-- Tanda Tangan Peminta (Wajib Selalu) -->
-                                <div class="space-y-3">
+                                                <div class="space-y-3" data-tour="ttd-peminta">
                                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">
                                         Tanda Tangan Peminta <span class="text-red-500">*</span>
                                     </label>
@@ -602,7 +618,7 @@
                                         kolom Diminta dan Diterima.</p>
 
                                     <x-signature-pad wire:model="diminta_signature" id="diminta_signature"
-                                        placeholder="Goreskan tanda tangan Anda di sini..." />
+                                        placeholder="Tanda tangan di sini..." />
                                     @error('diminta_signature')
                                         <span class="text-red-500 text-xs font-bold">{{ $message }}</span>
                                     @enderror
@@ -610,7 +626,7 @@
 
                                 <!-- Tanda Tangan ISTEK (Muncul Jika requiresIstekSignature = true) -->
                                 @if ($requiresIstekSignature)
-                                    <div
+                                    <div data-tour="ttd-istek"
                                         class="space-y-3 p-5 rounded-2xl border-2 border-orange-200 dark:border-orange-900/50 bg-orange-50/50 dark:bg-orange-900/10">
                                         <div class="flex items-center gap-2 mb-2 text-orange-600 dark:text-orange-400">
                                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"
@@ -643,7 +659,7 @@
                                                 </label>
                                                 <input type="text" wire:model="disetujui_oleh"
                                                     class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm"
-                                                    placeholder="Masukkan nama User/ISTEK...">
+                                                    placeholder="Contoh: Joko Susilo">
                                                 @error('disetujui_oleh')
                                                     <span
                                                         class="text-red-500 text-xs font-bold">{{ $message }}</span>
@@ -658,7 +674,7 @@
                                             </label>
                                             <input type="text" wire:model="disetujui_npk"
                                                 class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm disabled:opacity-60 disabled:bg-slate-100/50 dark:disabled:bg-slate-800/50 disabled:cursor-not-allowed"
-                                                placeholder="NPK User/ISTEK..." {{ $pilihan_istek !== 'Lainnya' ? 'disabled' : '' }}>
+                                                placeholder="Contoh: 654321" {{ $pilihan_istek !== 'Lainnya' ? 'disabled' : '' }}>
                                             @error('disetujui_npk')
                                                 <span class="text-red-500 text-xs font-bold">{{ $message }}</span>
                                             @enderror
@@ -668,7 +684,7 @@
                                             Tanda Tangan ISTEK <span class="text-red-500">*</span>
                                         </label>
                                         <x-signature-pad wire:model="disetujui_signature" id="disetujui_signature"
-                                            placeholder="Goreskan tanda tangan ISTEK di sini..." />
+                                            placeholder="Tanda tangan pihak ISTEK di sini..." />
                                         @error('disetujui_signature')
                                             <span class="text-red-500 text-xs font-bold">{{ $message }}</span>
                                         @enderror
@@ -676,7 +692,7 @@
                                 @endif
 
                                 <!-- Tanda Tangan Receiving -->
-                                <div
+                                <div data-tour="ttd-receiving"
                                     class="space-y-3 p-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900/50 mt-6">
                                     <div class="flex items-center gap-2 mb-2 text-slate-600 dark:text-slate-400">
                                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"
@@ -708,7 +724,7 @@
                                             </label>
                                             <input type="text" wire:model="diserahkan_oleh"
                                                 class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm"
-                                                placeholder="Masukkan nama pihak receiving...">
+                                                placeholder="Contoh: Agus Pratama">
                                             @error('diserahkan_oleh')
                                                 <span
                                                     class="text-red-500 text-xs font-bold">{{ $message }}</span>
@@ -722,7 +738,7 @@
                                         </label>
                                         <input type="text" wire:model="diserahkan_npk"
                                             class="block w-full text-base font-medium bg-white/50 dark:bg-black/20 backdrop-blur-md border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#F47920]/50 focus:border-[#F47920] focus:bg-white dark:focus:bg-slate-900/60 transition-all shadow-sm disabled:opacity-60 disabled:bg-slate-100/50 dark:disabled:bg-slate-800/50 disabled:cursor-not-allowed"
-                                            placeholder="NPK pihak receiving..." {{ $pilihan_receiving !== 'Lainnya' ? 'disabled' : '' }}>
+                                            placeholder="Contoh: 112233" {{ $pilihan_receiving !== 'Lainnya' ? 'disabled' : '' }}>
                                         @error('diserahkan_npk')
                                             <span class="text-red-500 text-xs font-bold">{{ $message }}</span>
                                         @enderror
@@ -732,7 +748,7 @@
                                         Tanda Tangan Receiving <span class="text-red-500">*</span>
                                     </label>
                                     <x-signature-pad wire:model="diserahkan_signature" id="diserahkan_signature"
-                                        placeholder="Goreskan tanda tangan receiving di sini..." />
+                                        placeholder="Tanda tangan pihak receiving di sini..." />
                                     @error('diserahkan_signature')
                                         <span class="text-red-500 text-xs font-bold">{{ $message }}</span>
                                     @enderror
@@ -913,4 +929,292 @@
             </div>
         </div>
     @endif
+
+    <!-- Toast Notifications -->
+    <div x-data="{ 
+            toasts: [],
+            addToast(message, type) {
+                const id = Date.now();
+                this.toasts.push({ id, message, type });
+                setTimeout(() => {
+                    this.removeToast(id);
+                }, 3000);
+            },
+            removeToast(id) {
+                window.dispatchEvent(new CustomEvent('hide-toast', { detail: { id } }));
+                setTimeout(() => {
+                    this.toasts = this.toasts.filter(t => t.id !== id);
+                }, 200);
+            }
+        }" 
+        @item-added.window="addToast('Berhasil menambah baris item', 'success')"
+        @item-removed.window="addToast('Berhasil menghapus item', 'danger')"
+        class="fixed top-24 right-4 sm:top-28 sm:right-8 z-[100] flex flex-col gap-3 pointer-events-none">
+        
+        <template x-for="toast in toasts" :key="toast.id">
+            <div x-data="{ show: false }"
+                x-init="setTimeout(() => show = true, 50)"
+                x-show="show" 
+                x-transition:enter="transition ease-out duration-300 transform"
+                x-transition:enter-start="opacity-0 translate-x-12 scale-95"
+                x-transition:enter-end="opacity-100 translate-x-0 scale-100"
+                x-transition:leave="transition ease-in duration-200 transform"
+                x-transition:leave-start="opacity-100 translate-x-0 scale-100"
+                x-transition:leave-end="opacity-0 translate-x-12 scale-95"
+                @hide-toast.window="if ($event.detail.id === toast.id) show = false"
+                class="pointer-events-auto relative overflow-hidden flex items-center gap-3.5 px-5 py-4 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-white/10"
+                >
+                
+                <!-- Colored accent line -->
+                <div class="absolute left-0 top-0 bottom-0 w-1.5"
+                    :class="{
+                        'bg-gradient-to-b from-green-400 to-green-600': toast.type === 'success',
+                        'bg-gradient-to-b from-red-400 to-red-600': toast.type === 'danger'
+                    }"></div>
+
+                <!-- Icon Container -->
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-inner"
+                    :class="{
+                        'bg-green-100/80 dark:bg-green-500/20 text-green-600 dark:text-green-400': toast.type === 'success',
+                        'bg-red-100/80 dark:bg-red-500/20 text-red-600 dark:text-red-400': toast.type === 'danger'
+                    }">
+                    <template x-if="toast.type === 'success'">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+                    </template>
+                    <template x-if="toast.type === 'danger'">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </template>
+                </div>
+
+                <div class="flex flex-col pr-4">
+                    <span class="font-bold text-[13px] text-slate-800 dark:text-white" x-text="toast.type === 'success' ? 'Berhasil' : 'Pemberitahuan'"></span>
+                    <span class="font-medium text-[13px] text-slate-500 dark:text-slate-400" x-text="toast.message"></span>
+                </div>
+                
+                <!-- Close Button -->
+                <button @click="removeToast(toast.id)" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </template>
+    </div>
+
+    <!-- Floating Guide Button -->
+    <button type="button" @click="startTour()" class="fixed bottom-8 left-8 z-[90] flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-[#cf6935] text-white rounded-full shadow-[0_8px_20px_rgba(244,121,32,0.3)] hover:shadow-[0_12px_25px_rgba(244,121,32,0.4)] hover:-translate-y-1 transition-all duration-300 group">
+        <svg class="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="font-bold text-sm tracking-wide">Panduan Pengisian</span>
+    </button>
+
+    <style>
+        .shepherd-element {
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(244, 121, 32, 0.2);
+            background: rgba(255, 255, 255, 0.98) !important;
+            backdrop-filter: blur(12px);
+            max-width: 400px;
+            animation: shepherd-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 9999 !important; /* Fixed z-index to be above overlay */
+        }
+        @keyframes shepherd-pop {
+            0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .shepherd-header {
+            background: transparent !important;
+            border-bottom: 1px solid rgba(244, 121, 32, 0.1);
+            padding: 1.25rem 1.5rem 0.75rem;
+        }
+        .shepherd-title {
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .shepherd-title::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 20px;
+            background: linear-gradient(to bottom, #F47920, #BE5A27);
+            border-radius: 4px;
+        }
+        .shepherd-cancel-icon {
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+        .shepherd-cancel-icon:hover {
+            color: #ef4444;
+            transform: rotate(90deg);
+        }
+        .shepherd-text {
+            padding: 1rem 1.5rem;
+            font-size: 0.95rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+        .shepherd-footer {
+            padding: 0.5rem 1.5rem 1.5rem;
+            background: transparent !important;
+            border-top: none;
+        }
+        /* Dark Mode overrides */
+        .dark .shepherd-element {
+            background: rgba(15, 23, 42, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px 0 rgba(244, 121, 32, 0.1);
+        }
+        .dark .shepherd-title { color: #f8fafc; }
+        .dark .shepherd-text { color: #cbd5e1; }
+        .dark .shepherd-header { border-bottom-color: rgba(255, 255, 255, 0.05); }
+        
+        .shepherd-arrow::before {
+            background: #fff !important;
+            border: 1px solid rgba(244, 121, 32, 0.2) !important;
+        }
+        .dark .shepherd-arrow::before {
+            background: #0f172a !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .shepherd-button {
+            border-radius: 0.75rem;
+            font-weight: 700;
+            padding: 0.6rem 1.25rem;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+        .shepherd-button-secondary {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+        .shepherd-button-secondary:hover {
+            background-color: #e2e8f0;
+            color: #1e293b;
+        }
+        .dark .shepherd-button-secondary {
+            background-color: #1e293b;
+            color: #cbd5e1;
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+        .dark .shepherd-button-secondary:hover {
+            background-color: #334155;
+            color: #f8fafc;
+        }
+        
+        .shepherd-button-primary {
+            background: linear-gradient(to right, #F47920, #BE5A27);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(244, 121, 32, 0.2), 0 2px 4px -1px rgba(244, 121, 32, 0.1);
+            border: none;
+        }
+        .shepherd-button-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px -1px rgba(244, 121, 32, 0.3), 0 4px 6px -1px rgba(244, 121, 32, 0.2);
+        }
+        
+        /* Highlight Target */
+        .shepherd-target.shepherd-enabled {
+            box-shadow: 0 0 0 4px rgba(244, 121, 32, 0.3) !important;
+            transition: all 0.3s ease;
+            border-radius: 8px; /* fallback just in case */
+            z-index: 10000 !important;
+            position: relative;
+        }
+    </style>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('tourGuide', () => ({
+                tourObj: null,
+                init() {
+                    const checkShepherd = setInterval(() => {
+                        if (window.Shepherd) {
+                            clearInterval(checkShepherd);
+                            this.tourObj = new Shepherd.Tour({
+                                useModalOverlay: true,
+                                defaultStepOptions: {
+                                    cancelIcon: { enabled: true },
+                                    scrollTo: { behavior: 'smooth', block: 'center' }
+                                }
+                            });
+
+                            const steps = [
+                                { id: 'nama-peminta', title: '1. Nama Peminta', text: 'Isi dengan nama lengkap Anda yang mengajukan.', position: 'bottom' },
+                                { id: 'npk', title: '2. NPK', text: 'Masukkan Nomor Pokok Karyawan Anda.', position: 'bottom' },
+                                { id: 'no-hp', title: '3. NO. HP', text: 'Masukkan nomor handphone yang aktif agar mudah dihubungi.', position: 'bottom' },
+                                { id: 'departemen', title: '4. Departemen', text: 'Isi dengan nama Departemen Anda.', position: 'bottom' },
+                                { id: 'bagian', title: '5. Bagian', text: 'Isi dengan Sub-bagian Anda.', position: 'bottom' },
+                                { id: 'tanggal', title: '6. Tanggal Pengajuan', text: 'Secara otomatis terisi tanggal hari ini.', position: 'bottom' },
+                                { id: 'search-mode', title: '7. Mode Pencarian', text: 'Pilih mode pencarian terlebih dahulu (menggunakan Nomor PO atau Stock Number).', position: 'bottom' },
+                                { id: 'po', title: '8. Cari & Pilih', text: 'Ketik Nomor PO atau Stock Number yang dicari, lalu klik hasil yang muncul di bawahnya.', position: 'bottom' },
+                                { id: 'reservasi', title: '9. Nomor Reservasi', text: 'Jika ada, isi dengan Nomor Reservasi sebelumnya.', position: 'bottom' },
+                                { id: 'jor', title: '10. Nomor JOR/WO', text: 'Jika ada, isi dengan Nomor Job Order atau Work Order.', position: 'bottom' },
+                                { id: 'alat', title: '11. No. Alat', text: 'Isi dengan nomor alat yang akan menggunakan sparepart yang diambil.', position: 'bottom' },
+                                { id: 'kode-biaya', title: '12. Kode Biaya', text: 'Jika ada, isi dengan kode biaya yang berkesinambungan.', position: 'bottom' },
+                                { id: 'kegunaan', title: '13. Digunakan Untuk', text: '<b>Wajib diisi!</b> Alat yang diambil digunakan untuk kebutuhan apa.', position: 'bottom' },
+                                
+                                { id: 'pilih-item', title: '14. Pilih Nomor Item', text: 'Pilih material/item yang ingin diambil dari PO yang sudah dipilih sebelumnya. <br><br><i>(Jika ini belum muncul, pastikan Anda sudah mengisi langkah ke-8)</i>', position: 'top' },
+                                { id: 'deskripsi', title: '15. Deskripsi Item', text: 'Cocokkan deskripsinya dengan material yang akan Anda ambil.', position: 'top' },
+                                { id: 'stock-no', title: '16. Stock Number', text: 'Cocokkan Stock Number jika barang yang diambil memilikinya.', position: 'top' },
+                                { id: 'boh', title: '17. Stok Gudang (Receiving)', text: 'Sesuaikan jumlah yang akan diambil dengan Sisa Stok yang tersedia di sini.', position: 'top' },
+                                { id: 'qty', title: '18. Jumlah Pengambilan', text: 'Isi jumlah pengambilan di sini. Jumlah tidak boleh melebihi Stok Gudang Receiving.', position: 'top' },
+                                { id: 'tambah-item', title: 'Item Lebih dari Satu?', text: 'Jika Anda ingin mengambil item lain dalam PO yang sama, klik tombol ini untuk menambah baris.', position: 'top' },
+                                
+                                { id: 'ttd-peminta', title: '19. Tanda Tangan Peminta', text: 'Tanda tangan orang yang mengambil barang saat itu.', position: 'top' },
+                                { id: 'ttd-istek', title: '20. Tanda Tangan Pihak ISTEK', text: 'Tanda tangan pihak ISTEK yang menyetujui barang tersebut boleh diambil.', position: 'top' },
+                                { id: 'ttd-receiving', title: '21. Tanda Tangan Receiving', text: 'Terakhir, tanda tangan pihak gudang (Receiving) yang memproses form ini.', position: 'top' }
+                            ];
+
+                            steps.forEach((s, index) => {
+                                const buttons = [];
+                                if (index > 0) {
+                                    buttons.push({
+                                        text: '&larr; Kembali',
+                                        action: this.tourObj.back,
+                                        classes: 'shepherd-button-secondary mr-2'
+                                    });
+                                }
+                                if (index < steps.length - 1) {
+                                    buttons.push({
+                                        text: 'Lanjut &rarr;',
+                                        action: this.tourObj.next,
+                                        classes: 'shepherd-button-primary'
+                                    });
+                                } else {
+                                    buttons.push({
+                                        text: 'Selesai',
+                                        action: this.tourObj.complete,
+                                        classes: 'shepherd-button-primary bg-green-500 hover:bg-green-600'
+                                    });
+                                }
+
+                                this.tourObj.addStep({
+                                    id: s.id,
+                                    title: s.title,
+                                    text: s.text,
+                                    attachTo: { element: `[data-tour="${s.id}"]`, on: s.position },
+                                    buttons: buttons,
+                                    showOn: () => {
+                                        return document.querySelector(`[data-tour="${s.id}"]`) !== null;
+                                    }
+                                });
+                            });
+                        }
+                    }, 100);
+                },
+                startTour() {
+                    if(this.tourObj) {
+                        this.tourObj.start();
+                    } else {
+                        alert("Panduan sedang dimuat, mohon tunggu sebentar.");
+                    }
+                }
+            }));
+        });
+    </script>
 </div>
