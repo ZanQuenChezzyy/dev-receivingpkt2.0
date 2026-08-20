@@ -274,10 +274,10 @@ new class extends Component {
                     'content' => $chat['content'] ?? '',
                     'tool_calls' => $chat['tool_calls']
                 ];
-            } elseif (isset($chat['tool_name'])) {
+            } elseif (isset($chat['name'])) {
                 $ollamaMessages[] = [
                     'role' => $chat['role'],
-                    'name' => $chat['tool_name'],
+                    'name' => $chat['name'],
                     'content' => $chat['content'] ?? ''
                 ];
             } else {

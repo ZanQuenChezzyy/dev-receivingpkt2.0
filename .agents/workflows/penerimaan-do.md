@@ -32,18 +32,22 @@ Setelah barang berstatus Post 103, dokumen dan sampel (jika ada) diteruskan ke t
 - Admin membuat Transmittal Tipe **Kirim** yang ditujukan kepada ISTEK atau PPE. DO Receipt akan terikat ke dalam dokumen ini, menandakan dokumen "Sedang di-QC".
 
 ### 2B. Transmittal Kembali (Dari QC)
-- Setelah diinspeksi, dokumen dikembalikan ke Gudang Receiving beserta keputusannya (Passed/Rejected/dll).
-- Admin membuat Transmittal Tipe **Kembali** untuk menutup siklus QC dan merekap hasilnya ke dalam arsip.
+- Setelah diinspeksi, dokumen dikembalikan ke Gudang Receiving oleh pihak inspeksi (Manual).
+- Menggunakan `TransmittalResource`.
+- Admin membuat Transmittal Tipe **Kembali** sistem otomatis tau dokumennya habis balik dari ISTEK atau PPE.
+
+dengan begini user tau nih dokumen dikirimkan untukk pengajuan QC (Kirim) kapan dan dokumen dikembalikan dari pengajuan QC (Kembali) kapan, lalu masuk ke tahap 3
 
 ---
 
 ## TAHAP 3: GRS & RDTV (DIGITALISASI PENAGIHAN)
 
-Tahap administratif akhir dari siklus kedatangan barang, bergantung pada hasil QC di Tahap 2. Menggunakan modul `GrsRdtvs`.
+Dokumen yang kembali tadi ada tulisan pulpen di dokumen nya seperti (Ditolak/Diterima) kalo di tolak pasti disertakan alasannya juga di tulis di pulpen.
+- admin melakukan transaksi MIGO di SAP.
+- `Release GR Blocked` untuk material yang diterima, dan `Return Delivery` untuk material yang ditolak, output dari transaksi MIGO ini disimpan di perangkat komputer masing masing admin, file disimpan menggunakan nama kode dokumen yang udah di buat pada penerimaan DO.
+- setelah itu admin akses `GrsRdtv` dan upload berdasarkan tipe nya Diterima(GRS) atau Ditolak(RDTV), jika nama file dan nama kode dokumen di penerimaan DO sesuai maka matched status nya.
 
-- **GRS (Goods Receipt Slip)**: Dibuat jika barang dinyatakan **Diterima/Passed**. GRS adalah tanda terima final agar vendor dapat menagih pembayaran.
-- **RDTV (Return Delivery to Vendor)**: Dibuat jika barang dinyatakan **Ditolak/Rejected**. RDTV digunakan sebagai dokumen retur pengembalian barang ke vendor.
-- Admin mengunggah bukti fisik digital (PDF dokumen penagihan) dan menautkannya ke DO awal, sehingga siklus kedatangan selesai secara administratif.
+dengan begini user tau nih dokumen/material mana yang diterima (GRS) dan dokumen mana yang ditolak (RDTV) dan tanggal transaksi MIGO nya juga ketahuan disini.
 
 ---
 
