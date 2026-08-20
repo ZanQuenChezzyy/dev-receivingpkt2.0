@@ -97,7 +97,13 @@ new class extends Component {
         ]);
 
         // 2. Filter dinamis berdasarkan pesan user
-        $limit = (stripos($contextText, 'semua') !== false || stripos($contextText, 'sebanyak') !== false || stripos($contextText, 'list') !== false) ? 50 : 5;
+        $limit = (
+            stripos($contextText, 'semua') !== false || 
+            stripos($contextText, 'sebanyak') !== false || 
+            stripos($contextText, 'list') !== false ||
+            stripos($contextText, 'tanggal') !== false ||
+            preg_match('/(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)/i', $contextText)
+        ) ? 50 : 5;
 
         // Jika ada term pencarian, prioritaskan mencari data spesifik tersebut
         if (!empty($searchTerms)) {
@@ -260,7 +266,7 @@ Detail Barang:
                 });
             }
 
-            $recentMirs = $mirQuery->latest('tanggal')->take($limit)->get();
+            $recentMirs = $mirQuery->latest('tanggal')->take(50)->get();
             
             if ($recentMirs->isNotEmpty()) {
                 $mirContextData = "DATA PENGAMBILAN BARANG (MIR / MATERIAL ISSUE):\n" . $recentMirs->map(function ($mir) {
