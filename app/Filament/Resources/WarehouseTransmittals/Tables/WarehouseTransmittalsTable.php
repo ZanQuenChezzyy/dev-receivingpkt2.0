@@ -13,6 +13,10 @@ use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\Indicator;
 
 class WarehouseTransmittalsTable
 {
@@ -77,7 +81,36 @@ class WarehouseTransmittalsTable
                 ]),
             ])
             ->filters([
-                //
+                Filter::make('tanggal')
+                    ->form([
+                        DatePicker::make('from')
+                            ->label('Dari Tanggal GRS'),
+                        DatePicker::make('until')
+                            ->label('Sampai Tanggal GRS'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal', '<=', $date),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['from'] ?? null) {
+                            $indicators[] = Indicator::make('Dari: ' . Carbon::parse($data['from'])->toFormattedDateString())
+                                ->removeField('from');
+                        }
+                        if ($data['until'] ?? null) {
+                            $indicators[] = Indicator::make('Sampai: ' . Carbon::parse($data['until'])->toFormattedDateString())
+                                ->removeField('until');
+                        }
+                        return $indicators;
+                    }),
             ])
             ->recordActions([
                 Action::make('print')

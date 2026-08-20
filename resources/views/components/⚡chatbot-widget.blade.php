@@ -378,8 +378,8 @@ Detail Barang:
                 'messages' => $ollamaMessages,
                 'stream' => false,
                 'options' => [
-                    'temperature' => 0.0, // Temperature 0 agar bot sangat akurat, konsisten, dan tidak halusinasi
-                    'top_p' => 0.1,
+                    'temperature' => 0.15, // Ditingkatkan sedikit dari 0.0 agar lebih luwes dan natural
+                    'top_p' => 0.4,
                 ]
             ]);
 
