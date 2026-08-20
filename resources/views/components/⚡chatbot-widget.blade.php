@@ -112,7 +112,8 @@ new class extends Component {
                 $mirInfo = "";
                 if ($detail->materialIssueDetails->isNotEmpty()) {
                     $mirs = $detail->materialIssueDetails->map(function ($mid) {
-                        return "MIR " . ($mid->materialIssue->mir_number ?? 'Draft') . " (Qty Diambil: " . (float)$mid->diserahkan . ", Oleh: " . ($mid->materialIssue->diminta_oleh ?? 'Tidak diketahui') . ", Tgl: " . ($mid->materialIssue->tanggal ? \Carbon\Carbon::parse($mid->materialIssue->tanggal)->isoFormat('D MMM YYYY') : '-') . ")";
+                        $fase = $mid->stage_when_issued ? " (Fase: {$mid->stage_when_issued})" : "";
+                        return "MIR " . ($mid->materialIssue->mir_number ?? 'Draft') . " (Qty Diambil: " . (float)$mid->diserahkan . ", Oleh: " . ($mid->materialIssue->diminta_oleh ?? 'Tidak diketahui') . ", Tgl: " . ($mid->materialIssue->tanggal ? \Carbon\Carbon::parse($mid->materialIssue->tanggal)->isoFormat('D MMM YYYY') : '-') . "){$fase}";
                     })->implode(", ");
                     $mirInfo = " | Riwayat Pengambilan: {$mirs}";
                 }
@@ -143,10 +144,19 @@ new class extends Component {
                 return "- Item: {$detail->description} ({$detail->material_code}) | Qty: " . (float)$detail->quantity . " {$detail->uoi} | PO: {$poNumber}{$locationStr}{$mirInfo}{$warehouseInfo}";
             })->implode("\n");
 
-            $latestTransmittal = $receipt->transmittals->sortByDesc('created_at')->first();
-            $transmittalInfo = $latestTransmittal
-                ? "Dikirim ke {$latestTransmittal->destination} via Transmittal No: {$latestTransmittal->transmittal_no} (Tipe: {$latestTransmittal->type}) pada {$latestTransmittal->created_at->isoFormat('D MMMM YYYY')}"
-                : "Belum ada riwayat Transmittal.";
+            if ($receipt->transmittals->isNotEmpty()) {
+                $transmittalsList = $receipt->transmittals->sortBy('created_at')->map(function ($trans) {
+                    $tanggal = $trans->created_at ? $trans->created_at->isoFormat('D MMMM YYYY') : '-';
+                    if ($trans->type === 'Kembali') {
+                        return "- Dikembalikan dari QC via Transmittal No: {$trans->transmittal_no} pada {$tanggal}";
+                    } else {
+                        return "- Dikirim ke {$trans->destination} via Transmittal No: {$trans->transmittal_no} pada {$tanggal}";
+                    }
+                })->implode("\n");
+                $transmittalInfo = "Riwayat Transmittal QC:\n{$transmittalsList}";
+            } else {
+                $transmittalInfo = "Belum ada riwayat Transmittal.";
+            }
 
             $qcNotes = $receipt->qcHistories->map(function ($qc) {
                 return "- [{$qc->created_at->isoFormat('D MMMM YYYY HH:mm')}] Status QC: {$qc->status} | Catatan: " . strip_tags($qc->notes);
