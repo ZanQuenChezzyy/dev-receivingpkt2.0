@@ -334,7 +334,7 @@ new class extends Component {
         ];
 
         $ollamaUrl = config('services.ollama.url') . '/api/chat';
-        $ollamaModel = config('services.ollama.model');
+        $ollamaModel = 'llama3.1';
 
         try {
             while (true) {
