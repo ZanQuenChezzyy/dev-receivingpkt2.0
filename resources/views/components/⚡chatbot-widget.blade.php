@@ -65,25 +65,12 @@ new class extends Component {
         $this->dispatch('process-ai-response', userMessage: $userMessage);
     }
 
-    #[On('process-ai-response')]
-    public function fetchAiResponse(string $userMessage)
-    {
-        // 1. Ekstrak potensi nomor (PO/DO) atau teks dari riwayat pesan user
-        // Ambil dari 3 pesan terakhir user agar AI tidak lupa nomor PO jika user melakukan follow-up
-        $contextText = '';
-        $historyCount = count($this->chats);
-        $messagesToCheck = min(6, $historyCount); // Cek 6 baris terakhir (3 pasang user-ai)
-        for ($i = $historyCount - 1; $i >= $historyCount - $messagesToCheck; $i--) {
-            if (isset($this->chats[$i]) && $this->chats[$i]['role'] === 'user') {
-                $contextText .= ' ' . $this->chats[$i]['content'];
-            }
-        }
-        
-        // Regex ini akan mengambil semua deretan angka atau kata dari gabungan pesan user
-        preg_match_all('/\b[A-Za-z0-9-]+\b/', $contextText, $matches);
-        $searchTerms = $matches[0];
 
-        // Mulai Query Dasar
+    private function toolCariDataPenerimaan($kataKunci)
+    {
+        $searchTerms = preg_split('/\s+/', $kataKunci, -1, PREG_SPLIT_NO_EMPTY);
+        if (empty($searchTerms)) return "Tidak ada kata kunci yang dicari.";
+
         $query = DeliveryOrderReceipt::with([
             'deliveryOrderReceiptDetails.purchaseOrderIssued', 
             'deliveryOrderReceiptDetails.materialIssueDetails.materialIssue',
@@ -96,43 +83,29 @@ new class extends Component {
             'delayLogs'
         ]);
 
-        // 2. Filter dinamis berdasarkan pesan user
-        $limit = (
-            stripos($contextText, 'semua') !== false || 
-            stripos($contextText, 'sebanyak') !== false || 
-            stripos($contextText, 'list') !== false ||
-            stripos($contextText, 'tanggal') !== false ||
-            preg_match('/(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)/i', $contextText)
-        ) ? 50 : 5;
+        $query->where(function ($q) use ($searchTerms) {
+            foreach ($searchTerms as $term) {
+                if (strlen($term) < 3 && !is_numeric($term)) continue;
 
-        // Jika ada term pencarian, prioritaskan mencari data spesifik tersebut
-        if (!empty($searchTerms)) {
-            $query->where(function ($q) use ($searchTerms) {
-                foreach ($searchTerms as $term) {
-                    // Abaikan kata-kata umum agar query tidak berat
-                    if (strlen($term) < 3 && !is_numeric($term))
-                        continue;
+                $q->orWhere('delivery_order_no', 'LIKE', "%{$term}%")
+                    ->orWhereHas('deliveryOrderReceiptDetails', function ($qDetail) use ($term) {
+                        $qDetail->where('material_code', 'LIKE', "%{$term}%")
+                            ->orWhereHas('purchaseOrderIssued', function ($qPo) use ($term) {
+                                $qPo->where('purchase_order_no', 'LIKE', "%{$term}%");
+                            });
+                    });
+            }
+        });
 
-                    $q->orWhere('delivery_order_no', 'LIKE', "%{$term}%")
-                        ->orWhereHas('deliveryOrderReceiptDetails', function ($qDetail) use ($term) {
-                            $qDetail->where('material_code', 'LIKE', "%{$term}%")
-                                ->orWhereHas('purchaseOrderIssued', function ($qPo) use ($term) {
-                                    // PERBAIKAN: Ubah po_number menjadi purchase_order_no
-                                    $qPo->where('purchase_order_no', 'LIKE', "%{$term}%");
-                                });
-                        });
-                }
-            });
+        $recentReceipts = $query->latest('received_date')->take(20)->get();
+
+        if ($recentReceipts->isEmpty()) {
+            return "Data Penerimaan, PO, atau DO tidak ditemukan untuk kata kunci: {$kataKunci}.";
         }
-
-        // 3. Tarik Konteks Data dari Database
-        $recentReceipts = $query->latest('received_date')
-            ->take($limit)
-            ->get();
 
         \Carbon\Carbon::setLocale('id');
 
-        $contextData = $recentReceipts->map(function ($receipt) {
+        return $recentReceipts->map(function ($receipt) {
             $details = $receipt->deliveryOrderReceiptDetails->map(function ($detail) {
                 $poNumber = $detail->purchaseOrderIssued ? $detail->purchaseOrderIssued->purchase_order_no : 'Tidak Ada PO';
                 
@@ -170,13 +143,11 @@ new class extends Component {
                 return "- Item: {$detail->description} ({$detail->material_code}) | Qty: " . (float)$detail->quantity . " {$detail->uoi} | PO: {$poNumber}{$locationStr}{$mirInfo}{$warehouseInfo}";
             })->implode("\n");
 
-            // Info Transmittal (Posisi Dokumen)
             $latestTransmittal = $receipt->transmittals->sortByDesc('created_at')->first();
             $transmittalInfo = $latestTransmittal
                 ? "Dikirim ke {$latestTransmittal->destination} via Transmittal No: {$latestTransmittal->transmittal_no} (Tipe: {$latestTransmittal->type}) pada {$latestTransmittal->created_at->isoFormat('D MMMM YYYY')}"
                 : "Belum ada riwayat Transmittal.";
 
-            // Info QC History (Masalah QC)
             $qcNotes = $receipt->qcHistories->map(function ($qc) {
                 return "- [{$qc->created_at->isoFormat('D MMMM YYYY HH:mm')}] Status QC: {$qc->status} | Catatan: " . strip_tags($qc->notes);
             })->implode("\n");
@@ -185,7 +156,6 @@ new class extends Component {
                 $qcNotes = "- Belum ada riwayat masalah QC.";
             }
 
-            // Info Pending/Delay
             $pendingInfo = "";
             if ($receipt->status === 'Pending' || $receipt->status === 'Pending (Menunggu Pengajuan Ulang)') {
                 $pendingInfo = "\nKendala Saat Ini (Pending): " . ($receipt->delay_reason ?? 'Menunggu Pengajuan Ulang/Revisi') . " | Catatan: " . ($receipt->delay_notes ?? '-');
@@ -193,7 +163,6 @@ new class extends Component {
                 $pendingInfo = "\nRiwayat Kendala Sebelumnya (Sudah Resolusi): " . $receipt->delay_reason;
             }
 
-            // Info Riwayat Kendala/Pengajuan Ulang
             if ($receipt->delayLogs && $receipt->delayLogs->isNotEmpty()) {
                 $delayHistories = $receipt->delayLogs->map(function ($log) {
                     return "- [{$log->created_at->isoFormat('D MMMM YYYY HH:mm')}] Alasan: {$log->delay_reason} | Catatan: {$log->delay_notes}";
@@ -201,7 +170,6 @@ new class extends Component {
                 $pendingInfo .= "\nRiwayat Kendala / Pengajuan Ulang:\n" . $delayHistories;
             }
 
-            // Info GRS dan RDTV dari tabel GRSRDTV
             $grsRdtvInfo = "";
             if ($receipt->grsRdtvItems->isNotEmpty()) {
                 $grsRdtvList = $receipt->grsRdtvItems->map(function ($item) {
@@ -214,114 +182,65 @@ new class extends Component {
             } else {
                 $grsRdtvInfo = "Status GRS/RDTV: Belum ada riwayat GRS atau RDTV.";
             }
+            
             $post103Date = $receipt->post_103 ? \Carbon\Carbon::parse($receipt->post_103)->isoFormat('D MMMM YYYY') : 'Belum Posting 103';
 
-            return "DO No: {$receipt->delivery_order_no} | Status Utama: {$receipt->status} {$pendingInfo} | Tanggal Terima: {$receipt->received_date->isoFormat('D MMMM YYYY')} | Tgl Posting 103: {$post103Date}
-{$grsRdtvInfo}
-Posisi/Status Dokumen (Transmittal): {$transmittalInfo}
-Histori QC & Masalah:
-{$qcNotes}
-Detail Barang:
-{$details}";
+            return "DO No: {$receipt->delivery_order_no} | Status Utama: {$receipt->status} {$pendingInfo} | Tanggal Terima: {$receipt->received_date->isoFormat('D MMMM YYYY')} | Tgl Posting 103: {$post103Date}\n{$grsRdtvInfo}\nPosisi/Status Dokumen (Transmittal): {$transmittalInfo}\nHistori QC & Masalah:\n{$qcNotes}\nDetail Barang:\n{$details}";
         })->implode("\n\n-------------------\n\n");
+    }
 
-        $isMirQuery = stripos($contextText, 'mir') !== false || stripos($contextText, 'material issue') !== false || stripos($contextText, 'pengambilan') !== false;
-        $mirContextData = "";
-        
-        if ($isMirQuery) {
-            $mirQuery = \App\Models\MaterialIssue::with([
-                'materialIssueDetails.deliveryOrderReceiptDetail.purchaseOrderIssued'
-            ]);
+    private function toolCariDataPengambilan($kataKunci, $tanggalMulai = null, $tanggalSelesai = null)
+    {
+        $searchTerms = preg_split('/\s+/', $kataKunci, -1, PREG_SPLIT_NO_EMPTY);
+        $mirQuery = \App\Models\MaterialIssue::with([
+            'materialIssueDetails.deliveryOrderReceiptDetail.purchaseOrderIssued'
+        ]);
 
-            $startDate = null;
-            $endDate = null;
-            // Deteksi range tanggal eksplisit: dari tanggal X sampai tanggal Y
-            if (preg_match('/(?:dari\s+(?:tanggal\s+)?)?(\d{1,2}(?:\s+[a-zA-Z]+)?(?:\s+\d{4})?)\s*(?:sampai|-|s\/d)\s*(?:tanggal\s+)?(\d{1,2}(?:\s+[a-zA-Z]+)?(?:\s+\d{4})?)/i', $contextText, $dateMatch)) {
-                $parseIndonesianDate = function($dateStr) {
-                    $months = [
-                        'januari' => '01', 'februari' => '02', 'maret' => '03', 'april' => '04', 
-                        'mei' => '05', 'juni' => '06', 'juli' => '07', 'agustus' => '08', 
-                        'september' => '09', 'oktober' => '10', 'november' => '11', 'desember' => '12'
-                    ];
-                    $dateStr = strtolower(trim($dateStr));
-                    foreach ($months as $id => $num) {
-                        if (strpos($dateStr, $id) !== false) {
-                            $dateStr = str_replace($id, $num, $dateStr);
-                            break;
-                        }
-                    }
-                    $dateStr = preg_replace('/\s+/', '-', $dateStr);
-                    if (!preg_match('/\d{4}/', $dateStr)) {
-                        $dateStr .= '-' . date('Y');
-                    }
-                    $parsed = strtotime($dateStr);
-                    return $parsed ? date('Y-m-d', $parsed) : null;
-                };
+        if ($tanggalMulai && $tanggalSelesai) {
+            $mirQuery->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai]);
+        }
 
-                $startDate = $parseIndonesianDate($dateMatch[1]);
-                $endDate = $parseIndonesianDate($dateMatch[2]);
-            }
+        if (!empty($searchTerms)) {
+            $mirQuery->where(function ($q) use ($searchTerms) {
+                foreach ($searchTerms as $term) {
+                    if (strlen($term) < 3 && !is_numeric($term)) continue;
 
-            if ($startDate && $endDate) {
-                // Jika range tanggal jelas, ambil di dalam range tersebut
-                $mirQuery->whereBetween('tanggal', [$startDate, $endDate]);
-                $limitMir = 200; // Limit diperbesar khusus range tanggal
-            } else {
-                $limitMir = 50;
-                if (!empty($searchTerms)) {
-                    $months = [
-                        'januari' => '01', 'februari' => '02', 'maret' => '03', 'april' => '04', 
-                        'mei' => '05', 'juni' => '06', 'juli' => '07', 'agustus' => '08', 
-                        'september' => '09', 'oktober' => '10', 'november' => '11', 'desember' => '12'
-                    ];
-                    $mirQuery->where(function ($q) use ($searchTerms, $months) {
-                        foreach ($searchTerms as $term) {
-                            if (strlen($term) < 3 && !is_numeric($term)) continue;
-
-                            $q->orWhere('mir_number', 'LIKE', "%{$term}%")
-                              ->orWhere('diminta_oleh', 'LIKE', "%{$term}%")
-                              ->orWhere('departemen', 'LIKE', "%{$term}%")
-                              ->orWhere('tanggal', 'LIKE', "%{$term}%");
-
-                            $lowerTerm = strtolower($term);
-                            if (isset($months[$lowerTerm])) {
-                                $q->orWhereMonth('tanggal', $months[$lowerTerm]);
-                            }
-
-                            $q->orWhereHas('materialIssueDetails.deliveryOrderReceiptDetail', function ($qDetail) use ($term) {
-                                $qDetail->where('material_code', 'LIKE', "%{$term}%")
-                                    ->orWhere('description', 'LIKE', "%{$term}%")
-                                    ->orWhereHas('purchaseOrderIssued', function ($qPo) use ($term) {
-                                        $qPo->where('purchase_order_no', 'LIKE', "%{$term}%");
-                                    });
-                            });
-                        }
-                    });
+                    $q->orWhere('mir_number', 'LIKE', "%{$term}%")
+                      ->orWhere('diminta_oleh', 'LIKE', "%{$term}%")
+                      ->orWhere('departemen', 'LIKE', "%{$term}%")
+                      ->orWhereHas('materialIssueDetails.deliveryOrderReceiptDetail', function ($qDetail) use ($term) {
+                          $qDetail->where('material_code', 'LIKE', "%{$term}%")
+                              ->orWhere('description', 'LIKE', "%{$term}%")
+                              ->orWhereHas('purchaseOrderIssued', function ($qPo) use ($term) {
+                                  $qPo->where('purchase_order_no', 'LIKE', "%{$term}%");
+                              });
+                      });
                 }
-            }
+            });
+        }
 
-            $recentMirs = $mirQuery->latest('tanggal')->take($limitMir)->get();
+        $recentMirs = $mirQuery->latest('tanggal')->take(50)->get();
+        
+        if ($recentMirs->isEmpty()) {
+            return "Data Material Issue (MIR) / Pengambilan Barang tidak ditemukan.";
+        }
+
+        return "DATA PENGAMBILAN BARANG (MIR / MATERIAL ISSUE):\n" . $recentMirs->map(function ($mir) {
+            $details = $mir->materialIssueDetails->map(function ($detail) {
+                $desc = $detail->deliveryOrderReceiptDetail->description ?? 'N/A';
+                $matCode = $detail->deliveryOrderReceiptDetail->material_code ?? 'N/A';
+                $po = $detail->deliveryOrderReceiptDetail->purchaseOrderIssued->purchase_order_no ?? 'N/A';
+                return "- {$desc} ({$matCode}) | Qty Diambil: " . (float)$detail->diserahkan . " | PO: {$po}";
+            })->implode("\n");
             
-            if ($recentMirs->isNotEmpty()) {
-                $mirContextData = "DATA PENGAMBILAN BARANG (MIR / MATERIAL ISSUE):\n" . $recentMirs->map(function ($mir) {
-                    $details = $mir->materialIssueDetails->map(function ($detail) {
-                        $desc = $detail->deliveryOrderReceiptDetail->description ?? 'N/A';
-                        $matCode = $detail->deliveryOrderReceiptDetail->material_code ?? 'N/A';
-                        $po = $detail->deliveryOrderReceiptDetail->purchaseOrderIssued->purchase_order_no ?? 'N/A';
-                        return "- {$desc} ({$matCode}) | Qty Diambil: " . (float)$detail->diserahkan . " | PO: {$po}";
-                    })->implode("\n");
-                    
-                    $tgl = $mir->tanggal ? \Carbon\Carbon::parse($mir->tanggal)->isoFormat('D MMMM YYYY') : '-';
-                    return "MIR No: {$mir->mir_number} | Tanggal: {$tgl} | Diminta oleh: {$mir->diminta_oleh} (Dept: {$mir->departemen})\nDetail Item yang diambil:\n{$details}";
-                })->implode("\n\n-------------------\n\n");
-            }
-        }
+            $tgl = $mir->tanggal ? \Carbon\Carbon::parse($mir->tanggal)->isoFormat('D MMMM YYYY') : '-';
+            return "MIR No: {$mir->mir_number} | Tanggal: {$tgl} | Diminta oleh: {$mir->diminta_oleh} (Dept: {$mir->departemen})\nDetail Item yang diambil:\n{$details}";
+        })->implode("\n\n-------------------\n\n");
+    }
 
-        if (!empty($mirContextData)) {
-            $contextData .= "\n\n=======================================\n\n" . $mirContextData;
-        }
-
-        // 4. Susun Prompt untuk Gemini
+    #[On('process-ai-response')]
+    public function fetchAiResponse(string $userMessage)
+    {
         $userName = auth()->check() ? auth()->user()->name : 'Tamu';
         $sapaan = auth()->check() ? "Kak {$userName}" : "Kak";
         
@@ -341,67 +260,189 @@ Detail Barang:
             'userName' => $userName,
             'currentTime' => $currentTime,
             'waktu' => $waktu,
-            'contextData' => $contextData,
             'sapaan' => $sapaan
         ])->render();
 
-        // Susun format pesan untuk Ollama
         $ollamaMessages = [
             ['role' => 'system', 'content' => $systemPrompt]
         ];
 
         foreach ($this->chats as $chat) {
-            $ollamaMessages[] = [
-                'role' => $chat['role'], // Ollama menggunakan 'assistant' dan 'user'
-                'content' => $chat['content']
-            ];
+            if (isset($chat['tool_calls'])) {
+                $ollamaMessages[] = [
+                    'role' => $chat['role'],
+                    'content' => $chat['content'] ?? '',
+                    'tool_calls' => $chat['tool_calls']
+                ];
+            } elseif (isset($chat['tool_name'])) {
+                $ollamaMessages[] = [
+                    'role' => $chat['role'],
+                    'name' => $chat['tool_name'],
+                    'content' => $chat['content'] ?? ''
+                ];
+            } else {
+                $ollamaMessages[] = [
+                    'role' => $chat['role'],
+                    'content' => $chat['content'] ?? ''
+                ];
+            }
         }
 
-        // Hit API Ollama Lokal (Bisa dikonfigurasi via .env)
-        try {
-            $ollamaUrl = config('services.ollama.url') . '/api/chat';
-            $ollamaModel = config('services.ollama.model');
-
-            // Mengatur timeout menjadi 120 detik dan memaksa penggunaan IPv4 serta membypass DNS (cURL error 6)
-            $response = Http::withOptions([
-                'curl' => [
-                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
-                    CURLOPT_RESOLVE => [
-                        "ai.receivingpkt.com:443:104.21.73.54"
+        $tools = [
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'cari_data_penerimaan',
+                    'description' => 'Mencari data penerimaan barang (Delivery Order / PO), Transmittal, QC, dan GRS.',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'kata_kunci' => [
+                                'type' => 'string',
+                                'description' => 'Nomor PO, Nomor DO, atau kode material (gabungkan dengan spasi jika lebih dari satu).'
+                            ]
+                        ],
+                        'required' => ['kata_kunci']
                     ]
                 ]
-            ])
-            ->connectTimeout(30)
-            ->timeout(120) // Waktu tunggu diset lama agar tidak putus di tengah jalan saat memikirkan jawaban
-            ->post($ollamaUrl, [
-                'model' => $ollamaModel,
-                'messages' => $ollamaMessages,
-                'stream' => false,
-                'options' => [
-                    'temperature' => 0.15, // Ditingkatkan sedikit dari 0.0 agar lebih luwes dan natural
-                    'top_p' => 0.4,
+            ],
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'cari_data_pengambilan',
+                    'description' => 'Mencari riwayat data pengambilan barang (Material Issue Request / MIR).',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'kata_kunci' => [
+                                'type' => 'string',
+                                'description' => 'Nomor PO, kode material, nama departemen, atau nomor MIR.'
+                            ],
+                            'tanggal_mulai' => [
+                                'type' => 'string',
+                                'description' => 'Tanggal mulai (format: YYYY-MM-DD). Opsional.'
+                            ],
+                            'tanggal_selesai' => [
+                                'type' => 'string',
+                                'description' => 'Tanggal selesai (format: YYYY-MM-DD). Opsional.'
+                            ]
+                        ],
+                        'required' => ['kata_kunci']
+                    ]
                 ]
-            ]);
+            ]
+        ];
 
-            if ($response->successful()) {
-                $aiReply = $response->json('message.content');
-                $this->chats[] = ['role' => 'assistant', 'content' => $aiReply];
-            } else {
-                \Illuminate\Support\Facades\Log::error('Ollama API Error: ' . $response->body());
-                $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, AI dalam mode tidur, silahkan dicoba lagi nanti'];
+        $ollamaUrl = config('services.ollama.url') . '/api/chat';
+        $ollamaModel = config('services.ollama.model');
+
+        try {
+            while (true) {
+                $response = Http::withOptions([
+                    'stream' => true,
+                    'curl' => [
+                        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                        CURLOPT_RESOLVE => [
+                            "ai.receivingpkt.com:443:104.21.73.54"
+                        ]
+                    ]
+                ])
+                ->connectTimeout(30)
+                ->timeout(120)
+                ->post($ollamaUrl, [
+                    'model' => $ollamaModel,
+                    'messages' => $ollamaMessages,
+                    'tools' => $tools,
+                    'stream' => true,
+                    'options' => [
+                        'temperature' => 0.15,
+                        'top_p' => 0.4,
+                    ]
+                ]);
+
+                if (!$response->successful()) {
+                    \Illuminate\Support\Facades\Log::error('Ollama API Error: ' . $response->body());
+                    $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, API mengalami gangguan, coba lagi nanti.'];
+                    break;
+                }
+
+                $body = $response->toPsrResponse()->getBody();
+                $fullReply = '';
+                $toolCalls = [];
+                
+                while (!$body->eof()) {
+                    $line = '';
+                    while (!$body->eof()) {
+                        $char = $body->read(1);
+                        $line .= $char;
+                        if ($char === "\n") {
+                            break;
+                        }
+                    }
+                    
+                    if (trim($line) !== '') {
+                        $data = json_decode($line, true);
+                        if (isset($data['message']['tool_calls']) && !empty($data['message']['tool_calls'])) {
+                            foreach ($data['message']['tool_calls'] as $tc) {
+                                $toolCalls[] = $tc;
+                            }
+                        }
+                        
+                        if (isset($data['message']['content']) && $data['message']['content'] !== '') {
+                            $fullReply .= $data['message']['content'];
+                            $renderedHtml = str($fullReply)->markdown([
+                                'html_input' => 'escape',
+                                'allow_unsafe_links' => false,
+                            ]);
+                            $this->stream(to: 'ai-reply-stream', content: $renderedHtml, replace: true);
+                        }
+                    }
+                }
+                
+                if (!empty($fullReply) || !empty($toolCalls)) {
+                    $assistantMsg = ['role' => 'assistant', 'content' => $fullReply];
+                    if (!empty($toolCalls)) {
+                        $assistantMsg['tool_calls'] = $toolCalls;
+                    }
+                    $ollamaMessages[] = $assistantMsg;
+                }
+
+                if (empty($toolCalls)) {
+                    if (!empty($fullReply)) {
+                        $this->chats[] = ['role' => 'assistant', 'content' => $fullReply];
+                    }
+                    break;
+                }
+
+                $this->stream(to: 'ai-reply-stream', content: '<div class="italic text-slate-500 dark:text-slate-400 text-[12px] flex items-center gap-1.5 py-1"><svg class="w-3.5 h-3.5 animate-spin text-[#F47920]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Mencari data ke database...</div>', replace: true);
+
+                foreach ($toolCalls as $call) {
+                    $funcName = $call['function']['name'];
+                    $args = $call['function']['arguments'] ?? [];
+                    
+                    $result = '';
+                    if ($funcName === 'cari_data_penerimaan') {
+                        $result = $this->toolCariDataPenerimaan($args['kata_kunci'] ?? '');
+                    } elseif ($funcName === 'cari_data_pengambilan') {
+                        $result = $this->toolCariDataPengambilan($args['kata_kunci'] ?? '', $args['tanggal_mulai'] ?? null, $args['tanggal_selesai'] ?? null);
+                    } else {
+                        $result = 'Unknown tool';
+                    }
+                    
+                    $ollamaMessages[] = ['role' => 'tool', 'name' => $funcName, 'content' => (string)$result];
+                }
             }
+            
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Ollama Connection Exception: ' . $e->getMessage());
-            $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, AI dalam mode tidur, silahkan dicoba lagi nanti'];
+            $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, koneksi ke AI terputus. Silakan coba lagi.'];
         }
 
-        // 4. Matikan indikator loading setelah mendapatkan balasan
         $this->isTyping = false;
         $this->generateSuggestions();
     }
 };
 ?>
-
 <div class="fixed bottom-6 right-6 z-50 font-sans">
     <!-- Tombol Chat (Floating) -->
     <div class="relative group" id="tour-chatbot-button">
@@ -514,36 +555,57 @@ Detail Barang:
                 @endif
             @endforeach
 
-            <!-- Loading Indicator -->
+            <!-- Loading Indicator & Streaming Bubble -->
             @if($isTyping)
-                <div class="flex items-start gap-3 max-w-[85%]" x-data="{
+                <div class="flex items-start gap-3 max-w-[92%] group" wire:key="typing-indicator" x-data="{
                     texts: [
                         'Menganalisis pertanyaan...',
                         'Mencari data PO/DO terkait...',
                         'Menyusun riwayat pergerakan material...',
-                        'ALEX sedang mengetik balasan...'
+                        'ALEX sedang merangkai balasan...'
                     ],
                     currentIndex: 0,
                     interval: null,
+                    isStreaming: false,
                     init() {
                         this.interval = setInterval(() => {
                             this.currentIndex = (this.currentIndex + 1) % this.texts.length;
                         }, 2500);
+                        
+                        const observer = new MutationObserver(() => {
+                            this.isStreaming = true;
+                            if (this.interval) clearInterval(this.interval);
+                        });
+                        observer.observe(this.$refs.streamContainer, { childList: true, subtree: true, characterData: true });
                     },
                     destroy() {
                         if (this.interval) clearInterval(this.interval);
                     }
                 }">
-                    <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center mt-1 animate-pulse border border-slate-300/50 dark:border-white/5">
-                        <span class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full"></span>
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <div class="bg-white dark:bg-slate-800/80 px-5 py-4 rounded-[1.5rem] rounded-tl-sm shadow-sm border border-slate-200/60 dark:border-white/5 flex items-center gap-1.5 backdrop-blur-md w-fit">
-                            <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce"></span>
-                            <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
-                            <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                    <div class="relative flex-shrink-0 mt-1">
+                        <div class="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm border border-slate-200/80 dark:border-white/10 relative z-10" :class="{'animate-pulse bg-slate-200 dark:bg-slate-700': !isStreaming}">
+                            <svg x-show="isStreaming" class="w-4 h-4 text-[#F47920]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                <path d="M12 8V4H8"></path>
+                                <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+                                <path d="M2 14h2"></path>
+                                <path d="M20 14h2"></path>
+                                <path d="M15 13v2"></path>
+                                <path d="M9 13v2"></path>
+                            </svg>
+                            <span x-show="!isStreaming" class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full"></span>
                         </div>
-                        <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400 animate-pulse ml-2 tracking-wide" x-text="texts[currentIndex]">Berpikir...</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5 min-w-0 w-full overflow-hidden">
+                        <div class="bg-white dark:bg-slate-800/80 px-5 py-4 rounded-[1.5rem] rounded-tl-sm shadow-sm border border-slate-200/60 dark:border-white/5 text-[13.5px] text-slate-700 dark:text-slate-300 leading-relaxed ai-markdown-content backdrop-blur-md min-w-[50px] w-fit transition-shadow duration-300"
+                             wire:stream="ai-reply-stream" 
+                             x-ref="streamContainer">
+                            <div class="flex items-center gap-1.5 h-6">
+                                <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce"></span>
+                                <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
+                                <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                            </div>
+                        </div>
+                        <span x-show="!isStreaming" class="text-[10px] font-medium text-slate-500 dark:text-slate-400 animate-pulse ml-2 tracking-wide" x-text="texts[currentIndex]">Berpikir...</span>
                     </div>
                 </div>
             @endif
@@ -618,8 +680,9 @@ Detail Barang:
     @script
     <script>
         document.addEventListener('livewire:initialized', () => {
+            const container = document.getElementById('chat-container');
+            
             Livewire.hook('morph.updated', () => {
-                const container = document.getElementById('chat-container');
                 if (container) {
                     container.scrollTo({
                         top: container.scrollHeight,
@@ -627,6 +690,19 @@ Detail Barang:
                     });
                 }
             });
+
+            if (container) {
+                const observer = new MutationObserver(() => {
+                    // Only scroll if we're near the bottom to avoid fighting user scroll
+                    if (container.scrollHeight - container.scrollTop - container.clientHeight < 150) {
+                        container.scrollTo({
+                            top: container.scrollHeight,
+                            behavior: 'auto'
+                        });
+                    }
+                });
+                observer.observe(container, { childList: true, subtree: true, characterData: true });
+            }
         });
     </script>
     @endscript
