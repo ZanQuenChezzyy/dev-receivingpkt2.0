@@ -339,7 +339,6 @@ new class extends Component {
         try {
             while (true) {
                 $response = Http::withOptions([
-                    'stream' => true,
                     'curl' => [
                         CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
                         CURLOPT_RESOLVE => [
@@ -353,7 +352,7 @@ new class extends Component {
                     'model' => $ollamaModel,
                     'messages' => $ollamaMessages,
                     'tools' => $tools,
-                    'stream' => true,
+                    'stream' => false,
                     'options' => [
                         'temperature' => 0.15,
                         'top_p' => 0.4,
@@ -366,39 +365,13 @@ new class extends Component {
                     break;
                 }
 
-                $body = $response->toPsrResponse()->getBody();
-                $fullReply = '';
-                $toolCalls = [];
+                $data = $response->json();
+                $message = $data['message'] ?? [];
                 
-                while (!$body->eof()) {
-                    $line = '';
-                    while (!$body->eof()) {
-                        $char = $body->read(1);
-                        $line .= $char;
-                        if ($char === "\n") {
-                            break;
-                        }
-                    }
-                    
-                    if (trim($line) !== '') {
-                        $data = json_decode($line, true);
-                        if (isset($data['message']['tool_calls']) && !empty($data['message']['tool_calls'])) {
-                            foreach ($data['message']['tool_calls'] as $tc) {
-                                $toolCalls[] = $tc;
-                            }
-                        }
-                        
-                        if (isset($data['message']['content']) && $data['message']['content'] !== '') {
-                            $fullReply .= $data['message']['content'];
-                            $renderedHtml = str($fullReply)->markdown([
-                                'html_input' => 'escape',
-                                'allow_unsafe_links' => false,
-                            ]);
-                            $this->stream(to: 'ai-reply-stream', content: $renderedHtml, replace: true);
-                        }
-                    }
-                }
-                
+                $fullReply = $message['content'] ?? '';
+                $toolCalls = $message['tool_calls'] ?? [];
+
+                // Append assistant's reply and tool calls to history for the next iteration
                 if (!empty($fullReply) || !empty($toolCalls)) {
                     $assistantMsg = ['role' => 'assistant', 'content' => $fullReply];
                     if (!empty($toolCalls)) {
@@ -407,6 +380,7 @@ new class extends Component {
                     $ollamaMessages[] = $assistantMsg;
                 }
 
+                // If no tools were called, we are done
                 if (empty($toolCalls)) {
                     if (!empty($fullReply)) {
                         $this->chats[] = ['role' => 'assistant', 'content' => $fullReply];
