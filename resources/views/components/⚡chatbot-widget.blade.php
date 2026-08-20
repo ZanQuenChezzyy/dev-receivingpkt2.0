@@ -352,7 +352,7 @@ new class extends Component {
                     'model' => $ollamaModel,
                     'messages' => $ollamaMessages,
                     'tools' => $tools,
-                    'stream' => false,
+                    'stream' => true,
                     'options' => [
                         'temperature' => 0.15,
                         'top_p' => 0.4,
@@ -365,11 +365,40 @@ new class extends Component {
                     break;
                 }
 
-                $data = $response->json();
-                $message = $data['message'] ?? [];
-                
-                $fullReply = $message['content'] ?? '';
-                $toolCalls = $message['tool_calls'] ?? [];
+                $body = $response->toPsrResponse()->getBody();
+                $fullReply = '';
+                $toolCalls = [];
+
+                while (!$body->eof()) {
+                    $line = '';
+                    while (!$body->eof()) {
+                        $char = $body->read(1);
+                        $line .= $char;
+                        if ($char === "\n") {
+                            break;
+                        }
+                    }
+
+                    if (trim($line) === '') continue;
+
+                    $data = json_decode($line, true);
+                    if ($data) {
+                        if (isset($data['message']['content']) && $data['message']['content'] !== '') {
+                            $fullReply .= $data['message']['content'];
+                            $renderedHtml = str($fullReply)->markdown([
+                                'html_input' => 'escape',
+                                'allow_unsafe_links' => false,
+                            ]);
+                            $this->stream(to: 'ai-reply-stream', content: $renderedHtml, replace: true);
+                        }
+
+                        if (isset($data['message']['tool_calls']) && !empty($data['message']['tool_calls'])) {
+                            foreach ($data['message']['tool_calls'] as $tc) {
+                                $toolCalls[] = $tc;
+                            }
+                        }
+                    }
+                }
 
                 // Append assistant's reply and tool calls to history for the next iteration
                 if (!empty($fullReply) || !empty($toolCalls)) {
