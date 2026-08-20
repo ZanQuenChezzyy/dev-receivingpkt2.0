@@ -233,40 +233,74 @@ Detail Barang:
                 'materialIssueDetails.deliveryOrderReceiptDetail.purchaseOrderIssued'
             ]);
 
-            if (!empty($searchTerms)) {
-                // Coba konversi nama bulan bahasa indonesia ke angka
-                $months = [
-                    'januari' => '01', 'februari' => '02', 'maret' => '03', 'april' => '04', 
-                    'mei' => '05', 'juni' => '06', 'juli' => '07', 'agustus' => '08', 
-                    'september' => '09', 'oktober' => '10', 'november' => '11', 'desember' => '12'
-                ];
-                
-                $mirQuery->where(function ($q) use ($searchTerms, $months) {
-                    foreach ($searchTerms as $term) {
-                        if (strlen($term) < 3 && !is_numeric($term)) continue;
-
-                        $q->orWhere('mir_number', 'LIKE', "%{$term}%")
-                          ->orWhere('diminta_oleh', 'LIKE', "%{$term}%")
-                          ->orWhere('departemen', 'LIKE', "%{$term}%")
-                          ->orWhere('tanggal', 'LIKE', "%{$term}%");
-
-                        $lowerTerm = strtolower($term);
-                        if (isset($months[$lowerTerm])) {
-                            $q->orWhereMonth('tanggal', $months[$lowerTerm]);
+            $startDate = null;
+            $endDate = null;
+            // Deteksi range tanggal eksplisit: dari tanggal X sampai tanggal Y
+            if (preg_match('/(?:dari\s+(?:tanggal\s+)?)?(\d{1,2}(?:\s+[a-zA-Z]+)?(?:\s+\d{4})?)\s*(?:sampai|-|s\/d)\s*(?:tanggal\s+)?(\d{1,2}(?:\s+[a-zA-Z]+)?(?:\s+\d{4})?)/i', $contextText, $dateMatch)) {
+                $parseIndonesianDate = function($dateStr) {
+                    $months = [
+                        'januari' => '01', 'februari' => '02', 'maret' => '03', 'april' => '04', 
+                        'mei' => '05', 'juni' => '06', 'juli' => '07', 'agustus' => '08', 
+                        'september' => '09', 'oktober' => '10', 'november' => '11', 'desember' => '12'
+                    ];
+                    $dateStr = strtolower(trim($dateStr));
+                    foreach ($months as $id => $num) {
+                        if (strpos($dateStr, $id) !== false) {
+                            $dateStr = str_replace($id, $num, $dateStr);
+                            break;
                         }
-
-                        $q->orWhereHas('materialIssueDetails.deliveryOrderReceiptDetail', function ($qDetail) use ($term) {
-                            $qDetail->where('material_code', 'LIKE', "%{$term}%")
-                                ->orWhere('description', 'LIKE', "%{$term}%")
-                                ->orWhereHas('purchaseOrderIssued', function ($qPo) use ($term) {
-                                    $qPo->where('purchase_order_no', 'LIKE', "%{$term}%");
-                                });
-                        });
                     }
-                });
+                    $dateStr = preg_replace('/\s+/', '-', $dateStr);
+                    if (!preg_match('/\d{4}/', $dateStr)) {
+                        $dateStr .= '-' . date('Y');
+                    }
+                    $parsed = strtotime($dateStr);
+                    return $parsed ? date('Y-m-d', $parsed) : null;
+                };
+
+                $startDate = $parseIndonesianDate($dateMatch[1]);
+                $endDate = $parseIndonesianDate($dateMatch[2]);
             }
 
-            $recentMirs = $mirQuery->latest('tanggal')->take(50)->get();
+            if ($startDate && $endDate) {
+                // Jika range tanggal jelas, ambil di dalam range tersebut
+                $mirQuery->whereBetween('tanggal', [$startDate, $endDate]);
+                $limitMir = 200; // Limit diperbesar khusus range tanggal
+            } else {
+                $limitMir = 50;
+                if (!empty($searchTerms)) {
+                    $months = [
+                        'januari' => '01', 'februari' => '02', 'maret' => '03', 'april' => '04', 
+                        'mei' => '05', 'juni' => '06', 'juli' => '07', 'agustus' => '08', 
+                        'september' => '09', 'oktober' => '10', 'november' => '11', 'desember' => '12'
+                    ];
+                    $mirQuery->where(function ($q) use ($searchTerms, $months) {
+                        foreach ($searchTerms as $term) {
+                            if (strlen($term) < 3 && !is_numeric($term)) continue;
+
+                            $q->orWhere('mir_number', 'LIKE', "%{$term}%")
+                              ->orWhere('diminta_oleh', 'LIKE', "%{$term}%")
+                              ->orWhere('departemen', 'LIKE', "%{$term}%")
+                              ->orWhere('tanggal', 'LIKE', "%{$term}%");
+
+                            $lowerTerm = strtolower($term);
+                            if (isset($months[$lowerTerm])) {
+                                $q->orWhereMonth('tanggal', $months[$lowerTerm]);
+                            }
+
+                            $q->orWhereHas('materialIssueDetails.deliveryOrderReceiptDetail', function ($qDetail) use ($term) {
+                                $qDetail->where('material_code', 'LIKE', "%{$term}%")
+                                    ->orWhere('description', 'LIKE', "%{$term}%")
+                                    ->orWhereHas('purchaseOrderIssued', function ($qPo) use ($term) {
+                                        $qPo->where('purchase_order_no', 'LIKE', "%{$term}%");
+                                    });
+                            });
+                        }
+                    });
+                }
+            }
+
+            $recentMirs = $mirQuery->latest('tanggal')->take($limitMir)->get();
             
             if ($recentMirs->isNotEmpty()) {
                 $mirContextData = "DATA PENGAMBILAN BARANG (MIR / MATERIAL ISSUE):\n" . $recentMirs->map(function ($mir) {
