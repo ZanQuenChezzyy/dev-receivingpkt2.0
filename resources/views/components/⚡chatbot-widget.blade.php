@@ -362,7 +362,7 @@ new class extends Component {
 
                 if (!$response->successful()) {
                     \Illuminate\Support\Facades\Log::error('Ollama API Error: ' . $response->body());
-                    $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, API mengalami gangguan, coba lagi nanti.'];
+                    $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, API mengalami gangguan: ' . $response->body()];
                     break;
                 }
 
