@@ -97,12 +97,14 @@ new class extends Component {
         ]);
 
         // 2. Filter dinamis berdasarkan pesan user
+        $limit = (stripos($contextText, 'semua') !== false || stripos($contextText, 'sebanyak') !== false || stripos($contextText, 'list') !== false) ? 50 : 5;
+
         // Jika ada term pencarian, prioritaskan mencari data spesifik tersebut
         if (!empty($searchTerms)) {
             $query->where(function ($q) use ($searchTerms) {
                 foreach ($searchTerms as $term) {
                     // Abaikan kata-kata umum agar query tidak berat
-                    if (strlen($term) < 3)
+                    if (strlen($term) < 3 && !is_numeric($term))
                         continue;
 
                     $q->orWhere('delivery_order_no', 'LIKE', "%{$term}%")
@@ -117,10 +119,9 @@ new class extends Component {
             });
         }
 
-        // 3. Tarik Konteks Data dari Database (Batas 3 data spesifik atau terbaru)
-        // Kurangi dari 10 ke 3 agar tidak terlalu berat membebani memori AI
+        // 3. Tarik Konteks Data dari Database
         $recentReceipts = $query->latest('received_date')
-            ->take(3)
+            ->take($limit)
             ->get();
 
         \Carbon\Carbon::setLocale('id');
@@ -217,6 +218,68 @@ Histori QC & Masalah:
 Detail Barang:
 {$details}";
         })->implode("\n\n-------------------\n\n");
+
+        $isMirQuery = stripos($contextText, 'mir') !== false || stripos($contextText, 'material issue') !== false || stripos($contextText, 'pengambilan') !== false;
+        $mirContextData = "";
+        
+        if ($isMirQuery) {
+            $mirQuery = \App\Models\MaterialIssue::with([
+                'materialIssueDetails.deliveryOrderReceiptDetail.purchaseOrderIssued'
+            ]);
+
+            if (!empty($searchTerms)) {
+                // Coba konversi nama bulan bahasa indonesia ke angka
+                $months = [
+                    'januari' => '01', 'februari' => '02', 'maret' => '03', 'april' => '04', 
+                    'mei' => '05', 'juni' => '06', 'juli' => '07', 'agustus' => '08', 
+                    'september' => '09', 'oktober' => '10', 'november' => '11', 'desember' => '12'
+                ];
+                
+                $mirQuery->where(function ($q) use ($searchTerms, $months) {
+                    foreach ($searchTerms as $term) {
+                        if (strlen($term) < 3 && !is_numeric($term)) continue;
+
+                        $q->orWhere('mir_number', 'LIKE', "%{$term}%")
+                          ->orWhere('diminta_oleh', 'LIKE', "%{$term}%")
+                          ->orWhere('departemen', 'LIKE', "%{$term}%")
+                          ->orWhere('tanggal', 'LIKE', "%{$term}%");
+
+                        $lowerTerm = strtolower($term);
+                        if (isset($months[$lowerTerm])) {
+                            $q->orWhereMonth('tanggal', $months[$lowerTerm]);
+                        }
+
+                        $q->orWhereHas('materialIssueDetails.deliveryOrderReceiptDetail', function ($qDetail) use ($term) {
+                            $qDetail->where('material_code', 'LIKE', "%{$term}%")
+                                ->orWhere('description', 'LIKE', "%{$term}%")
+                                ->orWhereHas('purchaseOrderIssued', function ($qPo) use ($term) {
+                                    $qPo->where('purchase_order_no', 'LIKE', "%{$term}%");
+                                });
+                        });
+                    }
+                });
+            }
+
+            $recentMirs = $mirQuery->latest('tanggal')->take($limit)->get();
+            
+            if ($recentMirs->isNotEmpty()) {
+                $mirContextData = "DATA PENGAMBILAN BARANG (MIR / MATERIAL ISSUE):\n" . $recentMirs->map(function ($mir) {
+                    $details = $mir->materialIssueDetails->map(function ($detail) {
+                        $desc = $detail->deliveryOrderReceiptDetail->description ?? 'N/A';
+                        $matCode = $detail->deliveryOrderReceiptDetail->material_code ?? 'N/A';
+                        $po = $detail->deliveryOrderReceiptDetail->purchaseOrderIssued->purchase_order_no ?? 'N/A';
+                        return "- {$desc} ({$matCode}) | Qty Diambil: " . (float)$detail->diserahkan . " | PO: {$po}";
+                    })->implode("\n");
+                    
+                    $tgl = $mir->tanggal ? \Carbon\Carbon::parse($mir->tanggal)->isoFormat('D MMMM YYYY') : '-';
+                    return "MIR No: {$mir->mir_number} | Tanggal: {$tgl} | Diminta oleh: {$mir->diminta_oleh} (Dept: {$mir->departemen})\nDetail Item yang diambil:\n{$details}";
+                })->implode("\n\n-------------------\n\n");
+            }
+        }
+
+        if (!empty($mirContextData)) {
+            $contextData .= "\n\n=======================================\n\n" . $mirContextData;
+        }
 
         // 4. Susun Prompt untuk Gemini
         $userName = auth()->check() ? auth()->user()->name : 'Tamu';
