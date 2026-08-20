@@ -153,7 +153,7 @@ new class extends Component {
             })->implode("\n");
 
             if (empty($qcNotes)) {
-                $qcNotes = "- Belum ada riwayat masalah QC.";
+                $qcNotes = "- Tidak ada catatan QC.";
             }
 
             $pendingInfo = "";
@@ -400,20 +400,17 @@ new class extends Component {
                     }
                 }
 
-                // Append assistant's reply and tool calls to history for the next iteration
                 if (!empty($fullReply) || !empty($toolCalls)) {
                     $assistantMsg = ['role' => 'assistant', 'content' => $fullReply];
                     if (!empty($toolCalls)) {
                         $assistantMsg['tool_calls'] = $toolCalls;
                     }
                     $ollamaMessages[] = $assistantMsg;
+                    $this->chats[] = $assistantMsg;
                 }
 
                 // If no tools were called, we are done
                 if (empty($toolCalls)) {
-                    if (!empty($fullReply)) {
-                        $this->chats[] = ['role' => 'assistant', 'content' => $fullReply];
-                    }
                     break;
                 }
 
@@ -432,7 +429,9 @@ new class extends Component {
                         $result = 'Unknown tool';
                     }
                     
-                    $ollamaMessages[] = ['role' => 'tool', 'name' => $funcName, 'content' => (string)$result];
+                    $toolMsg = ['role' => 'tool', 'name' => $funcName, 'content' => (string)$result];
+                    $ollamaMessages[] = $toolMsg;
+                    $this->chats[] = $toolMsg;
                 }
             }
             
@@ -524,6 +523,14 @@ new class extends Component {
             </div>
 
             @foreach($chats as $chat)
+                @if($chat['role'] === 'tool')
+                    @continue
+                @endif
+                
+                @if($chat['role'] === 'assistant' && empty($chat['content']))
+                    @continue
+                @endif
+
                 @if($chat['role'] === 'assistant')
                         <!-- Bubble AI -->
                         <div class="flex items-start gap-3 max-w-[92%] group">
