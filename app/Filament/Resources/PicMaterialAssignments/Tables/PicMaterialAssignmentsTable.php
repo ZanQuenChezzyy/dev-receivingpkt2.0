@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PicMaterialAssignments\Tables;
 
+use App\Models\PicMaterialAssignment;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
