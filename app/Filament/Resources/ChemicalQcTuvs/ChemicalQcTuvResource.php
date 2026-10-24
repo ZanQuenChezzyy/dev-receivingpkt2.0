@@ -37,17 +37,17 @@ class ChemicalQcTuvResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'QC TUV';
+        return 'QC Karung';
     }
 
     public static function getModelLabel(): string
     {
-        return 'QC TUV';
+        return 'QC Karung';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'QC TUV';
+        return 'QC Karung';
     }
 
     public static function form(Schema $schema): Schema
@@ -68,7 +68,7 @@ class ChemicalQcTuvResource extends Resource
                             Group::make([
                                 Select::make('tahapan_name')
                                     ->label('Tahapan')
-                                    ->options(collect(range(1, 100))->mapWithKeys(fn ($i) => ["TAHAP $i TUV" => "TAHAP $i TUV"]))
+                                    ->options(collect(range(1, 100))->mapWithKeys(fn($i) => ["TAHAP $i TUV" => "TAHAP $i TUV"]))
                                     ->searchable()
                                     ->required(),
                                 TextInput::make('qty_qc_tuv')
