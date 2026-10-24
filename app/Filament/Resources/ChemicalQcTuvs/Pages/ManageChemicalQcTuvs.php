@@ -15,7 +15,7 @@ class ManageChemicalQcTuvs extends ManageRecords
     {
         return [
             CreateAction::make()
-                ->label('Tambah QC TUV')
+                ->label('Tambah QC Karung')
                 ->icon(Heroicon::PlusCircle),
         ];
     }
