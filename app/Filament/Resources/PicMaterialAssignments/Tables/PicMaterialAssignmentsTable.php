@@ -54,6 +54,18 @@ class PicMaterialAssignmentsTable
                     ->badge()
                     ->color('info')
                     ->separator(', ')
+                    ->state(function (PicMaterialAssignment $record) {
+                        if ($record->assignment_mode !== 'user') {
+                            return null;
+                        }
+
+                        $names = $record->users->pluck('name')->toArray();
+                        if (empty($names) && $record->user) {
+                            return [$record->user->name];
+                        }
+
+                        return ! empty($names) ? $names : null;
+                    })
                     ->placeholder('Bebas ke Siapapun')
                     ->searchable(),
 

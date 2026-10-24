@@ -50,16 +50,17 @@ class PicMaterialAssignmentForm
                             ->inline()
                             ->required(),
 
-                        Select::make('user_id')
+                        Select::make('users')
                             ->label('Pilih PIC Khusus (Staff Invoice)')
                             ->relationship(
-                                name: 'user',
+                                name: 'users',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: fn ($query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
                             )
+                            ->multiple()
                             ->searchable()
                             ->preload()
-                            ->helperText('Hanya pengguna dengan role "Staff Invoice" yang dapat dipilih sebagai PIC.')
+                            ->helperText('Bisa memilih satu atau lebih staf invoice. Jika lebih dari 1 orang dipilih, dokumen GRS akan dibagi rata secara bergantian (Fair Round-Robin).')
                             ->required(fn (Get $get) => $get('assignment_mode') === 'user')
                             ->visible(fn (Get $get) => $get('assignment_mode') === 'user')
                             ->columnSpanFull(),

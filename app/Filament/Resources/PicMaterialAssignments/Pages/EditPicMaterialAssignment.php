@@ -18,4 +18,15 @@ class EditPicMaterialAssignment extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    protected function afterSave(): void
+    {
+        if ($this->record->assignment_mode !== 'user') {
+            $this->record->users()->detach();
+            $this->record->updateQuietly(['user_id' => null]);
+        } else {
+            $firstId = $this->record->users()->first()?->id;
+            $this->record->updateQuietly(['user_id' => $firstId]);
+        }
+    }
 }
