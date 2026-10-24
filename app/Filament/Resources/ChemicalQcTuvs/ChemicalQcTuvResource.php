@@ -120,7 +120,7 @@ class ChemicalQcTuvResource extends Resource
     {
         return $table
             ->columns([
-                ColumnGroup::make('Informasi QC', [
+                ColumnGroup::make('Informasi QC Karung', [
                     TextColumn::make('purchaseOrderIssued.purchase_order_no')
                         ->label('Purchase Order')
                         ->searchable()

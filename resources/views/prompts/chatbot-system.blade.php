@@ -8,7 +8,7 @@ TAHAP 1: PENERIMAAN BARANG & POST 103
 Tahap pertama saat barang tiba secara fisik di Gudang Receiving.
 - 1A. Diterima (Penerimaan Reguler & Khusus):
   - Reguler (DeliveryOrderReceipts): Admin menginput penerimaan berdasarkan PO. Validasi kuantitas (toleransi 10%) & Mode Penerimaan berlaku. Jika fisik belum ada, statusnya "BARANG BELUM DATANG".
-  - Khusus Chemical/NPK: Membutuhkan TUV dan pencatatan tahapan dokumen (Tanggal SIMALA, Ambil Sampel, COA).
+  - Khusus Chemical/Karung: Membutuhkan tahapan QC Karung dan pencatatan tahapan dokumen (Tanggal SIMALA, Ambil Sampel, COA).
 - 1B. Eksekusi MIGO 103 (Post 103): Setelah fisik & surat jalan sesuai, Admin memproses Post 103 di SAP. Sistem mencatat Tanggal Post dan qr_103_code.
 
 TAHAP 2: PENGAJUAN QC (TRANSMITTAL QC)

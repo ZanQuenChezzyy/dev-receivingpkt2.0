@@ -179,9 +179,9 @@ class MonitoringChemicalForm
 
                                 if (! empty($tahapanTerlibat)) {
                                     $tahapanUnik = array_unique($tahapanTerlibat);
-                                    $tahapanValue = 'TAHAP '.implode(',', $tahapanUnik).' TUV';
+                                    $tahapanValue = 'TAHAP '.implode(',', $tahapanUnik).' Karung';
                                 } else {
-                                    $tahapanValue = 'TAHAPAN TUV PENUH / MELEBIHI TARGET';
+                                    $tahapanValue = 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET';
                                 }
                             }
 
@@ -235,7 +235,7 @@ class MonitoringChemicalForm
     {
         return Section::make('Detail Item Kedatangan')
             ->icon(Heroicon::OutlinedClipboardDocumentList)
-            ->description('Tambahkan item yang diterima beserta tahapan TUV dan informasi QC.')
+            ->description('Tambahkan item yang diterima beserta tahapan Karung dan informasi QC.')
             ->schema([
                 EmptyState::make('Belum Ada PO yang Dipilih')
                     ->description('Silakan pilih Kategori dan cari Nomor Purchase Order di form Informasi Dokumen untuk memunculkan item kedatangan.')
@@ -311,9 +311,9 @@ class MonitoringChemicalForm
 
                                         if (! empty($tahapanTerlibat)) {
                                             $tahapanUnik = array_unique($tahapanTerlibat);
-                                            $tahapanValue = 'TAHAP '.implode(',', $tahapanUnik).' TUV';
+                                            $tahapanValue = 'TAHAP '.implode(',', $tahapanUnik).' Karung';
                                         } else {
-                                            $tahapanValue = 'TAHAPAN TUV PENUH / MELEBIHI TARGET';
+                                            $tahapanValue = 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET';
                                         }
                                     }
 
@@ -374,10 +374,10 @@ class MonitoringChemicalForm
 
                                                 if (! empty($tahapanTerlibat)) {
                                                     $tahapanUnik = array_unique($tahapanTerlibat);
-                                                    $set('tahapan', 'TAHAP '.implode(',', $tahapanUnik).' TUV');
+                                                    $set('tahapan', 'TAHAP '.implode(',', $tahapanUnik).' Karung');
                                                 } else {
                                                     // Jika history sudah melebihi semua akumulasi target
-                                                    $set('tahapan', 'TAHAPAN TUV PENUH / MELEBIHI TARGET');
+                                                    $set('tahapan', 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET');
                                                 }
                                             }
                                         })
@@ -422,7 +422,7 @@ class MonitoringChemicalForm
 
                                                 if ($inputQty > $sisaBisaDiterima) {
                                                     $fmtSisa = rtrim(rtrim(number_format($sisaBisaDiterima, 2, '.', ','), '0'), '.');
-                                                    $limitSource = $tuvTotal > 0 ? 'Target TUV' : 'PO';
+                                                    $limitSource = $tuvTotal > 0 ? 'Target Karung' : 'PO';
                                                     if ($isToleranceActive) {
                                                         $fail("Overlimit! Dengan toleransi 10% {$limitSource}, sisa maksimal hanya {$fmtSisa}.");
                                                     } else {
@@ -447,7 +447,7 @@ class MonitoringChemicalForm
                                 TextInput::make('tahapan')
                                     ->label(fn (Get $get) => $get('../../material_category') === 'Karung' ? 'Tahapan (Auto)' : 'Tahapan')
                                     ->placeholder('Otomatis / Manual')
-                                    ->helperText('Tahapan TUV berdasarkan alokasi.')
+                                    ->helperText('Tahapan Karung berdasarkan alokasi.')
                                     ->prefixIcon('heroicon-o-flag')
                                     ->required()
                                     ->readOnly(fn (Get $get) => $get('../../material_category') === 'Karung'),
@@ -471,7 +471,7 @@ class MonitoringChemicalForm
 
                                             $tuvs = ChemicalQcTuv::where('purchase_order_issued_id', $poId)->orderBy('id')->get();
                                             if ($tuvs->isEmpty()) {
-                                                return new HtmlString('<span class="text-danger-600 font-medium text-sm">Belum ada target TUV. Silakan tambah.</span>');
+                                                return new HtmlString('<span class="text-danger-600 font-medium text-sm">Belum ada target QC Karung. Silakan tambah.</span>');
                                             }
 
                                             $html = '<div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">';
@@ -518,14 +518,14 @@ class MonitoringChemicalForm
 
                                     Actions::make([
                                         Action::make('addTuv')
-                                            ->label('Tambah TUV')
+                                            ->label('Tambah QC Karung')
                                             ->icon('heroicon-m-plus')
                                             ->size('sm')
                                             ->color('success')
                                             ->schema([
                                                 Select::make('tahapan_name')
                                                     ->label('Nama Tahapan')
-                                                    ->options(collect(range(1, 100))->mapWithKeys(fn ($i) => ["TAHAP $i TUV" => "TAHAP $i TUV"]))
+                                                    ->options(collect(range(1, 100))->mapWithKeys(fn ($i) => ["TAHAP $i Karung" => "TAHAP $i Karung"]))
                                                     ->searchable()
                                                     ->required(),
                                                 TextInput::make('qty_qc_tuv')
@@ -569,7 +569,7 @@ class MonitoringChemicalForm
 
                                                 if ($inputQty > $sisaKuota) {
                                                     $fmtSisa = rtrim(rtrim(number_format($sisaKuota, 2, '.', ','), '0'), '.');
-                                                    Notification::make()->danger()->title('Kuota TUV Tidak Mencukupi')->body("Sisa kuota PO untuk TUV baru hanya {$fmtSisa}. Input dibatalkan.")->send();
+                                                    Notification::make()->danger()->title('Kuota Karung Tidak Mencukupi')->body("Sisa kuota PO untuk Karung baru hanya {$fmtSisa}. Input dibatalkan.")->send();
 
                                                     return; // Silently fail UI side
                                                 }
@@ -579,7 +579,7 @@ class MonitoringChemicalForm
                                                     'tahapan_name' => $data['tahapan_name'],
                                                     'qty_qc_tuv' => $inputQty,
                                                 ]);
-                                                Notification::make()->success()->title('Berhasil')->body('Target TUV ditambahkan.')->send();
+                                                Notification::make()->success()->title('Berhasil')->body('Target QC Karung ditambahkan.')->send();
 
                                                 // Trigger re-render placeholder
                                                 $component->getContainer()->getComponent('tuv_refresh_trigger')->state((string) Str::uuid());
@@ -610,9 +610,9 @@ class MonitoringChemicalForm
                                                     }
                                                     if (! empty($tahapanTerlibat)) {
                                                         $tahapanUnik = array_unique($tahapanTerlibat);
-                                                        $set('tahapan', 'TAHAP '.implode(',', $tahapanUnik).' TUV');
+                                                        $set('tahapan', 'TAHAP '.implode(',', $tahapanUnik).' Karung');
                                                     } else {
-                                                        $set('tahapan', 'TAHAPAN TUV PENUH / MELEBIHI TARGET');
+                                                        $set('tahapan', 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET');
                                                     }
                                                 }
                                             }),
@@ -658,7 +658,7 @@ class MonitoringChemicalForm
                                                     })
                                                     ->searchable()
                                                     ->required()
-                                                    ->helperText('Hanya TUV yang belum ada penerimaan (belum masuk Monitoring Chemical) yang bisa dihapus.'),
+                                                    ->helperText('Hanya tahapan Karung yang belum ada penerimaan (belum masuk Monitoring Chemical) yang bisa dihapus.'),
                                             ])
                                             ->action(function (array $data, Get $get, Set $set, Actions $component) {
                                                 $tuv = ChemicalQcTuv::find($data['tuv_id']);
@@ -697,9 +697,9 @@ class MonitoringChemicalForm
                                                         }
                                                         if (! empty($tahapanTerlibat)) {
                                                             $tahapanUnik = array_unique($tahapanTerlibat);
-                                                            $set('tahapan', 'TAHAP '.implode(',', $tahapanUnik).' TUV');
+                                                            $set('tahapan', 'TAHAP '.implode(',', $tahapanUnik).' Karung');
                                                         } else {
-                                                            $set('tahapan', $allTuvs->isEmpty() ? null : 'TAHAPAN TUV PENUH / MELEBIHI TARGET');
+                                                            $set('tahapan', $allTuvs->isEmpty() ? null : 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET');
                                                         }
                                                     }
                                                 }

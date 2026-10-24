@@ -69,11 +69,11 @@ class MonitoringChemical extends Model
             }
 
             if ($this->material_category === 'Karung') {
-                if (empty($detail->chemical_qc_tuv_id)) {
+                if (empty($detail->chemical_qc_tuv_id) && empty($detail->tahapan)) {
                     return false;
                 }
             } elseif ($this->material_category === 'Chemical') {
-                if (empty($detail->chemical_qc_tuv_id) || $detail->is_qty_tolerance === null || $detail->has_update_progress === null) {
+                if (empty($detail->tahapan) || $detail->is_qty_tolerance === null || $detail->has_update_progress === null) {
                     return false;
                 }
 
@@ -87,7 +87,7 @@ class MonitoringChemical extends Model
                     }
                 }
             } elseif ($this->material_category === 'Lainnya') {
-                if (empty($detail->chemical_qc_tuv_id) || $detail->is_qty_tolerance === null) {
+                if ((empty($detail->chemical_qc_tuv_id) && empty($detail->tahapan)) || $detail->is_qty_tolerance === null) {
                     return false;
                 }
 
