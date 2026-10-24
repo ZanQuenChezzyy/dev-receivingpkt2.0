@@ -54,8 +54,8 @@ class ChemicalQcTuvResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Informasi QC TUV')
-                    ->description('Masukkan detail informasi QC TUV.')
+                Section::make('Informasi QC Karung')
+                    ->description('Masukkan detail informasi QC Karung.')
                     ->icon('heroicon-o-shield-check')
                     ->schema([
                         Grid::make(2)->schema([
@@ -66,13 +66,12 @@ class ChemicalQcTuvResource extends Resource
                                 ->preload()
                                 ->required(),
                             Group::make([
-                                Select::make('tahapan_name')
+                                TextInput::make('tahapan_name')
                                     ->label('Tahapan')
-                                    ->options(collect(range(1, 100))->mapWithKeys(fn($i) => ["TAHAP $i TUV" => "TAHAP $i TUV"]))
-                                    ->searchable()
+                                    ->placeholder('Masukkan Tahapan QC Karung')
                                     ->required(),
                                 TextInput::make('qty_qc_tuv')
-                                    ->label('Kuantitas QC TUV')
+                                    ->label('Kuantitas QC Karung')
                                     ->placeholder('Masukkan Kuantitas')
                                     ->numeric()
                                     ->required()
@@ -88,7 +87,7 @@ class ChemicalQcTuvResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Detail QC TUV')
+                Section::make('Detail QC Karung')
                     ->icon('heroicon-o-shield-check')
                     ->schema([
                         Grid::make(2)->schema([
