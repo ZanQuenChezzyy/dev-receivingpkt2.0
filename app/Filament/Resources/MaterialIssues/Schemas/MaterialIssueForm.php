@@ -61,7 +61,7 @@ class MaterialIssueForm
                     ->inline()
                     ->required()
                     ->default('digital')
-                    ->live()
+                    ->live(),
             ]);
     }
 
@@ -70,22 +70,22 @@ class MaterialIssueForm
         return Section::make('Data MIR Manual')
             ->icon(Heroicon::OutlinedDocumentArrowUp)
             ->description('Unggah dokumen MIR yang sudah ditandatangani secara fisik.')
-            ->visible(fn(Get $get): bool => $get('jenis_mir') === 'manual')
+            ->visible(fn (Get $get): bool => $get('jenis_mir') === 'manual')
             ->schema([
                 Grid::make(2)->schema([
                     TextInput::make('po_number')
                         ->label('Nomor PO')
                         ->placeholder('Masukkan Nomor PO')
-                        ->required(fn(Get $get): bool => $get('jenis_mir') === 'manual'),
+                        ->required(fn (Get $get): bool => $get('jenis_mir') === 'manual'),
 
                     Select::make('delivery_order_receipt_id')
                         ->label('Referensi Penerimaan DO (Opsional)')
                         ->relationship(
                             name: 'deliveryOrderReceipt',
                             titleAttribute: 'document_code',
-                            modifyQueryUsing: fn($query) => $query->whereNotNull('document_code')
+                            modifyQueryUsing: fn ($query) => $query->whereNotNull('document_code')
                         )
-                        ->getOptionLabelFromRecordUsing(fn($record) => $record->document_code ?? '-')
+                        ->getOptionLabelFromRecordUsing(fn ($record) => $record->document_code ?? '-')
                         ->searchable()
                         ->preload(),
                 ]),
@@ -95,7 +95,7 @@ class MaterialIssueForm
                     ->disk('public')
                     ->directory('manual-mirs')
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'application/pdf'])
-                    ->required(fn(Get $get): bool => $get('jenis_mir') === 'manual')
+                    ->required(fn (Get $get): bool => $get('jenis_mir') === 'manual')
                     ->columnSpanFull(),
             ]);
     }
@@ -105,7 +105,7 @@ class MaterialIssueForm
         return Section::make('Informasi Utama MIR')
             ->icon(Heroicon::OutlinedDocumentText)
             ->description('Lengkapi data utama formulir Material Issued Request (MIR) di bawah ini.')
-            ->visible(fn(Get $get): bool => $get('jenis_mir') === 'digital')
+            ->visible(fn (Get $get): bool => $get('jenis_mir') === 'digital')
             ->schema([
                 Grid::make(2)->schema([
                     TextInput::make('mir_number')
@@ -148,9 +148,9 @@ class MaterialIssueForm
                                 ->toArray();
                         })
                         ->columnSpanFull()
-                        ->getOptionLabelUsing(fn($value): string => PurchaseOrderIssued::find($value)?->purchase_order_no ?? '-')
+                        ->getOptionLabelUsing(fn ($value): string => PurchaseOrderIssued::find($value)?->purchase_order_no ?? '-')
                         ->live()
-                        ->afterStateUpdated(fn(Set $set) => $set('materialIssueDetails', [])),
+                        ->afterStateUpdated(fn (Set $set) => $set('materialIssueDetails', [])),
                 ]),
 
                 Section::make('Detail Kebutuhan (Cost Center & Lokasi)')
@@ -205,7 +205,7 @@ class MaterialIssueForm
     {
         return Section::make('Daftar Barang yang Diambil')
             ->icon(Heroicon::OutlinedCube)
-            ->visible(fn(Get $get): bool => $get('jenis_mir') === 'digital')
+            ->visible(fn (Get $get): bool => $get('jenis_mir') === 'digital')
             ->description(function (Get $get) {
                 $poId = $get('purchase_order_issued_id');
                 if ($poId) {
@@ -223,8 +223,8 @@ class MaterialIssueForm
                     ->addActionLabel('Tambah Material ke Daftar')
                     ->collapsible()
                     ->defaultItems(1)
-                    ->itemLabel(fn(array $state): ?string => $state['description'] ?? 'Item Baru')
-                    ->hidden(fn(Get $get): bool => empty($get('purchase_order_issued_id')))
+                    ->itemLabel(fn (array $state): ?string => $state['description'] ?? 'Item Baru')
+                    ->hidden(fn (Get $get): bool => empty($get('purchase_order_issued_id')))
                     ->schema([
                         Grid::make(12)->schema([
                             Select::make('delivery_order_receipt_detail_id')
@@ -237,11 +237,11 @@ class MaterialIssueForm
                                 ->placeholder('Pilih Item dari PO')
                                 ->options(function (Get $get) {
                                     $poId = $get('../../purchase_order_issued_id');
-                                    if (!$poId) {
+                                    if (! $poId) {
                                         return [];
                                     }
                                     $poItem = PurchaseOrderIssued::find($poId);
-                                    if (!$poItem) {
+                                    if (! $poItem) {
                                         return [];
                                     }
                                     $allPoItemIds = PurchaseOrderIssued::where('purchase_order_no', $poItem->purchase_order_no)->pluck('id');
@@ -282,7 +282,7 @@ class MaterialIssueForm
                                 ->disabled()
                                 ->dehydrated(false)
                                 ->afterStateHydrated(function (TextInput $component, $state, Get $get) {
-                                    if (!$state && $get('delivery_order_receipt_detail_id')) {
+                                    if (! $state && $get('delivery_order_receipt_detail_id')) {
                                         $detail = DeliveryOrderReceiptDetail::find($get('delivery_order_receipt_detail_id'));
                                         if ($detail) {
                                             $component->state($detail->material_code);
@@ -298,7 +298,7 @@ class MaterialIssueForm
                                 ->dehydrated(false)
                                 ->prefixIcon('heroicon-m-map-pin')
                                 ->afterStateHydrated(function (TextInput $component, $state, Get $get) {
-                                    if (!$state && $get('delivery_order_receipt_detail_id')) {
+                                    if (! $state && $get('delivery_order_receipt_detail_id')) {
                                         $detail = DeliveryOrderReceiptDetail::with('locationReceiving')->find($get('delivery_order_receipt_detail_id'));
                                         if ($detail) {
                                             $component->state($detail->locationReceiving?->name);
@@ -313,7 +313,7 @@ class MaterialIssueForm
                                 ->disabled()
                                 ->dehydrated(false)
                                 ->afterStateHydrated(function (TextInput $component, $state, Get $get) {
-                                    if (!$state && $get('delivery_order_receipt_detail_id')) {
+                                    if (! $state && $get('delivery_order_receipt_detail_id')) {
                                         $detail = DeliveryOrderReceiptDetail::find($get('delivery_order_receipt_detail_id'));
                                         if ($detail) {
                                             $component->state($detail->description);
@@ -326,7 +326,7 @@ class MaterialIssueForm
                             Hidden::make('uoi')
                                 ->dehydrated(false)
                                 ->afterStateHydrated(function (Hidden $component, $state, Get $get) {
-                                    if (!$state && $get('delivery_order_receipt_detail_id')) {
+                                    if (! $state && $get('delivery_order_receipt_detail_id')) {
                                         $detail = DeliveryOrderReceiptDetail::find($get('delivery_order_receipt_detail_id'));
                                         if ($detail) {
                                             $component->state($detail->uoi);
@@ -340,7 +340,7 @@ class MaterialIssueForm
                                 ->numeric()
                                 ->required()
                                 ->prefixIcon('heroicon-m-shopping-cart')
-                                ->suffix(fn(Get $get) => $get('uoi') ?? '')
+                                ->suffix(fn (Get $get) => $get('uoi') ?? '')
                                 ->rule(function (Get $get) {
                                     return function (string $attribute, $value, \Closure $fail) use ($get) {
                                         $boh = (float) $get('boh');
@@ -357,7 +357,7 @@ class MaterialIssueForm
                                 ->numeric()
                                 ->required()
                                 ->prefixIcon('heroicon-m-check-badge')
-                                ->suffix(fn(Get $get) => $get('uoi') ?? '')
+                                ->suffix(fn (Get $get) => $get('uoi') ?? '')
                                 ->rule(function (Get $get) {
                                     return function (string $attribute, $value, \Closure $fail) use ($get) {
                                         $boh = (float) $get('boh');
@@ -374,7 +374,7 @@ class MaterialIssueForm
                                 ->numeric()
                                 ->readOnly()
                                 ->prefixIcon('heroicon-m-cube')
-                                ->suffix(fn(Get $get) => $get('uoi') ?? '')
+                                ->suffix(fn (Get $get) => $get('uoi') ?? '')
                                 ->columnSpan(4),
                         ]),
                     ])
@@ -383,7 +383,7 @@ class MaterialIssueForm
                 EmptyState::make('Belum ada Nomor PO yang dipilih')
                     ->description('Silakan cari dan pilih Nomor PO pada bagian Informasi Utama untuk menampilkan daftar material.')
                     ->icon(Heroicon::OutlinedDocumentMagnifyingGlass)
-                    ->visible(fn(Get $get): bool => empty($get('purchase_order_issued_id'))),
+                    ->visible(fn (Get $get): bool => empty($get('purchase_order_issued_id'))),
             ]);
     }
 
@@ -391,7 +391,7 @@ class MaterialIssueForm
     {
         return Section::make('Tanda Tangan (Fisik & Digital)')
             ->icon(Heroicon::OutlinedPencilSquare)
-            ->visible(fn(Get $get): bool => $get('jenis_mir') === 'digital')
+            ->visible(fn (Get $get): bool => $get('jenis_mir') === 'digital')
             ->description('Catat nama pihak yang bertanda tangan di formulir fisik atau lihat tanda tangan digital MIR.')
             ->schema([
                 Grid::make(4)->schema([
@@ -442,19 +442,19 @@ class MaterialIssueForm
                         Grid::make(3)->schema([
                             TextEntry::make('diminta_signature')
                                 ->label('Tanda Tangan Peminta')
-                                ->state(fn($record) => $record?->diminta_signature ? new HtmlString('<div class="flex flex-col items-center"><img src="' . $record->diminta_signature . '" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;"><span class="text-xs text-gray-500 mt-2">Digital Signature</span></div>') : new HtmlString('<span class="text-sm text-gray-500 italic">Tidak Ada Tanda Tangan Digital</span>')),
+                                ->state(fn ($record) => $record?->diminta_signature ? new HtmlString('<div class="flex flex-col items-center"><img src="'.$record->diminta_signature.'" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;"><span class="text-xs text-gray-500 mt-2">Digital Signature</span></div>') : new HtmlString('<span class="text-sm text-gray-500 italic">Tidak Ada Tanda Tangan Digital</span>')),
 
                             TextEntry::make('disetujui_signature')
                                 ->label('Tanda Tangan ISTEK')
-                                ->state(fn($record) => $record?->disetujui_signature ? new HtmlString('<div class="flex flex-col items-center"><img src="' . $record->disetujui_signature . '" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;"><span class="text-xs text-gray-500 mt-2">Digital Signature</span></div>') : new HtmlString('<span class="text-sm text-gray-500 italic">Tidak Ada Tanda Tangan Digital</span>')),
+                                ->state(fn ($record) => $record?->disetujui_signature ? new HtmlString('<div class="flex flex-col items-center"><img src="'.$record->disetujui_signature.'" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;"><span class="text-xs text-gray-500 mt-2">Digital Signature</span></div>') : new HtmlString('<span class="text-sm text-gray-500 italic">Tidak Ada Tanda Tangan Digital</span>')),
 
                             TextEntry::make('diserahkan_signature')
                                 ->label('Tanda Tangan Receiving')
-                                ->state(fn($record) => $record?->diserahkan_signature ? new HtmlString('<div class="flex flex-col items-center"><img src="' . $record->diserahkan_signature . '" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;"><span class="text-xs text-gray-500 mt-2">Digital Signature</span></div>') : new HtmlString('<span class="text-sm text-gray-500 italic">Tidak Ada Tanda Tangan Digital</span>')),
+                                ->state(fn ($record) => $record?->diserahkan_signature ? new HtmlString('<div class="flex flex-col items-center"><img src="'.$record->diserahkan_signature.'" style="max-height: 100px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px; background: white;"><span class="text-xs text-gray-500 mt-2">Digital Signature</span></div>') : new HtmlString('<span class="text-sm text-gray-500 italic">Tidak Ada Tanda Tangan Digital</span>')),
                         ]),
                     ])
                     ->collapsible()
-                    ->collapsed(fn($record) => !$record?->diminta_signature && !$record?->disetujui_signature && !$record?->diserahkan_signature),
+                    ->collapsed(fn ($record) => ! $record?->diminta_signature && ! $record?->disetujui_signature && ! $record?->diserahkan_signature),
             ])->collapsible();
     }
 }

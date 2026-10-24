@@ -76,7 +76,7 @@ class MonitoringChemical extends Model
                 if (empty($detail->chemical_qc_tuv_id) || $detail->is_qty_tolerance === null || $detail->has_update_progress === null) {
                     return false;
                 }
-                
+
                 if ($detail->has_update_progress) {
                     if (
                         empty($detail->tanggal_pengajuan_simala) ||
@@ -90,7 +90,7 @@ class MonitoringChemical extends Model
                 if (empty($detail->chemical_qc_tuv_id) || $detail->is_qty_tolerance === null) {
                     return false;
                 }
-                
+
                 if ($this->qc_by === 'PPE') {
                     if ($detail->has_update_progress === null) {
                         return false;

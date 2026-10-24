@@ -9,9 +9,11 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Enums\RecordActionsPosition;
@@ -29,13 +31,13 @@ class PurchaseOrderIssuedsTable
             ->deferLoading()
             ->poll('10s')
             ->columns([
-                \Filament\Tables\Columns\ColumnGroup::make('Informasi PO', [
+                ColumnGroup::make('Informasi PO', [
                     TextColumn::make('purchase_order_and_item')
                         ->label('Purchase Order & Item')
                         ->searchable()
                         ->placeholder('None')
                         ->icon('heroicon-m-document-text')
-                        ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                        ->weight(FontWeight::Bold)
                         ->color('primary')
                         ->copyable(),
 
@@ -56,7 +58,7 @@ class PurchaseOrderIssuedsTable
                         ->toggleable(isToggledHiddenByDefault: true),
                 ]),
 
-                \Filament\Tables\Columns\ColumnGroup::make('Detail Material', [
+                ColumnGroup::make('Detail Material', [
                     TextColumn::make('material_code')
                         ->label('Kode Material')
                         ->sortable()
@@ -70,12 +72,12 @@ class PurchaseOrderIssuedsTable
                         ->wrap()
                         ->searchable()
                         ->placeholder('None')
-                        ->tooltip(fn($record) => $record->description),
+                        ->tooltip(fn ($record) => $record->description),
 
                     TextColumn::make('quantity_uoi')
                         ->label('Kuantitas')
-                        ->getStateUsing(fn($record) => $record->qty_po . ' ' . $record->uoi)
-                        ->sortable(query: fn(Builder $query, string $direction) => $query->orderBy('qty_po', $direction))
+                        ->getStateUsing(fn ($record) => $record->qty_po.' '.$record->uoi)
+                        ->sortable(query: fn (Builder $query, string $direction) => $query->orderBy('qty_po', $direction))
                         ->badge()
                         ->placeholder('None')
                         ->color('info')
@@ -90,7 +92,7 @@ class PurchaseOrderIssuedsTable
                         ->label('Tipe Material')
                         ->sortable()
                         ->placeholder('None')
-                        ->color(fn($state) => match ($state) {
+                        ->color(fn ($state) => match ($state) {
                             'ZSP' => 'warning',
                             'ZFP', 'ZRM' => 'danger',
                             'ZSM', 'ZPM' => 'info',
@@ -102,7 +104,7 @@ class PurchaseOrderIssuedsTable
                     TextColumn::make('mrp_type')
                         ->label('MRP Type')
                         ->badge()
-                        ->color(fn($state) => match ($state) {
+                        ->color(fn ($state) => match ($state) {
                             'V1' => 'success',
                             'PD' => 'warning',
                             'INVESTASI' => 'info',
@@ -128,13 +130,13 @@ class PurchaseOrderIssuedsTable
                         ->toggleable(isToggledHiddenByDefault: true),
                 ]),
 
-                \Filament\Tables\Columns\ColumnGroup::make('Komersial & Vendor', [
+                ColumnGroup::make('Komersial & Vendor', [
                     TextColumn::make('vendor_name')
                         ->label('Vendor')
                         ->searchable()
                         ->placeholder('None')
                         ->icon('heroicon-m-building-storefront')
-                        ->tooltip(fn($record) => $record->vendor_id_name)
+                        ->tooltip(fn ($record) => $record->vendor_id_name)
                         ->limit(15),
 
                     TextColumn::make('currency')
@@ -146,14 +148,14 @@ class PurchaseOrderIssuedsTable
 
                     TextColumn::make('net_price')
                         ->label('Net Price')
-                        ->money(fn($record) => $record->currency ?? 'IDR')
+                        ->money(fn ($record) => $record->currency ?? 'IDR')
                         ->sortable()
                         ->placeholder('0')
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('total_amount_in_lc')
                         ->label('Total Amount in LC')
-                        ->money(fn($record) => $record->currency ?? 'IDR')
+                        ->money(fn ($record) => $record->currency ?? 'IDR')
                         ->sortable()
                         ->placeholder('0')
                         ->color('success')
@@ -166,17 +168,17 @@ class PurchaseOrderIssuedsTable
 
                     TextColumn::make('incoterm')
                         ->label('Incoterm')
-                        ->tooltip(fn($record) => $record->incoterm)
+                        ->tooltip(fn ($record) => $record->incoterm)
                         ->limit(15)
                         ->placeholder('None')
                         ->toggleable(isToggledHiddenByDefault: true),
                 ]),
 
-                \Filament\Tables\Columns\ColumnGroup::make('Jadwal & Status', [
+                ColumnGroup::make('Jadwal & Status', [
                     TextColumn::make('po_status')
                         ->label('Status')
                         ->badge()
-                        ->color(fn($state) => match ($state) {
+                        ->color(fn ($state) => match ($state) {
                             'A' => 'success',
                             'B' => 'warning',
                             'C' => 'danger',
@@ -198,7 +200,7 @@ class PurchaseOrderIssuedsTable
                         ->toggleable(isToggledHiddenByDefault: true),
                 ]),
 
-                \Filament\Tables\Columns\ColumnGroup::make('Sistem', [
+                ColumnGroup::make('Sistem', [
                     TextColumn::make('created_at')
                         ->label('Dibuat')
                         ->dateTime('d M Y H:i')
@@ -238,7 +240,7 @@ class PurchaseOrderIssuedsTable
             ->filtersFormWidth(Width::FourExtraLarge)
             ->filtersFormColumns(3)
             ->filtersTriggerAction(
-                fn(Action $action) => $action
+                fn (Action $action) => $action
                     ->button()
                     ->label('Filter'),
             )

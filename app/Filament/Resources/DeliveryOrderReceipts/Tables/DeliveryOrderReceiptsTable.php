@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\DeliveryOrderReceipts\Tables;
 
-use App\Filament\Exports\DeliveryOrderReceiptExporter;
+use App\Models\LocationReceiving;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -10,8 +10,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ExportAction;
-use Filament\Actions\ExportBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -47,7 +45,7 @@ class DeliveryOrderReceiptsTable
                         ->iconColor('primary')
                         ->color('primary')
                         ->weight(FontWeight::Bold)
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? 'TIDAK ADA PO')
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? 'TIDAK ADA PO')
                         ->description(function ($record) {
                             $doNumber = $record->delivery_order_no;
                             $js = 'event.stopPropagation(); event.preventDefault(); ';
@@ -75,10 +73,10 @@ class DeliveryOrderReceiptsTable
                         ->color('primary')
                         ->searchable()
                         ->copyable()
-                        ->copyableState(fn($record) => $record->document_code)
+                        ->copyableState(fn ($record) => $record->document_code)
                         ->weight(FontWeight::SemiBold)
                         ->limit(10)
-                        ->tooltip(fn($record) => $record->document_code)
+                        ->tooltip(fn ($record) => $record->document_code)
                         ->copyMessage('Kode dokumen disalin!')
                         ->toggleable(isToggledHiddenByDefault: true),
 
@@ -87,7 +85,7 @@ class DeliveryOrderReceiptsTable
                         ->icon(Heroicon::CalendarDays)
                         ->iconColor('gray')
                         ->date('d F Y')
-                        ->description(fn($record) => Carbon::parse($record->received_date)->translatedFormat('l')) // Nama hari di bawahnya
+                        ->description(fn ($record) => Carbon::parse($record->received_date)->translatedFormat('l')) // Nama hari di bawahnya
                         ->sortable()
                         ->toggleable(isToggledHiddenByDefault: true),
 
@@ -191,7 +189,7 @@ class DeliveryOrderReceiptsTable
                     TextColumn::make('lokasi')
                         ->label('Lokasi')
                         ->icon('heroicon-m-map-pin')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->first()?->locationReceiving?->name ?? 'BELUM DITENTUKAN')
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->first()?->locationReceiving?->name ?? 'BELUM DITENTUKAN')
                         ->badge()
                         ->color('info'),
 
@@ -241,7 +239,7 @@ class DeliveryOrderReceiptsTable
                         })
                         ->badge()
                         ->toggleable(isToggledHiddenByDefault: true)
-                        ->color(fn($state) => match ($state) {
+                        ->color(fn ($state) => match ($state) {
                             'Belum Diambil' => 'danger',
                             'Sebagian Diambil' => 'warning',
                             'Full Diambil' => 'success',
@@ -260,67 +258,67 @@ class DeliveryOrderReceiptsTable
 
                     TextColumn::make('item_no')
                         ->label('Item No')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->pluck('item_no')->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->pluck('item_no')->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('material_code')
                         ->label('Material Code')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->pluck('material_code')->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->pluck('material_code')->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('mrp_type')
                         ->label('MRP Type')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->pluck('mrp_type')->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->pluck('mrp_type')->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('material_type')
                         ->label('Material Type')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->pluck('material_type')->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->pluck('material_type')->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('aac')
                         ->label('AAC')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->pluck('aac')->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->pluck('aac')->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('abc_indicator')
                         ->label('ABC Indicator')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->pluck('abc_indicator')->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->pluck('abc_indicator')->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('requisitioner')
                         ->label('Requisitioner')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->pluck('requisitioner')->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->pluck('requisitioner')->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('total_amount_snapshot')
                         ->label('Total Amount')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->map(fn($d) => number_format((float) $d->total_amount_snapshot, 0, ',', '.'))->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->map(fn ($d) => number_format((float) $d->total_amount_snapshot, 0, ',', '.'))->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('warehouseDestination.name')
                         ->label('Tujuan Gudang')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->map(fn($d) => $d->warehouseDestination?->name ?? '-')->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->map(fn ($d) => $d->warehouseDestination?->name ?? '-')->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('is_different_location')
                         ->label('Beda Lokasi?')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->map(fn($d) => $d->is_different_location ? 'Ya' : 'Tidak')->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->map(fn ($d) => $d->is_different_location ? 'Ya' : 'Tidak')->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('is_qty_tolerance')
                         ->label('Toleransi Qty?')
-                        ->getStateUsing(fn($record) => $record->deliveryOrderReceiptDetails->map(fn($d) => $d->is_qty_tolerance ? 'Ya' : 'Tidak')->toArray())
+                        ->getStateUsing(fn ($record) => $record->deliveryOrderReceiptDetails->map(fn ($d) => $d->is_qty_tolerance ? 'Ya' : 'Tidak')->toArray())
                         ->listWithLineBreaks()->limitList(2)->expandableLimitedList()
                         ->toggleable(isToggledHiddenByDefault: true),
                 ]),
@@ -338,12 +336,14 @@ class DeliveryOrderReceiptsTable
                                 if ($record->termins->isEmpty()) {
                                     return ['Belum Ada Termin'];
                                 }
+
                                 return $record->termins->map(function ($termin) {
                                     $percentage = (float) $termin->percentage;
+
                                     return "{$termin->stage}: {$percentage}%";
                                 })->toArray();
                             }
-                            
+
                             $state = $record->stage;
                             if (empty($state)) {
                                 return ['Default'];
@@ -351,21 +351,37 @@ class DeliveryOrderReceiptsTable
                             if (str_contains(strtoupper($state), 'DOF')) {
                                 return ['Surat DOF'];
                             }
-                            
+
                             return [$state];
                         })
                         ->listWithLineBreaks()
                         ->color(function ($state) {
-                            if ($state === 'Default') return 'success';
-                            if ($state === 'Surat DOF') return 'info';
-                            if (str_contains(strtoupper((string) $state), 'TERMIN')) return 'warning';
-                            if ($state === 'Belum Ada Termin') return 'danger';
+                            if ($state === 'Default') {
+                                return 'success';
+                            }
+                            if ($state === 'Surat DOF') {
+                                return 'info';
+                            }
+                            if (str_contains(strtoupper((string) $state), 'TERMIN')) {
+                                return 'warning';
+                            }
+                            if ($state === 'Belum Ada Termin') {
+                                return 'danger';
+                            }
+
                             return 'gray';
                         })
                         ->icon(function ($state) {
-                            if ($state === 'Default') return 'heroicon-m-check-circle';
-                            if ($state === 'Surat DOF') return 'heroicon-m-document-duplicate';
-                            if (str_contains(strtoupper((string) $state), 'TERMIN')) return 'heroicon-m-chart-pie';
+                            if ($state === 'Default') {
+                                return 'heroicon-m-check-circle';
+                            }
+                            if ($state === 'Surat DOF') {
+                                return 'heroicon-m-document-duplicate';
+                            }
+                            if (str_contains(strtoupper((string) $state), 'TERMIN')) {
+                                return 'heroicon-m-chart-pie';
+                            }
+
                             return 'heroicon-m-tag';
                         })
                         ->searchable(query: function (Builder $query, string $search) {
@@ -384,30 +400,45 @@ class DeliveryOrderReceiptsTable
                                 if ($record->termins->isEmpty()) {
                                     return ['Belum Ada Termin'];
                                 }
+
                                 return $record->termins->map(function ($termin) {
                                     if ($termin->post_103) {
                                         $date = Carbon::parse($termin->post_103)->translatedFormat('d M Y');
+
                                         return "{$termin->stage}: Posted ({$date})";
                                     }
+
                                     return "{$termin->stage}: Belum Post";
                                 })->toArray();
                             }
-                            
+
                             if ($record->post_103) {
                                 $date = Carbon::parse($record->post_103)->translatedFormat('d M Y');
+
                                 return ["Posted 103 ({$date})"];
                             }
+
                             return ['Belum Post'];
                         })
                         ->listWithLineBreaks()
                         ->color(function ($state) {
-                            if (str_contains((string) $state, 'Posted')) return 'success';
-                            if (str_contains((string) $state, 'Belum Post')) return 'gray';
+                            if (str_contains((string) $state, 'Posted')) {
+                                return 'success';
+                            }
+                            if (str_contains((string) $state, 'Belum Post')) {
+                                return 'gray';
+                            }
+
                             return 'gray';
                         })
                         ->icon(function ($state) {
-                            if (str_contains((string) $state, 'Posted')) return 'heroicon-m-check-badge';
-                            if (str_contains((string) $state, 'Belum Post')) return 'heroicon-m-clock';
+                            if (str_contains((string) $state, 'Posted')) {
+                                return 'heroicon-m-check-badge';
+                            }
+                            if (str_contains((string) $state, 'Belum Post')) {
+                                return 'heroicon-m-clock';
+                            }
+
                             return 'heroicon-m-clock';
                         })
                         ->toggleable(isToggledHiddenByDefault: true)
@@ -417,11 +448,11 @@ class DeliveryOrderReceiptsTable
 
                     TextColumn::make('is_physically_received')
                         ->label('Kedatangan Fisik')
-                        ->getStateUsing(fn($record) => $record->receipt_mode === 'Standard' ? true : $record->is_physically_received)
-                        ->formatStateUsing(fn($state) => $state ? 'Fisik Tiba' : 'Menunggu / Transit')
+                        ->getStateUsing(fn ($record) => $record->receipt_mode === 'Standard' ? true : $record->is_physically_received)
+                        ->formatStateUsing(fn ($state) => $state ? 'Fisik Tiba' : 'Menunggu / Transit')
                         ->badge()
-                        ->color(fn($state) => $state ? 'success' : 'warning')
-                        ->icon(fn($state) => $state ? 'heroicon-m-check-badge' : 'heroicon-m-truck')
+                        ->color(fn ($state) => $state ? 'success' : 'warning')
+                        ->icon(fn ($state) => $state ? 'heroicon-m-check-badge' : 'heroicon-m-truck')
                         ->description(function ($record) {
                             if ($record->receipt_mode === 'Standard' || $record->is_physically_received) {
                                 return null;
@@ -519,12 +550,13 @@ class DeliveryOrderReceiptsTable
                                         ->options(function () use ($record) {
                                             return $record->termins()->whereNull('post_103')->pluck('stage', 'id');
                                         })
-                                        ->required()
+                                        ->required(),
                                 ];
                             }
+
                             return [];
                         })
-                        ->requiresConfirmation(fn($record) => $record->receipt_mode !== 'Termin')
+                        ->requiresConfirmation(fn ($record) => $record->receipt_mode !== 'Termin')
                         ->modalHeading('Konfirmasi Post 103')
                         ->modalDescription('Apakah Anda yakin ingin melakukan Post 103 pada dokumen ini? Tanggal hari ini akan tercatat sebagai tanggal post.')
                         ->modalSubmitActionLabel('Ya, Post Sekarang')
@@ -532,6 +564,7 @@ class DeliveryOrderReceiptsTable
                             if ($record->receipt_mode === 'Termin') {
                                 return $record->termins()->whereNull('post_103')->count() === 0;
                             }
+
                             return $record->post_103 !== null;
                         })
                         ->action(function (array $data, $record) {
@@ -567,12 +600,13 @@ class DeliveryOrderReceiptsTable
                                         ->options(function () use ($record) {
                                             return $record->termins()->whereNotNull('post_103')->pluck('stage', 'id');
                                         })
-                                        ->required()
+                                        ->required(),
                                 ];
                             }
+
                             return [];
                         })
-                        ->requiresConfirmation(fn($record) => $record->receipt_mode !== 'Termin')
+                        ->requiresConfirmation(fn ($record) => $record->receipt_mode !== 'Termin')
                         ->modalHeading('Batalkan Post 103')
                         ->modalDescription('Apakah Anda yakin ingin membatalkan Post 103? Data tanggal post sebelumnya akan dihapus dari dokumen ini.')
                         ->modalSubmitActionLabel('Ya, Batalkan')
@@ -580,6 +614,7 @@ class DeliveryOrderReceiptsTable
                             if ($record->receipt_mode === 'Termin') {
                                 return $record->termins()->whereNotNull('post_103')->count() === 0;
                             }
+
                             return $record->post_103 === null;
                         })
                         ->action(function (array $data, $record) {
@@ -625,13 +660,13 @@ class DeliveryOrderReceiptsTable
                                 ->placeholder('Masukkan Alasan Penundaan Lainnya')
                                 ->autosize()
                                 ->rows(3)
-                                ->visible(fn(Get $get) => $get('delay_reason') === 'Lainnya')
-                                ->required(fn(Get $get) => $get('delay_reason') === 'Lainnya'),
+                                ->visible(fn (Get $get) => $get('delay_reason') === 'Lainnya')
+                                ->required(fn (Get $get) => $get('delay_reason') === 'Lainnya'),
                         ])
                         ->modalHeading('Pending Dokumen')
                         ->modalDescription('Masukkan alasan penundaan proses dokumen ini.')
                         ->modalSubmitActionLabel('Simpan')
-                        ->hidden(fn($record): bool => $record->status === 'Pending')
+                        ->hidden(fn ($record): bool => $record->status === 'Pending')
                         ->action(function (array $data, $record) {
                             $record->update([
                                 'status' => 'Pending',
@@ -656,7 +691,7 @@ class DeliveryOrderReceiptsTable
                         ->modalHeading('Batalkan Status Pending')
                         ->modalDescription('Apakah Anda yakin ingin membatalkan status Pending pada dokumen ini? Dokumen akan kembali diproses seperti biasa.')
                         ->modalSubmitActionLabel('Ya, Batalkan')
-                        ->visible(fn($record): bool => $record->status === 'Pending')
+                        ->visible(fn ($record): bool => $record->status === 'Pending')
                         ->action(function ($record) {
                             $record->update([
                                 'status' => 'Diterima',
@@ -679,7 +714,7 @@ class DeliveryOrderReceiptsTable
                         ->modalHeading('Konfirmasi Kedatangan Fisik Barang')
                         ->modalDescription('Masukkan tanggal kedatangan fisik dan lokasi rak gudang yang sebenarnya.')
                         ->modalSubmitActionLabel('Simpan')
-                        ->visible(fn($record): bool => $record->is_physically_received === false && in_array($record->receipt_mode, ['Termin', 'DOF_Incoterm']))
+                        ->visible(fn ($record): bool => $record->is_physically_received === false && in_array($record->receipt_mode, ['Termin', 'DOF_Incoterm']))
                         ->schema([
                             DatePicker::make('physical_received_date')
                                 ->label('Tanggal Barang Fisik Tiba')
@@ -689,13 +724,13 @@ class DeliveryOrderReceiptsTable
                                 ->maxDate(now()),
                             Select::make('location_id')
                                 ->label('Lokasi Rak Gudang (Aktual)')
-                                ->options(\App\Models\LocationReceiving::where('name', '!=', 'BARANG BELUM DATANG')->pluck('name', 'id'))
+                                ->options(LocationReceiving::where('name', '!=', 'BARANG BELUM DATANG')->pluck('name', 'id'))
                                 ->searchable()
                                 ->preload()
                                 ->required(),
                         ])
                         ->action(function (array $data, $record) {
-                            $location = \App\Models\LocationReceiving::find($data['location_id']);
+                            $location = LocationReceiving::find($data['location_id']);
 
                             $record->update([
                                 'is_physically_received' => true,
@@ -728,17 +763,17 @@ class DeliveryOrderReceiptsTable
                     Action::make('cetak_material')
                         ->label('Label Material')
                         ->icon(Heroicon::OutlinedTag)
-                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['deliveryOrderReceipt' => $record->document_code, 'mode' => 'material']))
+                        ->url(fn ($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['deliveryOrderReceipt' => $record->document_code, 'mode' => 'material']))
                         ->openUrlInNewTab(),
                     Action::make('cetak_dokumen')
                         ->label('Kode Dokumen')
                         ->icon(Heroicon::OutlinedDocumentText)
-                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['deliveryOrderReceipt' => $record->document_code, 'mode' => 'document']))
+                        ->url(fn ($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['deliveryOrderReceipt' => $record->document_code, 'mode' => 'document']))
                         ->openUrlInNewTab(),
                     Action::make('cetak_keduanya')
                         ->label('Material & Dokumen')
                         ->icon(Heroicon::OutlinedDocumentDuplicate)
-                        ->url(fn($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['deliveryOrderReceipt' => $record->document_code, 'mode' => 'both']))
+                        ->url(fn ($record) => route('filament.admin.resources.delivery-order-receipts.print_qr', ['deliveryOrderReceipt' => $record->document_code, 'mode' => 'both']))
                         ->openUrlInNewTab(),
                 ])
                     ->label('Cetak')
@@ -771,7 +806,7 @@ class DeliveryOrderReceiptsTable
                         ->icon('heroicon-m-tag')
                         ->color('gray')
                         ->action(
-                            fn(Collection $records) => redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'material']))
+                            fn (Collection $records) => redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'material']))
                         )
                         ->deselectRecordsAfterCompletion(),
 
@@ -780,7 +815,7 @@ class DeliveryOrderReceiptsTable
                         ->icon('heroicon-m-document-text')
                         ->color('gray')
                         ->action(
-                            fn(Collection $records) => redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'document']))
+                            fn (Collection $records) => redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'document']))
                         )
                         ->deselectRecordsAfterCompletion(),
 
@@ -789,7 +824,7 @@ class DeliveryOrderReceiptsTable
                         ->icon('heroicon-m-printer')
                         ->color('gray')
                         ->action(
-                            fn(Collection $records) => redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'both']))
+                            fn (Collection $records) => redirect()->to(route('filament.admin.resources.delivery-order-receipts.bulk_print_qr', ['ids' => $records->pluck('id')->join(','), 'mode' => 'both']))
                         )
                         ->deselectRecordsAfterCompletion(),
                 ])
@@ -804,7 +839,7 @@ class DeliveryOrderReceiptsTable
                         ->modalHeading('Konfirmasi Bulk Post 103')
                         ->modalDescription('Apakah Anda yakin ingin melakukan Post 103 pada dokumen yang dipilih? Tanggal post akan mengikuti tanggal penerimaan barang masing-masing dokumen.')
                         ->modalSubmitActionLabel('Ya, Post Sekarang')
-                        ->visible(fn() => Auth::user()->hasRole('Developer'))
+                        ->visible(fn () => Auth::user()->hasRole('Developer'))
                         ->action(function (Collection $records) {
                             foreach ($records as $record) {
                                 if ($record->receipt_mode === 'Termin') {

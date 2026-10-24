@@ -14,7 +14,7 @@ class QCTransmittalPrintController extends Controller
         $transmittal->load([
             'createdBy',
             'transmittalItems.deliveryOrderReceipt.deliveryOrderReceiptDetails',
-            'transmittalItems.deliveryOrderReceipt.deliveryOrderReceiptDetails.purchaseOrderIssued'
+            'transmittalItems.deliveryOrderReceipt.deliveryOrderReceiptDetails.purchaseOrderIssued',
         ]);
 
         $pdfStr = Pdf::loadView('pdf.qc_transmittal', [
@@ -24,7 +24,7 @@ class QCTransmittalPrintController extends Controller
 
         return response($pdfStr, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="Transmittal_QC_' . $transmittal->transmittal_no . '.pdf"',
+            'Content-Disposition' => 'inline; filename="Transmittal_QC_'.$transmittal->transmittal_no.'.pdf"',
         ]);
     }
 }

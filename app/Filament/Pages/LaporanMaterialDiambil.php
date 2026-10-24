@@ -65,10 +65,10 @@ class LaporanMaterialDiambil extends Page implements HasTable
             'all' => Tab::make('Semua')
                 ->badge($this->getDeliveryOrderDetailQuery()->count()),
             'pd' => Tab::make('PD')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('mrp_type', 'PD'))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('mrp_type', 'PD'))
                 ->badge($this->getDeliveryOrderDetailQuery()->where('mrp_type', 'PD')->count()),
             'nonstock' => Tab::make('NONSTOCK')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('mrp_type', 'NONSTOCK'))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('mrp_type', 'NONSTOCK'))
                 ->badge($this->getDeliveryOrderDetailQuery()->where('mrp_type', 'NONSTOCK')->count()),
         ];
     }
@@ -77,7 +77,7 @@ class LaporanMaterialDiambil extends Page implements HasTable
     {
         return $table
             ->query($this->getDeliveryOrderDetailQuery())
-            ->modifyQueryUsing(fn(Builder $query) => $this->modifyQueryWithActiveTab($query))
+            ->modifyQueryUsing(fn (Builder $query) => $this->modifyQueryWithActiveTab($query))
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('deliveryOrderReceipt.received_date')
@@ -91,13 +91,13 @@ class LaporanMaterialDiambil extends Page implements HasTable
                         ->iconColor('gray')
                         ->weight(FontWeight::SemiBold)
                         ->searchable()
-                        ->getStateUsing(fn($record) => $record->material_code ?: str($record->description)->limit(40))
-                        ->description(fn($record) => $record->material_code ? str($record->description)->limit(40) : '')
+                        ->getStateUsing(fn ($record) => $record->material_code ?: str($record->description)->limit(40))
+                        ->description(fn ($record) => $record->material_code ? str($record->description)->limit(40) : '')
                         ->sortable(),
                     TextColumn::make('mrp_type')
                         ->label('MRP Type')
                         ->badge()
-                        ->color(fn(string $state): string => match ($state) {
+                        ->color(fn (string $state): string => match ($state) {
                             'PD' => 'info',
                             'NONSTOCK' => 'warning',
                             default => 'gray',
@@ -108,12 +108,12 @@ class LaporanMaterialDiambil extends Page implements HasTable
                     TextColumn::make('quantity')
                         ->label('Diterima')
                         ->numeric(decimalPlaces: 2, decimalSeparator: ',', thousandsSeparator: '.')
-                        ->suffix(fn($record) => ' ' . $record->uoi)
+                        ->suffix(fn ($record) => ' '.$record->uoi)
                         ->sortable(),
                     TextColumn::make('issued_quantity')
                         ->label('Diambil')
                         ->numeric(decimalPlaces: 2, decimalSeparator: ',', thousandsSeparator: '.')
-                        ->suffix(fn($record) => ' ' . $record->uoi)
+                        ->suffix(fn ($record) => ' '.$record->uoi)
                         ->sortable(),
                 ]),
                 TextColumn::make('status_pengambilan')
@@ -131,7 +131,7 @@ class LaporanMaterialDiambil extends Page implements HasTable
                         return 'Sudah Diambil';
                     })
                     ->badge()
-                    ->color(fn(string $state) => match ($state) {
+                    ->color(fn (string $state) => match ($state) {
                         'Belum Diambil' => 'danger',
                         'Sebagian Diambil' => 'warning',
                         'Sudah Diambil' => 'success',
@@ -155,11 +155,11 @@ class LaporanMaterialDiambil extends Page implements HasTable
                             return '-';
                         }
                         $issue = $issues->last()->materialIssue;
-                        if (!$issue) {
+                        if (! $issue) {
                             return '-';
                         }
 
-                        return $issue->diminta_oleh . ' (' . $issue->departemen . ')';
+                        return $issue->diminta_oleh.' ('.$issue->departemen.')';
                     }),
             ])
             ->deferFilters(false)
@@ -170,11 +170,11 @@ class LaporanMaterialDiambil extends Page implements HasTable
                     ->placeholder('Pilih rentang tanggal')
                     ->defaultThisMonth()
                     ->modifyQueryUsing(
-                        fn(Builder $query, ?Carbon $startDate, ?Carbon $endDate, $dateString) => $query->when(
-                            !empty($dateString),
-                            fn(Builder $query) => $query->whereHas(
+                        fn (Builder $query, ?Carbon $startDate, ?Carbon $endDate, $dateString) => $query->when(
+                            ! empty($dateString),
+                            fn (Builder $query) => $query->whereHas(
                                 'deliveryOrderReceipt',
-                                fn($q) => $q->whereBetween('received_date', [$startDate, $endDate])
+                                fn ($q) => $q->whereBetween('received_date', [$startDate, $endDate])
                             )
                         )
                     ),

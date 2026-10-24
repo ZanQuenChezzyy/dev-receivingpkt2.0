@@ -5,11 +5,11 @@ namespace App\Filament\Pages;
 use App\Filament\Resources\DeliveryOrderReceipts\DeliveryOrderReceiptResource;
 use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\PurchaseOrderIssued;
-use UnitEnum;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Pages\Page;
+use Filament\Resources\Concerns\HasTabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
@@ -19,20 +19,23 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\FiltersLayout;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\SelectFilter;
-use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
-use Filament\Resources\Concerns\HasTabs;
+use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Database\Eloquent\Builder;
+use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
+use UnitEnum;
 
 class MonitoringMaterial extends Page implements HasTable
 {
-    use InteractsWithTable, HasTabs;
+    use HasTabs, InteractsWithTable;
 
     protected static string|UnitEnum|null $navigationGroup = 'Penerimaan Receiving';
+
     protected static ?int $navigationSort = 10;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-chart-pie';
+
     protected static string|BackedEnum|null $activeNavigationIcon = 'heroicon-s-chart-pie';
 
     public static function getNavigationLabel(): string
@@ -56,16 +59,16 @@ class MonitoringMaterial extends Page implements HasTable
     {
         return [
             'v1' => Tab::make('V1')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('delivery_order_receipt_details.mrp_type', 'V1'))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('delivery_order_receipt_details.mrp_type', 'V1'))
                 ->badge(DeliveryOrderReceiptDetail::where('mrp_type', 'V1')->count()),
             'pd' => Tab::make('PD')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('delivery_order_receipt_details.mrp_type', 'PD'))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('delivery_order_receipt_details.mrp_type', 'PD'))
                 ->badge(DeliveryOrderReceiptDetail::where('mrp_type', 'PD')->count()),
             'nonstock' => Tab::make('NONSTOCK')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('delivery_order_receipt_details.mrp_type', 'NONSTOCK'))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('delivery_order_receipt_details.mrp_type', 'NONSTOCK'))
                 ->badge(DeliveryOrderReceiptDetail::where('mrp_type', 'NONSTOCK')->count()),
             'investasi' => Tab::make('INVESTASI')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('delivery_order_receipt_details.mrp_type', 'INVESTASI'))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('delivery_order_receipt_details.mrp_type', 'INVESTASI'))
                 ->badge(DeliveryOrderReceiptDetail::where('mrp_type', 'INVESTASI')->count()),
         ];
     }
@@ -78,7 +81,7 @@ class MonitoringMaterial extends Page implements HasTable
                     ->leftJoin('delivery_order_receipts', 'delivery_order_receipt_details.delivery_order_receipt_id', '=', 'delivery_order_receipts.id')
                     ->select('delivery_order_receipt_details.*')
             )
-            ->modifyQueryUsing(fn(Builder $query) => $this->modifyQueryWithActiveTab($query))
+            ->modifyQueryUsing(fn (Builder $query) => $this->modifyQueryWithActiveTab($query))
             ->defaultSort(function (Builder $query) {
                 // Urutan:
                 // 1. Barang diterima dan belum post 103
@@ -102,8 +105,8 @@ class MonitoringMaterial extends Page implements HasTable
                         ->iconColor('primary')
                         ->color('primary')
                         ->weight(FontWeight::Bold)
-                        ->getStateUsing(fn($record) => $record->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
-                        ->description(fn($record) => 'DO: ' . ($record->deliveryOrderReceipt?->delivery_order_no ?? '-'))
+                        ->getStateUsing(fn ($record) => $record->purchaseOrderIssued?->purchase_order_no ?? 'Tanpa PO')
+                        ->description(fn ($record) => 'DO: '.($record->deliveryOrderReceipt?->delivery_order_no ?? '-'))
                         ->searchable(query: function (Builder $query, string $search) {
                             $query->whereHas('purchaseOrderIssued', function ($q) use ($search) {
                                 $q->where('purchase_order_no', 'like', "%{$search}%");
@@ -128,8 +131,8 @@ class MonitoringMaterial extends Page implements HasTable
                         ->iconColor('gray')
                         ->weight(FontWeight::SemiBold)
                         ->searchable(['delivery_order_receipt_details.material_code', 'delivery_order_receipt_details.description'])
-                        ->getStateUsing(fn($record) => $record->material_code ?: str($record->description)->limit(40))
-                        ->description(fn($record) => $record->material_code ? str($record->description)->limit(40) : (string) $record->mrp_type)
+                        ->getStateUsing(fn ($record) => $record->material_code ?: str($record->description)->limit(40))
+                        ->description(fn ($record) => $record->material_code ? str($record->description)->limit(40) : (string) $record->mrp_type)
                         ->sortable(),
                 ]),
                 ColumnGroup::make('Kuantitas', [
@@ -140,35 +143,36 @@ class MonitoringMaterial extends Page implements HasTable
                             decimalSeparator: ',',
                             thousandsSeparator: '.',
                         )
-                        ->suffix(fn($record) => ' ' . $record->uoi)
+                        ->suffix(fn ($record) => ' '.$record->uoi)
                         ->sortable(),
                     TextColumn::make('diambil')
                         ->label('Diambil')
-                        ->getStateUsing(fn($record) => $record->issued_quantity)
+                        ->getStateUsing(fn ($record) => $record->issued_quantity)
                         ->numeric(
                             decimalPlaces: 2,
                             decimalSeparator: ',',
                             thousandsSeparator: '.',
                         )
-                        ->suffix(fn($record) => ' ' . $record->uoi),
+                        ->suffix(fn ($record) => ' '.$record->uoi),
                     TextColumn::make('sisa')
                         ->label('Sisa')
-                        ->getStateUsing(fn($record) => max(0, $record->quantity - $record->issued_quantity))
+                        ->getStateUsing(fn ($record) => max(0, $record->quantity - $record->issued_quantity))
                         ->numeric(
                             decimalPlaces: 2,
                             decimalSeparator: ',',
                             thousandsSeparator: '.',
                         )
-                        ->color(fn($state) => $state == 0 ? 'success' : 'warning')
-                        ->suffix(fn($record) => ' ' . $record->uoi),
+                        ->color(fn ($state) => $state == 0 ? 'success' : 'warning')
+                        ->suffix(fn ($record) => ' '.$record->uoi),
                 ]),
                 ColumnGroup::make('Status', [
                     TextColumn::make('status_grs')
                         ->label('Status')
                         ->getStateUsing(function ($record) {
                             $doReceipt = $record->deliveryOrderReceipt;
-                            if (!$doReceipt)
+                            if (! $doReceipt) {
                                 return 'Belum Diketahui';
+                            }
 
                             if (in_array($doReceipt->status, ['GRS', 'RDTV'])) {
                                 return $doReceipt->status;
@@ -186,7 +190,7 @@ class MonitoringMaterial extends Page implements HasTable
                             return 'Menunggu GRS / RDTV';
                         })
                         ->badge()
-                        ->color(fn(string $state): string => match ($state) {
+                        ->color(fn (string $state): string => match ($state) {
                             'GRS' => 'success',
                             'RDTV' => 'warning',
                             'Menunggu Post 103' => 'danger',
@@ -200,6 +204,7 @@ class MonitoringMaterial extends Page implements HasTable
                             if ($record->warehouseDestination) {
                                 return $record->warehouseDestination->name;
                             }
+
                             return $record->locationReceiving?->name ?? '-';
                         })
                         ->icon('heroicon-m-map-pin'),
@@ -220,7 +225,7 @@ class MonitoringMaterial extends Page implements HasTable
                         'Draft' => 'Draft / Menunggu',
                     ])
                     ->query(function (Builder $query, array $data) {
-                        if (!empty($data['value'])) {
+                        if (! empty($data['value'])) {
                             if ($data['value'] === 'Draft') {
                                 $query->where(function ($q) {
                                     $q->whereNull('delivery_order_receipts.status')
@@ -240,7 +245,7 @@ class MonitoringMaterial extends Page implements HasTable
                     ])
                     ->native(false)
                     ->query(function (Builder $query, array $data) {
-                        if (!empty($data['value'])) {
+                        if (! empty($data['value'])) {
                             $subquery = '(SELECT COALESCE(SUM(diserahkan), 0) FROM material_issue_details WHERE material_issue_details.delivery_order_receipt_detail_id = delivery_order_receipt_details.id)';
                             if ($data['value'] === 'ada') {
                                 $query->whereRaw("delivery_order_receipt_details.quantity > {$subquery}");
@@ -273,7 +278,7 @@ class MonitoringMaterial extends Page implements HasTable
                     ])
                     ->native(false)
                     ->query(function (Builder $query, array $data) {
-                        if (!empty($data['value'])) {
+                        if (! empty($data['value'])) {
                             $query->whereHas('deliveryOrderReceipt', function ($q) use ($data) {
                                 if ($data['value'] === 'pending') {
                                     $q->whereNotNull('delay_reason')->where('delay_reason', '!=', '');
@@ -292,8 +297,8 @@ class MonitoringMaterial extends Page implements HasTable
                         ->label('Detail')
                         ->icon('heroicon-o-document-text')
                         ->color('primary')
-                        ->url(fn($record) => $record->delivery_order_receipt_id ? DeliveryOrderReceiptResource::getUrl('view', ['record' => $record->delivery_order_receipt_id]) : null)
-                        ->visible(fn($record) => $record->delivery_order_receipt_id !== null),
+                        ->url(fn ($record) => $record->delivery_order_receipt_id ? DeliveryOrderReceiptResource::getUrl('view', ['record' => $record->delivery_order_receipt_id]) : null)
+                        ->visible(fn ($record) => $record->delivery_order_receipt_id !== null),
 
                     Action::make('cetak_mir')
                         ->label('Cetak MIR')
@@ -304,10 +309,11 @@ class MonitoringMaterial extends Page implements HasTable
                             if ($latestIssue && $latestIssue->material_issue_id) {
                                 return route('filament.admin.resources.material-issues.print', $latestIssue->material_issue_id);
                             }
+
                             return null;
                         })
                         ->openUrlInNewTab()
-                        ->visible(fn($record) => $record->issued_quantity > 0),
+                        ->visible(fn ($record) => $record->issued_quantity > 0),
                 ])
                     ->label('')
                     ->icon(Heroicon::EllipsisHorizontal)

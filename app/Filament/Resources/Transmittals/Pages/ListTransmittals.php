@@ -19,7 +19,7 @@ class ListTransmittals extends ListRecords
                 ->label('Scan Transmittal QC')
                 ->icon('heroicon-o-qr-code')
                 ->color('primary')
-                ->url(fn(): string => TransmittalResource::getUrl('bulk-scan')),
+                ->url(fn (): string => TransmittalResource::getUrl('bulk-scan')),
         ];
     }
 
@@ -30,10 +30,10 @@ class ListTransmittals extends ListRecords
                 ->icon(Heroicon::OutlinedListBullet),
             'Kirim' => Tab::make()
                 ->icon(Heroicon::OutlinedPaperAirplane)
-                ->modifyQueryUsing(fn($query) => $query->where('type', 'Kirim')),
+                ->modifyQueryUsing(fn ($query) => $query->where('type', 'Kirim')),
             'Kembali' => Tab::make()
                 ->icon(Heroicon::OutlinedArrowUturnLeft)
-                ->modifyQueryUsing(fn($query) => $query->where('type', 'Kembali')),
+                ->modifyQueryUsing(fn ($query) => $query->where('type', 'Kembali')),
         ];
     }
 

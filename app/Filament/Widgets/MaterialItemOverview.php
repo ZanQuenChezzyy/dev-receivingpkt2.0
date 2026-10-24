@@ -116,33 +116,33 @@ class MaterialItemOverview extends BaseWidget
             // Baris: Kedatangan Murni (Warna Biru Netral)
             $descriptionHtml .= '<div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 font-medium text-blue-600 dark:text-blue-400">';
             $descriptionHtml .= '  <span class="flex items-center gap-1.5 leading-tight"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg> Kedatangan</span>';
-            $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">' . number_format($kedatanganMurni, 0, ',', '.') . ' Item</span>';
+            $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">'.number_format($kedatanganMurni, 0, ',', '.').' Item</span>';
             $descriptionHtml .= '</div>';
 
             // Baris: Datang & Selesai GRS (Warna Hijau)
             $descriptionHtml .= '<div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 font-medium text-success-600 dark:text-success-400">';
             $descriptionHtml .= '  <span class="flex items-center gap-1.5 leading-tight"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> GRS</span>';
-            $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">' . number_format($kedatanganDanGrs, 0, ',', '.') . ' Item</span>';
+            $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">'.number_format($kedatanganDanGrs, 0, ',', '.').' Item</span>';
             $descriptionHtml .= '</div>';
 
             // Baris: RDTV (Warna Kuning/Warning)
             $descriptionHtml .= '<div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 font-medium text-warning-600 dark:text-warning-400">';
             $descriptionHtml .= '  <span class="flex items-center gap-1.5 leading-tight"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> RDTV</span>';
-            $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">' . number_format($rdtv, 0, ',', '.') . ' Item</span>';
+            $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">'.number_format($rdtv, 0, ',', '.').' Item</span>';
             $descriptionHtml .= '</div>';
 
             // Baris: Belum GRS (Warna Merah)
             $descriptionHtml .= '<div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 font-medium text-danger-600 dark:text-danger-400">';
             $descriptionHtml .= '  <span class="flex items-center gap-1.5 leading-tight"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Belum GRS</span>';
-            $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">' . number_format($belumGrs, 0, ',', '.') . ' Item</span>';
+            $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">'.number_format($belumGrs, 0, ',', '.').' Item</span>';
             $descriptionHtml .= '</div>';
 
             if ($abcIndicators->isNotEmpty()) {
                 $descriptionHtml .= '<div class="my-2 border-t border-gray-200 dark:border-gray-700"></div>';
                 foreach ($abcIndicators as $abc) {
                     $descriptionHtml .= '<div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-gray-600 dark:text-gray-300">';
-                    $descriptionHtml .= '  <span class="flex items-center gap-1.5 leading-tight"><svg class="w-2.5 h-2.5 shrink-0 text-gray-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg> Tipe ' . $abc->abc_indicator . '</span>';
-                    $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">' . number_format($abc->total, 0, ',', '.') . ' Item</span>';
+                    $descriptionHtml .= '  <span class="flex items-center gap-1.5 leading-tight"><svg class="w-2.5 h-2.5 shrink-0 text-gray-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg> Tipe '.$abc->abc_indicator.'</span>';
+                    $descriptionHtml .= '  <span class="whitespace-nowrap ml-auto text-right">'.number_format($abc->total, 0, ',', '.').' Item</span>';
                     $descriptionHtml .= '</div>';
                 }
             }
@@ -153,7 +153,7 @@ class MaterialItemOverview extends BaseWidget
             $title = "Total Material {$mrpType}";
 
             $exactTotal = number_format($totalGrsBulanIni, 0, ',', '.');
-            $htmlValue = new HtmlString('<span class="text-xl xl:text-lg 2xl:text-xl font-bold tracking-tight">' . $exactTotal . ' Item</span>');
+            $htmlValue = new HtmlString('<span class="text-xl xl:text-lg 2xl:text-xl font-bold tracking-tight">'.$exactTotal.' Item</span>');
 
             $stats[] = Stat::make($title, $htmlValue)
                 ->description(new HtmlString($descriptionHtml))

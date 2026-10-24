@@ -33,7 +33,7 @@ return new class extends Migration
             $table->decimal('net_price', 20, 4)->default(0)->change();
             $table->decimal('total_amount_in_lc', 20, 4)->default(0)->change();
         });
-        
+
         Schema::table('material_issue_details', function (Blueprint $table) {
             $table->decimal('diminta', 15, 4)->change();
             $table->decimal('diserahkan', 15, 4)->change();
@@ -67,7 +67,7 @@ return new class extends Migration
             $table->decimal('net_price', 20, 0)->default(0)->change();
             $table->decimal('total_amount_in_lc', 20, 0)->default(0)->change();
         });
-        
+
         Schema::table('material_issue_details', function (Blueprint $table) {
             $table->decimal('diminta', 15, 2)->change();
             $table->decimal('diserahkan', 15, 2)->change();

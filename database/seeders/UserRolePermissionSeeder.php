@@ -73,6 +73,9 @@ class UserRolePermissionSeeder extends Seeder
             'User' => [
                 null,
             ],
+            'Staff Invoice' => [
+                null,
+            ],
         ];
 
         foreach ($roles as $roleName => $rolePermissions) {

@@ -24,7 +24,7 @@ class SyncNpkToDeliveryOrderService
             $dor = DeliveryOrderReceipt::where('monitoring_npk_id', $npk->id)->first() ?? new DeliveryOrderReceipt;
 
             $tgl103 = $npk->getAttribute('purchase_order_103_date');
-            
+
             // Calculate document_code
             $details = $npk->details()->get();
             $itemCountStr = '';
@@ -39,7 +39,7 @@ class SyncNpkToDeliveryOrderService
 
             $parts = array_filter([$poNo, $itemCountStr, $doNo, $dateStr, $stage]);
             $documentCode = null;
-            if (!empty($parts)) {
+            if (! empty($parts)) {
                 $joinedString = implode('-', $parts);
                 $upperString = strtoupper($joinedString);
                 $documentCode = preg_replace('/[^A-Z0-9\-_]/', '', $upperString);
@@ -61,7 +61,7 @@ class SyncNpkToDeliveryOrderService
                 'eta_date' => $anchor->getAttribute('delivery_date_po') ?? $dor->getAttribute('eta_date'),
             ];
 
-            if (!$dor->exists) {
+            if (! $dor->exists) {
                 $receiptMode = 'Standard';
                 $isPhysicallyReceived = true;
                 $physicalReceivedDate = $recDate;

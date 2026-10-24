@@ -83,7 +83,6 @@ class BulkScanTransmittal extends Page implements HasForms
                         ->default(now())
                         ->native(false)
                         ->required()
-                        ->disabled(fn() => !Auth::user()->hasRole('Developer'))
                         ->dehydrated()
                         ->live()
                         ->afterStateUpdated(function ($state) {
@@ -108,7 +107,7 @@ class BulkScanTransmittal extends Page implements HasForms
                         ->inline()
                         ->required()
                         ->default('Kirim')
-                        ->disabled(fn() => $this->transmittalId !== null)
+                        ->disabled(fn () => $this->transmittalId !== null)
                         ->dehydrated()
                         ->live()
                         ->afterStateUpdated(function ($state) {
@@ -131,17 +130,17 @@ class BulkScanTransmittal extends Page implements HasForms
                             'PPE' => 'success',
                         ])
                         ->inline()
-                        ->required(fn(Get $get) => $get('type') !== 'Kembali')
-                        ->disabled(fn(Get $get) => $get('type') === 'Kembali' || $this->transmittalId !== null)
+                        ->required(fn (Get $get) => $get('type') !== 'Kembali')
+                        ->disabled(fn (Get $get) => $get('type') === 'Kembali' || $this->transmittalId !== null)
                         ->dehydrated()
-                        ->helperText(fn(Get $get) => $get('type') === 'Kembali' ? 'Tujuan dideteksi otomatis berdasarkan riwayat Kirim.' : '')
+                        ->helperText(fn (Get $get) => $get('type') === 'Kembali' ? 'Tujuan dideteksi otomatis berdasarkan riwayat Kirim.' : '')
                         ->default('ISTEK')
                         ->live()
                         ->afterStateUpdated(function ($state) {
                             $this->resetScanState();
                             if ($this->isEditMode && $this->transmittalId && $this->data['type'] !== 'Kembali') {
                                 Transmittal::find($this->transmittalId)?->update(['destination' => $state]);
-                            } elseif (!$this->isEditMode) {
+                            } elseif (! $this->isEditMode) {
                                 $this->transmittalId = null;
                             }
                         }),
@@ -182,7 +181,7 @@ class BulkScanTransmittal extends Page implements HasForms
             ->orWhere('document_code', $code) // Bisa scan nomor DO atau document code (QR Dokumen)
             ->first();
 
-        if (!$doReceipt) {
+        if (! $doReceipt) {
             $this->dispatch('play-error-sound');
             Notification::make()
                 ->title('Tidak ditemukan')
@@ -195,10 +194,10 @@ class BulkScanTransmittal extends Page implements HasForms
 
         if ($this->data['type'] === 'Kirim') {
             $isPost103Null = false;
-            
+
             if ($doReceipt->receipt_mode === 'Termin') {
                 $latestTermin = $doReceipt->termins()->latest('id')->first();
-                if (!$latestTermin || is_null($latestTermin->post_103)) {
+                if (! $latestTermin || is_null($latestTermin->post_103)) {
                     $isPost103Null = true;
                 }
             } else {
@@ -243,7 +242,7 @@ class BulkScanTransmittal extends Page implements HasForms
 
     public function submit103Scan()
     {
-        if ($this->step !== 2 || !$this->pending_do_id) {
+        if ($this->step !== 2 || ! $this->pending_do_id) {
             return;
         }
 
@@ -255,7 +254,7 @@ class BulkScanTransmittal extends Page implements HasForms
         }
 
         $doReceipt = DeliveryOrderReceipt::find($this->pending_do_id);
-        if (!$doReceipt) {
+        if (! $doReceipt) {
             $this->resetScanState();
 
             return;
@@ -303,13 +302,13 @@ class BulkScanTransmittal extends Page implements HasForms
             ->whereDate('created_at', $tanggal->toDateString())
             ->first();
 
-        if (!$transmittal) {
+        if (! $transmittal) {
             $transmittal = Transmittal::create([
                 'type' => $this->data['type'],
                 'destination' => $dest,
                 'created_by' => Auth::user()->id ?? 1,
                 'created_at' => $tanggal->setTimeFrom(now()),
-                'transmittal_no' => 'TRM-' . $tanggal->format('Ymd') . '-' . strtoupper(substr(uniqid(), -4)),
+                'transmittal_no' => 'TRM-'.$tanggal->format('Ymd').'-'.strtoupper(substr(uniqid(), -4)),
             ]);
         }
 
@@ -430,8 +429,8 @@ class BulkScanTransmittal extends Page implements HasForms
                     $this->dispatch('focus-document-input');
                 }
             })
-            ->modalCancelAction(fn($action) => $action->label('Batal'))
-            ->modalSubmitAction(fn($action) => $action->label('Lanjutkan Transmittal'));
+            ->modalCancelAction(fn ($action) => $action->label('Batal'))
+            ->modalSubmitAction(fn ($action) => $action->label('Lanjutkan Transmittal'));
     }
 
     protected function resumeProcessTransmittal(DeliveryOrderReceipt $doReceipt, Transmittal $transmittal, ?string $reason = null)
@@ -448,7 +447,7 @@ class BulkScanTransmittal extends Page implements HasForms
             $destination = $this->data['type'] === 'Kembali' ? 'Receiving' : $this->data['destination'];
             $notes = "Di-scan melalui Transmittal {$this->data['type']} (Tujuan: {$destination}, No: {$transmittal->transmittal_no})";
             if ($reason) {
-                $notes .= '<br>Alasan Pengajuan Ulang: ' . $reason;
+                $notes .= '<br>Alasan Pengajuan Ulang: '.$reason;
             }
 
             // Catat ke QcHistory
@@ -517,7 +516,7 @@ class BulkScanTransmittal extends Page implements HasForms
         }
 
         $dest = $this->data['destination'] ?? null;
-        if (!$dest) {
+        if (! $dest) {
             return collect();
         }
 
@@ -527,7 +526,7 @@ class BulkScanTransmittal extends Page implements HasForms
             ->whereDate('created_at', \Carbon\Carbon::parse($this->data['tanggal'])->toDateString())
             ->first();
 
-        if (!$transmittal) {
+        if (! $transmittal) {
             return collect();
         }
 

@@ -14,13 +14,12 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\RawJs;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -69,7 +68,7 @@ class ChemicalQcTuvResource extends Resource
                             Group::make([
                                 Select::make('tahapan_name')
                                     ->label('Tahapan')
-                                    ->options(collect(range(1, 100))->mapWithKeys(fn($i) => ["TAHAP $i TUV" => "TAHAP $i TUV"]))
+                                    ->options(collect(range(1, 100))->mapWithKeys(fn ($i) => ["TAHAP $i TUV" => "TAHAP $i TUV"]))
                                     ->searchable()
                                     ->required(),
                                 TextInput::make('qty_qc_tuv')

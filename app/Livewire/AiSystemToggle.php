@@ -2,9 +2,9 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class AiSystemToggle extends Component
 {
@@ -21,12 +21,12 @@ class AiSystemToggle extends Component
 
     public function toggle()
     {
-        if (!Auth::user()?->hasRole('Developer')) {
+        if (! Auth::user()?->hasRole('Developer')) {
             return;
         }
 
-        $this->isActive = !$this->isActive;
-        
+        $this->isActive = ! $this->isActive;
+
         Setting::updateOrCreate(
             ['key' => 'ai_system_active'],
             ['value' => $this->isActive ? '1' : '0']

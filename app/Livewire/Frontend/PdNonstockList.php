@@ -52,13 +52,13 @@ class PdNonstockList extends Component
             })
             ->whereRaw('quantity > (SELECT COALESCE(SUM(diserahkan), 0) FROM material_issue_details WHERE material_issue_details.delivery_order_receipt_detail_id = delivery_order_receipt_details.id)');
 
-        if (!empty($this->search)) {
+        if (! empty($this->search)) {
             $query->where(function ($q) {
                 $q->whereHas('purchaseOrderIssued', function ($qPo) {
-                    $qPo->where('purchase_order_no', 'like', '%' . $this->search . '%')
-                        ->orWhere('description', 'like', '%' . $this->search . '%')
-                        ->orWhere('material_code', 'like', '%' . $this->search . '%')
-                        ->orWhere('requisitioner', 'like', '%' . $this->search . '%');
+                    $qPo->where('purchase_order_no', 'like', '%'.$this->search.'%')
+                        ->orWhere('description', 'like', '%'.$this->search.'%')
+                        ->orWhere('material_code', 'like', '%'.$this->search.'%')
+                        ->orWhere('requisitioner', 'like', '%'.$this->search.'%');
                 });
             });
         }

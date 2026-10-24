@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\DeliveryOrderReceiptDetails;
 
 use App\Filament\Resources\DeliveryOrderReceiptDetails\Pages\ManageDeliveryOrderReceiptDetails;
+use App\Models\DeliveryOrderReceipt;
 use App\Models\DeliveryOrderReceiptDetail;
+use App\Models\LocationReceiving;
 use App\Models\PurchaseOrderIssued;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -27,6 +29,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
@@ -110,7 +113,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                             Select::make('delivery_order_receipt_id')
                                 ->label('Referensi DO')
                                 ->options(function () {
-                                    return \App\Models\DeliveryOrderReceipt::whereNotNull('document_code')
+                                    return DeliveryOrderReceipt::whereNotNull('document_code')
                                         ->where('document_code', '!=', '')
                                         ->pluck('document_code', 'id')
                                         ->toArray();
@@ -127,7 +130,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                             Select::make('location_id')
                                 ->label('Lokasi Penyimpanan')
                                 ->options(function () {
-                                    return \App\Models\LocationReceiving::whereNotNull('name')
+                                    return LocationReceiving::whereNotNull('name')
                                         ->where('name', '!=', '')
                                         ->pluck('name', 'id')
                                         ->toArray();
@@ -160,7 +163,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                             Select::make('abc_indicator')
                                 ->label('ABC Indicator')
                                 ->options(function () {
-                                    return \App\Models\DeliveryOrderReceiptDetail::whereNotNull('abc_indicator')
+                                    return DeliveryOrderReceiptDetail::whereNotNull('abc_indicator')
                                         ->where('abc_indicator', '!=', '')
                                         ->distinct()
                                         ->pluck('abc_indicator', 'abc_indicator')
@@ -170,7 +173,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                             Select::make('aac')
                                 ->label('AAC Indicator')
                                 ->options(function () {
-                                    return \App\Models\DeliveryOrderReceiptDetail::whereNotNull('aac')
+                                    return DeliveryOrderReceiptDetail::whereNotNull('aac')
                                         ->where('aac', '!=', '')
                                         ->distinct()
                                         ->pluck('aac', 'aac')
@@ -207,7 +210,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                 ColumnGroup::make('Informasi Material', [
                     TextColumn::make('purchaseOrderIssued.purchase_order_no')
                         ->label('No. PO & Item')
-                        ->description(fn($record) => 'Item No: ' . $record->item_no)
+                        ->description(fn ($record) => 'Item No: '.$record->item_no)
                         ->searchable()
                         ->icon(Heroicon::DocumentText)
                         ->iconColor('primary')
@@ -216,7 +219,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
 
                     TextColumn::make('description')
                         ->label('Material')
-                        ->description(fn($record) => 'Stock No: ' . (!empty($record->material_code) ? $record->material_code : 'None'))
+                        ->description(fn ($record) => 'Stock No: '.(! empty($record->material_code) ? $record->material_code : 'None'))
                         ->searchable(['description', 'material_code'])
                         ->weight(FontWeight::Bold)
                         ->icon('heroicon-m-cube')
@@ -228,8 +231,8 @@ class DeliveryOrderReceiptDetailResource extends Resource
                 ColumnGroup::make('Data Penerimaan', [
                     TextColumn::make('quantity')
                         ->label('Qty Diterima')
-                        ->formatStateUsing(fn($state) => rtrim(rtrim(number_format($state, 3, ',', '.'), '0'), ','))
-                        ->suffix(fn($record) => " {$record->uoi}")
+                        ->formatStateUsing(fn ($state) => rtrim(rtrim(number_format($state, 3, ',', '.'), '0'), ','))
+                        ->suffix(fn ($record) => " {$record->uoi}")
                         ->badge() // Jadikan badge agar menonjol
                         ->color('success')
                         ->sortable(),
@@ -237,11 +240,11 @@ class DeliveryOrderReceiptDetailResource extends Resource
                     TextColumn::make('is_qty_tolerance')
                         ->label('Toleransi')
                         ->badge()
-                        ->color(fn($state) => $state ? 'danger' : 'success')
-                        ->icon(fn($state) => $state ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check-circle')
+                        ->color(fn ($state) => $state ? 'danger' : 'success')
+                        ->icon(fn ($state) => $state ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check-circle')
                         ->formatStateUsing(function ($state, $record) {
                             // 1. Jika False (Normal), tampilkan teks biasa
-                            if (!$state) {
+                            if (! $state) {
                                 return 'Normal';
                             }
 
@@ -287,15 +290,15 @@ class DeliveryOrderReceiptDetailResource extends Resource
                     TextColumn::make('locationReceiving.name')
                         ->label('Lokasi Penyimpanan')
                         ->icon('heroicon-m-map-pin')
-                        ->description(fn($record) => $record->is_different_location ? 'Berbeda Lokasi' : 'Lokasi Utama')
-                        ->color(fn($record) => $record->is_different_location ? 'warning' : 'gray')
+                        ->description(fn ($record) => $record->is_different_location ? 'Berbeda Lokasi' : 'Lokasi Utama')
+                        ->color(fn ($record) => $record->is_different_location ? 'warning' : 'gray')
                         ->searchable()
                         ->sortable(),
 
                     // Menggabungkan MRP & Material Type agar hemat kolom
                     TextColumn::make('mrp_type')
                         ->label('MRP / Mat. Type')
-                        ->description(fn($record) => $record->material_type)
+                        ->description(fn ($record) => $record->material_type)
                         ->badge()
                         ->color('info')
                         ->searchable(),
@@ -306,10 +309,10 @@ class DeliveryOrderReceiptDetailResource extends Resource
                         ->html() // Wajib agar HTML bisa dirender
                         ->getStateUsing(function ($record) {
                             // Ambil data ABC, jika kosong set jadi 'None'
-                            $abc = !empty($record->abc_indicator) ? $record->abc_indicator : 'None';
+                            $abc = ! empty($record->abc_indicator) ? $record->abc_indicator : 'None';
 
                             // Ambil data AAC, jika kosong set jadi '-'
-                            $aac = !empty($record->aac) ? $record->aac : '-';
+                            $aac = ! empty($record->aac) ? $record->aac : '-';
 
                             // Rangkai menjadi HTML dengan menambahkan prefix ABC dan AAC
                             return "
@@ -349,7 +352,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                 SelectFilter::make('purchase_order_issued_id')
                     ->label('Nomor PO')
                     ->options(function () {
-                        return \App\Models\PurchaseOrderIssued::whereNotNull('purchase_order_no')
+                        return PurchaseOrderIssued::whereNotNull('purchase_order_no')
                             ->where('purchase_order_no', '!=', '')
                             ->pluck('purchase_order_no', 'id')
                             ->toArray();
@@ -359,7 +362,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
                 SelectFilter::make('location_id')
                     ->label('Lokasi Penyimpanan')
                     ->options(function () {
-                        return \App\Models\LocationReceiving::whereNotNull('name')
+                        return LocationReceiving::whereNotNull('name')
                             ->where('name', '!=', '')
                             ->pluck('name', 'id')
                             ->toArray();
@@ -388,7 +391,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
             ->filtersFormWidth(Width::FourExtraLarge)
             ->filtersFormColumns(3)
             ->filtersTriggerAction(
-                fn(Action $action) => $action
+                fn (Action $action) => $action
                     ->button()
                     ->label('Filter'),
             )
@@ -410,7 +413,7 @@ class DeliveryOrderReceiptDetailResource extends Resource
             ]);
     }
 
-    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    public static function canEdit(Model $record): bool
     {
         return Auth::user()->hasRole('Developer');
     }

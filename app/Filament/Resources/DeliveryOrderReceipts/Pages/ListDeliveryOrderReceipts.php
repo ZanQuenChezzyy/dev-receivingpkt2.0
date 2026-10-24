@@ -28,7 +28,7 @@ class ListDeliveryOrderReceipts extends ListRecords
                 ->icon(Heroicon::DocumentArrowDown)
                 ->modifyQueryUsing(function (Builder $query, ExportAction $action) {
                     $data = $action->getData();
-                    if (!empty($data['created_at_range'])) {
+                    if (! empty($data['created_at_range'])) {
                         $dates = explode(' - ', $data['created_at_range']);
                         if (count($dates) === 2) {
                             $startDate = Carbon::createFromFormat('d/m/Y', trim($dates[0]))->startOfDay();
@@ -49,17 +49,17 @@ class ListDeliveryOrderReceipts extends ListRecords
             'Semua' => Tab::make('Semua')
                 ->icon('heroicon-o-list-bullet'),
             'Belum 103' => Tab::make('Belum 103')
-                ->modifyQueryUsing(fn(Builder $query) => $query->whereNull('post_103'))
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereNull('post_103'))
                 ->icon('heroicon-o-document-minus')
                 ->badgeColor('info')
                 ->badge(DeliveryOrderReceipt::whereNull('post_103')->count()),
             'Pending Dokumen' => Tab::make('Pending Dokumen')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('status', 'Pending'))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'Pending'))
                 ->icon('heroicon-o-clock')
                 ->badgeColor('danger')
                 ->badge(DeliveryOrderReceipt::where('status', 'Pending')->count()),
             'Menunggu Kedatangan' => Tab::make('Menunggu Kedatangan')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('is_physically_received', false)->where('receipt_mode', '!=', 'Standard'))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('is_physically_received', false)->where('receipt_mode', '!=', 'Standard'))
                 ->icon('heroicon-o-truck')
                 ->badgeColor('warning')
                 ->badge(DeliveryOrderReceipt::where('is_physically_received', false)->where('receipt_mode', '!=', 'Standard')->count()),

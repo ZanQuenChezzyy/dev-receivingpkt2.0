@@ -28,12 +28,12 @@ class GrsRdtvInfolist
                             TextEntry::make('category')
                                 ->label('Kategori Dokumen')
                                 ->badge()
-                                ->color(fn(string $state): string => match ($state) {
+                                ->color(fn (string $state): string => match ($state) {
                                     'GRS' => 'success',
                                     'RDTV' => 'warning',
                                     default => 'gray',
                                 })
-                                ->icon(fn(string $state): string => match ($state) {
+                                ->icon(fn (string $state): string => match ($state) {
                                     'GRS' => 'heroicon-m-document-check',
                                     'RDTV' => 'heroicon-m-arrow-path',
                                     default => 'heroicon-m-document',

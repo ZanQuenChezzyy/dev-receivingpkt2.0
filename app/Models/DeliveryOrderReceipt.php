@@ -119,11 +119,16 @@ class DeliveryOrderReceipt extends Model
         return $this->hasMany(DeliveryOrderReceiptDelayLog::class);
     }
 
+    public function invoicingReceipts(): HasMany
+    {
+        return $this->hasMany(InvoicingReceipt::class);
+    }
+
     protected static function booted()
     {
         static::updating(function ($record) {
             // Auto-fill delay_notes if it's empty when delay_reason is set
-            if ($record->isDirty('delay_reason') && !empty($record->delay_reason) && empty($record->delay_notes)) {
+            if ($record->isDirty('delay_reason') && ! empty($record->delay_reason) && empty($record->delay_notes)) {
                 $record->delay_notes = match ($record->delay_reason) {
                     'PO Belum Confirm' => 'Menunggu konfirmasi lebih lanjut dari pihak pengadaan terkait status PO.',
                     'Barang Diambil User Langsung (Tanpa Monitor)' => 'Barang telah diambil secara langsung oleh user ke lapangan sehingga proses monitoring terlewat.',
@@ -138,7 +143,7 @@ class DeliveryOrderReceipt extends Model
             // Check if delay_reason or delay_notes was changed
             if ($record->wasChanged('delay_reason') || $record->wasChanged('delay_notes')) {
                 // If it's not simply clearing the reason, log it
-                if (!empty($record->delay_reason)) {
+                if (! empty($record->delay_reason)) {
                     $record->delayLogs()->create([
                         'delay_reason' => $record->delay_reason,
                         'delay_notes' => $record->delay_notes,

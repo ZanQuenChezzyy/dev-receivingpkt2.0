@@ -37,7 +37,7 @@ class TransmittalPrintController extends Controller
         if ($mirRecords->isEmpty()) {
             return response($transmittalPdfStr, 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="Transmittal_' . $transmittal->transmittal_no . '.pdf"',
+                'Content-Disposition' => 'inline; filename="Transmittal_'.$transmittal->transmittal_no.'.pdf"',
             ]);
         }
 
@@ -47,7 +47,7 @@ class TransmittalPrintController extends Controller
         ])->setPaper([0, 0, 595.276, 935.433], 'portrait')->output();
 
         // Merge PDFs
-        return $this->mergePdfs($transmittalPdfStr, $mirPdfStr, 'Transmittal_' . $transmittal->transmittal_no . '.pdf');
+        return $this->mergePdfs($transmittalPdfStr, $mirPdfStr, 'Transmittal_'.$transmittal->transmittal_no.'.pdf');
     }
 
     public function printBulk(Request $request)
@@ -139,7 +139,7 @@ class TransmittalPrintController extends Controller
 
         return response($fpdi->Output('S'), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
         ]);
     }
 }

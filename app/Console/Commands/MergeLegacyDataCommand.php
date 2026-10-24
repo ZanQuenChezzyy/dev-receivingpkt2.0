@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -9,25 +10,31 @@ use Illuminate\Support\Facades\Schema;
 class MergeLegacyDataCommand extends Command
 {
     protected $signature = 'app:migrate-legacy-merge';
+
     protected $description = 'Safely merge data from legacy database to active production database mapping IDs.';
 
     protected $mapUsers = [];
+
     protected $mapLocations = [];
+
     protected $mapPo = [];
+
     protected $mapDo = [];
+
     protected $mapDoDetails = [];
 
     public function handle()
     {
         ini_set('memory_limit', '-1'); // Just in case, allow unlimited memory for CLI
-        
+
         $this->info('Starting legacy data MERGE (Safe ID Mapping)...');
 
         try {
             $oldDb = DB::connection('mysql_old');
             $oldDb->getPdo();
         } catch (\Exception $e) {
-            $this->error('Failed to connect to mysql_old: ' . $e->getMessage());
+            $this->error('Failed to connect to mysql_old: '.$e->getMessage());
+
             return;
         }
 
@@ -53,7 +60,7 @@ class MergeLegacyDataCommand extends Command
             $this->info('All merges completed successfully without overwriting IDs!');
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->error('Merge failed! All changes have been UNDONE. Error: ' . $e->getMessage());
+            $this->error('Merge failed! All changes have been UNDONE. Error: '.$e->getMessage());
         }
     }
 
@@ -82,8 +89,10 @@ class MergeLegacyDataCommand extends Command
     private function mergeLocationReceivings($oldDb)
     {
         $this->info('Merging Location Receivings...');
-        if (!Schema::connection('mysql_old')->hasTable('locations')) return;
-        
+        if (! Schema::connection('mysql_old')->hasTable('locations')) {
+            return;
+        }
+
         $oldDb->table('locations')->orderBy('id')->chunk(500, function ($locations) {
             foreach ($locations as $loc) {
                 $existing = DB::table('location_receivings')->where('name', $loc->name)->first();
@@ -112,13 +121,13 @@ class MergeLegacyDataCommand extends Command
             $existing = DB::table('purchase_order_issueds')->select('id', 'purchase_order_no', 'item_no')->get();
             $this->existingPosCache = [];
             foreach ($existing as $e) {
-                $this->existingPosCache[$e->purchase_order_no . '-' . $e->item_no] = $e->id;
+                $this->existingPosCache[$e->purchase_order_no.'-'.$e->item_no] = $e->id;
             }
         }
 
         $oldDb->table('purchase_order_terbits')->orderBy('id')->chunk(500, function ($pos) {
             foreach ($pos as $po) {
-                $cacheKey = $po->purchase_order_no . '-' . $po->item_no;
+                $cacheKey = $po->purchase_order_no.'-'.$po->item_no;
                 if (isset($this->existingPosCache[$cacheKey])) {
                     $this->mapPo[$po->id] = $this->existingPosCache[$cacheKey];
                 } else {
@@ -157,20 +166,22 @@ class MergeLegacyDataCommand extends Command
     private function mergeDeliveryOrders($oldDb)
     {
         $this->info('Merging Delivery Orders...');
-        if (!Schema::connection('mysql_old')->hasTable('delivery_order_receipts')) return;
+        if (! Schema::connection('mysql_old')->hasTable('delivery_order_receipts')) {
+            return;
+        }
 
         $oldDb->table('delivery_order_receipts')->orderBy('id')->chunk(500, function ($dors) {
             foreach ($dors as $dor) {
                 $existing = null;
-                if (!empty($dor->do_code)) {
+                if (! empty($dor->do_code)) {
                     $existing = DB::table('delivery_order_receipts')->where('document_code', $dor->do_code)->first();
                 }
 
                 if ($existing) {
                     $this->mapDo[$dor->id] = $existing->id;
-                    
+
                     // Update if missing in production
-                    if (empty($existing->post_103) && !empty($dor->post_103) || empty($existing->description) && !empty($dor->keterangan)) {
+                    if (empty($existing->post_103) && ! empty($dor->post_103) || empty($existing->description) && ! empty($dor->keterangan)) {
                         DB::table('delivery_order_receipts')
                             ->where('id', $existing->id)
                             ->update([
@@ -204,12 +215,16 @@ class MergeLegacyDataCommand extends Command
     private function mergeDeliveryOrderDetails($oldDb)
     {
         $this->info('Merging Delivery Order Details...');
-        if (!Schema::connection('mysql_old')->hasTable('delivery_order_receipt_details')) return;
+        if (! Schema::connection('mysql_old')->hasTable('delivery_order_receipt_details')) {
+            return;
+        }
 
         $oldDb->table('delivery_order_receipt_details')->orderBy('id')->chunk(500, function ($details) use ($oldDb) {
             foreach ($details as $detail) {
                 $parentDorId = $this->mapDo[$detail->delivery_order_receipt_id] ?? null;
-                if (!$parentDorId) continue;
+                if (! $parentDorId) {
+                    continue;
+                }
 
                 $poId = 1;
                 $parentDorOld = $oldDb->table('delivery_order_receipts')->where('id', $detail->delivery_order_receipt_id)->first();
@@ -222,12 +237,13 @@ class MergeLegacyDataCommand extends Command
                     ->where('item_no', $detail->item_no ?? 1)
                     ->where('purchase_order_issued_id', $poId)
                     ->first();
-                
+
                 if ($existingDetail) {
                     $this->mapDoDetails[$detail->id] = $existingDetail->id;
+
                     continue;
                 }
-                
+
                 $locId = $this->mapLocations[$detail->location_id ?? 1] ?? 1;
 
                 $newId = DB::table('delivery_order_receipt_details')->insertGetId([
@@ -257,13 +273,15 @@ class MergeLegacyDataCommand extends Command
         if (Schema::connection('mysql_old')->hasTable('material_issued_requests')) {
             $oldDb->table('material_issued_requests')->orderBy('id')->chunk(500, function ($rows) use ($oldDb) {
                 foreach ($rows as $row) {
-                    $mirNo = $row->mir_no ?? ('LEGACY-MIR-' . $row->id);
+                    $mirNo = $row->mir_no ?? ('LEGACY-MIR-'.$row->id);
                     $existing = DB::table('material_issues')->where('mir_number', $mirNo)->first();
-                    if ($existing) continue; 
+                    if ($existing) {
+                        continue;
+                    }
 
                     $attachment = $oldDb->table('material_issued_request_attachments')
-                                        ->where('material_issued_request_id', $row->id)
-                                        ->first();
+                        ->where('material_issued_request_id', $row->id)
+                        ->first();
 
                     $poId = isset($this->mapPo[$row->purchase_order_terbit_id]) ? $this->mapPo[$row->purchase_order_terbit_id] : null;
 
@@ -296,7 +314,7 @@ class MergeLegacyDataCommand extends Command
                         $details = $oldDb->table('material_issued_request_details')
                             ->where('material_issued_request_id', $row->id)
                             ->get();
-                        
+
                         $insertDetails = [];
                         foreach ($details as $d) {
                             $newDoDetailId = $this->mapDoDetails[$d->delivery_order_receipt_detail_id ?? 0] ?? null;
@@ -327,17 +345,24 @@ class MergeLegacyDataCommand extends Command
         if (Schema::connection('mysql_old')->hasTable('transmittal_kirims')) {
             $oldDb->table('transmittal_kirims')->orderBy('id')->chunk(500, function ($rows) {
                 // Group them by date
-                $groupedKirims = collect($rows)->groupBy(function($item) {
-                    if (!empty($item->tanggal_kirim)) return \Carbon\Carbon::parse($item->tanggal_kirim)->format('Y-m-d');
-                    if (!empty($item->created_at)) return \Carbon\Carbon::parse($item->created_at)->format('Y-m-d');
+                $groupedKirims = collect($rows)->groupBy(function ($item) {
+                    if (! empty($item->tanggal_kirim)) {
+                        return Carbon::parse($item->tanggal_kirim)->format('Y-m-d');
+                    }
+                    if (! empty($item->created_at)) {
+                        return Carbon::parse($item->created_at)->format('Y-m-d');
+                    }
+
                     return '1970-01-01';
                 });
 
                 foreach ($groupedKirims as $date => $groupRows) {
-                    $no = 'TRM-' . str_replace('-', '', $date) . '-LEGACY-K-' . crc32($date);
-                    
+                    $no = 'TRM-'.str_replace('-', '', $date).'-LEGACY-K-'.crc32($date);
+
                     $existing = DB::table('transmittals')->where('transmittal_no', $no)->first();
-                    if ($existing) continue;
+                    if ($existing) {
+                        continue;
+                    }
 
                     $newId = DB::table('transmittals')->insertGetId([
                         'transmittal_no' => $no,
@@ -347,10 +372,10 @@ class MergeLegacyDataCommand extends Command
                         'created_at' => $groupRows->first()->created_at ?? $date,
                         'updated_at' => $groupRows->first()->updated_at ?? null,
                     ]);
-                    
+
                     $insertItems = [];
                     foreach ($groupRows as $row) {
-                        if (!empty($row->delivery_order_receipt_id)) {
+                        if (! empty($row->delivery_order_receipt_id)) {
                             $newDoId = $this->mapDo[$row->delivery_order_receipt_id] ?? null;
                             if ($newDoId) {
                                 $insertItems[] = [
@@ -363,7 +388,9 @@ class MergeLegacyDataCommand extends Command
                             }
                         }
                     }
-                    if (!empty($insertItems)) DB::table('transmittal_items')->insert($insertItems);
+                    if (! empty($insertItems)) {
+                        DB::table('transmittal_items')->insert($insertItems);
+                    }
                 }
             });
         }
@@ -372,12 +399,17 @@ class MergeLegacyDataCommand extends Command
             $oldDb->table('transmittal_kembalis')->orderBy('id')->chunk(500, function ($rows) use ($oldDb) {
                 foreach ($rows as $row) {
                     $dateStr = '19700101';
-                    if (!empty($row->tanggal_kembali)) $dateStr = \Carbon\Carbon::parse($row->tanggal_kembali)->format('Ymd');
-                    elseif (!empty($row->created_at)) $dateStr = \Carbon\Carbon::parse($row->created_at)->format('Ymd');
+                    if (! empty($row->tanggal_kembali)) {
+                        $dateStr = Carbon::parse($row->tanggal_kembali)->format('Ymd');
+                    } elseif (! empty($row->created_at)) {
+                        $dateStr = Carbon::parse($row->created_at)->format('Ymd');
+                    }
 
-                    $no = 'TRM-' . $dateStr . '-LEGACY-B-' . $row->id;
+                    $no = 'TRM-'.$dateStr.'-LEGACY-B-'.$row->id;
                     $existing = DB::table('transmittals')->where('transmittal_no', $no)->first();
-                    if ($existing) continue;
+                    if ($existing) {
+                        continue;
+                    }
 
                     $newId = DB::table('transmittals')->insertGetId([
                         'transmittal_no' => $no,
@@ -391,7 +423,7 @@ class MergeLegacyDataCommand extends Command
                     $oldDetails = $oldDb->table('transmittal_kembali_details')->where('transmittal_kembali_id', $row->id)->get();
                     $insertItems = [];
                     foreach ($oldDetails as $detail) {
-                        if (!empty($detail->delivery_order_receipt_id)) {
+                        if (! empty($detail->delivery_order_receipt_id)) {
                             $newDoId = $this->mapDo[$detail->delivery_order_receipt_id] ?? null;
                             if ($newDoId) {
                                 $insertItems[] = [
@@ -404,7 +436,9 @@ class MergeLegacyDataCommand extends Command
                             }
                         }
                     }
-                    if (!empty($insertItems)) DB::table('transmittal_items')->insert($insertItems);
+                    if (! empty($insertItems)) {
+                        DB::table('transmittal_items')->insert($insertItems);
+                    }
                 }
             });
         }
@@ -466,7 +500,7 @@ class MergeLegacyDataCommand extends Command
                                 ->where('item_no', $d->item_no ?? 1)
                                 ->first();
 
-                            if (!$existingDetail) {
+                            if (! $existingDetail) {
                                 DB::table('monitoring_npk_details')->insert([
                                     'monitoring_npk_id' => $newId,
                                     'item_no' => $d->item_no ?? 1,

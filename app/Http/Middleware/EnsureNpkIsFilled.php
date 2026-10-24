@@ -22,9 +22,9 @@ class EnsureNpkIsFilled
         // Cek apakah user sudah login dan NPK-nya kosong
         if ($user && empty($user->npk)) {
             // Jangan redirect jika sedang berada di halaman profil atau proses logout
-            if (!$request->routeIs('filament.admin.auth.profile') && !$request->routeIs('filament.admin.auth.logout')) {
+            if (! $request->routeIs('filament.admin.auth.profile') && ! $request->routeIs('filament.admin.auth.logout')) {
                 // Kecualikan request Livewire agar profil bisa disimpan
-                if (!$request->is('livewire/*')) {
+                if (! $request->is('livewire/*')) {
                     Notification::make()
                         ->warning()
                         ->title('Perhatian')

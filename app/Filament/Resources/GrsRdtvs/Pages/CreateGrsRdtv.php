@@ -4,6 +4,10 @@ namespace App\Filament\Resources\GrsRdtvs\Pages;
 
 use App\Filament\Resources\GrsRdtvs\GrsRdtvResource;
 use App\Models\DeliveryOrderReceipt;
+use App\Models\GrsRdtvItem;
+use App\Models\InvoicingReceipt;
+use App\Models\Vendor;
+use App\Services\InvoicingAssignmentService;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +21,17 @@ class CreateGrsRdtv extends CreateRecord
     protected array $uploadedFiles = [];
 
     protected array $uploadedItems = [];
+
+    protected ?InvoicingAssignmentService $assignmentService = null;
+
+    protected function getAssignmentService(): InvoicingAssignmentService
+    {
+        if (! $this->assignmentService) {
+            $this->assignmentService = app(InvoicingAssignmentService::class);
+        }
+
+        return $this->assignmentService;
+    }
 
     protected function handleRecordCreation(array $data): Model
     {
@@ -262,13 +277,15 @@ class CreateGrsRdtv extends CreateRecord
                         $notFoundDocs[] = $documentCode;
                     }
 
-                    $grsRdtv->grsRdtvItems()->create([
+                    $grsRdtvItem = $grsRdtv->grsRdtvItems()->create([
                         'delivery_order_receipt_id' => $do ? $do->id : null,
                         'document_code' => $documentCode,
                         'file_path' => $path,
                         'status' => $do ? 'Matched' : 'Not Found',
                         'reason' => null,
                     ]);
+
+                    $this->createInvoicingReceiptFor($grsRdtvItem, $do, $category, $grsRdtv->transaction_date);
                 }
             }
         }
@@ -299,13 +316,15 @@ class CreateGrsRdtv extends CreateRecord
                         $notFoundDocs[] = $documentCode;
                     }
 
-                    $grsRdtv->grsRdtvItems()->create([
+                    $grsRdtvItem = $grsRdtv->grsRdtvItems()->create([
                         'delivery_order_receipt_id' => $do ? $do->id : null,
                         'document_code' => $documentCode,
                         'file_path' => $path,
                         'status' => $do ? 'Matched' : 'Not Found',
                         'reason' => $reason,
                     ]);
+
+                    $this->createInvoicingReceiptFor($grsRdtvItem, $do, $category, $grsRdtv->transaction_date);
                 }
             }
         }
@@ -325,5 +344,66 @@ class CreateGrsRdtv extends CreateRecord
             ->body($body)
             ->success()
             ->send();
+    }
+
+    protected function createInvoicingReceiptFor(GrsRdtvItem $grsRdtvItem, ?DeliveryOrderReceipt $do, string $category, $transactionDate): void
+    {
+        if (! $do) {
+            return;
+        }
+
+        $do->loadMissing(['deliveryOrderReceiptDetails.purchaseOrderIssued']);
+        $firstDetail = $do->deliveryOrderReceiptDetails->first();
+        $po = $firstDetail?->purchaseOrderIssued;
+
+        $rawMaterialType = $firstDetail?->material_type ?? $po?->material_type;
+        $cleanType = trim((string) $rawMaterialType);
+        $isNoneOrEmpty = empty($cleanType) || in_array(strtolower($cleanType), ['none', 'null', '-', 'kosong']);
+        $materialType = $isNoneOrEmpty ? null : $cleanType;
+
+        // Tentukan PIC: jika tipe material none atau kosong, bagi rata ke Staff Invoice
+        $picId = $this->getAssignmentService()->determinePicId($materialType);
+
+        // Lookup data vendor di master Vendor
+        $vendor = null;
+        if ($po?->vendor_id || $po?->vendor_name) {
+            $vendor = Vendor::where('vendor_number', $po->vendor_id)
+                ->orWhere('name', $po->vendor_name)
+                ->first();
+        }
+
+        $qtyPenagihan = $firstDetail?->quantity ?? $po?->qty_po;
+        $qtyPo = $po?->qty_po ?? $firstDetail?->quantity;
+        $uoi = $firstDetail?->uoi ?? $po?->uoi ?? 'PCS';
+        $subtotalExclude = $firstDetail?->total_amount_snapshot ?? $po?->total_amount_in_lc;
+        $subtotalInclude = $subtotalExclude !== null ? round((float) $subtotalExclude * 1.11, 2) : null;
+
+        InvoicingReceipt::create([
+            'grs_rdtv_item_id' => $grsRdtvItem->id,
+            'delivery_order_receipt_id' => $do->id,
+            'purchase_order_issued_id' => $po?->id,
+            'vendor_id' => $vendor?->id,
+            'pic_id' => $picId,
+            'tanggal_terima_grs' => $transactionDate ?? now(),
+            'jenis' => $category,
+            'no_grs' => $category === 'GRS' ? $grsRdtvItem->document_code : null,
+            'no_rdtv' => $category === 'RDTV' ? $grsRdtvItem->document_code : null,
+            'no_po' => $po?->purchase_order_no ?? '-',
+            'no_do' => $do->delivery_order_no,
+            'material_type' => $materialType,
+            'vendor_name' => $po?->vendor_name ?? $vendor?->name,
+            'deskripsi' => $firstDetail?->description ?? $po?->description,
+            'email_vendor' => $vendor?->email,
+            'tanggal_info_grs' => $transactionDate ?? now(),
+            'nama_barang' => $firstDetail?->description ?? $po?->description,
+            'qty_penagihan' => $qtyPenagihan,
+            'qty_po' => $qtyPo,
+            'uoi' => $uoi,
+            'subtotal_exclude_ppn' => $subtotalExclude,
+            'subtotal_include_ppn' => $subtotalInclude,
+            'tanggal_terima_koreksi_invoice' => $transactionDate ?? now(),
+            'keterangan' => "Auto-generate dari {$category}: {$grsRdtvItem->document_code} (DO: {$do->delivery_order_no})",
+            'status' => 'Menunggu Verifikasi',
+        ]);
     }
 }

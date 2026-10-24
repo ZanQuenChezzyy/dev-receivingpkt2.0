@@ -3,21 +3,22 @@
 namespace App\Filament\Resources\DeliveryOrderReceipts\RelationManagers;
 
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Filament\Support\Enums\FontWeight;
 
 class DelayLogsRelationManager extends RelationManager
 {
     protected static string $relationship = 'delayLogs';
 
     protected static ?string $title = 'Riwayat Penundaan';
+
     protected static ?string $modelLabel = 'Riwayat Penundaan';
 
     public function form(Schema $schema): Schema
@@ -43,7 +44,7 @@ class DelayLogsRelationManager extends RelationManager
                         TextEntry::make('delay_reason')
                             ->label('Alasan')
                             ->badge()
-                            ->color(fn(string $state): string => match ($state) {
+                            ->color(fn (string $state): string => match ($state) {
                                 'PO Belum Confirm' => 'warning',
                                 'Barang Diambil User Langsung (Tanpa Monitor)' => 'info',
                                 'Fisik Kelebihan Kirim (Over-delivery)' => 'danger',
@@ -85,7 +86,7 @@ class DelayLogsRelationManager extends RelationManager
                 TextColumn::make('delay_reason')
                     ->label('Alasan')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'PO Belum Confirm' => 'warning',
                         'Barang Diambil User Langsung (Tanpa Monitor)' => 'info',
                         'Fisik Kelebihan Kirim (Over-delivery)' => 'danger',

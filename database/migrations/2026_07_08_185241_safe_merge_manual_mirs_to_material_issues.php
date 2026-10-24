@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -26,9 +27,9 @@ return new class extends Migration
             $table->text('digunakan_untuk')->nullable()->change();
         });
 
-        $manualMirs = \Illuminate\Support\Facades\DB::table('manual_mirs')->get();
+        $manualMirs = DB::table('manual_mirs')->get();
         foreach ($manualMirs as $mir) {
-            \Illuminate\Support\Facades\DB::table('material_issues')->insert([
+            DB::table('material_issues')->insert([
                 'jenis_mir' => 'manual',
                 'po_number' => $mir->po_number,
                 'delivery_order_receipt_id' => $mir->delivery_order_receipt_id,
@@ -45,12 +46,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        \Illuminate\Support\Facades\DB::table('material_issues')->where('jenis_mir', 'manual')->delete();
+        DB::table('material_issues')->where('jenis_mir', 'manual')->delete();
 
         Schema::table('material_issues', function (Blueprint $table) {
             $table->dropForeign(['delivery_order_receipt_id']);
             $table->dropColumn(['jenis_mir', 'image_path', 'po_number', 'delivery_order_receipt_id']);
-            
+
             $table->string('mir_number')->nullable(false)->change();
             $table->date('tanggal')->nullable(false)->change();
             $table->foreignId('purchase_order_issued_id')->nullable(false)->change();

@@ -3,15 +3,19 @@
 namespace App\Filament\Resources\GrsRdtvs\Pages;
 
 use App\Filament\Resources\GrsRdtvs\GrsRdtvResource;
+use App\Models\DeliveryOrderReceipt;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EditGrsRdtv extends EditRecord
 {
     protected static string $resource = GrsRdtvResource::class;
 
     protected array $uploadedFiles = [];
+
     protected array $uploadedItems = [];
 
     protected function getHeaderActions(): array
@@ -33,17 +37,18 @@ class EditGrsRdtv extends EditRecord
         if (isset($data['files'])) {
             $uniqueFiles = [];
             foreach ($data['files'] as $file) {
-                if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                if ($file instanceof TemporaryUploadedFile) {
                     $originalName = $file->getClientOriginalName();
                     $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
 
                     if (in_array($documentCode, $seen)) {
                         $duplicateDocuments[] = $documentCode;
+
                         continue;
                     }
                     $seen[] = $documentCode;
 
-                    $do = \App\Models\DeliveryOrderReceipt::where('document_code', $documentCode)->first();
+                    $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                     if ($do) {
                         if ($do->status === 'GRS') {
                             $alreadyProcessed[] = $documentCode;
@@ -65,17 +70,18 @@ class EditGrsRdtv extends EditRecord
             $uniqueItems = [];
             foreach ($data['items'] as $item) {
                 $file = is_array($item['file']) ? array_values($item['file'])[0] ?? null : $item['file'];
-                if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                if ($file instanceof TemporaryUploadedFile) {
                     $originalName = $file->getClientOriginalName();
                     $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
 
                     if (in_array($documentCode, $seen)) {
                         $duplicateDocuments[] = $documentCode;
+
                         continue;
                     }
                     $seen[] = $documentCode;
 
-                    $do = \App\Models\DeliveryOrderReceipt::where('document_code', $documentCode)->first();
+                    $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                     if ($do) {
                         if ($do->status === 'GRS') {
                             $alreadyProcessed[] = $documentCode;
@@ -105,7 +111,7 @@ class EditGrsRdtv extends EditRecord
         }
 
         if (! empty($errors)) {
-            \Filament\Notifications\Notification::make()
+            Notification::make()
                 ->title('Gagal Disimpan')
                 ->body(implode('<br>', $errors))
                 ->danger()
@@ -127,12 +133,12 @@ class EditGrsRdtv extends EditRecord
 
         if ($category === 'GRS' && ! empty($this->uploadedFiles)) {
             foreach ($this->uploadedFiles as $file) {
-                if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                if ($file instanceof TemporaryUploadedFile) {
                     $originalName = $file->getClientOriginalName();
                     $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
 
                     $path = $file->storeAs('grs-rdtv-docs', $originalName, 'public');
-                    $do = \App\Models\DeliveryOrderReceipt::where('document_code', $documentCode)->first();
+                    $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
 
                     if ($do) {
                         $do->update(['status' => $category]);
@@ -157,12 +163,12 @@ class EditGrsRdtv extends EditRecord
                 $file = is_array($item['file']) ? array_values($item['file'])[0] ?? null : $item['file'];
                 $reason = $item['reason'] ?? null;
 
-                if ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                if ($file instanceof TemporaryUploadedFile) {
                     $originalName = $file->getClientOriginalName();
                     $documentCode = pathinfo($originalName, PATHINFO_FILENAME);
 
                     $path = $file->storeAs('grs-rdtv-docs', $originalName, 'public');
-                    $do = \App\Models\DeliveryOrderReceipt::where('document_code', $documentCode)->first();
+                    $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
 
                     if ($do) {
                         $do->update([
@@ -187,7 +193,7 @@ class EditGrsRdtv extends EditRecord
         }
 
         if ($matchedCount > 0 || $notFoundCount > 0) {
-            \Filament\Notifications\Notification::make()
+            Notification::make()
                 ->title('Proses Lanjutan Selesai')
                 ->body("Berhasil memproses tambahan dokumen {$category}. Matched: {$matchedCount}, Not Found: {$notFoundCount}")
                 ->success()

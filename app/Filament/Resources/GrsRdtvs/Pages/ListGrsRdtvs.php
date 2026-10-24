@@ -30,12 +30,12 @@ class ListGrsRdtvs extends ListRecords
                 ->badge(GrsRdtvItem::count()),
             'grs' => Tab::make('GRS')
                 ->icon(Heroicon::OutlinedDocumentCheck)
-                ->modifyQueryUsing(fn($query) => $query->where('category', 'GRS'))
-                ->badge(GrsRdtvItem::whereHas('grsRdtv', fn($q) => $q->where('category', 'GRS'))->count()),
+                ->modifyQueryUsing(fn ($query) => $query->where('category', 'GRS'))
+                ->badge(GrsRdtvItem::whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count()),
             'rdtv' => Tab::make('RDTV')
                 ->icon(Heroicon::OutlinedArrowPath)
-                ->modifyQueryUsing(fn($query) => $query->where('category', 'RDTV'))
-                ->badge(GrsRdtvItem::whereHas('grsRdtv', fn($q) => $q->where('category', 'RDTV'))->count()),
+                ->modifyQueryUsing(fn ($query) => $query->where('category', 'RDTV'))
+                ->badge(GrsRdtvItem::whereHas('grsRdtv', fn ($q) => $q->where('category', 'RDTV'))->count()),
         ];
     }
 }

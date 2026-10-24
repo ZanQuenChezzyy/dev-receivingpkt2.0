@@ -4,7 +4,6 @@ namespace App\Filament\Resources\MaterialIssues\Pages;
 
 use App\Filament\Exports\MaterialIssueExporter;
 use App\Filament\Resources\MaterialIssues\MaterialIssueResource;
-use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\ExportAction;
 use Filament\Resources\Pages\ListRecords;
@@ -36,10 +35,10 @@ class ListMaterialIssues extends ListRecords
                 ->icon(Heroicon::OutlinedListBullet),
             'digital' => Tab::make('Digital')
                 ->icon(Heroicon::OutlinedComputerDesktop)
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('jenis_mir', 'digital')),
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('jenis_mir', 'digital')),
             'manual' => Tab::make('Manual')
                 ->icon(Heroicon::OutlinedDocumentArrowUp)
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('jenis_mir', 'manual')),
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('jenis_mir', 'manual')),
         ];
     }
 }

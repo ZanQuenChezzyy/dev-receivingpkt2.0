@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\MaterialIssuePrintController;
+use App\Http\Controllers\Admin\QCTransmittalPrintController;
 use App\Http\Controllers\Admin\TransmittalPrintController;
 use App\Http\Controllers\QRCodeController;
 use App\Livewire\Frontend\Home;
@@ -27,7 +28,7 @@ Route::get('/admin/warehouse-transmittals/{transmittal:transmittal_no}/print', [
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.warehouse-transmittals.print');
 
-Route::get('/admin/transmittals/{transmittal:transmittal_no}/print-qc', [\App\Http\Controllers\Admin\QCTransmittalPrintController::class, 'print'])
+Route::get('/admin/transmittals/{transmittal:transmittal_no}/print-qc', [QCTransmittalPrintController::class, 'print'])
     ->where('transmittal', '.*')
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.transmittals.print_qc');

@@ -24,4 +24,9 @@ class GrsRdtvItem extends Model
     {
         return $this->belongsTo(DeliveryOrderReceipt::class);
     }
+
+    public function invoicingReceipt()
+    {
+        return $this->hasOne(InvoicingReceipt::class);
+    }
 }

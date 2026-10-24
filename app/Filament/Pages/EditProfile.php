@@ -70,8 +70,8 @@ class EditProfile extends BaseEditProfile
                                     ->revealable(filament()->arePasswordsRevealable())
                                     ->rule(Password::default())
                                     ->autocomplete('new-password')
-                                    ->dehydrated(fn($state): bool => filled($state))
-                                    ->dehydrateStateUsing(fn($state): string => Hash::make($state))
+                                    ->dehydrated(fn ($state): bool => filled($state))
+                                    ->dehydrateStateUsing(fn ($state): string => Hash::make($state))
                                     ->live(debounce: 500)
                                     ->same('passwordConfirmation'),
 
@@ -81,7 +81,7 @@ class EditProfile extends BaseEditProfile
                                     ->password()
                                     ->revealable(filament()->arePasswordsRevealable())
                                     ->required()
-                                    ->visible(fn(Get $get): bool => filled($get('password')))
+                                    ->visible(fn (Get $get): bool => filled($get('password')))
                                     ->dehydrated(false),
                             ]),
                     ]),

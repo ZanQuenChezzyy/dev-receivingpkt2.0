@@ -35,7 +35,7 @@ class SyncChemicalToDeliveryOrderService
 
             $parts = array_filter([$poNo, $itemCountStr, $doNo, $dateStr, $stage]);
             $documentCode = null;
-            if (!empty($parts)) {
+            if (! empty($parts)) {
                 $joinedString = implode('-', $parts);
                 $upperString = strtoupper($joinedString);
                 $documentCode = preg_replace('/[^A-Z0-9\-_]/', '', $upperString);
@@ -58,11 +58,11 @@ class SyncChemicalToDeliveryOrderService
                 'eta_date' => $po ? $po->getAttribute('delivery_date_po') : $dor->getAttribute('eta_date'),
             ];
 
-            if (!$dor->exists) {
+            if (! $dor->exists) {
                 $payload['receipt_mode'] = 'Standard';
                 $payload['is_physically_received'] = true;
                 $payload['physical_received_date'] = $recDate;
-                
+
                 if ($poNo) {
                     $receiptQuery = DeliveryOrderReceipt::whereHas('deliveryOrderReceiptDetails.purchaseOrderIssued', function ($q) use ($poNo) {
                         $q->where('purchase_order_no', $poNo);
