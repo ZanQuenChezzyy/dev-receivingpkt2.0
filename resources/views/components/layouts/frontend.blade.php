@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="format-detection" content="telephone=no">
-    <title>{{ $title ?? 'Welcome - Receiving PKT' }}</title>
+    <title>{{ $title ?? 'Welcome - Receiving Pupuk Kalimantan Timur' }}</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -45,7 +45,20 @@
 
     <x-frontend.navbar />
 
-    <main class="flex-grow">
+    <!-- Ambient PKT Geometric Background (Fixed, Theme Responsive) -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
+        <div x-show="!isDark" class="absolute inset-0 bg-[radial-gradient(#0A4F86_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.05]"></div>
+        <div x-show="isDark" style="display: none;" class="absolute inset-0 bg-[radial-gradient(#F47920_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.04]"></div>
+
+        <!-- Minimal PKT Corporate Watermark Top-Right -->
+        <div class="absolute -top-16 -right-16 w-[420px] md:w-[600px] h-[520px] md:h-[720px] pointer-events-none overflow-hidden">
+            <img :src="isDark ? '{{ asset('images/pattern/pkt-pattern-white.png') }}' : '{{ asset('images/pattern/pkt-pattern-dark.png') }}'" 
+                alt="Pupuk Kalimantan Timur Pattern" 
+                class="w-full h-full object-contain opacity-[0.08] dark:opacity-[0.05] transition-opacity duration-500">
+        </div>
+    </div>
+
+    <main class="flex-grow relative z-10">
         {{ $slot }}
     </main>
 

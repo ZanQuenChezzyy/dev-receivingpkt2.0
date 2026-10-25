@@ -19,6 +19,8 @@
             style="animation-duration: 15s;"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[50rem] h-[50rem] bg-blue-600 rounded-full mix-blend-multiply filter blur-[140px] opacity-10 dark:opacity-5 animate-pulse"
             style="animation-duration: 20s;"></div>
+
+
     </div>
 
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -87,7 +89,8 @@
                 </div>
 
                 <div class="md:pl-[8.5rem]">
-                    <div class="glass-panel p-6 sm:p-8 lg:p-10 hover:-translate-y-0.5">
+                    <div class="glass-panel p-6 sm:p-8 lg:p-10 hover:-translate-y-0.5 relative overflow-hidden">
+
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                             <!-- Nama Peminta -->
                             <div data-tour="nama-peminta">
@@ -225,7 +228,8 @@
                 </div>
 
                 <div class="md:pl-[8.5rem]">
-                    <div class="glass-panel p-6 sm:p-8 lg:p-10 hover:-translate-y-0.5">
+                    <div class="glass-panel p-6 sm:p-8 lg:p-10 hover:-translate-y-0.5 relative overflow-hidden">
+
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                             <div class="min-w-0" data-tour="tanggal">
                                 <label
@@ -838,7 +842,8 @@
 
                 <!-- Decorative Header -->
                 <div
-                    class="absolute top-0 inset-x-0 h-32 bg-gradient-to-br from-[#F47920]/20 to-orange-600/20 dark:from-[#F47920]/10 dark:to-orange-900/10">
+                    class="absolute top-0 inset-x-0 h-32 bg-gradient-to-br from-[#F47920]/20 to-orange-600/20 dark:from-[#F47920]/10 dark:to-orange-900/10 relative overflow-hidden">
+
                 </div>
 
                 <div class="relative p-8 sm:p-10">

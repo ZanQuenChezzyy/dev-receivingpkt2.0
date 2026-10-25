@@ -62,6 +62,10 @@ class AdminPanelProvider extends PanelProvider
                 'panels::global-search.after',
                 fn (): string => Blade::render('@livewire(\'ai-system-toggle\')')
             )
+            ->renderHook(
+                'panels::sidebar.footer',
+                fn (): string => Blade::render('@include(\'filament.components.sidebar-pattern\')')
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')

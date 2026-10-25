@@ -7,6 +7,8 @@
         <!-- Glow Orbs -->
         <div class="absolute top-[-10%] left-[-10%] w-[50rem] h-[50rem] bg-[#F47920] rounded-full mix-blend-multiply filter blur-[140px] opacity-10 dark:opacity-5 animate-pulse" style="animation-duration: 15s;"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[50rem] h-[50rem] bg-blue-600 rounded-full mix-blend-multiply filter blur-[140px] opacity-10 dark:opacity-5 animate-pulse" style="animation-duration: 20s;"></div>
+
+
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -18,7 +20,7 @@
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#F47920]"></span>
                 </span>
-                <span class="text-xs font-bold tracking-widest uppercase text-slate-600 dark:text-[#F47920]">ReceivingPKT Info</span>
+                <span class="text-xs font-bold tracking-widest uppercase text-slate-600 dark:text-[#F47920]">Receiving Pupuk Kalimantan Timur</span>
             </div>
             
             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-800 dark:text-white tracking-tight mb-6">
@@ -77,7 +79,8 @@
         <!-- Data Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
             @forelse($this->items as $item)
-                <div class="glass-panel p-6 hover:-translate-y-1 group flex flex-col justify-between h-full">
+                <div class="glass-panel p-6 hover:-translate-y-1 group flex flex-col justify-between h-full relative overflow-hidden">
+
                     
                     <div>
                         <!-- Badge & Date -->
@@ -166,6 +169,7 @@
         @else
         <!-- Data Table -->
         <div class="glass-panel overflow-hidden relative z-10 rounded-2xl border border-white/50 dark:border-white/10 shadow-sm backdrop-blur-xl bg-white/40 dark:bg-black/20">
+
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse min-w-max">
                     <thead>

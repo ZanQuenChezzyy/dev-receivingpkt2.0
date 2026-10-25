@@ -5,7 +5,7 @@
             <div class="flex items-center">
                 <a href="/" wire:navigate class="block">
                     <!-- Gunakan logo putih untuk tema gelap -->
-                    <img :src="isDark ? '{{ asset('images/logo/receiving_white.png') }}' : '{{ asset('images/logo/receiving_dark.png') }}'" alt="Receiving PKT Logo"
+                    <img :src="isDark ? '{{ asset('images/logo/receiving_white.png') }}' : '{{ asset('images/logo/receiving_dark.png') }}'" alt="Receiving Pupuk Kalimantan Timur Logo"
                         class="h-7 sm:h-8 md:h-10 w-auto object-contain transition-transform hover:scale-105 duration-300 drop-shadow-md">
                 </a>
             </div>
@@ -37,7 +37,23 @@
                     </div>
                 </div>
 
-                <!-- Link 2: Pengambilan Barang -->
+                <!-- Link 1: Fitur -->
+                <div class="relative group h-full py-2 flex items-center">
+                    <a href="/#fitur-layanan" class="flex items-center gap-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-[#F47920] dark:hover:text-white transition-colors relative pb-1">
+                        Fitur
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#F47920] to-[#BE5A27] transition-all duration-300 group-hover:w-full shadow-[0_0_8px_rgba(244,121,32,0.8)]"></span>
+                    </a>
+                </div>
+
+                <!-- Link 2: Alur Proses -->
+                <div class="relative group h-full py-2 flex items-center">
+                    <a href="/#alur-proses" class="flex items-center gap-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-[#F47920] dark:hover:text-white transition-colors relative pb-1">
+                        Alur Proses
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#F47920] to-[#BE5A27] transition-all duration-300 group-hover:w-full shadow-[0_0_8px_rgba(244,121,32,0.8)]"></span>
+                    </a>
+                </div>
+
+                <!-- Link 3: Pengambilan Barang -->
                 <div class="relative group h-full py-2 flex items-center">
                     <a href="{{ route('frontend.mir.create') }}" wire:navigate class="flex items-center gap-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-[#F47920] dark:hover:text-white transition-colors relative pb-1">
                         Pengambilan Barang
@@ -84,7 +100,7 @@
             class="lg:hidden fixed top-0 right-0 z-50 w-[85%] sm:w-[60%] md:w-80 h-screen bg-white/40 dark:bg-[#031525]/60 backdrop-blur-3xl border-l border-white/40 dark:border-white/10 shadow-2xl overflow-y-auto flex flex-col">
             
             <div class="px-5 py-5 flex items-center justify-between sticky top-0 bg-white/30 dark:bg-slate-900/30 backdrop-blur-xl border-b border-white/30 dark:border-white/10 z-10 shadow-sm">
-                <img :src="isDark ? '{{ asset('images/logo/receiving_white.png') }}' : '{{ asset('images/logo/receiving_dark.png') }}'" alt="Receiving PKT Logo" class="h-6 w-auto object-contain drop-shadow-md">
+                <img :src="isDark ? '{{ asset('images/logo/receiving_white.png') }}' : '{{ asset('images/logo/receiving_dark.png') }}'" alt="Receiving Pupuk Kalimantan Timur Logo" class="h-6 w-auto object-contain drop-shadow-md">
                 <button @click="mobileMenuOpen = false" class="glass-btn p-2 -mr-2 text-slate-500 dark:text-slate-400 hover:text-[#F47920] dark:hover:text-white rounded-full transition-transform hover:scale-105 active:scale-95">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
@@ -109,13 +125,24 @@
                     </div>
                 </div>
 
+                <a @click="mobileMenuOpen = false" href="/#fitur-layanan" class="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex items-center gap-2 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
+                    <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Fitur Layanan
+                </a>
+
+                <a @click="mobileMenuOpen = false" href="/#alur-proses" class="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex items-center gap-2 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
+                    <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Alur Perjalanan Material
+                </a>
+
                 <a href="{{ route('frontend.mir.create') }}" wire:navigate class="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex items-center gap-2 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
                     <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     Pengambilan Barang
                 </a>
             </div>
 
-            <div class="mt-auto p-5 glass-nav border-b-0 border-x-0">
+
+            <div class="mt-auto p-5 glass-nav border-b-0 border-x-0 relative z-10">
                 <a href="{{ filament()->getLoginUrl() }}"
                     class="w-full flex items-center justify-center gap-2 px-5 py-3.5 text-sm font-bold text-white bg-linear-to-r from-[#F47920] to-[#BE5A27] rounded-xl shadow-[0_8px_20px_-6px_rgba(244,121,32,0.5)] hover:-translate-y-0.5 transition-transform">
                     <span>Login</span>

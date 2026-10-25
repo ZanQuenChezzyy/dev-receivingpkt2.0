@@ -98,3 +98,46 @@
     border-color: rgba(244, 121, 32, 0.5);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(244, 121, 32, 0.2);
 }
+
+/* =========================================================
+   Official PKT Corporate Pattern Overlays & Watermarks
+   ========================================================= */
+.pkt-pattern-overlay {
+    background-image: url('/images/pattern/pkt-pattern-dark.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.08;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.dark .pkt-pattern-overlay {
+    background-image: url('/images/pattern/pkt-pattern-white.png');
+    opacity: 0.07;
+}
+
+.pkt-pattern-repeat {
+    background-image: url('/images/pattern/pkt-pattern-dark.png');
+    background-repeat: repeat;
+    background-size: 380px auto;
+    opacity: 0.04;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.dark .pkt-pattern-repeat {
+    background-image: url('/images/pattern/pkt-pattern-white.png');
+    opacity: 0.035;
+}
+
+.pkt-card-watermark {
+    background-image: url('/images/pattern/pkt-pattern-dark.png');
+    background-repeat: no-repeat;
+    background-position: right -30px bottom -30px;
+    background-size: 240px auto;
+}
+
+.dark .pkt-card-watermark {
+    background-image: url('/images/pattern/pkt-pattern-white.png');
+}

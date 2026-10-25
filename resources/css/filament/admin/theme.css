@@ -14,6 +14,29 @@
 /* Sidebar - Liquid Glass Upgrade */
 .fi-sidebar {
     @apply !bg-white/30 dark:!bg-gray-900/40 !backdrop-blur-3xl !border-r !border-white/50 border-r-white/20 dark:!border-gray-700/50 dark:!border-r-gray-600/50 !shadow-[4px_0_24px_rgba(0,0,0,0.05)];
+    overflow: hidden;
+}
+
+.fi-sidebar-nav,
+.fi-sidebar-footer {
+    position: relative;
+    z-index: 1;
+}
+
+.fi-sidebar-pattern-light {
+    display: block;
+}
+
+.fi-sidebar-pattern-dark {
+    display: none;
+}
+
+.dark .fi-sidebar-pattern-light {
+    display: none !important;
+}
+
+.dark .fi-sidebar-pattern-dark {
+    display: block !important;
 }
 
 .fi-sidebar-header {

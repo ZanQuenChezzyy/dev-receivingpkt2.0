@@ -1,16 +1,17 @@
 <!-- Background Texture -->
-    <div class="absolute inset-0 z-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-size-[24px_24px] opacity-20"></div>
+    <div class="absolute inset-0 z-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-size-[24px_24px] opacity-15 dark:opacity-10"></div>
+
 
     <!-- Animated Glassmorphism Blobs -->
     <div class="absolute top-0 right-0 z-0 w-full h-full overflow-hidden pointer-events-none">
         <!-- Top Right Navy Glow -->
-        <div class="absolute -top-[10%] -right-[5%] w-[50%] h-[60%] rounded-full bg-linear-to-bl from-[#0A4F86]/40 via-[#0A4F86]/10 to-transparent blur-[120px] animate-pulse duration-3000"></div>
+        <div class="absolute -top-[10%] -right-[5%] w-[50%] h-[60%] rounded-full bg-gradient-to-bl from-[#0A4F86]/35 via-[#0A4F86]/10 to-transparent blur-[130px] animate-pulse" style="animation-duration: 4s;"></div>
         <!-- Bottom Left Orange Glow -->
-        <div class="absolute -bottom-[10%] -left-[10%] w-[40%] h-[50%] rounded-full bg-linear-to-tr from-[#F47920]/30 via-[#F47920]/5 to-transparent blur-[120px] animate-pulse duration-3000" style="animation-delay: 2s;"></div>
+        <div class="absolute -bottom-[10%] -left-[10%] w-[40%] h-[50%] rounded-full bg-gradient-to-tr from-[#F47920]/25 via-[#F47920]/5 to-transparent blur-[130px] animate-pulse" style="animation-duration: 5s; animation-delay: 2s;"></div>
         <!-- Center Subtle Blue -->
-        <div class="absolute top-[30%] left-[30%] w-[30%] h-[40%] rounded-full bg-[#0A4F86]/20 blur-[150px]"></div>
+        <div class="absolute top-[30%] left-[30%] w-[30%] h-[40%] rounded-full bg-[#0A4F86]/15 blur-[160px]"></div>
     </div>
-<main class="relative z-10 flex items-center justify-center min-h-screen pt-28 pb-12">
+<section class="relative z-10 flex items-center justify-center min-h-[85vh] pt-28 pb-10">
         <div class="container mx-auto px-5 md:px-12 lg:px-24 flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-12">
 
             <!-- Left Column: Text & CTA -->
@@ -21,12 +22,12 @@
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
                         <span class="relative inline-flex rounded-full w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#F47920]"></span>
                     </span>
-                    ReceivingPKT v2.0
+                    Receiving Pupuk Kalimantan Timur v2.0
                 </div>
 
                 <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] text-slate-800 dark:text-white mb-6 tracking-tight">
                     Otomasi Logistik <br class="hidden sm:block">
-                    <span class="text-transparent bg-clip-text bg-linear-to-r from-[#F47920] to-[#ff9b52] relative inline-block">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#ff9b52] relative inline-block">
                         Inventaris
                         <svg class="absolute w-full h-2 sm:h-3 -bottom-2 left-0 text-[#0A4F86]/80 dark:text-[#F47920]/80" viewBox="0 0 100 10" preserveAspectRatio="none">
                             <path d="M0 5 Q 50 10 100 5" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
@@ -34,14 +35,14 @@
                     </span>
                 </h1>
 
-                <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-10 max-w-lg leading-relaxed font-medium">
+                <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-lg leading-relaxed font-medium">
                     Platform terpadu untuk memantau pergerakan material, mempercepat proses administrasi di <span class="text-[#F47920] font-bold">receiving</span>, dan memastikan akurasi data gudang secara presisi.
                 </p>
 
                 <!-- Actions -->
                 <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                     <a href="{{ filament()->getLoginUrl() }}"
-                        class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-sm sm:text-base font-bold text-white bg-linear-to-r from-[#F47920] to-[#BE5A27] rounded-2xl shadow-[0_10px_30px_-10px_rgba(244,121,32,0.8)] hover:shadow-[0_15px_40px_-10px_rgba(244,121,32,1)] hover:-translate-y-1 transition-all duration-300">
+                        class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-sm sm:text-base font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-2xl shadow-[0_10px_30px_-10px_rgba(244,121,32,0.8)] hover:shadow-[0_15px_40px_-10px_rgba(244,121,32,1)] hover:-translate-y-1 transition-all duration-300">
                         Masuk Dashboard
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </a>
@@ -50,33 +51,61 @@
                     </a>
                 </div>
 
-                <!-- Glass Cards -->
-                <div class="mt-12 sm:mt-16 w-full grid grid-cols-3 gap-3 sm:gap-5 max-w-md">
-                    <!-- Service Card 1 -->
-                    <div class="glass-panel p-4 sm:p-5">
-                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#0A4F86]/10 dark:bg-[#0A4F86]/50 border border-[#0A4F86]/20 dark:border-[#0A4F86] flex items-center justify-center mb-3">
-                            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#0A4F86] dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                <!-- Quick Tracking Bar -->
+                <div class="mt-6 w-full max-w-md">
+                    <form wire:submit="searchMaterial" class="relative flex items-center group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#F47920] transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
                         </div>
-                        <p class="text-lg sm:text-xl font-black text-slate-800 dark:text-white">ZSM</p>
-                        <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">Support</p>
+                        <input wire:model="quickSearch" type="text"
+                            placeholder="Ketik Nomor PO / Deskripsi Material..."
+                            class="glass-input w-full pl-10 pr-24 py-3 text-xs sm:text-sm text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none">
+                        <button type="submit"
+                            class="absolute right-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-lg shadow-sm hover:brightness-110 active:scale-95 transition-all">
+                            Lacak
+                        </button>
+                    </form>
+                    <div class="flex items-center gap-2 mt-2 px-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span class="font-semibold text-slate-400 dark:text-slate-500">Pencarian Cepat:</span>
+                        <a href="{{ route('frontend.list-material', ['search' => '53000']) }}" wire:navigate class="hover:text-[#F47920] underline transition-colors">PO 53000...</a>
+                        <span>•</span>
+                        <a href="{{ route('frontend.list-material', ['search' => 'Sparepart']) }}" wire:navigate class="hover:text-[#F47920] underline transition-colors">Sparepart</a>
                     </div>
+                </div>
 
-                    <!-- Service Card 2 -->
-                    <div class="glass-panel p-4 sm:p-5">
-                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#F47920]/10 dark:bg-[#F47920]/20 border border-[#F47920]/30 dark:border-[#F47920]/50 flex items-center justify-center mb-3">
-                            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <!-- Glass Badges: 5 Material Types -->
+                <div class="mt-8 sm:mt-10 w-full max-w-lg">
+                    <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5">
+                        Tipe Material SAP (MTART)
+                    </p>
+                    <div class="grid grid-cols-5 gap-2 sm:gap-2.5">
+                        <!-- ZSP -->
+                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-1 transition-transform">
+                            <span class="text-xs sm:text-sm font-black text-[#F47920] block">ZSP</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block truncate">Sparepart</span>
                         </div>
-                        <p class="text-lg sm:text-xl font-black text-slate-800 dark:text-white">ZSP</p>
-                        <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">Sparepart</p>
-                    </div>
-
-                    <!-- Service Card 3 -->
-                    <div class="glass-panel p-4 sm:p-5">
-                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#0A4F86]/10 dark:bg-[#0A4F86]/50 border border-[#0A4F86]/20 dark:border-[#0A4F86] flex items-center justify-center mb-3">
-                            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#0A4F86] dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                        <!-- ZRM -->
+                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-1 transition-transform">
+                            <span class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 block">ZRM</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block truncate">Raw Mat.</span>
                         </div>
-                        <p class="text-lg sm:text-xl font-black text-slate-800 dark:text-white">ZRM</p>
-                        <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">Raw Mat.</p>
+                        <!-- ZPM -->
+                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-1 transition-transform">
+                            <span class="text-xs sm:text-sm font-black text-purple-600 dark:text-purple-400 block">ZPM</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block truncate">Packaging</span>
+                        </div>
+                        <!-- ZSM -->
+                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-1 transition-transform">
+                            <span class="text-xs sm:text-sm font-black text-[#0A4F86] dark:text-blue-400 block">ZSM</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block truncate">Support</span>
+                        </div>
+                        <!-- ZFP -->
+                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-1 transition-transform">
+                            <span class="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400 block">ZFP</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block truncate">Finish Prod.</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -230,7 +259,7 @@
 
                 <div class="text-slate-600 dark:text-slate-300 mb-6 sm:mb-8 leading-relaxed">
                     @if($aiSettingActive)
-                        <p class="text-sm sm:text-base">Mokondo AI Receiving PKT v2.0 saat ini telah aktif! Asisten chatbot cerdas kami siap membantu Anda mengecek status barang dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.</p>
+                        <p class="text-sm sm:text-base">Mokondo AI Receiving Pupuk Kalimantan Timur v2.0 saat ini telah aktif! Asisten chatbot cerdas kami siap membantu Anda mengecek status barang dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.</p>
 
                         <div class="mt-4 sm:mt-6 relative group overflow-hidden rounded-2xl">
                             <!-- Animated Glow Background -->
@@ -251,7 +280,7 @@
                             </div>
                         </div>
                     @else
-                        <p class="text-sm sm:text-base">Mokondo AI Receiving PKT v2.0 saat ini sedang dalam masa pemeliharaan dan pelatihan Model (Training). Layanan chatbot cerdas untuk pengecekan status dan pengambilan barang sementara tidak dapat digunakan. Kami mohon maaf atas ketidaknyamanan ini.</p>
+                        <p class="text-sm sm:text-base">Mokondo AI Receiving Pupuk Kalimantan Timur v2.0 saat ini sedang dalam masa pemeliharaan dan pelatihan Model (Training). Layanan chatbot cerdas untuk pengecekan status dan pengambilan barang sementara tidak dapat digunakan. Kami mohon maaf atas ketidaknyamanan ini.</p>
                     @endif
                 </div>
 
@@ -260,7 +289,7 @@
                 </button>
             </div>
         </div>
-    </main>
+    </section>
 
     <!-- Shepherd.js for Interactive Tour -->
     <link rel="stylesheet" href="https://unpkg.com/shepherd.js@11.0.1/dist/css/shepherd.css"/>
