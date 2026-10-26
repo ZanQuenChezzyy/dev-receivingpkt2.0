@@ -17,6 +17,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
@@ -360,76 +361,129 @@ class InvoicingReceiptsTable
                     ->button()
                     ->outlined()
                     ->size(Size::Small)
+                    ->modalWidth('4xl')
+                    ->modalIcon('heroicon-o-document-currency-dollar')
                     ->modalHeading(fn (InvoicingReceipt $record) => "Input Data Invoice & No. GRS - PO: {$record->no_po}")
-                    ->modalDescription('Lengkapi No. Invoice, No. DO, Faktur Pajak, dan Nomor GRS resmi.')
+                    ->modalDescription('Lengkapi No. Invoice, No. DO, Faktur Pajak, dan Nomor GRS resmi SAP.')
+                    ->modalSubmitActionLabel('Simpan Data Invoice')
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.input-invoice-modal-header', ['record' => $record]))
                     ->schema([
-                        TextInput::make('no_grs')
-                            ->label('No. GRS')
-                            ->placeholder('Nomor dokumen GRS resmi (SAP)')
-                            ->default(fn (InvoicingReceipt $record) => $record->no_grs)
-                            ->required(fn (InvoicingReceipt $record) => $record->jenis === 'GRS')
-                            ->visible(fn (InvoicingReceipt $record) => $record->jenis !== 'RDTV')
-                            ->helperText('Wajib diisi dengan Nomor GRS resmi SAP/Fisik.'),
+                        Section::make('Dokumen Penagihan Wajib')
+                            ->description('Nomor dokumen resmi penagihan vendor dan slip resmi GRS/RDTV dari SAP.')
+                            ->icon('heroicon-o-clipboard-document-check')
+                            ->schema([
+                                TextInput::make('no_grs')
+                                    ->label('No. GRS (Resmi SAP)')
+                                    ->placeholder('Contoh: 5000xxxxxx')
+                                    ->prefixIcon('heroicon-m-hashtag')
+                                    ->default(fn (InvoicingReceipt $record) => $record->no_grs)
+                                    ->required(fn (InvoicingReceipt $record) => $record->jenis === 'GRS')
+                                    ->visible(fn (InvoicingReceipt $record) => $record->jenis !== 'RDTV')
+                                    ->hint('Wajib dari SAP')
+                                    ->hintColor('danger')
+                                    ->hintIcon('heroicon-m-exclamation-circle')
+                                    ->helperText('Nomor GRS resmi SAP dari slip fisik (bukan kode dokumen file).'),
 
-                        TextInput::make('no_rdtv')
-                            ->label('No. RDTV')
-                            ->placeholder('Nomor dokumen RDTV')
-                            ->default(fn (InvoicingReceipt $record) => $record->no_rdtv)
-                            ->required(fn (InvoicingReceipt $record) => $record->jenis === 'RDTV')
-                            ->visible(fn (InvoicingReceipt $record) => $record->jenis === 'RDTV')
-                            ->helperText('Wajib diisi dengan Nomor RDTV resmi.'),
+                                TextInput::make('no_rdtv')
+                                    ->label('No. RDTV (Resmi)')
+                                    ->placeholder('Nomor dokumen RDTV')
+                                    ->prefixIcon('heroicon-m-hashtag')
+                                    ->default(fn (InvoicingReceipt $record) => $record->no_rdtv)
+                                    ->required(fn (InvoicingReceipt $record) => $record->jenis === 'RDTV')
+                                    ->visible(fn (InvoicingReceipt $record) => $record->jenis === 'RDTV')
+                                    ->hint('Wajib RDTV')
+                                    ->hintColor('danger')
+                                    ->helperText('Nomor RDTV resmi dari slip fisik.'),
 
-                        TextInput::make('no_invoice')
-                            ->label('Nomor Invoice')
-                            ->placeholder('Nomor tagihan vendor')
-                            ->default(fn (InvoicingReceipt $record) => $record->no_invoice)
-                            ->required(),
+                                TextInput::make('no_invoice')
+                                    ->label('Nomor Invoice')
+                                    ->placeholder('Contoh: INV-2026/001')
+                                    ->prefixIcon('heroicon-m-document-text')
+                                    ->default(fn (InvoicingReceipt $record) => $record->no_invoice)
+                                    ->required()
+                                    ->hint('Wajib dari Vendor')
+                                    ->hintColor('danger')
+                                    ->helperText('Nomor invoice penagihan resmi yang tertera pada berkas tagihan vendor.'),
 
-                        TextInput::make('no_do')
-                            ->label('Nomor DO')
-                            ->placeholder('Nomor Delivery Order')
-                            ->default(fn (InvoicingReceipt $record) => $record->no_do)
-                            ->required(),
+                                TextInput::make('no_do')
+                                    ->label('Nomor DO (Delivery Order)')
+                                    ->placeholder('Nomor Delivery Order')
+                                    ->prefixIcon('heroicon-m-truck')
+                                    ->default(fn (InvoicingReceipt $record) => $record->no_do)
+                                    ->required()
+                                    ->hint('Wajib')
+                                    ->hintColor('danger')
+                                    ->helperText('Nomor surat jalan / Delivery Order yang ditagihkan.'),
 
-                        TextInput::make('faktur_pajak')
-                            ->label('Nomor Faktur Pajak')
-                            ->placeholder('Contoh: 010.001-26.12345678')
-                            ->default(fn (InvoicingReceipt $record) => $record->faktur_pajak)
-                            ->required(),
+                                TextInput::make('faktur_pajak')
+                                    ->label('Nomor Faktur Pajak')
+                                    ->placeholder('Contoh: 010.001-26.12345678')
+                                    ->prefixIcon('heroicon-m-receipt-percent')
+                                    ->default(fn (InvoicingReceipt $record) => $record->faktur_pajak)
+                                    ->required()
+                                    ->hint('Wajib')
+                                    ->hintColor('danger')
+                                    ->helperText('Nomor seri Faktur Pajak elektronik (e-Faktur) dari vendor.'),
+                            ])->columns(2),
 
-                        TextInput::make('qty_penagihan')
-                            ->label('Quantity Penagihan')
-                            ->numeric()
-                            ->default(fn (InvoicingReceipt $record) => $record->qty_penagihan),
+                        Section::make('Rincian Kuantitas & Nilai Penagihan')
+                            ->description('Kuantitas barang dan perhitungan nilai tagihan. Nilai Include PPN terhitung otomatis (+11%).')
+                            ->icon('heroicon-o-calculator')
+                            ->schema([
+                                TextInput::make('qty_penagihan')
+                                    ->label('Quantity Penagihan')
+                                    ->numeric()
+                                    ->prefixIcon('heroicon-m-archive-box')
+                                    ->default(fn (InvoicingReceipt $record) => $record->qty_penagihan)
+                                    ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI')
+                                    ->hint('Ditagihkan Vendor')
+                                    ->helperText('Jumlah kuantitas barang yang ditagihkan oleh vendor.'),
 
-                        TextInput::make('qty_po')
-                            ->label('Quantity di PO')
-                            ->numeric()
-                            ->default(fn (InvoicingReceipt $record) => $record->qty_po),
+                                TextInput::make('qty_po')
+                                    ->label('Quantity di PO')
+                                    ->numeric()
+                                    ->prefixIcon('heroicon-m-shopping-cart')
+                                    ->default(fn (InvoicingReceipt $record) => $record->qty_po)
+                                    ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI')
+                                    ->hint('Referensi PO')
+                                    ->helperText('Total kuantitas barang yang tertera pada PO terbit.'),
 
-                        TextInput::make('uoi')
-                            ->label('Satuan (UOI)')
-                            ->default(fn (InvoicingReceipt $record) => $record->uoi),
+                                TextInput::make('uoi')
+                                    ->label('Satuan Barang (UOI)')
+                                    ->prefixIcon('heroicon-m-tag')
+                                    ->placeholder('PCS, TON, SET, dll')
+                                    ->default(fn (InvoicingReceipt $record) => $record->uoi)
+                                    ->helperText('Satuan Unit of Issue barang.'),
 
-                        TextInput::make('subtotal_exclude_ppn')
-                            ->label('Sub Total (Exclude PPN)')
-                            ->numeric()
-                            ->prefix('Rp')
-                            ->default(fn (InvoicingReceipt $record) => $record->subtotal_exclude_ppn)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, Set $set) {
-                                if ($state !== null && is_numeric($state)) {
-                                    $subtotal = (float) $state;
-                                    $set('subtotal_include_ppn', round($subtotal + ($subtotal * 0.11), 2));
-                                }
-                            }),
+                                TextInput::make('subtotal_exclude_ppn')
+                                    ->label('Sub Total (Exclude PPN)')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->default(fn (InvoicingReceipt $record) => $record->subtotal_exclude_ppn)
+                                    ->live(onBlur: true)
+                                    ->hint('DPP Sebelum PPN')
+                                    ->hintColor('primary')
+                                    ->afterStateUpdated(function ($state, Set $set) {
+                                        if ($state !== null && is_numeric($state)) {
+                                            $subtotal = (float) $state;
+                                            $set('subtotal_include_ppn', round($subtotal + ($subtotal * 0.11), 2));
+                                        } else {
+                                            $set('subtotal_include_ppn', null);
+                                        }
+                                    })
+                                    ->helperText('Dasar Pengenaan Pajak (DPP) sebelum dikenakan PPN.'),
 
-                        TextInput::make('subtotal_include_ppn')
-                            ->label('Sub Total (Include PPN 11%)')
-                            ->numeric()
-                            ->prefix('Rp')
-                            ->default(fn (InvoicingReceipt $record) => $record->subtotal_include_ppn)
-                            ->helperText('Rumus otomatis: Sub Total (Exclude PPN) + 11% PPN'),
+                                TextInput::make('subtotal_include_ppn')
+                                    ->label('Sub Total (Include PPN 11%)')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->default(fn (InvoicingReceipt $record) => $record->subtotal_include_ppn)
+                                    ->hint('Otomatis +11% PPN')
+                                    ->hintColor('success')
+                                    ->hintIcon('heroicon-m-sparkles')
+                                    ->helperText('Rumus otomatis: Exclude PPN + (Exclude PPN × 11%).'),
+                            ])->columns(2),
                     ])
                     ->action(function (InvoicingReceipt $record, array $data) {
                         $record->update([
@@ -446,8 +500,8 @@ class InvoicingReceiptsTable
                         ]);
 
                         Notification::make()
-                            ->title('Data Invoice Tersimpan')
-                            ->body("Data invoice untuk PO {$record->no_po} berhasil diperbarui.")
+                            ->title('Data Invoice Berhasil Disimpan')
+                            ->body("Data penagihan untuk PO {$record->no_po} telah diperbarui.")
                             ->success()
                             ->send();
                     }),
