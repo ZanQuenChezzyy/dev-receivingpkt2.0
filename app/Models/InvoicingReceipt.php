@@ -91,9 +91,12 @@ class InvoicingReceipt extends Model
     protected static function booted(): void
     {
         static::saving(function (InvoicingReceipt $record) {
-            // Auto hitung Subtotal Include PPN jika exclude PPN ada tapi include kosong
-            if ($record->subtotal_exclude_ppn !== null && $record->subtotal_include_ppn === null) {
-                $record->subtotal_include_ppn = round((float) $record->subtotal_exclude_ppn * 1.11, 2);
+            // Auto hitung Subtotal Include PPN: rumus = Exclude + (Exclude * 11%)
+            if ($record->subtotal_exclude_ppn !== null) {
+                if ($record->subtotal_include_ppn === null || $record->isDirty('subtotal_exclude_ppn')) {
+                    $exclude = (float) $record->subtotal_exclude_ppn;
+                    $record->subtotal_include_ppn = round($exclude + ($exclude * 0.11), 2);
+                }
             }
 
             // Auto hitung Lama Pekerjaan

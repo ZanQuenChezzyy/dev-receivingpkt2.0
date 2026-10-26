@@ -1,14 +1,22 @@
 <?php
 
+use App\Filament\Resources\InvoicingReceipts\Pages\ListInvoicingReceipts;
+use App\Filament\Resources\InvoicingReceipts\Schemas\InvoicingReceiptForm;
+use App\Filament\Resources\InvoicingReceipts\Tables\InvoicingReceiptsTable;
 use App\Models\InvoicingReceipt;
 use App\Models\PicMaterialAssignment;
 use App\Models\PurchaseOrderIssued;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Services\InvoicingAssignmentService;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Livewire\Component;
 
 test('vendor model has all 13 required columns and handles multiple emails', function () {
     $vendor = new Vendor;
@@ -238,5 +246,69 @@ test('copy to mitraku modal blade view renders successfully without undefined co
     expect($view)->toContain('PO-12345')
         ->and($view)->toContain('DO-67890')
         ->and($view)->toContain('GRS-111')
-        ->and($view)->toContain('copiedField');
+        ->and($view)->toContain('copiedField')
+        ->and($view)->toContain('Quantity di PO');
+});
+
+test('invoicing receipt model computes subtotal include ppn with 11% formula', function () {
+    $exclude1 = 1000000.0;
+    $include1 = round($exclude1 + ($exclude1 * 0.11), 2);
+    expect($include1)->toBe(1110000.0);
+
+    $exclude2 = 150250.50;
+    $include2 = round($exclude2 + ($exclude2 * 0.11), 2);
+    expect($include2)->toBe(166778.06);
+});
+
+test('invoicing receipt form configures required validation for no_invoice, no_do, faktur_pajak, and no_grs', function () {
+    $livewire = new class extends Component implements HasSchemas
+    {
+        use InteractsWithSchemas;
+    };
+
+    $schema = (new Schema)->livewire($livewire);
+    InvoicingReceiptForm::configure($schema);
+    $components = collect($schema->getComponents());
+
+    $flattenComponents = function ($comps) use (&$flattenComponents) {
+        $flat = collect();
+        foreach ($comps as $c) {
+            $flat->push($c);
+            if (method_exists($c, 'getChildComponents')) {
+                $flat = $flat->merge($flattenComponents($c->getChildComponents()));
+            }
+        }
+
+        return $flat;
+    };
+
+    $allFields = $flattenComponents($components)->filter(fn ($c) => method_exists($c, 'getName'))->keyBy(fn ($c) => $c->getName());
+
+    expect($allFields)->toHaveKey('no_invoice')
+        ->and($allFields)->toHaveKey('no_do')
+        ->and($allFields)->toHaveKey('faktur_pajak')
+        ->and($allFields)->toHaveKey('no_grs')
+        ->and($allFields)->toHaveKey('qty_penagihan')
+        ->and($allFields)->toHaveKey('qty_po')
+        ->and($allFields)->toHaveKey('uoi')
+        ->and($allFields)->toHaveKey('subtotal_exclude_ppn')
+        ->and($allFields)->toHaveKey('subtotal_include_ppn');
+
+    expect($allFields['no_invoice']->isRequired())->toBeTrue()
+        ->and($allFields['no_do']->isRequired())->toBeTrue()
+        ->and($allFields['faktur_pajak']->isRequired())->toBeTrue();
+});
+
+test('invoicing receipts table defines merged uploadBerkas action for verification and invoice files', function () {
+    $livewire = app(ListInvoicingReceipts::class);
+
+    $table = new Table($livewire);
+    InvoicingReceiptsTable::configure($table);
+
+    $actions = collect($table->getRecordActions());
+    $actionNames = $actions->map(fn ($a) => method_exists($a, 'getName') ? $a->getName() : null)->filter();
+
+    expect($actionNames)->toContain('uploadBerkas')
+        ->and($actionNames)->not->toContain('uploadVerifikasi')
+        ->and($actionNames)->not->toContain('uploadInvoice');
 });

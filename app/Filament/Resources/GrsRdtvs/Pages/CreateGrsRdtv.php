@@ -372,11 +372,23 @@ class CreateGrsRdtv extends CreateRecord
                 ->first();
         }
 
-        $qtyPenagihan = $firstDetail?->quantity ?? $po?->qty_po;
-        $qtyPo = $po?->qty_po ?? $firstDetail?->quantity;
+        $details = $do->deliveryOrderReceiptDetails;
+        $qtyPenagihan = $details->isNotEmpty() ? (float) $details->sum('quantity') : (float) ($po?->qty_po ?? 0);
+        $qtyPo = $details->map(fn ($d) => $d->purchaseOrderIssued)->filter()->unique('id')->sum('qty_po');
+        if (! $qtyPo && $po) {
+            $qtyPo = (float) $po->qty_po;
+        }
         $uoi = $firstDetail?->uoi ?? $po?->uoi ?? 'PCS';
-        $subtotalExclude = $firstDetail?->total_amount_snapshot ?? $po?->total_amount_in_lc;
-        $subtotalInclude = $subtotalExclude !== null ? round((float) $subtotalExclude * 1.11, 2) : null;
+
+        $sumSnapshot = $details->sum('total_amount_snapshot');
+        $subtotalExclude = ($details->isNotEmpty() && $sumSnapshot > 0)
+            ? (float) $sumSnapshot
+            : (float) ($po?->total_amount_in_lc ?? 0);
+
+        // Rumus Subtotal Include PPN: = Exclude + (Exclude * 11%)
+        $subtotalInclude = $subtotalExclude !== null
+            ? round((float) $subtotalExclude + ((float) $subtotalExclude * 0.11), 2)
+            : null;
 
         InvoicingReceipt::create([
             'grs_rdtv_item_id' => $grsRdtvItem->id,
@@ -386,8 +398,8 @@ class CreateGrsRdtv extends CreateRecord
             'pic_id' => $picId,
             'tanggal_terima_grs' => $transactionDate ?? now(),
             'jenis' => $category,
-            'no_grs' => $category === 'GRS' ? $grsRdtvItem->document_code : null,
-            'no_rdtv' => $category === 'RDTV' ? $grsRdtvItem->document_code : null,
+            'no_grs' => null, // Wajib diisi nomor GRS resmi (bukan kode dokumen) oleh Staff Invoice
+            'no_rdtv' => null,
             'no_po' => $po?->purchase_order_no ?? '-',
             'no_do' => $do->delivery_order_no,
             'material_type' => $materialType,

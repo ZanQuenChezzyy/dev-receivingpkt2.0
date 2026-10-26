@@ -209,6 +209,25 @@
             </button>
         </div>
 
+        <!-- Quantity di PO -->
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
+            <div class="min-w-0 pr-2">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Quantity di PO</span>
+                <span class="font-bold text-gray-900 dark:text-white truncate block text-sm">
+                    {{ $record->qty_po ?? '-' }} {{ $record->uoi ?? '' }}
+                </span>
+            </div>
+            <button
+                type="button"
+                @click="copyText('{{ $record->qty_po ?? '' }}', 'qty_po')"
+                :class="copiedField === 'qty_po' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
+                class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'qty_po'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'qty_po'" />
+                <span x-text="copiedField === 'qty_po' ? 'Disalin' : 'Salin'"></span>
+            </button>
+        </div>
+
         <!-- Nama Vendor -->
         <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs sm:col-span-2 lg:col-span-1">
             <div class="min-w-0 pr-2">
