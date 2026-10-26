@@ -2,6 +2,7 @@
 
 use App\Models\InvoicingReceipt;
 use App\Models\PicMaterialAssignment;
+use App\Models\PurchaseOrderIssued;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Services\InvoicingAssignmentService;
@@ -158,4 +159,30 @@ test('invoicing assignment service distributes items evenly among multiple desig
     expect($counts[201])->toBe(10)
         ->and($counts[202])->toBe(10)
         ->and($counts)->not->toHaveKey(999);
+});
+
+test('user model defines invoicing receipts and pic material assignments relationships', function () {
+    $user = new User;
+
+    expect($user->invoicingReceipts())->toBeInstanceOf(HasMany::class)
+        ->and($user->picMaterialAssignments())->toBeInstanceOf(BelongsToMany::class)
+        ->and($user->assignedPicMaterialAssignments())->toBeInstanceOf(HasMany::class);
+});
+
+test('purchase order issued model defines invoicing receipts relationship', function () {
+    $po = new PurchaseOrderIssued;
+
+    expect($po->invoicingReceipts())->toBeInstanceOf(HasMany::class);
+});
+
+test('user model allows querying invoicing receipts with count on pic_id', function () {
+    $query = User::withCount(['invoicingReceipts as active_count' => function ($q) {
+        $q->whereIn('status', ['Menunggu Verifikasi', 'Terverifikasi']);
+    }]);
+
+    expect($query->toSql())->toContain('invoicing_receipts')
+        ->and($query->toSql())->toContain('active_count')
+        ->and($query->toSql())->toContain('pic_id')
+        ->and($query->getBindings())->toContain('Menunggu Verifikasi')
+        ->and($query->getBindings())->toContain('Terverifikasi');
 });

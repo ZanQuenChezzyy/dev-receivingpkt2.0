@@ -12,6 +12,8 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
@@ -45,5 +47,20 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->roles()->exists();
+    }
+
+    public function invoicingReceipts(): HasMany
+    {
+        return $this->hasMany(InvoicingReceipt::class, 'pic_id');
+    }
+
+    public function picMaterialAssignments(): BelongsToMany
+    {
+        return $this->belongsToMany(PicMaterialAssignment::class, 'pic_material_assignment_user');
+    }
+
+    public function assignedPicMaterialAssignments(): HasMany
+    {
+        return $this->hasMany(PicMaterialAssignment::class, 'user_id');
     }
 }
