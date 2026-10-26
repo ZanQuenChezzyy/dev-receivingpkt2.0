@@ -1,14 +1,9 @@
-<div class="min-h-screen bg-slate-50 dark:bg-[#031525] transition-colors duration-500 pt-28 pb-24 font-sans relative overflow-hidden">
-    <!-- Sophisticated Abstract Background -->
-    <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center">
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100/40 via-transparent to-transparent dark:from-blue-900/20 dark:via-transparent dark:to-transparent"></div>
-        <div class="absolute w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgxNDgsIDE2MywgMTg0LCAwLjE1KSIvPjwvc3ZnPg==')] opacity-50 dark:opacity-20"></div>
-        
+<div class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-500 pt-28 pb-24 font-sans relative overflow-hidden">
+    <!-- Sophisticated Abstract Background Glows -->
+    <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
         <!-- Glow Orbs -->
         <div class="absolute top-[-10%] left-[-10%] w-[50rem] h-[50rem] bg-[#F47920] rounded-full mix-blend-multiply filter blur-[140px] opacity-10 dark:opacity-5 animate-pulse" style="animation-duration: 15s;"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[50rem] h-[50rem] bg-blue-600 rounded-full mix-blend-multiply filter blur-[140px] opacity-10 dark:opacity-5 animate-pulse" style="animation-duration: 20s;"></div>
-
-
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50rem] h-[50rem] bg-[#0A4F86] rounded-full mix-blend-multiply filter blur-[140px] opacity-10 dark:opacity-5 animate-pulse" style="animation-duration: 20s;"></div>
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

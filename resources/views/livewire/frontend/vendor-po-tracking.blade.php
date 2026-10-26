@@ -1,10 +1,9 @@
-<div class="min-h-screen bg-slate-50 dark:bg-[#031525] text-slate-800 dark:text-slate-200 transition-colors duration-500 pt-28 pb-24 font-sans relative overflow-hidden">
+<div class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-500 pt-28 pb-24 font-sans relative overflow-hidden">
 
     <!-- Sophisticated Ambient Background Glows -->
     <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
         <div class="absolute top-0 right-1/4 w-[500px] h-[500px] bg-[#0A4F86]/10 dark:bg-[#0A4F86]/20 rounded-full blur-[120px]"></div>
         <div class="absolute bottom-1/3 left-1/4 w-[450px] h-[450px] bg-[#F47920]/10 dark:bg-[#F47920]/15 rounded-full blur-[140px]"></div>
-        <div class="absolute inset-0 bg-[radial-gradient(#0A4F86_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.03] dark:opacity-[0.02]"></div>
     </div>
 
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -48,18 +47,13 @@
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
-                            </div>
-
-                            <!-- Prefix Tag -->
-                            <span class="px-2 py-1 rounded-md text-[11px] font-black uppercase tracking-wider bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono select-none border border-slate-300 dark:border-slate-700 shrink-0">
-                                PO
-                            </span>
+                            </div> 
 
                             <!-- Real Input Element -->
                             <input id="poNumberInput"
                                 wire:model="poNumber"
                                 type="text"
-                                placeholder="Ketik nomor PO (contoh: 5300065628)..."
+                                placeholder="Ketik nomor PO"
                                 class="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3 py-3.5 sm:py-4 text-base sm:text-lg font-bold font-mono tracking-wider text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-sm sm:placeholder:text-base"
                                 autocomplete="off"
                                 maxlength="15"

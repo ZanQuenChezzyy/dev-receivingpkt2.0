@@ -291,6 +291,25 @@ class PublicMaterialIssueForm extends Component
         }
     }
 
+    public function fillMaxBoh(int $index): void
+    {
+        if (isset($this->details[$index]) && isset($this->details[$index]['boh'])) {
+            $boh = (float) $this->details[$index]['boh'];
+            $this->details[$index]['diminta'] = $boh;
+            $this->details[$index]['diserahkan'] = $boh;
+        }
+    }
+
+    public function clearSelectedPo(): void
+    {
+        $this->purchase_order_issued_id = '';
+        $this->po_search = '';
+        $this->available_po_items = [];
+        $this->details = [];
+        $this->addDetail();
+        $this->checkIfIstekSignatureRequired();
+    }
+
     protected function checkIfIstekSignatureRequired()
     {
         $requires = false;
