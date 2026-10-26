@@ -94,14 +94,4 @@
             </div>
         </div>
     </div>
-
-    <!-- Alert / Petunjuk Kerja Khusus -->
-    <div class="p-3 rounded-lg border border-amber-200 dark:border-amber-800/60 bg-amber-50/70 dark:bg-amber-950/30 flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
-        <x-filament::icon icon="heroicon-m-information-circle" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-        <div class="leading-relaxed">
-            <span class="font-semibold">Catatan Penting:</span>
-            Pastikan <strong>No. GRS</strong> diisi dengan nomor resmi dari sistem SAP/slip fisik GRS (bukan kode dokumen berkas).
-            Nilai <strong>Sub Total (Include PPN)</strong> akan terhitung otomatis sebesar <strong>11%</strong> dari nilai Exclude PPN.
-        </div>
-    </div>
 </div>
