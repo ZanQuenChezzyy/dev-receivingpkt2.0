@@ -15,6 +15,10 @@ class Home extends Component
     {
         $search = trim($this->quickSearch);
         if ($search !== '') {
+            if (is_numeric($search) || preg_match('/^\d{6,12}$/', $search)) {
+                return $this->redirect(route('frontend.vendor.tracking', ['po' => $search]), navigate: true);
+            }
+
             return $this->redirect(route('frontend.list-material', ['search' => $search]), navigate: true);
         }
 

@@ -97,6 +97,7 @@ test('invoicing receipt model has complete fillable attributes for all 27 requir
         'keterangan',
         'dokumen_verifikasi_grs',
         'dokumen_invoice',
+        'dokumen_kelengkapan',
         'status'
     );
 });
@@ -119,7 +120,8 @@ test('invoicing receipt casts numeric and date fields properly', function () {
         ->and($casts)->toHaveKey('qty_penagihan', 'float')
         ->and($casts)->toHaveKey('subtotal_exclude_ppn', 'float')
         ->and($casts)->toHaveKey('subtotal_include_ppn', 'float')
-        ->and($casts)->toHaveKey('lama_pekerjaan', 'integer');
+        ->and($casts)->toHaveKey('lama_pekerjaan', 'integer')
+        ->and($casts)->toHaveKey('dokumen_kelengkapan', 'array');
 });
 
 test('pic selection query builder filters strictly by Staff Invoice role', function () {

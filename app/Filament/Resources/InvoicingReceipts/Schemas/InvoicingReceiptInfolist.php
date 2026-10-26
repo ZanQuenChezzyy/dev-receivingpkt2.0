@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\InvoicingReceipts\Schemas;
 
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
@@ -192,6 +193,16 @@ class InvoicingReceiptInfolist
                             ->columnSpanFull()
                             ->placeholder('-'),
                     ])->columns(2),
+
+                Section::make('Kelengkapan Dokumen Penagihan Vendor (16 Dokumen Persyaratan)')
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->description('Daftar berkas penagihan invoice yang diunggah oleh vendor melalui portal tracking self-service.')
+                    ->schema([
+                        ViewEntry::make('dokumen_kelengkapan')
+                            ->label('Checklist Dokumen')
+                            ->view('filament.infolists.components.dokumen-kelengkapan')
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 }

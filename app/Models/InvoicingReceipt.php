@@ -42,6 +42,7 @@ use Illuminate\Support\Carbon;
     'keterangan',
     'dokumen_verifikasi_grs',
     'dokumen_invoice',
+    'dokumen_kelengkapan',
     'status',
 ])]
 class InvoicingReceipt extends Model
@@ -61,6 +62,7 @@ class InvoicingReceipt extends Model
             'subtotal_exclude_ppn' => 'float',
             'subtotal_include_ppn' => 'float',
             'lama_pekerjaan' => 'integer',
+            'dokumen_kelengkapan' => 'array',
         ];
     }
 

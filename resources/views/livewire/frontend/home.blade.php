@@ -53,20 +53,27 @@
                             </p>
                         </div>
 
-                        <!-- Mini Feature Tags -->
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4 border-t border-slate-200/70 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                            <div class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-[#F47920]"></span>
-                                <span>Cetak QR Surat Jalan</span>
+                        <!-- Mini Feature Tags & Action -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-200/70 dark:border-white/10">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#F47920]"></span>
+                                    <span>Cetak QR Surat Jalan</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    <span>Toleransi Quantity PO</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                    <span>Klasifikasi MRP V1/PD</span>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <span>Toleransi Quantity PO</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                <span>Klasifikasi MRP V1/PD</span>
-                            </div>
+                            <a href="{{ route('frontend.vendor.tracking') }}" wire:navigate
+                                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all shrink-0">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                <span>Lacak PO Vendor</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -239,333 +246,540 @@
             </div>
 
             <!-- =========================================================
-                 VIEW 1: BAGAN DIAGRAM SWIMLANE SOP RESMI
+                 VIEW 1: BAGAN DIAGRAM SWIMLANE SOP RESMI (DIAGRAM DESIGN SPEC)
                  ========================================================= -->
             <div x-show="viewMode === 'flowchart'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
 
-                <!-- Interactive Highlight Filter & Legend -->
+                <!-- Interactive Highlight Filter & Style Legend -->
                 <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-white/80 dark:border-white/10 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
                     <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                        <span class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1">Fokus Alur:</span>
+                        <span class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#0A4F86]"></span>
+                            Fokus Jalur:
+                        </span>
                         <button @click="filterBranch = 'all'"
-                            :class="filterBranch === 'all' ? 'bg-[#0A4F86] text-white shadow-sm' : 'bg-slate-200/70 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/10'"
+                            :class="filterBranch === 'all' ? 'bg-[#0A4F86] text-white shadow-sm ring-1 ring-blue-400/40' : 'bg-slate-200/70 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/10'"
                             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
                             Semua Alur
                         </button>
                         <button @click="filterBranch = 'chemical'"
-                            :class="filterBranch === 'chemical' ? 'bg-red-600 text-white shadow-sm' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/20'"
+                            :class="filterBranch === 'chemical' ? 'bg-red-600 text-white shadow-sm ring-1 ring-red-400/40' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/20'"
                             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                            Chemical / Bahan Baku (Lab & PPE)
+                            Chemical / Bahan Baku (Lab &amp; PPE)
                         </button>
                         <button @click="filterBranch = 'sparepart'"
-                            :class="filterBranch === 'sparepart' ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20'"
+                            :class="filterBranch === 'sparepart' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/40' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20'"
                             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                            Sparepart (ISTEK 2)
-                        </button>
-                        <button @click="filterBranch = 'ditolak'"
-                            :class="filterBranch === 'ditolak' ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'"
-                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                            Ditolak (RDTV)
+                            Sparepart Teknis (ISTEK 2)
                         </button>
                         <button @click="filterBranch = 'diterima'"
-                            :class="filterBranch === 'diterima' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'"
+                            :class="filterBranch === 'diterima' ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400/40' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'"
                             class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            Diterima (GRS & Gudang)
+                            Diterima (GRS &amp; Gudang)
+                        </button>
+                        <button @click="filterBranch = 'ditolak'"
+                            :class="filterBranch === 'ditolak' ? 'bg-amber-600 text-white shadow-sm ring-1 ring-amber-400/40' : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            Ditolak (RDTV &amp; Retur)
                         </button>
                     </div>
 
                     <div class="flex items-center gap-4 text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
                         <span class="inline-flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded bg-amber-400 border border-amber-600 inline-block"></span>
-                            Tanggung Jawab Receiving
+                            <span class="w-2.5 h-2.5 rounded bg-[#0A4F86] inline-block"></span>
+                            Unit Penerimaan (Focal Hub)
                         </span>
                         <span class="inline-flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded bg-white dark:bg-slate-800 border border-slate-300 dark:border-white/20 inline-block"></span>
-                            Unit Terkait
+                            <span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block"></span>
+                            Lolos QC (GRS)
+                        </span>
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded bg-red-500 inline-block"></span>
+                            Ditolak (RDTV)
                         </span>
                     </div>
                 </div>
 
-                <!-- Swimlane Flowchart Canvas Container -->
+                <!-- Editorial Diagram Container (cathrynlavery/diagram-design) -->
                 <div class="glass-panel p-4 sm:p-6 rounded-3xl border border-white/80 dark:border-white/10 shadow-2xl relative overflow-hidden">
+                    
                     <!-- Mobile Scroll Hint -->
                     <div class="flex lg:hidden items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 px-1">
                         <span class="inline-flex items-center gap-1.5 text-[#0A4F86] dark:text-blue-300">
                             <svg class="w-4 h-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                            Geser horizontal untuk melihat 7 swimlane lengkap
+                            Geser horizontal untuk melihat bagan diagram 7 unit lengkap
                         </span>
                     </div>
 
+                    <!-- Scoped Diagram-Design CSS & Tokens -->
+                    <style>
+                        #receiving-diagram {
+                            --diagram-paper: #ffffff;
+                            --diagram-ink: #0f172a;
+                            --diagram-muted: #475569;
+                            --diagram-soft: #64748b;
+                            --diagram-rule: rgba(15, 23, 42, 0.08);
+                            --diagram-rule-strong: rgba(15, 23, 42, 0.20);
+                            --diagram-lane-even: rgba(248, 250, 252, 0.85);
+                            --diagram-lane-odd: #ffffff;
+                            --diagram-lane-focal: rgba(10, 79, 134, 0.04);
+                            --diagram-dot: rgba(15, 23, 42, 0.08);
+                            --diagram-node: #ffffff;
+                            --diagram-node-stroke: rgba(15, 23, 42, 0.16);
+                            --diagram-blue: #0A4F86;
+                            --diagram-blue-tint: rgba(10, 79, 134, 0.08);
+                            --diagram-tangerine: #F47920;
+                            --diagram-green: #059669;
+                            --diagram-green-tint: rgba(16, 185, 129, 0.09);
+                            --diagram-red: #DC2626;
+                            --diagram-red-tint: rgba(239, 68, 68, 0.08);
+                            --diagram-chip: rgba(15, 23, 42, 0.06);
+                        }
+
+                        .dark #receiving-diagram {
+                            --diagram-paper: #071321;
+                            --diagram-ink: #f8fafc;
+                            --diagram-muted: #94a3b8;
+                            --diagram-soft: #64748b;
+                            --diagram-rule: rgba(255, 255, 255, 0.08);
+                            --diagram-rule-strong: rgba(255, 255, 255, 0.22);
+                            --diagram-lane-even: rgba(13, 27, 46, 0.7);
+                            --diagram-lane-odd: rgba(8, 19, 34, 0.9);
+                            --diagram-lane-focal: rgba(10, 79, 134, 0.22);
+                            --diagram-dot: rgba(255, 255, 255, 0.08);
+                            --diagram-node: #0d1e33;
+                            --diagram-node-stroke: rgba(255, 255, 255, 0.16);
+                            --diagram-blue: #38bdf8;
+                            --diagram-blue-tint: rgba(56, 189, 248, 0.12);
+                            --diagram-tangerine: #fb923c;
+                            --diagram-green: #34d399;
+                            --diagram-green-tint: rgba(52, 211, 153, 0.12);
+                            --diagram-red: #f87171;
+                            --diagram-red-tint: rgba(248, 113, 113, 0.12);
+                            --diagram-chip: rgba(255, 255, 255, 0.1);
+                        }
+
+                        #receiving-diagram text {
+                            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+                        }
+                        #receiving-diagram .mono {
+                            font-family: 'Geist Mono', 'SF Mono', 'Cascadia Code', ui-monospace, Menlo, Consolas, monospace;
+                        }
+                        #receiving-diagram g {
+                            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        }
+                        #receiving-diagram .node-group {
+                            transition: transform 0.2s ease, opacity 0.3s ease;
+                        }
+                        #receiving-diagram .node-group:hover {
+                            transform: translateY(-1.5px);
+                        }
+                    </style>
+
                     <div class="overflow-x-auto pb-4 custom-scrollbar">
-                        <div class="min-w-[1080px] select-none">
+                        <div class="min-w-[1100px] select-none">
+                            <svg id="receiving-diagram" viewBox="0 0 1260 660" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="diagram-title diagram-desc" class="w-full h-auto block rounded-2xl border border-slate-200/80 dark:border-white/10">
+                                <title id="diagram-title">Alur Proses Penerimaan Barang Gudang Receiving Pupuk Kaltim</title>
+                                <desc id="diagram-desc">Diagram Swimlane SOP Resmi Penerimaan Barang Lintas 7 Unit Kerja Pupuk Kalimantan Timur</desc>
 
-                            <!-- SWIMLANE HEADER ROW (7 UNIT KERJA) -->
-                            <div class="grid grid-cols-7 gap-3 mb-6 bg-gradient-to-r from-[#0A4F86] via-[#105e9c] to-[#0A4F86] p-2.5 rounded-2xl shadow-md text-white text-center font-black tracking-wider text-xs uppercase">
-                                <div class="py-2 px-1 rounded-xl bg-white/10 flex items-center justify-center gap-1">
-                                    <span>1. VENDOR</span>
-                                </div>
-                                <div class="py-2 px-1 rounded-xl bg-white/10 flex items-center justify-center gap-1">
-                                    <span>2. EXPEDITING</span>
-                                </div>
-                                <div class="py-2 px-1 rounded-xl bg-amber-400 text-slate-900 font-extrabold shadow-sm flex items-center justify-center gap-1">
-                                    <span>3. RECEIVING</span>
-                                </div>
-                                <div class="py-2 px-1 rounded-xl bg-white/10 flex items-center justify-center gap-1">
-                                    <span>4. ISTEK 2</span>
-                                </div>
-                                <div class="py-2 px-1 rounded-xl bg-white/10 flex items-center justify-center gap-1">
-                                    <span>5. LAB</span>
-                                </div>
-                                <div class="py-2 px-1 rounded-xl bg-white/10 flex items-center justify-center gap-1">
-                                    <span>6. PPE</span>
-                                </div>
-                                <div class="py-2 px-1 rounded-xl bg-white/10 flex items-center justify-center gap-1">
-                                    <span>7. GUDANG</span>
-                                </div>
-                            </div>
+                                <defs>
+                                    <!-- Editorial Dot Grid Background -->
+                                    <pattern id="dot-grid" width="22" height="22" patternUnits="userSpaceOnUse">
+                                        <circle cx="11" cy="11" r="0.85" fill="var(--diagram-dot)"/>
+                                    </pattern>
 
-                            <!-- FLOWCHART GRID BODY -->
-                            <div class="relative bg-slate-50/70 dark:bg-slate-950/40 rounded-2xl p-6 border border-slate-200/80 dark:border-white/5 space-y-8">
+                                    <!-- Directional Arrow Markers -->
+                                    <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                        <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-muted)"/>
+                                    </marker>
+                                    <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                        <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-blue)"/>
+                                    </marker>
+                                    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                        <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-green)"/>
+                                    </marker>
+                                    <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                        <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-red)"/>
+                                    </marker>
+                                    <marker id="arrow-tangerine" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                        <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-tangerine)"/>
+                                    </marker>
+                                </defs>
 
-                                <!-- ROW A: JALUR ATAS (CHEMICAL / BAHAN BAKU) -->
-                                <div class="grid grid-cols-7 gap-3 items-center min-h-[140px]"
-                                    :class="{'opacity-25 grayscale': filterBranch === 'sparepart'}">
-                                    <!-- Col 1: Vendor (Empty space in Row A) -->
-                                    <div class="col-span-1"></div>
+                                <!-- Base Canvas Background -->
+                                <rect width="100%" height="100%" fill="var(--diagram-paper)"/>
+                                <rect width="100%" height="100%" fill="url(#dot-grid)" opacity="0.6"/>
 
-                                    <!-- Col 2: Expediting (Empty space in Row A) -->
-                                    <div class="col-span-1"></div>
+                                <!-- 7 Vertical Swimlane Column Backgrounds -->
+                                <rect x="0" y="44" width="180" height="556" fill="var(--diagram-lane-odd)"/>
+                                <rect x="180" y="44" width="180" height="556" fill="var(--diagram-lane-even)"/>
+                                <rect x="360" y="44" width="180" height="556" fill="var(--diagram-lane-focal)"/>
+                                <rect x="540" y="44" width="180" height="556" fill="var(--diagram-lane-even)"/>
+                                <rect x="720" y="44" width="180" height="556" fill="var(--diagram-lane-odd)"/>
+                                <rect x="900" y="44" width="180" height="556" fill="var(--diagram-lane-even)"/>
+                                <rect x="1080" y="44" width="180" height="556" fill="var(--diagram-lane-odd)"/>
 
-                                    <!-- Col 3: Receiving -> Permintaan QC/JOR -->
-                                    <div class="col-span-1 flex flex-col items-center relative">
-                                        <div class="text-[10px] font-black uppercase text-red-600 dark:text-red-400 tracking-wider mb-1 flex items-center gap-1">
-                                            <span>Jalur Chemical / Bahan Baku</span>
-                                        </div>
-                                        <div class="w-full p-3.5 rounded-xl bg-amber-300 dark:bg-amber-400 text-slate-900 font-bold text-xs text-center border-2 border-amber-500 shadow-md transition-all hover:scale-105">
-                                            Mengajukan permintaan QC/JOR
-                                        </div>
-                                        <!-- Red Arrow pointing right to LAB -->
-                                        <div class="absolute -right-4 top-1/2 translate-x-full text-red-500 font-black text-sm z-10 hidden lg:block">
-                                            <span class="inline-flex items-center gap-1 bg-red-500/10 px-2 py-0.5 rounded text-[10px] font-black text-red-600">
-                                                Surat QC/JOR &rarr;
-                                            </span>
-                                        </div>
-                                    </div>
+                                <!-- Vertical Column Dividers (Hairline 0.8px) -->
+                                <g stroke="var(--diagram-rule)" stroke-width="0.8">
+                                    <line x1="180" y1="0" x2="180" y2="600"/>
+                                    <line x1="360" y1="0" x2="360" y2="600" stroke="var(--diagram-blue)" stroke-opacity="0.35" stroke-width="1"/>
+                                    <line x1="540" y1="0" x2="540" y2="600" stroke="var(--diagram-blue)" stroke-opacity="0.35" stroke-width="1"/>
+                                    <line x1="720" y1="0" x2="720" y2="600"/>
+                                    <line x1="900" y1="0" x2="900" y2="600"/>
+                                    <line x1="1080" y1="0" x2="1080" y2="600"/>
+                                </g>
 
-                                    <!-- Col 4: ISTEK 2 (Bypass for chemical) -->
-                                    <div class="col-span-1 flex items-center justify-center">
-                                        <div class="w-full border-t-2 border-dashed border-red-400/60 relative">
-                                            <span class="absolute -top-3 left-1/2 -translate-x-1/2 text-[9px] font-bold text-red-500 bg-white dark:bg-slate-900 px-1.5 rounded">
-                                                Kirim Sampel
-                                            </span>
-                                        </div>
-                                    </div>
+                                <!-- Horizontal Divider below Header -->
+                                <line x1="0" y1="44" x2="1260" y2="44" stroke="var(--diagram-rule-strong)" stroke-width="1"/>
 
-                                    <!-- Col 5: LAB -> Melakukan Uji Lab & Menerbitkan COA -->
-                                    <div class="col-span-1 flex flex-col items-center gap-2 relative">
-                                        <div class="w-full p-3 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-bold text-xs text-center border border-slate-300 dark:border-white/10 shadow-sm">
-                                            Melakukan Uji Lab
-                                        </div>
-                                        <svg class="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-                                        <div class="w-full p-3 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-bold text-xs text-center border border-slate-300 dark:border-white/10 shadow-sm">
-                                            Menerbitkan COA
-                                        </div>
-                                    </div>
+                                <!-- ===================================================
+                                     COLUMN HEADERS (7 UNIT KERJA)
+                                     =================================================== -->
+                                <g text-anchor="middle">
+                                    <!-- 01 VENDOR -->
+                                    <rect x="15" y="8" width="150" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                    <text x="90" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.10em" fill="var(--diagram-ink)">01 · VENDOR</text>
+                                    <text x="90" y="31.5" font-size="7" fill="var(--diagram-muted)">Rekanan / Supplier</text>
 
-                                    <!-- Col 6: PPE -> Evaluasi Kualitas & Decision -->
-                                    <div class="col-span-1 flex flex-col items-center gap-2">
-                                        <div class="w-full p-3 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-bold text-xs text-center border border-slate-300 dark:border-white/10 shadow-sm">
-                                            Melakukan Evaluasi kualitas
-                                        </div>
-                                        <svg class="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-                                        <!-- Decision Diamond: Diterima? -->
-                                        <div class="w-24 h-12 flex items-center justify-center bg-white dark:bg-slate-800 border-2 border-red-500 rounded-lg shadow-md text-slate-800 dark:text-white font-extrabold text-[11px] text-center rotate-45 transform hover:rotate-0 transition-transform cursor-help" title="Evaluasi Mutu PPE: Apakah spesifikasi kimia & COA memenuhi standar?">
-                                            <span class="-rotate-45 hover:rotate-0 transition-transform">Diterima ?</span>
-                                        </div>
-                                        <div class="flex items-center justify-between w-full text-[10px] font-black px-1 mt-1">
-                                            <span class="text-red-500">&larr; Tidak</span>
-                                            <span class="text-emerald-500">Ya &darr;</span>
-                                        </div>
-                                    </div>
+                                    <!-- 02 EXPEDITING -->
+                                    <rect x="195" y="8" width="150" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                    <text x="270" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.10em" fill="var(--diagram-ink)">02 · EXPEDITING</text>
+                                    <text x="270" y="31.5" font-size="7" fill="var(--diagram-muted)">Pengendalian Logistik</text>
 
-                                    <!-- Col 7: Gudang (Empty space in Row A) -->
-                                    <div class="col-span-1"></div>
-                                </div>
+                                    <!-- 03 RECEIVING (Focal Hub) -->
+                                    <rect x="375" y="6" width="150" height="32" rx="5" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-opacity="0.4" stroke-width="1"/>
+                                    <text x="450" y="20" class="mono" font-size="9" font-weight="800" letter-spacing="0.10em" fill="var(--diagram-blue)">03 · RECEIVING</text>
+                                    <text x="450" y="32.5" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-tangerine)">FOCAL HUB / SAP 103</text>
 
-                                <!-- CONNECTOR ROW A -> ROW B (BRANCHING LINES) -->
-                                <div class="grid grid-cols-7 gap-3 text-center">
-                                    <div class="col-span-2"></div>
-                                    <div class="col-span-1 flex flex-col items-center">
-                                        <div class="h-8 border-l-2 border-red-500 flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-red-500 -mt-1 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-                                        </div>
-                                    </div>
-                                    <div class="col-span-4"></div>
-                                </div>
+                                    <!-- 04 ISTEK 2 -->
+                                    <rect x="555" y="8" width="150" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                    <text x="630" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.10em" fill="var(--diagram-ink)">04 · ISTEK 2</text>
+                                    <text x="630" y="31.5" font-size="7" fill="var(--diagram-muted)">QC Sparepart Teknis</text>
 
-                                <!-- ROW B: JALUR TENGAH (KEDATANGAN, EXPEDITING & VERIFIKASI UTAMA PO) -->
-                                <div class="grid grid-cols-7 gap-3 items-center min-h-[90px]">
-                                    <!-- Col 1: Vendor -> Mengirim Barang -->
-                                    <div class="col-span-1 flex flex-col items-center relative">
-                                        <div class="w-full p-4 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-black text-xs text-center border border-slate-300 dark:border-white/10 shadow-sm transition-all hover:border-[#0A4F86]">
-                                            Mengirim Barang
-                                        </div>
-                                        <span class="text-[9px] font-bold text-slate-400 mt-1">Surat Jalan (DO)</span>
-                                    </div>
+                                    <!-- 05 LAB -->
+                                    <rect x="735" y="8" width="150" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                    <text x="810" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.10em" fill="var(--diagram-ink)">05 · LAB</text>
+                                    <text x="810" y="31.5" font-size="7" fill="var(--diagram-muted)">Uji Kimia &amp; COA</text>
 
-                                    <!-- Col 2: Expediting -> Monitor Pengiriman -->
-                                    <div class="col-span-1 flex flex-col items-center relative">
-                                        <div class="w-full p-4 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-bold text-xs text-center border border-slate-300 dark:border-white/10 shadow-sm transition-all hover:border-[#0A4F86]">
-                                            Monitor Pengiriman
-                                        </div>
-                                        <span class="text-[9px] font-bold text-slate-400 mt-1">Tracking Logistik</span>
-                                    </div>
+                                    <!-- 06 PPE -->
+                                    <rect x="915" y="8" width="150" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                    <text x="990" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.10em" fill="var(--diagram-ink)">06 · PPE</text>
+                                    <text x="990" y="31.5" font-size="7" fill="var(--diagram-muted)">Evaluasi Mutu Bahan</text>
 
-                                    <!-- Col 3: Receiving -> Menerima, Memeriksa PO & Lampiran -->
-                                    <div class="col-span-1 flex flex-col items-center relative">
-                                        <div class="w-full p-4 rounded-xl bg-amber-400 dark:bg-amber-400 text-slate-900 font-black text-xs text-center border-2 border-amber-600 shadow-xl transition-all hover:scale-105">
-                                            Menerima , Memeriksa kesesuaian PO &amp; lampiran vendor
-                                        </div>
-                                        <span class="text-[9px] font-black text-amber-800 dark:text-amber-300 mt-1">MIGO SAP 103</span>
-                                    </div>
+                                    <!-- 07 GUDANG -->
+                                    <rect x="1095" y="8" width="150" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                    <text x="1170" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.10em" fill="var(--diagram-ink)">07 · GUDANG</text>
+                                    <text x="1170" y="31.5" font-size="7" fill="var(--diagram-muted)">Penyimpanan Fisik</text>
+                                                               <!-- ===================================================
+                                     CONNECTORS (DRAWN FIRST - BEFORE BOXES)
+                                     =================================================== -->
+                                
+                                <!-- 1. INTAKE CHAIN: VENDOR -> EXPEDITING -> RECEIVING -->
+                                <g id="intake-chain-connectors">
+                                    <!-- Vendor (Mengirim Barang) -> Expediting (Monitor Pengiriman) -->
+                                    <line x1="148" y1="182" x2="212" y2="182" stroke="var(--diagram-muted)" stroke-width="1.4" marker-end="url(#arrow)"/>
+                                    <rect x="154" y="167" width="52" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-node-stroke)" stroke-width="0.8"/>
+                                    <text x="180" y="176.5" text-anchor="middle" class="mono" font-size="6" font-weight="700" fill="var(--diagram-muted)">FISIK &amp; DO</text>
 
-                                    <!-- Col 4 s.d. 7 (Row B empty/spacer) -->
-                                    <div class="col-span-4 flex items-center justify-center">
-                                        <div class="text-xs font-semibold text-slate-400 dark:text-slate-500 italic text-center">
-                                            &larr; Verifikasi Administratif PO &amp; Fisik Awal sebelum didistribusikan ke unit QC &rarr;
-                                        </div>
-                                    </div>
-                                </div>
+                                    <!-- Expediting (Monitor Pengiriman) -> Receiving (Menerima & Cek PO) -->
+                                    <line x1="340" y1="182" x2="396" y2="182" stroke="var(--diagram-muted)" stroke-width="1.4" marker-end="url(#arrow)"/>
+                                    <rect x="345" y="167" width="46" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-node-stroke)" stroke-width="0.8"/>
+                                    <text x="368" y="176.5" text-anchor="middle" class="mono" font-size="6" font-weight="700" fill="var(--diagram-muted)">ETA VALID</text>
+                                </g>
 
-                                <!-- CONNECTOR ROW B -> ROW C -->
-                                <div class="grid grid-cols-7 gap-3 text-center">
-                                    <div class="col-span-2"></div>
-                                    <div class="col-span-1 flex flex-col items-center">
-                                        <div class="h-8 border-l-2 border-blue-500 flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-blue-500 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-                                        </div>
-                                    </div>
-                                    <div class="col-span-4"></div>
-                                </div>
+                                <!-- 2. RECEIVING INTERNAL REQUEST DISPATCH -->
+                                <g id="receiving-dispatch-connectors">
+                                    <!-- Menerima PO -> Permintaan QC/JOR (Chemical, UP) -->
+                                    <line x1="463" y1="154" x2="463" y2="114" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#arrow-red)"
+                                        :class="{'opacity-15': filterBranch === 'sparepart'}"/>
+                                    <rect x="471" y="127" width="86" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"
+                                        :class="{'opacity-15': filterBranch === 'sparepart'}"/>
+                                    <text x="514" y="136.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)"
+                                        :class="{'opacity-15': filterBranch === 'sparepart'}">CHEMICAL / RAW MAT</text>
 
-                                <!-- ROW C: JALUR BAWAH (SPAREPART / ISTEK 2) -->
-                                <div class="grid grid-cols-7 gap-3 items-center min-h-[110px]"
-                                    :class="{'opacity-25 grayscale': filterBranch === 'chemical'}">
-                                    <!-- Col 1 & 2: Empty -->
-                                    <div class="col-span-2"></div>
+                                    <!-- Menerima PO -> Permintaan QC (Sparepart, DOWN) -->
+                                    <line x1="463" y1="210" x2="463" y2="250" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#arrow-blue)"
+                                        :class="{'opacity-15': filterBranch === 'chemical'}"/>
+                                    <rect x="471" y="222" width="60" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-blue)" stroke-width="0.8"
+                                        :class="{'opacity-15': filterBranch === 'chemical'}"/>
+                                    <text x="501" y="231.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-blue)"
+                                        :class="{'opacity-15': filterBranch === 'chemical'}">SPAREPART</text>
+                                </g>
 
-                                    <!-- Col 3: Receiving -> Mengajukan permintaan QC (Sparepart) -->
-                                    <div class="col-span-1 flex flex-col items-center relative">
-                                        <div class="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 tracking-wider mb-1 flex items-center gap-1">
-                                            <span>Jalur Sparepart Teknis</span>
-                                        </div>
-                                        <div class="w-full p-3.5 rounded-xl bg-amber-300 dark:bg-amber-400 text-slate-900 font-bold text-xs text-center border-2 border-amber-500 shadow-md transition-all hover:scale-105">
-                                            Mengajukan permintaan QC
-                                        </div>
-                                    </div>
+                                <!-- 3. CHEMICAL TRACK: RECEIVING -> LAB -> PPE -> DECISION -->
+                                <g id="chemical-track-connectors" :class="{'opacity-15': filterBranch === 'sparepart'}">
+                                    <!-- Permintaan QC/JOR -> Lab: Melakukan Uji Lab -->
+                                    <line x1="530" y1="90" x2="736" y2="90" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#arrow-red)"/>
+                                    <rect x="600" y="76" width="86" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="643" y="85.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">PERMINTAAN JOR LAB</text>
 
-                                    <!-- Col 4: ISTEK 2 -> Melakukan QC & Keputusan Diterima? -->
-                                    <div class="col-span-1 flex flex-col items-center gap-2">
-                                        <div class="w-full p-3 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-bold text-xs text-center border border-slate-300 dark:border-white/10 shadow-sm">
-                                            Melakukan QC
-                                        </div>
-                                        <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-                                        <!-- Decision Diamond: Diterima? -->
-                                        <div class="w-24 h-12 flex items-center justify-center bg-white dark:bg-slate-800 border-2 border-blue-500 rounded-lg shadow-md text-slate-800 dark:text-white font-extrabold text-[11px] text-center rotate-45 transform hover:rotate-0 transition-transform cursor-help" title="Evaluasi Mutu ISTEK 2: Apakah spesifikasi mekanikal/elektrikal sesuai PO?">
-                                            <span class="-rotate-45 hover:rotate-0 transition-transform">Diterima ?</span>
-                                        </div>
-                                        <div class="flex items-center justify-between w-full text-[10px] font-black px-1 mt-1">
-                                            <span class="text-red-500">&larr; Tidak</span>
-                                            <span class="text-emerald-500">Ya &darr;</span>
-                                        </div>
-                                    </div>
+                                    <!-- Lab (Uji Lab) -> Lab (Menerbitkan COA) -->
+                                    <line x1="800" y1="114" x2="800" y2="158" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#arrow-red)"/>
+                                    <rect x="808" y="128" width="56" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="836" y="137.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">HASIL UJI</text>
 
-                                    <!-- Col 5, 6, 7: Empty in Row C -->
-                                    <div class="col-span-3"></div>
-                                </div>
+                                    <!-- Lab (Menerbitkan COA) -> PPE (Evaluasi Mutu) -->
+                                    <line x1="864" y1="182" x2="924" y2="182" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#arrow-red)"/>
+                                    <rect x="869" y="167" width="50" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="894" y="176.5" text-anchor="middle" class="mono" font-size="6" font-weight="700" fill="var(--diagram-red)">TERBIT COA</text>
 
-                                <!-- ROW D: HASIL KEPUTUSAN QC (RDTV vs GRS) -->
-                                <div class="pt-6 border-t border-slate-200 dark:border-white/10 space-y-6">
+                                    <!-- PPE (Evaluasi Mutu) -> PPE Decision Diamond -->
+                                    <line x1="988" y1="206" x2="988" y2="258" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#arrow-red)"/>
 
-                                    <!-- HASIL DITOLAK (RDTV FLOW) -->
-                                    <div class="grid grid-cols-7 gap-3 items-center p-3 rounded-2xl bg-red-500/5 border border-red-500/20"
-                                        :class="{'opacity-25 grayscale': filterBranch === 'diterima'}">
-                                        <!-- Col 1: Vendor -> Menerima Pemberitahuan Ditolak -->
-                                        <div class="col-span-1 flex flex-col items-center">
-                                            <div class="w-full p-3.5 rounded-xl bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 font-black text-xs text-center border-2 border-red-300 dark:border-red-900/50 shadow-sm">
-                                                Menerima pemberitahuan barang ditolak
-                                            </div>
-                                            <span class="text-[9px] font-bold text-red-500 mt-1">Proses Retur / Klaim</span>
-                                        </div>
+                                    <!-- PPE Diamond TIDAK -> RDTV (Col 3) -->
+                                    <path d="M 956 274 H 718 Q 710 274 710 282 V 420 Q 710 428 702 428 H 530" fill="none" stroke="var(--diagram-red)" stroke-width="1.2" marker-end="url(#arrow-red)"
+                                        :class="{'opacity-15': filterBranch === 'diterima'}"/>
+                                    <rect x="780" y="261" width="66" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"
+                                        :class="{'opacity-15': filterBranch === 'diterima'}"/>
+                                    <text x="813" y="270.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)"
+                                        :class="{'opacity-15': filterBranch === 'diterima'}">TIDAK · GAGAL</text>
 
-                                        <!-- Col 2: Expediting -> Monitor Penolakan -->
-                                        <div class="col-span-1 flex flex-col items-center">
-                                            <div class="w-full p-3.5 rounded-xl bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-bold text-xs text-center border border-slate-300 dark:border-white/10 shadow-sm">
-                                                Monitor Penolakan
-                                            </div>
-                                        </div>
+                                    <!-- PPE Diamond YA -> GRS (Col 3) -->
+                                    <path d="M 988 290 V 544 Q 988 552 980 552 H 530" fill="none" stroke="var(--diagram-green)" stroke-width="1.4" marker-end="url(#arrow-green)"
+                                        :class="{'opacity-15': filterBranch === 'ditolak'}"/>
+                                    <rect x="996" y="360" width="56" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-green)" stroke-width="0.8"
+                                        :class="{'opacity-15': filterBranch === 'ditolak'}"/>
+                                    <text x="1024" y="369.5" text-anchor="middle" class="mono" font-size="7" font-weight="700" fill="var(--diagram-green)"
+                                        :class="{'opacity-15': filterBranch === 'ditolak'}">YA · LOLOS</text>
+                                </g>
 
-                                        <!-- Col 3: Receiving -> Menerbitkan RDTV -->
-                                        <div class="col-span-1 flex flex-col items-center">
-                                            <div class="w-full p-3.5 rounded-xl bg-amber-400 dark:bg-amber-400 text-slate-900 font-black text-xs text-center border-2 border-red-500 shadow-md">
-                                                Menerbitkan <br>
-                                                <span class="text-red-700 font-extrabold text-sm">RDTV</span>
-                                            </div>
-                                            <span class="text-[9px] font-bold text-red-600 dark:text-red-400 mt-1">Material Ditolak (QC Failed)</span>
-                                        </div>
+                                <!-- 4. SPAREPART TRACK: RECEIVING -> ISTEK 2 -> DECISION -->
+                                <g id="sparepart-track-connectors" :class="{'opacity-15': filterBranch === 'chemical'}">
+                                    <!-- Permintaan QC -> ISTEK 2: Melakukan QC -->
+                                    <line x1="526" y1="274" x2="572" y2="274" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#arrow-blue)"/>
+                                    <rect x="531" y="267" width="36" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-blue)" stroke-width="0.8"/>
+                                    <text x="549" y="276.5" text-anchor="middle" class="mono" font-size="6" font-weight="700" fill="var(--diagram-blue)">QC PO</text>
 
-                                        <!-- Col 4 s.d. 7: Keterangan Alur Penolakan -->
-                                        <div class="col-span-4 pl-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                            <div class="inline-flex items-center gap-1.5 font-bold text-red-600 dark:text-red-400 mb-1">
-                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                                Alur Barang Ditolak (RDTV - Return Delivery to Vendor):
-                                            </div>
-                                            <p class="text-[11px] opacity-90">
-                                                Jika hasil uji ISTEK 2 atau evaluasi PPE menyatakan barang <strong>TIDAK DITERIMA</strong>, Receiving menerbitkan dokumen <strong>RDTV</strong>. Expediting memonitor penolakan dan vendor menerima pemberitahuan resmi untuk proses klaim / penggantian barang.
-                                            </p>
-                                        </div>
-                                    </div>
+                                    <!-- ISTEK 2 (Melakukan QC) -> ISTEK 2 Decision Diamond -->
+                                    <line x1="634" y1="298" x2="634" y2="332" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#arrow-blue)"/>
 
-                                    <!-- HASIL DITERIMA (GRS & GUDANG FLOW) -->
-                                    <div class="grid grid-cols-7 gap-3 items-center p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20"
-                                        :class="{'opacity-25 grayscale': filterBranch === 'ditolak'}">
-                                        <!-- Col 1 & 2: Empty -->
-                                        <div class="col-span-2"></div>
+                                    <!-- ISTEK 2 Diamond TIDAK -> RDTV (Col 3) -->
+                                    <path d="M 602 348 H 553 Q 545 348 545 356 V 440 Q 545 448 537 448 H 530" fill="none" stroke="var(--diagram-red)" stroke-width="1.2" marker-end="url(#arrow-red)"
+                                        :class="{'opacity-15': filterBranch === 'diterima'}"/>
+                                    <rect x="548" y="335" width="60" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"
+                                        :class="{'opacity-15': filterBranch === 'diterima'}"/>
+                                    <text x="578" y="344.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)"
+                                        :class="{'opacity-15': filterBranch === 'diterima'}">TIDAK · GAGAL</text>
 
-                                        <!-- Col 3: Receiving -> Menerbitkan GRS -->
-                                        <div class="col-span-1 flex flex-col items-center">
-                                            <div class="w-full p-3.5 rounded-xl bg-amber-400 dark:bg-amber-400 text-slate-900 font-black text-xs text-center border-2 border-emerald-600 shadow-md">
-                                                Menerbitkan <br>
-                                                <span class="text-emerald-800 font-extrabold text-sm">GRS</span>
-                                            </div>
-                                            <span class="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 mt-1">MIGO SAP 105 (Accepted)</span>
-                                        </div>
+                                    <!-- ISTEK 2 Diamond YA -> GRS (Col 3) -->
+                                    <path d="M 634 364 V 520 Q 634 528 626 528 H 530" fill="none" stroke="var(--diagram-green)" stroke-width="1.4" marker-end="url(#arrow-green)"
+                                        :class="{'opacity-15': filterBranch === 'ditolak'}"/>
+                                    <rect x="642" y="440" width="56" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-green)" stroke-width="0.8"
+                                        :class="{'opacity-15': filterBranch === 'ditolak'}"/>
+                                    <text x="670" y="449.5" text-anchor="middle" class="mono" font-size="7" font-weight="700" fill="var(--diagram-green)"
+                                        :class="{'opacity-15': filterBranch === 'ditolak'}">YA · LOLOS</text>
+                                </g>
 
-                                        <!-- Col 4, 5, 6: Arrow connector to Gudang -->
-                                        <div class="col-span-3 flex items-center justify-center">
-                                            <div class="w-full border-t-2 border-emerald-500 flex items-center justify-end relative">
-                                                <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-900 px-3 py-1 rounded-full border border-emerald-500/30 -mt-3.5 shadow-sm">
-                                                    Material Lolos QC &rarr; Serah Terima ke Fisik Gudang
-                                                </span>
-                                            </div>
-                                        </div>
+                                <!-- 5. REJECTION RETURN FLOW (RDTV -> EXPEDITING -> VENDOR) -->
+                                <g id="rejection-flow-connectors" :class="{'opacity-15': filterBranch === 'diterima'}">
+                                    <!-- Receiving (RDTV) -> Expediting (Monitor Penolakan) -->
+                                    <line x1="396" y1="438" x2="340" y2="438" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#arrow-red)"/>
+                                    <rect x="345" y="423" width="46" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="368" y="432.5" text-anchor="middle" class="mono" font-size="6" font-weight="700" fill="var(--diagram-red)">RETUR ERP</text>
 
-                                        <!-- Col 7: Gudang -> Melakukan Penyimpanan Barang -->
-                                        <div class="col-span-1 flex flex-col items-center">
-                                            <div class="w-full p-4 rounded-xl bg-emerald-600 text-white font-black text-xs text-center border-2 border-emerald-400 shadow-lg transition-all hover:scale-105">
-                                                Melakukan Penyimpanan Barang
-                                            </div>
-                                            <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mt-1">Staging &amp; Rak Gudang</span>
-                                        </div>
-                                    </div>
+                                    <!-- Expediting (Monitor Penolakan) -> Vendor (Pemberitahuan Retur) -->
+                                    <line x1="212" y1="438" x2="148" y2="438" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#arrow-red)"/>
+                                    <rect x="154" y="423" width="52" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="180" y="432.5" text-anchor="middle" class="mono" font-size="6" font-weight="700" fill="var(--diagram-red)">KLAIM RETUR</text>
+                                </g>
 
-                                </div>
+                                <!-- 6. ACCEPTANCE FLOW (GRS -> GUDANG) -->
+                                <g id="acceptance-flow-connectors" :class="{'opacity-15': filterBranch === 'ditolak'}">
+                                    <line x1="530" y1="540" x2="1096" y2="540" stroke="var(--diagram-green)" stroke-width="1.6" marker-end="url(#arrow-green)"/>
+                                    <rect x="730" y="527" width="160" height="15" rx="3" fill="var(--diagram-paper)" stroke="var(--diagram-green)" stroke-width="0.8"/>
+                                    <text x="810" y="537.5" text-anchor="middle" class="mono" font-size="7" font-weight="700" fill="var(--diagram-green)">SERAH TERIMA FISIK &amp; GRS (SAP 105)</text>
+                                </g>
 
-                            </div>
+                                <!-- ===================================================
+                                     NODES (PROCESS BOXES & DECISION DIAMONDS)
+                                     =================================================== -->
+
+                                <!-- 1. VENDOR: Mengirim Barang (Col 1) -->
+                                <g class="node-group" id="node-vendor">
+                                    <rect x="20" y="158" width="128" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-node-stroke)" stroke-width="1"/>
+                                    <rect x="26" y="164" width="24" height="11" rx="2" fill="var(--diagram-chip)"/>
+                                    <text x="38" y="172.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-ink)">VND</text>
+                                    <text x="88" y="176" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Mengirim Barang</text>
+                                    <text x="88" y="190" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Kirim Fisik &amp; DO</text>
+                                </g>
+
+                                <!-- 2. EXPEDITING: Monitor Pengiriman (Col 2) -->
+                                <g class="node-group" id="node-expediting">
+                                    <rect x="212" y="158" width="128" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-node-stroke)" stroke-width="1"/>
+                                    <rect x="218" y="164" width="24" height="11" rx="2" fill="var(--diagram-chip)"/>
+                                    <text x="230" y="172.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-ink)">EXP</text>
+                                    <text x="280" y="176" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Monitor Pengiriman</text>
+                                    <text x="280" y="190" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Tracking Jadwal PO</text>
+                                </g>
+
+                                <!-- 3. RECEIVING: Menerima & Memeriksa PO (Col 3 - Central Focal Hub) -->
+                                <g class="node-group" id="node-receiving-main">
+                                    <rect x="396" y="154" width="134" height="56" rx="6" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-width="1.5"/>
+                                    <rect x="402" y="160" width="26" height="11" rx="2" fill="var(--diagram-blue)" fill-opacity="0.25"/>
+                                    <text x="415" y="168.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-blue)">RCV</text>
+                                    <text x="466" y="175" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-ink)">Menerima &amp; Cek PO</text>
+                                    <text x="466" y="188" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-muted)">Cek fisik &amp; berkas vendor</text>
+                                    <rect x="419" y="192" width="94" height="12" rx="2" fill="var(--diagram-chip)"/>
+                                    <text x="466" y="200.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-blue)">MIGO SAP 103 (KARANTINA)</text>
+                                </g>
+
+                                <!-- 4. RECEIVING: Mengajukan Permintaan QC/JOR Chemical (Col 3 - Top) -->
+                                <g class="node-group" id="node-receiving-jor" :class="{'opacity-15': filterBranch === 'sparepart'}">
+                                    <rect x="396" y="66" width="134" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-red)" stroke-width="1"/>
+                                    <rect x="402" y="72" width="26" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.15"/>
+                                    <text x="415" y="80.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">RCV</text>
+                                    <text x="466" y="84" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Permintaan QC/JOR</text>
+                                    <text x="466" y="98" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Chemical / Bahan Baku</text>
+                                </g>
+
+                                <!-- 5. RECEIVING: Mengajukan Permintaan QC Sparepart (Col 3 - Bottom) -->
+                                <g class="node-group" id="node-receiving-qc-req" :class="{'opacity-15': filterBranch === 'chemical'}">
+                                    <rect x="396" y="250" width="130" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-blue)" stroke-width="1"/>
+                                    <rect x="402" y="256" width="26" height="11" rx="2" fill="var(--diagram-blue)" fill-opacity="0.15"/>
+                                    <text x="415" y="264.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-blue)">RCV</text>
+                                    <text x="464" y="268" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Permintaan QC</text>
+                                    <text x="464" y="282" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Sparepart &amp; Material Teknis</text>
+                                </g>
+
+                                <!-- 6. LAB: Melakukan Uji Lab (Col 5 - Top) -->
+                                <g class="node-group" id="node-lab-uji" :class="{'opacity-15': filterBranch === 'sparepart'}">
+                                    <rect x="736" y="66" width="128" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-red)" stroke-width="1"/>
+                                    <rect x="742" y="72" width="24" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.15"/>
+                                    <text x="754" y="80.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">LAB</text>
+                                    <text x="804" y="84" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Melakukan Uji Lab</text>
+                                    <text x="804" y="98" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Sampling &amp; Uji Kimiawi</text>
+                                </g>
+
+                                <!-- 7. LAB: Menerbitkan COA (Col 5 - Middle) -->
+                                <g class="node-group" id="node-lab-coa" :class="{'opacity-15': filterBranch === 'sparepart'}">
+                                    <rect x="736" y="158" width="128" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-red)" stroke-width="1"/>
+                                    <rect x="742" y="164" width="24" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.15"/>
+                                    <text x="754" y="172.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">LAB</text>
+                                    <text x="804" y="176" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Menerbitkan COA</text>
+                                    <text x="804" y="190" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Certificate of Analysis</text>
+                                </g>
+
+                                <!-- 8. PPE: Melakukan Evaluasi Mutu (Col 6) -->
+                                <g class="node-group" id="node-ppe-eval" :class="{'opacity-15': filterBranch === 'sparepart'}">
+                                    <rect x="924" y="158" width="128" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-red)" stroke-width="1"/>
+                                    <rect x="930" y="164" width="24" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.15"/>
+                                    <text x="942" y="172.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">PPE</text>
+                                    <text x="992" y="176" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Evaluasi Mutu</text>
+                                    <text x="992" y="190" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Verifikasi COA vs Standar</text>
+                                </g>
+
+                                <!-- 8b. PPE DECISION DIAMOND (Col 6) -->
+                                <g id="diamond-ppe" :class="{'opacity-15': filterBranch === 'sparepart'}">
+                                    <polygon points="988,258 1020,274 988,290 956,274" fill="var(--diagram-node)" stroke="var(--diagram-ink)" stroke-width="1.2"/>
+                                    <text x="988" y="277" text-anchor="middle" font-size="8" font-weight="700" fill="var(--diagram-ink)">Diterima?</text>
+                                </g>
+
+                                <!-- 9. ISTEK 2: Melakukan QC (Col 4) -->
+                                <g class="node-group" id="node-istek-qc" :class="{'opacity-15': filterBranch === 'chemical'}">
+                                    <rect x="572" y="250" width="124" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-blue)" stroke-width="1"/>
+                                    <rect x="578" y="256" width="24" height="11" rx="2" fill="var(--diagram-blue)" fill-opacity="0.15"/>
+                                    <text x="590" y="264.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-blue)">IST</text>
+                                    <text x="638" y="268" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Melakukan QC</text>
+                                    <text x="638" y="282" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Dimensi &amp; Part Number</text>
+                                </g>
+
+                                <!-- 9b. ISTEK 2 DECISION DIAMOND (Col 4) -->
+                                <g id="diamond-istek" :class="{'opacity-15': filterBranch === 'chemical'}">
+                                    <polygon points="634,332 666,348 634,364 602,348" fill="var(--diagram-node)" stroke="var(--diagram-ink)" stroke-width="1.2"/>
+                                    <text x="634" y="351" text-anchor="middle" font-size="8" font-weight="700" fill="var(--diagram-ink)">Diterima?</text>
+                                </g>
+
+                                <!-- 10. RECEIVING: Menerbitkan RDTV (Col 3) -->
+                                <g class="node-group" id="node-rdtv" :class="{'opacity-15': filterBranch === 'diterima'}">
+                                    <rect x="396" y="410" width="134" height="56" rx="6" fill="var(--diagram-red-tint)" stroke="var(--diagram-red)" stroke-width="1.5"/>
+                                    <rect x="402" y="416" width="26" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.25"/>
+                                    <text x="415" y="424.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">RCV</text>
+                                    <text x="466" y="431" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-red)">Menerbitkan RDTV</text>
+                                    <text x="466" y="443" text-anchor="middle" class="mono" font-size="7" font-weight="600" fill="var(--diagram-ink)">RETURN TO VENDOR</text>
+                                    <rect x="419" y="448" width="94" height="12" rx="2" fill="var(--diagram-red)" fill-opacity="0.15"/>
+                                    <text x="466" y="456.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">MATERIAL DITOLAK</text>
+                                </g>
+
+                                <!-- 11. EXPEDITING: Monitor Penolakan (Col 2) -->
+                                <g class="node-group" id="node-exp-retur" :class="{'opacity-15': filterBranch === 'diterima'}">
+                                    <rect x="212" y="414" width="128" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-red)" stroke-width="1.2"/>
+                                    <rect x="218" y="420" width="24" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.2"/>
+                                    <text x="230" y="428.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">EXP</text>
+                                    <text x="280" y="432" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Monitor Penolakan</text>
+                                    <text x="280" y="446" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Update Retur ERP</text>
+                                </g>
+
+                                <!-- 12. VENDOR: Menerima Pemberitahuan Barang Ditolak (Col 1) -->
+                                <g class="node-group" id="node-vendor-retur" :class="{'opacity-15': filterBranch === 'diterima'}">
+                                    <rect x="20" y="414" width="128" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-red)" stroke-width="1.2"/>
+                                    <rect x="26" y="420" width="24" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.2"/>
+                                    <text x="38" y="428.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">VND</text>
+                                    <text x="88" y="431" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--diagram-ink)">Pemberitahuan Retur</text>
+                                    <text x="88" y="444" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-muted)">Klaim / Penggantian</text>
+                                    <text x="88" y="454" text-anchor="middle" font-size="6.5" font-weight="600" fill="var(--diagram-red)">Barang Ditolak</text>
+                                </g>
+
+                                <!-- 13. RECEIVING: Menerbitkan GRS (Col 3) -->
+                                <g class="node-group" id="node-grs" :class="{'opacity-15': filterBranch === 'ditolak'}">
+                                    <rect x="396" y="512" width="134" height="56" rx="6" fill="var(--diagram-green-tint)" stroke="var(--diagram-green)" stroke-width="1.5"/>
+                                    <rect x="402" y="518" width="26" height="11" rx="2" fill="var(--diagram-green)" fill-opacity="0.25"/>
+                                    <text x="415" y="526.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-green)">RCV</text>
+                                    <text x="466" y="533" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-green)">Menerbitkan GRS</text>
+                                    <text x="466" y="546" text-anchor="middle" class="mono" font-size="7" font-weight="600" fill="var(--diagram-ink)">MIGO SAP 105</text>
+                                    <rect x="419" y="550" width="94" height="12" rx="2" fill="var(--diagram-green)" fill-opacity="0.15"/>
+                                    <text x="466" y="558.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-green)">UNRESTRICTED STOCK</text>
+                                </g>
+
+                                <!-- 14. GUDANG: Melakukan Penyimpanan Barang (Col 7) -->
+                                <g class="node-group" id="node-gudang" :class="{'opacity-15': filterBranch === 'ditolak'}">
+                                    <rect x="1096" y="516" width="134" height="48" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-green)" stroke-width="1.3"/>
+                                    <rect x="1102" y="522" width="24" height="11" rx="2" fill="var(--diagram-green)" fill-opacity="0.2"/>
+                                    <text x="1114" y="530.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-green)">GDG</text>
+                                    <text x="1166" y="534" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Penyimpanan Fisik</text>
+                                    <text x="1166" y="548" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Staging &amp; Rak Gudang</text>
+                                </g>       </g>
+
+                                <!-- ===================================================
+                                     BOTTOM LEGEND & NOTATION STRIP
+                                     =================================================== -->
+                                <g id="diagram-legend">
+                                    <!-- Legend Hairline -->
+                                    <line x1="20" y1="600" x2="1240" y2="600" stroke="var(--diagram-rule-strong)" stroke-width="0.8"/>
+                                    
+                                    <!-- Legend Title -->
+                                    <text x="24" y="618" class="mono" font-size="7.5" font-weight="700" letter-spacing="0.14em" fill="var(--diagram-soft)">NOTASI DIAGRAM</text>
+
+                                    <!-- Legend Items Row -->
+                                    <!-- 1. Step -->
+                                    <rect x="24" y="628" width="14" height="10" rx="2" fill="var(--diagram-node)" stroke="var(--diagram-node-stroke)" stroke-width="1"/>
+                                    <text x="44" y="636" font-size="8.5" fill="var(--diagram-muted)">Tahap Aktivitas SOP</text>
+
+                                    <!-- 2. Decision Diamond -->
+                                    <polygon points="172,633 178,627 184,633 178,639" fill="var(--diagram-node)" stroke="var(--diagram-ink)" stroke-width="1"/>
+                                    <text x="190" y="636" font-size="8.5" fill="var(--diagram-muted)">Keputusan Mutu (Diterima?)</text>
+
+                                    <!-- 3. GRS Accepted -->
+                                    <rect x="336" y="628" width="14" height="10" rx="2" fill="var(--diagram-green-tint)" stroke="var(--diagram-green)" stroke-width="1.2"/>
+                                    <text x="356" y="636" font-size="8.5" font-weight="600" fill="var(--diagram-green)">Diterima (GRS SAP 105)</text>
+
+                                    <!-- 4. RDTV Rejected -->
+                                    <rect x="516" y="628" width="14" height="10" rx="2" fill="var(--diagram-red-tint)" stroke="var(--diagram-red)" stroke-width="1.2"/>
+                                    <text x="536" y="636" font-size="8.5" font-weight="600" fill="var(--diagram-red)">Ditolak (RDTV Retur)</text>
+
+                                    <!-- 5. Handoff Flow -->
+                                    <line x1="700" y1="633" x2="726" y2="633" stroke="var(--diagram-muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
+                                    <text x="736" y="636" font-size="8.5" fill="var(--diagram-muted)">Alur Lintas Unit</text>
+
+                                    <!-- 6. Focal Hub Unit -->
+                                    <rect x="850" y="628" width="14" height="10" rx="2" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-width="1.2"/>
+                                    <text x="870" y="636" font-size="8.5" font-weight="700" fill="var(--diagram-blue)">Receiving (Focal Hub)</text>
+                                </g>
+
+                            </svg>
                         </div>
                     </div>
                 </div>

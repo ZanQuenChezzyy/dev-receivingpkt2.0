@@ -7,12 +7,14 @@ use App\Http\Controllers\QRCodeController;
 use App\Livewire\Frontend\Home;
 use App\Livewire\Frontend\PdNonstockList;
 use App\Livewire\Frontend\PublicMaterialIssueForm;
+use App\Livewire\Frontend\VendorPoTracking;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', Home::class)->name('home');
 
 Route::get('/pengambilan-barang/mir', PublicMaterialIssueForm::class)->name('frontend.mir.create');
 Route::get('/list-material', PdNonstockList::class)->name('frontend.list-material');
+Route::get('/lacak-po-vendor', VendorPoTracking::class)->name('frontend.vendor.tracking');
 
 Route::get('/admin/material-issues/print-bulk', [MaterialIssuePrintController::class, 'printBulk'])
     ->middleware(['web', 'auth'])
