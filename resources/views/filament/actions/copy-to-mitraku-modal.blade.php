@@ -78,7 +78,8 @@
                 @click="copyText('{{ addslashes($record->no_po ?? '') }}', 'no_po')"
                 :class="copiedField === 'no_po' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
-                <x-filament::icon :icon="copiedField === 'no_po' ? 'heroicon-m-check' : 'heroicon-m-clipboard'" class="w-4 h-4" />
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'no_po'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'no_po'" />
                 <span x-text="copiedField === 'no_po' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>
@@ -94,7 +95,8 @@
                 @click="copyText('{{ addslashes($record->no_do ?? '') }}', 'no_do')"
                 :class="copiedField === 'no_do' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
-                <x-filament::icon :icon="copiedField === 'no_do' ? 'heroicon-m-check' : 'heroicon-m-clipboard'" class="w-4 h-4" />
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'no_do'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'no_do'" />
                 <span x-text="copiedField === 'no_do' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>
@@ -110,7 +112,8 @@
                 @click="copyText('{{ addslashes($record->no_grs ?? ($record->no_rdtv ?? '')) }}', 'no_grs')"
                 :class="copiedField === 'no_grs' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
-                <x-filament::icon :icon="copiedField === 'no_grs' ? 'heroicon-m-check' : 'heroicon-m-clipboard'" class="w-4 h-4" />
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'no_grs'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'no_grs'" />
                 <span x-text="copiedField === 'no_grs' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>
@@ -126,7 +129,8 @@
                 @click="copyText('{{ addslashes($record->no_invoice ?? '') }}', 'no_invoice')"
                 :class="copiedField === 'no_invoice' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
-                <x-filament::icon :icon="copiedField === 'no_invoice' ? 'heroicon-m-check' : 'heroicon-m-clipboard'" class="w-4 h-4" />
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'no_invoice'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'no_invoice'" />
                 <span x-text="copiedField === 'no_invoice' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>
@@ -142,7 +146,8 @@
                 @click="copyText('{{ addslashes($record->faktur_pajak ?? '') }}', 'faktur_pajak')"
                 :class="copiedField === 'faktur_pajak' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
-                <x-filament::icon :icon="copiedField === 'faktur_pajak' ? 'heroicon-m-check' : 'heroicon-m-clipboard'" class="w-4 h-4" />
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'faktur_pajak'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'faktur_pajak'" />
                 <span x-text="copiedField === 'faktur_pajak' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>
@@ -160,7 +165,8 @@
                 @click="copyText('{{ $record->subtotal_exclude_ppn ? number_format($record->subtotal_exclude_ppn, 2, '.', '') : '' }}', 'subtotal_exclude')"
                 :class="copiedField === 'subtotal_exclude' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
-                <x-filament::icon :icon="copiedField === 'subtotal_exclude' ? 'heroicon-m-check' : 'heroicon-m-clipboard'" class="w-4 h-4" />
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'subtotal_exclude'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'subtotal_exclude'" />
                 <span x-text="copiedField === 'subtotal_exclude' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>
@@ -178,7 +184,8 @@
                 @click="copyText('{{ $record->subtotal_include_ppn ? number_format($record->subtotal_include_ppn, 2, '.', '') : '' }}', 'subtotal_include')"
                 :class="copiedField === 'subtotal_include' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
-                <x-filament::icon :icon="copiedField === 'subtotal_include' ? 'heroicon-m-check' : 'heroicon-m-clipboard'" class="w-4 h-4" />
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'subtotal_include'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'subtotal_include'" />
                 <span x-text="copiedField === 'subtotal_include' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>
@@ -196,7 +203,8 @@
                 @click="copyText('{{ $record->qty_penagihan ?? '' }}', 'qty')"
                 :class="copiedField === 'qty' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
-                <x-filament::icon :icon="copiedField === 'qty' ? 'heroicon-m-check' : 'heroicon-m-clipboard'" class="w-4 h-4" />
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'qty'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'qty'" />
                 <span x-text="copiedField === 'qty' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>
@@ -212,7 +220,8 @@
                 @click="copyText('{{ addslashes($record->vendor_name ?? '') }}', 'vendor_name')"
                 :class="copiedField === 'vendor_name' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
-                <x-filament::icon :icon="copiedField === 'vendor_name' ? 'heroicon-m-check' : 'heroicon-m-clipboard'" class="w-4 h-4" />
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'vendor_name'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'vendor_name'" />
                 <span x-text="copiedField === 'vendor_name' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>

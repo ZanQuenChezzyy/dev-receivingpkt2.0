@@ -10,12 +10,43 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-test('vendor model has expected fillable attributes and relationships', function () {
+test('vendor model has all 13 required columns and handles multiple emails', function () {
     $vendor = new Vendor;
     $fillables = $vendor->getFillable();
 
-    expect($fillables)->toContain('name', 'vendor_number', 'email', 'city', 'street', 'salesperson')
-        ->and($vendor->invoicingReceipts())->toBeInstanceOf(HasMany::class);
+    expect($fillables)->toEqual([
+        'name',
+        'vendor_number',
+        'city',
+        'street',
+        'street2',
+        'street3',
+        'street4',
+        'telephone_1',
+        'telephone_2',
+        'fax_number',
+        'salesperson',
+        'telp_salesperson',
+        'email',
+    ])->and($vendor->invoicingReceipts())->toBeInstanceOf(HasMany::class);
+
+    // Multi-email array
+    $vendor->email = ['vendor1@pkt.com', 'vendor2@pkt.com'];
+    expect($vendor->email)->toBe(['vendor1@pkt.com', 'vendor2@pkt.com'])
+        ->and($vendor->primary_email)->toBe('vendor1@pkt.com')
+        ->and($vendor->email_string)->toBe('vendor1@pkt.com, vendor2@pkt.com');
+
+    // Comma-separated string
+    $vendor->email = 'finance@pkt.com, tax@pkt.com';
+    expect($vendor->email)->toBe(['finance@pkt.com', 'tax@pkt.com']);
+
+    // Single email string
+    $vendor->email = 'sales@pkt.com';
+    expect($vendor->email)->toBe(['sales@pkt.com']);
+
+    // Null/empty
+    $vendor->email = null;
+    expect($vendor->email)->toBe([]);
 });
 
 test('pic material assignment model has expected fillable attributes and user relation', function () {
@@ -185,4 +216,27 @@ test('user model allows querying invoicing receipts with count on pic_id', funct
         ->and($query->toSql())->toContain('pic_id')
         ->and($query->getBindings())->toContain('Menunggu Verifikasi')
         ->and($query->getBindings())->toContain('Terverifikasi');
+});
+
+test('copy to mitraku modal blade view renders successfully without undefined constant error', function () {
+    $receipt = new InvoicingReceipt([
+        'no_po' => 'PO-12345',
+        'no_do' => 'DO-67890',
+        'no_grs' => 'GRS-111',
+        'no_invoice' => 'INV-222',
+        'faktur_pajak' => '010.000-24.12345678',
+        'subtotal_exclude_ppn' => 1000000,
+        'subtotal_include_ppn' => 1110000,
+        'qty_penagihan' => 10,
+        'uoi' => 'PCS',
+        'vendor_name' => 'PT Testing Indonesia',
+        'nama_barang' => 'Barang Uji',
+    ]);
+
+    $view = (string) view('filament.actions.copy-to-mitraku-modal', ['record' => $receipt]);
+
+    expect($view)->toContain('PO-12345')
+        ->and($view)->toContain('DO-67890')
+        ->and($view)->toContain('GRS-111')
+        ->and($view)->toContain('copiedField');
 });

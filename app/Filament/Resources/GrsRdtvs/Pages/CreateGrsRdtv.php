@@ -393,7 +393,7 @@ class CreateGrsRdtv extends CreateRecord
             'material_type' => $materialType,
             'vendor_name' => $po?->vendor_name ?? $vendor?->name,
             'deskripsi' => $firstDetail?->description ?? $po?->description,
-            'email_vendor' => $vendor?->email,
+            'email_vendor' => is_array($vendor?->email) ? implode(', ', $vendor->email) : $vendor?->email,
             'tanggal_info_grs' => $transactionDate ?? now(),
             'nama_barang' => $firstDetail?->description ?? $po?->description,
             'qty_penagihan' => $qtyPenagihan,

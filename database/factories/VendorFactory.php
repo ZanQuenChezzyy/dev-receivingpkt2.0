@@ -20,13 +20,17 @@ class VendorFactory extends Factory
         return [
             'name' => fake()->company(),
             'vendor_number' => (string) fake()->unique()->numerify('1000####'),
-            'email' => fake()->unique()->companyEmail(),
-            'name_3' => fake()->companySuffix(),
             'city' => fake()->city(),
             'street' => fake()->streetAddress(),
+            'street2' => null,
+            'street3' => null,
+            'street4' => null,
             'telephone_1' => fake()->phoneNumber(),
+            'telephone_2' => fake()->phoneNumber(),
+            'fax_number' => null,
             'salesperson' => fake()->name(),
             'telp_salesperson' => fake()->phoneNumber(),
+            'email' => [fake()->unique()->companyEmail(), fake()->unique()->companyEmail()],
         ];
     }
 }

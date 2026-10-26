@@ -16,36 +16,46 @@ class VendorImporter extends Importer
     {
         return [
             ImportColumn::make('name')
+                ->label('NAMA VENDOR')
                 ->requiredMapping()
                 ->rules(['required', 'max:255']),
             ImportColumn::make('vendor_number')
+                ->label('Vendor Number')
                 ->requiredMapping()
                 ->rules(['required', 'max:255']),
-            ImportColumn::make('email')
-                ->requiredMapping()
-                ->rules(['required', 'email', 'max:255']),
-            ImportColumn::make('name_3')
-                ->rules(['max:255']),
             ImportColumn::make('city')
+                ->label('City')
                 ->rules(['max:255']),
             ImportColumn::make('street')
+                ->label('Street')
                 ->rules(['max:255']),
             ImportColumn::make('street2')
+                ->label('Street2')
                 ->rules(['max:255']),
             ImportColumn::make('street3')
+                ->label('Street3')
                 ->rules(['max:255']),
             ImportColumn::make('street4')
+                ->label('Street4')
                 ->rules(['max:255']),
             ImportColumn::make('telephone_1')
+                ->label('Telephone 1')
                 ->rules(['max:255']),
             ImportColumn::make('telephone_2')
+                ->label('Telephone 2')
                 ->rules(['max:255']),
             ImportColumn::make('fax_number')
+                ->label('Fax Number')
                 ->rules(['max:255']),
             ImportColumn::make('salesperson')
+                ->label('Salesperson')
                 ->rules(['max:255']),
             ImportColumn::make('telp_salesperson')
+                ->label('Telp. Salesperson')
                 ->rules(['max:255']),
+            ImportColumn::make('email')
+                ->label('Email')
+                ->rules(['nullable']),
         ];
     }
 

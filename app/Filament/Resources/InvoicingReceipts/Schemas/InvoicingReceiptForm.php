@@ -108,7 +108,7 @@ class InvoicingReceiptForm
                                     $vendor = Vendor::find($state);
                                     if ($vendor) {
                                         $set('vendor_name', $vendor->name);
-                                        $set('email_vendor', $vendor->email);
+                                        $set('email_vendor', is_array($vendor->email) ? implode(', ', $vendor->email) : $vendor->email);
                                     }
                                 }
                             }),
@@ -119,8 +119,7 @@ class InvoicingReceiptForm
 
                         TextInput::make('email_vendor')
                             ->label('Email Vendor')
-                            ->email()
-                            ->placeholder('vendor@email.com'),
+                            ->placeholder('vendor@email.com (bisa lebih dari 1 email)'),
 
                         Textarea::make('deskripsi')
                             ->label('Deskripsi Pekerjaan / Catatan Pengadaan')

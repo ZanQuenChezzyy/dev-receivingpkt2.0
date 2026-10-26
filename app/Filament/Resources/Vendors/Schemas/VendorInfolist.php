@@ -13,10 +13,6 @@ class VendorInfolist
             ->components([
                 TextEntry::make('name'),
                 TextEntry::make('vendor_number'),
-                TextEntry::make('email')
-                    ->label('Email address'),
-                TextEntry::make('name_3')
-                    ->placeholder('-'),
                 TextEntry::make('city')
                     ->placeholder('-'),
                 TextEntry::make('street')
@@ -36,6 +32,11 @@ class VendorInfolist
                 TextEntry::make('salesperson')
                     ->placeholder('-'),
                 TextEntry::make('telp_salesperson')
+                    ->placeholder('-'),
+                TextEntry::make('email')
+                    ->label('Email')
+                    ->badge()
+                    ->separator(',')
                     ->placeholder('-'),
                 TextEntry::make('created_at')
                     ->dateTime()

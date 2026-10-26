@@ -36,15 +36,13 @@ class VendorsTable
                         ->copyMessage('Nomor vendor disalin')
                         ->searchable()
                         ->sortable(),
-                    TextColumn::make('name_3')
-                        ->label('Name 3')
-                        ->placeholder('-')
-                        ->toggleable(isToggledHiddenByDefault: true),
                 ]),
 
                 ColumnGroup::make('Kontak Resmi', [
                     TextColumn::make('email')
                         ->label('Email Vendor')
+                        ->badge()
+                        ->separator(',')
                         ->icon('heroicon-m-envelope')
                         ->iconColor('info')
                         ->copyable()
