@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\InvoicingReceiptFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -86,6 +87,27 @@ class InvoicingReceipt extends Model
     public function pic(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pic_id');
+    }
+
+    protected function deliveryDatePo(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->relationLoaded('purchaseOrderIssued') && $this->purchaseOrderIssued) {
+                    return $this->purchaseOrderIssued->delivery_date_po;
+                }
+
+                if ($this->purchase_order_issued_id) {
+                    return $this->purchaseOrderIssued?->delivery_date_po;
+                }
+
+                if ($this->no_po && $this->no_po !== '-') {
+                    return PurchaseOrderIssued::where('purchase_order_no', $this->no_po)->value('delivery_date_po');
+                }
+
+                return null;
+            }
+        );
     }
 
     protected static function booted(): void

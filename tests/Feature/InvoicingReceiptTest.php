@@ -241,13 +241,28 @@ test('copy to mitraku modal blade view renders successfully without undefined co
         'nama_barang' => 'Barang Uji',
     ]);
 
+    $po = new PurchaseOrderIssued([
+        'purchase_order_no' => 'PO-12345',
+        'delivery_date_po' => '2026-10-26',
+    ]);
+    $receipt->setRelation('purchaseOrderIssued', $po);
+
     $view = (string) view('filament.actions.copy-to-mitraku-modal', ['record' => $receipt]);
 
     expect($view)->toContain('PO-12345')
         ->and($view)->toContain('DO-67890')
         ->and($view)->toContain('GRS-111')
         ->and($view)->toContain('copiedField')
-        ->and($view)->toContain('Quantity di PO');
+        ->and($view)->toContain('Quantity di PO')
+        ->and($view)->toContain("copyText('1000000', 'subtotal_exclude')")
+        ->and($view)->toContain("copyText('1110000', 'subtotal_include')")
+        ->and($view)->toContain('Material / Nama Barang')
+        ->and($view)->toContain("copyText('Barang Uji', 'nama_barang')")
+        ->and($view)->toContain('Delivery Date PO')
+        ->and($view)->toContain("copyText('26-10-2026', 'delivery_date_po')")
+        ->and($view)->toContain('26-10-2026')
+        ->and($view)->not->toContain('1000000.00')
+        ->and($view)->not->toContain('1110000.00');
 });
 
 test('invoicing receipt model computes subtotal include ppn with 11% formula', function () {

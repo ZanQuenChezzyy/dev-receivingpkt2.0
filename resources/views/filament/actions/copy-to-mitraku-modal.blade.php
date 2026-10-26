@@ -1,3 +1,25 @@
+@php
+    $formatSubtotalForCopy = function ($val): string {
+        if ($val === null || $val === '') {
+            return '';
+        }
+        $num = (float) $val;
+
+        return floor($num) == $num
+            ? number_format($num, 0, '', '')
+            : rtrim(rtrim(number_format($num, 2, '.', ''), '0'), '.');
+    };
+
+    $subtotalExcludeCopy = $formatSubtotalForCopy($record->subtotal_exclude_ppn ?? null);
+    $subtotalIncludeCopy = $formatSubtotalForCopy($record->subtotal_include_ppn ?? null);
+
+    $materialName = $record->nama_barang ?: ($record->deskripsi ?: '-');
+    $materialCode = $record->purchaseOrderIssued?->material_code ?? $record->deliveryOrderReceipt?->deliveryOrderReceiptDetails?->first()?->material_code;
+
+    $rawDeliveryDate = $record->delivery_date_po ?? $record->purchaseOrderIssued?->delivery_date_po;
+    $deliveryDatePoFormatted = $rawDeliveryDate ? \Illuminate\Support\Carbon::parse($rawDeliveryDate)->format('d-m-Y') : '';
+@endphp
+
 <div class="space-y-4" x-data="{
     copiedField: null,
     copyText(text, fieldName) {
@@ -16,16 +38,17 @@
     copyAllTsv() {
         const row = [
             '{{ addslashes($record->no_po ?? '') }}',
+            '{{ $deliveryDatePoFormatted }}',
             '{{ addslashes($record->no_do ?? '') }}',
             '{{ addslashes($record->no_grs ?? ($record->no_rdtv ?? '')) }}',
             '{{ addslashes($record->no_invoice ?? '') }}',
             '{{ addslashes($record->faktur_pajak ?? '') }}',
-            '{{ $record->subtotal_exclude_ppn ? number_format($record->subtotal_exclude_ppn, 2, '.', '') : '' }}',
-            '{{ $record->subtotal_include_ppn ? number_format($record->subtotal_include_ppn, 2, '.', '') : '' }}',
+            '{{ $subtotalExcludeCopy }}',
+            '{{ $subtotalIncludeCopy }}',
             '{{ $record->qty_penagihan ?? '' }}',
             '{{ addslashes($record->uoi ?? '') }}',
             '{{ addslashes($record->vendor_name ?? '') }}',
-            '{{ addslashes($record->nama_barang ?? '') }}'
+            '{{ addslashes($materialName !== '-' ? $materialName : '') }}'
         ].join('\t');
 
         navigator.clipboard.writeText(row).then(() => {
@@ -34,40 +57,23 @@
         });
     }
 }">
-    <!-- Banner Utama: Salin Format Excel / Mitraku -->
-    <div class="p-4 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/70 dark:bg-primary-950/40 flex flex-col md:flex-row items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-            <div class="p-2.5 rounded-lg bg-primary-600 text-white shadow-sm">
-                <x-filament::icon icon="heroicon-m-clipboard-document-check" class="w-6 h-6" />
-            </div>
-            <div>
-                <h4 class="font-semibold text-gray-900 dark:text-white text-base">Salin Cepat Format Mitraku PKT</h4>
-                <p class="text-xs text-gray-600 dark:text-gray-400">Salin seluruh data baris ini (Tab-Separated) untuk langsung di-paste ke tabel Mitraku / Excel.</p>
-            </div>
-        </div>
+    <!-- Baris Aksi Header Cepat -->
+    <div class="flex items-center justify-between gap-2 pb-1 border-b border-gray-100 dark:border-gray-800">
+        <span class="text-xs text-gray-500 dark:text-gray-400">Klik <strong>Salin</strong> pada data yang ingin di-paste ke portal Mitraku:</span>
         <button
             type="button"
             @click="copyAllTsv()"
-            :class="copiedField === '__ALL__' ? 'bg-success-600 text-white' : 'bg-primary-600 hover:bg-primary-700 text-white'"
-            class="px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 shadow-sm flex items-center gap-2 shrink-0">
-            <template x-if="copiedField === '__ALL__'">
-                <div class="flex items-center gap-1.5 font-bold">
-                    <x-filament::icon icon="heroicon-m-check" class="w-5 h-5" />
-                    <span>Semua Data Disalin!</span>
-                </div>
-            </template>
-            <template x-if="copiedField !== '__ALL__'">
-                <div class="flex items-center gap-1.5">
-                    <x-filament::icon icon="heroicon-m-document-duplicate" class="w-5 h-5" />
-                    <span>Salin Semua Baris (TSV)</span>
-                </div>
-            </template>
+            :class="copiedField === '__ALL__' ? 'bg-success-600 text-white' : 'bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/60 border border-primary-200 dark:border-primary-800'"
+            class="px-2.5 py-1 rounded-md text-xs font-medium transition flex items-center gap-1.5 shrink-0 shadow-xs">
+            <x-filament::icon icon="heroicon-m-check" class="w-3.5 h-3.5" x-show="copiedField === '__ALL__'" x-cloak />
+            <x-filament::icon icon="heroicon-m-document-duplicate" class="w-3.5 h-3.5" x-show="copiedField !== '__ALL__'" />
+            <span x-text="copiedField === '__ALL__' ? 'Semua Baris Disalin!' : 'Salin Semua (TSV)'"></span>
         </button>
     </div>
 
-    <!-- Grid Kartu Data Satuan (Single-click Copy) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <!-- No. PO -->
+    <!-- Grid Kartu Data Satuan (Single-Click Copy) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Nomor PO -->
         <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
             <div class="min-w-0 pr-2">
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Nomor PO</span>
@@ -84,7 +90,24 @@
             </button>
         </div>
 
-        <!-- No. DO -->
+        <!-- Delivery Date PO -->
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
+            <div class="min-w-0 pr-2">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Delivery Date PO</span>
+                <span class="font-bold text-gray-900 dark:text-white truncate block text-sm">{{ $deliveryDatePoFormatted ?: '-' }}</span>
+            </div>
+            <button
+                type="button"
+                @click="copyText('{{ $deliveryDatePoFormatted }}', 'delivery_date_po')"
+                :class="copiedField === 'delivery_date_po' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
+                class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'delivery_date_po'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'delivery_date_po'" />
+                <span x-text="copiedField === 'delivery_date_po' ? 'Disalin' : 'Salin'"></span>
+            </button>
+        </div>
+
+        <!-- Nomor DO -->
         <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
             <div class="min-w-0 pr-2">
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Nomor DO</span>
@@ -118,7 +141,7 @@
             </button>
         </div>
 
-        <!-- No. Invoice -->
+        <!-- Nomor Invoice -->
         <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
             <div class="min-w-0 pr-2">
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Nomor Invoice</span>
@@ -162,7 +185,7 @@
             </div>
             <button
                 type="button"
-                @click="copyText('{{ $record->subtotal_exclude_ppn ? number_format($record->subtotal_exclude_ppn, 2, '.', '') : '' }}', 'subtotal_exclude')"
+                @click="copyText('{{ $subtotalExcludeCopy }}', 'subtotal_exclude')"
                 :class="copiedField === 'subtotal_exclude' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
                 <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'subtotal_exclude'" x-cloak />
@@ -181,7 +204,7 @@
             </div>
             <button
                 type="button"
-                @click="copyText('{{ $record->subtotal_include_ppn ? number_format($record->subtotal_include_ppn, 2, '.', '') : '' }}', 'subtotal_include')"
+                @click="copyText('{{ $subtotalIncludeCopy }}', 'subtotal_include')"
                 :class="copiedField === 'subtotal_include' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
                 class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
                 <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'subtotal_include'" x-cloak />
@@ -228,8 +251,53 @@
             </button>
         </div>
 
+        <!-- Nama Material / Barang -->
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs sm:col-span-2">
+            <div class="min-w-0 pr-2">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Material / Nama Barang</span>
+                    @if ($record->material_type)
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                            {{ $record->material_type }}
+                        </span>
+                    @endif
+                </div>
+                <span class="font-bold text-gray-900 dark:text-white truncate block text-sm mt-0.5" title="{{ $materialName }}">
+                    {{ $materialName }}
+                </span>
+            </div>
+            <button
+                type="button"
+                @click="copyText('{{ addslashes($materialName !== '-' ? $materialName : '') }}', 'nama_barang')"
+                :class="copiedField === 'nama_barang' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
+                class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'nama_barang'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'nama_barang'" />
+                <span x-text="copiedField === 'nama_barang' ? 'Disalin' : 'Salin'"></span>
+            </button>
+        </div>
+
+        @if ($materialCode)
+            <!-- Kode Material -->
+            <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
+                <div class="min-w-0 pr-2">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Kode Material</span>
+                    <span class="font-bold text-gray-900 dark:text-white truncate block text-sm">{{ $materialCode }}</span>
+                </div>
+                <button
+                    type="button"
+                    @click="copyText('{{ addslashes($materialCode) }}', 'material_code')"
+                    :class="copiedField === 'material_code' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
+                    class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
+                    <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'material_code'" x-cloak />
+                    <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'material_code'" />
+                    <span x-text="copiedField === 'material_code' ? 'Disalin' : 'Salin'"></span>
+                </button>
+            </div>
+        @endif
+
         <!-- Nama Vendor -->
-        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs sm:col-span-2 lg:col-span-1">
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs {{ $materialCode ? '' : 'sm:col-span-2' }}">
             <div class="min-w-0 pr-2">
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Nama Vendor</span>
                 <span class="font-bold text-gray-900 dark:text-white truncate block text-sm">{{ $record->vendor_name ?? '-' }}</span>
