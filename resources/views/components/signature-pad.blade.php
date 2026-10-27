@@ -43,8 +43,14 @@
             if (!val && this.ctx) {
                 const canvas = this.$refs.canvas;
                 this.ctx.clearRect(0, 0, canvas.width, canvas.height);
+                this.$dispatch('signature-updated', { id: '{{ $id }}', hasSignature: false, value: null });
+            } else if (val) {
+                this.$dispatch('signature-updated', { id: '{{ $id }}', hasSignature: true, value: val });
             }
         });
+        if (this.value) {
+            this.$dispatch('signature-updated', { id: '{{ $id }}', hasSignature: true, value: this.value });
+        }
     },
     
     getMousePos(e) {
@@ -135,12 +141,14 @@
         }
         
         this.value = tempCanvas.toDataURL('image/png');
+        this.$dispatch('signature-updated', { id: '{{ $id }}', hasSignature: true, value: this.value });
     },
     
     clear() {
         const canvas = this.$refs.canvas;
         this.ctx.clearRect(0, 0, canvas.width, canvas.height);
         this.value = null;
+        this.$dispatch('signature-updated', { id: '{{ $id }}', hasSignature: false, value: null });
     }
 }" class="glass-panel relative w-full overflow-hidden group/sig">
     <canvas id="{{ $id }}" x-ref="canvas" 

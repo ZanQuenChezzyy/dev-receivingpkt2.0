@@ -55,11 +55,106 @@
         </div>
 
         <form wire:submit.prevent="confirmSubmit" class="relative" x-data="{
-            diminta_oleh: $persist(@entangle('diminta_oleh').live).as('mi_diminta_oleh'),
+            diminta_oleh: $persist(@entangle('diminta_oleh')).as('mi_diminta_oleh'),
             npk: $persist(@entangle('npk')).as('mi_npk'),
             no_hp: $persist(@entangle('no_hp')).as('mi_no_hp'),
             departemen: $persist(@entangle('departemen')).as('mi_departemen'),
             bagian: $persist(@entangle('bagian')).as('mi_bagian'),
+            tanggal: @entangle('tanggal'),
+            purchase_order_issued_id: @entangle('purchase_order_issued_id'),
+            digunakan_untuk: @entangle('digunakan_untuk'),
+            agreement: @entangle('agreement'),
+            details: @entangle('details'),
+            requiresIstekSignature: @entangle('requiresIstekSignature'),
+            diserahkan_oleh: @entangle('diserahkan_oleh'),
+            diserahkan_npk: @entangle('diserahkan_npk'),
+            disetujui_oleh: @entangle('disetujui_oleh'),
+            disetujui_npk: @entangle('disetujui_npk'),
+            diminta_signature: @entangle('diminta_signature'),
+            diserahkan_signature: @entangle('diserahkan_signature'),
+            disetujui_signature: @entangle('disetujui_signature'),
+            hasDimintaSig: Boolean(@js(!empty($diminta_signature))),
+            hasDiserahkanSig: Boolean(@js(!empty($diserahkan_signature))),
+            hasDisetujuiSig: Boolean(@js(!empty($disetujui_signature))),
+            onSignatureChange(detail) {
+                if (!detail || !detail.id) return;
+                if (detail.id === 'diminta_signature') {
+                    this.hasDimintaSig = detail.hasSignature;
+                    this.diminta_signature = detail.value;
+                } else if (detail.id === 'diserahkan_signature') {
+                    this.hasDiserahkanSig = detail.hasSignature;
+                    this.diserahkan_signature = detail.value;
+                } else if (detail.id === 'disetujui_signature') {
+                    this.hasDisetujuiSig = detail.hasSignature;
+                    this.disetujui_signature = detail.value;
+                }
+            },
+            hasVal(v) {
+                return v !== null && v !== undefined && String(v).trim().length > 0;
+            },
+            isFormReady() {
+                // 1. Informasi Peminta
+                const diminta = this.diminta_oleh ?? $wire.diminta_oleh;
+                const npk = this.npk ?? $wire.npk;
+                const noHp = this.no_hp ?? $wire.no_hp;
+                const dept = this.departemen ?? $wire.departemen;
+                const bagian = this.bagian ?? $wire.bagian;
+                if (!this.hasVal(diminta)) return false;
+                if (!this.hasVal(npk)) return false;
+                if (!this.hasVal(noHp)) return false;
+                if (!this.hasVal(dept)) return false;
+                if (!this.hasVal(bagian)) return false;
+
+                // 2. Tanggal, PO, & Keperluan
+                const tgl = this.tanggal ?? $wire.tanggal;
+                const poId = this.purchase_order_issued_id ?? $wire.purchase_order_issued_id;
+                const kegunaan = this.digunakan_untuk ?? $wire.digunakan_untuk;
+                if (!this.hasVal(tgl)) return false;
+                if (!poId) return false;
+                if (!this.hasVal(kegunaan)) return false;
+
+                // 3. Detail Material
+                const rawDetails = this.details ?? $wire.details;
+                const items = Array.isArray(rawDetails) ? rawDetails : Object.values(rawDetails || {});
+                if (items.length === 0) return false;
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (!item || !item.delivery_order_receipt_detail_id) return false;
+                    const qty = parseFloat(item.diminta);
+                    if (isNaN(qty) || qty <= 0) return false;
+                    const boh = parseFloat(item.boh || 0);
+                    if (boh > 0 && qty > boh) return false;
+                }
+
+                // 4. Tanda Tangan Peminta
+                const hasPeminta = Boolean(this.hasDimintaSig || this.diminta_signature || $wire.diminta_signature);
+                if (!hasPeminta) return false;
+
+                // 5. Petugas & Tanda Tangan Receiving
+                const diserahkanOleh = this.diserahkan_oleh ?? $wire.diserahkan_oleh;
+                const diserahkanNpk = this.diserahkan_npk ?? $wire.diserahkan_npk;
+                if (!this.hasVal(diserahkanOleh)) return false;
+                if (!this.hasVal(diserahkanNpk)) return false;
+                const hasReceiving = Boolean(this.hasDiserahkanSig || this.diserahkan_signature || $wire.diserahkan_signature);
+                if (!hasReceiving) return false;
+
+                // 6. ISTEK (Jika Material Belum GRS)
+                const reqIstek = Boolean(this.requiresIstekSignature ?? $wire.requiresIstekSignature);
+                if (reqIstek) {
+                    const disetujuiOleh = this.disetujui_oleh ?? $wire.disetujui_oleh;
+                    const disetujuiNpk = this.disetujui_npk ?? $wire.disetujui_npk;
+                    if (!this.hasVal(disetujuiOleh)) return false;
+                    if (!this.hasVal(disetujuiNpk)) return false;
+                    const hasIstek = Boolean(this.hasDisetujuiSig || this.disetujui_signature || $wire.disetujui_signature);
+                    if (!hasIstek) return false;
+                }
+
+                // 7. Persetujuan Syarat & Ketentuan
+                const agreed = Boolean(this.agreement ?? $wire.agreement);
+                if (!agreed) return false;
+
+                return true;
+            },
             toastMessage: '',
             toastType: 'success',
             showToast: false,
@@ -74,9 +169,11 @@
                 }, 2600);
             },
             setKegunaan(val) {
+                this.digunakan_untuk = val;
                 @this.set('digunakan_untuk', val);
             }
         }"
+        @signature-updated.window="onSignatureChange($event.detail)"
         @item-added.window="
             triggerToast('✨ Baris material #' + ($event.detail.itemIndex || '') + ' berhasil ditambahkan!', 'success');
             setTimeout(() => {
@@ -347,7 +444,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 </div>
-                                <input type="date" wire:model="tanggal"
+                                <input type="date" wire:model.live="tanggal" x-model="tanggal"
                                     class="w-full pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
                                     required>
                             </div>
@@ -489,7 +586,7 @@
                         <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                             Digunakan Untuk (Peruntukan Material) <span class="text-[#F47920]">*</span>
                         </label>
-                        <textarea wire:model="digunakan_untuk" rows="2"
+                        <textarea wire:model.live.debounce.300ms="digunakan_untuk" x-model="digunakan_untuk" rows="2"
                             class="w-full px-4 py-3 text-sm sm:text-base font-medium text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
                             placeholder="Jelaskan kebutuhan operasional pengambilan material ini secara rinci..."></textarea>
                         
@@ -593,6 +690,7 @@
                                             Pilih Item <span class="text-[#F47920]">*</span>
                                         </label>
                                         <select wire:model.live="details.{{ $index }}.delivery_order_receipt_detail_id"
+                                            @change="if (details && details[{{ $index }}]) { details[{{ $index }}].delivery_order_receipt_detail_id = $event.target.value; }"
                                             class="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all">
                                             <option value="">-- Pilih Item --</option>
                                             @foreach ($available_po_items as $item)
@@ -645,6 +743,7 @@
                                             <div class="relative flex items-center" data-tour="qty">
                                                 <input type="number" step="any" min="0.01" max="{{ $detail['boh'] ?? 99999 }}"
                                                     wire:model.live.debounce.300ms="details.{{ $index }}.diminta"
+                                                    @input="if (details && details[{{ $index }}]) { details[{{ $index }}].diminta = $event.target.value; }"
                                                     class="w-full pr-24 pl-4 py-3 sm:py-3.5 text-base sm:text-lg font-black text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
                                                     placeholder="0.00">
                                                 
@@ -819,7 +918,7 @@
                                         @if ($pilihan_istek === 'Lainnya')
                                             <div>
                                                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nama ISTEK</label>
-                                                <input type="text" wire:model="disetujui_oleh"
+                                                <input type="text" wire:model.live.debounce.300ms="disetujui_oleh" x-model="disetujui_oleh"
                                                     class="w-full px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200"
                                                     placeholder="Nama lengkap pejabat ISTEK">
                                             </div>
@@ -827,7 +926,7 @@
 
                                         <div>
                                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">NPK ISTEK</label>
-                                            <input type="text" wire:model="disetujui_npk"
+                                            <input type="text" wire:model.live.debounce.300ms="disetujui_npk" x-model="disetujui_npk"
                                                 class="w-full px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200 disabled:opacity-60"
                                                 placeholder="NPK" {{ $pilihan_istek !== 'Lainnya' ? 'disabled' : '' }}>
                                         </div>
@@ -881,7 +980,7 @@
                                     @if ($pilihan_receiving === 'Lainnya')
                                         <div>
                                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Petugas</label>
-                                            <input type="text" wire:model="diserahkan_oleh"
+                                            <input type="text" wire:model.live.debounce.300ms="diserahkan_oleh" x-model="diserahkan_oleh"
                                                 class="w-full px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200"
                                                 placeholder="Nama lengkap">
                                         </div>
@@ -889,7 +988,7 @@
 
                                     <div>
                                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">NPK Petugas</label>
-                                        <input type="text" wire:model="diserahkan_npk"
+                                        <input type="text" wire:model.live.debounce.300ms="diserahkan_npk" x-model="diserahkan_npk"
                                             class="w-full px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200 disabled:opacity-60"
                                             placeholder="NPK" {{ $pilihan_receiving !== 'Lainnya' ? 'disabled' : '' }}>
                                     </div>
@@ -913,13 +1012,13 @@
             </div>
 
             <!-- AGREEMENT CHECKBOX & SUBMIT AREA -->
-            <div class="relative z-10 p-5 sm:p-8 rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/70 dark:border-white/10 shadow-sm mb-20 md:mb-0">
+            <div class="relative z-10 p-5 sm:p-8 rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/70 dark:border-white/10 shadow-sm mb-8 sm:mb-12">
                 
                 <!-- Agreement Checkbox -->
                 <div class="mb-6">
                     <label class="flex items-start gap-3 sm:gap-4 cursor-pointer group select-none">
                         <div class="relative flex items-center justify-center shrink-0 mt-0.5">
-                            <input type="checkbox" wire:model="agreement"
+                            <input type="checkbox" wire:model.live="agreement" x-model="agreement"
                                 class="peer appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-black/20 checked:bg-[#F47920] checked:border-[#F47920] focus:ring-2 focus:ring-[#F47920]/40 transition-all cursor-pointer shadow-xs">
                             <svg class="absolute w-3.5 h-3.5 sm:w-4 sm:h-4 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
@@ -936,43 +1035,36 @@
                     </label>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="pt-6 border-t border-slate-200/60 dark:border-white/10 flex flex-col-reverse md:flex-row items-center justify-between gap-4">
+                <!-- Action Buttons (Unified for PC & Mobile - Never Hidden, Disabled when Incomplete) -->
+                <div class="pt-6 border-t border-slate-200/60 dark:border-white/10 flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
                     <a href="{{ url('/') }}" wire:navigate
-                        class="w-full md:w-auto text-center px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-2xl transition-all">
+                        class="w-full sm:w-auto text-center px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-2xl transition-all">
                         &larr; Kembali ke Beranda
                     </a>
 
-                    <button type="submit"
-                        class="hidden md:inline-flex items-center justify-center gap-2.5 px-8 sm:px-12 py-3.5 sm:py-4 text-sm sm:text-base font-black text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 rounded-2xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-98 transition-all">
-                        <svg wire:loading.remove wire:target="confirmSubmit" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                        <svg wire:loading wire:target="confirmSubmit" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        <span wire:loading.remove wire:target="confirmSubmit">Kirim Pengajuan MIR</span>
-                        <span wire:loading wire:target="confirmSubmit">Memvalidasi Formulir...</span>
-                    </button>
-                </div>
-            </div>
+                    <div class="w-full sm:w-auto flex flex-col items-center sm:items-end gap-2">
+                        <button type="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="confirmSubmit"
+                            :disabled="!isFormReady()"
+                            :class="isFormReady() 
+                                ? 'text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-98 cursor-pointer' 
+                                : 'text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800 border border-slate-300/60 dark:border-white/5 cursor-not-allowed shadow-none opacity-60'"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 sm:px-12 py-3.5 sm:py-4 text-sm sm:text-base font-black rounded-2xl transition-all duration-300">
+                            
+                            <svg wire:loading.remove wire:target="confirmSubmit" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            <svg wire:loading wire:target="confirmSubmit" class="animate-spin h-5 w-5 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
 
-            <!-- MOBILE STICKY SUBMIT BAR (Mobile UX Supercharged) -->
-            <div x-data="{ isChatOpen: false }"
-                 @chat-toggled.window="isChatOpen = $event.detail.isOpen"
-                 x-show="!isChatOpen"
-                 class="mir-mobile-bar fixed bottom-0 inset-x-0 z-40 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-white/10 shadow-2xl flex md:hidden items-center justify-between gap-3">
-                <div class="min-w-0">
-                    <span class="block text-[11px] font-bold uppercase text-slate-400">Total Material</span>
-                    <span class="block text-xs font-black text-slate-800 dark:text-white truncate">
-                        {{ count($details) }} Item Pengambilan
-                    </span>
+                            <span wire:loading.remove wire:target="confirmSubmit">Kirim MIR</span>
+                            <span wire:loading wire:target="confirmSubmit">Memvalidasi Formulir...</span>
+                        </button>
+
+                        <div x-show="!isFormReady()" class="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400 text-center sm:text-right">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Lengkapi semua field bertanda (*) dan tanda tangan untuk mengaktifkan tombol</span>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit"
-                    wire:loading.attr="disabled"
-                    wire:target="confirmSubmit"
-                    class="px-5 py-2.5 text-xs font-black text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-xl shadow-md shadow-orange-500/30 flex items-center gap-2 active:scale-95 disabled:opacity-60 transition-all">
-                    <svg wire:loading.remove wire:target="confirmSubmit" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                    <svg wire:loading wire:target="confirmSubmit" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <span wire:loading.remove wire:target="confirmSubmit">Kirim MIR</span>
-                    <span wire:loading wire:target="confirmSubmit">Memvalidasi...</span>
-                </button>
             </div>
 
         </form>
@@ -1095,13 +1187,6 @@
                 bottom: 5.25rem !important;
                 right: 1rem !important;
             }
-        }
-
-        @media (min-width: 768px) {
-            .mir-mobile-bar {
-                display: none !important;
-            }
-        }
     </style>
 
     <script>
