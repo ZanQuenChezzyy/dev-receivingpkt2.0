@@ -194,11 +194,12 @@ class PublicMaterialIssueForm extends Component
                             return true;
                         }
 
-                        $has_grs_category = $item->deliveryOrderReceipt->grsRdtvItems->contains(function ($grsItem) {
-                            return $grsItem->grsRdtv && $grsItem->grsRdtv->category === 'GRS';
-                        });
+                        $isGrs = ($item->deliveryOrderReceipt->status === 'GRS') ||
+                            $item->deliveryOrderReceipt->grsRdtvItems->contains(function ($grsItem) {
+                                return $grsItem->grsRdtv && $grsItem->grsRdtv->category === 'GRS';
+                            });
 
-                        return ! $has_grs_category;
+                        return ! $isGrs;
                     });
 
                     return [
@@ -222,6 +223,20 @@ class PublicMaterialIssueForm extends Component
         // Reset details
         $this->details = [];
         $this->addDetail();
+
+        // If there is only one item available, pre-select it
+        if (count($this->available_po_items) === 1) {
+            $singleItem = $this->available_po_items[0];
+            $this->details[0]['delivery_order_receipt_detail_id'] = (string) $singleItem['id'];
+            $this->details[0]['stock_no'] = $singleItem['material_code'];
+            $this->details[0]['description'] = $singleItem['description'];
+            $this->details[0]['location'] = $singleItem['combined_locations'];
+            $this->details[0]['uoi'] = $singleItem['uoi'];
+            $this->details[0]['boh'] = $singleItem['combined_boh'];
+            $this->details[0]['has_non_grs'] = $singleItem['has_non_grs'];
+        }
+
+        $this->checkIfIstekSignatureRequired();
     }
 
     public function updatedDetails(mixed $value, string $key)
@@ -234,7 +249,7 @@ class PublicMaterialIssueForm extends Component
 
             if ($field === 'delivery_order_receipt_detail_id') {
                 $detailId = $value;
-                if ($detailId) {
+                if ($detailId !== '' && $detailId !== null) {
                     $item = collect($this->available_po_items)->firstWhere('id', (int) $detailId)
                         ?? collect($this->available_po_items)->firstWhere('id', (string) $detailId);
 
@@ -244,6 +259,7 @@ class PublicMaterialIssueForm extends Component
                         $this->details[$index]['location'] = $item['combined_locations'];
                         $this->details[$index]['uoi'] = $item['uoi'];
                         $this->details[$index]['boh'] = $item['combined_boh'];
+                        $this->details[$index]['has_non_grs'] = $item['has_non_grs'] ?? false;
                     }
                 } else {
                     $this->details[$index]['stock_no'] = '';
@@ -251,6 +267,7 @@ class PublicMaterialIssueForm extends Component
                     $this->details[$index]['location'] = '';
                     $this->details[$index]['uoi'] = '';
                     $this->details[$index]['boh'] = 0;
+                    $this->details[$index]['has_non_grs'] = false;
                 }
             } elseif ($field === 'diminta') {
                 // Auto fill diserahkan
@@ -273,10 +290,11 @@ class PublicMaterialIssueForm extends Component
                 'diminta' => '',
                 'diserahkan' => '',
                 'boh' => 0,
+                'has_non_grs' => false,
             ];
 
             if ($showToast) {
-                $this->dispatch('item-added');
+                $this->dispatch('item-added', itemIndex: count($this->details));
             }
         }
     }
@@ -310,12 +328,12 @@ class PublicMaterialIssueForm extends Component
         $this->checkIfIstekSignatureRequired();
     }
 
-    protected function checkIfIstekSignatureRequired()
+    public function checkIfIstekSignatureRequired(): void
     {
         $requires = false;
         foreach ($this->details as $detail) {
             $detailId = $detail['delivery_order_receipt_detail_id'] ?? null;
-            if ($detailId) {
+            if ($detailId !== '' && $detailId !== null) {
                 $item = collect($this->available_po_items)->firstWhere('id', (int) $detailId)
                     ?? collect($this->available_po_items)->firstWhere('id', (string) $detailId);
 
@@ -382,9 +400,9 @@ class PublicMaterialIssueForm extends Component
             'details.*.diminta.min' => 'Qty harus lebih dari 0.',
             'agreement.accepted' => 'Anda harus menyetujui pernyataan ini sebelum mengirim form.',
             'diminta_signature.required' => 'Tanda tangan peminta wajib diisi.',
-            'disetujui_oleh.required' => 'Nama ISTEK wajib diisi karena ada barang yang belum GRS.',
-            'disetujui_npk.required' => 'NPK ISTEK wajib diisi.',
-            'disetujui_signature.required' => 'Tanda tangan ISTEK wajib diisi karena ada barang yang belum GRS.',
+            'disetujui_oleh.required' => 'Nama pihak ISTEK wajib diisi karena material belum GRS.',
+            'disetujui_npk.required' => 'NPK pihak ISTEK wajib diisi.',
+            'disetujui_signature.required' => 'Tanda tangan ISTEK wajib diisi karena material belum GRS.',
             'diserahkan_oleh.required' => 'Nama pihak Receiving wajib diisi.',
             'diserahkan_npk.required' => 'NPK pihak Receiving wajib diisi.',
             'diserahkan_signature.required' => 'Tanda tangan pihak Receiving wajib diisi.',
@@ -394,6 +412,7 @@ class PublicMaterialIssueForm extends Component
     public function confirmSubmit()
     {
         $this->diterima_oleh = $this->diminta_oleh;
+        $this->checkIfIstekSignatureRequired();
         try {
             $this->validate();
         } catch (ValidationException $e) {
@@ -406,6 +425,7 @@ class PublicMaterialIssueForm extends Component
     public function submit()
     {
         $this->diterima_oleh = $this->diminta_oleh;
+        $this->checkIfIstekSignatureRequired();
         try {
             $this->validate();
         } catch (ValidationException $e) {

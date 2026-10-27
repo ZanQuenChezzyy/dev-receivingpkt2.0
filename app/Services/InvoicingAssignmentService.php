@@ -107,7 +107,7 @@ class InvoicingAssignmentService
      * - Jika material_type kosong, null, atau 'none' -> Bagi rata ke Staff Invoice (Fair Round-Robin).
      * - Jika material_type spesifik (ZSP, ZFP, ZPM, ZRM, ZSM):
      *     - Jika mode 'user' -> ditugaskan ke user-user yang ditentukan (bisa 1 atau lebih, dibagi rata).
-     *     - Jika mode 'free_pool' -> dibiarkan null (Open Pool) agar dapat diklaim bebas.
+     *     - Jika mode 'free_pool' -> dibagikan secara merata ke seluruh pengguna ber-role Staff Invoice.
      * - Jika rule tidak ditemukan -> Bagi rata ke Staff Invoice.
      */
     public function determinePicId(?string $materialType): ?int
@@ -144,8 +144,8 @@ class InvoicingAssignmentService
                 return null;
             }
 
-            // Mode 'free_pool': biarkan open pool (null)
-            return null;
+            // Mode 'free_pool': bagikan secara merata ke seluruh pengguna ber-role Staff Invoice
+            return $this->getNextStaffInvoiceId();
         }
 
         // Jika material type tidak terdaftar di PicMaterialAssignment, bagikan secara rata

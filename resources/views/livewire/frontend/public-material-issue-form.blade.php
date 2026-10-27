@@ -60,16 +60,82 @@
             no_hp: $persist(@entangle('no_hp')).as('mi_no_hp'),
             departemen: $persist(@entangle('departemen')).as('mi_departemen'),
             bagian: $persist(@entangle('bagian')).as('mi_bagian'),
+            toastMessage: '',
+            toastType: 'success',
+            showToast: false,
+            toastTimeout: null,
+            triggerToast(msg, type = 'success') {
+                this.toastMessage = msg;
+                this.toastType = type;
+                this.showToast = true;
+                clearTimeout(this.toastTimeout);
+                this.toastTimeout = setTimeout(() => {
+                    this.showToast = false;
+                }, 2600);
+            },
             setKegunaan(val) {
                 @this.set('digunakan_untuk', val);
             }
         }"
+        @item-added.window="
+            triggerToast('✨ Baris material #' + ($event.detail.itemIndex || '') + ' berhasil ditambahkan!', 'success');
+            setTimeout(() => {
+                const cards = document.querySelectorAll('.material-item-card');
+                const lastCard = cards[cards.length - 1];
+                if (lastCard) {
+                    lastCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    lastCard.classList.add('ring-4', 'ring-emerald-500/50', 'bg-emerald-50/80', 'dark:bg-emerald-950/40');
+                    setTimeout(() => {
+                        lastCard.classList.remove('ring-4', 'ring-emerald-500/50', 'bg-emerald-50/80', 'dark:bg-emerald-950/40');
+                    }, 1800);
+                    const selectEl = lastCard.querySelector('select');
+                    if (selectEl) {
+                        selectEl.focus();
+                    }
+                }
+            }, 80);
+        "
+        @item-removed.window="
+            triggerToast('Baris material berhasil dihapus', 'info');
+        "
         @validation-failed.window="setTimeout(() => {
             const firstError = document.querySelector('.text-red-500');
             if (firstError) {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }, 100)">
+
+            <!-- Floating Toast Notification -->
+            <div x-show="showToast"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 -translate-y-4 scale-90"
+                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave-end="opacity-0 -translate-y-4 scale-90"
+                 class="fixed top-24 left-1/2 -translate-x-1/2 z-[110] pointer-events-none"
+                 style="display: none;">
+                <div class="px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border flex items-center gap-3 text-xs sm:text-sm font-bold transition-all duration-300 pointer-events-auto"
+                     :class="toastType === 'success' 
+                        ? 'bg-emerald-600/95 text-white border-emerald-400/40 shadow-emerald-600/30' 
+                        : 'bg-slate-800/95 text-white border-slate-600/40 shadow-black/30'">
+                    <template x-if="toastType === 'success'">
+                        <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                    </template>
+                    <template x-if="toastType === 'info'">
+                        <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </div>
+                    </template>
+                    <span x-text="toastMessage"></span>
+                </div>
+            </div>
 
             <!-- STEPPER INDICATOR (Mobile Friendly & Desktop Progress Bar) -->
             <div class="mb-10 relative z-10">
@@ -120,9 +186,12 @@
                     </div>
 
                     <!-- Step 4 Indicator -->
-                    <div class="flex items-center gap-2 sm:gap-3 p-2 rounded-xl transition-all {{ !empty($diminta_signature) && !empty($diserahkan_signature) ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500 dark:text-slate-400 font-semibold' }}">
-                        <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center text-xs sm:text-sm font-black {{ !empty($diminta_signature) && !empty($diserahkan_signature) ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400' }}">
-                            @if (!empty($diminta_signature) && !empty($diserahkan_signature))
+                    @php
+                        $isStep4Complete = !empty($diminta_signature) && !empty($diserahkan_signature) && (!$requiresIstekSignature || !empty($disetujui_signature));
+                    @endphp
+                    <div class="flex items-center gap-2 sm:gap-3 p-2 rounded-xl transition-all {{ $isStep4Complete ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500 dark:text-slate-400 font-semibold' }}">
+                        <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center text-xs sm:text-sm font-black {{ $isStep4Complete ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400' }}">
+                            @if ($isStep4Complete)
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             @else
                                 4
@@ -310,23 +379,32 @@
                                 <!-- Selected PO Active Badge -->
                                 @php
                                     $activePoModel = \App\Models\PurchaseOrderIssued::find($purchase_order_issued_id);
+                                    $hasAnyNonGrsInPo = collect($available_po_items)->contains('has_non_grs', true);
                                 @endphp
-                                <div class="flex items-center justify-between p-3.5 rounded-2xl bg-blue-50/90 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/50">
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <div class="p-3.5 rounded-2xl bg-blue-50/90 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/50">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <span class="text-xs font-bold text-blue-600 dark:text-blue-400 block uppercase">PO Terpilih</span>
+                                                <span class="text-sm font-black text-slate-800 dark:text-white truncate block">
+                                                    {{ $activePoModel?->purchase_order_no ?? 'PO #' . $purchase_order_issued_id }}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div class="min-w-0">
-                                            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 block uppercase">PO Terpilih</span>
-                                            <span class="text-sm font-black text-slate-800 dark:text-white truncate block">
-                                                {{ $activePoModel?->purchase_order_no ?? 'PO #' . $purchase_order_issued_id }}
-                                            </span>
-                                        </div>
+                                        <button type="button" wire:click="clearSelectedPo"
+                                            class="px-3 py-1.5 text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all">
+                                            Ganti PO
+                                        </button>
                                     </div>
-                                    <button type="button" wire:click="clearSelectedPo"
-                                        class="px-3 py-1.5 text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all">
-                                        Ganti PO
-                                    </button>
+                                    @if ($hasAnyNonGrsInPo)
+                                        <div class="mt-2.5 pt-2.5 border-t border-blue-200/60 dark:border-blue-800/40 flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                                            <svg class="w-4 h-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                            <span>PO ini memiliki item material <strong>Belum GRS</strong>. Pengambilan item tersebut mewajibkan tanda tangan ISTEK.</span>
+                                        </div>
+                                    @endif
                                 </div>
                             @else
                                 <div class="relative" data-tour="po">
@@ -451,10 +529,20 @@
                     </div>
 
                     @if (!empty($purchase_order_issued_id) && count($details) < count($available_po_items))
-                        <button type="button" wire:click="addDetail(true)" data-tour="tambah-item"
-                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-xs sm:text-sm transition-all shadow-xs self-start sm:self-auto">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                            Tambah Baris Material
+                        <button type="button" wire:click="addDetail(true)" wire:loading.attr="disabled" data-tour="tambah-item"
+                            class="group inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold text-xs sm:text-sm transition-all duration-200 shadow-md shadow-emerald-500/25 hover:shadow-emerald-500/40 self-start sm:self-auto cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                            <svg wire:loading.remove wire:target="addDetail" class="w-4 h-4 transition-transform group-hover:rotate-90 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            <svg wire:loading wire:target="addDetail" class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span wire:loading.remove wire:target="addDetail">Tambah Baris Material</span>
+                            <span wire:loading wire:target="addDetail">Menambahkan...</span>
+                            <span class="ml-0.5 px-2 py-0.5 rounded-lg bg-white/20 text-[11px] font-black tracking-wide">
+                                {{ count($details) }}/{{ count($available_po_items) }}
+                            </span>
                         </button>
                     @endif
                 </div>
@@ -476,7 +564,8 @@
                     <!-- Items Repeater Cards -->
                     <div class="space-y-4 sm:space-y-6">
                         @foreach ($details as $index => $detail)
-                            <div class="p-5 sm:p-7 rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/70 dark:border-white/10 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+                            <div wire:key="detail-row-{{ $index }}"
+                                 class="material-item-card p-5 sm:p-7 rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/70 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-500 relative overflow-hidden group">
                                 
                                 <!-- Card Header -->
                                 <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200/60 dark:border-white/5">
@@ -497,15 +586,15 @@
                                     @endif
                                 </div>
 
-                                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                                    <!-- Material Selector Dropdown (Spans 7 cols on desktop) -->
-                                    <div class="lg:col-span-7" data-tour="pilih-item">
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
+                                    <!-- Pilih Item (Spans 3 cols on desktop) -->
+                                    <div class="md:col-span-4 lg:col-span-3" data-tour="pilih-item">
                                         <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                            Pilih Material PO <span class="text-[#F47920]">*</span>
+                                            Pilih Item <span class="text-[#F47920]">*</span>
                                         </label>
                                         <select wire:model.live="details.{{ $index }}.delivery_order_receipt_detail_id"
                                             class="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all">
-                                            <option value="">-- Pilih Material dari PO --</option>
+                                            <option value="">-- Pilih Item --</option>
                                             @foreach ($available_po_items as $item)
                                                 @php
                                                     $isAlreadySelected = collect($details)->contains(function($d, $k) use ($item, $index) {
@@ -513,37 +602,35 @@
                                                     });
                                                 @endphp
                                                 <option value="{{ $item['id'] }}" {{ $isAlreadySelected ? 'disabled' : '' }}>
-                                                    Item #{{ $item['item_no'] }} - {{ Str::limit($item['description'], 45) }} (Sisa Stok: {{ $item['combined_boh'] }} {{ $item['uoi'] }})
+                                                    Item {{ $item['item_no'] }}{{ $isAlreadySelected ? ' (Dipilih)' : '' }}
                                                 </option>
                                             @endforeach
                                         </select>
                                         @error("details.{$index}.delivery_order_receipt_detail_id")
                                             <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
                                         @enderror
-
-                                        <!-- Selected Material Quick Specs Summary -->
-                                        @if (!empty($detail['delivery_order_receipt_detail_id']))
-                                            <div class="mt-3 p-3.5 rounded-2xl bg-slate-50/80 dark:bg-black/20 border border-slate-200/60 dark:border-white/5 space-y-2">
-                                                <div class="flex flex-wrap items-center gap-2" data-tour="stock-no">
-                                                    <span class="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 text-xs font-bold">
-                                                        SN: {{ $detail['stock_no'] ?: 'Non-Stock' }}
-                                                    </span>
-                                                    <span class="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 text-xs font-bold">
-                                                        Lokasi: {{ $detail['location'] ?: 'Receiving' }}
-                                                    </span>
-                                                    <span class="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 text-xs font-bold">
-                                                        Satuan: {{ $detail['uoi'] ?: 'EA' }}
-                                                    </span>
-                                                </div>
-                                                <p class="text-xs text-slate-600 dark:text-slate-300 font-medium" data-tour="deskripsi">
-                                                    {{ $detail['description'] }}
-                                                </p>
-                                            </div>
-                                        @endif
                                     </div>
 
-                                    <!-- Quantity Input & Max BOH (Spans 5 cols on desktop) -->
-                                    <div class="lg:col-span-5 flex flex-col justify-between">
+                                    <!-- Deskripsi Material (Spans 5 cols on desktop) -->
+                                    <div class="md:col-span-8 lg:col-span-5" data-tour="deskripsi">
+                                        <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                            Deskripsi
+                                        </label>
+                                        <div class="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 min-h-[48px] sm:min-h-[52px] flex items-center">
+                                            @if (!empty($detail['description']))
+                                                <span class="line-clamp-2 leading-relaxed" title="{{ $detail['description'] }}">
+                                                    {{ $detail['description'] }}
+                                                </span>
+                                            @else
+                                                <span class="text-slate-400 dark:text-slate-500 italic font-normal">
+                                                    Pilih item terlebih dahulu...
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <!-- Quantity Input & Max BOH (Spans 4 cols on desktop) -->
+                                    <div class="md:col-span-12 lg:col-span-4 flex flex-col justify-between">
                                         <div>
                                             <div class="flex items-center justify-between mb-2">
                                                 <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
@@ -581,8 +668,52 @@
                                         @endif
                                     </div>
                                 </div>
+
+                                <!-- Selected Material Quick Specs Summary (SN, Lokasi, Satuan, Status 105) -->
+                                @if (!empty($detail['delivery_order_receipt_detail_id']))
+                                    <div class="mt-3.5 pt-3.5 border-t border-slate-200/60 dark:border-white/5 flex flex-wrap items-center justify-between gap-2.5">
+                                        <div class="flex flex-wrap items-center gap-2" data-tour="stock-no">
+                                            <span class="px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200/60 dark:border-blue-500/20">
+                                                SN: {{ $detail['stock_no'] ?: 'Non-Stock' }}
+                                            </span>
+                                            <span class="px-2.5 py-1 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 text-xs font-bold border border-purple-200/60 dark:border-purple-500/20">
+                                                Lokasi: {{ $detail['location'] ?: 'Receiving' }}
+                                            </span>
+                                            <span class="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-200/60 dark:border-emerald-500/20">
+                                                Satuan: {{ $detail['uoi'] ?: 'EA' }}
+                                            </span>
+                                            @if(!empty($detail['has_non_grs']))
+                                                <span class="px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs font-black flex items-center gap-1.5 border border-amber-300/80 dark:border-amber-500/30">
+                                                    <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                                    Belum GRS
+                                                </span>
+                                            @else
+                                                <span class="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-1.5 border border-emerald-300/80 dark:border-emerald-500/30">
+                                                    <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                                    Sudah GRS
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         @endforeach
+
+                        @if (!empty($purchase_order_issued_id) && count($details) < count($available_po_items))
+                            <!-- Interactive Add Next Item Card Button at Bottom of List -->
+                            <button type="button" wire:click="addDetail(true)" wire:loading.attr="disabled"
+                                class="w-full py-4 px-6 rounded-3xl border-2 border-dashed border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-500 dark:hover:border-emerald-400 bg-emerald-50/40 hover:bg-emerald-50 dark:bg-emerald-950/10 dark:hover:bg-emerald-950/25 text-emerald-700 dark:text-emerald-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-3 transition-all duration-200 active:scale-98 group cursor-pointer shadow-xs hover:shadow-md">
+                                <div class="w-7 h-7 rounded-xl bg-emerald-500 text-white flex items-center justify-center group-hover:scale-110 group-hover:rotate-90 transition-all duration-300 shadow-sm">
+                                    <svg wire:loading.remove wire:target="addDetail" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                    <svg wire:loading wire:target="addDetail" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                </div>
+                                <span wire:loading.remove wire:target="addDetail">Tambah Baris Material Berikutnya (Item #{{ count($details) + 1 }})</span>
+                                <span wire:loading wire:target="addDetail">Menambahkan baris material...</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-black">
+                                    {{ count($details) }}/{{ count($available_po_items) }}
+                                </span>
+                            </button>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -598,13 +729,34 @@
                             Tanda Tangan Digital
                         </h2>
                         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                            Bubuhkan tanda tangan elektronik pemohon dan pihak gudang Receiving.
+                            Bubuhkan tanda tangan elektronik pemohon, pihak gudang Receiving{{ $requiresIstekSignature ? ', dan persetujuan ISTEK (karena material belum GRS)' : '' }}.
                         </p>
                     </div>
                 </div>
 
                 <div class="p-5 sm:p-8 rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/70 dark:border-white/10 shadow-sm hover:shadow-md transition-all">
                     
+                    @if ($requiresIstekSignature)
+                        <!-- Alert Banner: Material Belum GRS -->
+                        <div class="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                            <div class="text-xs sm:text-sm">
+                                <span class="font-bold text-amber-800 dark:text-amber-300 block mb-0.5">Material Belum GRS (Wajib Persetujuan ISTEK)</span>
+                                <p class="text-amber-700/90 dark:text-amber-300/80 leading-relaxed font-medium">
+                                    Item yang Anda ambil berstatus <strong>Belum GRS</strong>. Sesuai SOP gudang Pupuk Kaltim, serah terima material yang belum terbit GRS <strong>wajib</strong> mendapatkan persetujuan dan tanda tangan dari pihak ISTEK.
+                                </p>
+                            </div>
+                        </div>
+                    @elseif(!empty($purchase_order_issued_id) && count($details) > 0 && !empty($details[0]['delivery_order_receipt_detail_id']))
+                        <!-- Info Banner: Material Sudah GRS -->
+                        <div class="mb-6 p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-800/30 flex items-center gap-3 text-xs sm:text-sm text-emerald-800 dark:text-emerald-300 font-semibold">
+                            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Seluruh material terpilih <strong>Sudah GRS</strong>. Tanda tangan persetujuan ISTEK tidak diperlukan.</span>
+                        </div>
+                    @endif
+
                     <div class="grid grid-cols-1 {{ $requiresIstekSignature ? 'md:grid-cols-3' : 'md:grid-cols-2' }} gap-6 sm:gap-8">
                         
                         <!-- Panel 1: Tanda Tangan Peminta -->
@@ -639,14 +791,14 @@
                             </div>
                         </div>
 
-                        <!-- Panel 2: Tanda Tangan ISTEK (Khusus jika ada barang non-GRS) -->
+                        <!-- Panel 2: Tanda Tangan ISTEK (Khusus jika ada barang belum GRS) -->
                         @if ($requiresIstekSignature)
-                            <div class="p-5 rounded-2xl bg-orange-50/70 dark:bg-orange-950/20 border-2 border-orange-200 dark:border-orange-500/30 flex flex-col justify-between" data-tour="ttd-istek">
+                            <div class="p-5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-500/40 flex flex-col justify-between shadow-xs" data-tour="ttd-istek">
                                 <div>
-                                    <div class="flex items-center justify-between mb-3 pb-3 border-b border-orange-200/60 dark:border-orange-500/20">
-                                        <span class="text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">Pihak 2</span>
-                                        <span class="px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-[#F47920] text-xs font-bold">
-                                            Persetujuan ISTEK (Non-GRS)
+                                    <div class="flex items-center justify-between mb-3 pb-3 border-b border-amber-200/80 dark:border-amber-500/20">
+                                        <span class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pihak 2</span>
+                                        <span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-black">
+                                            ISTEK
                                         </span>
                                     </div>
 
@@ -656,8 +808,8 @@
                                                 Pilih Pihak ISTEK <span class="text-red-500">*</span>
                                             </label>
                                             <select wire:model.live="pilihan_istek"
-                                                class="w-full px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10">
-                                                <option value="">-- Pilih Penyetuju --</option>
+                                                class="w-full px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500">
+                                                <option value="">-- Pilih Penyetuju ISTEK --</option>
                                                 <option value="Pasarela">Pasarela</option>
                                                 <option value="Joko">Joko</option>
                                                 <option value="Lainnya">Lainnya...</option>
@@ -669,7 +821,7 @@
                                                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nama ISTEK</label>
                                                 <input type="text" wire:model="disetujui_oleh"
                                                     class="w-full px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200"
-                                                    placeholder="Nama lengkap">
+                                                    placeholder="Nama lengkap pejabat ISTEK">
                                             </div>
                                         @endif
 
@@ -690,6 +842,12 @@
                                         placeholder="Tanda tangan pihak ISTEK di sini..." />
                                     @error('disetujui_signature')
                                         <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
+                                    @enderror
+                                    @error('disetujui_oleh')
+                                        <span class="text-red-500 text-xs font-semibold mt-1 block">{{ $message }}</span>
+                                    @enderror
+                                    @error('disetujui_npk')
+                                        <span class="text-red-500 text-xs font-semibold mt-1 block">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
@@ -755,7 +913,7 @@
             </div>
 
             <!-- AGREEMENT CHECKBOX & SUBMIT AREA -->
-            <div class="relative z-10 p-5 sm:p-8 rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/70 dark:border-white/10 shadow-sm">
+            <div class="relative z-10 p-5 sm:p-8 rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/70 dark:border-white/10 shadow-sm mb-20 md:mb-0">
                 
                 <!-- Agreement Checkbox -->
                 <div class="mb-6">
@@ -779,14 +937,14 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="pt-6 border-t border-slate-200/60 dark:border-white/10 flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
+                <div class="pt-6 border-t border-slate-200/60 dark:border-white/10 flex flex-col-reverse md:flex-row items-center justify-between gap-4">
                     <a href="{{ url('/') }}" wire:navigate
-                        class="w-full sm:w-auto text-center px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-2xl transition-all">
+                        class="w-full md:w-auto text-center px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-2xl transition-all">
                         &larr; Kembali ke Beranda
                     </a>
 
                     <button type="submit"
-                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 sm:px-12 py-3.5 sm:py-4 text-sm sm:text-base font-black text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 rounded-2xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-98 transition-all">
+                        class="hidden md:inline-flex items-center justify-center gap-2.5 px-8 sm:px-12 py-3.5 sm:py-4 text-sm sm:text-base font-black text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 rounded-2xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-98 transition-all">
                         <svg wire:loading.remove wire:target="confirmSubmit" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                         <svg wire:loading wire:target="confirmSubmit" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         <span wire:loading.remove wire:target="confirmSubmit">Kirim Pengajuan MIR</span>
@@ -796,7 +954,10 @@
             </div>
 
             <!-- MOBILE STICKY SUBMIT BAR (Mobile UX Supercharged) -->
-            <div class="mir-mobile-bar fixed bottom-0 inset-x-0 z-40 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-white/10 shadow-2xl flex items-center justify-between gap-3">
+            <div x-data="{ isChatOpen: false }"
+                 @chat-toggled.window="isChatOpen = $event.detail.isOpen"
+                 x-show="!isChatOpen"
+                 class="mir-mobile-bar fixed bottom-0 inset-x-0 z-40 p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-white/10 shadow-2xl flex md:hidden items-center justify-between gap-3">
                 <div class="min-w-0">
                     <span class="block text-[11px] font-bold uppercase text-slate-400">Total Material</span>
                     <span class="block text-xs font-black text-slate-800 dark:text-white truncate">
@@ -804,9 +965,13 @@
                     </span>
                 </div>
                 <button type="submit"
-                    class="px-5 py-2.5 text-xs font-black text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-xl shadow-md shadow-orange-500/30 flex items-center gap-2">
-                    <span>Kirim MIR</span>
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    wire:loading.attr="disabled"
+                    wire:target="confirmSubmit"
+                    class="px-5 py-2.5 text-xs font-black text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-xl shadow-md shadow-orange-500/30 flex items-center gap-2 active:scale-95 disabled:opacity-60 transition-all">
+                    <svg wire:loading.remove wire:target="confirmSubmit" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    <svg wire:loading wire:target="confirmSubmit" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span wire:loading.remove wire:target="confirmSubmit">Kirim MIR</span>
+                    <span wire:loading wire:target="confirmSubmit">Memvalidasi...</span>
                 </button>
             </div>
 
@@ -892,7 +1057,7 @@
     <div x-data="{ isChatOpen: false }"
          @chat-toggled.window="isChatOpen = $event.detail.isOpen"
          x-show="!isChatOpen"
-         class="fixed bottom-20 sm:bottom-8 left-4 sm:left-8 z-40">
+         class="fixed bottom-20 md:bottom-8 left-4 md:left-8 z-40">
         <button type="button" @click.prevent="startTour()"
             class="flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-[#cf6935] text-white rounded-full shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 active:scale-95 transition-all duration-300 cursor-pointer">
             <svg class="w-4 h-4 sm:w-5 sm:h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -923,6 +1088,13 @@
             color: white;
             border-radius: 0.75rem;
             font-weight: 700;
+        }
+
+        @media (max-width: 767px) {
+            #chatbot-widget-container {
+                bottom: 5.25rem !important;
+                right: 1rem !important;
+            }
         }
 
         @media (min-width: 768px) {
@@ -962,7 +1134,8 @@
                                 { id: 'boh', title: '11. Stok BOH', text: 'Periksa sisa stok gudang (BOH) yang tersedia.', position: 'top' },
                                 { id: 'qty', title: '12. Jumlah Pengambilan', text: 'Ketik jumlah atau klik MAX untuk mengambil seluruh stok.', position: 'top' },
                                 { id: 'ttd-peminta', title: '13. Tanda Tangan Peminta', text: 'Bubuhkan tanda tangan pemohon di canvas ini.', position: 'top' },
-                                { id: 'ttd-receiving', title: '14. Tanda Tangan Receiving', text: 'Tanda tangan serah terima oleh pihak gudang Receiving.', position: 'top' }
+                                { id: 'ttd-istek', title: '14. Tanda Tangan Pihak ISTEK', text: 'Tanda tangan persetujuan pihak ISTEK yang berwenang jika material belum GRS.', position: 'top' },
+                                { id: 'ttd-receiving', title: '15. Tanda Tangan Receiving', text: 'Tanda tangan serah terima oleh pihak gudang Receiving.', position: 'top' }
                             ];
 
                             steps.forEach((s, index) => {

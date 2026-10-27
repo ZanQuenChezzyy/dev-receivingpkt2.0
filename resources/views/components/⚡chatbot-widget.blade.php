@@ -455,7 +455,7 @@ new class extends Component {
     }
 };
 ?>
-<div class="fixed bottom-6 right-6 z-50 font-sans">
+<div id="chatbot-widget-container" class="fixed bottom-6 right-6 z-50 font-sans">
     <!-- Tombol Chat (Floating) -->
     <div class="relative group" id="tour-chatbot-button">
         <!-- Efek Glow Oranye di belakang tombol -->

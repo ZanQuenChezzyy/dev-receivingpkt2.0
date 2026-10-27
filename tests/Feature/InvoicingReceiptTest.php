@@ -176,6 +176,50 @@ test('invoicing assignment service treats empty string, none, and null as free f
         ->and($service->determinePicId('-'))->toBe(1);
 });
 
+test('invoicing assignment service distributes free_pool material type evenly across staff invoice', function () {
+    if (! Illuminate\Support\Facades\Schema::hasTable('users')) {
+        Illuminate\Support\Facades\Schema::create('users', function ($table) {
+            $table->id();
+            $table->string('name')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Illuminate\Support\Facades\Schema::hasTable('pic_material_assignments')) {
+        Illuminate\Support\Facades\Schema::create('pic_material_assignments', function ($table) {
+            $table->id();
+            $table->string('material_type')->unique();
+            $table->string('assignment_mode')->default('free_pool');
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->text('notes')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Illuminate\Support\Facades\Schema::hasTable('pic_material_assignment_user')) {
+        Illuminate\Support\Facades\Schema::create('pic_material_assignment_user', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('pic_material_assignment_id');
+            $table->unsignedBigInteger('user_id');
+        });
+    }
+
+    PicMaterialAssignment::create([
+        'material_type' => 'ZSP',
+        'assignment_mode' => 'free_pool',
+    ]);
+
+    $service = new InvoicingAssignmentService;
+    $service->setStaffWorkloads([
+        10 => 0,
+        20 => 0,
+    ]);
+
+    expect($service->determinePicId('ZSP'))->toBe(10)
+        ->and($service->determinePicId('ZSP'))->toBe(20)
+        ->and($service->determinePicId('ZSP'))->toBe(10);
+});
+
 test('pic material assignment model defines users belongsToMany relation for multiple pics', function () {
     $assignment = new PicMaterialAssignment;
 
