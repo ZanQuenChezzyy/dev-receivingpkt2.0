@@ -20,69 +20,205 @@
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] via-orange-400 to-[#BE5A27]">Logistik Digital Pupuk Kalimantan Timur</span>
                 </h2>
                 <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 font-medium">
-                    Dari verifikasi dokumen vendor, pengecekan mutu laboratorium, hingga serah terima material kepada unit kerja pengguna secara terotomasi.
+                    Dari pelacakan PO mandiri rekanan vendor, verifikasi kedatangan fisik, pengujian mutu lab, penerbitan GRS & penagihan invoice, hingga serah terima material secara terpadu.
                 </p>
             </div>
 
-            <!-- Bento Grid Layout -->
+            <!-- Bento Grid Layout (3x3 Balanced Grid) -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                <!-- Card 1 (Large - Spans 2 Cols): Verifikasi DO & Kedatangan -->
-                <div class="lg:col-span-2 glass-panel p-8 sm:p-10 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 border border-white/80 dark:border-white/10">
-                    <div class="absolute -top-12 -right-12 w-48 h-48 bg-[#0A4F86]/15 dark:bg-[#0A4F86]/30 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
-
-
+                <!-- Card 1 (Large - Spans 2 Cols): Pelacakan PO & Dokumen Vendor Mandiri -->
+                <div class="lg:col-span-2 glass-panel p-8 sm:p-10 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 border border-white/80 dark:border-white/10 flex flex-col justify-between">
+                    <div class="absolute -top-12 -right-12 w-56 h-56 bg-gradient-to-br from-[#F47920]/20 via-[#0A4F86]/15 to-transparent rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
 
                     <div class="relative z-10 flex flex-col justify-between h-full">
                         <div>
-                            <div class="flex items-center justify-between mb-6">
-                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0A4F86] to-[#052b49] text-white flex items-center justify-center shadow-lg shadow-blue-900/30">
-                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
-                                    </svg>
+                            <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#F47920] to-[#BE5A27] text-white flex items-center justify-center shadow-lg shadow-orange-500/30 shrink-0">
+                                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                    </div>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#F47920]/10 text-[#F47920] dark:text-orange-400 border border-[#F47920]/20">
+                                        <span class="w-2 h-2 rounded-full bg-[#F47920] animate-ping"></span>
+                                        Portal Mandiri Rekanan
+                                    </span>
                                 </div>
-                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-500/20">
-                                    QR Code Validated
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                    Live PO Tracking 24/7
                                 </span>
                             </div>
-                            <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-3 tracking-tight">
-                                Verifikasi DO & Pengawasan Kedatangan Fisik
-                            </h3>
-                            <p class="text-slate-600 dark:text-slate-300 leading-relaxed text-sm sm:text-base max-w-xl mb-6">
-                                Pencatatan nomor surat jalan (DO), nomor PO, dan inspeksi fisik langsung di pintu receiving. Dilengkapi validasi toleransi kuantitas, pencatatan snapshot harga, dan penandaan staging lokasi gudang.
-                            </p>
-                        </div>
 
-                        <!-- Mini Feature Tags & Action -->
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-200/70 dark:border-white/10">
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-semibold text-slate-700 dark:text-slate-200">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-[#F47920]"></span>
-                                    <span>Cetak QR Surat Jalan</span>
+                            <h3 class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white mb-3 tracking-tight">
+                                Pelacakan PO & Dokumen Vendor Mandiri
+                            </h3>
+                            <p class="text-slate-600 dark:text-slate-300 leading-relaxed text-sm sm:text-base max-w-2xl mb-6">
+                                Portal monitoring terpadu bagi vendor rekanan PT Pupuk Kaltim untuk melacak status Purchase Order (PO) secara transparan. Pantau status kedatangan surat jalan (DO), progres pengujian laboratorium (COA), checklist berkas kelengkapan, hingga status penerbitan nomor GRS resmi SAP tanpa harus datang ke gudang.
+                            </p>
+
+                            <!-- Quick Stats / Feature Highlights -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                                <div class="p-3 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Status Dokumen</span>
+                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">PO & DO Realtime</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                    <span>Toleransi Quantity PO</span>
+                                <div class="p-3 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Upload Invoice</span>
+                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">Unggah Softfile Dokumen Invoice</span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                    <span>Klasifikasi MRP V1/PD</span>
+                                <div class="p-3 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Syarat Tagihan</span>
+                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">Checklist Berkas</span>
+                                </div>
+                                <div class="p-3 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">GRS & Verifikasi</span>
+                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">Unduh atau Lihat</span>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Action Button & Link -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-slate-200/70 dark:border-white/10">
+                            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>Akses publik terbuka tanpa login — cukup gunakan Nomor PO</span>
+                            </div>
                             <a href="{{ route('frontend.vendor.tracking') }}" wire:navigate
-                                class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] shadow-sm hover:shadow-md hover:scale-105 active:scale-95 transition-all shrink-0">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                <span>Lacak PO Vendor</span>
+                                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all shrink-0">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                <span>Buka Pelacakan PO Vendor</span>
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                </svg>
                             </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Card 2: Pengambilan Barang MIR Online -->
+                <!-- Card 2: Verifikasi DO & Kedatangan Fisik (1 Col) -->
+                <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
+                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-[#0A4F86]/15 dark:bg-[#0A4F86]/30 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0A4F86] to-[#052b49] text-white flex items-center justify-center shadow-lg shadow-blue-900/30">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                </svg>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-500/20">
+                                QR Code Validated
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
+                            Verifikasi DO & Pintu Receiving
+                        </h3>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
+                            Pencatatan nomor surat jalan (DO), nomor PO, dan inspeksi fisik di pos gudang receiving. Dilengkapi validasi toleransi kuantitas, cetak QR slip kedatangan, dan penandaan staging lokasi penyimpanan.
+                        </p>
+                    </div>
+
+                    <div class="relative z-10 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200/70 dark:border-white/10">
+                        <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Validasi Toleransi Qty PO & QR 103</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Invoicing & Verifikasi Penagihan GRS -->
+                <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
+                    <div class="absolute -top-10 -left-10 w-40 h-40 bg-amber-500/10 dark:bg-amber-500/20 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center shadow-lg shadow-amber-900/30">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20">
+                                Invoicing & Mitraku
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
+                            Invoicing & Penagihan GRS
+                        </h3>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
+                            Pengelolaan berkas penagihan vendor, sinkronisasi nomor GRS resmi SAP, nomor invoice, dan Faktur Pajak. Dilengkapi kalkulasi PPN 11% otomatis, format ekspor Mitraku, serta pembagian PIC Staff Invoice.
+                        </p>
+                    </div>
+
+                    <div class="relative z-10 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200/70 dark:border-white/10">
+                        <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Format Salin Mitraku & Distribusi PIC</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: Quality Control & Transmittal Lab -->
+                <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
+                    <div class="absolute -top-10 -left-10 w-40 h-40 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-800 text-white flex items-center justify-center shadow-lg shadow-purple-900/30">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                                </svg>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20">
+                                QC & COA Lab
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
+                            Pemeriksaan QC & Transmittal
+                        </h3>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
+                            Pengendalian mutu material kimia, karung, dan NPK. Terhubung langsung dengan transmittal dokumen, tracking penerbitan sertifikat analisa (COA), serta leadtime pengujian laboratorium.
+                        </p>
+                    </div>
+
+                    <div class="relative z-10 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200/70 dark:border-white/10">
+                        <svg class="w-4 h-4 text-purple-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Monitoring Chemical, Karung, & NPK</span>
+                    </div>
+                </div>
+
+                <!-- Card 5: Distribusi & Transmittal Gudang Tujuan -->
+                <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
+                    <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-cyan-500/10 dark:bg-cyan-500/20 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-600 to-blue-800 text-white flex items-center justify-center shadow-lg shadow-cyan-900/30">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+                                </svg>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/10 text-cyan-600 dark:text-cyan-300 border border-cyan-500/20">
+                                28+ Gudang Tujuan
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
+                            Transmittal Gudang Tujuan
+                        </h3>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
+                            Alokasi dan pengiriman material yang telah lolos inspeksi ke 28+ gudang penyangga (Gudang SP 1, SP 2, Laydown dan Lainnya). Terintegrasi dengan berita acara serah terima dan nomor transmittal.
+                        </p>
+                    </div>
+
+                    <div class="relative z-10 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200/70 dark:border-white/10">
+                        <svg class="w-4 h-4 text-cyan-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Serah Terima Fisik Antargudang</span>
+                    </div>
+                </div>
+
+                <!-- Card 6: Pengambilan Barang MIR Online -->
                 <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
                     <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-[#F47920]/15 dark:bg-[#F47920]/25 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
-
-
 
                     <div class="relative z-10">
                         <div class="flex items-center justify-between mb-6">
@@ -96,10 +232,10 @@
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-                            Permohonan Pengambilan Barang (MIR)
+                            Permohonan Pengambilan (MIR)
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                            Unit kerja pemohon dapat mengajukan Material Issue Request secara mandiri, lengkap dengan tanda tangan digital dan validasi staff gudang.
+                            Unit kerja pemohon dapat mengajukan Material Issue Request secara mandiri, lengkap dengan validasi stok BOH gudang dan tanda tangan digital terverifikasi.
                         </p>
                     </div>
 
@@ -110,42 +246,9 @@
                     </a>
                 </div>
 
-                <!-- Card 3: Quality Control & Transmittal Lab -->
-                <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
-                    <div class="absolute -top-10 -left-10 w-40 h-40 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
-
-
-
-                    <div class="relative z-10">
-                        <div class="flex items-center justify-between mb-6">
-                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-800 text-white flex items-center justify-center shadow-lg shadow-purple-900/30">
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-                                </svg>
-                            </div>
-                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20">
-                                QC & COA
-                            </span>
-                        </div>
-                        <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-                            Pemeriksaan QC & Transmittal
-                        </h3>
-                        <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-                            Pengendalian mutu material kimia dan karung. Terhubung dengan transmittal dokumen, tracking penerbitan sertifikat analisa (COA), serta leadtime uji lab.
-                        </p>
-                    </div>
-
-                    <div class="relative z-10 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200/70 dark:border-white/10">
-                        <svg class="w-4 h-4 text-purple-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Monitoring Chemical, Karung, & NPK</span>
-                    </div>
-                </div>
-
-                <!-- Card 4: Good Receipt Slip (GRS / RDTV) -->
+                <!-- Card 7: Good Receipt Slip (GRS / RDTV) -->
                 <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
                     <div class="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
-
-
 
                     <div class="relative z-10">
                         <div class="flex items-center justify-between mb-6">
@@ -155,14 +258,14 @@
                                 </svg>
                             </div>
                             <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/20">
-                                GRS / RDTV Slip
+                                Resmi SAP 105
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
                             Good Receipt Slip (GRS / RDTV)
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-                            Konfirmasi penyelesaian penerimaan material di sistem SAP. Mendukung penerbitan RDTV bila material ditolak atau dikembalikan ke vendor.
+                            Konfirmasi penyelesaian penerimaan material di sistem SAP. Mendukung penerbitan berita acara RDTV bila material ditolak atau dikembalikan ke vendor rekanan.
                         </p>
                     </div>
 
@@ -172,11 +275,9 @@
                     </div>
                 </div>
 
-                <!-- Card 5 (Col span 1 or full on mobile): Mokondo AI Assistant -->
+                <!-- Card 8: Asisten Pintar ALEX (AI) -->
                 <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
                     <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-[#F47920]/20 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
-
-
 
                     <div class="relative z-10">
                         <div class="flex items-center justify-between mb-6">

@@ -51,49 +51,6 @@
                     </a>
                 </div>
 
-                <!-- Interactive AI Tour Quick Launcher -->
-                <div class="mt-3 flex items-center gap-2">
-                    <button type="button" onclick="if (typeof startAiTour === 'function') startAiTour();"
-                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800 border border-[#F47920]/30 hover:border-[#F47920] text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-xs hover:shadow-md hover:scale-102 active:scale-98 group cursor-pointer backdrop-blur-md">
-                        <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-[#F47920]"></span>
-                        </span>
-                        <span class="text-[#F47920] font-black">Tur Interaktif:</span>
-                        <span class="text-slate-600 dark:text-slate-300 font-semibold">Pelajari Cara Kerja Chatbot ALEX</span>
-                        <svg class="w-3.5 h-3.5 text-[#F47920] group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                    </button>
-                </div>
-
-                <!-- Quick Tracking Bar -->
-                <div class="mt-6 w-full max-w-md">
-                    <form wire:submit="searchMaterial" class="relative flex items-center group">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#F47920] transition-colors">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <input wire:model="quickSearch" type="text"
-                            placeholder="Ketik Nomor PO / Deskripsi Material..."
-                            class="glass-input w-full pl-10 pr-24 py-3 text-xs sm:text-sm text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none">
-                        <button type="submit"
-                            class="absolute right-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-lg shadow-sm hover:brightness-110 active:scale-95 transition-all">
-                            Lacak
-                        </button>
-                    </form>
-                    <div class="flex flex-wrap items-center gap-2 mt-2 px-1 text-[11px] text-slate-500 dark:text-slate-400">
-                        <span class="font-semibold text-slate-400 dark:text-slate-500">Pencarian Cepat:</span>
-                        <a href="{{ route('frontend.vendor.tracking') }}" wire:navigate class="text-[#F47920] font-bold hover:underline transition-colors flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                            Lacak PO Vendor
-                        </a>
-                        <span>•</span>
-                        <a href="{{ route('frontend.vendor.tracking', ['po' => '5300065628']) }}" wire:navigate class="hover:text-[#F47920] underline transition-colors">PO 5300065628</a>
-                        <span>•</span>
-                        <a href="{{ route('frontend.list-material', ['search' => 'Sparepart']) }}" wire:navigate class="hover:text-[#F47920] underline transition-colors">Sparepart</a>
-                    </div>
-                </div>
-
                 <!-- Glass Badges: 5 Material Types -->
                 <div class="mt-8 sm:mt-10 w-full max-w-lg">
                     <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5">
