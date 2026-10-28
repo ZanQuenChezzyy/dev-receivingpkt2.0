@@ -106,14 +106,20 @@ class InvoicingAssignmentService
      * Tentukan PIC untuk dokumen Invoicing:
      * - Jika material_type kosong, null, atau 'none' -> Bagi rata ke Staff Invoice (Fair Round-Robin).
      * - Jika material_type spesifik (ZSP, ZFP, ZPM, ZRM, ZSM):
-     *     - Jika mode 'user' -> ditugaskan ke user-user yang ditentukan (bisa 1 atau lebih, dibagi rata).
+     *     - Jika mode 'user':
+     *         - Pertama, cek apakah ada conditional_rules (aturan pengecualian kode material / keyword deskripsi).
+     *           Jika cocok, tugaskan ke user_ids aturan tersebut (dibagi rata jika > 1).
+     *         - Jika tidak ada aturan tambahan yang cocok, fallback ke PIC utama (users).
      *     - Jika mode 'free_pool' -> dibagikan secara merata ke seluruh pengguna ber-role Staff Invoice.
      * - Jika rule tidak ditemukan -> Bagi rata ke Staff Invoice.
+     *
+     * @param  string|array<string>|null  $materialCode
+     * @param  string|array<string>|null  $description
      */
-    public function determinePicId(?string $materialType): ?int
+    public function determinePicId(?string $materialType, string|array|null $materialCode = null, string|array|null $description = null): ?int
     {
         $cleanType = trim((string) $materialType);
-        $isNoneOrEmpty = empty($cleanType) || in_array(strtolower($cleanType), ['none', 'null', '-', 'kosong']);
+        $isNoneOrEmpty = empty($cleanType) || in_array(strtolower($cleanType), ['none', 'null', '-', 'kosong'], true);
 
         if ($isNoneOrEmpty) {
             return $this->getNextStaffInvoiceId();
@@ -123,6 +129,56 @@ class InvoicingAssignmentService
 
         if ($rule) {
             if ($rule->assignment_mode === 'user') {
+                // 1. Evaluasi Aturan Tambahan (Conditional Rules) jika ada
+                if (! empty($rule->conditional_rules) && is_array($rule->conditional_rules)) {
+                    foreach ($rule->conditional_rules as $cRule) {
+                        $criteriaType = $cRule['criteria_type'] ?? 'material_code';
+                        $matched = false;
+
+                        if ($criteriaType === 'material_code') {
+                            $targetCodesRaw = (string) ($cRule['material_code'] ?? '');
+                            $targetCodes = array_filter(array_map('trim', explode(',', $targetCodesRaw)));
+
+                            $codesToCheck = is_array($materialCode) ? $materialCode : [$materialCode];
+                            foreach ($codesToCheck as $code) {
+                                $cleanCode = trim((string) $code);
+                                if ($cleanCode !== '' && in_array($cleanCode, $targetCodes, true)) {
+                                    $matched = true;
+                                    break;
+                                }
+                            }
+                        } elseif ($criteriaType === 'description_contains') {
+                            $keyword = trim((string) ($cRule['description_keyword'] ?? ''));
+                            if ($keyword !== '') {
+                                $descsToCheck = is_array($description) ? $description : [$description];
+                                foreach ($descsToCheck as $desc) {
+                                    if ($desc !== null && stripos((string) $desc, $keyword) !== false) {
+                                        $matched = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if ($matched) {
+                            $cUserIds = array_values(array_filter(array_map('intval', (array) ($cRule['user_ids'] ?? []))));
+                            if (count($cUserIds) === 1) {
+                                $singleId = $cUserIds[0];
+                                if ($this->staffWorkloads !== null && isset($this->staffWorkloads[$singleId])) {
+                                    $this->staffWorkloads[$singleId]++;
+                                }
+
+                                return $singleId;
+                            }
+
+                            if (count($cUserIds) > 1) {
+                                return $this->getNextStaffInvoiceIdAmong($cUserIds);
+                            }
+                        }
+                    }
+                }
+
+                // 2. Fallback ke PIC Utama jika tidak ada conditional rule yang cocok
                 $candidateIds = $rule->users->pluck('id')->toArray();
                 if (empty($candidateIds) && $rule->user_id) {
                     $candidateIds = [$rule->user_id];

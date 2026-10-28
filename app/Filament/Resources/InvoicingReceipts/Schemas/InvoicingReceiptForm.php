@@ -228,13 +228,11 @@ class InvoicingReceiptForm
                     ->schema([
                         TextInput::make('no_invoice')
                             ->label('Nomor Invoice')
-                            ->placeholder('Nomor tagihan vendor')
-                            ->required(),
+                            ->placeholder('Nomor tagihan vendor (opsional)'),
 
                         TextInput::make('faktur_pajak')
                             ->label('Nomor Faktur Pajak')
-                            ->placeholder('Contoh: 010.001-26.12345678')
-                            ->required(),
+                            ->placeholder('Contoh: 010.001-26.12345678 (opsional)'),
 
                         TextInput::make('nama_barang')
                             ->label('Nama Barang')

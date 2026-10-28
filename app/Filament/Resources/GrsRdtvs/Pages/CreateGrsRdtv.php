@@ -353,16 +353,27 @@ class CreateGrsRdtv extends CreateRecord
         }
 
         $do->loadMissing(['deliveryOrderReceiptDetails.purchaseOrderIssued']);
-        $firstDetail = $do->deliveryOrderReceiptDetails->first();
+        $details = $do->deliveryOrderReceiptDetails;
+        $firstDetail = $details->first();
         $po = $firstDetail?->purchaseOrderIssued;
 
         $rawMaterialType = $firstDetail?->material_type ?? $po?->material_type;
         $cleanType = trim((string) $rawMaterialType);
-        $isNoneOrEmpty = empty($cleanType) || in_array(strtolower($cleanType), ['none', 'null', '-', 'kosong']);
+        $isNoneOrEmpty = empty($cleanType) || in_array(strtolower($cleanType), ['none', 'null', '-', 'kosong'], true);
         $materialType = $isNoneOrEmpty ? null : $cleanType;
 
+        // Ambil kode material dan deskripsi dari detail DO atau PO
+        $materialCodes = $details->isNotEmpty()
+            ? $details->pluck('material_code')->filter()->values()->all()
+            : array_filter([$po?->material_code]);
+
+        $descriptions = $details->isNotEmpty()
+            ? $details->pluck('description')->filter()->values()->all()
+            : array_filter([$po?->description]);
+
         // Tentukan PIC: jika tipe material none atau kosong, bagi rata ke Staff Invoice
-        $picId = $this->getAssignmentService()->determinePicId($materialType);
+        // Jika ada aturan pengecualian (kode material / kata kunci deskripsi), sistem akan mengalihkan ke PIC yang sesuai
+        $picId = $this->getAssignmentService()->determinePicId($materialType, $materialCodes, $descriptions);
 
         // Lookup data vendor di master Vendor
         $vendor = null;
@@ -371,8 +382,6 @@ class CreateGrsRdtv extends CreateRecord
                 ->orWhere('name', $po->vendor_name)
                 ->first();
         }
-
-        $details = $do->deliveryOrderReceiptDetails;
         $qtyPenagihan = $details->isNotEmpty() ? (float) $details->sum('quantity') : (float) ($po?->qty_po ?? 0);
         $qtyPo = $details->map(fn ($d) => $d->purchaseOrderIssued)->filter()->unique('id')->sum('qty_po');
         if (! $qtyPo && $po) {

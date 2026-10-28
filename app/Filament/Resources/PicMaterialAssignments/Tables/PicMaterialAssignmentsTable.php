@@ -70,6 +70,49 @@ class PicMaterialAssignmentsTable
                     ->placeholder('Bebas ke Siapapun')
                     ->searchable(),
 
+                TextColumn::make('conditional_rules')
+                    ->label('Aturan Tambahan')
+                    ->badge()
+                    ->state(function (PicMaterialAssignment $record): ?string {
+                        if ($record->assignment_mode !== 'user') {
+                            return null;
+                        }
+
+                        $rules = $record->conditional_rules;
+                        $count = is_array($rules) ? count($rules) : 0;
+
+                        return $count > 0 ? "{$count} Pengecualian" : 'Standar (0)';
+                    })
+                    ->color(function (PicMaterialAssignment $record): string {
+                        $rules = $record->conditional_rules;
+                        $count = is_array($rules) ? count($rules) : 0;
+
+                        return $count > 0 ? 'warning' : 'gray';
+                    })
+                    ->icon(function (PicMaterialAssignment $record): ?string {
+                        $rules = $record->conditional_rules;
+                        $count = is_array($rules) ? count($rules) : 0;
+
+                        return $count > 0 ? 'heroicon-m-funnel' : null;
+                    })
+                    ->tooltip(function (PicMaterialAssignment $record): ?string {
+                        $rules = $record->conditional_rules;
+                        if (! is_array($rules) || empty($rules)) {
+                            return null;
+                        }
+
+                        $lines = [];
+                        foreach ($rules as $i => $rule) {
+                            $target = ($rule['criteria_type'] ?? '') === 'material_code'
+                                ? ('Kode: '.($rule['material_code'] ?? '-'))
+                                : ('Deskripsi: "'.($rule['description_keyword'] ?? '-').'"');
+                            $lines[] = '#'.($i + 1)." {$target}";
+                        }
+
+                        return implode("\n", $lines);
+                    })
+                    ->placeholder('-'),
+
                 TextColumn::make('notes')
                     ->label('Catatan Aturan')
                     ->placeholder('-')

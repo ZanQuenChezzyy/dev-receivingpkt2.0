@@ -366,12 +366,12 @@ class InvoicingReceiptsTable
                     ->modalWidth('4xl')
                     ->modalIcon('heroicon-o-document-currency-dollar')
                     ->modalHeading(fn (InvoicingReceipt $record) => "Input Data Invoice & No. GRS - PO: {$record->no_po}")
-                    ->modalDescription('Lengkapi No. Invoice, No. DO, Faktur Pajak, dan Nomor GRS resmi SAP.')
+                    ->modalDescription('Lengkapi Nomor GRS resmi SAP, No. DO, serta Nomor Invoice dan Faktur Pajak (opsional, dapat diisi menyusul).')
                     ->modalSubmitActionLabel('Simpan Data Invoice')
                     ->modalCancelActionLabel('Tutup')
                     ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.input-invoice-modal-header', ['record' => $record]))
                     ->schema([
-                        Section::make('Dokumen Penagihan Wajib')
+                        Section::make('Dokumen Penagihan & Slip SAP')
                             ->description('Nomor dokumen resmi penagihan vendor dan slip resmi GRS/RDTV dari SAP.')
                             ->icon('heroicon-o-clipboard-document-check')
                             ->schema([
@@ -400,13 +400,10 @@ class InvoicingReceiptsTable
 
                                 TextInput::make('no_invoice')
                                     ->label('Nomor Invoice')
-                                    ->placeholder('Contoh: INV-2026/001')
+                                    ->placeholder('Contoh: INV-2026/001 (Opsional)')
                                     ->prefixIcon('heroicon-m-document-text')
                                     ->default(fn (InvoicingReceipt $record) => $record->no_invoice)
-                                    ->required()
-                                    ->hint('Wajib dari Vendor')
-                                    ->hintColor('danger')
-                                    ->helperText('Nomor invoice penagihan resmi yang tertera pada berkas tagihan vendor.'),
+                                    ->helperText('Nomor invoice penagihan resmi vendor (opsional, dapat diisi menyusul saat berkas fisik diterima).'),
 
                                 TextInput::make('no_do')
                                     ->label('Nomor DO (Delivery Order)')
@@ -420,13 +417,10 @@ class InvoicingReceiptsTable
 
                                 TextInput::make('faktur_pajak')
                                     ->label('Nomor Faktur Pajak')
-                                    ->placeholder('Contoh: 010.001-26.12345678')
+                                    ->placeholder('Contoh: 010.001-26.12345678 (Opsional)')
                                     ->prefixIcon('heroicon-m-receipt-percent')
                                     ->default(fn (InvoicingReceipt $record) => $record->faktur_pajak)
-                                    ->required()
-                                    ->hint('Wajib')
-                                    ->hintColor('danger')
-                                    ->helperText('Nomor seri Faktur Pajak elektronik (e-Faktur) dari vendor.'),
+                                    ->helperText('Nomor seri Faktur Pajak elektronik / e-Faktur (opsional, dapat diisi menyusul).'),
                             ])->columns(2),
 
                         Section::make('Rincian Kuantitas & Nilai Penagihan')
@@ -491,9 +485,9 @@ class InvoicingReceiptsTable
                         $record->update([
                             'no_grs' => $data['no_grs'] ?? $record->no_grs,
                             'no_rdtv' => $data['no_rdtv'] ?? $record->no_rdtv,
-                            'no_invoice' => $data['no_invoice'],
+                            'no_invoice' => $data['no_invoice'] ?? null,
                             'no_do' => $data['no_do'],
-                            'faktur_pajak' => $data['faktur_pajak'],
+                            'faktur_pajak' => $data['faktur_pajak'] ?? null,
                             'qty_penagihan' => $data['qty_penagihan'] ?? $record->qty_penagihan,
                             'qty_po' => $data['qty_po'] ?? $record->qty_po,
                             'uoi' => $data['uoi'] ?? $record->uoi,

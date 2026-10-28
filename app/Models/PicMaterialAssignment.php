@@ -14,11 +14,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
     'assignment_mode',
     'user_id',
     'notes',
+    'conditional_rules',
 ])]
 class PicMaterialAssignment extends Model
 {
     /** @use HasFactory<PicMaterialAssignmentFactory> */
     use HasFactory;
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'conditional_rules' => 'array',
+        ];
+    }
 
     public function user(): BelongsTo
     {

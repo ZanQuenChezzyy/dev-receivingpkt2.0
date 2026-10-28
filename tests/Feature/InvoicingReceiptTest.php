@@ -3,6 +3,7 @@
 use App\Filament\Resources\InvoicingReceipts\Pages\ListInvoicingReceipts;
 use App\Filament\Resources\InvoicingReceipts\Schemas\InvoicingReceiptForm;
 use App\Filament\Resources\InvoicingReceipts\Tables\InvoicingReceiptsTable;
+use App\Filament\Resources\PicMaterialAssignments\Schemas\PicMaterialAssignmentForm;
 use App\Models\InvoicingReceipt;
 use App\Models\PicMaterialAssignment;
 use App\Models\PurchaseOrderIssued;
@@ -61,8 +62,9 @@ test('pic material assignment model has expected fillable attributes and user re
     $assignment = new PicMaterialAssignment;
     $fillables = $assignment->getFillable();
 
-    expect($fillables)->toContain('material_type', 'assignment_mode', 'user_id', 'notes')
-        ->and($assignment->user())->toBeInstanceOf(BelongsTo::class);
+    expect($fillables)->toContain('material_type', 'assignment_mode', 'user_id', 'notes', 'conditional_rules')
+        ->and($assignment->user())->toBeInstanceOf(BelongsTo::class)
+        ->and($assignment->getCasts()['conditional_rules'])->toBe('array');
 });
 
 test('invoicing receipt model has complete fillable attributes for all 27 required columns', function () {
@@ -176,7 +178,8 @@ test('invoicing assignment service treats empty string, none, and null as free f
         ->and($service->determinePicId('-'))->toBe(1);
 });
 
-test('invoicing assignment service distributes free_pool material type evenly across staff invoice', function () {
+function ensurePicAssignmentTablesExist(): void
+{
     if (! Illuminate\Support\Facades\Schema::hasTable('users')) {
         Illuminate\Support\Facades\Schema::create('users', function ($table) {
             $table->id();
@@ -192,7 +195,12 @@ test('invoicing assignment service distributes free_pool material type evenly ac
             $table->string('assignment_mode')->default('free_pool');
             $table->unsignedBigInteger('user_id')->nullable();
             $table->text('notes')->nullable();
+            $table->json('conditional_rules')->nullable();
             $table->timestamps();
+        });
+    } elseif (! Illuminate\Support\Facades\Schema::hasColumn('pic_material_assignments', 'conditional_rules')) {
+        Illuminate\Support\Facades\Schema::table('pic_material_assignments', function ($table) {
+            $table->json('conditional_rules')->nullable();
         });
     }
 
@@ -203,6 +211,10 @@ test('invoicing assignment service distributes free_pool material type evenly ac
             $table->unsignedBigInteger('user_id');
         });
     }
+}
+
+test('invoicing assignment service distributes free_pool material type evenly across staff invoice', function () {
+    ensurePicAssignmentTablesExist();
 
     PicMaterialAssignment::create([
         'material_type' => 'ZSP',
@@ -321,7 +333,7 @@ test('invoicing receipt model computes subtotal include ppn with 11% formula', f
     expect($include2)->toBe(166778.06);
 });
 
-test('invoicing receipt form configures required validation for no_invoice, no_do, faktur_pajak, and no_grs', function () {
+test('invoicing receipt form configures validation where no_do is required while no_invoice and faktur_pajak are optional', function () {
     $livewire = new class extends Component implements HasSchemas
     {
         use InteractsWithSchemas;
@@ -355,9 +367,9 @@ test('invoicing receipt form configures required validation for no_invoice, no_d
         ->and($allFields)->toHaveKey('subtotal_exclude_ppn')
         ->and($allFields)->toHaveKey('subtotal_include_ppn');
 
-    expect($allFields['no_invoice']->isRequired())->toBeTrue()
-        ->and($allFields['no_do']->isRequired())->toBeTrue()
-        ->and($allFields['faktur_pajak']->isRequired())->toBeTrue();
+    expect($allFields['no_do']->isRequired())->toBeTrue()
+        ->and($allFields['no_invoice']->isRequired())->toBeFalse()
+        ->and($allFields['faktur_pajak']->isRequired())->toBeFalse();
 });
 
 test('invoicing receipts table defines merged uploadBerkas action for verification and invoice files', function () {
@@ -372,4 +384,133 @@ test('invoicing receipts table defines merged uploadBerkas action for verificati
     expect($actionNames)->toContain('uploadBerkas')
         ->and($actionNames)->not->toContain('uploadVerifikasi')
         ->and($actionNames)->not->toContain('uploadInvoice');
+});
+
+test('invoicing assignment service redirects to conditional rule PIC by material code, falling back to default PIC for other codes', function () {
+    ensurePicAssignmentTablesExist();
+
+    $assignment = PicMaterialAssignment::updateOrCreate(
+        ['material_type' => 'ZSM'],
+        [
+            'assignment_mode' => 'user',
+            'user_id' => 10, // Andre (Default)
+            'conditional_rules' => [
+                [
+                    'criteria_type' => 'material_code',
+                    'material_code' => '300001',
+                    'user_ids' => [20], // Wahyu (Khusus 300001)
+                ],
+            ],
+        ]
+    );
+
+    $service = new InvoicingAssignmentService;
+
+    // Material ZSM dengan kode 300001 -> Harus ke Wahyu (20)
+    expect($service->determinePicId('ZSM', '300001', 'Baut ZSM'))->toBe(20)
+        // Material ZSM dengan kode lain (300002) -> Harus ke Andre (10)
+        ->and($service->determinePicId('ZSM', '300002', 'Baut ZSM'))->toBe(10)
+        // Material ZSM tanpa kode -> Harus fallback ke Andre (10)
+        ->and($service->determinePicId('ZSM'))->toBe(10);
+});
+
+test('invoicing assignment service redirects to conditional rule PIC by description keyword case-insensitively', function () {
+    ensurePicAssignmentTablesExist();
+
+    PicMaterialAssignment::updateOrCreate(
+        ['material_type' => 'ZSM'],
+        [
+            'assignment_mode' => 'user',
+            'user_id' => 10, // Andre (Default)
+            'conditional_rules' => [
+                [
+                    'criteria_type' => 'material_code',
+                    'material_code' => '300001',
+                    'user_ids' => [20], // Wahyu
+                ],
+                [
+                    'criteria_type' => 'description_contains',
+                    'description_keyword' => 'COAL',
+                    'user_ids' => [30], // Specialist Batubara
+                ],
+            ],
+        ]
+    );
+
+    $service = new InvoicingAssignmentService;
+
+    // Deskripsi mengandung kata 'COAL' (meskipun mixed case) -> Harus ke Specialist Batubara (30)
+    expect($service->determinePicId('ZSM', '300999', 'STEAM COAL BITUMINOUS'))->toBe(30)
+        ->and($service->determinePicId('ZSM', '300888', 'premium coal supplier'))->toBe(30)
+        // Deskripsi umum tanpa kata kunci COAL dan bukan kode 300001 -> Harus ke Andre (10)
+        ->and($service->determinePicId('ZSM', '300999', 'Sparepart Pompa'))->toBe(10);
+});
+
+test('invoicing assignment service supports multiple conditional rule user_ids with round-robin', function () {
+    ensurePicAssignmentTablesExist();
+
+    PicMaterialAssignment::updateOrCreate(
+        ['material_type' => 'ZSM'],
+        [
+            'assignment_mode' => 'user',
+            'user_id' => 10,
+            'conditional_rules' => [
+                [
+                    'criteria_type' => 'material_code',
+                    'material_code' => '300001, 300002',
+                    'user_ids' => [21, 22],
+                ],
+            ],
+        ]
+    );
+
+    $service = new InvoicingAssignmentService;
+    $service->setStaffWorkloads([
+        21 => 0,
+        22 => 0,
+        10 => 0,
+    ]);
+
+    // 4 panggilan berturut-turut untuk kode 300001 harus dibagi rata antara 21 dan 22
+    $first = $service->determinePicId('ZSM', '300001');
+    $second = $service->determinePicId('ZSM', '300002');
+    $third = $service->determinePicId('ZSM', '300001');
+    $fourth = $service->determinePicId('ZSM', '300002');
+
+    $counts = array_count_values([$first, $second, $third, $fourth]);
+    expect($counts[21])->toBe(2)
+        ->and($counts[22])->toBe(2)
+        ->and($counts)->not->toHaveKey(10);
+});
+
+test('pic material assignment form configures conditional_rules repeater with criteria_type, material_code, description_keyword', function () {
+    $livewire = new class extends Component implements HasSchemas
+    {
+        use InteractsWithSchemas;
+    };
+
+    $schema = (new Schema)->livewire($livewire);
+    PicMaterialAssignmentForm::configure($schema);
+    $components = collect($schema->getComponents());
+
+    $flattenComponents = function ($comps) use (&$flattenComponents) {
+        $flat = collect();
+        foreach ($comps as $c) {
+            $flat->push($c);
+            if (method_exists($c, 'getDefaultChildComponents')) {
+                $flat = $flat->merge($flattenComponents($c->getDefaultChildComponents()));
+            } elseif (method_exists($c, 'getChildComponents')) {
+                $flat = $flat->merge($flattenComponents($c->getChildComponents()));
+            }
+        }
+
+        return $flat;
+    };
+
+    $allFields = $flattenComponents($components)->filter(fn ($c) => method_exists($c, 'getName'))->keyBy(fn ($c) => $c->getName());
+
+    expect($allFields)->toHaveKey('material_type')
+        ->and($allFields)->toHaveKey('assignment_mode')
+        ->and($allFields)->toHaveKey('users')
+        ->and($allFields)->toHaveKey('conditional_rules');
 });
