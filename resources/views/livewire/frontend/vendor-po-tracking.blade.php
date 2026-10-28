@@ -165,28 +165,32 @@
                 x-transition:leave="ease-in duration-200"
                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                 x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                class="relative w-full max-w-lg glass-panel bg-white/95 dark:bg-[#031525]/95 rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/60 dark:border-white/10 z-10 overflow-hidden">
+                class="relative w-full max-w-lg bg-white dark:bg-[#031525] rounded-3xl p-6 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] border border-slate-200 dark:border-white/10 z-10 overflow-hidden">
                 
                 <!-- Ambient Accent Circle -->
-                <div class="absolute -top-16 -right-16 w-44 h-44 bg-[#F47920]/20 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -top-16 -right-16 w-44 h-44 bg-[#F47920]/15 dark:bg-[#F47920]/20 rounded-full blur-2xl pointer-events-none"></div>
 
                 <!-- Modal Header -->
                 <div class="flex items-start justify-between gap-4 mb-6 relative z-10">
                     <div class="flex items-center gap-3.5">
-                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#F47920] to-[#BE5A27] text-white flex items-center justify-center shadow-lg shadow-orange-500/30 shrink-0">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#F47920] to-[#BE5A27] text-white flex items-center justify-center shadow-md shadow-orange-500/25 shrink-0">
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
                         </div>
                         <div>
-                            <span class="text-[10px] font-black uppercase tracking-wider text-[#F47920] block">Verifikasi Keamanan</span>
-                            <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">
+                            <span class="text-[11px] font-black uppercase tracking-wider text-[#F47920] block">Verifikasi Keamanan</span>
+                            <h3 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">
                                 Akses Riwayat Dokumen
                             </h3>
+                            <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
+                                Masukkan nomor PO & email terdaftar untuk melihat riwayat lengkap.
+                            </p>
                         </div>
                     </div>
                     <button type="button" wire:click="closeModal"
-                        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-xl transition-colors">
+                        class="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                        title="Tutup">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -199,19 +203,19 @@
                     <!-- 1. Input Nomor Purchase Order (PO) -->
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
-                            <label for="modalPoNumberInput" class="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                            <label for="modalPoNumberInput" class="block text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                                 <span class="w-2 h-2 rounded-full bg-[#F47920] animate-pulse"></span>
                                 Nomor Purchase Order (PO)
                             </label>
-                            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500">10 Digit SAP PO</span>
+                            <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">10 Digit SAP PO</span>
                         </div>
-                        <div class="relative flex items-center rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus-within:border-[#F47920] dark:focus-within:border-[#F47920] focus-within:ring-4 focus-within:ring-[#F47920]/20 transition-all shadow-inner">
+                        <div class="relative flex items-center rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus-within:border-[#F47920] dark:focus-within:border-[#F47920] focus-within:ring-4 focus-within:ring-[#F47920]/20 transition-all shadow-sm">
                             <div class="pl-3.5 pr-2 text-[#F47920] flex items-center pointer-events-none shrink-0">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
-                            <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono select-none border border-slate-300 dark:border-slate-700 shrink-0">
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-mono select-none border border-slate-300 dark:border-slate-700 shrink-0">
                                 PO
                             </span>
                             <input id="modalPoNumberInput"
@@ -223,7 +227,7 @@
                                 maxlength="15">
                             @if (!empty($poNumber))
                                 <button type="button" wire:click="$set('poNumber', '')"
-                                    class="p-1.5 mr-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                                    class="p-1.5 mr-2 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
                                     title="Hapus input PO">
                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -233,18 +237,18 @@
                         </div>
 
                         <!-- Quick Sample PO Chips inside modal -->
-                        <div class="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
-                            <span class="text-slate-400 dark:text-slate-500 font-bold">Pilih Contoh:</span>
+                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                            <span class="text-slate-500 dark:text-slate-400 font-bold">Pilih Contoh:</span>
                             <button type="button" wire:click="selectSamplePo('5300065628')"
-                                class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono font-bold hover:border-[#F47920] hover:text-[#F47920] transition-colors cursor-pointer">
+                                class="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-orange-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono font-bold hover:border-[#F47920] hover:text-[#F47920] transition-colors cursor-pointer">
                                 5300065628
                             </button>
                             <button type="button" wire:click="selectSamplePo('5300065629')"
-                                class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono font-bold hover:border-[#F47920] hover:text-[#F47920] transition-colors cursor-pointer">
+                                class="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-orange-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono font-bold hover:border-[#F47920] hover:text-[#F47920] transition-colors cursor-pointer">
                                 5300065629
                             </button>
                             <button type="button" wire:click="selectSamplePo('5300065757')"
-                                class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-mono font-bold hover:border-[#F47920] hover:text-[#F47920] transition-colors cursor-pointer">
+                                class="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-orange-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono font-bold hover:border-[#F47920] hover:text-[#F47920] transition-colors cursor-pointer">
                                 5300065757
                             </button>
                         </div>
@@ -252,20 +256,20 @@
 
                     <!-- Vendor Context Card (if PO resolved) -->
                     @if (!empty($vendorInfo['name']))
-                        <div class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-800 dark:text-emerald-300 text-xs flex items-center justify-between gap-3 animate-fade-in">
+                        <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-300 dark:border-emerald-800/70 text-emerald-950 dark:text-emerald-200 text-xs flex items-center justify-between gap-3 animate-fade-in shadow-sm">
                             <div class="flex items-center gap-2.5 truncate">
-                                <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                <div class="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
                                 <div class="truncate">
-                                    <span class="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block">Vendor Teridentifikasi:</span>
-                                    <span class="font-black text-xs text-slate-900 dark:text-white truncate block">{{ $vendorInfo['name'] }}</span>
+                                    <span class="text-[10px] uppercase font-black text-emerald-700 dark:text-emerald-400 block tracking-wider">Vendor Teridentifikasi:</span>
+                                    <span class="font-black text-xs sm:text-sm text-slate-900 dark:text-white truncate block">{{ $vendorInfo['name'] }}</span>
                                 </div>
                             </div>
                             @if (!empty($vendorInfo['vendor_number']))
-                                <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 font-mono text-[10px] font-black text-emerald-700 dark:text-emerald-300 shrink-0">
+                                <span class="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 font-mono text-[11px] font-black text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 shrink-0">
                                     {{ $vendorInfo['vendor_number'] }}
                                 </span>
                             @endif
@@ -274,38 +278,45 @@
 
                     <!-- Clue / Masked Email Hint -->
                     @if (!empty($vendorInfo['masked_emails']))
-                        <div class="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-xs flex items-start gap-2.5">
-                            <svg class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div>
-                                <span class="font-bold block mb-0.5 text-blue-900 dark:text-blue-200">Petunjuk Email Terdaftar untuk PO Ini:</span>
-                                <div class="space-y-0.5 font-mono text-[11px] text-blue-800 dark:text-blue-300 font-bold">
+                        <div class="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-200 dark:border-blue-800/70 text-xs flex items-start gap-3 shadow-sm">
+                            <div class="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="space-y-1">
+                                <span class="font-black block text-blue-950 dark:text-blue-100 text-xs">Petunjuk Email Terdaftar untuk PO Ini:</span>
+                                <div class="space-y-1 font-mono text-xs text-blue-900 dark:text-blue-300 font-black">
                                     @foreach ($vendorInfo['masked_emails'] as $masked)
-                                        <div>• {{ $masked }}</div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-blue-500">•</span>
+                                            <span>{{ $masked }}</span>
+                                        </div>
                                     @endforeach
                                 </div>
                             </div>
                         </div>
                     @elseif (isset($vendorInfo['error_message']) && $vendorInfo['error_message'])
-                        <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs flex items-start gap-2.5">
-                            <svg class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
+                        <div class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-800/70 text-xs flex items-start gap-3 shadow-sm">
+                            <div class="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
                             <div>
-                                <span class="font-bold block mb-0.5">Informasi Kontak Master:</span>
-                                <p class="leading-relaxed">{{ $vendorInfo['error_message'] }}</p>
+                                <span class="font-black block mb-1 text-amber-950 dark:text-amber-100 text-xs">Informasi Kontak Master:</span>
+                                <p class="leading-relaxed text-amber-900 dark:text-amber-200 font-semibold">{{ $vendorInfo['error_message'] }}</p>
                             </div>
                         </div>
                     @endif
 
                     <!-- 2. Input Alamat Email Vendor -->
                     <div>
-                        <label for="verificationEmailInput" class="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                        <label for="verificationEmailInput" class="block text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                             Alamat Email Resmi Vendor
                         </label>
-                        <div class="relative flex items-center rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/20 transition-all shadow-inner">
+                        <div class="relative flex items-center rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/20 transition-all shadow-sm">
                             <div class="pl-3.5 pr-2 text-blue-500 flex items-center pointer-events-none shrink-0">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
@@ -313,15 +324,15 @@
                             </div>
                             <input id="verificationEmailInput" wire:model="verificationEmail" type="email"
                                 placeholder="Masukkan email resmi perusahaan vendor..."
-                                class="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3 py-3 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:text-xs sm:placeholder:text-sm"
+                                class="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3 py-3 text-sm font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:text-xs sm:placeholder:text-sm"
                                 autocomplete="email">
                         </div>
                     </div>
 
                     <!-- Verification Error Alert inside Modal -->
                     @if ($verificationError)
-                        <div class="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium flex items-center gap-2">
-                            <svg class="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <div class="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-800 text-rose-950 dark:text-rose-200 text-xs font-bold flex items-center gap-2.5 shadow-sm">
+                            <svg class="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span>{{ $verificationError }}</span>
@@ -331,11 +342,11 @@
                     <!-- Action Buttons -->
                     <div class="flex items-center justify-end gap-3 pt-3">
                         <button type="button" wire:click="closeModal"
-                            class="px-5 py-2.5 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-200/50 dark:hover:bg-white/10 transition-colors">
+                            class="px-5 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 transition-colors cursor-pointer">
                             Batal
                         </button>
                         <button type="submit" wire:loading.attr="disabled"
-                            class="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:shadow-[0_8px_20px_rgba(244,121,32,0.4)] active:scale-95 transition-all flex items-center gap-2">
+                            class="px-6 py-2.5 rounded-xl font-black text-xs text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:shadow-[0_8px_20px_rgba(244,121,32,0.4)] active:scale-95 transition-all flex items-center gap-2 cursor-pointer shadow-md">
                             <span wire:loading.remove wire:target="verifyVendorEmail">Verifikasi & Tampilkan Riwayat</span>
                             <span wire:loading wire:target="verifyVendorEmail" class="flex items-center gap-1.5">
                                 <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">

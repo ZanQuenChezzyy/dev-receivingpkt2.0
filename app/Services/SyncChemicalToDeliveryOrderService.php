@@ -14,6 +14,11 @@ class SyncChemicalToDeliveryOrderService
     public function sync(MonitoringChemical $chemical): DeliveryOrderReceipt
     {
         return DB::transaction(function () use ($chemical) {
+            $chemical->loadMissing([
+                'monitoringChemicalDetails.purchaseOrderIssued',
+                'monitoringChemicalDetails.chemicalQcTuv',
+            ]);
+
             $actorId = Auth::id() ?? $chemical->getAttribute('created_by');
 
             // Ambil detail pertama untuk location_id utama DO
@@ -31,7 +36,15 @@ class SyncChemicalToDeliveryOrderService
             $doNo = $chemical->getAttribute('do_number');
             $recDate = $chemical->getAttribute('received_date');
             $dateStr = $recDate ? Carbon::parse($recDate)->format('dmY') : '';
-            $stage = $firstDetail && $firstDetail->chemicalQcTuv ? $firstDetail->chemicalQcTuv->tahapan_name : null;
+
+            // Tahapan / Stage dari detail
+            $stages = $chemical->monitoringChemicalDetails
+                ->pluck('tahapan')
+                ->filter()
+                ->unique();
+            $stage = $stages->isNotEmpty()
+                ? $stages->implode(', ')
+                : ($firstDetail ? ($firstDetail->tahapan ?: $firstDetail->chemicalQcTuv?->tahapan_name) : null);
 
             $parts = array_filter([$poNo, $itemCountStr, $doNo, $dateStr, $stage]);
             $documentCode = null;
@@ -50,6 +63,7 @@ class SyncChemicalToDeliveryOrderService
                 'document_code' => $documentCode,
                 'location_id' => $mainLocationId,
                 'received_date' => $recDate,
+                'stage' => $stage,
                 'source_type' => $chemical->getAttribute('material_category') ?? 'Chemical/Karung',
                 'status' => $dor->getAttribute('status') ?? 'Diterima', // initial status
                 'received_by' => $dor->getAttribute('received_by') ?? $actorId,

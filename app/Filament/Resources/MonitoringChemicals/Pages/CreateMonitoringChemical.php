@@ -14,6 +14,8 @@ class CreateMonitoringChemical extends CreateRecord
     {
         $record = $this->record;
 
+        $record->unsetRelation('monitoringChemicalDetails');
+
         if ($record->isDone()) {
             $record->update(['doc_status' => 'Completed']);
         } else {

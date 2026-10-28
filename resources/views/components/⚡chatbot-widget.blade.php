@@ -515,12 +515,15 @@ new class extends Component {
                 </div>
             </div>
 
-            <button wire:click="toggleChat"
-                class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all duration-300 relative z-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-2 rounded-xl">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path>
-                </svg>
-            </button>
+            <div class="flex items-center gap-1.5 relative z-10">
+                <button wire:click="toggleChat"
+                    title="Tutup Chatbot"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all duration-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-2 rounded-xl active:scale-95">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <!-- Ruang Obrolan -->

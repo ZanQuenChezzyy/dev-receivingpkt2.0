@@ -51,6 +51,20 @@
                     </a>
                 </div>
 
+                <!-- Interactive AI Tour Quick Launcher -->
+                <div class="mt-3 flex items-center gap-2">
+                    <button type="button" onclick="if (typeof startAiTour === 'function') startAiTour();"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-800 border border-[#F47920]/30 hover:border-[#F47920] text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-xs hover:shadow-md hover:scale-102 active:scale-98 group cursor-pointer backdrop-blur-md">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-[#F47920]"></span>
+                        </span>
+                        <span class="text-[#F47920] font-black">Tur Interaktif:</span>
+                        <span class="text-slate-600 dark:text-slate-300 font-semibold">Pelajari Cara Kerja Chatbot ALEX</span>
+                        <svg class="w-3.5 h-3.5 text-[#F47920] group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+
                 <!-- Quick Tracking Bar -->
                 <div class="mt-6 w-full max-w-md">
                     <form wire:submit="searchMaterial" class="relative flex items-center group">
@@ -270,17 +284,33 @@
                             <!-- Animated Glow Background -->
                             <div class="absolute inset-0 bg-gradient-to-r from-[#F47920]/20 via-amber-400/20 to-[#0A4F86]/20 blur-xl group-hover:blur-2xl transition-all duration-500"></div>
                             
-                            <div class="relative p-4 sm:p-6 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-slate-200/50 dark:border-white/10 flex flex-col items-center justify-center text-center rounded-2xl shadow-lg">
-                                <div class="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-[#F47920]/20 to-transparent border border-[#F47920]/30 rounded-2xl flex items-center justify-center mb-2 sm:mb-4 transform group-hover:scale-110 transition-transform duration-300 shadow-inner">
-                                    <svg class="w-5 h-5 sm:w-7 sm:h-7 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                            <div class="relative p-5 sm:p-6 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 flex flex-col items-center justify-center text-center rounded-2xl shadow-xl">
+                                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-[#F47920]/20 to-orange-500/5 border border-[#F47920]/30 rounded-2xl flex items-center justify-center mb-3 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-inner">
+                                    <svg class="w-6 h-6 sm:w-7 sm:h-7 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                 </div>
-                                <h4 class="text-sm sm:text-lg font-black text-slate-800 dark:text-white mb-1.5 sm:mb-2 tracking-tight">Baru Pertama Kali?</h4>
-                                <p class="text-[11px] sm:text-sm text-slate-600 dark:text-slate-300 mb-4 sm:mb-6 max-w-sm">
-                                    Ikuti panduan interaktif singkat untuk mengetahui cara mudah melacak material Anda dengan asisten cerdas ALEX.
+                                <h4 class="text-base sm:text-lg font-black text-slate-800 dark:text-white mb-1.5 tracking-tight">Baru Pertama Kali Menggunakan Sistem?</h4>
+                                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mb-4 max-w-sm leading-relaxed font-medium">
+                                    Ikuti panduan interaktif 4 langkah cepat untuk mengetahui cara melacak PO, surat jalan DO, dan status material bersama asisten AI ALEX.
                                 </p>
-                                <button @click="closeModal(); startAiTour()" class="flex items-center justify-center w-full sm:w-auto gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] text-white text-xs sm:text-sm font-bold rounded-xl shadow-[0_8px_20px_-6px_rgba(244,121,32,0.6)] hover:shadow-[0_12px_25px_-6px_rgba(244,121,32,0.8)] transition-all hover:-translate-y-1">
-                                    <span>Mulai Panduan Interaktif</span>
-                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                                
+                                <div class="grid grid-cols-2 gap-2 w-full max-w-xs mb-4 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                                        <span>🤖</span> <span>Buka Chatbot</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                                        <span>⚡</span> <span>Saran Cepat</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                                        <span>🔎</span> <span>Ketik No. PO</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
+                                        <span>🎯</span> <span>Status Gudang</span>
+                                    </div>
+                                </div>
+
+                                <button @click="closeModal(); startAiTour()" class="flex items-center justify-center w-full sm:w-auto gap-2.5 px-6 py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 text-white text-xs sm:text-sm font-black rounded-xl shadow-[0_8px_20px_-6px_rgba(244,121,32,0.6)] hover:shadow-[0_12px_25px_-6px_rgba(244,121,32,0.8)] transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer">
+                                    <span>Mulai Tur Panduan AI (4 Langkah)</span>
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                                 </button>
                             </div>
                         </div>
@@ -302,165 +332,200 @@
     <style>
         /* Custom styling untuk Shepherd.js konsisten dengan form */
         @keyframes shepherdPop {
-            0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+            0% { opacity: 0; transform: scale(0.92) translateY(12px); }
             100% { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        .shepherd-theme {
+        @keyframes shepherdAiGlow {
+            0%, 100% {
+                box-shadow: 0 0 0 4px rgba(244, 121, 32, 0.45), 0 0 25px rgba(244, 121, 32, 0.25) !important;
+            }
+            50% {
+                box-shadow: 0 0 0 6px rgba(244, 121, 32, 0.75), 0 0 40px rgba(244, 121, 32, 0.45) !important;
+            }
+        }
+
+        .shepherd-theme,
+        .shepherd-element {
             background: rgba(255, 255, 255, 0.98) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
             border-radius: 1.5rem !important;
-            border: 1px solid rgba(244, 121, 32, 0.2) !important;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+            border: 1px solid rgba(244, 121, 32, 0.3) !important;
+            box-shadow: 0 25px 50px -12px rgba(10, 79, 134, 0.25), 0 0 30px rgba(244, 121, 32, 0.12) !important;
             font-family: inherit !important;
             color: #334155 !important;
-            max-width: 350px !important;
+            max-width: 370px !important;
             z-index: 2147483647 !important;
-            animation: shepherdPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+            overflow: hidden !important;
+            animation: shepherdPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
         }
 
-        .dark .shepherd-theme {
-            background: rgba(15, 23, 42, 0.95) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        .dark .shepherd-theme,
+        .dark .shepherd-element {
+            background: rgba(15, 23, 42, 0.96) !important;
+            border: 1px solid rgba(244, 121, 32, 0.35) !important;
             color: #f8fafc !important;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px 0 rgba(244, 121, 32, 0.1) !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 25px rgba(244, 121, 32, 0.2) !important;
         }
 
-        .shepherd-theme .shepherd-arrow:before {
-            background: #fff !important;
-            border: 1px solid rgba(244, 121, 32, 0.2) !important;
+        .shepherd-theme .shepherd-arrow:before,
+        .shepherd-element .shepherd-arrow:before {
+            background: #ffffff !important;
+            border: 1px solid rgba(244, 121, 32, 0.3) !important;
         }
         
-        .dark .shepherd-theme .shepherd-arrow:before {
+        .dark .shepherd-theme .shepherd-arrow:before,
+        .dark .shepherd-element .shepherd-arrow:before {
             background: #0f172a !important;
-            border-color: rgba(255, 255, 255, 0.1) !important;
+            border-color: rgba(244, 121, 32, 0.35) !important;
         }
 
-        .shepherd-theme .shepherd-header {
+        .shepherd-theme .shepherd-header,
+        .shepherd-element .shepherd-header {
             background: transparent !important;
-            border-bottom: 1px solid rgba(244, 121, 32, 0.1) !important;
-            padding: 1.25rem 1.5rem 0.75rem !important;
-        }
-        
-        .dark .shepherd-theme .shepherd-header {
-            border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+            border-bottom: none !important;
+            padding: 1.25rem 1.25rem 0.5rem !important;
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
         }
 
-        .shepherd-theme .shepherd-title {
-            font-size: 1.15rem !important;
+        .shepherd-theme .shepherd-title,
+        .shepherd-element .shepherd-title {
+            font-size: 1rem !important;
             font-weight: 900 !important;
-            color: #1e293b !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 0.6rem !important;
+            color: #0f172a !important;
+            width: 100% !important;
+            margin: 0 !important;
+            line-height: 1.3 !important;
         }
         
-        .dark .shepherd-theme .shepherd-title {
+        .dark .shepherd-theme .shepherd-title,
+        .dark .shepherd-element .shepherd-title {
             color: #f8fafc !important;
         }
 
-        .shepherd-theme .shepherd-title::before {
-            content: '';
-            display: inline-block;
-            width: 6px;
-            height: 20px;
-            background: linear-gradient(to bottom, #F47920, #BE5A27);
-            border-radius: 4px;
-        }
-
-        .shepherd-theme .shepherd-cancel-icon {
+        .shepherd-theme .shepherd-cancel-icon,
+        .shepherd-element .shepherd-cancel-icon {
             color: #94a3b8 !important;
-            transition: all 0.2s !important;
+            font-size: 1.4rem !important;
+            font-weight: 400 !important;
+            transition: all 0.2s ease !important;
+            padding: 0.25rem !important;
+            border-radius: 0.5rem !important;
+            line-height: 1 !important;
         }
         
-        .shepherd-theme .shepherd-cancel-icon:hover {
+        .shepherd-theme .shepherd-cancel-icon:hover,
+        .shepherd-element .shepherd-cancel-icon:hover {
             color: #ef4444 !important;
-            transform: rotate(90deg) !important;
+            transform: rotate(90deg) scale(1.15) !important;
         }
 
-        .shepherd-theme .shepherd-text {
-            padding: 1rem 1.5rem !important;
-            font-size: 0.95rem !important;
+        .shepherd-theme .shepherd-text,
+        .shepherd-element .shepherd-text {
+            padding: 0.5rem 1.25rem 0.75rem !important;
+            font-size: 0.875rem !important;
             line-height: 1.6 !important;
             color: #475569 !important;
         }
 
-        .dark .shepherd-theme .shepherd-text {
+        .dark .shepherd-theme .shepherd-text,
+        .dark .shepherd-element .shepherd-text {
             color: #cbd5e1 !important;
         }
 
-        .shepherd-theme .shepherd-footer {
-            padding: 0.5rem 1.5rem 1.5rem !important;
+        .shepherd-theme .shepherd-footer,
+        .shepherd-element .shepherd-footer {
+            padding: 0.75rem 1.25rem 1.25rem !important;
             background: transparent !important;
-            border-top: none !important;
+            border-top: 1px solid rgba(226, 232, 240, 0.6) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 0.5rem !important;
+        }
+
+        .dark .shepherd-theme .shepherd-footer,
+        .dark .shepherd-element .shepherd-footer {
+            border-top-color: rgba(255, 255, 255, 0.08) !important;
         }
 
         /* Tombol */
-        .shepherd-theme .shepherd-button {
-            border-radius: 0.75rem !important;
-            font-weight: 700 !important;
-            padding: 0.6rem 1.25rem !important;
-            transition: all 0.2s !important;
-            font-size: 0.875rem !important;
+        .shepherd-button {
+            border-radius: 0.875rem !important;
+            font-weight: 800 !important;
+            font-size: 0.8125rem !important;
+            padding: 0.55rem 1.15rem !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            cursor: pointer !important;
         }
 
-        .shepherd-theme .shepherd-button-primary {
-            background: linear-gradient(to right, #F47920, #BE5A27) !important;
-            color: white !important;
+        .shepherd-button:active {
+            transform: scale(0.96) !important;
+        }
+
+        .shepherd-button-primary {
+            background: linear-gradient(135deg, #F47920 0%, #BE5A27 100%) !important;
+            color: #ffffff !important;
             border: none !important;
-            box-shadow: 0 4px 6px -1px rgba(244, 121, 32, 0.2), 0 2px 4px -1px rgba(244, 121, 32, 0.1) !important;
+            box-shadow: 0 4px 14px rgba(244, 121, 32, 0.35) !important;
         }
 
-        .shepherd-theme .shepherd-button-primary:hover {
+        .shepherd-button-primary:hover {
+            box-shadow: 0 6px 20px rgba(244, 121, 32, 0.5) !important;
             transform: translateY(-1px) !important;
-            box-shadow: 0 6px 8px -1px rgba(244, 121, 32, 0.3), 0 4px 6px -1px rgba(244, 121, 32, 0.2) !important;
         }
 
-        .shepherd-theme .shepherd-button-secondary {
+        .shepherd-button-secondary {
             background-color: #f1f5f9 !important;
             color: #475569 !important;
             border: 1px solid #e2e8f0 !important;
-            margin-right: 0.5rem !important;
         }
         
-        .shepherd-theme .shepherd-button-secondary:hover {
+        .shepherd-button-secondary:hover {
             background-color: #e2e8f0 !important;
             color: #1e293b !important;
         }
 
-        .dark .shepherd-theme .shepherd-button-secondary {
+        .dark .shepherd-button-secondary {
             background-color: #1e293b !important;
             color: #cbd5e1 !important;
-            border-color: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
         }
 
-        .dark .shepherd-theme .shepherd-button-secondary:hover {
+        .dark .shepherd-button-secondary:hover {
             background-color: #334155 !important;
             color: #f8fafc !important;
         }
 
         /* Highlight Target */
         .shepherd-target.shepherd-enabled {
-            box-shadow: 0 0 0 4px rgba(244, 121, 32, 0.3) !important;
+            animation: shepherdAiGlow 2s infinite ease-in-out !important;
             transition: all 0.3s ease;
-            border-radius: 8px;
+            border-radius: 1rem !important;
             z-index: 10000 !important;
             position: relative;
         }
 
         @media (max-width: 640px) {
-            .shepherd-theme {
-                max-width: 320px !important; 
+            .shepherd-theme,
+            .shepherd-element {
+                max-width: calc(100vw - 32px) !important; 
+                margin: 0 auto !important;
             }
-            .shepherd-theme .shepherd-header { 
-                padding: 1rem 1.25rem 0.5rem !important; 
+            .shepherd-theme .shepherd-header,
+            .shepherd-element .shepherd-header { 
+                padding: 1rem 1rem 0.5rem !important; 
             }
-            .shepherd-theme .shepherd-text { 
-                padding: 0.75rem 1.25rem !important;
+            .shepherd-theme .shepherd-text,
+            .shepherd-element .shepherd-text { 
+                padding: 0.5rem 1rem !important; 
             }
-            .shepherd-theme .shepherd-footer { 
-                padding: 0.5rem 1.25rem 1.25rem !important; 
+            .shepherd-theme .shepherd-footer,
+            .shepherd-element .shepherd-footer { 
+                padding: 0.5rem 1rem 1rem !important; 
             }
         }
     </style>
@@ -471,41 +536,101 @@
             const tour = new Shepherd.Tour({
                 useModalOverlay: true,
                 defaultStepOptions: {
-                    classes: 'shepherd-theme',
-                    scrollTo: true,
+                    classes: 'shepherd-element shepherd-theme',
+                    scrollTo: { behavior: 'smooth', block: 'center' },
                     cancelIcon: {
                         enabled: true
                     }
                 }
             });
 
-            tour.addStep({
-                id: 'step-1',
-                title: '1. Buka Chatbot',
-                text: 'Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela Asisten AI.',
-                attachTo: {
-                    element: '#tour-chatbot-button',
-                    on: 'left'
+            const aiSteps = [
+                {
+                    id: 'step-1',
+                    num: 1,
+                    icon: '🤖',
+                    title: 'Buka Chatbot ALEX',
+                    text: 'Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela Asisten AI interaktif Receiving.',
+                    attachTo: { element: '#tour-chatbot-button', on: 'left' }
                 },
+                {
+                    id: 'step-2',
+                    num: 2,
+                    icon: '💡',
+                    title: 'Rekomendasi Pertanyaan Cepat',
+                    text: 'Pilih salah satu saran pertanyaan ini untuk memeriksa status PO, stok barang, atau panduan secara instan tanpa perlu mengetik.',
+                    attachTo: { element: '#tour-chatbot-suggestions', on: 'top' }
+                },
+                {
+                    id: 'step-3',
+                    num: 3,
+                    icon: '💬',
+                    title: 'Ketik Pertanyaan Bebas',
+                    text: 'Atau ketikkan nomor Purchase Order (PO), nomor Surat Jalan (DO), Stock Number, atau MIR di sini lalu tekan Enter.',
+                    attachTo: { element: '#tour-chatbot-input', on: 'top' }
+                },
+                {
+                    id: 'step-4',
+                    num: 4,
+                    icon: '⚡',
+                    title: 'Jawaban Cerdas & Real-Time',
+                    text: 'ALEX akan mencari data langsung di sistem Receiving dan menyajikan status lengkap dokumen Anda secara otomatis di sini.',
+                    attachTo: { element: '#tour-chatbot-window', on: 'left' }
+                }
+            ];
+
+            const totalSteps = aiSteps.length;
+
+            const makeHeaderHtml = (step) => {
+                const percent = Math.round((step.num / totalSteps) * 100);
+                return `
+                    <div class="flex items-center justify-between w-full mb-1">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-[#F47920] text-[11px] font-black uppercase tracking-wider">
+                            Langkah ${step.num} dari ${totalSteps}
+                        </span>
+                        <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500">${percent}%</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-900 dark:text-white font-black text-sm sm:text-base mt-1">
+                        <span class="text-base sm:text-lg">${step.icon}</span>
+                        <span>${step.title}</span>
+                    </div>
+                `;
+            };
+
+            const makeTextHtml = (step) => {
+                const percent = Math.round((step.num / totalSteps) * 100);
+                return `
+                    <div class="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full mb-3 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-full transition-all duration-300" style="width: ${percent}%"></div>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium m-0">${step.text}</p>
+                `;
+            };
+
+            // Step 1
+            tour.addStep({
+                id: aiSteps[0].id,
+                title: makeHeaderHtml(aiSteps[0]),
+                text: makeTextHtml(aiSteps[0]),
+                attachTo: aiSteps[0].attachTo,
                 buttons: [
                     {
-                        text: 'Lanjut',
+                        text: 'Buka Chat & Lanjut →',
                         classes: 'shepherd-button-primary',
                         action: function() {
                             const chatBtn = document.querySelector('#tour-chatbot-button button');
                             const chatWindow = document.querySelector('#tour-chatbot-window');
                             
                             if (chatBtn && chatWindow && chatWindow.style.display === 'none') {
-                                chatBtn.click(); // Memicu request Livewire ke server
+                                chatBtn.click(); // Memicu pembukaan jendela
                                 
-                                // Polling untuk menunggu sampai Livewire selesai dan elemen muncul
                                 let attempts = 0;
                                 let checkExist = setInterval(() => {
                                     attempts++;
                                     if (chatWindow.style.display !== 'none') {
                                         clearInterval(checkExist);
                                         setTimeout(() => tour.next(), 450);
-                                    } else if (attempts > 50) { // Maksimal tunggu 5 detik
+                                    } else if (attempts > 50) {
                                         clearInterval(checkExist);
                                         tour.next();
                                     }
@@ -518,17 +643,15 @@
                 ]
             });
 
+            // Step 2
             tour.addStep({
-                id: 'step-2',
-                title: '2. Saran Pertanyaan',
-                text: 'Pilih salah satu saran ini untuk bertanya secara cepat tanpa perlu mengetik.',
-                attachTo: {
-                    element: '#tour-chatbot-suggestions',
-                    on: 'top'
-                },
+                id: aiSteps[1].id,
+                title: makeHeaderHtml(aiSteps[1]),
+                text: makeTextHtml(aiSteps[1]),
+                attachTo: aiSteps[1].attachTo,
                 buttons: [
                     {
-                        text: 'Kembali',
+                        text: '← Kembali',
                         classes: 'shepherd-button-secondary',
                         action: function() {
                             const chatBtn = document.querySelector('#tour-chatbot-button button');
@@ -554,52 +677,48 @@
                         }
                     },
                     {
-                        text: 'Lanjut',
+                        text: 'Lanjut →',
                         classes: 'shepherd-button-primary',
                         action: tour.next
                     }
                 ]
             });
 
+            // Step 3
             tour.addStep({
-                id: 'step-3',
-                title: '3. Ketik Pertanyaan',
-                text: 'Atau ketikkan nomor PO, DO, atau MIR di sini, lalu tekan Enter.',
-                attachTo: {
-                    element: '#tour-chatbot-input',
-                    on: 'top'
-                },
+                id: aiSteps[2].id,
+                title: makeHeaderHtml(aiSteps[2]),
+                text: makeTextHtml(aiSteps[2]),
+                attachTo: aiSteps[2].attachTo,
                 buttons: [
                     {
-                        text: 'Kembali',
+                        text: '← Kembali',
                         classes: 'shepherd-button-secondary',
                         action: tour.back
                     },
                     {
-                        text: 'Lanjut',
+                        text: 'Lanjut →',
                         classes: 'shepherd-button-primary',
                         action: tour.next
                     }
                 ]
             });
 
+            // Step 4
             tour.addStep({
-                id: 'step-4',
-                title: '4. Jawaban AI',
-                text: 'AI akan mencari data di sistem Receiving dan memberikan status material secara real-time di sini.',
-                attachTo: {
-                    element: '#tour-chatbot-window',
-                    on: 'left'
-                },
+                id: aiSteps[3].id,
+                title: makeHeaderHtml(aiSteps[3]),
+                text: makeTextHtml(aiSteps[3]),
+                attachTo: aiSteps[3].attachTo,
                 buttons: [
                     {
-                        text: 'Kembali',
+                        text: '← Kembali',
                         classes: 'shepherd-button-secondary',
                         action: tour.back
                     },
                     {
-                        text: 'Selesai',
-                        classes: 'shepherd-button-primary',
+                        text: 'Selesai ✨',
+                        classes: 'shepherd-button-primary !bg-emerald-600 hover:!bg-emerald-700',
                         action: tour.complete
                     }
                 ]
@@ -610,7 +729,7 @@
                 const chatBtn = document.querySelector('#tour-chatbot-button button');
                 const chatWindow = document.querySelector('#tour-chatbot-window');
                 if (chatBtn && chatWindow && chatWindow.style.display !== 'none') {
-                    chatBtn.click();
+                    // Chatbot dibiarkan terbuka agar user bisa langsung menggunakan
                 }
             };
             
@@ -621,4 +740,5 @@
                 tour.start();
             }, 300);
         }
+        window.startAiTour = startAiTour;
     </script>

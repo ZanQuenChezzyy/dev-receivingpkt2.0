@@ -1,6 +1,6 @@
 <div
     x-data="tourGuide()"
-    class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-500 pt-28 pb-32 font-sans relative overflow-hidden">
+    class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-500 pt-28 pb-44 sm:pb-48 font-sans relative overflow-hidden">
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/css/shepherd.css"/>
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/js/shepherd.min.js"></script>
@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        <form wire:submit.prevent="confirmSubmit" class="relative" x-data="{
+        <form wire:submit.prevent="confirmSubmit" @submit.prevent="handleFormSubmit()" class="relative" x-data="{
             diminta_oleh: $persist(@entangle('diminta_oleh')).as('mi_diminta_oleh'),
             npk: $persist(@entangle('npk')).as('mi_npk'),
             no_hp: $persist(@entangle('no_hp')).as('mi_no_hp'),
@@ -76,102 +76,11 @@
             hasDimintaSig: Boolean(@js(!empty($diminta_signature))),
             hasDiserahkanSig: Boolean(@js(!empty($diserahkan_signature))),
             hasDisetujuiSig: Boolean(@js(!empty($disetujui_signature))),
-            onSignatureChange(detail) {
-                if (!detail || !detail.id) return;
-                if (detail.id === 'diminta_signature') {
-                    this.hasDimintaSig = detail.hasSignature;
-                    this.diminta_signature = detail.value;
-                } else if (detail.id === 'diserahkan_signature') {
-                    this.hasDiserahkanSig = detail.hasSignature;
-                    this.diserahkan_signature = detail.value;
-                } else if (detail.id === 'disetujui_signature') {
-                    this.hasDisetujuiSig = detail.hasSignature;
-                    this.disetujui_signature = detail.value;
-                }
-            },
-            hasVal(v) {
-                return v !== null && v !== undefined && String(v).trim().length > 0;
-            },
-            isFormReady() {
-                // 1. Informasi Peminta
-                const diminta = this.diminta_oleh ?? $wire.diminta_oleh;
-                const npk = this.npk ?? $wire.npk;
-                const noHp = this.no_hp ?? $wire.no_hp;
-                const dept = this.departemen ?? $wire.departemen;
-                const bagian = this.bagian ?? $wire.bagian;
-                if (!this.hasVal(diminta)) return false;
-                if (!this.hasVal(npk)) return false;
-                if (!this.hasVal(noHp)) return false;
-                if (!this.hasVal(dept)) return false;
-                if (!this.hasVal(bagian)) return false;
-
-                // 2. Tanggal, PO, & Keperluan
-                const tgl = this.tanggal ?? $wire.tanggal;
-                const poId = this.purchase_order_issued_id ?? $wire.purchase_order_issued_id;
-                const kegunaan = this.digunakan_untuk ?? $wire.digunakan_untuk;
-                if (!this.hasVal(tgl)) return false;
-                if (!poId) return false;
-                if (!this.hasVal(kegunaan)) return false;
-
-                // 3. Detail Material
-                const rawDetails = this.details ?? $wire.details;
-                const items = Array.isArray(rawDetails) ? rawDetails : Object.values(rawDetails || {});
-                if (items.length === 0) return false;
-                for (let i = 0; i < items.length; i++) {
-                    const item = items[i];
-                    if (!item || !item.delivery_order_receipt_detail_id) return false;
-                    const qty = parseFloat(item.diminta);
-                    if (isNaN(qty) || qty <= 0) return false;
-                    const boh = parseFloat(item.boh || 0);
-                    if (boh > 0 && qty > boh) return false;
-                }
-
-                // 4. Tanda Tangan Peminta
-                const hasPeminta = Boolean(this.hasDimintaSig || this.diminta_signature || $wire.diminta_signature);
-                if (!hasPeminta) return false;
-
-                // 5. Petugas & Tanda Tangan Receiving
-                const diserahkanOleh = this.diserahkan_oleh ?? $wire.diserahkan_oleh;
-                const diserahkanNpk = this.diserahkan_npk ?? $wire.diserahkan_npk;
-                if (!this.hasVal(diserahkanOleh)) return false;
-                if (!this.hasVal(diserahkanNpk)) return false;
-                const hasReceiving = Boolean(this.hasDiserahkanSig || this.diserahkan_signature || $wire.diserahkan_signature);
-                if (!hasReceiving) return false;
-
-                // 6. ISTEK (Jika Material Belum GRS)
-                const reqIstek = Boolean(this.requiresIstekSignature ?? $wire.requiresIstekSignature);
-                if (reqIstek) {
-                    const disetujuiOleh = this.disetujui_oleh ?? $wire.disetujui_oleh;
-                    const disetujuiNpk = this.disetujui_npk ?? $wire.disetujui_npk;
-                    if (!this.hasVal(disetujuiOleh)) return false;
-                    if (!this.hasVal(disetujuiNpk)) return false;
-                    const hasIstek = Boolean(this.hasDisetujuiSig || this.disetujui_signature || $wire.disetujui_signature);
-                    if (!hasIstek) return false;
-                }
-
-                // 7. Persetujuan Syarat & Ketentuan
-                const agreed = Boolean(this.agreement ?? $wire.agreement);
-                if (!agreed) return false;
-
-                return true;
-            },
             toastMessage: '',
             toastType: 'success',
             showToast: false,
             toastTimeout: null,
-            triggerToast(msg, type = 'success') {
-                this.toastMessage = msg;
-                this.toastType = type;
-                this.showToast = true;
-                clearTimeout(this.toastTimeout);
-                this.toastTimeout = setTimeout(() => {
-                    this.showToast = false;
-                }, 2600);
-            },
-            setKegunaan(val) {
-                this.digunakan_untuk = val;
-                @this.set('digunakan_untuk', val);
-            }
+            ...mirFormMethods()
         }"
         @signature-updated.window="onSignatureChange($event.detail)"
         @item-added.window="
@@ -215,11 +124,20 @@
                 <div class="px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border flex items-center gap-3 text-xs sm:text-sm font-bold transition-all duration-300 pointer-events-auto"
                      :class="toastType === 'success' 
                         ? 'bg-emerald-600/95 text-white border-emerald-400/40 shadow-emerald-600/30' 
-                        : 'bg-slate-800/95 text-white border-slate-600/40 shadow-black/30'">
+                        : (toastType === 'warning'
+                            ? 'bg-amber-600/95 text-white border-amber-400/40 shadow-amber-600/30'
+                            : 'bg-slate-800/95 text-white border-slate-600/40 shadow-black/30')">
                     <template x-if="toastType === 'success'">
                         <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
                             <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                    </template>
+                    <template x-if="toastType === 'warning'">
+                        <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
                         </div>
                     </template>
@@ -234,11 +152,11 @@
                 </div>
             </div>
 
-            <!-- STEPPER INDICATOR (Mobile Friendly & Desktop Progress Bar) -->
+            <!-- STEPPER INDICATOR (Mobile Friendly & Desktop Progress Bar - Click to Navigate) -->
             <div class="mb-10 relative z-10">
                 <div class="grid grid-cols-4 gap-2 sm:gap-4 p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/70 dark:border-white/10 shadow-sm">
                     <!-- Step 1 Indicator -->
-                    <div class="flex items-center gap-2 sm:gap-3 p-2 rounded-xl transition-all {{ !empty($diminta_oleh) && !empty($npk) ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-[#F47920] font-black' }}">
+                    <div @click="scrollToStep(1)" class="cursor-pointer flex items-center gap-2 sm:gap-3 p-2 rounded-xl transition-all hover:bg-slate-100/80 dark:hover:bg-white/5 {{ !empty($diminta_oleh) && !empty($npk) ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-[#F47920] font-black' }}">
                         <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center text-xs sm:text-sm font-black {{ !empty($diminta_oleh) && !empty($npk) ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-[#F47920]/15 text-[#F47920]' }}">
                             @if (!empty($diminta_oleh) && !empty($npk))
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -253,7 +171,7 @@
                     </div>
 
                     <!-- Step 2 Indicator -->
-                    <div class="flex items-center gap-2 sm:gap-3 p-2 rounded-xl transition-all {{ !empty($purchase_order_issued_id) ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500 dark:text-slate-400 font-semibold' }}">
+                    <div @click="scrollToStep(2)" class="cursor-pointer flex items-center gap-2 sm:gap-3 p-2 rounded-xl transition-all hover:bg-slate-100/80 dark:hover:bg-white/5 {{ !empty($purchase_order_issued_id) ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500 dark:text-slate-400 font-semibold' }}">
                         <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center text-xs sm:text-sm font-black {{ !empty($purchase_order_issued_id) ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400' }}">
                             @if (!empty($purchase_order_issued_id))
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -268,7 +186,7 @@
                     </div>
 
                     <!-- Step 3 Indicator -->
-                    <div class="flex items-center gap-2 sm:gap-3 p-2 rounded-xl transition-all {{ count($details) > 0 && !empty($details[0]['delivery_order_receipt_detail_id']) ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500 dark:text-slate-400 font-semibold' }}">
+                    <div @click="scrollToStep(3)" class="cursor-pointer flex items-center gap-2 sm:gap-3 p-2 rounded-xl transition-all hover:bg-slate-100/80 dark:hover:bg-white/5 {{ count($details) > 0 && !empty($details[0]['delivery_order_receipt_detail_id']) ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500 dark:text-slate-400 font-semibold' }}">
                         <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center text-xs sm:text-sm font-black {{ count($details) > 0 && !empty($details[0]['delivery_order_receipt_detail_id']) ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400' }}">
                             @if (count($details) > 0 && !empty($details[0]['delivery_order_receipt_detail_id']))
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -286,7 +204,7 @@
                     @php
                         $isStep4Complete = !empty($diminta_signature) && !empty($diserahkan_signature) && (!$requiresIstekSignature || !empty($disetujui_signature));
                     @endphp
-                    <div class="flex items-center gap-2 sm:gap-3 p-2 rounded-xl transition-all {{ $isStep4Complete ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500 dark:text-slate-400 font-semibold' }}">
+                    <div @click="scrollToStep(4)" class="cursor-pointer flex items-center gap-2 sm:gap-3 p-2 rounded-xl transition-all hover:bg-slate-100/80 dark:hover:bg-white/5 {{ $isStep4Complete ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500 dark:text-slate-400 font-semibold' }}">
                         <div class="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center text-xs sm:text-sm font-black {{ $isStep4Complete ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400' }}">
                             @if ($isStep4Complete)
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -303,7 +221,7 @@
             </div>
 
             <!-- STEP 1: INFORMASI PEMINTA -->
-            <div class="relative z-10 mb-8 sm:mb-12 group/step">
+            <div id="step-1" class="relative z-10 mb-8 sm:mb-12 group/step scroll-mt-24">
                 <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                     <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#F47920] to-[#BE5A27] text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-lg shadow-orange-500/20 shrink-0">
                         1
@@ -417,7 +335,7 @@
             </div>
 
             <!-- STEP 2: DOKUMEN & KEPERLUAN -->
-            <div class="relative z-10 mb-8 sm:mb-12 group/step">
+            <div id="step-2" class="relative z-10 mb-8 sm:mb-12 group/step scroll-mt-24">
                 <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                     <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-[#0A4F86] text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-lg shadow-blue-500/20 shrink-0">
                         2
@@ -609,7 +527,7 @@
             </div>
 
             <!-- STEP 3: DAFTAR MATERIAL YANG DIAMBIL -->
-            <div class="relative z-10 mb-8 sm:mb-12 group/step">
+            <div id="step-3" class="relative z-10 mb-8 sm:mb-12 group/step scroll-mt-24">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
                     <div class="flex items-center gap-3 sm:gap-4">
                         <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-lg shadow-emerald-500/20 shrink-0">
@@ -818,7 +736,7 @@
             </div>
 
             <!-- STEP 4: TANDA TANGAN DIGITAL & SERAH TERIMA -->
-            <div class="relative z-10 mb-8 sm:mb-12 group/step">
+            <div id="step-4" class="relative z-10 mb-8 sm:mb-12 group/step scroll-mt-24">
                 <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                     <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-800 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-lg shadow-purple-500/20 shrink-0">
                         4
@@ -1043,26 +961,91 @@
                     </a>
 
                     <div class="w-full sm:w-auto flex flex-col items-center sm:items-end gap-2">
-                        <button type="submit"
+                        <button type="button"
+                            @click="handleFormSubmit()"
                             wire:loading.attr="disabled"
                             wire:target="confirmSubmit"
-                            :disabled="!isFormReady()"
                             :class="isFormReady() 
                                 ? 'text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-98 cursor-pointer' 
-                                : 'text-slate-400 dark:text-slate-500 bg-slate-200 dark:bg-slate-800 border border-slate-300/60 dark:border-white/5 cursor-not-allowed shadow-none opacity-60'"
+                                : 'text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700/50 hover:bg-amber-100 dark:hover:bg-amber-900/40 cursor-pointer shadow-none'"
                             class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 sm:px-12 py-3.5 sm:py-4 text-sm sm:text-base font-black rounded-2xl transition-all duration-300">
                             
-                            <svg wire:loading.remove wire:target="confirmSubmit" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            <template x-if="isFormReady()">
+                                <svg wire:loading.remove wire:target="confirmSubmit" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            </template>
+                            <template x-if="!isFormReady()">
+                                <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </template>
+
                             <svg wire:loading wire:target="confirmSubmit" class="animate-spin h-5 w-5 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
 
-                            <span wire:loading.remove wire:target="confirmSubmit">Kirim MIR</span>
+                            <span wire:loading.remove wire:target="confirmSubmit" x-text="isFormReady() ? 'Kirim MIR' : 'Lengkapi & Kirim MIR'"></span>
                             <span wire:loading wire:target="confirmSubmit">Memvalidasi Formulir...</span>
                         </button>
 
-                        <div x-show="!isFormReady()" class="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400 text-center sm:text-right">
+                        <div x-show="!isFormReady() && getFirstMissingField()" 
+                             @click="focusFirstMissingField()"
+                             class="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400 text-center sm:text-right cursor-pointer hover:underline transition-all">
                             <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span>Lengkapi semua field bertanda (*) dan tanda tangan untuk mengaktifkan tombol</span>
+                            <span>Belum lengkap: <strong class="underline font-bold" x-text="getFirstMissingField()?.name"></strong> (Klik untuk langsung ke field ini)</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STICKY BOTTOM ACTION BAR (Mempermudah user submit & cek status tanpa perlu scroll) -->
+            <div class="fixed bottom-0 inset-x-0 z-30 bg-white/90 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-white/10 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-all duration-300">
+                <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
+                    <!-- Left: Status Indikator Field Kosong & Navigasi Cepat -->
+                    <div class="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 sm:gap-3 min-w-0">
+                        <template x-if="!isFormReady() && getFirstMissingField()">
+                            <button type="button" @click="focusFirstMissingField()"
+                                class="group w-full sm:w-auto inline-flex items-center justify-between sm:justify-start gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 active:scale-98 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs sm:text-sm font-bold transition-all text-left cursor-pointer">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="relative flex h-2.5 w-2.5 shrink-0">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                                    </span>
+                                    <span class="truncate">
+                                        Perlu diisi: <strong class="underline decoration-amber-500/60 underline-offset-2" x-text="getFirstMissingField()?.name"></strong>
+                                    </span>
+                                </div>
+                                <span class="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0 ml-2">
+                                    Arahkan ke Field &rarr;
+                                </span>
+                            </button>
+                        </template>
+                        <template x-if="isFormReady()">
+                            <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-bold">
+                                <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                <span>Formulir Lengkap & Siap Diajukan</span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Right: Tombol Kirim Sticky -->
+                    <div class="w-full sm:w-auto flex items-center justify-end gap-2 sm:gap-3">
+                        <button type="button"
+                            @click="handleFormSubmit()"
+                            wire:loading.attr="disabled"
+                            wire:target="confirmSubmit"
+                            :class="isFormReady() 
+                                ? 'text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 shadow-md shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-98 cursor-pointer' 
+                                : 'text-amber-900 dark:text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 active:scale-98 cursor-pointer shadow-xs'"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-black rounded-xl sm:rounded-2xl transition-all duration-300">
+                            
+                            <template x-if="isFormReady()">
+                                <svg wire:loading.remove wire:target="confirmSubmit" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            </template>
+                            <template x-if="!isFormReady()">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </template>
+                            
+                            <svg wire:loading wire:target="confirmSubmit" class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+
+                            <span wire:loading.remove wire:target="confirmSubmit" x-text="isFormReady() ? 'Kirim MIR Sekarang' : 'Cek & Isi Field Kosong'"></span>
+                            <span wire:loading wire:target="confirmSubmit">Memvalidasi Formulir...</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1146,54 +1129,458 @@
     @endif
 
     <!-- Floating Guide Button (Panduan Pengisian Shepherd.js) -->
-    <div x-data="{ isChatOpen: false }"
+    <div x-data="tourGuide"
          @chat-toggled.window="isChatOpen = $event.detail.isOpen"
          x-show="!isChatOpen"
-         class="fixed bottom-20 md:bottom-8 left-4 md:left-8 z-40">
+         class="fixed bottom-32 sm:bottom-22 left-4 md:left-8 z-40 group">
+        <!-- Ambient Glow -->
+        <div class="absolute -inset-1 rounded-full bg-gradient-to-r from-[#F47920] to-[#BE5A27] opacity-40 blur-md group-hover:opacity-75 transition duration-500 animate-pulse"></div>
         <button type="button" @click.prevent="startTour()"
-            class="flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-[#cf6935] text-white rounded-full shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 active:scale-95 transition-all duration-300 cursor-pointer">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span class="font-bold text-xs sm:text-sm tracking-wide">Panduan Pengisian</span>
+            class="relative flex items-center gap-2.5 px-4 py-2.5 sm:px-5 sm:py-3 bg-slate-900/90 hover:bg-slate-900 dark:bg-slate-900/95 dark:hover:bg-slate-800 text-white rounded-full shadow-2xl border border-white/20 dark:border-white/10 backdrop-blur-xl active:scale-95 transition-all duration-300 cursor-pointer">
+            <span class="relative flex h-2.5 w-2.5 shrink-0">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#F47920]"></span>
+            </span>
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#F47920] group-hover:rotate-12 transition-transform duration-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            <span class="font-bold text-xs sm:text-sm tracking-wide text-white">Panduan Pengisian</span>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-black uppercase text-[#F47920] tracking-wider border border-white/10">
+                15 Langkah
+            </span>
         </button>
     </div>
 
-    <!-- Shepherd CSS Tweaks -->
+    <!-- Shepherd CSS Tweaks & Floating Widgets Offset -->
     <style>
-        .shepherd-element {
-            border-radius: 1.25rem;
-            border: 1px solid rgba(244, 121, 32, 0.2);
-            background: rgba(255, 255, 255, 0.98) !important;
-            backdrop-filter: blur(12px);
-            max-width: 360px;
-            z-index: 9999 !important;
-        }
-        .dark .shepherd-element {
-            background: rgba(15, 23, 42, 0.95) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .shepherd-title { font-weight: 900; color: #1e293b; }
-        .dark .shepherd-title { color: #f8fafc; }
-        .shepherd-text { font-size: 0.9rem; color: #475569; line-height: 1.5; }
-        .dark .shepherd-text { color: #cbd5e1; }
-        .shepherd-button-primary {
-            background: linear-gradient(to right, #F47920, #BE5A27);
-            color: white;
-            border-radius: 0.75rem;
-            font-weight: 700;
+        @keyframes shepherdPop {
+            0% { opacity: 0; transform: scale(0.92) translateY(12px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        @media (max-width: 767px) {
+        .shepherd-element {
+            border-radius: 1.5rem !important;
+            background: rgba(255, 255, 255, 0.97) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(244, 121, 32, 0.3) !important;
+            box-shadow: 0 25px 50px -12px rgba(10, 79, 134, 0.25), 0 0 30px rgba(244, 121, 32, 0.12) !important;
+            max-width: 380px !important;
+            z-index: 99999 !important;
+            overflow: hidden !important;
+            animation: shepherdPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+            font-family: inherit !important;
+        }
+
+        .dark .shepherd-element {
+            background: rgba(15, 23, 42, 0.96) !important;
+            border: 1px solid rgba(244, 121, 32, 0.35) !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 25px rgba(244, 121, 32, 0.2) !important;
+        }
+
+        .shepherd-element .shepherd-header {
+            background: transparent !important;
+            padding: 1.25rem 1.25rem 0.5rem !important;
+            border-bottom: none !important;
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+        }
+
+        .shepherd-element .shepherd-title {
+            font-size: 1rem !important;
+            font-weight: 900 !important;
+            color: #0f172a !important;
+            width: 100% !important;
+            margin: 0 !important;
+            line-height: 1.3 !important;
+        }
+        .dark .shepherd-element .shepherd-title {
+            color: #f8fafc !important;
+        }
+
+        .shepherd-element .shepherd-cancel-icon {
+            color: #94a3b8 !important;
+            font-size: 1.4rem !important;
+            font-weight: 400 !important;
+            transition: all 0.2s ease !important;
+            padding: 0.25rem !important;
+            border-radius: 0.5rem !important;
+            line-height: 1 !important;
+        }
+        .shepherd-element .shepherd-cancel-icon:hover {
+            color: #ef4444 !important;
+            transform: rotate(90deg) scale(1.15) !important;
+        }
+
+        .shepherd-element .shepherd-text {
+            padding: 0.5rem 1.25rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1.6 !important;
+            color: #475569 !important;
+        }
+        .dark .shepherd-element .shepherd-text {
+            color: #cbd5e1 !important;
+        }
+
+        .shepherd-element .shepherd-footer {
+            padding: 0.75rem 1.25rem 1.25rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 0.5rem !important;
+            border-top: 1px solid rgba(226, 232, 240, 0.6) !important;
+        }
+        .dark .shepherd-element .shepherd-footer {
+            border-top-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .shepherd-button {
+            border-radius: 0.875rem !important;
+            font-weight: 800 !important;
+            font-size: 0.8125rem !important;
+            padding: 0.55rem 1.1rem !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            cursor: pointer !important;
+        }
+        .shepherd-button:active {
+            transform: scale(0.96) !important;
+        }
+
+        .shepherd-button-primary {
+            background: linear-gradient(135deg, #F47920 0%, #BE5A27 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+            box-shadow: 0 4px 14px rgba(244, 121, 32, 0.35) !important;
+        }
+        .shepherd-button-primary:hover {
+            box-shadow: 0 6px 20px rgba(244, 121, 32, 0.5) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .shepherd-button-secondary {
+            background: #f1f5f9 !important;
+            color: #475569 !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+        .shepherd-button-secondary:hover {
+            background: #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+        .dark .shepherd-button-secondary {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #cbd5e1 !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        .dark .shepherd-button-secondary:hover {
+            background: rgba(255, 255, 255, 0.14) !important;
+            color: #ffffff !important;
+        }
+
+        .shepherd-arrow:before {
+            background: rgba(255, 255, 255, 0.98) !important;
+            border: 1px solid rgba(244, 121, 32, 0.3) !important;
+        }
+        .dark .shepherd-arrow:before {
+            background: #0f172a !important;
+            border-color: rgba(244, 121, 32, 0.4) !important;
+        }
+
+        /* Target Spotlight Glow */
+        .shepherd-target.shepherd-enabled {
+            box-shadow: 0 0 0 4px rgba(244, 121, 32, 0.4), 0 0 30px rgba(244, 121, 32, 0.25) !important;
+            border-radius: 1.25rem !important;
+            transition: all 0.3s ease !important;
+            z-index: 99990 !important;
+            position: relative !important;
+        }
+
+        #chatbot-widget-container {
+            bottom: 8rem !important;
+            right: 1rem !important;
+        }
+        @media (min-width: 640px) {
             #chatbot-widget-container {
-                bottom: 5.25rem !important;
-                right: 1rem !important;
+                bottom: 5.5rem !important;
+                right: 1.5rem !important;
             }
+        }
     </style>
 
     <script>
+        function mirFormMethods() {
+            return {
+                onSignatureChange(detail) {
+                    if (!detail || !detail.id) return;
+                    if (detail.id === 'diminta_signature') {
+                        this.hasDimintaSig = detail.hasSignature;
+                        this.diminta_signature = detail.value;
+                    } else if (detail.id === 'diserahkan_signature') {
+                        this.hasDiserahkanSig = detail.hasSignature;
+                        this.diserahkan_signature = detail.value;
+                    } else if (detail.id === 'disetujui_signature') {
+                        this.hasDisetujuiSig = detail.hasSignature;
+                        this.disetujui_signature = detail.value;
+                    }
+                },
+                hasVal(v) {
+                    return v !== null && v !== undefined && String(v).trim().length > 0;
+                },
+                getFirstMissingField() {
+                    // 1. Informasi Peminta (Langkah 1)
+                    const diminta = this.diminta_oleh ?? (this.$wire ? this.$wire.diminta_oleh : null);
+                    if (!this.hasVal(diminta)) {
+                        return {
+                            name: 'Nama Peminta',
+                            step: 1,
+                            selector: '[data-tour="nama-peminta"] input',
+                            message: 'Silakan isi Nama Peminta terlebih dahulu'
+                        };
+                    }
+                    const npk = this.npk ?? (this.$wire ? this.$wire.npk : null);
+                    if (!this.hasVal(npk)) {
+                        return {
+                            name: 'NPK Karyawan',
+                            step: 1,
+                            selector: '[data-tour="npk"] input',
+                            message: 'Silakan isi NPK Karyawan terlebih dahulu'
+                        };
+                    }
+                    const noHp = this.no_hp ?? (this.$wire ? this.$wire.no_hp : null);
+                    if (!this.hasVal(noHp)) {
+                        return {
+                            name: 'No. Handphone (WA)',
+                            step: 1,
+                            selector: '[data-tour="no-hp"] input',
+                            message: 'Silakan isi No. Handphone (WhatsApp) terlebih dahulu'
+                        };
+                    }
+                    const dept = this.departemen ?? (this.$wire ? this.$wire.departemen : null);
+                    if (!this.hasVal(dept)) {
+                        return {
+                            name: 'Departemen',
+                            step: 1,
+                            selector: '[data-tour="departemen"] input',
+                            message: 'Silakan isi nama Departemen terlebih dahulu'
+                        };
+                    }
+                    const bagian = this.bagian ?? (this.$wire ? this.$wire.bagian : null);
+                    if (!this.hasVal(bagian)) {
+                        return {
+                            name: 'Bagian / Seksi',
+                            step: 1,
+                            selector: '[data-tour="bagian"] input',
+                            message: 'Silakan isi Bagian / Seksi terlebih dahulu'
+                        };
+                    }
+
+                    // 2. Tanggal, PO, & Keperluan (Langkah 2)
+                    const tgl = this.tanggal ?? (this.$wire ? this.$wire.tanggal : null);
+                    if (!this.hasVal(tgl)) {
+                        return {
+                            name: 'Tanggal Pengajuan',
+                            step: 2,
+                            selector: '[data-tour="tanggal"] input',
+                            message: 'Silakan pilih Tanggal Pengajuan'
+                        };
+                    }
+                    const poId = this.purchase_order_issued_id ?? (this.$wire ? this.$wire.purchase_order_issued_id : null);
+                    if (!poId) {
+                        return {
+                            name: 'Nomor Purchase Order (PO)',
+                            step: 2,
+                            selector: '[data-tour="po"] input, [data-tour="search-mode"]',
+                            message: 'Silakan cari dan pilih Nomor PO terlebih dahulu'
+                        };
+                    }
+                    const kegunaan = this.digunakan_untuk ?? (this.$wire ? this.$wire.digunakan_untuk : null);
+                    if (!this.hasVal(kegunaan)) {
+                        return {
+                            name: 'Peruntukan / Keperluan Material',
+                            step: 2,
+                            selector: '[data-tour="kegunaan"] textarea',
+                            message: 'Silakan isi tujuan / peruntukan material'
+                        };
+                    }
+
+                    // 3. Detail Material (Langkah 3)
+                    const rawDetails = this.details ?? (this.$wire ? this.$wire.details : null);
+                    const items = Array.isArray(rawDetails) ? rawDetails : Object.values(rawDetails || {});
+                    if (items.length === 0) {
+                        return {
+                            name: 'Tambah Baris Material',
+                            step: 3,
+                            selector: '[data-tour="tambah-item"], button[wire\\:click*="addDetail"]',
+                            message: 'Silakan tambahkan minimal 1 baris material'
+                        };
+                    }
+                    for (let i = 0; i < items.length; i++) {
+                        const item = items[i];
+                        if (!item || !item.delivery_order_receipt_detail_id) {
+                            return {
+                                name: `Pilih Item Material (Baris #${i + 1})`,
+                                step: 3,
+                                selector: `.material-item-card:nth-of-type(${i + 1}) select, [data-tour="pilih-item"] select`,
+                                message: `Silakan pilih item material pada baris #${i + 1}`
+                            };
+                        }
+                        const qty = parseFloat(item.diminta);
+                        if (isNaN(qty) || qty <= 0) {
+                            return {
+                                name: `Jumlah Diminta (Baris #${i + 1})`,
+                                step: 3,
+                                selector: `.material-item-card:nth-of-type(${i + 1}) input[type="number"], [data-tour="qty"] input`,
+                                message: `Silakan tentukan kuantitas yang diminta pada baris #${i + 1}`
+                            };
+                        }
+                        const boh = parseFloat(item.boh || 0);
+                        if (boh > 0 && qty > boh) {
+                            return {
+                                name: `Qty Melebihi Stok BOH (Baris #${i + 1})`,
+                                step: 3,
+                                selector: `.material-item-card:nth-of-type(${i + 1}) input[type="number"]`,
+                                message: `Jumlah diminta baris #${i + 1} melebihi sisa stok gudang`
+                            };
+                        }
+                    }
+
+                    // 4. Tanda Tangan Peminta (Langkah 4)
+                    const hasPeminta = Boolean(this.hasDimintaSig || this.diminta_signature || (this.$wire ? this.$wire.diminta_signature : null));
+                    if (!hasPeminta) {
+                        return {
+                            name: 'Tanda Tangan Peminta',
+                            step: 4,
+                            selector: '[data-tour="ttd-peminta"]',
+                            message: 'Silakan bubuhkan tanda tangan peminta'
+                        };
+                    }
+
+                    // 5. Petugas & Tanda Tangan Receiving (Langkah 4)
+                    const diserahkanOleh = this.diserahkan_oleh ?? (this.$wire ? this.$wire.diserahkan_oleh : null);
+                    const diserahkanNpk = this.diserahkan_npk ?? (this.$wire ? this.$wire.diserahkan_npk : null);
+                    if (!this.hasVal(diserahkanOleh) || !this.hasVal(diserahkanNpk)) {
+                        return {
+                            name: 'Petugas Gudang Receiving',
+                            step: 4,
+                            selector: '[data-tour="ttd-receiving"] select, [data-tour="ttd-receiving"] input',
+                            message: 'Silakan tentukan atau isi nama dan NPK petugas gudang Receiving'
+                        };
+                    }
+                    const hasReceiving = Boolean(this.hasDiserahkanSig || this.diserahkan_signature || (this.$wire ? this.$wire.diserahkan_signature : null));
+                    if (!hasReceiving) {
+                        return {
+                            name: 'Tanda Tangan Petugas Receiving',
+                            step: 4,
+                            selector: '[data-tour="ttd-receiving"]',
+                            message: 'Silakan bubuhkan tanda tangan petugas gudang Receiving'
+                        };
+                    }
+
+                    // 6. ISTEK (Jika Material Belum GRS)
+                    const reqIstek = Boolean(this.requiresIstekSignature ?? (this.$wire ? this.$wire.requiresIstekSignature : null));
+                    if (reqIstek) {
+                        const disetujuiOleh = this.disetujui_oleh ?? (this.$wire ? this.$wire.disetujui_oleh : null);
+                        const disetujuiNpk = this.disetujui_npk ?? (this.$wire ? this.$wire.disetujui_npk : null);
+                        if (!this.hasVal(disetujuiOleh) || !this.hasVal(disetujuiNpk)) {
+                            return {
+                                name: 'Penyetuju ISTEK',
+                                step: 4,
+                                selector: '[data-tour="ttd-istek"] select, [data-tour="ttd-istek"] input',
+                                message: 'Silakan pilih atau isi nama pejabat penyetuju ISTEK'
+                            };
+                        }
+                        const hasIstek = Boolean(this.hasDisetujuiSig || this.disetujui_signature || (this.$wire ? this.$wire.disetujui_signature : null));
+                        if (!hasIstek) {
+                            return {
+                                name: 'Tanda Tangan ISTEK',
+                                step: 4,
+                                selector: '[data-tour="ttd-istek"]',
+                                message: 'Silakan bubuhkan tanda tangan persetujuan pihak ISTEK'
+                            };
+                        }
+                    }
+
+                    // 7. Persetujuan Syarat & Ketentuan
+                    const agreed = Boolean(this.agreement ?? (this.$wire ? this.$wire.agreement : null));
+                    if (!agreed) {
+                        return {
+                            name: 'Centang Pernyataan & Persetujuan',
+                            step: 4,
+                            selector: 'input[x-model="agreement"], input[wire\\:model*="agreement"]',
+                            message: 'Silakan centang persetujuan serah terima di bagian bawah'
+                        };
+                    }
+
+                    return null;
+                },
+                isFormReady() {
+                    return this.getFirstMissingField() === null;
+                },
+                focusFirstMissingField() {
+                    const missing = this.getFirstMissingField();
+                    if (!missing) {
+                        return true;
+                    }
+
+                    this.triggerToast(missing.message, 'warning');
+
+                    const el = document.querySelector(missing.selector);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        setTimeout(() => {
+                            const focusTarget = el.matches('input, select, textarea, button') 
+                                ? el 
+                                : el.querySelector('input, select, textarea, button') || el;
+
+                            if (typeof focusTarget.focus === 'function') {
+                                try { focusTarget.focus({ preventScroll: true }); } catch (e) { focusTarget.focus(); }
+                            }
+                        }, 280);
+                    }
+
+                    return false;
+                },
+                handleFormSubmit() {
+                    if (!this.isFormReady()) {
+                        this.focusFirstMissingField();
+                        return;
+                    }
+                    if (this.$wire) {
+                        this.$wire.confirmSubmit();
+                    }
+                },
+                scrollToStep(num) {
+                    const el = document.getElementById('step-' + num);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                },
+                triggerToast(msg, type = 'success') {
+                    this.toastMessage = msg;
+                    this.toastType = type;
+                    this.showToast = true;
+                    clearTimeout(this.toastTimeout);
+                    this.toastTimeout = setTimeout(() => {
+                        this.showToast = false;
+                    }, 2800);
+                },
+                setKegunaan(val) {
+                    this.digunakan_untuk = val;
+                    if (this.$wire) {
+                        this.$wire.set('digunakan_untuk', val);
+                    }
+                }
+            };
+        }
+        window.mirFormMethods = mirFormMethods;
+
         document.addEventListener('alpine:init', () => {
             Alpine.data('tourGuide', () => ({
+                isChatOpen: false,
                 tourObj: null,
                 init() {
+                    window.startFormTour = () => this.startTour();
                     const checkShepherd = setInterval(() => {
                         if (window.Shepherd) {
                             clearInterval(checkShepherd);
@@ -1206,50 +1593,75 @@
                             });
 
                             const steps = [
-                                { id: 'nama-peminta', title: '1. Nama Peminta', text: 'Isi dengan nama lengkap pemohon pengambilan barang.', position: 'bottom' },
-                                { id: 'npk', title: '2. NPK Karyawan', text: 'Masukkan Nomor Pokok Karyawan Anda.', position: 'bottom' },
-                                { id: 'no-hp', title: '3. No. HP / WA', text: 'Nomor aktif yang dapat dihubungi oleh petugas gudang.', position: 'bottom' },
-                                { id: 'departemen', title: '4. Departemen', text: 'Isi dengan nama Departemen Anda.', position: 'bottom' },
-                                { id: 'bagian', title: '5. Bagian / Seksi', text: 'Isi dengan unit kerja atau seksi pemohon.', position: 'bottom' },
-                                { id: 'tanggal', title: '6. Tanggal', text: 'Otomatis terisi tanggal hari ini.', position: 'bottom' },
-                                { id: 'search-mode', title: '7. Mode Cari', text: 'Pilih cari berdasarkan Nomor PO atau Stock Number.', position: 'bottom' },
-                                { id: 'po', title: '8. Pilih PO', text: 'Ketik Nomor PO atau Stock Number, lalu klik PO yang sesuai.', position: 'bottom' },
-                                { id: 'kegunaan', title: '9. Peruntukan', text: 'Pilih atau ketik tujuan penggunaan material ini.', position: 'bottom' },
-                                { id: 'pilih-item', title: '10. Pilih Material', text: 'Pilih item barang yang akan diambil dari PO terpilih.', position: 'top' },
-                                { id: 'boh', title: '11. Stok BOH', text: 'Periksa sisa stok gudang (BOH) yang tersedia.', position: 'top' },
-                                { id: 'qty', title: '12. Jumlah Pengambilan', text: 'Ketik jumlah atau klik MAX untuk mengambil seluruh stok.', position: 'top' },
-                                { id: 'ttd-peminta', title: '13. Tanda Tangan Peminta', text: 'Bubuhkan tanda tangan pemohon di canvas ini.', position: 'top' },
-                                { id: 'ttd-istek', title: '14. Tanda Tangan Pihak ISTEK', text: 'Tanda tangan persetujuan pihak ISTEK yang berwenang jika material belum GRS.', position: 'top' },
-                                { id: 'ttd-receiving', title: '15. Tanda Tangan Receiving', text: 'Tanda tangan serah terima oleh pihak gudang Receiving.', position: 'top' }
+                                { id: 'nama-peminta', icon: '👤', title: 'Nama Lengkap Peminta', text: 'Ketik nama lengkap karyawan yang mengajukan serah terima barang di gudang Receiving.', position: 'bottom' },
+                                { id: 'npk', icon: '🪪', title: 'NPK Karyawan', text: 'Masukkan Nomor Pokok Karyawan Pupuk Kaltim resmi Anda untuk validasi data pemohon.', position: 'bottom' },
+                                { id: 'no-hp', icon: '📱', title: 'No. WhatsApp / HP', text: 'Nomor aktif agar petugas gudang Receiving dapat berkoordinasi secara langsung.', position: 'bottom' },
+                                { id: 'departemen', icon: '🏢', title: 'Departemen Kerja', text: 'Pilih atau ketik departemen kerja Anda (misal: PPGP, Pemeliharaan, Pabrik 1, dll).', position: 'bottom' },
+                                { id: 'bagian', icon: '🏷️', title: 'Bagian / Seksi', text: 'Unit kerja atau seksi spesifik pemohon di bawah naungan departemen.', position: 'bottom' },
+                                { id: 'tanggal', icon: '📅', title: 'Tanggal Pengajuan', text: 'Tanggal transaksi serah terima material gudang (otomatis terisi hari ini).', position: 'bottom' },
+                                { id: 'search-mode', icon: '🔍', title: 'Mode Pencarian Dokumen', text: 'Pilih pencarian berdasarkan Nomor PO atau Stock Number SAP.', position: 'bottom' },
+                                { id: 'po', icon: '📄', title: 'Cari & Pilih PO', text: 'Ketikkan nomor PO / Stock No, lalu pilih dokumen penerimaan dari daftar hasil pencarian.', position: 'bottom' },
+                                { id: 'kegunaan', icon: '🎯', title: 'Peruntukan Material', text: 'Jelaskan tujuan pemakaian barang atau klik tombol rekomendasi cepat yang tersedia.', position: 'bottom' },
+                                { id: 'pilih-item', icon: '📦', title: 'Pilih Item Barang', text: 'Pilih nomor item material yang akan diambil dari PO yang sudah dipilih sebelumnya.', position: 'top' },
+                                { id: 'boh', icon: '📊', title: 'Stok Gudang (BOH)', text: 'Periksa sisa stok fisik Balance on Hand yang tersedia di gudang Receiving saat ini.', position: 'top' },
+                                { id: 'qty', icon: '⚖️', title: 'Jumlah Pengambilan', text: 'Ketik jumlah yang dibutuhkan atau klik tombol MAX untuk mengambil seluruh stok BOH.', position: 'top' },
+                                { id: 'ttd-peminta', icon: '✍️', title: 'Tanda Tangan Pemohon', text: 'Bubuhkan tanda tangan elektronik peminta langsung di atas area canvas ini.', position: 'top' },
+                                { id: 'ttd-istek', icon: '🛡️', title: 'Persetujuan ISTEK', text: 'Wajib diisi jika item yang diambil berstatus Belum GRS sesuai SOP pergudangan.', position: 'top' },
+                                { id: 'ttd-receiving', icon: '🤝', title: 'Tanda Tangan Petugas Gudang', text: 'Pilih staf gudang yang bertugas dan bubuhkan tanda tangan serah terima fisik material.', position: 'top' }
                             ];
 
+                            const totalSteps = steps.length;
+
                             steps.forEach((s, index) => {
+                                const currentStep = index + 1;
+                                const progressPercent = Math.round((currentStep / totalSteps) * 100);
+
+                                const stepTitleHtml = `
+                                    <div class="flex items-center justify-between w-full mb-1">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-[#F47920] text-[11px] font-black uppercase tracking-wider">
+                                            Langkah ${currentStep} dari ${totalSteps}
+                                        </span>
+                                        <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500">${progressPercent}%</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-slate-900 dark:text-white font-black text-sm sm:text-base mt-1">
+                                        <span class="text-base sm:text-lg">${s.icon}</span>
+                                        <span>${s.title}</span>
+                                    </div>
+                                `;
+
+                                const stepTextHtml = `
+                                    <div class="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full mb-3 overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-full transition-all duration-300" style="width: ${progressPercent}%"></div>
+                                    </div>
+                                    <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium m-0">${s.text}</p>
+                                `;
+
                                 const buttons = [];
                                 if (index > 0) {
                                     buttons.push({
-                                        text: '&larr; Kembali',
+                                        text: '← Kembali',
                                         action: this.tourObj.back,
-                                        classes: 'px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                        classes: 'shepherd-button-secondary'
                                     });
                                 }
-                                if (index < steps.length - 1) {
+                                if (index < totalSteps - 1) {
                                     buttons.push({
-                                        text: 'Lanjut &rarr;',
+                                        text: 'Lanjut →',
                                         action: this.tourObj.next,
-                                        classes: 'px-3 py-1.5 text-xs font-bold rounded-lg shepherd-button-primary'
+                                        classes: 'shepherd-button-primary'
                                     });
                                 } else {
                                     buttons.push({
-                                        text: 'Selesai',
+                                        text: 'Selesai ✨',
                                         action: this.tourObj.complete,
-                                        classes: 'px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white'
+                                        classes: 'shepherd-button-primary !bg-emerald-600 hover:!bg-emerald-700'
                                     });
                                 }
 
                                 this.tourObj.addStep({
                                     id: s.id,
-                                    title: s.title,
-                                    text: s.text,
+                                    title: stepTitleHtml,
+                                    text: stepTextHtml,
                                     attachTo: { element: `[data-tour="${s.id}"]`, on: s.position },
                                     buttons: buttons,
                                     showOn: () => document.querySelector(`[data-tour="${s.id}"]`) !== null

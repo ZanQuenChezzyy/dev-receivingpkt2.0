@@ -55,6 +55,58 @@ class MonitoringChemicalForm
         ]);
     }
 
+    public static function calculateTahapan(?int $poId, ?float $qty, ?string $category, ?int $recordId = null): ?string
+    {
+        if (! $poId || $qty === null || $qty <= 0) {
+            return null;
+        }
+
+        $historyQty = MonitoringChemicalDetail::where('purchase_order_issued_id', $poId)
+            ->when($recordId, function ($q) use ($recordId) {
+                $q->whereHas('monitoringChemical', fn ($query) => $query->where('id', '!=', $recordId));
+            })
+            ->sum('quantity');
+
+        if ($category === 'Karung') {
+            $tuvs = ChemicalQcTuv::where('purchase_order_issued_id', $poId)->orderBy('id')->get();
+            if ($tuvs->isEmpty()) {
+                return null;
+            }
+
+            $totalAkumulasiSistem = $historyQty + $qty;
+            $tahapanTerlibat = [];
+            $akumulasiTuvTarget = 0;
+
+            foreach ($tuvs as $index => $tuv) {
+                $tahapStart = $akumulasiTuvTarget;
+                $akumulasiTuvTarget += $tuv->qty_qc_tuv;
+
+                if ($historyQty < $akumulasiTuvTarget && $totalAkumulasiSistem > $tahapStart) {
+                    preg_match('/\d+/', $tuv->tahapan_name, $matches);
+                    $angkaTahap = $matches[0] ?? ($index + 1);
+                    $tahapanTerlibat[] = $angkaTahap;
+                }
+            }
+
+            if (! empty($tahapanTerlibat)) {
+                $tahapanUnik = array_unique($tahapanTerlibat);
+
+                return 'TAHAP '.implode(',', $tahapanUnik).' Karung';
+            }
+
+            return 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET';
+        }
+
+        // Untuk Chemical / Lainnya: Otomatis urutan penerimaan (TAHAP 1, TAHAP 2, dst)
+        $historyCount = MonitoringChemicalDetail::where('purchase_order_issued_id', $poId)
+            ->when($recordId, function ($q) use ($recordId) {
+                $q->whereHas('monitoringChemical', fn ($query) => $query->where('id', '!=', $recordId));
+            })
+            ->count();
+
+        return 'TAHAP '.($historyCount + 1);
+    }
+
     protected static function getInformasiKedatanganSection(): Section
     {
         return Section::make('Informasi Dokumen Kedatangan')
@@ -159,31 +211,7 @@ class MonitoringChemicalForm
                             $targetQty = $tuvTotal > 0 ? $tuvTotal : $item->qty_po;
                             $sisaBisaDiterima = max(0, $targetQty - $historyQty);
                             $autoQty = $sisaBisaDiterima > 0 ? $sisaBisaDiterima : null;
-                            $tahapanValue = null;
-
-                            if ($autoQty && $cat === 'Karung' && $tuvs->isNotEmpty()) {
-                                $tahapanTerlibat = [];
-                                $akumulasiTuvTarget = 0;
-                                $totalAkumulasiSistem = $historyQty + $autoQty;
-
-                                foreach ($tuvs as $index => $tuv) {
-                                    $tahapStart = $akumulasiTuvTarget;
-                                    $akumulasiTuvTarget += $tuv->qty_qc_tuv;
-
-                                    if ($historyQty < $akumulasiTuvTarget && $totalAkumulasiSistem > $tahapStart) {
-                                        preg_match('/\d+/', $tuv->tahapan_name, $matches);
-                                        $angkaTahap = $matches[0] ?? ($index + 1);
-                                        $tahapanTerlibat[] = $angkaTahap;
-                                    }
-                                }
-
-                                if (! empty($tahapanTerlibat)) {
-                                    $tahapanUnik = array_unique($tahapanTerlibat);
-                                    $tahapanValue = 'TAHAP '.implode(',', $tahapanUnik).' Karung';
-                                } else {
-                                    $tahapanValue = 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET';
-                                }
-                            }
+                            $tahapanValue = self::calculateTahapan($item->id, $autoQty, $cat, $recordId);
 
                             $repeaterData[(string) Str::uuid()] = [
                                 'purchase_order_issued_id' => $item->id,
@@ -291,31 +319,7 @@ class MonitoringChemicalForm
                                     $targetQty = $tuvTotal > 0 ? $tuvTotal : $poItem->qty_po;
                                     $sisaBisaDiterima = max(0, $targetQty - $historyQty);
                                     $autoQty = $sisaBisaDiterima > 0 ? $sisaBisaDiterima : null;
-                                    $tahapanValue = null;
-
-                                    if ($autoQty && $cat === 'Karung' && $tuvs->isNotEmpty()) {
-                                        $tahapanTerlibat = [];
-                                        $akumulasiTuvTarget = 0;
-                                        $totalAkumulasiSistem = $historyQty + $autoQty;
-
-                                        foreach ($tuvs as $index => $tuv) {
-                                            $tahapStart = $akumulasiTuvTarget;
-                                            $akumulasiTuvTarget += $tuv->qty_qc_tuv;
-
-                                            if ($historyQty < $akumulasiTuvTarget && $totalAkumulasiSistem > $tahapStart) {
-                                                preg_match('/\d+/', $tuv->tahapan_name, $matches);
-                                                $angkaTahap = $matches[0] ?? ($index + 1);
-                                                $tahapanTerlibat[] = $angkaTahap;
-                                            }
-                                        }
-
-                                        if (! empty($tahapanTerlibat)) {
-                                            $tahapanUnik = array_unique($tahapanTerlibat);
-                                            $tahapanValue = 'TAHAP '.implode(',', $tahapanUnik).' Karung';
-                                        } else {
-                                            $tahapanValue = 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET';
-                                        }
-                                    }
+                                    $tahapanValue = self::calculateTahapan($state, $autoQty, $cat, $recordId);
 
                                     $set('quantity', $autoQty);
                                     $set('tahapan', $tahapanValue);
@@ -338,9 +342,10 @@ class MonitoringChemicalForm
                                         ->afterStateUpdated(function (Set $set, Get $get, $state) {
                                             $poId = $get('purchase_order_issued_id');
                                             $inputQty = (float) str_replace(',', '', (string) $state);
+                                            $cat = $get('../../material_category');
 
                                             if (! $poId || $inputQty <= 0) {
-                                                if ($get('../../material_category') === 'Karung') {
+                                                if ($cat === 'Karung') {
                                                     $set('tahapan', null);
                                                 }
 
@@ -348,37 +353,10 @@ class MonitoringChemicalForm
                                             }
 
                                             $recordId = $get('../../id');
-                                            $historyQty = MonitoringChemicalDetail::where('purchase_order_issued_id', $poId)
-                                                ->when($recordId, function ($q) use ($recordId) {
-                                                    $q->whereHas('monitoringChemical', fn ($query) => $query->where('id', '!=', $recordId));
-                                                })
-                                                ->sum('quantity');
+                                            $tahapanValue = self::calculateTahapan($poId, $inputQty, $cat, $recordId);
 
-                                            $totalAkumulasiSistem = $historyQty + $inputQty;
-                                            $tuvs = ChemicalQcTuv::where('purchase_order_issued_id', $poId)->orderBy('id')->get();
-
-                                            if ($get('../../material_category') === 'Karung' && $tuvs->isNotEmpty()) {
-                                                $tahapanTerlibat = [];
-                                                $akumulasiTuvTarget = 0;
-
-                                                foreach ($tuvs as $index => $tuv) {
-                                                    $tahapStart = $akumulasiTuvTarget;
-                                                    $akumulasiTuvTarget += $tuv->qty_qc_tuv;
-
-                                                    if ($historyQty < $akumulasiTuvTarget && $totalAkumulasiSistem > $tahapStart) {
-                                                        preg_match('/\d+/', $tuv->tahapan_name, $matches);
-                                                        $angkaTahap = $matches[0] ?? ($index + 1);
-                                                        $tahapanTerlibat[] = $angkaTahap;
-                                                    }
-                                                }
-
-                                                if (! empty($tahapanTerlibat)) {
-                                                    $tahapanUnik = array_unique($tahapanTerlibat);
-                                                    $set('tahapan', 'TAHAP '.implode(',', $tahapanUnik).' Karung');
-                                                } else {
-                                                    // Jika history sudah melebihi semua akumulasi target
-                                                    $set('tahapan', 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET');
-                                                }
+                                            if ($cat === 'Karung' || empty($get('tahapan'))) {
+                                                $set('tahapan', $tahapanValue);
                                             }
                                         })
                                         ->rules([
@@ -447,9 +425,10 @@ class MonitoringChemicalForm
                                 TextInput::make('tahapan')
                                     ->label(fn (Get $get) => $get('../../material_category') === 'Karung' ? 'Tahapan (Auto)' : 'Tahapan')
                                     ->placeholder('Otomatis / Manual')
-                                    ->helperText('Tahapan Karung berdasarkan alokasi.')
+                                    ->helperText(fn (Get $get) => $get('../../material_category') === 'Karung' ? 'Tahapan Karung berdasarkan alokasi QC.' : 'Tahapan penerimaan material.')
                                     ->prefixIcon('heroicon-o-flag')
                                     ->required()
+                                    ->dehydrated()
                                     ->readOnly(fn (Get $get) => $get('../../material_category') === 'Karung'),
                             ]),
 
@@ -522,7 +501,12 @@ class MonitoringChemicalForm
                                             ->icon('heroicon-m-plus')
                                             ->size('sm')
                                             ->color('success')
+                                            ->mountUsing(function ($form, Actions $component) {
+                                                $poId = $component->evaluate(fn (Get $get) => $get('purchase_order_issued_id'));
+                                                $form->fill(['po_id' => $poId]);
+                                            })
                                             ->schema([
+                                                Hidden::make('po_id'),
                                                 Select::make('tahapan_name')
                                                     ->label('Nama Tahapan')
                                                     ->options(collect(range(1, 100))->mapWithKeys(fn ($i) => ["TAHAP $i Karung" => "TAHAP $i Karung"]))
@@ -536,8 +520,8 @@ class MonitoringChemicalForm
                                                     ->mask(RawJs::make('$money($input)'))
                                                     ->stripCharacters(','),
                                             ])
-                                            ->action(function (array $data, Get $get, Set $set, Actions $component) {
-                                                $poId = $get('purchase_order_issued_id');
+                                            ->action(function (array $data, Actions $component) {
+                                                $poId = $data['po_id'] ?? $component->evaluate(fn (Get $get) => $get('purchase_order_issued_id'));
                                                 if (! $poId) {
                                                     return;
                                                 }
@@ -562,7 +546,7 @@ class MonitoringChemicalForm
                                                 // Validasi sisa PO
                                                 $poItem = PurchaseOrderIssued::find($poId);
                                                 $totalPo = $poItem ? (float) $poItem->qty_po : 0;
-                                                $isToleranceActive = (bool) ($get('is_qty_tolerance') ?? false);
+                                                $isToleranceActive = (bool) $component->evaluate(fn (Get $get) => $get('is_qty_tolerance') ?? false);
                                                 $maxAllowedPo = $isToleranceActive ? ($totalPo + ($totalPo * 0.10)) : $totalPo;
                                                 $existingTuvTotal = ChemicalQcTuv::where('purchase_order_issued_id', $poId)->sum('qty_qc_tuv');
                                                 $sisaKuota = $maxAllowedPo - (float) $existingTuvTotal;
@@ -584,37 +568,16 @@ class MonitoringChemicalForm
                                                 // Trigger re-render placeholder
                                                 $component->getContainer()->getComponent('tuv_refresh_trigger')->state((string) Str::uuid());
 
-                                                // Update tahapan manually if quantity is already filled
-                                                $qtyCurrent = (float) str_replace(',', '', (string) $get('quantity'));
-                                                if ($qtyCurrent > 0 && $get('../../material_category') === 'Karung') {
+                                                // Update tahapan manually on the repeater row
+                                                $component->evaluate(function (Set $set, Get $get) use ($poId) {
+                                                    $qtyCurrent = (float) str_replace(',', '', (string) $get('quantity'));
+                                                    $cat = $get('../../material_category');
                                                     $recordId = $get('../../id');
-                                                    $historyQty = MonitoringChemicalDetail::where('purchase_order_issued_id', $poId)
-                                                        ->when($recordId, function ($q) use ($recordId) {
-                                                            $q->whereHas('monitoringChemical', fn ($query) => $query->where('id', '!=', $recordId));
-                                                        })
-                                                        ->sum('quantity');
-
-                                                    $totalAkumulasiSistem = $historyQty + $qtyCurrent;
-                                                    $allTuvs = ChemicalQcTuv::where('purchase_order_issued_id', $poId)->orderBy('id')->get();
-
-                                                    $tahapanTerlibat = [];
-                                                    $akumulasiTuvTarget = 0;
-                                                    foreach ($allTuvs as $idx => $t) {
-                                                        $tahapStart = $akumulasiTuvTarget;
-                                                        $akumulasiTuvTarget += $t->qty_qc_tuv;
-                                                        if ($historyQty < $akumulasiTuvTarget && $totalAkumulasiSistem > $tahapStart) {
-                                                            preg_match('/\d+/', $t->tahapan_name, $matches);
-                                                            $angkaTahap = $matches[0] ?? ($idx + 1);
-                                                            $tahapanTerlibat[] = $angkaTahap;
-                                                        }
+                                                    $tahapanValue = MonitoringChemicalForm::calculateTahapan($poId, $qtyCurrent, $cat, $recordId);
+                                                    if ($tahapanValue) {
+                                                        $set('tahapan', $tahapanValue);
                                                     }
-                                                    if (! empty($tahapanTerlibat)) {
-                                                        $tahapanUnik = array_unique($tahapanTerlibat);
-                                                        $set('tahapan', 'TAHAP '.implode(',', $tahapanUnik).' Karung');
-                                                    } else {
-                                                        $set('tahapan', 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET');
-                                                    }
-                                                }
+                                                });
                                             }),
 
                                         Action::make('deleteTuv')
@@ -660,48 +623,25 @@ class MonitoringChemicalForm
                                                     ->required()
                                                     ->helperText('Hanya tahapan Karung yang belum ada penerimaan (belum masuk Monitoring Chemical) yang bisa dihapus.'),
                                             ])
-                                            ->action(function (array $data, Get $get, Set $set, Actions $component) {
+                                            ->action(function (array $data, Actions $component) {
                                                 $tuv = ChemicalQcTuv::find($data['tuv_id']);
                                                 if ($tuv) {
                                                     $tuvName = $tuv->tahapan_name;
+                                                    $poId = $tuv->purchase_order_issued_id;
                                                     $tuv->delete();
                                                     Notification::make()->success()->title('Berhasil')->body("{$tuvName} berhasil dihapus.")->send();
 
                                                     // Trigger re-render placeholder
                                                     $component->getContainer()->getComponent('tuv_refresh_trigger')->state((string) Str::uuid());
 
-                                                    // Update tahapan manually if quantity is already filled
-                                                    $poId = $get('purchase_order_issued_id');
-                                                    $qtyCurrent = (float) str_replace(',', '', (string) $get('quantity'));
-                                                    if ($qtyCurrent > 0 && $get('../../material_category') === 'Karung' && $poId) {
+                                                    // Update tahapan manually on the repeater row
+                                                    $component->evaluate(function (Set $set, Get $get) use ($poId) {
+                                                        $qtyCurrent = (float) str_replace(',', '', (string) $get('quantity'));
+                                                        $cat = $get('../../material_category');
                                                         $recordId = $get('../../id');
-                                                        $historyQty = MonitoringChemicalDetail::where('purchase_order_issued_id', $poId)
-                                                            ->when($recordId, function ($q) use ($recordId) {
-                                                                $q->whereHas('monitoringChemical', fn ($query) => $query->where('id', '!=', $recordId));
-                                                            })
-                                                            ->sum('quantity');
-
-                                                        $totalAkumulasiSistem = $historyQty + $qtyCurrent;
-                                                        $allTuvs = ChemicalQcTuv::where('purchase_order_issued_id', $poId)->orderBy('id')->get();
-
-                                                        $tahapanTerlibat = [];
-                                                        $akumulasiTuvTarget = 0;
-                                                        foreach ($allTuvs as $idx => $t) {
-                                                            $tahapStart = $akumulasiTuvTarget;
-                                                            $akumulasiTuvTarget += $t->qty_qc_tuv;
-                                                            if ($historyQty < $akumulasiTuvTarget && $totalAkumulasiSistem > $tahapStart) {
-                                                                preg_match('/\d+/', $t->tahapan_name, $matches);
-                                                                $angkaTahap = $matches[0] ?? ($idx + 1);
-                                                                $tahapanTerlibat[] = $angkaTahap;
-                                                            }
-                                                        }
-                                                        if (! empty($tahapanTerlibat)) {
-                                                            $tahapanUnik = array_unique($tahapanTerlibat);
-                                                            $set('tahapan', 'TAHAP '.implode(',', $tahapanUnik).' Karung');
-                                                        } else {
-                                                            $set('tahapan', $allTuvs->isEmpty() ? null : 'TAHAPAN KARUNG PENUH / MELEBIHI TARGET');
-                                                        }
-                                                    }
+                                                        $tahapanValue = MonitoringChemicalForm::calculateTahapan($poId, $qtyCurrent, $cat, $recordId);
+                                                        $set('tahapan', $tahapanValue);
+                                                    });
                                                 }
                                             }),
 
@@ -789,18 +729,62 @@ class MonitoringChemicalForm
                             ->rows(2)
                             ->columnSpanFull(),
                     ])
-                    ->mutateRelationshipDataBeforeCreateUsing(function (array $data) {
+                    ->mutateRelationshipDataBeforeCreateUsing(function (array $data, Get $get, Repeater $component): array {
                         if (! empty($data['tanggal_pengajuan_simala']) && ! empty($data['tanggal_terbit_coa'])) {
                             $diff = Carbon::parse($data['tanggal_pengajuan_simala'])->diffInDays(Carbon::parse($data['tanggal_terbit_coa']));
                             $data['leadtime_coa'] = $diff;
                         }
 
+                        if (empty($data['tahapan']) && ! empty($data['purchase_order_issued_id']) && ! empty($data['quantity'])) {
+                            $poId = (int) $data['purchase_order_issued_id'];
+                            $qty = (float) str_replace(',', '', (string) $data['quantity']);
+                            $cat = $get('material_category');
+                            $recordId = $component->getRecord()?->id ?? $get('id');
+                            $data['tahapan'] = self::calculateTahapan(
+                                $poId,
+                                $qty,
+                                is_string($cat) ? $cat : null,
+                                is_numeric($recordId) ? (int) $recordId : null
+                            );
+                        }
+
+                        if (empty($data['chemical_qc_tuv_id']) && ! empty($data['purchase_order_issued_id']) && ! empty($data['tahapan'])) {
+                            $matchingTuv = ChemicalQcTuv::where('purchase_order_issued_id', $data['purchase_order_issued_id'])
+                                ->where('tahapan_name', $data['tahapan'])
+                                ->first();
+                            if ($matchingTuv) {
+                                $data['chemical_qc_tuv_id'] = $matchingTuv->id;
+                            }
+                        }
+
                         return $data;
                     })
-                    ->mutateRelationshipDataBeforeSaveUsing(function (array $data) {
+                    ->mutateRelationshipDataBeforeSaveUsing(function (array $data, Get $get, Repeater $component): array {
                         if (! empty($data['tanggal_pengajuan_simala']) && ! empty($data['tanggal_terbit_coa'])) {
                             $diff = Carbon::parse($data['tanggal_pengajuan_simala'])->diffInDays(Carbon::parse($data['tanggal_terbit_coa']));
                             $data['leadtime_coa'] = $diff;
+                        }
+
+                        if (empty($data['tahapan']) && ! empty($data['purchase_order_issued_id']) && ! empty($data['quantity'])) {
+                            $poId = (int) $data['purchase_order_issued_id'];
+                            $qty = (float) str_replace(',', '', (string) $data['quantity']);
+                            $cat = $get('material_category');
+                            $recordId = $component->getRecord()?->id ?? $get('id');
+                            $data['tahapan'] = self::calculateTahapan(
+                                $poId,
+                                $qty,
+                                is_string($cat) ? $cat : null,
+                                is_numeric($recordId) ? (int) $recordId : null
+                            );
+                        }
+
+                        if (empty($data['chemical_qc_tuv_id']) && ! empty($data['purchase_order_issued_id']) && ! empty($data['tahapan'])) {
+                            $matchingTuv = ChemicalQcTuv::where('purchase_order_issued_id', $data['purchase_order_issued_id'])
+                                ->where('tahapan_name', $data['tahapan'])
+                                ->first();
+                            if ($matchingTuv) {
+                                $data['chemical_qc_tuv_id'] = $matchingTuv->id;
+                            }
                         }
 
                         return $data;
