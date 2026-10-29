@@ -28,7 +28,7 @@
                 <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] text-slate-800 dark:text-white mb-6 tracking-tight">
                     Pusat Layanan <br class="hidden sm:block">
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#ff9b52] relative inline-block">
-                        Unit Receivng
+                        Unit Receiving
                         <svg class="absolute w-full h-2 sm:h-3 -bottom-2 left-0 text-[#0A4F86]/80 dark:text-[#F47920]/80" viewBox="0 0 100 10" preserveAspectRatio="none">
                             <path d="M0 5 Q 50 10 100 5" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
                         </svg>

@@ -17,7 +17,7 @@
                         class="h-8 md:h-9 w-auto object-contain drop-shadow-sm">
                 </a>
                 <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
-                    Sistem Informasi Proses Kerja Bagian Receiving — Departemen Perencanaan, Penerimaan &amp; Pergudangan (Dept. PP&amp;P) PT Pupuk Kalimantan Timur: Penerimaan Barang, Invoicing Barang, serta Penerimaan &amp; Invoicing Jasa.
+                    Sistem Informasi Proses Kerja Bagian Receiving, Departemen Perencanaan, Penerimaan &amp; Pergudangan (Dept. PP&amp;P) PT Pupuk Kalimantan Timur: Penerimaan Barang, Invoicing Barang, serta Penerimaan &amp; Invoicing Jasa.
                 </p>
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
