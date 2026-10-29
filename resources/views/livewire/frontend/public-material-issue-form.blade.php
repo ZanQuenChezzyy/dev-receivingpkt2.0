@@ -354,16 +354,16 @@
                     
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
                         <!-- Tanggal Pengajuan -->
-                        <div data-tour="tanggal">
+                        <div data-tour="tanggal" class="min-w-0">
                             <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                 Tanggal Pengajuan <span class="text-[#F47920]">*</span>
                             </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <div class="relative w-full min-w-0">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 </div>
                                 <input type="date" wire:model.live="tanggal" x-model="tanggal"
-                                    class="w-full pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
+                                    class="block w-full min-w-0 max-w-full box-border appearance-none pl-11 pr-4 py-3 sm:py-3.5 min-h-[46px] sm:min-h-[52px] text-sm sm:text-base font-semibold text-left text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all [&::-webkit-date-and-time-value]:text-left"
                                     required>
                             </div>
                             @error('tanggal')
