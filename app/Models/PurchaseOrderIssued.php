@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 // use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -50,6 +51,29 @@ class PurchaseOrderIssued extends Model
             'net_price' => 'float',
             'total_amount_in_lc' => 'float',
         ];
+    }
+
+    /**
+     * Clean the "Pusat" word from vendor name and normalize whitespace.
+     */
+    public static function cleanVendorName(?string $vendorName): ?string
+    {
+        if ($vendorName === null) {
+            return null;
+        }
+
+        $cleaned = (string) preg_replace('/pusat/i', '', $vendorName);
+        $cleaned = (string) preg_replace('/\s+,/', ',', $cleaned);
+        $cleaned = (string) preg_replace('/\s+/', ' ', $cleaned);
+
+        return trim($cleaned);
+    }
+
+    protected function vendorName(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $value): ?string => self::cleanVendorName($value),
+        );
     }
 
     public function monitoringNpks(): HasMany

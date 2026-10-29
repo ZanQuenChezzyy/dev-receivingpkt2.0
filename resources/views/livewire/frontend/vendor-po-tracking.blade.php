@@ -453,11 +453,10 @@
                             ['num' => 3, 'label' => 'Post 103 SAP', 'sub' => 'Validasi Sistem'],
                             ['num' => 4, 'label' => 'Inspeksi QC', 'sub' => 'Uji Mutu ISTEK'],
                             ['num' => 5, 'label' => 'Slip GRS (105)', 'sub' => 'Arsip Penagihan'],
-                            ['num' => 6, 'label' => 'Serah Terima', 'sub' => 'MIR User / Selesai'],
                         ];
                     @endphp
 
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                         @foreach ($steps as $step)
                             @php
                                 $isDone = $stageIdx > $step['num'];

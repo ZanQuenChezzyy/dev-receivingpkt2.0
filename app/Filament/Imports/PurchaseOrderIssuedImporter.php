@@ -50,6 +50,7 @@ class PurchaseOrderIssuedImporter extends Importer
                 ->rules(['max:20']),
             ImportColumn::make('vendor_name')
                 ->requiredMapping()
+                ->castStateUsing(fn (?string $state): ?string => PurchaseOrderIssued::cleanVendorName($state))
                 ->rules(['required', 'max:100']),
             ImportColumn::make('date_create')
                 ->requiredMapping()
@@ -101,7 +102,7 @@ class PurchaseOrderIssuedImporter extends Importer
             'qty_po' => $this->data['qty_po'],
             'uoi' => $this->data['uoi'],
             'vendor_id' => $this->data['vendor_id'] ?? null,
-            'vendor_name' => $this->data['vendor_name'],
+            'vendor_name' => PurchaseOrderIssued::cleanVendorName($this->data['vendor_name'] ?? null),
             'date_create' => $dateCreate,
             'delivery_date_po' => $deliveryDate,
             'po_status' => $this->data['po_status'] ?? null,

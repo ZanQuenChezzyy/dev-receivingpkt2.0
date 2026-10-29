@@ -1657,69 +1657,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Statistik Historis GRS vs RDTV (Slide 6) -->
-                <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-white/80 dark:border-white/10 shadow-lg">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                        <div>
-                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00529B]/10 border border-[#00529B]/20 text-[#00529B] dark:text-blue-300 text-[11px] font-black uppercase tracking-wider mb-2">
-                                Kinerja Kualitas Penerimaan Barang (Slide 6)
-                            </div>
-                            <h4 class="text-lg sm:text-xl font-black text-slate-800 dark:text-white">
-                                Rekapitulasi Total GRS vs RDTV Tahun 2023 &amp; 2024 (s.d. Juli)
-                            </h4>
-                        </div>
-                        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                            Sumber: Bagian Receiving Dept. PP&amp;P PT Pupuk Kaltim
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Tahun 2023 -->
-                        <div class="rounded-2xl p-5 bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/10">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="text-sm font-black text-slate-800 dark:text-white">Periode Tahun 2023 (Jan – Des)</span>
-                                <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-black">95,92% Lolos QC</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-3 text-center">
-                                <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Total GRS</div>
-                                    <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">9.769</div>
-                                </div>
-                                <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Total RDTV</div>
-                                    <div class="text-xl font-black text-rose-600 dark:text-rose-400 mt-0.5">416</div>
-                                </div>
-                                <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Rasio % RDTV</div>
-                                    <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">4,08%</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tahun 2024 (s.d. Juli) -->
-                        <div class="rounded-2xl p-5 bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/10">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="text-sm font-black text-slate-800 dark:text-white">Periode Tahun 2024 (s.d. Juli)</span>
-                                <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-black">95,87% Lolos QC</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-3 text-center">
-                                <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Total GRS</div>
-                                    <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">4.150</div>
-                                </div>
-                                <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Total RDTV</div>
-                                    <div class="text-xl font-black text-rose-600 dark:text-rose-400 mt-0.5">179</div>
-                                </div>
-                                <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Rasio % RDTV</div>
-                                    <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">4,13%</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
                 </div> <!-- END PILAR 1: PENERIMAAN BARANG -->
