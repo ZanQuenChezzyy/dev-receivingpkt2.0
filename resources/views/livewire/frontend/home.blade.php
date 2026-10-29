@@ -11,17 +11,68 @@
 
         <div class="container mx-auto max-w-7xl relative z-10">
             <!-- Section Header -->
-            <div class="text-center max-w-3xl mx-auto mb-16">
+            <div class="text-center max-w-3xl mx-auto mb-12">
                 <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#F47920]/10 border border-[#F47920]/20 text-[#F47920] text-xs font-bold tracking-widest uppercase mb-4">
-                    Solusi Terpadu
+                    Bagian Receiving • Dept. PP&amp;P
                 </div>
                 <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tight mb-5">
-                    Ekosistem Layanan <br class="hidden sm:inline">
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] via-orange-400 to-[#BE5A27]">Logistik Digital Pupuk Kalimantan Timur</span>
+                    3 Pilar Utama &amp; Ekosistem <br class="hidden sm:inline">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] via-orange-400 to-[#BE5A27]">Receiving Pupuk Kalimantan Timur</span>
                 </h2>
                 <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 font-medium">
-                    Dari pelacakan PO mandiri rekanan vendor, verifikasi kedatangan fisik, pengujian mutu lab, penerbitan GRS & penagihan invoice, hingga serah terima material secara terpadu.
+                    Mengintegrasikan tiga fungsi utama Bagian Receiving (Dept. PP&amp;P): <strong>Penerimaan Barang</strong>, <strong>Invoicing Barang</strong>, serta <strong>Penerimaan &amp; Invoicing Jasa (Service Acceptance)</strong> dalam satu ekosistem digital.
                 </p>
+            </div>
+
+            <!-- 3 PILAR UTAMA PROSES KERJA RECEIVING (Sesuai Presentasi Resmi Receiving Dept. PP&P) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+                <!-- Pilar 1: Penerimaan Barang -->
+                <a href="#alur-proses" onclick="window.dispatchEvent(new CustomEvent('select-pillar', { detail: 'barang' }))"
+                    class="glass-panel p-6 rounded-3xl border border-emerald-500/30 dark:border-emerald-500/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                    <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-emerald-500/15 blur-2xl group-hover:scale-125 transition-transform"></div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
+                            Pilar 01 • Fisik &amp; Mutu
+                        </span>
+                        <svg class="w-5 h-5 text-emerald-500 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-black text-slate-800 dark:text-white mb-1.5">Penerimaan Barang</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Terima barang sesuai PO, pengajuan QC (ISTEK 2 / Lab &amp; PPE), penerbitan <strong>GRS</strong> (lolos QC), penerbitan <strong>RDTV</strong> (barang tolak), hingga pengiriman ke Gudang Penyimpanan.
+                    </p>
+                </a>
+
+                <!-- Pilar 2: Invoicing Barang -->
+                <a href="#alur-proses" onclick="window.dispatchEvent(new CustomEvent('select-pillar', { detail: 'invoicing_barang' }))"
+                    class="glass-panel p-6 rounded-3xl border border-blue-500/30 dark:border-blue-500/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                    <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-[#0A4F86]/20 blur-2xl group-hover:scale-125 transition-transform"></div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-blue-500/15 text-[#0A4F86] dark:text-blue-300 border border-blue-500/25">
+                            Pilar 02 • Tagihan Material
+                        </span>
+                        <svg class="w-5 h-5 text-[#0A4F86] dark:text-blue-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-black text-slate-800 dark:text-white mb-1.5">Invoicing Barang</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Penyampaian GRS ke vendor, penerimaan &amp; verifikasi 16 berkas kelengkapan tagihan (<strong>sebelum Tgl 20</strong>), input &amp; approval sistem <strong>Mitraku</strong> hingga pembayaran di Keuangan PKT.
+                    </p>
+                </a>
+
+                <!-- Pilar 3: Penerimaan & Invoicing Jasa -->
+                <a href="#alur-proses" onclick="window.dispatchEvent(new CustomEvent('select-pillar', { detail: 'jasa' }))"
+                    class="glass-panel p-6 rounded-3xl border border-teal-500/30 dark:border-teal-500/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                    <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-teal-500/15 blur-2xl group-hover:scale-125 transition-transform"></div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/25">
+                            Pilar 03 • Pekerjaan Jasa
+                        </span>
+                        <svg class="w-5 h-5 text-teal-500 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    </div>
+                    <h3 class="text-lg sm:text-xl font-black text-slate-800 dark:text-white mb-1.5">Penerimaan &amp; Invoicing Jasa</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Verifikasi berkas pekerjaan jasa (BAPP, SIK, BATE, Order Kerja, Invoice), proses input penagihan via sistem SAP, dan penerbitan <strong>Service Acceptance (SA)</strong>.
+                    </p>
+                </a>
             </div>
 
             <!-- Bento Grid Layout (3x3 Balanced Grid) -->
@@ -51,28 +102,28 @@
                             </div>
 
                             <h3 class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white mb-3 tracking-tight">
-                                Pelacakan PO & Dokumen Vendor Mandiri
+                                Pelacakan PO &amp; Dokumen Vendor Mandiri
                             </h3>
                             <p class="text-slate-600 dark:text-slate-300 leading-relaxed text-sm sm:text-base max-w-2xl mb-6">
-                                Portal monitoring terpadu bagi vendor rekanan PT Pupuk Kaltim untuk melacak status Purchase Order (PO) secara transparan. Pantau status kedatangan surat jalan (DO), progres pengujian laboratorium (COA), checklist berkas kelengkapan, hingga status penerbitan nomor GRS resmi SAP tanpa harus datang ke gudang.
+                                Portal monitoring terpadu bagi vendor rekanan PT Pupuk Kaltim untuk melacak status Purchase Order (PO) secara transparan. Pantau status kedatangan surat jalan (DO), progres pengujian laboratorium (COA), checklist 16 berkas kelengkapan penagihan, hingga status penerbitan nomor GRS resmi SAP tanpa harus datang ke gudang.
                             </p>
 
                             <!-- Quick Stats / Feature Highlights -->
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                                 <div class="p-3 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
                                     <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Status Dokumen</span>
-                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">PO & DO Realtime</span>
+                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">PO &amp; DO Realtime</span>
                                 </div>
                                 <div class="p-3 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Upload Invoice</span>
-                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">Unggah Softfile Dokumen Invoice</span>
+                                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Batas Tagihan</span>
+                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">Invoice Sblm Tgl 20</span>
                                 </div>
                                 <div class="p-3 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
                                     <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">Syarat Tagihan</span>
-                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">Checklist Berkas</span>
+                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">Checklist 16 Berkas</span>
                                 </div>
                                 <div class="p-3 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">GRS & Verifikasi</span>
+                                    <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">GRS &amp; RDTV</span>
                                     <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">Unduh atau Lihat</span>
                                 </div>
                             </div>
@@ -116,20 +167,20 @@
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-                            Verifikasi DO & Pintu Receiving
+                            Verifikasi DO &amp; Pintu Receiving
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-                            Pencatatan nomor surat jalan (DO), nomor PO, dan inspeksi fisik di pos gudang receiving. Dilengkapi validasi toleransi kuantitas, cetak QR slip kedatangan, dan penandaan staging lokasi penyimpanan.
+                            Penerimaan barang sesuai PO, pemeriksaan lampiran vendor, dan inspeksi fisik di pos gudang receiving. Dilengkapi validasi toleransi kuantitas, cetak QR slip kedatangan, dan penandaan staging lokasi penyimpanan.
                         </p>
                     </div>
 
                     <div class="relative z-10 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200/70 dark:border-white/10">
                         <svg class="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        <span>Validasi Toleransi Qty PO & QR 103</span>
+                        <span>Validasi Toleransi Qty PO &amp; QR 103</span>
                     </div>
                 </div>
 
-                <!-- Card 3: Invoicing & Verifikasi Penagihan GRS -->
+                <!-- Card 3: Invoicing Barang & Jasa (Mitraku & SA) -->
                 <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
                     <div class="absolute -top-10 -left-10 w-40 h-40 bg-amber-500/10 dark:bg-amber-500/20 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
 
@@ -141,20 +192,20 @@
                                 </svg>
                             </div>
                             <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20">
-                                Invoicing & Mitraku
+                                Mitraku &amp; SAP SA
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-                            Invoicing & Penagihan GRS
+                            Invoicing Barang &amp; Jasa (SA)
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-                            Pengelolaan berkas penagihan vendor, sinkronisasi nomor GRS resmi SAP, nomor invoice, dan Faktur Pajak. Dilengkapi kalkulasi PPN 11% otomatis, format ekspor Mitraku, serta pembagian PIC Staff Invoice.
+                            Verifikasi kelengkapan dokumen penagihan barang (<strong>sebelum Tgl 20</strong>) ke sistem <strong>Mitraku</strong>, serta penginputan penagihan pekerjaan jasa melalui SAP hingga terbit <strong>Service Acceptance (SA)</strong>.
                         </p>
                     </div>
 
                     <div class="relative z-10 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200/70 dark:border-white/10">
                         <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Format Salin Mitraku & Distribusi PIC</span>
+                        <span>Integrasi Mitraku, SAP SA &amp; Keuangan PKT</span>
                     </div>
                 </div>
 
@@ -170,20 +221,20 @@
                                 </svg>
                             </div>
                             <span class="px-3 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/20">
-                                QC & COA Lab
+                                ISTEK 2 • Lab • PPE
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-                            Pemeriksaan QC & Transmittal
+                            Permintaan QC &amp; Uji Lab (COA)
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-                            Pengendalian mutu material kimia, karung, dan NPK. Terhubung langsung dengan transmittal dokumen, tracking penerbitan sertifikat analisa (COA), serta leadtime pengujian laboratorium.
+                            Pengajuan QC sparepart ke <strong>ISTEK 2</strong> serta pengajuan QC/JOR chemical &amp; bahan baku ke <strong>LAB</strong> (penerbitan COA) dan evaluasi kualitas oleh <strong>PPE</strong>.
                         </p>
                     </div>
 
                     <div class="relative z-10 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200/70 dark:border-white/10">
                         <svg class="w-4 h-4 text-purple-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Monitoring Chemical, Karung, & NPK</span>
+                        <span>Monitoring Chemical, Karung, NPK &amp; Sparepart</span>
                     </div>
                 </div>
 
@@ -203,10 +254,10 @@
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-                            Transmittal Gudang Tujuan
+                            Pengiriman Gudang Penyimpanan
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-                            Alokasi dan pengiriman material yang telah lolos inspeksi ke 28+ gudang penyangga (Gudang SP 1, SP 2, Laydown dan Lainnya). Terintegrasi dengan berita acara serah terima dan nomor transmittal.
+                            Pengiriman barang yang telah lolos QC/GRS ke 28+ gudang penyimpanan (Gudang SP 1, SP 2, Laydown dan Lainnya). Terintegrasi dengan berita acara serah terima dan nomor transmittal.
                         </p>
                     </div>
 
@@ -258,20 +309,20 @@
                                 </svg>
                             </div>
                             <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/20">
-                                Resmi SAP 105
+                                GRS 105 &amp; RDTV
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-                            Good Receipt Slip (GRS / RDTV)
+                            Good Receive Slip (GRS / RDTV)
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-                            Konfirmasi penyelesaian penerimaan material di sistem SAP. Mendukung penerbitan berita acara RDTV bila material ditolak atau dikembalikan ke vendor rekanan.
+                            Penerbitan GRS untuk barang lolos QC (rasio kelulusan ~95,9%) serta penerbitan RDTV untuk barang QC tolak lengkap dengan mekanisme Surat Klarifikasi Kebenaran Barang.
                         </p>
                     </div>
 
                     <div class="relative z-10 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200/70 dark:border-white/10">
                         <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        <span>Sinkron dengan Nomor Dokumen SAP</span>
+                        <span>Sinkron dengan Approval AVP &amp; VP PP&amp;P</span>
                     </div>
                 </div>
 
@@ -309,42 +360,130 @@
         </div>
     </section>
 
-    <!-- 4. INTERACTIVE MATERIAL RECEIVING WORKFLOW (SOP RESMI) -->
-    <section id="alur-proses" x-data="{ viewMode: 'flowchart', filterBranch: 'all', activeStep: 1 }" class="relative z-10 py-24 px-5 md:px-12 lg:px-24 bg-slate-100/60 dark:bg-slate-900/40 border-y border-slate-200/70 dark:border-white/5">
+    <!-- 4. INTERACTIVE RECEIVING WORKFLOWS & DOCUMENT REQUIREMENTS (SESUAI PRESENTASI RESMI RECEIVING DEPT. PP&P) -->
+    <section id="alur-proses"
+        x-data="{ activePillar: 'barang', viewMode: 'flowchart', filterBranch: 'all', rdtvBranch: 'all', activeStep: 1 }"
+        @select-pillar.window="activePillar = $event.detail"
+        class="relative z-10 py-24 px-5 md:px-12 lg:px-24 bg-slate-100/60 dark:bg-slate-900/40 border-y border-slate-200/70 dark:border-white/5">
         <div class="container mx-auto max-w-7xl">
             <!-- Section Header -->
-            <div class="text-center max-w-3xl mx-auto mb-12">
+            <div class="text-center max-w-3xl mx-auto mb-10">
                 <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#0A4F86]/10 dark:bg-[#0A4F86]/30 border border-[#0A4F86]/20 text-[#0A4F86] dark:text-blue-300 text-xs font-bold tracking-widest uppercase mb-4">
-                    SOP Resmi Penerimaan Barang
+                    SOP Resmi Bagian Receiving • Dept. PP&amp;P
                 </div>
                 <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tight mb-5">
-                    Alur Proses Penerimaan Barang <br class="hidden sm:inline">
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#0A4F86] via-blue-500 to-[#F47920]">Gudang Receiving Pupuk Kalimantan Timur</span>
+                    Proses Kerja &amp; Kelengkapan Dokumen <br class="hidden sm:inline">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#0A4F86] via-blue-500 to-[#F47920]">Receiving Pupuk Kalimantan Timur</span>
                 </h2>
                 <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 font-medium">
-                    Standar Operasional Prosedur terpadu lintas 7 unit kerja (Vendor, Expediting, Receiving, ISTEK 2, Lab, PPE, dan Gudang) mulai dari kedatangan fisik hingga verifikasi kelayakan (GRS) atau retur (RDTV).
+                    Pilih salah satu dari 3 pilar proses kerja Bagian Receiving di bawah ini untuk melihat bagan alur SOP lintas unit kerja serta daftar kelengkapan dokumen penagihan resmi.
                 </p>
             </div>
 
-            <!-- View Switcher Tabs -->
-            <div class="flex flex-wrap items-center justify-center gap-3 mb-8">
-                <button @click="viewMode = 'flowchart'"
-                    :class="viewMode === 'flowchart' ? 'bg-[#0A4F86] text-white shadow-lg shadow-blue-900/30 scale-102 ring-2 ring-blue-400/30' : 'glass-btn text-slate-700 dark:text-slate-300 hover:text-[#0A4F86]'"
-                    class="px-5 py-2.5 rounded-2xl font-black text-xs sm:text-sm inline-flex items-center gap-2 transition-all duration-300 cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
-                    </svg>
-                    <span>Bagan Swimlane SOP (Diagram Alur)</span>
+            <!-- TOP-LEVEL 3 PILLAR TABS (Slide 2: Penerimaan Barang | Invoicing Barang | Penerimaan & Invoicing Jasa) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto mb-10">
+                <button type="button" @click="activePillar = 'barang'"
+                    :class="activePillar === 'barang'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-xl shadow-emerald-900/25 ring-2 ring-emerald-400/40 scale-[1.01]'
+                        : 'glass-panel text-slate-700 dark:text-slate-200 hover:border-emerald-500/40'"
+                    class="p-4 sm:p-5 rounded-2xl flex items-center gap-3.5 text-left transition-all duration-300 cursor-pointer">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-black text-sm"
+                        :class="activePillar === 'barang' ? 'bg-white/20 text-white' : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'">
+                        01
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-[10px] uppercase tracking-wider font-extrabold block opacity-80">Pilar Pertama</span>
+                        <span class="text-sm sm:text-base font-black block truncate">Penerimaan Barang &amp; RDTV</span>
+                    </div>
                 </button>
-                <button @click="viewMode = 'steps'"
-                    :class="viewMode === 'steps' ? 'bg-[#F47920] text-white shadow-lg shadow-orange-500/30 scale-102 ring-2 ring-orange-400/30' : 'glass-btn text-slate-700 dark:text-slate-300 hover:text-[#F47920]'"
-                    class="px-5 py-2.5 rounded-2xl font-black text-xs sm:text-sm inline-flex items-center gap-2 transition-all duration-300 cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                    </svg>
-                    <span>Panduan Tahapan Detail & SOP</span>
+
+                <button type="button" @click="activePillar = 'invoicing_barang'"
+                    :class="activePillar === 'invoicing_barang'
+                        ? 'bg-gradient-to-r from-[#0A4F86] to-blue-700 text-white shadow-xl shadow-blue-900/25 ring-2 ring-blue-400/40 scale-[1.01]'
+                        : 'glass-panel text-slate-700 dark:text-slate-200 hover:border-blue-500/40'"
+                    class="p-4 sm:p-5 rounded-2xl flex items-center gap-3.5 text-left transition-all duration-300 cursor-pointer">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-black text-sm"
+                        :class="activePillar === 'invoicing_barang' ? 'bg-white/20 text-white' : 'bg-blue-500/15 text-[#0A4F86] dark:text-blue-400'">
+                        02
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-[10px] uppercase tracking-wider font-extrabold block opacity-80">Pilar Kedua</span>
+                        <span class="text-sm sm:text-base font-black block truncate">Invoicing Barang (Mitraku)</span>
+                    </div>
+                </button>
+
+                <button type="button" @click="activePillar = 'jasa'"
+                    :class="activePillar === 'jasa'
+                        ? 'bg-gradient-to-r from-[#F47920] to-[#BE5A27] text-white shadow-xl shadow-orange-900/25 ring-2 ring-orange-400/40 scale-[1.01]'
+                        : 'glass-panel text-slate-700 dark:text-slate-200 hover:border-orange-500/40'"
+                    class="p-4 sm:p-5 rounded-2xl flex items-center gap-3.5 text-left transition-all duration-300 cursor-pointer">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-black text-sm"
+                        :class="activePillar === 'jasa' ? 'bg-white/20 text-white' : 'bg-[#F47920]/15 text-[#F47920]'">
+                        03
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-[10px] uppercase tracking-wider font-extrabold block opacity-80">Pilar Ketiga</span>
+                        <span class="text-sm sm:text-base font-black block truncate">Penerimaan &amp; Invoicing Jasa</span>
+                    </div>
                 </button>
             </div>
+
+            <!-- =========================================================================
+                 PILAR 1: PENERIMAAN BARANG & ALUR BARANG TOLAK (RDTV) (SLIDE 3, 4, 5, 6)
+                 ========================================================================= -->
+            <div x-show="activePillar === 'barang'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+
+                <!-- 5 Aktivitas Utama Penerimaan Barang (Slide 3) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+                    <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-[#F47920] flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-full bg-[#F47920]/15 text-[#F47920] font-black text-xs flex items-center justify-center shrink-0">1</span>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white leading-snug">Menerima Barang sesuai PO</span>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-lime-500 flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-full bg-lime-500/15 text-lime-600 dark:text-lime-400 font-black text-xs flex items-center justify-center shrink-0">2</span>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white leading-snug">Mengajukan Permintaan QC</span>
+                    </div>
+                    <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-emerald-500 flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-black text-xs flex items-center justify-center shrink-0">3</span>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white leading-snug">Menerbitkan GRS untuk Barang Lolos QC</span>
+                    </div>
+                    <button type="button" @click="viewMode = 'rdtv'; document.getElementById('alur-barang-tolak')?.scrollIntoView({ behavior: 'smooth', block: 'start' })" class="glass-panel p-4 rounded-2xl border-l-4 border-l-rose-500 flex items-center gap-3 text-left hover:border-rose-500/50 transition-all cursor-pointer">
+                        <span class="w-7 h-7 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 font-black text-xs flex items-center justify-center shrink-0">4</span>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white leading-snug">Menerbitkan RDTV untuk Barang QC Tolak &rarr;</span>
+                    </button>
+                    <div class="glass-panel p-4 rounded-2xl border-l-4 border-l-[#0A4F86] flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-full bg-[#0A4F86]/15 text-[#0A4F86] dark:text-blue-400 font-black text-xs flex items-center justify-center shrink-0">5</span>
+                        <span class="text-xs font-bold text-slate-800 dark:text-white leading-snug">Pengiriman Barang Lolos QC/GRS ke Gudang</span>
+                    </div>
+                </div>
+
+                <!-- Sub-View Switcher Tabs for Pilar 1 -->
+                <div class="flex flex-wrap items-center justify-center gap-3 mb-8">
+                    <button @click="viewMode = 'flowchart'"
+                        :class="viewMode === 'flowchart' ? 'bg-[#0A4F86] text-white shadow-lg shadow-blue-900/30 scale-102 ring-2 ring-blue-400/30' : 'glass-btn text-slate-700 dark:text-slate-300 hover:text-[#0A4F86]'"
+                        class="px-5 py-2.5 rounded-2xl font-black text-xs sm:text-sm inline-flex items-center gap-2 transition-all duration-300 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                        </svg>
+                        <span>Bagan Swimlane Penerimaan Barang (7 Unit)</span>
+                    </button>
+                    <button @click="viewMode = 'rdtv'"
+                        :class="viewMode === 'rdtv' ? 'bg-red-600 text-white shadow-lg shadow-red-900/30 scale-102 ring-2 ring-red-400/30' : 'glass-btn text-slate-700 dark:text-slate-300 hover:text-red-500'"
+                        class="px-5 py-2.5 rounded-2xl font-black text-xs sm:text-sm inline-flex items-center gap-2 transition-all duration-300 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <span>Alur Proses Barang Tolak / RDTV (4 Unit)</span>
+                    </button>
+                    <button @click="viewMode = 'steps'"
+                        :class="viewMode === 'steps' ? 'bg-[#F47920] text-white shadow-lg shadow-orange-500/30 scale-102 ring-2 ring-orange-400/30' : 'glass-btn text-slate-700 dark:text-slate-300 hover:text-[#F47920]'"
+                        class="px-5 py-2.5 rounded-2xl font-black text-xs sm:text-sm inline-flex items-center gap-2 transition-all duration-300 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        </svg>
+                        <span>Panduan Tahapan Detail &amp; Matriks 7 Unit</span>
+                    </button>
+                </div>
 
             <!-- =========================================================
                  VIEW 1: BAGAN DIAGRAM SWIMLANE SOP RESMI (DIAGRAM DESIGN SPEC)
@@ -418,7 +557,9 @@
 
                     <!-- Scoped Diagram-Design CSS & Tokens -->
                     <style>
-                        #receiving-diagram {
+                        #receiving-diagram,
+                        #rdtv-diagram,
+                        #invoicing-diagram {
                             --diagram-paper: #ffffff;
                             --diagram-ink: #0f172a;
                             --diagram-muted: #475569;
@@ -441,7 +582,9 @@
                             --diagram-chip: rgba(15, 23, 42, 0.06);
                         }
 
-                        .dark #receiving-diagram {
+                        .dark #receiving-diagram,
+                        .dark #rdtv-diagram,
+                        .dark #invoicing-diagram {
                             --diagram-paper: #071321;
                             --diagram-ink: #f8fafc;
                             --diagram-muted: #94a3b8;
@@ -464,19 +607,29 @@
                             --diagram-chip: rgba(255, 255, 255, 0.1);
                         }
 
-                        #receiving-diagram text {
+                        #receiving-diagram text,
+                        #rdtv-diagram text,
+                        #invoicing-diagram text {
                             font-family: 'Inter', system-ui, -apple-system, sans-serif;
                         }
-                        #receiving-diagram .mono {
+                        #receiving-diagram .mono,
+                        #rdtv-diagram .mono,
+                        #invoicing-diagram .mono {
                             font-family: 'Geist Mono', 'SF Mono', 'Cascadia Code', ui-monospace, Menlo, Consolas, monospace;
                         }
-                        #receiving-diagram g {
+                        #receiving-diagram g,
+                        #rdtv-diagram g,
+                        #invoicing-diagram g {
                             transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                         }
-                        #receiving-diagram .node-group {
+                        #receiving-diagram .node-group,
+                        #rdtv-diagram .node-group,
+                        #invoicing-diagram .node-group {
                             transition: transform 0.2s ease, opacity 0.3s ease;
                         }
-                        #receiving-diagram .node-group:hover {
+                        #receiving-diagram .node-group:hover,
+                        #rdtv-diagram .node-group:hover,
+                        #invoicing-diagram .node-group:hover {
                             transform: translateY(-1.5px);
                         }
                     </style>
@@ -1162,8 +1315,1009 @@
                         </table>
                     </div>
                 </div>
+            </div> <!-- END VIEW 2: PANDUAN TAHAPAN DETAIL -->
 
+            <!-- =========================================================
+                 VIEW 3: BAGAN DIAGRAM SWIMLANE BARANG TOLAK / RDTV (4 UNIT - SLIDE 5 & 6)
+                 ========================================================= -->
+            <div id="alur-barang-tolak"
+                x-show="viewMode === 'rdtv'"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-2"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                style="display: none;"
+                class="space-y-6">
+
+                <!-- Interactive Highlight Filter & Style Legend (Konsisten dengan Bagan 7 Unit) -->
+                <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-white/80 dark:border-white/10 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                        <span class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#0A4F86]"></span>
+                            Fokus Jalur:
+                        </span>
+                        <button @click="rdtvBranch = 'all'"
+                            :class="rdtvBranch === 'all' ? 'bg-[#0A4F86] text-white shadow-sm ring-1 ring-blue-400/40' : 'bg-slate-200/70 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/10'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                            Semua Alur RDTV
+                        </button>
+                        <button @click="rdtvBranch = 'retur'"
+                            :class="rdtvBranch === 'retur' ? 'bg-red-600 text-white shadow-sm ring-1 ring-red-400/40' : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/20'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            Vendor Setuju RDTV (Pengambilan Barang)
+                        </button>
+                        <button @click="rdtvBranch = 'klarifikasi'"
+                            :class="rdtvBranch === 'klarifikasi' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400/40' : 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/20'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Tidak Setuju (Surat Klarifikasi &amp; ISTEK)
+                        </button>
+                        <button @click="rdtvBranch = 'grs'"
+                            :class="rdtvBranch === 'grs' ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400/40' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Disetujui ISTEK (Terbit GRS)
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-4 text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded bg-[#0A4F86] inline-block"></span>
+                            Receiving (Focal Hub)
+                        </span>
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block"></span>
+                            Lolos Klarifikasi (GRS)
+                        </span>
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded bg-red-500 inline-block"></span>
+                            Retur Fisik (RDTV)
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Editorial Swimlane Diagram Container (Konsisten dengan #receiving-diagram) -->
+                <div class="glass-panel p-4 sm:p-6 rounded-3xl border border-white/80 dark:border-white/10 shadow-2xl relative overflow-hidden">
+
+                    <!-- Mobile Scroll Hint -->
+                    <div class="flex lg:hidden items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 px-1">
+                        <span class="inline-flex items-center gap-1.5 text-[#0A4F86] dark:text-blue-300">
+                            <svg class="w-4 h-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                            Geser horizontal untuk melihat bagan diagram 4 unit lengkap
+                        </span>
+                    </div>
+
+                    <div class="overflow-x-auto pb-4 custom-scrollbar">
+                        <div class="min-w-[1100px] select-none">
+                            <svg id="rdtv-diagram" viewBox="0 0 1260 660" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="rdtv-diagram-title rdtv-diagram-desc" class="w-full h-auto block rounded-2xl border border-slate-200/80 dark:border-white/10">
+                                <title id="rdtv-diagram-title">Alur Proses Barang Tolak (RDTV) Gudang Receiving Pupuk Kaltim</title>
+                                <desc id="rdtv-diagram-desc">Diagram Swimlane SOP Resmi Penanganan Barang QC Tolak (RDTV) Lintas 4 Unit Kerja Pupuk Kalimantan Timur</desc>
+
+                                <defs>
+                                    <pattern id="dot-grid-rdtv" width="22" height="22" patternUnits="userSpaceOnUse">
+                                        <circle cx="11" cy="11" r="0.85" fill="var(--diagram-dot)"/>
+                                    </pattern>
+                                    <marker id="rdtv-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                        <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-muted)"/>
+                                    </marker>
+                                    <marker id="rdtv-arr-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                        <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-blue)"/>
+                                    </marker>
+                                    <marker id="rdtv-arr-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                        <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-green)"/>
+                                    </marker>
+                                    <marker id="rdtv-arr-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                        <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-red)"/>
+                                    </marker>
+                                </defs>
+
+                                <!-- Base Canvas Background -->
+                                <rect width="100%" height="100%" fill="var(--diagram-paper)"/>
+                                <rect width="100%" height="100%" fill="url(#dot-grid-rdtv)" opacity="0.6"/>
+
+                                <!-- 4 Vertical Swimlane Column Backgrounds (315px each) -->
+                                <rect x="0" y="44" width="315" height="556" fill="var(--diagram-lane-focal)"/>
+                                <rect x="315" y="44" width="315" height="556" fill="var(--diagram-lane-even)"/>
+                                <rect x="630" y="44" width="315" height="556" fill="var(--diagram-lane-odd)"/>
+                                <rect x="945" y="44" width="315" height="556" fill="var(--diagram-lane-even)"/>
+
+                                <!-- Vertical Column Dividers -->
+                                <g stroke="var(--diagram-rule)" stroke-width="0.8">
+                                    <line x1="315" y1="0" x2="315" y2="600" stroke="var(--diagram-blue)" stroke-opacity="0.35" stroke-width="1"/>
+                                    <line x1="630" y1="0" x2="630" y2="600"/>
+                                    <line x1="945" y1="0" x2="945" y2="600"/>
+                                </g>
+
+                                <!-- Horizontal Divider below Header -->
+                                <line x1="0" y1="44" x2="1260" y2="44" stroke="var(--diagram-rule-strong)" stroke-width="1"/>
+
+                                <!-- ===================================================
+                                     COLUMN HEADERS (4 UNIT KERJA - SLIDE 5)
+                                     =================================================== -->
+                                <g text-anchor="middle">
+                                    <!-- 01 RECEIVING (Focal Hub) -->
+                                    <rect x="62" y="6" width="190" height="32" rx="5" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-opacity="0.4" stroke-width="1"/>
+                                    <text x="157.5" y="20" class="mono" font-size="9" font-weight="800" letter-spacing="0.10em" fill="var(--diagram-blue)">01 · RECEIVING</text>
+                                    <text x="157.5" y="32.5" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-tangerine)">FOCAL HUB · RDTV &amp; GRS</text>
+
+                                    <!-- 02 EKSPEDITING -->
+                                    <rect x="377" y="8" width="190" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                    <text x="472.5" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.10em" fill="var(--diagram-ink)">02 · EKSPEDITING</text>
+                                    <text x="472.5" y="31.5" font-size="7" fill="var(--diagram-muted)">Koordinasi Vendor &amp; Retur</text>
+
+                                    <!-- 03 VENDOR -->
+                                    <rect x="692" y="8" width="190" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                    <text x="787.5" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.10em" fill="var(--diagram-ink)">03 · VENDOR</text>
+                                    <text x="787.5" y="31.5" font-size="7" fill="var(--diagram-muted)">Rekanan / Pemasok Barang</text>
+
+                                    <!-- 04 ISTEK -->
+                                    <rect x="1007" y="8" width="190" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                    <text x="1102.5" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.10em" fill="var(--diagram-ink)">04 · ISTEK</text>
+                                    <text x="1102.5" y="31.5" font-size="7" fill="var(--diagram-muted)">Verifikasi Klarifikasi Teknis</text>
+                                </g>
+
+                                <!-- ===================================================
+                                     CONNECTORS (DRAWN FIRST)
+                                     =================================================== -->
+
+                                <!-- 1. INTAKE RDTV CHAIN: Mulai -> Menerbitkan RDTV -> Ekspediting -> Vendor -> Setuju? -->
+                                <g id="rdtv-intake-connectors">
+                                    <!-- Mulai -> Menerbitkan RDTV (Col 1) -->
+                                    <line x1="157.5" y1="90" x2="157.5" y2="112" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#rdtv-arr-red)"/>
+
+                                    <!-- Receiving (Menerbitkan RDTV) -> Ekspediting (Menerima RDTV & Info Vendor) -->
+                                    <line x1="252" y1="140" x2="378" y2="140" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#rdtv-arr-red)"/>
+                                    <rect x="275" y="125" width="80" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="315" y="134.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">DOKUMEN RDTV</text>
+
+                                    <!-- Ekspediting -> Vendor (Menerima RDTV) -->
+                                    <line x1="567" y1="140" x2="693" y2="140" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#rdtv-arr-red)"/>
+                                    <rect x="586" y="125" width="88" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="630" y="134.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">INFORMASI VENDOR</text>
+
+                                    <!-- Vendor (Menerima RDTV) -> Vendor Decision Diamond (Setuju?) -->
+                                    <line x1="787.5" y1="168" x2="787.5" y2="218" stroke="var(--diagram-muted)" stroke-width="1.4" marker-end="url(#rdtv-arr)"/>
+                                </g>
+
+                                <!-- 2. JALUR YA (VENDOR SETUJU RDTV -> PENGAMBILAN BARANG -> SELESAI) -->
+                                <g id="rdtv-retur-connectors" :class="{'opacity-15': rdtvBranch === 'klarifikasi' || rdtvBranch === 'grs'}">
+                                    <!-- Vendor Diamond (Setuju? = YA) -> Ekspediting (Memerintahkan Pengambilan Barang) -->
+                                    <line x1="745" y1="238" x2="567" y2="238" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#rdtv-arr-red)"/>
+                                    <rect x="612" y="223" width="90" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="657" y="232.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">YA · SETUJU RETUR</text>
+
+                                    <!-- Ekspediting (Memerintahkan Pengambilan Barang) -> Receiving (Selesai Retur) -->
+                                    <line x1="378" y1="238" x2="252" y2="238" stroke="var(--diagram-red)" stroke-width="1.4" marker-end="url(#rdtv-arr-red)"/>
+                                    <rect x="273" y="223" width="84" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="315" y="232.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">AMBIL BARANG</text>
+                                </g>
+
+                                <!-- 3. JALUR TIDAK (SURAT KLARIFIKASI KEBENARAN BARANG -> EKSPEDITING -> ISTEK) -->
+                                <g id="rdtv-klarifikasi-connectors" :class="{'opacity-15': rdtvBranch === 'retur'}">
+                                    <!-- Vendor Diamond (Setuju? = TIDAK) -> Vendor (Menerbitkan Surat Klarifikasi) -->
+                                    <line x1="787.5" y1="258" x2="787.5" y2="322" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#rdtv-arr-blue)"/>
+                                    <rect x="796" y="280" width="98" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-blue)" stroke-width="0.8"/>
+                                    <text x="845" y="289.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-blue)">TIDAK · KLARIFIKASI</text>
+
+                                    <!-- Vendor (Menerbitkan Surat Klarifikasi) -> Ekspediting (Menerima Surat Klarifikasi) -->
+                                    <line x1="693" y1="350" x2="567" y2="350" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#rdtv-arr-blue)"/>
+                                    <rect x="582" y="335" width="96" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-blue)" stroke-width="0.8"/>
+                                    <text x="630" y="344.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-blue)">SURAT KLARIFIKASI</text>
+
+                                    <!-- Ekspediting (Menerima Surat Klarifikasi) -> ISTEK Decision Diamond (Setuju?) -->
+                                    <path d="M 472.5 378 V 434 Q 472.5 442 480.5 442 H 1058" fill="none" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#rdtv-arr-blue)"/>
+                                    <rect x="705" y="428" width="136" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-blue)" stroke-width="0.8"/>
+                                    <text x="773" y="437.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-blue)">REVIEW TEKNIS SURAT KLARIFIKASI</text>
+
+                                    <!-- ISTEK Diamond (Setuju? = TIDAK) -> Loop Kembali ke Vendor Decision Diamond (Setuju?) -->
+                                    <path d="M 1102.5 422 V 238 Q 1102.5 230 1094.5 230 H 832" fill="none" stroke="var(--diagram-red)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#rdtv-arr-red)"
+                                        :class="{'opacity-15': rdtvBranch === 'grs'}"/>
+                                    <rect x="935" y="216" width="124" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"
+                                        :class="{'opacity-15': rdtvBranch === 'grs'}"/>
+                                    <text x="997" y="225.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)"
+                                        :class="{'opacity-15': rdtvBranch === 'grs'}">TIDAK · TOLAK KLARIFIKASI</text>
+                                </g>
+
+                                <!-- 4. JALUR DISETUJUI ISTEK (YA -> RECEIVING MENERBITKAN GRS -> SELESAI) -->
+                                <g id="rdtv-grs-connectors" :class="{'opacity-15': rdtvBranch === 'retur'}">
+                                    <!-- ISTEK Diamond (Setuju? = YA) -> Receiving (Menerbitkan GRS) -->
+                                    <path d="M 1102.5 462 V 526 Q 1102.5 534 1094.5 534 H 252" fill="none" stroke="var(--diagram-green)" stroke-width="1.6" marker-end="url(#rdtv-arr-green)"/>
+                                    <rect x="570" y="520" width="190" height="15" rx="3" fill="var(--diagram-paper)" stroke="var(--diagram-green)" stroke-width="0.8"/>
+                                    <text x="665" y="530.5" text-anchor="middle" class="mono" font-size="7" font-weight="700" fill="var(--diagram-green)">YA · KLARIFIKASI DISETUJUI ISTEK (TERBIT GRS)</text>
+                                </g>
+
+                                <!-- ===================================================
+                                     NODES (PROCESS BOXES & DECISION DIAMONDS - SLIDE 5)
+                                     =================================================== -->
+
+                                <!-- 0. START PILL: Mulai (Col 1) -->
+                                <g class="node-group">
+                                    <rect x="112.5" y="62" width="90" height="26" rx="13" fill="var(--diagram-blue)" stroke="var(--diagram-blue)" stroke-width="1"/>
+                                    <text x="157.5" y="78" text-anchor="middle" class="mono" font-size="8.5" font-weight="800" letter-spacing="0.08em" fill="#ffffff">MULAI</text>
+                                </g>
+
+                                <!-- 1. RECEIVING: Menerbitkan RDTV (Col 1) -->
+                                <g class="node-group">
+                                    <rect x="63" y="112" width="189" height="56" rx="6" fill="var(--diagram-red-tint)" stroke="var(--diagram-red)" stroke-width="1.5"/>
+                                    <rect x="69" y="118" width="26" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.25"/>
+                                    <text x="82" y="126.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">RCV</text>
+                                    <text x="162" y="133" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-red)">Menerbitkan RDTV</text>
+                                    <text x="162" y="146" text-anchor="middle" class="mono" font-size="7" font-weight="600" fill="var(--diagram-ink)">RETURN DELIVERY TO VENDOR</text>
+                                    <rect x="98" y="150" width="124" height="12" rx="2" fill="var(--diagram-red)" fill-opacity="0.15"/>
+                                    <text x="160" y="158.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">BARANG TIDAK LOLOS QC</text>
+                                </g>
+
+                                <!-- 2. EKSPEDITING: Menerima RDTV & Menginformasikan Vendor (Col 2) -->
+                                <g class="node-group">
+                                    <rect x="378" y="112" width="189" height="56" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-red)" stroke-width="1.2"/>
+                                    <rect x="384" y="118" width="26" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.2"/>
+                                    <text x="397" y="126.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">EXP</text>
+                                    <text x="477" y="133" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Menerima RDTV &amp;</text>
+                                    <text x="477" y="146" text-anchor="middle" font-size="10" font-weight="700" fill="var(--diagram-ink)">Menginformasikan Vendor</text>
+                                    <text x="477" y="159" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-muted)">Penyampaian Resmi ke Pemasok</text>
+                                </g>
+
+                                <!-- 3. VENDOR: Menerima RDTV (Col 3) -->
+                                <g class="node-group">
+                                    <rect x="693" y="116" width="189" height="52" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-node-stroke)" stroke-width="1.2"/>
+                                    <rect x="699" y="122" width="26" height="11" rx="2" fill="var(--diagram-chip)"/>
+                                    <text x="712" y="130.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-ink)">VND</text>
+                                    <text x="792" y="139" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--diagram-ink)">Menerima RDTV</text>
+                                    <text x="792" y="154" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">Review Temuan Penolakan QC</text>
+                                </g>
+
+                                <!-- 4. VENDOR DECISION DIAMOND: Setuju? (Col 3) -->
+                                <g id="rdtv-diamond-vendor">
+                                    <polygon points="787.5,218 830,238 787.5,258 745,238" fill="var(--diagram-node)" stroke="var(--diagram-ink)" stroke-width="1.3"/>
+                                    <text x="787.5" y="241" text-anchor="middle" font-size="8.5" font-weight="800" fill="var(--diagram-ink)">Setuju?</text>
+                                </g>
+
+                                <!-- 5. EKSPEDITING: Memerintahkan Pengambilan Barang (Col 2 - Jalur YA) -->
+                                <g class="node-group" :class="{'opacity-15': rdtvBranch === 'klarifikasi' || rdtvBranch === 'grs'}">
+                                    <rect x="378" y="212" width="189" height="52" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-red)" stroke-width="1.3"/>
+                                    <rect x="384" y="218" width="26" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.2"/>
+                                    <text x="397" y="226.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">EXP</text>
+                                    <text x="477" y="233" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--diagram-ink)">Memerintahkan</text>
+                                    <text x="477" y="246" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--diagram-ink)">Pengambilan Barang</text>
+                                    <text x="477" y="258" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-red)">Instruksi Retur Fisik</text>
+                                </g>
+
+                                <!-- 6. RECEIVING: Selesai (Retur Barang) (Col 1 - Jalur YA) -->
+                                <g class="node-group" :class="{'opacity-15': rdtvBranch === 'klarifikasi' || rdtvBranch === 'grs'}">
+                                    <rect x="63" y="212" width="189" height="52" rx="6" fill="var(--diagram-red-tint)" stroke="var(--diagram-red)" stroke-width="1.5"/>
+                                    <rect x="69" y="218" width="26" height="11" rx="2" fill="var(--diagram-red)" fill-opacity="0.25"/>
+                                    <text x="82" y="226.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">RCV</text>
+                                    <text x="162" y="236" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-red)">Selesai (Retur Vendor)</text>
+                                    <text x="162" y="251" text-anchor="middle" class="mono" font-size="7" font-weight="700" fill="var(--diagram-ink)">BARANG DIAMBIL VENDOR</text>
+                                </g>
+
+                                <!-- 7. VENDOR: Menerbitkan Surat Klarifikasi Kebenaran Barang (Col 3 - Jalur TIDAK) -->
+                                <g class="node-group" :class="{'opacity-15': rdtvBranch === 'retur'}">
+                                    <rect x="693" y="322" width="189" height="56" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-blue)" stroke-width="1.3"/>
+                                    <rect x="699" y="328" width="26" height="11" rx="2" fill="var(--diagram-blue)" fill-opacity="0.18"/>
+                                    <text x="712" y="336.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-blue)">VND</text>
+                                    <text x="792" y="343" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--diagram-ink)">Menerbitkan Surat</text>
+                                    <text x="792" y="356" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--diagram-ink)">Klarifikasi Kebenaran Barang</text>
+                                    <text x="792" y="369" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-blue)">Sanggahan &amp; Bukti Teknis</text>
+                                </g>
+
+                                <!-- 8. EKSPEDITING: Menerima Surat Klarifikasi Kebenaran Barang (Col 2 - Jalur TIDAK) -->
+                                <g class="node-group" :class="{'opacity-15': rdtvBranch === 'retur'}">
+                                    <rect x="378" y="322" width="189" height="56" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-blue)" stroke-width="1.3"/>
+                                    <rect x="384" y="328" width="26" height="11" rx="2" fill="var(--diagram-blue)" fill-opacity="0.18"/>
+                                    <text x="397" y="336.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-blue)">EXP</text>
+                                    <text x="477" y="343" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--diagram-ink)">Menerima Surat</text>
+                                    <text x="477" y="356" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--diagram-ink)">Klarifikasi Kebenaran Barang</text>
+                                    <text x="477" y="369" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-muted)">Diteruskan ke Unit ISTEK</text>
+                                </g>
+
+                                <!-- 9. ISTEK DECISION DIAMOND: Setuju? (Col 4) -->
+                                <g id="rdtv-diamond-istek" :class="{'opacity-15': rdtvBranch === 'retur'}">
+                                    <polygon points="1102.5,422 1145,442 1102.5,462 1060,442" fill="var(--diagram-node)" stroke="var(--diagram-ink)" stroke-width="1.3"/>
+                                    <text x="1102.5" y="445" text-anchor="middle" font-size="8.5" font-weight="800" fill="var(--diagram-ink)">Setuju?</text>
+                                </g>
+
+                                <!-- 10. RECEIVING: Menerbitkan GRS & Selesai (Col 1 - Jalur YA ISTEK) -->
+                                <g class="node-group" :class="{'opacity-15': rdtvBranch === 'retur'}">
+                                    <rect x="63" y="506" width="189" height="56" rx="6" fill="var(--diagram-green-tint)" stroke="var(--diagram-green)" stroke-width="1.5"/>
+                                    <rect x="69" y="512" width="26" height="11" rx="2" fill="var(--diagram-green)" fill-opacity="0.25"/>
+                                    <text x="82" y="520.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-green)">RCV</text>
+                                    <text x="162" y="527" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-green)">Menerbitkan GRS &rarr; Selesai</text>
+                                    <text x="162" y="540" text-anchor="middle" class="mono" font-size="7" font-weight="600" fill="var(--diagram-ink)">GOOD RECEIVE SLIP (SAP 105)</text>
+                                    <rect x="98" y="544" width="124" height="12" rx="2" fill="var(--diagram-green)" fill-opacity="0.15"/>
+                                    <text x="160" y="552.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-green)">KLARIFIKASI DISETUJUI ISTEK</text>
+                                </g>
+
+                                <!-- ===================================================
+                                     BOTTOM LEGEND & NOTATION STRIP (KONSISTEN)
+                                     =================================================== -->
+                                <g id="rdtv-diagram-legend">
+                                    <line x1="20" y1="600" x2="1240" y2="600" stroke="var(--diagram-rule-strong)" stroke-width="0.8"/>
+                                    <text x="24" y="618" class="mono" font-size="7.5" font-weight="700" letter-spacing="0.14em" fill="var(--diagram-soft)">NOTASI DIAGRAM ALUR BARANG TOLAK (RDTV)</text>
+
+                                    <rect x="24" y="628" width="14" height="10" rx="2" fill="var(--diagram-node)" stroke="var(--diagram-node-stroke)" stroke-width="1"/>
+                                    <text x="44" y="636" font-size="8.5" fill="var(--diagram-muted)">Tahap Aktivitas SOP</text>
+
+                                    <polygon points="172,633 178,627 184,633 178,639" fill="var(--diagram-node)" stroke="var(--diagram-ink)" stroke-width="1"/>
+                                    <text x="190" y="636" font-size="8.5" fill="var(--diagram-muted)">Keputusan (Setuju?)</text>
+
+                                    <rect x="336" y="628" width="14" height="10" rx="2" fill="var(--diagram-green-tint)" stroke="var(--diagram-green)" stroke-width="1.2"/>
+                                    <text x="356" y="636" font-size="8.5" font-weight="600" fill="var(--diagram-green)">Disetujui ISTEK (Terbit GRS)</text>
+
+                                    <rect x="536" y="628" width="14" height="10" rx="2" fill="var(--diagram-red-tint)" stroke="var(--diagram-red)" stroke-width="1.2"/>
+                                    <text x="556" y="636" font-size="8.5" font-weight="600" fill="var(--diagram-red)">Barang Tolak / Retur Vendor (RDTV)</text>
+
+                                    <rect x="760" y="628" width="14" height="10" rx="2" fill="var(--diagram-node)" stroke="var(--diagram-blue)" stroke-width="1.2"/>
+                                    <text x="780" y="636" font-size="8.5" font-weight="600" fill="var(--diagram-blue)">Surat Klarifikasi Kebenaran Barang</text>
+
+                                    <rect x="990" y="628" width="14" height="10" rx="2" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-width="1.2"/>
+                                    <text x="1010" y="636" font-size="8.5" font-weight="700" fill="var(--diagram-blue)">Receiving (Focal Hub)</text>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistik Historis GRS vs RDTV (Slide 6) -->
+                <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-white/80 dark:border-white/10 shadow-lg">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00529B]/10 border border-[#00529B]/20 text-[#00529B] dark:text-blue-300 text-[11px] font-black uppercase tracking-wider mb-2">
+                                Kinerja Kualitas Penerimaan Barang (Slide 6)
+                            </div>
+                            <h4 class="text-lg sm:text-xl font-black text-slate-800 dark:text-white">
+                                Rekapitulasi Total GRS vs RDTV Tahun 2023 &amp; 2024 (s.d. Juli)
+                            </h4>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            Sumber: Bagian Receiving Dept. PP&amp;P PT Pupuk Kaltim
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Tahun 2023 -->
+                        <div class="rounded-2xl p-5 bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/10">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm font-black text-slate-800 dark:text-white">Periode Tahun 2023 (Jan – Des)</span>
+                                <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-black">95,92% Lolos QC</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 text-center">
+                                <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Total GRS</div>
+                                    <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">9.769</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Total RDTV</div>
+                                    <div class="text-xl font-black text-rose-600 dark:text-rose-400 mt-0.5">416</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Rasio % RDTV</div>
+                                    <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">4,08%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tahun 2024 (s.d. Juli) -->
+                        <div class="rounded-2xl p-5 bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/10">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm font-black text-slate-800 dark:text-white">Periode Tahun 2024 (s.d. Juli)</span>
+                                <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-black">95,87% Lolos QC</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3 text-center">
+                                <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Total GRS</div>
+                                    <div class="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">4.150</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Total RDTV</div>
+                                    <div class="text-xl font-black text-rose-600 dark:text-rose-400 mt-0.5">179</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                                    <div class="text-[11px] font-bold text-slate-500 dark:text-slate-400">Rasio % RDTV</div>
+                                    <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">4,13%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+                </div> <!-- END PILAR 1: PENERIMAAN BARANG -->
+
+                <!-- ===================================================================== -->
+                <!-- PILAR 2: INVOICING BARANG (SLIDE 7, 8, 9)                             -->
+                <!-- ===================================================================== -->
+                <div x-show="activePillar === 'invoicing_barang'"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    style="display: none;"
+                    class="space-y-8">
+
+                    <!-- Alur Proses Invoicing Barang (5 Swimlanes - Slide 8) -->
+                    <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-[#00529B]/25">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200/60 dark:border-white/10">
+                            <div>
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00529B]/10 border border-[#00529B]/20 text-[#00529B] dark:text-blue-300 text-[11px] font-black uppercase tracking-wider mb-2">
+                                    Pilar 2 • Invoicing Barang
+                                </div>
+                                <h3 class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white">
+                                    Alur Proses Invoicing Barang (Sistem Mitraku &rarr; Keuangan PKT)
+                                </h3>
+                                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                    Tahapan verifikasi tagihan barang setelah GRS terbit hingga proses pembayaran oleh Departemen Keuangan PT Pupuk Kalimantan Timur.
+                                </p>
+                            </div>
+                            <div class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-black shrink-0">
+                                <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Batas Pengiriman Invoice Vendor: SEBELUM TANGGAL 20</span>
+                            </div>
+                        </div>
+
+                        <!-- BAGAN DIAGRAM SWIMLANE 5 UNIT: ALUR PROSES INVOICING BARANG - SLIDE 8 (KONSISTEN DENGAN DIAGRAM DESIGN) -->
+                        <div class="overflow-x-auto pb-4 mb-8 custom-scrollbar">
+                            <div class="min-w-[1100px] select-none">
+                                <svg id="invoicing-diagram" viewBox="0 0 1260 660" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bagan Swimlane Alur Proses Invoicing Barang" class="w-full h-auto block rounded-2xl border border-slate-200/80 dark:border-white/10">
+                                    <defs>
+                                        <pattern id="dot-grid-inv" width="22" height="22" patternUnits="userSpaceOnUse">
+                                            <circle cx="11" cy="11" r="0.85" fill="var(--diagram-dot)"/>
+                                        </pattern>
+                                        <marker id="inv-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                            <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-muted)"/>
+                                        </marker>
+                                        <marker id="inv-arr-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                            <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-blue)"/>
+                                        </marker>
+                                        <marker id="inv-arr-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                            <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-green)"/>
+                                        </marker>
+                                        <marker id="inv-arr-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                            <polygon points="0 0, 8 3, 0 6" fill="var(--diagram-red)"/>
+                                        </marker>
+                                    </defs>
+
+                                    <!-- Base Canvas Background -->
+                                    <rect width="100%" height="100%" fill="var(--diagram-paper)"/>
+                                    <rect width="100%" height="100%" fill="url(#dot-grid-inv)" opacity="0.6"/>
+
+                                    <!-- 5 Vertical Swimlane Columns (252px each) -->
+                                    <rect x="0" y="44" width="252" height="556" fill="var(--diagram-lane-odd)"/>
+                                    <rect x="252" y="44" width="252" height="556" fill="var(--diagram-lane-even)"/>
+                                    <rect x="504" y="44" width="252" height="556" fill="var(--diagram-lane-focal)"/>
+                                    <rect x="756" y="44" width="252" height="556" fill="var(--diagram-lane-even)"/>
+                                    <rect x="1008" y="44" width="252" height="556" fill="var(--diagram-lane-odd)"/>
+
+                                    <!-- Vertical Dividers -->
+                                    <g stroke="var(--diagram-rule)" stroke-width="0.8">
+                                        <line x1="252" y1="0" x2="252" y2="600"/>
+                                        <line x1="504" y1="0" x2="504" y2="600" stroke="var(--diagram-blue)" stroke-opacity="0.35" stroke-width="1"/>
+                                        <line x1="756" y1="0" x2="756" y2="600" stroke="var(--diagram-blue)" stroke-opacity="0.35" stroke-width="1"/>
+                                        <line x1="1008" y1="0" x2="1008" y2="600"/>
+                                    </g>
+
+                                    <line x1="0" y1="44" x2="1260" y2="44" stroke="var(--diagram-rule-strong)" stroke-width="1"/>
+
+                                    <!-- COLUMN HEADERS (5 UNIT - SLIDE 8) -->
+                                    <g text-anchor="middle">
+                                        <rect x="26" y="8" width="200" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                        <text x="126" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.08em" fill="var(--diagram-ink)">01 · STAF RECEIVING</text>
+                                        <text x="126" y="31.5" font-size="7" fill="var(--diagram-muted)">Penerbitan GRS Barang</text>
+
+                                        <rect x="278" y="8" width="200" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                        <text x="378" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.08em" fill="var(--diagram-ink)">02 · AVP RCV &amp; VP PP&amp;P</text>
+                                        <text x="378" y="31.5" font-size="7" fill="var(--diagram-muted)">Otorisasi GRS &amp; Mitraku</text>
+
+                                        <rect x="530" y="6" width="200" height="32" rx="5" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-opacity="0.4" stroke-width="1"/>
+                                        <text x="630" y="20" class="mono" font-size="8.5" font-weight="800" letter-spacing="0.08em" fill="var(--diagram-blue)">03 · STAF INVOICING</text>
+                                        <text x="630" y="32.5" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-tangerine)">FOCAL HUB · SISTEM MITRAKU</text>
+
+                                        <rect x="782" y="8" width="200" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                        <text x="882" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.08em" fill="var(--diagram-ink)">04 · PENYEDIA BARANG</text>
+                                        <text x="882" y="31.5" font-size="7" fill="var(--diagram-muted)">Pengiriman Tagihan (&lt; Tgl 20)</text>
+
+                                        <rect x="1034" y="8" width="200" height="28" rx="4" fill="var(--diagram-chip)"/>
+                                        <text x="1134" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.08em" fill="var(--diagram-ink)">05 · KEUANGAN PKT</text>
+                                        <text x="1134" y="31.5" font-size="7" fill="var(--diagram-muted)">Tindaklanjut &amp; Pembayaran</text>
+                                    </g>
+
+                                    <!-- CONNECTORS -->
+                                    <!-- Mulai -> Penerbitan GRS -->
+                                    <line x1="126" y1="90" x2="126" y2="112" stroke="var(--diagram-muted)" stroke-width="1.4" marker-end="url(#inv-arr)"/>
+                                    <!-- Penerbitan GRS -> Approval GRS -->
+                                    <line x1="210" y1="140" x2="294" y2="140" stroke="var(--diagram-muted)" stroke-width="1.4" marker-end="url(#inv-arr)"/>
+                                    <!-- Approval GRS -> Penyampaian GRS ke Vendor -->
+                                    <line x1="462" y1="140" x2="546" y2="140" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#inv-arr-blue)"/>
+                                    <!-- Penyampaian GRS -> Menerima GRS (Penyedia Barang) -->
+                                    <line x1="714" y1="140" x2="798" y2="140" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#inv-arr-blue)"/>
+                                    <!-- Menerima GRS -> Mengirim Invoice (< Tgl 20) -->
+                                    <line x1="882" y1="168" x2="882" y2="212" stroke="var(--diagram-muted)" stroke-width="1.4" marker-end="url(#inv-arr)"/>
+                                    <!-- Mengirim Invoice -> Verifikasi Kelengkapan Dokumen (Staf Invoicing) -->
+                                    <line x1="798" y1="240" x2="714" y2="240" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#inv-arr-blue)"/>
+                                    <!-- Verifikasi -> Lengkap? Diamond -->
+                                    <line x1="630" y1="268" x2="630" y2="306" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#inv-arr-blue)"/>
+                                    <!-- Lengkap? = TIDAK -> Kembali ke Mengirim Invoice (Penyedia Barang) -->
+                                    <path d="M 672 326 H 882 V 270" fill="none" stroke="var(--diagram-red)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#inv-arr-red)"/>
+                                    <rect x="735" y="313" width="90" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="780" y="322.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">TIDAK · REVISI</text>
+
+                                    <!-- Lengkap? = YA -> Input Sistem Mitraku -->
+                                    <line x1="630" y1="346" x2="630" y2="386" stroke="var(--diagram-green)" stroke-width="1.4" marker-end="url(#inv-arr-green)"/>
+                                    <rect x="638" y="358" width="64" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-green)" stroke-width="0.8"/>
+                                    <text x="670" y="367.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-green)">YA · LENGKAP</text>
+
+                                    <!-- Input Sistem Mitraku -> Submit, Review & Approval Mitraku (Col 2) -->
+                                    <line x1="546" y1="414" x2="462" y2="414" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#inv-arr-blue)"/>
+                                    <!-- Submit Mitraku -> Approve? Diamond (Col 2) -->
+                                    <line x1="378" y1="442" x2="378" y2="480" stroke="var(--diagram-blue)" stroke-width="1.4" marker-end="url(#inv-arr-blue)"/>
+                                    <!-- Approve? = TIDAK -> Kembali ke Input Sistem Mitraku -->
+                                    <path d="M 420 500 H 525 V 428 H 546" fill="none" stroke="var(--diagram-red)" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#inv-arr-red)"/>
+                                    <rect x="432" y="487" width="84" height="13" rx="2" fill="var(--diagram-paper)" stroke="var(--diagram-red)" stroke-width="0.8"/>
+                                    <text x="474" y="496.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-red)">TIDAK · REVISI</text>
+
+                                    <!-- Approve? = YA -> Tindaklanjut di Keuangan s.d. Pembayaran (Col 5) -->
+                                    <path d="M 378 520 V 544 H 1050" fill="none" stroke="var(--diagram-green)" stroke-width="1.6" marker-end="url(#inv-arr-green)"/>
+                                    <rect x="620" y="531" width="160" height="15" rx="3" fill="var(--diagram-paper)" stroke="var(--diagram-green)" stroke-width="0.8"/>
+                                    <text x="700" y="541.5" text-anchor="middle" class="mono" font-size="7" font-weight="700" fill="var(--diagram-green)">YA · APPROVED MITRAKU &rarr; KEUANGAN</text>
+
+                                    <!-- NODES -->
+                                    <g class="node-group">
+                                        <rect x="81" y="62" width="90" height="26" rx="13" fill="var(--diagram-blue)"/>
+                                        <text x="126" y="78" text-anchor="middle" class="mono" font-size="8.5" font-weight="800" fill="#ffffff">MULAI</text>
+                                    </g>
+
+                                    <g class="node-group">
+                                        <rect x="42" y="112" width="168" height="56" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-node-stroke)" stroke-width="1.2"/>
+                                        <text x="126" y="136" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-ink)">Penerbitan GRS</text>
+                                        <text x="126" y="151" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-muted)">Good Receive Slip</text>
+                                    </g>
+
+                                    <g class="node-group">
+                                        <rect x="294" y="112" width="168" height="56" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-blue)" stroke-width="1.2"/>
+                                        <text x="378" y="136" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-ink)">Approval GRS</text>
+                                        <text x="378" y="151" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-muted)">Otorisasi AVP &amp; VP PP&amp;P</text>
+                                    </g>
+
+                                    <g class="node-group">
+                                        <rect x="546" y="112" width="168" height="56" rx="6" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-width="1.4"/>
+                                        <text x="630" y="134" text-anchor="middle" font-size="10" font-weight="800" fill="var(--diagram-ink)">Penyampaian GRS</text>
+                                        <text x="630" y="149" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-blue)">Distribusi Resmi ke Vendor</text>
+                                    </g>
+
+                                    <g class="node-group">
+                                        <rect x="798" y="112" width="168" height="56" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-node-stroke)" stroke-width="1.2"/>
+                                        <text x="882" y="136" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-ink)">Menerima GRS</text>
+                                        <text x="882" y="151" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-muted)">Dasar Pengajuan Tagihan</text>
+                                    </g>
+
+                                    <g class="node-group">
+                                        <rect x="798" y="212" width="168" height="56" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-tangerine)" stroke-width="1.4"/>
+                                        <text x="882" y="232" text-anchor="middle" font-size="9.5" font-weight="800" fill="var(--diagram-ink)">Kirim Invoice &amp; Berkas</text>
+                                        <text x="882" y="246" text-anchor="middle" class="mono" font-size="7" font-weight="700" fill="var(--diagram-tangerine)">WAJIB SEBELUM TGL 20</text>
+                                        <text x="882" y="259" text-anchor="middle" class="mono" font-size="6.5" fill="var(--diagram-muted)">Sesuai GRS &amp; 16 Dokumen</text>
+                                    </g>
+
+                                    <g class="node-group">
+                                        <rect x="546" y="212" width="168" height="56" rx="6" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-width="1.4"/>
+                                        <text x="630" y="233" text-anchor="middle" font-size="9.5" font-weight="800" fill="var(--diagram-ink)">Terima &amp; Verifikasi</text>
+                                        <text x="630" y="247" text-anchor="middle" font-size="9.5" font-weight="800" fill="var(--diagram-ink)">Kelengkapan Dokumen</text>
+                                        <text x="630" y="260" text-anchor="middle" class="mono" font-size="6.5" fill="var(--diagram-blue)">Cek 16 Dokumen Tagihan</text>
+                                    </g>
+
+                                    <g>
+                                        <polygon points="630,306 672,326 630,346 588,326" fill="var(--diagram-node)" stroke="var(--diagram-ink)" stroke-width="1.3"/>
+                                        <text x="630" y="329" text-anchor="middle" font-size="8" font-weight="800" fill="var(--diagram-ink)">Lengkap?</text>
+                                    </g>
+
+                                    <g class="node-group">
+                                        <rect x="546" y="386" width="168" height="56" rx="6" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-width="1.5"/>
+                                        <text x="630" y="409" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-blue)">Input Sistem Mitraku</text>
+                                        <text x="630" y="425" text-anchor="middle" class="mono" font-size="7" font-weight="700" fill="var(--diagram-ink)">REGISTRASI TAGIHAN DIGITAL</text>
+                                    </g>
+
+                                    <g class="node-group">
+                                        <rect x="294" y="386" width="168" height="56" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-blue)" stroke-width="1.3"/>
+                                        <text x="378" y="408" text-anchor="middle" font-size="9.5" font-weight="800" fill="var(--diagram-ink)">Submit, Review &amp;</text>
+                                        <text x="378" y="422" text-anchor="middle" font-size="9.5" font-weight="800" fill="var(--diagram-ink)">Approval Mitraku</text>
+                                        <text x="378" y="435" text-anchor="middle" class="mono" font-size="6.5" fill="var(--diagram-muted)">AVP Receiving &amp; VP PP&amp;P</text>
+                                    </g>
+
+                                    <g>
+                                        <polygon points="378,480 420,500 378,520 336,500" fill="var(--diagram-node)" stroke="var(--diagram-ink)" stroke-width="1.3"/>
+                                        <text x="378" y="503" text-anchor="middle" font-size="8" font-weight="800" fill="var(--diagram-ink)">Approve?</text>
+                                    </g>
+
+                                    <g class="node-group">
+                                        <rect x="1050" y="512" width="176" height="56" rx="6" fill="var(--diagram-green-tint)" stroke="var(--diagram-green)" stroke-width="1.5"/>
+                                        <text x="1138" y="532" text-anchor="middle" font-size="9.5" font-weight="800" fill="var(--diagram-green)">Tindaklanjut Keuangan</text>
+                                        <text x="1138" y="545" text-anchor="middle" font-size="9.5" font-weight="800" fill="var(--diagram-green)">s.d. Pembayaran &rarr; Selesai</text>
+                                        <text x="1138" y="559" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-ink)">PEMBAYARAN VENDOR PKT</text>
+                                    </g>
+
+                                    <!-- BOTTOM LEGEND STRIP -->
+                                    <g id="inv-diagram-legend">
+                                        <line x1="20" y1="600" x2="1240" y2="600" stroke="var(--diagram-rule-strong)" stroke-width="0.8"/>
+                                        <text x="24" y="618" class="mono" font-size="7.5" font-weight="700" letter-spacing="0.14em" fill="var(--diagram-soft)">NOTASI DIAGRAM ALUR INVOICING BARANG</text>
+
+                                        <rect x="24" y="628" width="14" height="10" rx="2" fill="var(--diagram-node)" stroke="var(--diagram-node-stroke)" stroke-width="1"/>
+                                        <text x="44" y="636" font-size="8.5" fill="var(--diagram-muted)">Tahap Aktivitas Invoicing</text>
+
+                                        <polygon points="186,633 192,627 198,633 192,639" fill="var(--diagram-node)" stroke="var(--diagram-ink)" stroke-width="1"/>
+                                        <text x="204" y="636" font-size="8.5" fill="var(--diagram-muted)">Verifikasi (Lengkap? / Approve?)</text>
+
+                                        <rect x="380" y="628" width="14" height="10" rx="2" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-width="1.2"/>
+                                        <text x="400" y="636" font-size="8.5" font-weight="700" fill="var(--diagram-blue)">Staf Invoicing (Sistem Mitraku)</text>
+
+                                        <rect x="595" y="628" width="14" height="10" rx="2" fill="var(--diagram-green-tint)" stroke="var(--diagram-green)" stroke-width="1.2"/>
+                                        <text x="615" y="636" font-size="8.5" font-weight="600" fill="var(--diagram-green)">Disetujui &amp; Lanjut Pembayaran Keuangan</text>
+
+                                        <rect x="860" y="628" width="14" height="10" rx="2" fill="var(--diagram-node)" stroke="var(--diagram-tangerine)" stroke-width="1.2"/>
+                                        <text x="880" y="636" font-size="8.5" font-weight="700" fill="var(--diagram-tangerine)">Batas Kirim Invoice: Sebelum Tanggal 20</text>
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- 5 Swimlanes Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <!-- 1. STAF RECEIVING BARANG -->
+                            <div class="rounded-2xl p-4 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/25">
+                                <div class="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-amber-500 text-white inline-block mb-3">
+                                    1. Staf Receiving Barang
+                                </div>
+                                <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20">
+                                    <div class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase">Tahap Awal</div>
+                                    <div class="text-xs font-bold text-slate-800 dark:text-white mt-0.5">Mulai &rarr; Penerbitan GRS</div>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Menerbitkan dokumen Good Receive Slip (GRS) atas barang yang telah lolos QC.</p>
+                                </div>
+                            </div>
+
+                            <!-- 2. AVP RECEIVING & VP PP&P -->
+                            <div class="rounded-2xl p-4 bg-purple-500/5 dark:bg-purple-500/10 border border-purple-500/25">
+                                <div class="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-purple-600 text-white inline-block mb-3">
+                                    2. AVP Receiving &amp; VP PP&amp;P
+                                </div>
+                                <div class="space-y-2.5">
+                                    <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-purple-500/20">
+                                        <div class="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase">Otorisasi GRS</div>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white mt-0.5">Approval GRS</div>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Pengesahan GRS sebelum disampaikan ke Vendor.</p>
+                                    </div>
+                                    <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-purple-500/20">
+                                        <div class="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase">Otorisasi Tagihan</div>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white mt-0.5">Submit, Review &amp; Approval Mitraku</div>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Jika <strong>Approve (YA)</strong> diteruskan ke Keuangan; jika <strong>TIDAK</strong> kembali ke Input Mitraku.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. STAF INVOICING BARANG -->
+                            <div class="rounded-2xl p-4 bg-[#00529B]/5 dark:bg-[#00529B]/15 border border-[#00529B]/25">
+                                <div class="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-[#00529B] text-white inline-block mb-3">
+                                    3. Staf Invoicing Barang
+                                </div>
+                                <div class="space-y-2.5">
+                                    <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-[#00529B]/20">
+                                        <div class="text-[10px] font-black text-[#00529B] dark:text-blue-400 uppercase">Distribusi GRS</div>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white mt-0.5">Penyampaian GRS ke Vendor</div>
+                                    </div>
+                                    <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-[#00529B]/20">
+                                        <div class="text-[10px] font-black text-[#00529B] dark:text-blue-400 uppercase">Verifikasi Berkas</div>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white mt-0.5">Menerima &amp; Verifikasi Dokumen Penagihan</div>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Jika <strong>Lengkap (YA)</strong> &rarr; <strong>Input Sistem Mitraku</strong>. Jika <strong>TIDAK</strong> &rarr; dikembalikan ke Penyedia Barang.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 4. PENYEDIA BARANG -->
+                            <div class="rounded-2xl p-4 bg-sky-500/5 dark:bg-sky-500/10 border border-sky-500/25">
+                                <div class="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-sky-600 text-white inline-block mb-3">
+                                    4. Penyedia Barang (Vendor)
+                                </div>
+                                <div class="space-y-2.5">
+                                    <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-sky-500/20">
+                                        <div class="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase">Penerimaan GRS</div>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white mt-0.5">Menerima GRS Resmi</div>
+                                    </div>
+                                    <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25">
+                                        <div class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase">Penagihan (&lt; Tgl 20)</div>
+                                        <div class="text-xs font-bold text-slate-800 dark:text-white mt-0.5">Mengirim Invoice / Tagihan Sesuai GRS</div>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Wajib dilengkapi seluruh dokumen persyaratan penagihan sebelum tanggal 20.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 5. KEUANGAN PKT -->
+                            <div class="rounded-2xl p-4 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/25">
+                                <div class="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-emerald-600 text-white inline-block mb-3">
+                                    5. Keuangan PKT
+                                </div>
+                                <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-emerald-500/20">
+                                    <div class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Tahap Akhir</div>
+                                    <div class="text-xs font-bold text-slate-800 dark:text-white mt-0.5">Tindaklanjut Proses di Keuangan s.d. Pembayaran &rarr; Selesai</div>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Eksekusi pembayaran tagihan kepada Penyedia Barang sesuai persetujuan Mitraku.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Checklist 16 Kelengkapan Dokumen Invoicing Barang (Slide 9) -->
+                    <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-200/70 dark:border-white/10">
+                        <div class="mb-6">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-black uppercase tracking-wider mb-2">
+                                Standar Verifikasi Berkas Tagihan
+                            </div>
+                            <h4 class="text-lg sm:text-xl font-black text-slate-800 dark:text-white">
+                                16 Kelengkapan Dokumen Invoicing Barang
+                            </h4>
+                            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                Daftar dokumen wajib umum dan dokumen khusus komoditas yang diverifikasi oleh Staf Invoicing Barang sebelum diinput ke Sistem Mitraku.
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <!-- 10 Dokumen Umum (Col 7) -->
+                            <div class="lg:col-span-7 rounded-2xl p-5 bg-white/60 dark:bg-slate-900/50 border border-slate-200/70 dark:border-white/10">
+                                <h5 class="text-xs font-black uppercase tracking-wider text-[#00529B] dark:text-blue-400 mb-4 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-[#00529B]"></span>
+                                    A. Dokumen Kelengkapan Umum (10 Dokumen)
+                                </h5>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
+                                        <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">1</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">PO Asli (Purchase Order)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
+                                        <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">2</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">Invoice (Nota Penjualan)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
+                                        <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">3</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">GRS (Good Receive Slip)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
+                                        <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">4</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">DO (Delivery Order)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
+                                        <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">5</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">Faktur Pajak</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
+                                        <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">6</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">ENOFA (No. Seri Faktur Pajak)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
+                                        <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">7</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">SPPKP (Pengukuhan PKP)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
+                                        <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">8</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">Bank Garansi (Jaminan Pelaksana)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
+                                        <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">9</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">SKF (Surat Keterangan Fiskal)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
+                                        <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">10</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">Surat Pernyataan</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 6 Dokumen Khusus Komoditas (Col 5) -->
+                            <div class="lg:col-span-5 rounded-2xl p-5 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/25">
+                                <h5 class="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 mb-4 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-[#F47920]"></span>
+                                    B. Dokumen Khusus Komoditas (6 Dokumen)
+                                </h5>
+                                <div class="space-y-2.5 text-xs">
+                                    <div class="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 flex items-start justify-between gap-2">
+                                        <div>
+                                            <span class="font-black text-slate-800 dark:text-white">11. LPKB (Laporan Pemeriksaan Kualitas Barang)</span>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Khusus Bahan Baku &amp; Chemical</p>
+                                        </div>
+                                        <span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-bold shrink-0">Chemical</span>
+                                    </div>
+                                    <div class="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 flex items-start justify-between gap-2">
+                                        <div>
+                                            <span class="font-black text-slate-800 dark:text-white">12. COA (Certificate of Analysis)</span>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Batubara, Bahan Baku Impor, Methanol, Karung</p>
+                                        </div>
+                                        <span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-bold shrink-0">Uji Mutu</span>
+                                    </div>
+                                    <div class="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 flex items-start justify-between gap-2">
+                                        <div>
+                                            <span class="font-black text-slate-800 dark:text-white">13. Bill of Lading (B/L)</span>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Khusus Pengiriman Batubara</p>
+                                        </div>
+                                        <span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-bold shrink-0">Batubara</span>
+                                    </div>
+                                    <div class="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 flex items-start justify-between gap-2">
+                                        <div>
+                                            <span class="font-black text-slate-800 dark:text-white">14. Keterangan Penyesuaian Harga</span>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Khusus Batubara &amp; BBM</p>
+                                        </div>
+                                        <span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-bold shrink-0">Batubara/BBM</span>
+                                    </div>
+                                    <div class="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 flex items-start justify-between gap-2">
+                                        <div>
+                                            <span class="font-black text-slate-800 dark:text-white">15. Jadwal Pengiriman</span>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Khusus Komoditas Batubara</p>
+                                        </div>
+                                        <span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-bold shrink-0">Batubara</span>
+                                    </div>
+                                    <div class="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 flex items-start justify-between gap-2">
+                                        <div>
+                                            <span class="font-black text-slate-800 dark:text-white">16. BA Transfering (Berita Acara)</span>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400">Khusus Komoditas Methanol</p>
+                                        </div>
+                                        <span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[10px] font-bold shrink-0">Methanol</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- END PILAR 2: INVOICING BARANG -->
+
+                <!-- ===================================================================== -->
+                <!-- PILAR 3: PENERIMAAN & INVOICING JASA (SLIDE 10, 11, 12, 13, 14)       -->
+                <!-- ===================================================================== -->
+                <div x-show="activePillar === 'jasa'"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    style="display: none;"
+                    class="space-y-8">
+
+                    <!-- 3 Tahap Inti Penerimaan Jasa (Slide 11) -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div class="glass-panel rounded-2xl p-5 border border-emerald-500/25">
+                            <div class="text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1">Tahap Inti 01</div>
+                            <h4 class="text-base font-black text-slate-800 dark:text-white mb-1">Dokumen Penagihan Lengkap</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-400">Verifikasi kelengkapan BAPP, SIK, BATE, Order Kerja/PO, Cost Code &amp; Cost Center, serta Surat Pengantar User.</p>
+                        </div>
+                        <div class="glass-panel rounded-2xl p-5 border border-[#00529B]/25">
+                            <div class="text-[11px] font-black uppercase tracking-wider text-[#00529B] dark:text-blue-400 mb-1">Tahap Inti 02</div>
+                            <h4 class="text-base font-black text-slate-800 dark:text-white mb-1">Input Penagihan Sistem SAP</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-400">Pengecekan status PO di sistem SAP, penginputan nilai realisasi pekerjaan jasa, dan pencetakan dokumen SA.</p>
+                        </div>
+                        <div class="glass-panel rounded-2xl p-5 border border-amber-500/25">
+                            <div class="text-[11px] font-black uppercase tracking-wider text-[#F47920] mb-1">Tahap Inti 03</div>
+                            <h4 class="text-base font-black text-slate-800 dark:text-white mb-1">Service Acceptance (SA)</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-400">Penerbitan &amp; pengesahan <strong>Berita Acara Penerimaan Pekerjaan (SA)</strong> untuk proses pembayaran di Kasir/Keuangan.</p>
+                        </div>
+                    </div>
+
+                    <!-- Alur Proses Penagihan & Invoice Pekerjaan Jasa (Slide 12 & 13) -->
+                    <div class="glass-panel rounded-3xl p-6 sm:p-8 border border-emerald-500/25">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200/60 dark:border-white/10">
+                            <div>
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-black uppercase tracking-wider mb-2">
+                                    Pilar 3 • Penerimaan &amp; Invoicing Jasa
+                                </div>
+                                <h3 class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white">
+                                    Alur Proses Penagihan &amp; Penerbitan Service Acceptance (SA)
+                                </h3>
+                                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                    Sinergi antara Penyedia Jasa, Unit Kerja Pengguna (User), Staf Penerimaan Jasa Dept. PP&amp;P, dan Departemen Keuangan.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <!-- Fase Awal & 6 Dokumen User (Col 5) -->
+                            <div class="lg:col-span-5 space-y-4">
+                                <div class="rounded-2xl p-5 bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/10">
+                                    <div class="text-xs font-black uppercase tracking-wider text-[#00529B] dark:text-blue-400 mb-3">
+                                        Fase 1 • Pelaksanaan &amp; Verifikasi User
+                                    </div>
+                                    <ol class="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+                                        <li class="flex items-start gap-2.5">
+                                            <span class="w-5 h-5 rounded-full bg-[#00529B] text-white font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+                                            <span><strong>START:</strong> Dokumen <strong>BATE</strong> &amp; <strong>SIK</strong> terbit, Penyedia Jasa memulai dan menyelesaikan pekerjaan.</span>
+                                        </li>
+                                        <li class="flex items-start gap-2.5">
+                                            <span class="w-5 h-5 rounded-full bg-[#00529B] text-white font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+                                            <span><strong>BAPP Diterbitkan User:</strong> Penyedia Jasa mengajukan penagihan dengan membawa Invoice &amp; Copy Order Kerja.</span>
+                                        </li>
+                                        <li class="flex items-start gap-2.5">
+                                            <span class="w-5 h-5 rounded-full bg-[#00529B] text-white font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                                            <span><strong>Verifikasi User:</strong> Unit Kerja (User) memverifikasi dokumen penagihan dan menerbitkan 6 berkas pengantar ke Dept. PP&amp;P:</span>
+                                        </li>
+                                    </ol>
+                                    <div class="mt-3 pt-3 border-t border-slate-200/60 dark:border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                                        <div class="p-2 rounded-lg bg-slate-100 dark:bg-white/5 font-bold text-slate-700 dark:text-slate-200">1. Copy Invoice</div>
+                                        <div class="p-2 rounded-lg bg-slate-100 dark:bg-white/5 font-bold text-slate-700 dark:text-slate-200">2. BAPP Resmi</div>
+                                        <div class="p-2 rounded-lg bg-slate-100 dark:bg-white/5 font-bold text-slate-700 dark:text-slate-200">3. SIK (Instruksi Kerja)</div>
+                                        <div class="p-2 rounded-lg bg-slate-100 dark:bg-white/5 font-bold text-slate-700 dark:text-slate-200">4. BATE (Tanggal Efektif)</div>
+                                        <div class="p-2 rounded-lg bg-slate-100 dark:bg-white/5 font-bold text-slate-700 dark:text-slate-200">5. Cost Code &amp; Cost Center</div>
+                                        <div class="p-2 rounded-lg bg-slate-100 dark:bg-white/5 font-bold text-slate-700 dark:text-slate-200">6. Surat Pengantar Keuangan</div>
+                                    </div>
+                                </div>
+
+                                <!-- 5 Dokumen Utama Invoicing Jasa (Slide 14) -->
+                                <div class="rounded-2xl p-5 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/25">
+                                    <div class="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 mb-2">
+                                        5 Dokumen Utama Invoicing Jasa
+                                    </div>
+                                    <div class="flex flex-wrap gap-2 text-xs font-bold">
+                                        <span class="px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 text-slate-800 dark:text-white">1. BAPP</span>
+                                        <span class="px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 text-slate-800 dark:text-white">2. SIK</span>
+                                        <span class="px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 text-slate-800 dark:text-white">3. Lampiran PO / Order Kerja</span>
+                                        <span class="px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 text-slate-800 dark:text-white">4. BATE</span>
+                                        <span class="px-3 py-1.5 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20 text-slate-800 dark:text-white">5. Invoice</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 7 Langkah Proses Dept. PP&P & Penyelesaian Keuangan (Col 7) -->
+                            <div class="lg:col-span-7 space-y-4">
+                                <div class="rounded-2xl p-5 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/25">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <span class="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                                            Fase 2 • 7 Langkah Proses Dept. PP&amp;P (Staf Penerimaan Jasa)
+                                        </span>
+                                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-black">SAP Service Entry</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                                        <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-emerald-500/20">
+                                            <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Langkah 1</span>
+                                            <div class="font-bold text-slate-800 dark:text-white mt-0.5">Pengecekan Kelengkapan Dokumen</div>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Jika tidak lengkap, dikembalikan ke User / Penyedia Jasa.</p>
+                                        </div>
+                                        <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-emerald-500/20">
+                                            <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Langkah 2</span>
+                                            <div class="font-bold text-slate-800 dark:text-white mt-0.5">Pengecekan Status PO di Sistem SAP</div>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Memastikan alokasi anggaran &amp; line item jasa aktif.</p>
+                                        </div>
+                                        <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-emerald-500/20">
+                                            <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Langkah 3</span>
+                                            <div class="font-bold text-slate-800 dark:text-white mt-0.5">Penginputan ke Sistem SAP</div>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Pembuatan Service Entry Sheet / Service Acceptance.</p>
+                                        </div>
+                                        <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-emerald-500/20">
+                                            <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Langkah 4</span>
+                                            <div class="font-bold text-slate-800 dark:text-white mt-0.5">Pencetakan SA yang Telah Diinput</div>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Mencetak lembar resmi Service Acceptance (SA).</p>
+                                        </div>
+                                        <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-emerald-500/20">
+                                            <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Langkah 5</span>
+                                            <div class="font-bold text-slate-800 dark:text-white mt-0.5">Verifikasi oleh Pejabat Berwenang</div>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Review &amp; tanda tangan pengesahan pejabat terkait.</p>
+                                        </div>
+                                        <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-emerald-500/20">
+                                            <span class="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Langkah 6 &amp; 7</span>
+                                            <div class="font-bold text-slate-800 dark:text-white mt-0.5">Dokumentasi, Monitoring &amp; Penyerahan SA</div>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Dokumen SA siap diserahkan kembali ke User / Penyedia Jasa untuk dilengkapi Faktur Pajak &amp; dibawa ke Kasir / Dept. Keuangan (END).</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Kontak Resmi Konfirmasi SA (Slide 12) -->
+                                <div class="rounded-2xl p-5 bg-gradient-to-r from-[#00529B]/10 via-emerald-500/10 to-[#F47920]/10 border border-[#00529B]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div>
+                                        <div class="text-[11px] font-black uppercase tracking-wider text-[#00529B] dark:text-blue-300">
+                                            Layanan Konfirmasi Proses Input SA ke Sistem
+                                        </div>
+                                        <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                                            Hubungi kanal resmi Penerimaan Jasa Dept. PP&amp;P untuk konfirmasi status penerbitan Service Acceptance (SA):
+                                        </p>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+                                        <a href="https://wa.me/6285752451225" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition-colors">
+                                            <span>+62 857-5245-1225</span>
+                                        </a>
+                                        <a href="mailto:receiving.jasa@pupukkaltim.com" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#00529B] hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-colors">
+                                            <span>receiving.jasa@pupukkaltim.com</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- END PILAR 3: PENERIMAAN & INVOICING JASA -->
+
         </div>
     </section>
 

@@ -22,22 +22,38 @@
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
                         <span class="relative inline-flex rounded-full w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#F47920]"></span>
                     </span>
-                    Receiving Pupuk Kalimantan Timur v2.0
+                    Bagian Receiving • Dept. PP&amp;P Pupuk Kaltim
                 </div>
 
                 <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] text-slate-800 dark:text-white mb-6 tracking-tight">
-                    Otomasi Logistik <br class="hidden sm:block">
+                    Pusat Layanan <br class="hidden sm:block">
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#ff9b52] relative inline-block">
-                        Inventaris
+                        Receiving &amp; Invoicing
                         <svg class="absolute w-full h-2 sm:h-3 -bottom-2 left-0 text-[#0A4F86]/80 dark:text-[#F47920]/80" viewBox="0 0 100 10" preserveAspectRatio="none">
                             <path d="M0 5 Q 50 10 100 5" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
                         </svg>
                     </span>
                 </h1>
 
-                <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-lg leading-relaxed font-medium">
-                    Platform terpadu untuk memantau pergerakan material, mempercepat proses administrasi di <span class="text-[#F47920] font-bold">receiving</span>, dan memastikan akurasi data gudang secara presisi.
+                <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-6 max-w-lg leading-relaxed font-medium">
+                    Platform resmi <span class="text-[#0A4F86] dark:text-blue-400 font-bold">Department of Planning, Receiving &amp; Warehousing (PP&amp;P)</span> PT Pupuk Kalimantan Timur untuk integrasi <strong>Penerimaan Barang</strong>, <strong>Invoicing Barang</strong>, serta <strong>Penerimaan &amp; Invoicing Jasa (SA)</strong>.
                 </p>
+
+                <!-- 3 Pilar Proses Kerja Receiving Pills -->
+                <div class="flex flex-wrap items-center gap-2 mb-8">
+                    <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        1. Penerimaan Barang (GRS / RDTV)
+                    </a>
+                    <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-blue-500/10 text-[#0A4F86] dark:text-blue-300 border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
+                        <span class="w-2 h-2 rounded-full bg-[#0A4F86] dark:bg-blue-400"></span>
+                        2. Invoicing Barang (Mitraku)
+                    </a>
+                    <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 hover:bg-teal-500/20 transition-colors">
+                        <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                        3. Penerimaan &amp; Invoicing Jasa (SA)
+                    </a>
+                </div>
 
                 <!-- Actions -->
                 <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">

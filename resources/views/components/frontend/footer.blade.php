@@ -17,7 +17,7 @@
                         class="h-8 md:h-9 w-auto object-contain drop-shadow-sm">
                 </a>
                 <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
-                    Sistem Manajemen Penerimaan, Pemeriksaan Mutu (QC), dan Pengeluaran Material Terpadu di Gudang PT Pupuk Kalimantan Timur.
+                    Sistem Informasi Proses Kerja Bagian Receiving — Departemen Perencanaan, Penerimaan &amp; Pergudangan (Dept. PP&amp;P) PT Pupuk Kalimantan Timur: Penerimaan Barang, Invoicing Barang, serta Penerimaan &amp; Invoicing Jasa.
                 </p>
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -40,12 +40,16 @@
 
             <!-- Unit Kerja Info (Col 3) -->
             <div class="lg:col-span-3 space-y-3">
-                <h4 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white">Departemen Pergudangan</h4>
+                <h4 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white">Bagian Receiving • Dept. PP&amp;P</h4>
                 <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Gudang Pusat Material & Suku Cadang<br>
+                    Department of Planning, Receiving &amp; Warehousing<br>
                     PT Pupuk Kalimantan Timur<br>
                     Bontang, Kalimantan Timur
                 </p>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5 pt-1">
+                    <div>Konfirmasi SA Jasa: <a href="https://wa.me/6285752451225" target="_blank" rel="noopener" class="font-bold text-slate-700 dark:text-slate-200 hover:text-[#F47920]">+62 857-5245-1225</a></div>
+                    <div>Email: <a href="mailto:receiving.jasa@pupukkaltim.com" class="font-bold text-slate-700 dark:text-slate-200 hover:text-[#F47920]">receiving.jasa@pupukkaltim.com</a></div>
+                </div>
                 <div class="pt-1">
                     <button type="button" onclick="startAiTour()" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#F47920] hover:underline">
                         <span>Panduan Asisten ALEX</span>
