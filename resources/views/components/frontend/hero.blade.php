@@ -28,7 +28,7 @@
                 <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] text-slate-800 dark:text-white mb-6 tracking-tight">
                     Pusat Layanan <br class="hidden sm:block">
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#ff9b52] relative inline-block">
-                        Receiving &amp; Invoicing
+                        Unit Receivng
                         <svg class="absolute w-full h-2 sm:h-3 -bottom-2 left-0 text-[#0A4F86]/80 dark:text-[#F47920]/80" viewBox="0 0 100 10" preserveAspectRatio="none">
                             <path d="M0 5 Q 50 10 100 5" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
                         </svg>
@@ -36,7 +36,7 @@
                 </h1>
 
                 <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-6 max-w-lg leading-relaxed font-medium">
-                    Platform resmi <span class="text-[#0A4F86] dark:text-blue-400 font-bold">Department of Planning, Receiving &amp; Warehousing (PP&amp;P)</span> PT Pupuk Kalimantan Timur untuk integrasi <strong>Penerimaan Barang</strong>, <strong>Invoicing Barang</strong>, serta <strong>Penerimaan &amp; Invoicing Jasa (SA)</strong>.
+                    Platform resmi <span class="text-[#0A4F86] dark:text-blue-400 font-bold">Department Perencanaan, Penerimaan &amp; Pergudangan (PP&amp;P)</span> PT Pupuk Kalimantan Timur untuk integrasi <strong>Penerimaan Barang</strong>, <strong>Invoicing Barang</strong>, serta <strong>Penerimaan &amp; Invoicing Jasa (SA)</strong>.
                 </p>
 
                 <!-- 3 Pilar Proses Kerja Receiving Pills -->
