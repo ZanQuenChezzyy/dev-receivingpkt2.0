@@ -228,7 +228,12 @@
 
 /* Khusus wadah Login, buat opacity background-nya 0 agar murni blur tanpa warna susu */
 .fi-simple-page-content {
-    @apply !bg-white/0 dark:!bg-gray-900/0;
+    @apply !bg-white/0 dark:!bg-gray-900/0 relative z-10;
+}
+
+.fi-auth-content-section {
+    position: relative;
+    overflow: hidden;
 }
 
 /* Memaksa elemen description di dalam stat widget agar merentang 100% lebarnya 
