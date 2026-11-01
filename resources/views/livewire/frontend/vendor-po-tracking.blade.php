@@ -14,7 +14,7 @@
                 <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Portal Tracking Vendor PKT
+                Portal Tracking Vendor PKT • Khusus Rekanan
             </div>
             <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tight mb-4">
                 Lacak Pergerakan <br class="hidden sm:inline">
@@ -23,8 +23,14 @@
                 </span>
             </h1>
             <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium max-w-2xl mx-auto">
-                Pantau status penerimaan surat jalan, Pengajuan QC, hingga GRS secara real-time.
+                Pantau status penerimaan surat jalan, Pengajuan QC, hingga GRS secara real-time khusus bagi Rekanan/Vendor PT Pupuk Kalimantan Timur (wajib verifikasi email resmi vendor).
             </p>
+            <div class="mt-4 inline-flex flex-wrap items-center justify-center gap-2 px-4 py-2 rounded-2xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/25 text-xs text-slate-700 dark:text-slate-200">
+                <span class="font-bold text-[#0A4F86] dark:text-sky-400">Info User Internal PKT:</span>
+                <span>Untuk cek kedatangan barang atau pengambilan material, gunakan</span>
+                <a href="{{ route('frontend.list-material') }}" wire:navigate class="font-extrabold text-[#F47920] underline hover:text-[#BE5A27]">Daftar Material</a>
+                <span>atau tanya langsung pada <strong>ALEX Asisten AI Receiving</strong> di pojok kanan bawah.</span>
+            </div>
         </div>
 
         <!-- 1. PO SEARCH BOX -->
@@ -132,9 +138,9 @@
                 </div>
                 <div class="flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span>Sinkronisasi Realtime SAP 103/105</span>
+                    <span>Support SAP 103/105 (Update Bertahap)</span>
                 </div>
             </div>
         </div>
@@ -234,23 +240,6 @@
                                     </svg>
                                 </button>
                             @endif
-                        </div>
-
-                        <!-- Quick Sample PO Chips inside modal -->
-                        <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px]">
-                            <span class="text-slate-500 dark:text-slate-400 font-bold">Pilih Contoh:</span>
-                            <button type="button" wire:click="selectSamplePo('5300065628')"
-                                class="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-orange-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono font-bold hover:border-[#F47920] hover:text-[#F47920] transition-colors cursor-pointer">
-                                5300065628
-                            </button>
-                            <button type="button" wire:click="selectSamplePo('5300065629')"
-                                class="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-orange-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono font-bold hover:border-[#F47920] hover:text-[#F47920] transition-colors cursor-pointer">
-                                5300065629
-                            </button>
-                            <button type="button" wire:click="selectSamplePo('5300065757')"
-                                class="px-2.5 py-0.5 rounded-md bg-slate-100 hover:bg-orange-50 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono font-bold hover:border-[#F47920] hover:text-[#F47920] transition-colors cursor-pointer">
-                                5300065757
-                            </button>
                         </div>
                     </div>
 

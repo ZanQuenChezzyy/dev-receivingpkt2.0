@@ -11,7 +11,7 @@
                 :color="$isActive ? 'primary' : 'gray'"
                 size="md"
                 :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-s-moon'"
-                tooltip="{{ $isActive ? 'Matikan AI' : 'Hidupkan AI' }}"
+                tooltip="{{ $isActive ? 'Matikan ALEX Asisten AI Receiving' : 'Hidupkan ALEX Asisten AI Receiving' }}"
             />
         </div>
 
@@ -25,9 +25,9 @@
                 :color="$isActive ? 'primary' : 'gray'"
                 size="sm"
                 :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-s-moon'"
-                tooltip="{{ $isActive ? 'Sistem AI Aktif (Klik untuk mematikan)' : 'Sistem AI Sedang Maintenance (Klik untuk mengaktifkan)' }}"
+                tooltip="{{ $isActive ? 'ALEX Asisten AI Receiving Aktif (Klik untuk mematikan)' : 'ALEX Asisten AI Receiving Sedang Maintenance (Klik untuk mengaktifkan)' }}"
             >
-                {{ $isActive ? 'AI ON' : 'AI OFF' }}
+                {{ $isActive ? 'ALEX AI ON' : 'ALEX AI OFF' }}
             </x-filament::button>
         </div>
     </div>

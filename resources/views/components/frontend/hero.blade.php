@@ -1,3 +1,29 @@
+@php
+    $aiSettingActive = false;
+    $totalItemsCount = 0;
+    $grsCount = 0;
+    $pendingQcCount = 0;
+
+    try {
+        $setting = \App\Models\Setting::where('key', 'ai_system_active')->first();
+        $aiSettingActive = $setting ? $setting->value === '1' : false;
+    } catch (\Throwable $e) {
+        $aiSettingActive = false;
+    }
+
+    try {
+        $totalItemsCount = \App\Models\DeliveryOrderReceiptDetail::count();
+        $grsCount = \App\Models\DeliveryOrderReceipt::where('status', 'GRS')->count();
+        $pendingQcCount = \App\Models\DeliveryOrderReceipt::whereNotIn('status', ['GRS', 'RDTV'])
+            ->whereNotNull('post_103')
+            ->count();
+    } catch (\Throwable $e) {
+        $totalItemsCount = 0;
+        $grsCount = 0;
+        $pendingQcCount = 0;
+    }
+@endphp
+
 <!-- Background Texture -->
     <div class="absolute inset-0 z-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] bg-size-[24px_24px] opacity-15 dark:opacity-10"></div>
 
@@ -59,7 +85,7 @@
 
                 <!-- Actions -->
                 <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-                    <a href="{{ filament()->getLoginUrl() }}"
+                    <a href="{{ auth()->check() ? filament()->getUrl() : filament()->getLoginUrl() }}"
                         class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-sm sm:text-base font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-2xl shadow-[0_10px_30px_-10px_rgba(244,121,32,0.8)] hover:shadow-[0_15px_40px_-10px_rgba(244,121,32,1)] hover:-translate-y-1 transition-all duration-300">
                         Masuk Dashboard
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
@@ -123,35 +149,35 @@
 
                         <!-- Dashboard Content -->
                         <div class="p-5 sm:p-8 flex-1 flex flex-col gap-5 sm:gap-6 bg-linear-to-b from-transparent to-black/20">
-                            <!-- Top Stats -->
+                            <!-- Top Stats (Data Aktual Sistem) -->
                             <div class="grid grid-cols-3 gap-3 sm:gap-5">
-                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group">
-                                    <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#0A4F86]/40 blur-xl rounded-full group-hover:bg-[#0A4F86]/60 transition-colors"></div>
+                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
+                                    <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#0A4F86]/40 blur-xl rounded-full"></div>
                                     <div>
-                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">1,284</div>
+                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">{{ number_format($totalItemsCount) }}</div>
                                         <div class="w-12 sm:w-20 h-1.5 mt-2 rounded-full bg-[#0A4F86]"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Total Item</p>
+                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Total Item DO</p>
                                 </div>
-                                <div class="h-24 sm:h-32 rounded-2xl bg-[#F47920]/10 border border-[#F47920]/30 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden group shadow-[inset_0_0_20px_rgba(244,121,32,0.1)]">
-                                    <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#F47920]/30 blur-xl rounded-full group-hover:bg-[#F47920]/50 transition-colors"></div>
+                                <div class="h-24 sm:h-32 rounded-2xl bg-[#F47920]/10 border border-[#F47920]/30 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden shadow-[inset_0_0_20px_rgba(244,121,32,0.1)]">
+                                    <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#F47920]/30 blur-xl rounded-full"></div>
                                     <div>
-                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">856</div>
+                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">{{ number_format($grsCount) }}</div>
                                         <div class="w-12 sm:w-20 h-1.5 mt-2 rounded-full bg-[#F47920]"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-[#F47920] font-medium">Sudah GRS</p>
+                                    <p class="text-[10px] sm:text-xs text-[#F47920] font-medium">DO Sudah GRS</p>
                                 </div>
                                 <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between shadow-sm">
                                     <div>
-                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">24</div>
+                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">{{ number_format($pendingQcCount) }}</div>
                                         <div class="w-10 sm:w-16 h-1.5 mt-2 rounded-full bg-slate-600"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Pending QC</p>
+                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Proses / QC</p>
                                 </div>
                             </div>
 
                             <!-- Main Chart Area -->
-                            <div class="flex-1 glass-panel p-5 sm:p-6 flex flex-col min-h-36 sm:min-h-0 relative overflow-hidden">
+                            <div class="flex-1 glass-panel p-5 sm:p-6 flex flex-col min-h-36 sm:min-h-0 relative overflow-hidden pointer-events-none select-none">
                                 <div class="absolute bottom-0 left-0 w-full h-1/2 bg-linear-to-t from-[#0A4F86]/20 to-transparent"></div>
                                 
                                 <div class="flex justify-between items-center mb-6 relative z-10">
@@ -161,54 +187,39 @@
                                 
                                 <!-- Mock Bars -->
                                 <div class="flex items-end gap-2 sm:gap-4 h-24 sm:h-36 mt-auto relative z-10">
-                                    <div class="w-full bg-white/10 rounded-t-md h-[40%] hover:bg-white/20 transition-colors"></div>
-                                    <div class="w-full bg-white/20 rounded-t-md h-[70%] hover:bg-white/30 transition-colors"></div>
-                                    <div class="w-full bg-[#0A4F86]/80 rounded-t-md h-[50%] hover:bg-[#0A4F86] transition-colors border-t border-[#0A4F86]/50"></div>
-                                    <div class="w-full bg-linear-to-t from-[#BE5A27] to-[#F47920] rounded-t-md h-[90%] shadow-[0_0_15px_rgba(244,121,32,0.6)] relative group cursor-pointer">
-                                        <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-[#051F34] text-[10px] sm:text-xs font-black px-2.5 py-1.5 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                            Puncak MIGO
-                                        </div>
-                                    </div>
-                                    <div class="w-full bg-[#0A4F86]/60 rounded-t-md h-[60%] hover:bg-[#0A4F86]/80 transition-colors"></div>
-                                    <div class="w-full bg-white/10 rounded-t-md h-[30%] hover:bg-white/20 transition-colors"></div>
+                                    <div class="w-full bg-white/10 rounded-t-md h-[40%]"></div>
+                                    <div class="w-full bg-white/20 rounded-t-md h-[70%]"></div>
+                                    <div class="w-full bg-[#0A4F86]/80 rounded-t-md h-[50%] border-t border-[#0A4F86]/50"></div>
+                                    <div class="w-full bg-linear-to-t from-[#BE5A27] to-[#F47920] rounded-t-md h-[90%] shadow-[0_0_15px_rgba(244,121,32,0.6)] relative"></div>
+                                    <div class="w-full bg-[#0A4F86]/60 rounded-t-md h-[60%]"></div>
+                                    <div class="w-full bg-white/10 rounded-t-md h-[30%]"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Floating Glass Widget 1 -->
-                    <div class="absolute -bottom-5 left-0 sm:-bottom-10 sm:-left-12 glass-panel p-3 sm:p-5 sm:rounded-3xl flex items-center gap-3 sm:gap-4 animate-bounce hover:scale-105 transition-transform" style="animation-duration: 4s;">
-                        <div class="relative flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-[#F47920]/10 dark:bg-[#F47920]/20 border border-[#F47920]/30 dark:border-[#F47920]/50">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-xl bg-[#F47920] opacity-30"></span>
-                            <svg class="w-5 h-5 sm:w-7 sm:h-7 text-[#F47920]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    <!-- Floating Glass Widget 1 (Informational Badge) -->
+                    <div class="absolute -bottom-5 left-0 sm:-bottom-8 sm:-left-10 glass-panel px-3.5 py-2.5 sm:px-4 sm:py-3.5 rounded-2xl flex items-center gap-3 pointer-events-none select-none opacity-95">
+                        <div class="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-200/80 dark:border-white/15 text-[#0A4F86] dark:text-slate-200">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
                         </div>
-                        <div class="pr-2 sm:pr-4">
-                            <p class="text-sm sm:text-base font-black text-slate-800 dark:text-white tracking-wide">Integrasi SAP</p>
-                            <p class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">Update data real-time</p>
+                        <div class="pr-1 sm:pr-2">
+                            <p class="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 tracking-wide">Support SAP</p>
+                            <p class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Update Data Bertahap</p>
                         </div>
                     </div>
 
-                    <!-- Floating Glass Widget 2 -->
-                    <div class="absolute -top-6 right-2 sm:top-10 sm:-right-10 glass-panel px-4 py-3 sm:px-6 sm:py-4 sm:rounded-2xl flex items-center gap-3 transform hover:-rotate-3 transition-transform z-20">
-                        <div class="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]"></div>
-                        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-white tracking-wider">Data Receiving Terpusat</p>
+                    <!-- Floating Glass Widget 2 (Informational Badge) -->
+                    <div class="absolute -top-5 right-2 sm:top-8 sm:-right-8 glass-panel px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-2xl flex items-center gap-2.5 z-20 pointer-events-none select-none opacity-95">
+                        <div class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500/80"></div>
+                        <p class="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-wide">Data Receiving Terpusat</p>
                     </div>
 
                 </div>
             </div>
         </div>
-
-        @php
-            $aiSettingActive = false;
-            try {
-                $setting = \App\Models\Setting::where('key', 'ai_system_active')->first();
-                $aiSettingActive = $setting ? $setting->value === '1' : false;
-            } catch (\Exception $e) {
-                $aiSettingActive = false;
-            }
-        @endphp
 
         <!-- AI Notification Modal -->
         <div x-data="{ 
@@ -237,23 +248,23 @@
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">Sistem AI Aktif</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm">Sistem AI sudah dapat digunakan</p>
+                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">ALEX • Asisten AI Receiving Aktif</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm">ALEX Asisten AI Receiving sudah dapat digunakan</p>
                         </div>
                     @else
                         <div class="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">Sistem AI Sedang Maintenance</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm">Sedang dalam masa training</p>
+                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">ALEX • Asisten AI Receiving Maintenance</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm">Sedang dalam masa pemeliharaan &amp; pelatihan model</p>
                         </div>
                     @endif
                 </div>
 
                 <div class="text-slate-600 dark:text-slate-300 mb-6 sm:mb-8 leading-relaxed">
                     @if($aiSettingActive)
-                        <p class="text-sm sm:text-base">Mokondo AI Receiving Pupuk Kalimantan Timur v2.0 saat ini telah aktif! Asisten chatbot cerdas kami siap membantu Anda mengecek status barang dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.</p>
+                        <p class="text-sm sm:text-base"><strong>ALEX — Asisten AI Receiving</strong> PT Pupuk Kalimantan Timur saat ini telah aktif! ALEX siap membantu Anda mengecek status PO/DO dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.</p>
 
                         <div class="mt-4 sm:mt-6 relative group overflow-hidden rounded-2xl">
                             <!-- Animated Glow Background -->
@@ -265,12 +276,12 @@
                                 </div>
                                 <h4 class="text-base sm:text-lg font-black text-slate-800 dark:text-white mb-1.5 tracking-tight">Baru Pertama Kali Menggunakan Sistem?</h4>
                                 <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mb-4 max-w-sm leading-relaxed font-medium">
-                                    Ikuti panduan interaktif 4 langkah cepat untuk mengetahui cara melacak PO, surat jalan DO, dan status material bersama asisten AI ALEX.
+                                    Ikuti panduan interaktif 4 langkah cepat untuk mengetahui cara melacak PO, surat jalan DO, dan status material bersama ALEX Asisten AI Receiving.
                                 </p>
                                 
                                 <div class="grid grid-cols-2 gap-2 w-full max-w-xs mb-4 text-[11px] font-bold text-slate-600 dark:text-slate-300">
                                     <div class="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                                        <span>🤖</span> <span>Buka Chatbot</span>
+                                        <span>🤖</span> <span>Tanya ALEX</span>
                                     </div>
                                     <div class="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
                                         <span>⚡</span> <span>Saran Cepat</span>
@@ -284,13 +295,13 @@
                                 </div>
 
                                 <button @click="closeModal(); startAiTour()" class="flex items-center justify-center w-full sm:w-auto gap-2.5 px-6 py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 text-white text-xs sm:text-sm font-black rounded-xl shadow-[0_8px_20px_-6px_rgba(244,121,32,0.6)] hover:shadow-[0_12px_25px_-6px_rgba(244,121,32,0.8)] transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer">
-                                    <span>Mulai Tur Panduan AI (4 Langkah)</span>
+                                    <span>Mulai Panduan ALEX (4 Langkah)</span>
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                                 </button>
                             </div>
                         </div>
                     @else
-                        <p class="text-sm sm:text-base">Mokondo AI Receiving Pupuk Kalimantan Timur v2.0 saat ini sedang dalam masa pemeliharaan dan pelatihan Model (Training). Layanan chatbot cerdas untuk pengecekan status dan pengambilan barang sementara tidak dapat digunakan. Kami mohon maaf atas ketidaknyamanan ini.</p>
+                        <p class="text-sm sm:text-base"><strong>ALEX — Asisten AI Receiving</strong> PT Pupuk Kalimantan Timur saat ini sedang dalam masa pemeliharaan dan pelatihan model (Training). Layanan asisten AI untuk pengecekan status otomatis sementara tidak dapat digunakan, namun Anda tetap dapat mengecek kedatangan barang melalui menu <strong>Daftar Material (PD &amp; Non-Stock)</strong> atau mengajukan <strong>Pengambilan Barang (MIR)</strong> secara manual.</p>
                     @endif
                 </div>
 
@@ -524,8 +535,8 @@
                     id: 'step-1',
                     num: 1,
                     icon: '🤖',
-                    title: 'Buka Chatbot ALEX',
-                    text: 'Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela Asisten AI interaktif Receiving.',
+                    title: 'Buka ALEX — Asisten AI Receiving',
+                    text: 'Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela ALEX Asisten AI Receiving.',
                     attachTo: { element: '#tour-chatbot-button', on: 'left' }
                 },
                 {

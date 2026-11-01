@@ -17,9 +17,11 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -39,6 +41,10 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->spa()
+            ->spaUrlExceptions(fn (): array => [
+                url('/'),
+                route('home'),
+            ])
             ->id('admin')
             ->path('admin')
             ->viteTheme('resources/css/filament/admin/theme.css')
@@ -70,11 +76,22 @@ class AdminPanelProvider extends PanelProvider
                 'panels::simple-page.start',
                 fn (): string => Blade::render('@include(\'filament.components.login-pattern\')')
             )
+            ->renderHook(
+                'panels::auth.login.form.after',
+                fn (): string => Blade::render('<div class="mt-2"><x-filament::button tag="a" :href="route(\'home\')" color="gray" outlined icon="heroicon-o-home-modern" class="w-full">Kembali ke Beranda</x-filament::button></div>')
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
             ->pages([
                 Dashboard::class,
+            ])
+            ->navigationItems([
+                NavigationItem::make('Beranda')
+                    ->url(fn (): string => route('home'))
+                    ->icon(Heroicon::OutlinedHomeModern)
+                    ->activeIcon(Heroicon::HomeModern)
+                    ->sort(-1),
             ])
             ->navigationGroups([
                 'Halaman Utama',

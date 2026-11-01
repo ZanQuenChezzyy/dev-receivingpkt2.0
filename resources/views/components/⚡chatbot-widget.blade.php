@@ -1,12 +1,14 @@
 <?php
 
 use App\Models\DeliveryOrderReceipt;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 use Livewire\Attributes\On; // Tambahkan import ini untuk Event Listener
 
 new class extends Component {
     public bool $isOpen = false;
+    public bool $isAiActive = false;
     public string $message = '';
     public array $chats = [];
     public bool $isTyping = false; // Tambahkan state untuk animasi loading AI
@@ -14,16 +16,28 @@ new class extends Component {
 
     public function mount()
     {
+        $this->refreshAiStatus();
         $this->generateSuggestions();
+    }
+
+    #[On('ai-system-toggled')]
+    public function refreshAiStatus(): void
+    {
+        try {
+            $setting = Setting::where('key', 'ai_system_active')->first();
+            $this->isAiActive = $setting ? $setting->value === '1' : false;
+        } catch (\Throwable $e) {
+            $this->isAiActive = false;
+        }
     }
 
     public function generateSuggestions()
     {
         $pool = [
-            "Cek status Penerimaan untuk PO 53000XXXXX",
-            "Cari Material Issue untuk PO 53000XXXXX",
-            "Cek status Penerimaan Material yang memiliki SN 60XXXXX",
-            "Cek riwayat pengambilan barang PO 53000XXXXX"
+            "Cek status Penerimaan untuk PO (Nomor PO)",
+            "Cari Material Issue untuk PO (Nomor PO)",
+            "Cek status Penerimaan Material yang memiliki SN (Nomor SN)",
+            "Cek riwayat pengambilan barang PO (Nomor PO)"
         ];
         shuffle($pool);
         // Ambil 2 atau 3 saran pertanyaan secara acak
@@ -32,24 +46,55 @@ new class extends Component {
 
     public function useSuggestedMessage($text)
     {
+        if (! $this->isAiActive) {
+            return;
+        }
+
         $this->message = $text;
         // Hanya memasukkan teks ke input, user harus tekan kirim sendiri
     }
 
     public function toggleChat()
     {
+        $this->refreshAiStatus();
         $this->isOpen = !$this->isOpen;
         if (empty($this->chats)) {
-            $this->chats[] = [
-                'role' => 'assistant',
-                'content' => 'Halo! Saya ALEX, Asisten AI Receiving. Ada yang bisa saya bantu terkait status PO, Delivery Order, atau pengecekan status material?'
-            ];
+            $this->initGreeting();
         }
         $this->dispatch('chat-toggled', isOpen: $this->isOpen);
     }
 
+    public function clearChat(): void
+    {
+        $this->refreshAiStatus();
+        $this->chats = [];
+        $this->initGreeting();
+        $this->generateSuggestions();
+    }
+
+    private function initGreeting(): void
+    {
+        $this->chats[] = [
+            'role' => 'assistant',
+            'content' => $this->isAiActive
+                ? 'Halo! Saya **ALEX**, Asisten AI Receiving PT Pupuk Kalimantan Timur. Silakan ketik **Nomor PO**, **Nomor Surat Jalan (DO)**, **Stock Number**, atau **Nomor MIR** yang ingin Anda tanyakan.'
+                : 'Mohon maaf, **ALEX — Asisten AI Receiving** PT Pupuk Kalimantan Timur saat ini sedang **Offline / Maintenance** (dalam masa pemeliharaan & training). Silakan gunakan menu **Daftar Material** atau **Formulir MIR** untuk pengecekan manual.'
+        ];
+    }
+
     public function sendMessage()
     {
+        $this->refreshAiStatus();
+        if (! $this->isAiActive) {
+            $this->chats[] = [
+                'role' => 'assistant',
+                'content' => 'Mohon maaf, **ALEX — Asisten AI Receiving** saat ini sedang **Offline / Maintenance**. Silakan coba kembali saat layanan telah diaktifkan.'
+            ];
+            $this->message = '';
+
+            return;
+        }
+
         $this->validate(['message' => 'required|string|max:255']);
 
         // 1. Simpan pesan user ke variabel lokal
@@ -456,48 +501,96 @@ new class extends Component {
 };
 ?>
 <div id="chatbot-widget-container" class="fixed bottom-6 right-6 z-50 font-sans">
-    <!-- Tombol Chat (Floating) -->
-    <div class="relative group" id="tour-chatbot-button">
-        <!-- Efek Glow Oranye di belakang tombol -->
+    <!-- Tombol Chat (Floating - Mencolok & Interaktif) -->
+    <div class="relative flex items-center gap-3 group" id="tour-chatbot-button">
+        <!-- Floating Callout Bubble (Muncul saat chat tertutup) -->
         <div x-show="!$wire.isOpen"
-            class="absolute -inset-2 bg-[#F47920] rounded-full blur-xl opacity-20 group-hover:opacity-40 transition duration-500 animate-pulse">
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-x-4 scale-95"
+            x-transition:enter-end="opacity-100 translate-x-0 scale-100"
+            @click="$wire.toggleChat()"
+            class="cursor-pointer select-none relative flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900/95 border-2 {{ $isAiActive ? 'border-[#F47920]/50 shadow-[0_10px_30px_-5px_rgba(244,121,32,0.35)] hover:shadow-[0_14px_35px_-5px_rgba(244,121,32,0.55)] hover:border-[#F47920] animate-bounce' : 'border-amber-500/40 dark:border-slate-700 shadow-lg hover:border-amber-500/70' }} transition-all duration-300 hover:-translate-y-0.5"
+            style="animation-duration: 3.2s;">
+            <span class="relative flex h-2.5 w-2.5 shrink-0">
+                @if($isAiActive)
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                @else
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                @endif
+            </span>
+            <div class="text-left leading-tight">
+                @if($isAiActive)
+                    <span class="block text-[10px] font-black uppercase tracking-wider text-[#F47920]">ALEX • Asisten AI Receiving</span>
+                    <span class="block text-xs sm:text-sm font-extrabold text-slate-800 dark:text-white whitespace-nowrap">Tanya ALEX • Cek Kedatangan</span>
+                @else
+                    <span class="block text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">ALEX • Asisten AI Receiving</span>
+                    <span class="block text-xs sm:text-sm font-extrabold text-slate-700 dark:text-slate-300 whitespace-nowrap">Offline • Sedang Maintenance</span>
+                @endif
+            </div>
+            <!-- Segitiga panah ke arah tombol -->
+            <div class="w-2.5 h-2.5 bg-white dark:bg-slate-900 border-t-2 border-r-2 {{ $isAiActive ? 'border-[#F47920]/50' : 'border-amber-500/40 dark:border-slate-700' }} rotate-45 -mr-5.5 shrink-0 hidden sm:block"></div>
         </div>
-        <button wire:click="toggleChat"
-            class="glass-btn relative w-14 h-14 rounded-full flex items-center justify-center text-[#F47920] transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 group-hover:border-[#F47920]/50">
 
-            <!-- Icon Chat (Tutup) -->
-            <svg x-show="!$wire.isOpen" class="w-7 h-7 transition-transform duration-300 group-hover:animate-bounce" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
-                <path d="M8 12h.01"></path>
-                <path d="M12 12h.01"></path>
-                <path d="M16 12h.01"></path>
-            </svg>
+        <!-- Tombol Utama Bulat Bergradasi Mencolok -->
+        <div class="relative">
+            @if($isAiActive)
+                <!-- Efek Ping & Glow Oranye Kuat di belakang tombol saat AI Online -->
+                <span x-show="!$wire.isOpen"
+                    class="animate-ping absolute -inset-1.5 rounded-full bg-[#F47920] opacity-40 duration-1000"></span>
+                <div x-show="!$wire.isOpen"
+                    class="absolute -inset-2.5 bg-gradient-to-r from-[#F47920] via-amber-400 to-[#BE5A27] rounded-full blur-xl opacity-60 group-hover:opacity-90 transition duration-500 animate-pulse">
+                </div>
+            @endif
 
-            <!-- Icon Close (Buka) -->
-            <svg x-show="$wire.isOpen" style="display: none;"
-                class="w-6 h-6 transition-transform duration-300 rotate-90 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        </button>
+            <button wire:click="toggleChat"
+                aria-label="Buka ALEX Asisten AI Receiving"
+                class="relative w-15 h-15 sm:w-16 sm:h-16 rounded-full flex items-center justify-center {{ $isAiActive ? 'bg-gradient-to-br from-[#F47920] via-[#ff852e] to-[#BE5A27] shadow-[0_12px_32px_-4px_rgba(244,121,32,0.85)] hover:shadow-[0_16px_40px_-2px_rgba(244,121,32,1)]' : 'bg-gradient-to-br from-slate-600 via-slate-700 to-slate-800 shadow-lg' }} text-white border-2 border-white/80 dark:border-white/30 transition-all duration-300 ease-out transform hover:scale-110 active:scale-95 cursor-pointer">
+
+                <!-- Badge Notifikasi Online/Offline di Sudut Atas Tombol -->
+                <span x-show="!$wire.isOpen"
+                    class="absolute -top-1 -right-1 flex items-center justify-center px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider {{ $isAiActive ? 'bg-emerald-500' : 'bg-amber-500' }} text-white rounded-full border-2 border-white dark:border-slate-900 shadow-md">
+                    {{ $isAiActive ? 'ON' : 'OFF' }}
+                </span>
+
+                <!-- Icon Robot / Chat (Saat Tertutup) -->
+                <svg x-show="!$wire.isOpen" class="w-7 h-7 sm:w-8 sm:h-8 text-white drop-shadow-sm transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 8V4H8"></path>
+                    <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+                    <path d="M2 14h2"></path>
+                    <path d="M20 14h2"></path>
+                    <path d="M15 13v2"></path>
+                    <path d="M9 13v2"></path>
+                </svg>
+
+                <!-- Icon Close (Saat Terbuka) -->
+                <svg x-show="$wire.isOpen" style="display: none;"
+                    class="w-6 h-6 transition-transform duration-300 rotate-90 text-white" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
     </div>
 
-    <!-- Jendela Chat -->
+    <!-- Jendela Chat (Modern Elevated UI) -->
     <div x-show="$wire.isOpen" style="display: none;" x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 translate-y-8 scale-95"
         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-8 scale-95"
-        class="glass-panel fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:max-w-[380px] h-[100dvh] md:h-[38rem] md:rounded-[1.5rem] overflow-hidden flex flex-col z-[100] md:z-auto" id="tour-chatbot-window">
+        class="fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:w-[410px] md:max-w-[410px] h-[100dvh] md:h-[40rem] bg-white/95 dark:bg-[#041829]/95 backdrop-blur-2xl md:rounded-[1.75rem] border-0 md:border-2 {{ $isAiActive ? 'md:border-[#F47920]/35 shadow-[0_25px_70px_-15px_rgba(3,21,37,0.55)]' : 'md:border-amber-500/35 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.55)]' }} overflow-hidden flex flex-col z-[100] md:z-auto" id="tour-chatbot-window">
 
-        <!-- Header -->
-        <div class="glass-nav px-6 py-5 flex items-center justify-between relative z-20 overflow-hidden">
+        <!-- Header Bergradasi Korporat PKT -->
+        <div class="relative px-5 py-4 flex items-center justify-between z-20 overflow-hidden {{ $isAiActive ? 'bg-gradient-to-r from-[#031525] via-[#0A4F86] to-[#073B66]' : 'bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800' }} text-white border-b border-white/10 shadow-md">
+            <!-- Ambient Glow di Header -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 {{ $isAiActive ? 'bg-[#F47920]/35' : 'bg-amber-500/20' }} rounded-full blur-2xl pointer-events-none"></div>
+
             <div class="flex items-center gap-3.5 relative z-10">
-                <div class="relative group">
-                    <div
-                        class="w-11 h-11 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm border border-slate-200/80 dark:border-white/5 group-hover:border-[#F47920]/50 transition-all duration-300">
-                        <svg class="w-6 h-6 text-[#F47920]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <div class="relative">
+                    <div class="w-11 h-11 rounded-2xl {{ $isAiActive ? 'bg-gradient-to-br from-[#F47920] to-[#BE5A27] shadow-lg shadow-[#F47920]/30' : 'bg-slate-700' }} flex items-center justify-center border border-white/25">
+                        <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 8V4H8"></path>
                             <rect width="16" height="12" x="4" y="8" rx="2"></rect>
                             <path d="M2 14h2"></path>
@@ -506,34 +599,92 @@ new class extends Component {
                             <path d="M9 13v2"></path>
                         </svg>
                     </div>
-                    <span
-                        class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-[#031525] rounded-full shadow-sm"></span>
+                    <span class="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5">
+                        @if($isAiActive)
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-[#031525]"></span>
+                        @else
+                            <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-500 border-2 border-slate-900"></span>
+                        @endif
+                    </span>
                 </div>
                 <div>
-                    <h3 class="text-[15px] font-bold text-slate-800 dark:text-white tracking-tight">ALEX</h3>
-                    <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium tracking-wide mt-0.5">Asisten AI Receiving</p>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-base font-black text-white tracking-tight">ALEX</h3>
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider {{ $isAiActive ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' : 'bg-amber-500/20 text-amber-300 border border-amber-400/30' }}">
+                            {{ $isAiActive ? '● Online' : '● Offline' }}
+                        </span>
+                    </div>
+                    <p class="text-[11px] text-slate-200/85 font-medium tracking-wide mt-0.5">
+                        {{ $isAiActive ? 'Asisten AI Receiving • Pupuk Kaltim' : 'Asisten AI Receiving • Maintenance' }}
+                    </p>
                 </div>
             </div>
 
             <div class="flex items-center gap-1.5 relative z-10">
+                <button wire:click="clearChat"
+                    title="Mulai Ulang Obrolan"
+                    class="text-white/75 hover:text-white transition-all duration-200 bg-white/10 hover:bg-white/20 p-2 rounded-xl active:scale-95 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
                 <button wire:click="toggleChat"
-                    title="Tutup Chatbot"
-                    class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-all duration-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-2 rounded-xl active:scale-95">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path>
+                    title="Tutup Jendela ALEX"
+                    class="text-white/75 hover:text-white transition-all duration-200 bg-white/10 hover:bg-rose-500/80 p-2 rounded-xl active:scale-95 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
         </div>
 
-        <!-- Ruang Obrolan -->
-        <div class="flex-1 p-5 overflow-y-auto bg-slate-50/50 dark:bg-transparent flex flex-col gap-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent relative" id="chat-container">
+        <!-- Sub-Header Pintasan Cepat (User PKT) -->
+        <div class="px-4 py-2 bg-slate-100/90 dark:bg-[#031525]/90 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-2 text-[11px]">
+            <span class="font-bold text-slate-500 dark:text-slate-400 truncate">Pintasan User:</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <a href="{{ route('frontend.list-material') }}" wire:navigate class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-white/10 font-bold text-slate-700 dark:text-slate-200 hover:border-[#F47920] hover:text-[#F47920] transition-colors">
+                    Daftar Material
+                </a>
+                <a href="{{ route('frontend.mir.create') }}" wire:navigate class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-white/10 font-bold text-slate-700 dark:text-slate-200 hover:border-[#F47920] hover:text-[#F47920] transition-colors">
+                    Formulir MIR
+                </a>
+            </div>
+        </div>
 
+        <!-- Ruang Obrolan -->
+        <div class="flex-1 p-4 sm:p-5 overflow-y-auto bg-gradient-to-b from-slate-50/90 via-white to-slate-50/90 dark:from-[#031525]/60 dark:via-[#041829]/80 dark:to-[#031525]/90 flex flex-col gap-5 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent relative" id="chat-container">
+
+            <!-- Tanggal Hari Ini -->
             <div class="flex justify-center">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/70 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5 shadow-sm backdrop-blur-md">
-                    <span class="text-[9px] font-bold tracking-widest uppercase text-slate-500 dark:text-slate-400">Hari ini</span>
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200/70 dark:bg-slate-800/80 border border-slate-300/60 dark:border-white/10 shadow-2xs">
+                    <span class="w-1.5 h-1.5 rounded-full {{ $isAiActive ? 'bg-[#F47920]' : 'bg-amber-500' }}"></span>
+                    <span class="text-[10px] font-extrabold tracking-wider uppercase text-slate-600 dark:text-slate-300">Percakapan Hari Ini</span>
                 </div>
             </div>
+
+            <!-- Banner Peringatan jika AI Sedang Offline / Maintenance -->
+            @if(!$isAiActive)
+                <div class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300/80 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 text-xs space-y-2.5 shadow-sm">
+                    <div class="flex items-center gap-2 font-black text-amber-700 dark:text-amber-300">
+                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span>Mode Pemeliharaan (ALEX Offline)</span>
+                    </div>
+                    <p class="leading-relaxed text-[11.5px] text-amber-800 dark:text-amber-200/90">
+                        ALEX — Asisten AI Receiving sedang dinonaktifkan sementara oleh Administrator. Bagi User PKT, silakan cek kedatangan barang atau ajukan pengambilan melalui tombol di bawah ini:
+                    </p>
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <a href="{{ route('frontend.list-material') }}" wire:navigate class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#F47920] hover:bg-[#BE5A27] text-white font-bold text-[11px] shadow-sm transition-colors text-center">
+                            <span>Daftar Material</span>
+                        </a>
+                        <a href="{{ route('frontend.mir.create') }}" wire:navigate class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-white dark:bg-slate-800 border border-amber-400/60 dark:border-white/15 text-slate-800 dark:text-white font-bold text-[11px] hover:bg-amber-100/50 transition-colors text-center">
+                            <span>Formulir MIR</span>
+                        </a>
+                    </div>
+                </div>
+            @endif
 
             @foreach($chats as $chat)
                 @if($chat['role'] === 'tool')
@@ -545,33 +696,35 @@ new class extends Component {
                 @endif
 
                 @if($chat['role'] === 'assistant')
-                        <!-- Bubble AI -->
-                        <div class="flex items-start gap-3 max-w-[92%] group">
-                            <div class="relative flex-shrink-0 mt-1">
-                                <div class="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm border border-slate-200/80 dark:border-white/10 relative z-10">
-                                    <svg class="w-4 h-4 text-[#F47920]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 8V4H8"></path>
-                                        <rect width="16" height="12" x="4" y="8" rx="2"></rect>
-                                        <path d="M2 14h2"></path>
-                                        <path d="M20 14h2"></path>
-                                        <path d="M15 13v2"></path>
-                                        <path d="M9 13v2"></path>
-                                    </svg>
-                                </div>
+                    <!-- Bubble AI -->
+                    <div class="flex items-start gap-2.5 max-w-[94%] group animate-fade-in-up">
+                        <div class="relative flex-shrink-0 mt-1">
+                            <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0A4F86] to-[#031525] text-white flex items-center justify-center shadow-sm border border-white/20">
+                                <svg class="w-4 h-4 text-[#F47920]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 8V4H8"></path>
+                                    <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+                                    <path d="M2 14h2"></path>
+                                    <path d="M20 14h2"></path>
+                                    <path d="M15 13v2"></path>
+                                    <path d="M9 13v2"></path>
+                                </svg>
                             </div>
-                            <div
-                                class="bg-white dark:bg-slate-800/80 px-5 py-4 rounded-[1.5rem] rounded-tl-sm shadow-sm border border-slate-200/60 dark:border-white/5 text-[13.5px] text-slate-700 dark:text-slate-300 leading-relaxed ai-markdown-content transition-shadow duration-300 backdrop-blur-md min-w-0 overflow-hidden">
+                        </div>
+                        <div class="flex flex-col gap-1 min-w-0">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#0A4F86] dark:text-sky-400 ml-1">ALEX • Asisten AI Receiving</span>
+                            <div class="bg-white dark:bg-slate-800/95 px-4 py-3.5 rounded-2xl rounded-tl-xs shadow-sm border border-slate-200/90 dark:border-white/10 text-[13.5px] text-slate-700 dark:text-slate-200 leading-relaxed ai-markdown-content min-w-0 overflow-hidden">
                                 {!! str($chat['content'])->markdown([
                                     'html_input' => 'escape',
                                     'allow_unsafe_links' => false,
                                 ]) !!}
                             </div>
                         </div>
+                    </div>
                 @else
                     <!-- Bubble User -->
-                    <div class="flex items-end justify-end w-full">
-                        <div
-                            class="bg-gradient-to-r from-[#F47920] to-[#BE5A27] text-white px-5 py-3.5 rounded-[1.5rem] rounded-tr-sm shadow-md shadow-[#F47920]/20 text-[13.5px] leading-relaxed max-w-[85%] relative overflow-hidden transform hover:-translate-y-0.5 transition-transform duration-300">
+                    <div class="flex flex-col items-end w-full animate-fade-in-up">
+                        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 mr-1 mb-1">Anda</span>
+                        <div class="bg-gradient-to-br from-[#F47920] to-[#BE5A27] text-white px-4 py-3 rounded-2xl rounded-tr-xs shadow-md shadow-[#F47920]/20 text-[13.5px] font-medium leading-relaxed max-w-[85%] relative overflow-hidden">
                             <span class="relative z-10 block">{{ $chat['content'] }}</span>
                         </div>
                     </div>
@@ -580,7 +733,7 @@ new class extends Component {
 
             <!-- Loading Indicator & Streaming Bubble -->
             @if($isTyping)
-                <div class="flex items-start gap-3 max-w-[92%] group" wire:key="typing-indicator" x-data="{
+                <div class="flex items-start gap-2.5 max-w-[94%] group" wire:key="typing-indicator" x-data="{
                     texts: [
                         'Menganalisis pertanyaan...',
                         'Mencari data PO/DO terkait...',
@@ -606,8 +759,8 @@ new class extends Component {
                     }
                 }">
                     <div class="relative flex-shrink-0 mt-1">
-                        <div class="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm border border-slate-200/80 dark:border-white/10 relative z-10" :class="{'animate-pulse bg-slate-200 dark:bg-slate-700': !isStreaming}">
-                            <svg x-show="isStreaming" class="w-4 h-4 text-[#F47920]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0A4F86] to-[#031525] flex items-center justify-center shadow-sm border border-white/20" :class="{'animate-pulse': !isStreaming}">
+                            <svg class="w-4 h-4 text-[#F47920]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 8V4H8"></path>
                                 <rect width="16" height="12" x="4" y="8" rx="2"></rect>
                                 <path d="M2 14h2"></path>
@@ -615,36 +768,42 @@ new class extends Component {
                                 <path d="M15 13v2"></path>
                                 <path d="M9 13v2"></path>
                             </svg>
-                            <span x-show="!isStreaming" class="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full"></span>
                         </div>
                     </div>
                     <div class="flex flex-col gap-1.5 min-w-0 w-full overflow-hidden">
-                        <div class="bg-white dark:bg-slate-800/80 px-5 py-4 rounded-[1.5rem] rounded-tl-sm shadow-sm border border-slate-200/60 dark:border-white/5 text-[13.5px] text-slate-700 dark:text-slate-300 leading-relaxed ai-markdown-content backdrop-blur-md min-w-[50px] w-fit transition-shadow duration-300"
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#F47920] ml-1" x-text="isStreaming ? 'ALEX • Mengetik...' : texts[currentIndex]">Berpikir...</span>
+                        <div class="bg-white dark:bg-slate-800/95 px-4 py-3.5 rounded-2xl rounded-tl-xs shadow-sm border border-[#F47920]/30 dark:border-[#F47920]/30 text-[13.5px] text-slate-700 dark:text-slate-200 leading-relaxed ai-markdown-content min-w-[60px] w-fit"
                              wire:stream="ai-reply-stream" 
                              x-ref="streamContainer">
-                            <div class="flex items-center gap-1.5 h-6">
-                                <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce"></span>
-                                <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
-                                <span class="w-1.5 h-1.5 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                            <div class="flex items-center gap-1.5 h-5 px-1">
+                                <span class="w-2 h-2 bg-[#F47920] rounded-full animate-bounce"></span>
+                                <span class="w-2 h-2 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
+                                <span class="w-2 h-2 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
                             </div>
                         </div>
-                        <span x-show="!isStreaming" class="text-[10px] font-medium text-slate-500 dark:text-slate-400 animate-pulse ml-2 tracking-wide" x-text="texts[currentIndex]">Berpikir...</span>
                     </div>
                 </div>
             @endif
 
             <!-- Saran Pertanyaan -->
-            @if(!$isTyping && !empty($suggestedQuestions))
-                <div id="tour-chatbot-suggestions" class="mt-2 mb-2 animate-fade-in-up">
-                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 ml-1">Saran:</p>
+            @if($isAiActive && !$isTyping && !empty($suggestedQuestions))
+                <div id="tour-chatbot-suggestions" class="mt-1 mb-1 animate-fade-in-up bg-orange-50/60 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-[#F47920]/20 dark:border-white/10">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-[#F47920] flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Saran Pertanyaan Cepat
+                        </span>
+                    </div>
                     <div class="flex flex-col gap-2">
                         @foreach($suggestedQuestions as $suggestion)
                             <button wire:click="useSuggestedMessage('{{ $suggestion }}')"
-                                class="px-3.5 py-2.5 bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-white/5 rounded-xl text-[11.5px] font-medium text-slate-700 dark:text-slate-300 hover:bg-[#F47920]/10 hover:border-[#F47920]/30 hover:text-[#F47920] dark:hover:text-[#F89B53] transition-all duration-300 shadow-sm backdrop-blur-sm text-left w-full hover:-translate-y-0.5 group flex items-start gap-2.5">
-                                <svg class="w-3.5 h-3.5 text-[#F47920] opacity-70 group-hover:opacity-100 flex-shrink-0 mt-[2px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                                class="px-3.5 py-2.5 bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-white/10 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-[#F47920]/10 hover:border-[#F47920] hover:text-[#F47920] dark:hover:text-[#F89B53] transition-all duration-200 shadow-2xs text-left w-full group flex items-center justify-between gap-2 cursor-pointer">
+                                <span class="truncate">{{ $suggestion }}</span>
+                                <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-[#F47920] group-hover:translate-x-0.5 transition-all shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                                 </svg>
-                                <span>{{ $suggestion }}</span>
                             </button>
                         @endforeach
                     </div>
@@ -654,8 +813,8 @@ new class extends Component {
 
         <!-- Input Area -->
         <form wire:submit="sendMessage"
-            class="glass-nav p-5 pb-8 md:pb-5 relative z-20 md:rounded-b-[1.5rem]" id="tour-chatbot-input">
-            <div class="glass-input relative flex flex-col rounded-[1.5rem] group p-1.5 pl-4"
+            class="bg-white dark:bg-[#031525] border-t border-slate-200/80 dark:border-white/10 p-4 pb-7 md:pb-4 relative z-20 md:rounded-b-[1.75rem]" id="tour-chatbot-input">
+            <div class="relative flex flex-col rounded-2xl bg-slate-50 dark:bg-slate-900/90 border-2 border-slate-200 dark:border-slate-700/80 focus-within:border-[#F47920] dark:focus-within:border-[#F47920] focus-within:ring-4 focus-within:ring-[#F47920]/15 transition-all p-1.5 pl-3.5"
                  x-data="{ 
                     resize() { 
                         $refs.input.style.height = 'auto'; 
@@ -665,30 +824,28 @@ new class extends Component {
                  x-init="$watch('$wire.message', () => { setTimeout(() => resize(), 10) })"
             >
 
-                <textarea wire:model="message" x-ref="input" placeholder="Tanya DO, PO, atau MIR..."
-                    class="w-full pt-3 pb-2 pr-2 bg-transparent text-[16px] md:text-[13.5px] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed font-medium resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 max-h-[120px] leading-relaxed"
-                    required autocomplete="off" @disabled($isTyping)
+                <textarea wire:model="message" x-ref="input" placeholder="{{ $isAiActive ? 'Tanya ALEX seputar nomor PO, DO, atau material...' : 'ALEX Asisten AI Receiving sedang Offline (Maintenance)...' }}"
+                    class="w-full pt-2 pb-1.5 pr-2 bg-transparent text-[15px] md:text-[13.5px] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed font-medium resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 max-h-[120px] leading-relaxed"
+                    required autocomplete="off" @disabled($isTyping || !$isAiActive)
                     @input="resize()"
                     @keydown.enter.prevent="if(!$event.shiftKey && $wire.message.trim() !== '') { $wire.sendMessage(); $refs.input.style.height = 'auto'; }"
                     rows="1"></textarea>
 
-                <div class="flex justify-between items-center w-full mt-1 pr-0.5 mb-0.5">
+                <div class="flex justify-between items-center w-full mt-1 pr-0.5">
                     <!-- Branding (Left) -->
-                    <div class="flex items-center gap-1.5 ml-1">
-                        <div class="relative flex items-center justify-center group-hover:animate-pulse">
-                            <div class="absolute w-3 h-3 bg-[#F47920] rounded-full blur-[3px] opacity-60"></div>
-                            <svg class="w-3 h-3 text-[#F47920] relative z-10 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-                            </svg>
-                        </div>
-                        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">Alex Mokondo AI <span class="text-[#F47920]">2.1</span> Pro</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full {{ $isAiActive ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
+                        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wide">
+                            ALEX • Asisten AI Receiving • <span class="{{ $isAiActive ? 'text-[#F47920]' : 'text-amber-500' }}">{{ $isAiActive ? 'Online' : 'Offline' }}</span>
+                        </span>
                     </div>
 
                     <!-- Button (Right) -->
                     <button type="submit"
-                        class="w-9 h-9 bg-[#F47920] hover:bg-[#E06714] rounded-full flex items-center justify-center text-white shadow-md hover:shadow-[#F47920]/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
-                        @disabled($isTyping)>
-                        <svg class="w-4 h-4 translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        class="px-3.5 py-2 {{ $isAiActive ? 'bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:shadow-lg hover:shadow-[#F47920]/30' : 'bg-slate-400 dark:bg-slate-700' }} rounded-xl flex items-center justify-center gap-1.5 text-white text-xs font-extrabold shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 cursor-pointer"
+                        @disabled($isTyping || !$isAiActive)>
+                        <span>Kirim</span>
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                             stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path>

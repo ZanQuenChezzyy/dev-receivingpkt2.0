@@ -38,7 +38,7 @@
                     @endauth
                     <a href="{{ route('frontend.list-material', ['activeTab' => 'NONSTOCK']) }}" wire:navigate class="text-slate-600 dark:text-slate-400 hover:text-[#F47920] dark:hover:text-white transition-colors">Material Non-Stock</a>
                     <a href="{{ route('frontend.mir.create') }}" wire:navigate class="text-slate-600 dark:text-slate-400 hover:text-[#F47920] dark:hover:text-white transition-colors">Pengambilan Barang (MIR)</a>
-                    <a href="{{ filament()->getLoginUrl() }}" class="text-slate-600 dark:text-slate-400 hover:text-[#F47920] dark:hover:text-white transition-colors">Portal Login Admin</a>
+                    <a href="{{ auth()->check() ? filament()->getUrl() : filament()->getLoginUrl() }}" class="text-slate-600 dark:text-slate-400 hover:text-[#F47920] dark:hover:text-white transition-colors">{{ auth()->check() ? 'Dashboard Admin' : 'Portal Login Admin' }}</a>
                 </div>
             </div>
 
@@ -56,11 +56,27 @@
                         <div>Email: <a href="mailto:receiving.jasa@pupukkaltim.com" class="font-bold text-slate-700 dark:text-slate-200 hover:text-[#F47920]">receiving.jasa@pupukkaltim.com</a></div>
                     </div>
                 @endauth
+                @php
+                    $footerAiActive = false;
+                    try {
+                        $footerSetting = \App\Models\Setting::where('key', 'ai_system_active')->first();
+                        $footerAiActive = $footerSetting ? $footerSetting->value === '1' : false;
+                    } catch (\Throwable $e) {
+                        $footerAiActive = false;
+                    }
+                @endphp
                 <div class="pt-1">
-                    <button type="button" onclick="startAiTour()" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#F47920] hover:underline">
-                        <span>Panduan Asisten ALEX</span>
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </button>
+                    @if ($footerAiActive)
+                        <button type="button" onclick="startAiTour()" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#F47920] hover:underline cursor-pointer">
+                            <span>Panduan ALEX Asisten AI Receiving (Online)</span>
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            <span>ALEX Asisten AI Receiving (Offline)</span>
+                        </span>
+                    @endif
                 </div>
             </div>
         </div>

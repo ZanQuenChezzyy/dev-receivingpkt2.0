@@ -31,6 +31,8 @@ class AiSystemToggle extends Component
             ['key' => 'ai_system_active'],
             ['value' => $this->isActive ? '1' : '0']
         );
+
+        $this->dispatch('ai-system-toggled');
     }
 
     public function render()

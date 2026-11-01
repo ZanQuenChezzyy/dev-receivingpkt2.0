@@ -134,14 +134,14 @@
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span>Akses publik terbuka tanpa login — cukup gunakan Nomor PO</span>
+                                <span>Khusus Rekanan / Vendor PKT — gunakan Nomor PO &amp; Email Resmi Vendor</span>
                             </div>
                             <a href="{{ route('frontend.vendor.tracking') }}" wire:navigate
                                 class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all shrink-0">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
-                                <span>Buka Pelacakan PO Vendor</span>
+                                <span>Portal Lacak PO Vendor</span>
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                                 </svg>
@@ -325,7 +325,7 @@
                     </div>
                 </div>
 
-                <!-- Card 8: Asisten Pintar ALEX (AI) -->
+                <!-- Card 8: ALEX — Asisten AI Receiving -->
                 <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
                     <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-[#F47920]/20 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
 
@@ -337,20 +337,20 @@
                                 </svg>
                             </div>
                             <span class="px-3 py-1 rounded-full text-xs font-bold {{ $aiSettingActive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' }}">
-                                {{ $aiSettingActive ? 'AI Online' : 'AI Training' }}
+                                {{ $aiSettingActive ? 'ALEX Online' : 'ALEX Maintenance' }}
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-                            Asisten Pintar ALEX (AI)
+                            ALEX — Asisten AI Receiving
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                            Layanan chatbot 24/7 untuk menjawab status nomor PO, surat jalan DO, dan memandu alur kerja pengambilan barang secara otomatis.
+                            Asisten AI Receiving 24/7 untuk menjawab status nomor PO, surat jalan DO, dan memandu alur kerja pengambilan barang secara otomatis.
                         </p>
                     </div>
 
                     <button type="button" onclick="startAiTour()"
                         class="relative z-10 inline-flex items-center justify-between w-full p-3.5 rounded-xl bg-slate-900/5 dark:bg-white/5 hover:bg-[#F47920] dark:hover:bg-[#F47920] text-slate-800 dark:text-white hover:text-white transition-all duration-300 font-bold text-xs shadow-sm">
-                        <span>Ikuti Tur Interaktif AI</span>
+                        <span>Ikuti Panduan ALEX</span>
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>
                 </div>
@@ -2388,25 +2388,42 @@
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
                     <!-- Left: Description & Action -->
                     <div class="lg:col-span-7">
-                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F47920]/10 border border-[#F47920]/30 text-[#F47920] text-xs font-black tracking-widest uppercase mb-6">
-                            <span class="w-2 h-2 rounded-full bg-[#F47920] animate-ping"></span>
-                            Asisten Digital Cerdas
-                        </div>
+                        @if ($aiSettingActive ?? false)
+                            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-black tracking-widest uppercase mb-6">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                ALEX • Asisten AI Receiving (Online)
+                            </div>
+                        @else
+                            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-black tracking-widest uppercase mb-6">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                ALEX • Asisten AI Receiving (Offline)
+                            </div>
+                        @endif
 
                         <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tight mb-6">
-                            Temui <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#BE5A27]">ALEX</span>, Asisten Logistik AI Anda
+                            Temui <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#BE5A27]">ALEX</span>, Asisten AI Receiving Anda
                         </h2>
 
                         <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-8">
-                            Tidak perlu login untuk mengecek apakah material Anda sudah sampai di gudang. Cukup tanyakan nomor PO atau DO Anda pada ALEX di pojok kanan bawah layar.
+                            @if ($aiSettingActive ?? false)
+                                Tidak perlu login untuk mengecek apakah material Anda sudah sampai di gudang. Cukup tanyakan nomor PO atau DO Anda pada ALEX di pojok kanan bawah layar.
+                            @else
+                                ALEX — Asisten AI Receiving saat ini sedang dalam masa pemeliharaan dan pelatihan model (Maintenance). Selama masa pemeliharaan, Anda tetap dapat mengecek kedatangan barang melalui menu Daftar Material (PD &amp; Non-Stock) atau mengajukan MIR secara manual.
+                            @endif
                         </p>
 
                         <div class="flex flex-col sm:flex-row items-center gap-4">
-                            <button type="button" onclick="startAiTour()"
-                                class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-2xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-1 transition-all duration-300">
-                                <span>Mulai Panduan Tur AI</span>
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                            </button>
+                            @if ($aiSettingActive ?? false)
+                                <button type="button" onclick="startAiTour()"
+                                    class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-2xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+                                    <span>Mulai Panduan ALEX</span>
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                </button>
+                            @else
+                                <span class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold text-amber-700 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-2xl select-none">
+                                    <span>ALEX Sedang Maintenance</span>
+                                </span>
+                            @endif
                             <a href="{{ route('frontend.list-material') }}" wire:navigate
                                 class="w-full sm:w-auto flex items-center justify-center px-8 py-4 text-sm font-bold text-slate-700 dark:text-slate-200 glass-btn rounded-2xl">
                                 Cek Daftar Manual
@@ -2424,10 +2441,16 @@
                                         AI
                                     </div>
                                     <div>
-                                        <h4 class="text-sm font-bold text-slate-800 dark:text-white">ALEX Assistant</h4>
-                                        <p class="text-[10px] text-emerald-500 font-bold flex items-center gap-1">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Siap Menjawab
-                                        </p>
+                                        <h4 class="text-sm font-bold text-slate-800 dark:text-white">ALEX • Asisten AI Receiving</h4>
+                                        @if ($aiSettingActive ?? false)
+                                            <p class="text-[10px] text-emerald-500 font-bold flex items-center gap-1">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online • Siap Menjawab
+                                            </p>
+                                        @else
+                                            <p class="text-[10px] text-amber-500 font-bold flex items-center gap-1">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Offline • Sedang Maintenance
+                                            </p>
+                                        @endif
                                     </div>
                                 </div>
                                 <span class="text-[11px] font-mono text-slate-400">v2.0</span>
@@ -2456,14 +2479,14 @@
                                 </div>
                             </div>
 
-                            <!-- Interactive Prompt Suggestions -->
+                            <!-- Interactive Action Links -->
                             <div class="pt-2 flex flex-wrap gap-1.5">
-                                <button type="button" onclick="startAiTour()" class="px-2.5 py-1 rounded-lg bg-[#F47920]/10 hover:bg-[#F47920]/20 text-[#F47920] text-[11px] font-bold transition-colors">
+                                <a href="{{ route('frontend.mir.create') }}" wire:navigate class="px-2.5 py-1 rounded-lg bg-[#F47920]/10 hover:bg-[#F47920]/20 text-[#F47920] text-[11px] font-bold transition-colors">
                                     Ajukan MIR Online
-                                </button>
-                                <button type="button" onclick="startAiTour()" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 text-[11px] font-bold transition-colors">
+                                </a>
+                                <a href="{{ route('frontend.list-material') }}" wire:navigate class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 text-[11px] font-bold transition-colors">
                                     Lihat Lokasi Rak
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>

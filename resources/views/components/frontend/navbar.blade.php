@@ -55,13 +55,14 @@
                     </div>
                 @endauth
 
-                <!-- Link 3: Lacak PO Vendor & Input -->
+                <!-- Link 3: Lacak PO Vendor (Khusus Rekanan) -->
                 <div class="relative group h-full py-1.5 flex items-center gap-2">
                     <a href="{{ route('frontend.vendor.tracking') }}" wire:navigate class="flex items-center gap-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-[#F47920] dark:hover:text-white transition-colors relative pb-0.5">
                         <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        Lacak PO
+                        <span>Lacak PO Vendor</span>
+                        <span class="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-md bg-[#F47920]/10 text-[#F47920] border border-[#F47920]/25">Rekanan</span>
                         <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#F47920] to-[#BE5A27] transition-all duration-300 group-hover:w-full shadow-[0_0_8px_rgba(244,121,32,0.8)]"></span>
                     </a>
                 </div>
@@ -84,11 +85,11 @@
                     <svg x-show="!isDark" style="display: none;" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
 
-                <a href="{{ filament()->getLoginUrl() }}"
+                <a href="{{ auth()->check() ? filament()->getUrl() : filament()->getLoginUrl() }}"
                     class="glass-btn group inline-flex items-center justify-center px-3 py-2 sm:px-5 sm:py-2.5 text-[11px] sm:text-sm font-bold text-slate-800 dark:text-white rounded-lg sm:rounded-xl transition-transform hover:scale-105 active:scale-95">
                     <span class="absolute inset-0 w-0 bg-linear-to-r from-[#F47920] to-[#BE5A27] transition-all duration-300 ease-out group-hover:w-full"></span>
                     <span class="relative flex items-center gap-1.5 sm:gap-2 group-hover:text-white transition-colors duration-300">
-                        <span>Login</span>
+                        <span>{{ auth()->check() ? 'Dashboard' : 'Login' }}</span>
                         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                         </svg>
@@ -124,23 +125,6 @@
             <div class="px-5 py-6 flex flex-col gap-4">
                 <h3 class="text-xs font-black text-white uppercase tracking-widest mb-1 opacity-80">Menu Utama</h3>
 
-                <!-- Mobile Quick PO Tracking Input Box -->
-                <div class="p-3.5 rounded-2xl bg-white/50 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-sm">
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-[#F47920] mb-2 flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Lacak Dokumen PO Vendor
-                    </label>
-                    <form action="{{ route('frontend.vendor.tracking') }}" method="GET" class="flex items-center gap-2">
-                        <input type="text" name="po" placeholder="Ketik No. PO (misal: 5300065628)..." maxlength="15"
-                            class="flex-grow bg-white/80 dark:bg-slate-900/80 border border-slate-300 dark:border-slate-700 focus:border-[#F47920] rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none">
-                        <button type="submit" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#F47920] to-[#BE5A27] text-white text-xs font-black shrink-0 hover:brightness-110 active:scale-95 transition-all">
-                            Lacak
-                        </button>
-                    </form>
-                </div>
-
                 <div x-data="{ accOpen: false }" class="bg-white/40 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-white/50 dark:border-white/10 overflow-hidden shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]">
                     <button @click="accOpen = !accOpen" class="w-full flex justify-between items-center px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-white/30 dark:hover:bg-white/10 transition-colors">
                         <span class="flex items-center gap-2">
@@ -155,9 +139,12 @@
                     </div>
                 </div>
 
-                <a href="{{ route('frontend.vendor.tracking') }}" wire:navigate class="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex items-center gap-2 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
-                    <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Lacak PO Vendor
+                <a href="{{ route('frontend.vendor.tracking') }}" wire:navigate class="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex items-center justify-between gap-2 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Lacak PO Vendor</span>
+                    </span>
+                    <span class="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md bg-[#F47920]/15 text-[#F47920] border border-[#F47920]/30">Khusus Rekanan</span>
                 </a>
 
                 @auth
@@ -180,9 +167,9 @@
 
 
             <div class="mt-auto p-5 glass-nav border-b-0 border-x-0 relative z-10">
-                <a href="{{ filament()->getLoginUrl() }}"
+                <a href="{{ auth()->check() ? filament()->getUrl() : filament()->getLoginUrl() }}"
                     class="w-full flex items-center justify-center gap-2 px-5 py-3.5 text-sm font-bold text-white bg-linear-to-r from-[#F47920] to-[#BE5A27] rounded-xl shadow-[0_8px_20px_-6px_rgba(244,121,32,0.5)] hover:-translate-y-0.5 transition-transform">
-                    <span>Login</span>
+                    <span>{{ auth()->check() ? 'Dashboard' : 'Login' }}</span>
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                     </svg>
