@@ -37,21 +37,23 @@
                     </div>
                 </div>
 
-                <!-- Link 1: Fitur -->
-                <div class="relative group h-full py-2 flex items-center">
-                    <a href="/#fitur-layanan" class="flex items-center gap-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-[#F47920] dark:hover:text-white transition-colors relative pb-1">
-                        Fitur
-                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#F47920] to-[#BE5A27] transition-all duration-300 group-hover:w-full shadow-[0_0_8px_rgba(244,121,32,0.8)]"></span>
-                    </a>
-                </div>
+                @auth
+                    <!-- Link 1: Fitur -->
+                    <div class="relative group h-full py-2 flex items-center">
+                        <a href="/#fitur-layanan" class="flex items-center gap-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-[#F47920] dark:hover:text-white transition-colors relative pb-1">
+                            Fitur
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#F47920] to-[#BE5A27] transition-all duration-300 group-hover:w-full shadow-[0_0_8px_rgba(244,121,32,0.8)]"></span>
+                        </a>
+                    </div>
 
-                <!-- Link 2: Alur Proses -->
-                <div class="relative group h-full py-2 flex items-center">
-                    <a href="/#alur-proses" class="flex items-center gap-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-[#F47920] dark:hover:text-white transition-colors relative pb-1">
-                        Alur Proses
-                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#F47920] to-[#BE5A27] transition-all duration-300 group-hover:w-full shadow-[0_0_8px_rgba(244,121,32,0.8)]"></span>
-                    </a>
-                </div>
+                    <!-- Link 2: Alur Proses -->
+                    <div class="relative group h-full py-2 flex items-center">
+                        <a href="/#alur-proses" class="flex items-center gap-1.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-[#F47920] dark:hover:text-white transition-colors relative pb-1">
+                            Alur Proses
+                            <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-[#F47920] to-[#BE5A27] transition-all duration-300 group-hover:w-full shadow-[0_0_8px_rgba(244,121,32,0.8)]"></span>
+                        </a>
+                    </div>
+                @endauth
 
                 <!-- Link 3: Lacak PO Vendor & Input -->
                 <div class="relative group h-full py-1.5 flex items-center gap-2">
@@ -158,15 +160,17 @@
                     Lacak PO Vendor
                 </a>
 
-                <a @click="mobileMenuOpen = false" href="/#fitur-layanan" class="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex items-center gap-2 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
-                    <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                    Fitur Layanan
-                </a>
+                @auth
+                    <a @click="mobileMenuOpen = false" href="/#fitur-layanan" class="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex items-center gap-2 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
+                        <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        Fitur Layanan
+                    </a>
 
-                <a @click="mobileMenuOpen = false" href="/#alur-proses" class="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex items-center gap-2 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
-                    <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    Alur Perjalanan Material
-                </a>
+                    <a @click="mobileMenuOpen = false" href="/#alur-proses" class="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex items-center gap-2 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
+                        <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Alur Perjalanan Material
+                    </a>
+                @endauth
 
                 <a href="{{ route('frontend.mir.create') }}" wire:navigate class="bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] flex items-center gap-2 px-4 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
                     <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>

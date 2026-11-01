@@ -3,8 +3,7 @@
     <!-- 1. HERO SECTION -->
     <x-frontend.hero />
 
-
-
+    @auth
     <!-- 3. CORE SOLUTIONS & BENTO GRID SECTION -->
     <section id="fitur-layanan" class="relative z-10 py-24 px-5 md:px-12 lg:px-24">
 
@@ -2257,6 +2256,7 @@
 
         </div>
     </section>
+    @endauth
 
     <!-- 5. KATEGORI MATERIAL GUDANG (ZSP, ZRM, ZPM, ZSM, ZFP) -->
     <section class="relative z-10 py-24 px-5 md:px-12 lg:px-24">

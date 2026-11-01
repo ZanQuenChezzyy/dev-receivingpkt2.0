@@ -39,21 +39,23 @@
                     Platform resmi <span class="text-[#0A4F86] dark:text-blue-400 font-bold">Department Perencanaan, Penerimaan &amp; Pergudangan (PP&amp;P)</span> PT Pupuk Kalimantan Timur untuk integrasi <strong>Penerimaan Barang</strong>, <strong>Invoicing Barang</strong>, serta <strong>Penerimaan &amp; Invoicing Jasa (SA)</strong>.
                 </p>
 
-                <!-- 3 Pilar Proses Kerja Receiving Pills -->
-                <div class="flex flex-wrap items-center gap-2 mb-8">
-                    <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        1. Penerimaan Barang (GRS / RDTV)
-                    </a>
-                    <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-blue-500/10 text-[#0A4F86] dark:text-blue-300 border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
-                        <span class="w-2 h-2 rounded-full bg-[#0A4F86] dark:bg-blue-400"></span>
-                        2. Invoicing Barang (Mitraku)
-                    </a>
-                    <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 hover:bg-teal-500/20 transition-colors">
-                        <span class="w-2 h-2 rounded-full bg-teal-500"></span>
-                        3. Penerimaan &amp; Invoicing Jasa (SA)
-                    </a>
-                </div>
+                @auth
+                    <!-- 3 Pilar Proses Kerja Receiving Pills -->
+                    <div class="flex flex-wrap items-center gap-2 mb-8">
+                        <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            1. Penerimaan Barang (GRS / RDTV)
+                        </a>
+                        <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-blue-500/10 text-[#0A4F86] dark:text-blue-300 border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
+                            <span class="w-2 h-2 rounded-full bg-[#0A4F86] dark:bg-blue-400"></span>
+                            2. Invoicing Barang (Mitraku)
+                        </a>
+                        <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 hover:bg-teal-500/20 transition-colors">
+                            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                            3. Penerimaan &amp; Invoicing Jasa (SA)
+                        </a>
+                    </div>
+                @endauth
 
                 <!-- Actions -->
                 <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
