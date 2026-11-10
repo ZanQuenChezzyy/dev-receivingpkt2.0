@@ -373,12 +373,13 @@ html.dark body {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 2.25rem !important;
-    height: 2.25rem !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    min-width: 2rem !important;
     border-radius: 9999px !important;
-    background-color: rgba(0, 0, 0, 0.06) !important;
+    background-color: rgba(0, 0, 0, 0.05) !important;
     color: #475569 !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
     flex-shrink: 0 !important;
     cursor: pointer !important;
@@ -398,14 +399,18 @@ html.dark body {
     transform: scale(0.95) !important;
 }
 
-.dark .fi-tabs-arrow-btn {
+.dark .fi-tabs-arrow-btn,
+html.dark .fi-tabs-arrow-btn,
+:root[class~="dark"] .fi-tabs-arrow-btn {
     background-color: rgba(255, 255, 255, 0.08) !important;
     color: #cbd5e1 !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
-.dark .fi-tabs-arrow-btn:hover:not(:disabled) {
-    background-color: rgba(244, 121, 32, 0.2) !important;
+.dark .fi-tabs-arrow-btn:hover:not(:disabled),
+html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
+:root[class~="dark"] .fi-tabs-arrow-btn:hover:not(:disabled) {
+    background-color: rgba(244, 121, 32, 0.25) !important;
     color: #F47920 !important;
     border-color: rgba(244, 121, 32, 0.5) !important;
 }
@@ -414,14 +419,17 @@ html.dark body {
     opacity: 0.25 !important;
     cursor: not-allowed !important;
     transform: none !important;
+    pointer-events: none !important;
 }
 
 .fi-tabs-arrow-btn svg {
-    width: 1.125rem !important;
-    height: 1.125rem !important;
+    width: 1rem !important;
+    height: 1rem !important;
     display: block !important;
-    fill: currentColor !important;
-    stroke: none !important;
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 2.5px !important;
+    pointer-events: none !important;
 }
 
 .fi-tabs:not(.fi-vertical) {

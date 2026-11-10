@@ -102,12 +102,20 @@
                 :disabled="!canScrollLeft"
                 @click.stop="scrollLeft()"
                 aria-label="Geser tab ke kiri"
-                class="fi-tabs-arrow-btn fi-tabs-arrow-left"
+                class="fi-tabs-arrow-btn fi-tabs-arrow-left group"
             >
-                <x-filament::icon
-                    icon="heroicon-m-chevron-left"
-                    class="h-4.5 w-4.5"
-                />
+                <svg
+                    class="h-4 w-4 shrink-0 pointer-events-none"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M12.5 15L7.5 10L12.5 5" />
+                </svg>
             </button>
 
             <!-- Nav Tablist di Tengah -->
@@ -138,12 +146,20 @@
                 :disabled="!canScrollRight"
                 @click.stop="scrollRight()"
                 aria-label="Geser tab ke kanan"
-                class="fi-tabs-arrow-btn fi-tabs-arrow-right"
+                class="fi-tabs-arrow-btn fi-tabs-arrow-right group"
             >
-                <x-filament::icon
-                    icon="heroicon-m-chevron-right"
-                    class="h-4.5 w-4.5"
-                />
+                <svg
+                    class="h-4 w-4 shrink-0 pointer-events-none"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M7.5 5L12.5 10L7.5 15" />
+                </svg>
             </button>
         </div>
     </div>
