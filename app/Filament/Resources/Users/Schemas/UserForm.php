@@ -28,12 +28,16 @@ class UserForm
                                     ->label(__('user.avatar'))
                                     ->helperText(__('user.avatar_helper'))
                                     ->image()
+                                    ->imageAspectRatio('1:1')
+                                    ->automaticallyOpenImageEditorForAspectRatio()
                                     ->imageEditor()
+                                    ->imageEditorMode(1)
+                                    ->imageEditorViewportWidth(1000)
+                                    ->imageEditorViewportHeight(1000)
                                     ->imageEditorAspectRatioOptions([
                                         '1:1',
                                     ])
                                     ->disk('public')
-                                    ->imageAspectRatio('1:1')
                                     ->directory('avatar_upload')
                                     ->visibility('public')
                                     ->columnSpanFull(),
