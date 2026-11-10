@@ -2,11 +2,13 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\User;
 use Caresome\FilamentAuthDesigner\Pages\Auth\Login as BaseLogin;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
+use Illuminate\Validation\ValidationException;
 
 class Login extends BaseLogin
 {
@@ -33,5 +35,32 @@ class Login extends BaseLogin
                     ->required()
                     ->extraInputAttributes(['tabindex' => 2]),
             ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function getCredentialsFromFormData(array $data): array
+    {
+        return [
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'is_active' => true,
+        ];
+    }
+
+    protected function throwFailureValidationException(): never
+    {
+        $data = $this->form->getState();
+        $user = User::where('email', $data['email'] ?? null)->first();
+
+        if ($user && ! $user->is_active) {
+            throw ValidationException::withMessages([
+                'data.email' => 'Akun Anda dinonaktifkan. Silakan hubungi administrator.',
+            ]);
+        }
+
+        parent::throwFailureValidationException();
     }
 }

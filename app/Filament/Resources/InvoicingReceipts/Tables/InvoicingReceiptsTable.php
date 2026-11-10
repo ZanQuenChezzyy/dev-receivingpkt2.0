@@ -142,7 +142,7 @@ class InvoicingReceiptsTable
                                         ->relationship(
                                             name: 'pic',
                                             titleAttribute: 'name',
-                                            modifyQueryUsing: fn ($query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
+                                            modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
                                         )
                                         ->searchable()
                                         ->preload()
@@ -310,7 +310,7 @@ class InvoicingReceiptsTable
 
                 SelectFilter::make('pic_id')
                     ->label('Filter PIC (Staff Invoice)')
-                    ->relationship('pic', 'name', modifyQueryUsing: fn ($query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))),
+                    ->relationship('pic', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))),
             ])
             ->recordActions([
                 ActionGroup::make([
@@ -545,7 +545,7 @@ class InvoicingReceiptsTable
                                 ->relationship(
                                     name: 'pic',
                                     titleAttribute: 'name',
-                                    modifyQueryUsing: fn ($query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
+                                    modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
                                 )
                                 ->searchable()
                                 ->preload()
@@ -614,7 +614,7 @@ class InvoicingReceiptsTable
                                 ->relationship(
                                     name: 'pic',
                                     titleAttribute: 'name',
-                                    modifyQueryUsing: fn ($query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
+                                    modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
                                 )
                                 ->searchable()
                                 ->preload()
@@ -675,7 +675,7 @@ class InvoicingReceiptsTable
                             Select::make('pic_id')
                                 ->label('Pilih PIC (Staff Invoice)')
                                 ->placeholder('Bebas ke Siapapun (Open Pool)')
-                                ->options(fn () => User::role('Staff Invoice')->pluck('name', 'id'))
+                                ->options(fn () => User::where('is_active', true)->role('Staff Invoice')->pluck('name', 'id'))
                                 ->searchable()
                                 ->preload()
                                 ->helperText('Hanya pengguna dengan role "Staff Invoice" yang dapat dipilih.'),
@@ -699,7 +699,7 @@ class InvoicingReceiptsTable
                         ->action(function (Collection $records) {
                             $service = app(InvoicingAssignmentService::class);
                             $assignedCount = $service->distributeEvenly($records);
-                            $staffCount = User::role('Staff Invoice')->count();
+                            $staffCount = User::where('is_active', true)->role('Staff Invoice')->count();
 
                             if ($staffCount === 0) {
                                 Notification::make()

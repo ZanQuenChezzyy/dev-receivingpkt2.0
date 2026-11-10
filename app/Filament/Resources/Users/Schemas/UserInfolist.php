@@ -68,13 +68,19 @@ class UserInfolist
                         ->description(__('user.account_section_desc'))
                         ->icon('heroicon-o-shield-check')
                         ->schema([
-                            Grid::make(2)
+                            Grid::make(3)
                                 ->schema([
                                     TextEntry::make('roles.name')
                                         ->label(__('user.role'))
                                         ->badge()
                                         ->separator(', ')
                                         ->color('info'),
+
+                                    TextEntry::make('is_active')
+                                        ->label('Status Akun')
+                                        ->badge()
+                                        ->formatStateUsing(fn ($state) => $state ? 'Aktif' : 'Nonaktif')
+                                        ->color(fn ($state) => $state ? 'success' : 'danger'),
 
                                     TextEntry::make('email_verified_at')
                                         ->label(__('user.email_verification_status'))

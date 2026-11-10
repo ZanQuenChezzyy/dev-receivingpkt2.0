@@ -58,7 +58,7 @@ class PicMaterialAssignmentForm
                             ->relationship(
                                 name: 'users',
                                 titleAttribute: 'name',
-                                modifyQueryUsing: fn ($query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
+                                modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
                             )
                             ->multiple()
                             ->searchable()
@@ -120,7 +120,7 @@ class PicMaterialAssignmentForm
 
                                 Select::make('user_ids')
                                     ->label('Dialihkan ke PIC Khusus (Staff Invoice)')
-                                    ->options(fn () => User::whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))->pluck('name', 'id'))
+                                    ->options(fn () => User::where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))->pluck('name', 'id'))
                                     ->multiple()
                                     ->searchable()
                                     ->preload()

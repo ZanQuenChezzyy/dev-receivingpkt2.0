@@ -27,6 +27,7 @@ use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\GridDirection;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
@@ -331,7 +332,11 @@ class DeliveryOrderReceiptForm
             Select::make('received_by')
                 ->label('Diterima Oleh')
                 ->placeholder('Pilih Penerima')
-                ->relationship('receivedBy', 'name')
+                ->relationship(
+                    'receivedBy',
+                    'name',
+                    modifyQueryUsing: fn (Builder $query, ?DeliveryOrderReceipt $record) => $query->where('is_active', true)->when($record?->received_by, fn ($q, $id) => $q->orWhere('id', $id))
+                )
                 ->default(Auth::id())
                 ->preload()
                 ->searchable()
@@ -610,7 +615,11 @@ class DeliveryOrderReceiptForm
 
                 Select::make('created_by')
                     ->label('Dibuat Oleh')
-                    ->relationship('createdBy', 'name')
+                    ->relationship(
+                        'createdBy',
+                        'name',
+                        modifyQueryUsing: fn (Builder $query, ?DeliveryOrderReceipt $record) => $query->where('is_active', true)->when($record?->created_by, fn ($q, $id) => $q->orWhere('id', $id))
+                    )
                     ->default(Auth::id())
                     ->dehydratedWhenHidden()
                     ->visible(fn () => Auth::user()->hasRole(['Developer', 'AVP Receiving'])),

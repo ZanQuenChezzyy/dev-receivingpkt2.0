@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\WarehouseDestinations\Schemas;
 
+use App\Models\WarehouseDestination;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class WarehouseDestinationForm
 {
@@ -25,7 +27,11 @@ class WarehouseDestinationForm
                                 ->label('Nama Gudang')
                                 ->placeholder('Contoh: Gudang Bahan Baku'),
                             Select::make('pic_id')
-                                ->relationship('pic', 'name')
+                                ->relationship(
+                                    'pic',
+                                    'name',
+                                    modifyQueryUsing: fn (Builder $query, ?WarehouseDestination $record) => $query->where('is_active', true)->when($record?->pic_id, fn ($q, $id) => $q->orWhere('id', $id))
+                                )
                                 ->required()
                                 ->searchable()
                                 ->preload()

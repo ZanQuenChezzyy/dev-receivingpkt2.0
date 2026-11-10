@@ -91,9 +91,10 @@ class PublicMaterialIssueForm extends Component
         $this->addDetail();
         $this->searchPOs();
 
-        $this->receiving_users = User::whereDoesntHave('roles', function ($q) {
-            $q->where('name', 'AVP Receiving');
-        })->get(['id', 'name', 'npk'])->toArray();
+        $this->receiving_users = User::where('is_active', true)
+            ->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'AVP Receiving');
+            })->get(['id', 'name', 'npk'])->toArray();
 
         if (! empty($this->po_search) && count($this->available_pos) > 0) {
             $matchedPo = collect($this->available_pos)->firstWhere('purchase_order_no', $this->po_search);

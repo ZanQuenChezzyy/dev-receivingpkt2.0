@@ -343,12 +343,20 @@ html.dark body {
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
+    align-items: stretch !important;
 }
 
 .fi-sc-tabs:not(.fi-contained)::before {
     display: none !important;
+}
+
+.fi-resource-relation-manager,
+.fi-resource-relation-managers,
+.fi-sc-tabs-tab,
+.fi-sc-tabs:not(.fi-contained) > div:not(.fi-tabs-scroll-outer) {
+    width: 100% !important;
+    max-width: 100% !important;
+    align-self: stretch !important;
 }
 
 .fi-tabs-scroll-outer {

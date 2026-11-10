@@ -11,6 +11,8 @@ use Filament\Actions\EditAction;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 
@@ -66,9 +68,17 @@ class UsersTable
                     ->limitList(3)
                     ->wrap()
                     ->color('info'),
+
+                ToggleColumn::make('is_active')
+                    ->label('Status Aktif')
+                    ->disabled(fn (User $record): bool => $record->id === Auth::id()),
             ])
             ->filters([
-                //
+                TernaryFilter::make('is_active')
+                    ->label('Status Akun')
+                    ->placeholder('Semua Status')
+                    ->trueLabel('Hanya Aktif')
+                    ->falseLabel('Hanya Nonaktif'),
             ])
             ->recordActions([
                 ActionGroup::make([

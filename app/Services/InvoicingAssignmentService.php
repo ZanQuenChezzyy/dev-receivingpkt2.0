@@ -18,7 +18,8 @@ class InvoicingAssignmentService
      */
     public function initializeWorkloads(): void
     {
-        $staffUsers = User::role('Staff Invoice')
+        $staffUsers = User::where('is_active', true)
+            ->role('Staff Invoice')
             ->withCount(['invoicingReceipts as active_count' => function ($q) {
                 $q->whereIn('status', ['Menunggu Verifikasi', 'Terverifikasi']);
             }])

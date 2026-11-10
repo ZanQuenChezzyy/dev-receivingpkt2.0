@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\MonitoringChemicals\Schemas;
 
 use App\Models\ChemicalQcTuv;
+use App\Models\MonitoringChemical;
 use App\Models\MonitoringChemicalDetail;
 use App\Models\PurchaseOrderIssued;
 use Filament\Actions\Action;
@@ -29,6 +30,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
 use Filament\Support\RawJs;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
@@ -245,7 +247,11 @@ class MonitoringChemicalForm
 
                 Select::make('received_by')
                     ->label('Diterima Oleh')
-                    ->relationship('receivedBy', 'name')
+                    ->relationship(
+                        'receivedBy',
+                        'name',
+                        modifyQueryUsing: fn (Builder $query, ?MonitoringChemical $record) => $query->where('is_active', true)->when($record?->received_by, fn ($q, $id) => $q->orWhere('id', $id))
+                    )
                     ->default(Auth::id())
                     ->searchable()
                     ->preload()

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\InvoicingReceipts\Schemas;
 
 use App\Models\DeliveryOrderReceipt;
+use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
 use App\Models\Vendor;
 use Filament\Forms\Components\DatePicker;
@@ -180,7 +181,7 @@ class InvoicingReceiptForm
                             ->relationship(
                                 name: 'pic',
                                 titleAttribute: 'name',
-                                modifyQueryUsing: fn ($query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
+                                modifyQueryUsing: fn ($query, ?InvoicingReceipt $record) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))->where(fn ($q) => $q->where('is_active', true)->when($record?->pic_id, fn ($sub, $id) => $sub->orWhere('id', $id)))
                             )
                             ->placeholder('Bebas ke Siapapun (Open Pool)')
                             ->searchable()

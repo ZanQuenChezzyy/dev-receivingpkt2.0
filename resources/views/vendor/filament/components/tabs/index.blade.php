@@ -52,8 +52,19 @@
                 const el = this.$refs.tabNav;
                 if (!el) return;
                 const active = el.querySelector('.fi-tabs-item.fi-active');
-                if (active) {
-                    active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                if (!active) return;
+
+                const activeLeft = active.offsetLeft;
+                const activeWidth = active.offsetWidth;
+                const containerWidth = el.clientWidth;
+                const scrollLeft = el.scrollLeft;
+
+                if (activeLeft < scrollLeft || (activeLeft + activeWidth) > (scrollLeft + containerWidth)) {
+                    const targetScrollLeft = activeLeft - (containerWidth / 2) + (activeWidth / 2);
+                    el.scrollTo({
+                        left: Math.max(0, targetScrollLeft),
+                        behavior: 'smooth'
+                    });
                 }
             }
         }"

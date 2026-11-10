@@ -6,6 +6,7 @@ use App\Models\User;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -29,7 +30,11 @@ class UserForm
                                     ->helperText(__('user.avatar_helper'))
                                     ->image()
                                     ->imageAspectRatio('1:1')
-                                    ->automaticallyOpenImageEditorForAspectRatio()
+                                    ->automaticallyCropImagesToAspectRatio()
+                                    ->automaticallyResizeImagesMode('cover')
+                                    ->automaticallyResizeImagesToWidth('1000')
+                                    ->automaticallyResizeImagesToHeight('1000')
+                                    ->automaticallyUpscaleImagesWhenResizing(false)
                                     ->imageEditor()
                                     ->imageEditorMode(1)
                                     ->imageEditorViewportWidth(1000)
@@ -53,6 +58,14 @@ class UserForm
                                     ->multiple()
                                     ->columnSpanFull()
                                     ->searchable()
+                                    ->required(),
+                            ]),
+                        Section::make('Status Akun')
+                            ->schema([
+                                Toggle::make('is_active')
+                                    ->label('Akun Aktif')
+                                    ->helperText('Jika dinonaktifkan, user tidak dapat login dan tidak muncul di daftar pilihan.')
+                                    ->default(true)
                                     ->required(),
                             ]),
                     ])

@@ -959,7 +959,8 @@ class InvoicingCsvImportService
         ?string $description
     ): ?int {
         if ($createdByName) {
-            $staffUser = User::role('Staff Invoice')
+            $staffUser = User::where('is_active', true)
+                ->role('Staff Invoice')
                 ->where('name', 'like', "%{$createdByName}%")
                 ->first();
 
