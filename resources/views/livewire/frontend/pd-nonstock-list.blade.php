@@ -28,43 +28,43 @@
             </p>
         </div>
 
-        <!-- Segmented Controls / Tabs & Search -->
+        <!-- Apple-Style Segmented Controls (Tabs) & Search -->
         <div class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
             
-            <!-- Tabs -->
-            <div class="glass-panel flex p-1 space-x-1 w-full md:w-auto">
+            <!-- Apple Segmented Control Tabs -->
+            <div class="apple-segmented-track w-full md:w-auto">
                 <button wire:click="setTab('PD')" 
-                        class="flex-1 md:w-48 py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 {{ $activeTab === 'PD' ? 'bg-white/40 dark:bg-[#0A4F86]/60 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] border border-white/50 dark:border-white/10 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/20 dark:hover:bg-white/5 border border-transparent' }}">
+                        class="apple-segmented-item flex-1 md:w-44 {{ $activeTab === 'PD' ? 'apple-segmented-item-active' : 'apple-segmented-item-inactive' }}">
                     Material PD
                 </button>
                 <button wire:click="setTab('NONSTOCK')" 
-                        class="flex-1 md:w-48 py-2.5 px-4 rounded-xl text-sm font-bold transition-all duration-300 {{ $activeTab === 'NONSTOCK' ? 'bg-white/40 dark:bg-[#0A4F86]/60 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] border border-white/50 dark:border-white/10 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/20 dark:hover:bg-white/5 border border-transparent' }}">
+                        class="apple-segmented-item flex-1 md:w-44 {{ $activeTab === 'NONSTOCK' ? 'apple-segmented-item-active' : 'apple-segmented-item-inactive' }}">
                     Material Non-Stock
                 </button>
             </div>
 
-            <div class="flex items-center gap-2 w-full md:w-auto">
-                <!-- Search -->
+            <div class="flex items-center gap-2.5 w-full md:w-auto">
+                <!-- Apple-Style Search Field -->
                 <div class="relative flex-1 md:w-80 group">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-20">
-                        <svg class="h-5 w-5 text-slate-400 group-focus-within:text-[#F47920] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
+                        <svg class="h-4 w-4 text-slate-400 group-focus-within:text-[#F47920] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
                     <input wire:model.live.debounce.300ms="search" type="text" 
-                           class="glass-input pl-11 w-full text-slate-900 dark:text-white py-3" 
-                           placeholder="Cari PO, Deskripsi, dll...">
+                           class="glass-input pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium w-full" 
+                           placeholder="Cari PO, Deskripsi, Requisitioner...">
                 </div>
 
-                <!-- Layout Toggle -->
-                <div class="glass-panel flex p-1 rounded-xl">
+                <!-- Apple Layout Segmented Buttons (Grid / Table) -->
+                <div class="apple-segmented-track">
                     <button wire:click="$set('layout', 'grid')" title="Tampilan Grid"
-                            class="p-2.5 rounded-lg transition-all duration-300 {{ $layout === 'grid' ? 'bg-white/40 dark:bg-white/10 shadow-sm text-slate-800 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300' }}">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                            class="apple-segmented-item p-2 {{ $layout === 'grid' ? 'apple-segmented-item-active' : 'apple-segmented-item-inactive' }}">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                     </button>
                     <button wire:click="$set('layout', 'table')" title="Tampilan Tabel"
-                            class="p-2.5 rounded-lg transition-all duration-300 {{ $layout === 'table' ? 'bg-white/40 dark:bg-white/10 shadow-sm text-slate-800 dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300' }}">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                            class="apple-segmented-item p-2 {{ $layout === 'table' ? 'apple-segmented-item-active' : 'apple-segmented-item-inactive' }}">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
                     </button>
                 </div>
             </div>
@@ -141,10 +141,11 @@
                         </div>
                     </div>
 
-                    <!-- Action Button -->
-                    <a href="{{ route('frontend.mir.create', ['po' => $item->purchaseOrderIssued?->purchase_order_no]) }}" wire:navigate class="glass-btn bg-[#0A4F86] w-full flex items-center justify-center gap-2 py-3 px-4 text-white rounded-xl font-bold text-sm shadow-lg hover:-translate-y-0.5">
-                        <span>Buat MIR Sekarang</span>
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    <!-- Action Button: Apple Primary Pill -->
+                    <a href="{{ route('frontend.mir.create', ['po' => $item->purchaseOrderIssued?->purchase_order_no]) }}" wire:navigate 
+                       class="apple-btn-primary w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold shadow-xs">
+                        <span>Buat Pengambilan (MIR)</span>
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
             @empty

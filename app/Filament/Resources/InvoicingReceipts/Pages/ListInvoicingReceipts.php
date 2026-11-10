@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources\InvoicingReceipts\Pages;
 
+use App\Filament\Imports\InvoicingImportAction;
+use App\Filament\Imports\InvoicingReceiptImporter;
 use App\Filament\Resources\InvoicingReceipts\InvoicingReceiptResource;
 use App\Models\InvoicingReceipt;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,6 +20,11 @@ class ListInvoicingReceipts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            InvoicingImportAction::make()
+                ->label('Impor Invoice Barang')
+                ->icon(Heroicon::ArrowDownTray)
+                ->importer(InvoicingReceiptImporter::class),
+
             CreateAction::make()
                 ->label('Tambah Tagihan Baru')
                 ->icon('heroicon-o-plus'),

@@ -56,11 +56,11 @@ class AdminPanelProvider extends PanelProvider
             ->defaultThemeMode(ThemeMode::System)
             ->colors([
                 'danger' => Color::Red,
-                'gray' => Color::Gray,
-                'info' => Color::Cyan,
-                'primary' => Color::Blue,
+                'gray' => Color::Slate,
+                'info' => Color::Sky,
+                'primary' => Color::hex('#F47920'),
                 'success' => Color::Emerald,
-                'warning' => Color::Orange,
+                'warning' => Color::Amber,
             ])
             ->databaseNotifications()
             ->userMenu(position: UserMenuPosition::Topbar)

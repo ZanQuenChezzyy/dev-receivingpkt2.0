@@ -37,94 +37,92 @@
         <!-- Center Subtle Blue -->
         <div class="absolute top-[30%] left-[30%] w-[30%] h-[40%] rounded-full bg-[#0A4F86]/15 blur-[160px]"></div>
     </div>
-<section class="relative z-10 flex items-center justify-center min-h-[85vh] pt-28 pb-10">
-        <div class="container mx-auto px-5 md:px-12 lg:px-24 flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-12">
+<section class="relative z-10 flex items-center justify-center min-h-[85vh] pt-28 pb-12">
+        <div class="container mx-auto px-5 md:px-12 lg:px-24 flex flex-col-reverse lg:flex-row items-center gap-12 lg:gap-14">
 
             <!-- Left Column: Text & CTA -->
-            <div class="w-full lg:w-5/12 flex flex-col items-start text-left mt-8 lg:mt-0">
-                <!-- Glowing Badge -->
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-50 dark:bg-white/5 backdrop-blur-md border border-[#F47920]/30 shadow-[0_0_15px_rgba(244,121,32,0.15)] text-[#F47920] text-xs font-black tracking-widest uppercase mb-6 sm:mb-8">
-                    <span class="relative flex w-2 h-2 sm:w-2.5 sm:h-2.5">
+            <div class="w-full lg:w-5/12 flex flex-col items-start text-left mt-6 lg:mt-0">
+                <!-- Apple-Style Pill Status Badge -->
+                <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.08] backdrop-blur-xl text-xs font-semibold text-slate-800 dark:text-slate-200 mb-6 sm:mb-8 shadow-xs">
+                    <span class="relative flex w-2 h-2">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
-                        <span class="relative inline-flex rounded-full w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#F47920]"></span>
+                        <span class="relative inline-flex rounded-full w-2 h-2 bg-[#F47920]"></span>
                     </span>
-                    Bagian Receiving • Dept. PP&amp;P Pupuk Kaltim
+                    <span class="tracking-tight">Bagian Receiving • Dept. PP&amp;P Pupuk Kaltim</span>
                 </div>
 
-                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] text-slate-800 dark:text-white mb-6 tracking-tight">
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.08] text-slate-900 dark:text-white mb-6 tracking-[-0.035em]">
                     Pusat Layanan <br class="hidden sm:block">
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#ff9b52] relative inline-block">
                         Unit Receiving
-                        <svg class="absolute w-full h-2 sm:h-3 -bottom-2 left-0 text-[#0A4F86]/80 dark:text-[#F47920]/80" viewBox="0 0 100 10" preserveAspectRatio="none">
-                            <path d="M0 5 Q 50 10 100 5" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" />
-                        </svg>
                     </span>
                 </h1>
 
-                <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-6 max-w-lg leading-relaxed font-medium">
-                    Platform resmi <span class="text-[#0A4F86] dark:text-blue-400 font-bold">Department Perencanaan, Penerimaan &amp; Pergudangan (PP&amp;P)</span> PT Pupuk Kalimantan Timur untuk integrasi <strong>Penerimaan Barang</strong>, <strong>Invoicing Barang</strong>, serta <strong>Penerimaan &amp; Invoicing Jasa (SA)</strong>.
+                <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-6 max-w-lg leading-relaxed font-normal">
+                    Platform resmi <span class="text-[#0A4F86] dark:text-sky-400 font-semibold">Department Perencanaan, Penerimaan &amp; Pergudangan (PP&amp;P)</span> PT Pupuk Kalimantan Timur untuk integrasi <strong>Penerimaan Barang</strong>, <strong>Invoicing Barang</strong>, serta <strong>Penerimaan &amp; Invoicing Jasa (SA)</strong>.
                 </p>
 
                 @auth
-                    <!-- 3 Pilar Proses Kerja Receiving Pills -->
+                    <!-- 3 Pilar Proses Kerja Receiving Pills (Apple Segmented Style) -->
                     <div class="flex flex-wrap items-center gap-2 mb-8">
-                        <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            1. Penerimaan Barang (GRS / RDTV)
+                        <a href="#alur-proses" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all duration-200 active:scale-95">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            <span>1. Penerimaan Barang</span>
                         </a>
-                        <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-blue-500/10 text-[#0A4F86] dark:text-blue-300 border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
-                            <span class="w-2 h-2 rounded-full bg-[#0A4F86] dark:bg-blue-400"></span>
-                            2. Invoicing Barang (Mitraku)
+                        <a href="#alur-proses" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 text-[#0A4F86] dark:text-sky-300 border border-blue-500/20 hover:bg-blue-500/20 transition-all duration-200 active:scale-95">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#0A4F86] dark:bg-sky-400"></span>
+                            <span>2. Invoicing Barang</span>
                         </a>
-                        <a href="#alur-proses" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 hover:bg-teal-500/20 transition-colors">
-                            <span class="w-2 h-2 rounded-full bg-teal-500"></span>
-                            3. Penerimaan &amp; Invoicing Jasa (SA)
+                        <a href="#alur-proses" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 hover:bg-teal-500/20 transition-all duration-200 active:scale-95">
+                            <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                            <span>3. SA Jasa</span>
                         </a>
                     </div>
                 @endauth
 
-                <!-- Actions -->
-                <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                <!-- Apple Style Actions -->
+                <div class="flex flex-col sm:flex-row items-center gap-3.5 w-full sm:w-auto">
                     <a href="{{ auth()->check() ? filament()->getUrl() : filament()->getLoginUrl() }}"
-                        class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-sm sm:text-base font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-2xl shadow-[0_10px_30px_-10px_rgba(244,121,32,0.8)] hover:shadow-[0_15px_40px_-10px_rgba(244,121,32,1)] hover:-translate-y-1 transition-all duration-300">
-                        Masuk Dashboard
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        class="apple-btn-primary w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 text-sm sm:text-base font-semibold rounded-full shadow-md">
+                        <span>Masuk Dashboard</span>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </a>
-                    <a href="{{ route('frontend.list-material') }}" wire:navigate class="w-full sm:w-auto flex items-center justify-center px-8 py-4 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200 glass-btn rounded-2xl">
-                        Daftar PD & Non-Stock
+                    <a href="{{ route('frontend.list-material') }}" wire:navigate 
+                       class="glass-btn w-full sm:w-auto flex items-center justify-center px-7 py-3.5 text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100 rounded-full">
+                        <span>Daftar PD &amp; Non-Stock</span>
                     </a>
                 </div>
 
-                <!-- Glass Badges: 5 Material Types -->
+                <!-- Material Types Tiles (Apple App-Icon Look) -->
                 <div class="mt-8 sm:mt-10 w-full max-w-lg">
-                    <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
                         Tipe Material SAP (MTART)
                     </p>
                     <div class="grid grid-cols-5 gap-2 sm:gap-2.5">
                         <!-- ZSP -->
-                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-1 transition-transform">
-                            <span class="text-xs sm:text-sm font-black text-[#F47920] block">ZSP</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block truncate">Sparepart</span>
+                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="text-xs sm:text-sm font-extrabold text-[#F47920] block tracking-tight">ZSP</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">Sparepart</span>
                         </div>
                         <!-- ZRM -->
-                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-1 transition-transform">
-                            <span class="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 block">ZRM</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block truncate">Raw Mat.</span>
+                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block tracking-tight">ZRM</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">Raw Mat.</span>
                         </div>
                         <!-- ZPM -->
-                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-1 transition-transform">
-                            <span class="text-xs sm:text-sm font-black text-purple-600 dark:text-purple-400 block">ZPM</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block truncate">Packaging</span>
+                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="text-xs sm:text-sm font-extrabold text-purple-600 dark:text-purple-400 block tracking-tight">ZPM</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">Packaging</span>
                         </div>
                         <!-- ZSM -->
-                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-1 transition-transform">
-                            <span class="text-xs sm:text-sm font-black text-[#0A4F86] dark:text-blue-400 block">ZSM</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block truncate">Support</span>
+                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="text-xs sm:text-sm font-extrabold text-[#0A4F86] dark:text-sky-400 block tracking-tight">ZSM</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">Support</span>
                         </div>
                         <!-- ZFP -->
-                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-1 transition-transform">
-                            <span class="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400 block">ZFP</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-bold block truncate">Finish Prod.</span>
+                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
+                            <span class="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 block tracking-tight">ZFP</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">Finish Prod.</span>
                         </div>
                     </div>
                 </div>

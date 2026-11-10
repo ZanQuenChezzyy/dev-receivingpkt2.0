@@ -10,6 +10,7 @@ use App\Models\PurchaseOrderIssued;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Services\InvoicingAssignmentService;
+use Filament\Actions\ActionGroup;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
@@ -378,7 +379,13 @@ test('invoicing receipts table defines merged uploadBerkas action for verificati
     $table = new Table($livewire);
     InvoicingReceiptsTable::configure($table);
 
-    $actions = collect($table->getRecordActions());
+    $actions = collect($table->getRecordActions())->flatMap(function ($a) {
+        if ($a instanceof ActionGroup) {
+            return $a->getActions();
+        }
+
+        return [$a];
+    });
     $actionNames = $actions->map(fn ($a) => method_exists($a, 'getName') ? $a->getName() : null)->filter();
 
     expect($actionNames)->toContain('uploadBerkas')

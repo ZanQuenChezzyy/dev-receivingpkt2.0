@@ -1,5 +1,7 @@
 @import "../../../../vendor/filament/filament/resources/css/theme.css";
 
+@custom-variant dark (&:is(.dark *));
+
 @source '../../../../app/Filament/**/*';
 @source '../../../../app/Livewire/**/*';
 @source '../../../../resources/views/chezzy/**/*';
@@ -9,12 +11,60 @@
 @source '../../../../resources/views/livewire/**/*';
 @source '../../../../vendor/devonab/filament-easy-footer/resources/views/**/*';
 
-/* Glassmorphism Styles */
+/* =========================================================
+   Apple Human Interface Guidelines (HIG) Theme for Filament
+   Luminous Liquid Glass, Continuous Radius & Apple Materials
+   Consistent with Frontend Receiving PKT v2.0
+   ========================================================= */
 
-/* Sidebar - Liquid Glass Upgrade */
+/* Typography & System Font Stack */
+:root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Inter", -system-ui, system-ui, sans-serif;
+}
+
+html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Inter", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
+}
+
+/* Apple Neutral Canvas Background with Soft Ambient Glow */
+body {
+    background-color: #F5F5F7;
+    background-image: 
+        radial-gradient(circle at 15% 15%, rgba(244, 121, 32, 0.07) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(10, 79, 134, 0.05) 0%, transparent 45%);
+    background-attachment: fixed;
+}
+
+html.dark body {
+    background-color: #070E18;
+    background-image: 
+        radial-gradient(circle at 15% 15%, rgba(244, 121, 32, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(10, 79, 134, 0.12) 0%, transparent 50%);
+    background-attachment: fixed;
+}
+
+/* Layout Transparency to let the Apple Canvas shine */
+.fi-layout,
+.fi-simple-layout,
+.fi-auth-content-section,
+.fi-auth-form-container,
+.fi-main {
+    @apply !bg-transparent;
+}
+
+/* =========================================================
+   1. SIDEBAR (Apple Liquid Glass Dock)
+   ========================================================= */
 .fi-sidebar {
-    @apply !bg-white/30 dark:!bg-gray-900/40 !backdrop-blur-3xl !border-r !border-white/50 border-r-white/20 dark:!border-gray-700/50 dark:!border-r-gray-600/50 !shadow-[4px_0_24px_rgba(0,0,0,0.05)];
+    @apply !bg-white/70 dark:!bg-[#07111e]/75 !backdrop-blur-2xl !backdrop-saturate-150 !border-r !border-black/[0.06] dark:!border-white/[0.08] !shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:!shadow-[4px_0_32px_rgba(0,0,0,0.3)];
     overflow: hidden;
+}
+
+.fi-sidebar-header {
+    @apply !bg-transparent border-b !border-black/[0.04] dark:!border-white/[0.05] !px-4;
 }
 
 .fi-sidebar-nav,
@@ -23,6 +73,7 @@
     z-index: 1;
 }
 
+/* Corporate Pattern Watermarks */
 .fi-sidebar-pattern-light {
     display: block;
 }
@@ -39,144 +90,95 @@
     display: block !important;
 }
 
-.fi-sidebar-header {
-    @apply !bg-transparent;
-}
-
-/* Navigasi Aktif (Liquid Glass Premium Style) */
-.fi-sidebar-item-btn[data-current] {
-    background-color: transparent !important;
-    position: relative;
-    z-index: 1;
-    transform: translateY(-1px);
-}
-
-.fi-sidebar-item-btn[data-current]::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    /* Efek Liquid Glass yang super premium (Jingga Siang) */
-    @apply bg-orange-500/10 backdrop-blur-xl border border-white/60 border-b-white/20 shadow-[0_8px_16px_rgba(249,115,22,0.1),inset_0_1px_1px_rgba(255,255,255,0.8)];
-    z-index: -1;
-    
-    transform-origin: left;
-    animation: slideActiveNav 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Override secara eksplisit untuk Mode Malam (Biru) */
-.dark .fi-sidebar-item-btn[data-current]::before {
-    @apply bg-blue-500/20 border-white/10 border-t-white/20 shadow-[0_8px_16px_rgba(59,130,246,0.15),inset_0_1px_1px_rgba(255,255,255,0.15)];
-}
-
-/* Pantulan Cahaya Kaca (Static Shimmer / Glossy Highlight) */
-.fi-sidebar-item-btn[data-current]::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.35) 50%, transparent 80%);
-    z-index: -1;
-    pointer-events: none;
-}
-
-/* Penyesuaian pantulan kaca untuk Mode Gelap */
-.dark .fi-sidebar-item-btn[data-current]::after {
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.08) 50%, transparent 80%);
-}
-
-@keyframes slideActiveNav {
-    0% { transform: scaleX(0); opacity: 0; }
-    100% { transform: scaleX(1); opacity: 1; }
-}
-
-/* Hover pada Sidebar Item yang Tidak Aktif (Menjaga efek Glassmorphism) */
+/* Sidebar Item - Inactive & Hover */
 .fi-sidebar-item-btn {
-    @apply transition-all duration-300;
+    @apply !rounded-xl transition-all duration-200;
 }
 
 .fi-sidebar-item-btn:not([data-current]):hover {
-    background-color: rgba(255, 255, 255, 0.3) !important;
-    @apply backdrop-blur-sm shadow-sm;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    @apply !bg-black/[0.04] dark:!bg-white/[0.06];
 }
 
-.dark .fi-sidebar-item-btn:not([data-current]):hover {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+/* Sidebar Item - Active (Apple macOS Elevated Pill) */
+.fi-sidebar-item-btn[data-current] {
+    @apply !bg-[#F47920] !text-white !font-semibold !rounded-xl !shadow-[0_2px_8px_rgba(244,121,32,0.35)];
 }
 
-/* Topbar - Liquid Glass Upgrade */
+.fi-sidebar-item-btn[data-current] .fi-sidebar-item-label,
+.fi-sidebar-item-btn[data-current] .fi-sidebar-item-icon {
+    @apply !text-white !font-semibold;
+}
+
+.fi-sidebar-item-label {
+    @apply !text-slate-700 dark:!text-slate-300 font-medium;
+}
+
+.fi-sidebar-item-icon {
+    @apply !text-slate-400 dark:!text-slate-500;
+}
+
+.fi-sidebar-group-label {
+    @apply !text-slate-400 dark:!text-slate-500 !font-semibold tracking-wider uppercase text-[10.5px];
+}
+
+.fi-sidebar-group-btn {
+    @apply !rounded-xl transition-colors hover:!bg-black/[0.03] dark:hover:!bg-white/[0.05];
+}
+
+/* =========================================================
+   2. TOPBAR (Apple Floating Glass Navigation Bar)
+   ========================================================= */
 .fi-topbar {
-    @apply !bg-white/30 dark:!bg-gray-900/40 !backdrop-blur-3xl !border-b !border-white/50 border-b-white/20 dark:!border-gray-700/50 dark:!border-b-gray-600/50 !shadow-[0_4px_24px_rgba(0,0,0,0.05)];
+    @apply !bg-white/75 dark:!bg-[#07111e]/80 !backdrop-blur-2xl !backdrop-saturate-150 !border-b !border-black/[0.06] dark:!border-white/[0.08] !shadow-[0_1px_3px_rgba(0,0,0,0.02)];
 }
 
 .fi-topbar nav {
     @apply !bg-transparent;
 }
 
-/* Main Content Area */
-.fi-main {
-    @apply !bg-transparent;
-}
-
-/* Page Transition Animation (Animasi halus saat berpindah halaman navigasi) */
+/* Page Transition Animation */
 @keyframes pageLoadTransition {
     0% {
         opacity: 0;
-        /* Hapus transform pada animasi karena di Safari iOS, animasi transform (meski berakhir di 'none') 
-           tetap menjebak elemen fixed seperti dropdown. */
     }
     100% {
         opacity: 1;
     }
 }
 
-/* Terapkan ke semua elemen anak langsung di dalam fi-main. 
-   Saat wire:navigate mengganti halaman, elemen baru akan ter-render dan memicu animasi ini. */
 .fi-main > * {
     opacity: 1;
-    animation: pageLoadTransition 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: pageLoadTransition 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Cards / Containers / Widgets / Tables / Repeaters / Simple Pages / Tabs / Stats */
-.fi-wi-widget, 
+/* =========================================================
+   3. CONTENT LAYER: Apple Standard Material Panels
+      (Cards, Widgets, Sections, Tables, Stats)
+   ========================================================= */
 .fi-wi-stats-overview-stat,
+.fi-wi-chart,
 .fi-ta-ctn,
 .fi-sc-ctn,
 .fi-fieldset,
-.fi-section,
+.fi-section:not(:has(.fi-wi-stats-overview-stat)),
 .fi-rep-item,
 .fi-in-repeatable-item,
 .fi-sc-tabs.fi-contained,
 .fi-tabs.fi-contained,
 .fi-empty-state,
 .fi-user-card {
-    /* Liquid Glass Upgrade untuk Container/Card */
-    /* !backdrop-blur-2xl DIPINDAHKAN ke ::before agar tidak menjebak dropdown (bug Safari iOS) */
-    @apply !bg-white/30 dark:!bg-slate-900/30 !rounded-2xl !relative focus-within:!z-[90];
-    
-    /* Custom Border 3D effect (terang di kiri atas, redup di kanan bawah) */
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-top-color: rgba(255, 255, 255, 0.6) !important;
-    border-left-color: rgba(255, 255, 255, 0.5) !important;
-    
-    /* Inset shadow (kilap siku) & Drop shadow tebal */
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 8px 32px rgba(0,0,0,0.1) !important;
-    
-    /* Pantulan cahaya kaca statis di pojok kiri atas */
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%) !important;
+    @apply !bg-white/80 dark:!bg-[#0b1626]/80 !rounded-2xl !relative focus-within:!z-[90] transition-all duration-300;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04), 0 12px 28px -6px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* FIX BUG SAFARI iOS: Pindahkan backdrop-filter ke pseudo-element ::before.
-   Safari mengubah elemen dengan backdrop-filter menjadi 'containing block' untuk elemen fixed.
-   Akibatnya, dropdown/popover yang dihitung dari layar malah bergeser menjauh. */
-.fi-wi-widget::before, 
+/* Safari iOS containment fix: Keep backdrop-blur in ::before */
 .fi-wi-stats-overview-stat::before,
+.fi-wi-chart::before,
 .fi-ta-ctn::before,
 .fi-sc-ctn::before,
 .fi-fieldset::before,
-.fi-section::before,
+.fi-section:not(:has(.fi-wi-stats-overview-stat))::before,
 .fi-rep-item::before,
 .fi-in-repeatable-item::before,
 .fi-sc-tabs.fi-contained::before,
@@ -187,33 +189,31 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    @apply backdrop-blur-2xl;
+    @apply backdrop-blur-xl;
     z-index: -1;
     pointer-events: none;
 }
 
-/* Penyesuaian Liquid Glass untuk Mode Gelap */
-.dark .fi-wi-widget, 
 .dark .fi-wi-stats-overview-stat,
+.dark .fi-wi-chart,
 .dark .fi-ta-ctn,
 .dark .fi-sc-ctn,
 .dark .fi-fieldset,
-.dark .fi-section,
+.dark .fi-section:not(:has(.fi-wi-stats-overview-stat)),
 .dark .fi-rep-item,
 .dark .fi-in-repeatable-item,
 .dark .fi-sc-tabs.fi-contained,
 .dark .fi-tabs.fi-contained,
 .dark .fi-empty-state,
 .dark .fi-user-card {
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    border-top-color: rgba(255, 255, 255, 0.15) !important;
-    border-left-color: rgba(255, 255, 255, 0.15) !important;
-    
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 8px 32px rgba(0,0,0,0.2) !important;
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 20%, transparent 40%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.3), 0 12px 32px -6px rgba(0, 0, 0, 0.45) !important;
 }
 
-/* Hilangkan background, border, dan ::before dari parent container Stats Overview */
+/* Pastikan widget wrapper parent, grid container, dan section stats selalu transparan tanpa gap background */
+.fi-wi-widget,
+.fi-wi-stats-overview,
+.fi-widgets-ctn,
 .fi-wi-widget:has(.fi-wi-stats-overview-stat),
 .fi-section:has(.fi-wi-stats-overview-stat) {
     background: transparent !important;
@@ -221,12 +221,52 @@
     box-shadow: none !important;
     backdrop-filter: none !important;
 }
+
+.fi-wi-widget::before,
+.fi-wi-stats-overview::before,
+.fi-widgets-ctn::before,
 .fi-wi-widget:has(.fi-wi-stats-overview-stat)::before,
 .fi-section:has(.fi-wi-stats-overview-stat)::before {
     display: none !important;
+    content: none !important;
 }
 
-/* Khusus wadah Login, buat opacity background-nya 0 agar murni blur tanpa warna susu */
+.dark .fi-wi-widget,
+.dark .fi-wi-stats-overview,
+.dark .fi-widgets-ctn,
+.dark .fi-wi-widget:has(.fi-wi-stats-overview-stat),
+.dark .fi-section:has(.fi-wi-stats-overview-stat) {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+.dark .fi-wi-widget::before,
+.dark .fi-wi-stats-overview::before,
+.dark .fi-widgets-ctn::before,
+.dark .fi-wi-widget:has(.fi-wi-stats-overview-stat)::before,
+.dark .fi-section:has(.fi-wi-stats-overview-stat)::before {
+    display: none !important;
+    content: none !important;
+}
+
+/* Stat card subtle hover accent */
+.fi-wi-stats-overview-stat:hover {
+    border-color: rgba(244, 121, 32, 0.35) !important;
+}
+
+.dark .fi-wi-stats-overview-stat:hover {
+    border-color: rgba(244, 121, 32, 0.4) !important;
+}
+
+.fi-wi-stats-overview-stat-description,
+.fi-wi-stats-overview-stat-description > span {
+    width: 100% !important;
+    display: block !important;
+}
+
+/* Auth / Login container */
 .fi-simple-page-content {
     @apply !bg-white/0 dark:!bg-gray-900/0 relative z-10;
 }
@@ -236,101 +276,36 @@
     overflow: hidden;
 }
 
-/* Memaksa elemen description di dalam stat widget agar merentang 100% lebarnya 
-   sehingga teks di dalamnya bisa rata kanan (text-right) */
-.fi-wi-stats-overview-stat-description,
-.fi-wi-stats-overview-stat-description > span {
-    width: 100% !important;
-    display: block !important;
-}
-
-/* Dropdown section moved below */
-
-/* Pastikan latar belakang layout utama transparan agar gradient <body> terlihat */
-.fi-layout,
-.fi-simple-layout,
-.fi-auth-content-section,
-.fi-auth-form-container,
-.fi-main {
-    @apply !bg-transparent;
-}
-
-/* Pastikan elemen anak di dalam dropdown tidak memakai background solid yang menutupi blur */
-.fi-dropdown-list,
-.fi-dropdown-list-item {
-    @apply !bg-transparent;
-}
-
-/* Container pencarian di dropdown dibuat seperti kaca buram tebal agar bisa menutupi list yang sedang di-scroll (Masking) */
-.fi-select-input-search-ctn {
-    @apply !bg-white/80 dark:!bg-gray-900/80 !backdrop-blur-xl border-b !border-white/30 dark:!border-white/10;
-}
-
-/* Berikan warna hover tipis pada opsi yang dipilih/dihover */
-.fi-dropdown-list-item:hover,
-.fi-dropdown-list-item:focus,
-.fi-select-input-option:hover,
-.fi-select-input-option:focus {
-    @apply !bg-white/20 dark:!bg-white/10;
-}
-
-/* Modals (Liquid Glass Premium) */
-.fi-modal-window {
-    @apply !bg-white/50 dark:!bg-slate-900/50 !backdrop-blur-3xl !rounded-2xl;
-    /* Kita memakai inset shadow dan border via box-shadow/border-image atau custom border 
-       Jika slide-over bermasalah karena border, biarkan border 0 atau gunakan box-shadow inset */
-    box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.4), 0 32px 64px rgba(0,0,0,0.2) !important;
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 20%, transparent 40%) !important;
-}
-
-.dark .fi-modal-window {
-    box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.1), 0 32px 64px rgba(0,0,0,0.4) !important;
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 20%, transparent 40%) !important;
-}
-
-/* Premium Modal Header */
-.fi-modal-header {
-    @apply !bg-white/40 dark:!bg-slate-800/40 !backdrop-blur-md border-b !border-white/40 dark:!border-white/10 !px-6 !py-4 !rounded-t-2xl;
-    box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
-}
-
-.dark .fi-modal-header {
-    box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.2);
-}
-
-.fi-modal-heading {
-    @apply !text-gray-900 dark:!text-gray-100 !font-bold tracking-tight;
-}
-
-.fi-modal-description {
-    @apply !text-gray-600 dark:!text-gray-400 !font-medium;
-}
-
-/* Efek Gelap dan Blur Kaca pada Latar Belakang Modal */
-/* Menggunakan .fi-modal-close-overlay karena ia sudah memiliki properti fixed inset-0 z-40 bawaan yang menutupi seluruh layar */
-.fi-modal-close-overlay {
-    @apply !bg-gray-900/40 dark:!bg-gray-900/60 !backdrop-blur-md;
-}
-
+/* =========================================================
+   4. TABLES (Apple Clean macOS Data Grids)
+   ========================================================= */
 .fi-ta-header, .fi-ta-content {
     @apply !bg-transparent;
 }
 
-/* Glassmorphism Table Rows (Memperbaiki efek hover yang terlalu putih/solid) */
 .fi-ta-row {
-    @apply transition-colors duration-300;
+    @apply transition-colors duration-150;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Hover & Selected (Mode Siang: Hitam transparan sangat tipis agar membaur dengan kaca) */
-.fi-ta-row.fi-clickable:hover,
+.dark .fi-ta-row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.fi-ta-row.fi-clickable:hover {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+.dark .fi-ta-row.fi-clickable:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
 .fi-ta-row.fi-selected {
-    background-color: rgba(0, 0, 0, 0.04) !important;
+    background-color: rgba(244, 121, 32, 0.06) !important;
 }
 
-/* Hover & Selected (Mode Malam: Putih transparan sangat tipis) */
-.dark .fi-ta-row.fi-clickable:hover,
 .dark .fi-ta-row.fi-selected {
-    background-color: rgba(255, 255, 255, 0.06) !important;
+    background-color: rgba(244, 121, 32, 0.12) !important;
 }
 
 .fi-section-header,
@@ -339,196 +314,349 @@
     @apply !bg-transparent;
 }
 
-/* Background for the whole app to show the glass effect */
-body {
-    /* Latar belakang utama (Slate 100 -> sedikit lebih kelabu) */
-    background-color: #e2e8f0;
-    /* Bola cahaya Jingga yang LEBIH GELAP dan PEKAT (Rust/Terracotta) */
-    background-image: 
-        radial-gradient(circle at 10% 10%, rgba(170, 70, 20, 0.35) 0%, transparent 45%),
-        radial-gradient(circle at 90% 90%, rgba(140, 50, 15, 0.3) 0%, transparent 45%);
-    background-attachment: fixed;
-}
-
-html.dark body {
-    /* Latar belakang utama sangat gelap (Slate 950 - nyaris hitam) */
-    background-color: #020617;
-    /* Bola cahaya Biru yang LEBIH GELAP (Deep Navy Blue) */
-    background-image: 
-        radial-gradient(circle at 10% 10%, rgba(5, 45, 85, 0.6) 0%, transparent 45%),
-        radial-gradient(circle at 90% 90%, rgba(8, 35, 65, 0.5) 0%, transparent 45%);
-    background-attachment: fixed;
-}
-
-/* Dropdown Panels, Popovers, & Global Search Results (Liquid Glass Premium) */
-.fi-dropdown-panel,
-.fi-popover,
-.fi-global-search-results-ctn {
-    @apply !bg-white/85 dark:!bg-slate-900/90 !backdrop-blur-lg !rounded-xl !z-[9999];
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    border-top-color: rgba(255, 255, 255, 0.7) !important;
-    border-left-color: rgba(255, 255, 255, 0.6) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 16px 48px rgba(0,0,0,0.15) !important;
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 20%, transparent 40%) !important;
-}
-
-.dark .fi-dropdown-panel,
-.dark .fi-popover,
-.dark .fi-global-search-results-ctn {
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    border-top-color: rgba(255, 255, 255, 0.15) !important;
-    border-left-color: rgba(255, 255, 255, 0.15) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 16px 48px rgba(0,0,0,0.4) !important;
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 20%, transparent 40%) !important;
-}
-
-/* Pastikan bagian dalam global search transparan */
-.fi-global-search-results,
-.fi-global-search-results > div,
-.fi-global-search-results ul {
-    @apply !bg-transparent;
-}
-
-/* Glassmorphism Buttons (Liquid Glass Premium) */
+/* =========================================================
+   5. BUTTONS (Apple Tactile Pill Buttons)
+   ========================================================= */
 .fi-btn {
-    --tw-bg-opacity: 0.6 !important; /* Transparansi untuk memunculkan blur */
-    @apply !backdrop-blur-xl transition-all duration-300 relative overflow-hidden;
-    
-    /* Tambahkan border khas kaca */
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    border-top-color: rgba(255, 255, 255, 0.8) !important;
-    
-    /* Inset shadow untuk ketebalan */
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
-    
-    /* Lapisan putih kaca melintang langsung di button */
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 50%, transparent 80%) !important;
+    @apply !rounded-xl !font-semibold !tracking-tight transition-all duration-200 select-none active:scale-[0.98];
 }
 
-.fi-btn:hover {
-    --tw-bg-opacity: 0.8 !important; /* Sedikit lebih solid saat hover */
-    transform: translateY(-1px);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.5) 50%, transparent 80%) !important;
+/* Primary Button */
+.fi-btn-color-primary:not(.fi-outlined):not(.fi-btn-ghost) {
+    @apply !bg-[#F47920] hover:!bg-[#e06b18] !text-white !shadow-[0_2px_10px_rgba(244,121,32,0.3)] hover:!shadow-[0_4px_16px_rgba(244,121,32,0.4)];
+    border: none !important;
 }
 
-.dark .fi-btn {
-    --tw-bg-opacity: 0.3 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-top-color: rgba(255, 255, 255, 0.2) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.08) 50%, transparent 80%) !important;
+/* Outlined / Gray Button */
+.fi-btn-color-gray:not(.fi-btn-ghost),
+.fi-btn.fi-outlined {
+    @apply !bg-black/[0.03] dark:!bg-white/[0.06] hover:!bg-black/[0.06] dark:hover:!bg-white/[0.1] !border !border-black/[0.08] dark:!border-white/[0.1];
 }
 
-.dark .fi-btn:hover {
-    --tw-bg-opacity: 0.5 !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 4px 6px rgba(0, 0, 0, 0.3) !important;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.15) 50%, transparent 80%) !important;
+/* =========================================================
+   6. TABS (Apple Segmented Control Style - Centered with Arrows)
+   ========================================================= */
+.fi-sc-tabs:not(.fi-contained) {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-/* Glassmorphism Active Tabs */
+.fi-sc-tabs:not(.fi-contained)::before {
+    display: none !important;
+}
+
+.fi-tabs-scroll-outer {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.fi-tabs-scroll-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+}
+
+/* Arrow buttons flanking the centered tabs */
+.fi-tabs-arrow-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    border-radius: 9999px !important;
+    background-color: rgba(0, 0, 0, 0.06) !important;
+    color: #475569 !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.fi-tabs-arrow-btn:hover:not(:disabled) {
+    background-color: rgba(244, 121, 32, 0.15) !important;
+    color: #F47920 !important;
+    border-color: rgba(244, 121, 32, 0.4) !important;
+    transform: scale(1.08) !important;
+}
+
+.fi-tabs-arrow-btn:active:not(:disabled) {
+    transform: scale(0.95) !important;
+}
+
+.dark .fi-tabs-arrow-btn {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.dark .fi-tabs-arrow-btn:hover:not(:disabled) {
+    background-color: rgba(244, 121, 32, 0.2) !important;
+    color: #F47920 !important;
+    border-color: rgba(244, 121, 32, 0.5) !important;
+}
+
+.fi-tabs-arrow-btn:disabled {
+    opacity: 0.25 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+.fi-tabs-arrow-btn svg {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+    display: block !important;
+    fill: currentColor !important;
+    stroke: none !important;
+}
+
+.fi-tabs:not(.fi-vertical) {
+    @apply !bg-slate-200/60 dark:!bg-slate-900/60 !backdrop-blur-md !p-1 !rounded-2xl !border !border-slate-300/40 dark:!border-white/5;
+    display: inline-flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none !important;
+    scroll-behavior: smooth !important;
+    max-width: calc(100% - 90px) !important;
+    min-width: 0 !important;
+}
+
+.fi-tabs:not(.fi-vertical)::-webkit-scrollbar {
+    display: none !important;
+}
+
+.fi-tabs-item {
+    @apply !rounded-xl !px-4 !py-2 !text-xs sm:!text-sm !font-semibold !transition-all !duration-200 !text-slate-600 dark:!text-slate-400;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    min-width: max-content !important;
+    border: none !important;
+}
+
+.fi-tabs-item:hover {
+    @apply !text-slate-900 dark:!text-white;
+}
+
 .fi-tabs-item.fi-active {
-    /* Latar kaca dengan sentuhan Jingga untuk mode terang */
-    @apply !bg-[#F47920]/15 !backdrop-blur-xl relative overflow-hidden;
-    
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
-    border-bottom-color: transparent !important; /* Supaya menyatu dengan panel bawah */
-    
-    /* Inset shadow putih terang & Drop shadow memancar jingga tipis ke atas */
-    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.8), 0 -4px 12px rgba(244, 121, 32, 0.1) !important;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.5) 50%, transparent 80%) !important;
+    @apply !bg-white dark:!bg-slate-800 !text-slate-900 dark:!text-white !shadow-[0_2px_8px_rgba(0,0,0,0.08)] !border !border-black/[0.04] dark:!border-white/[0.08];
 }
 
-.dark .fi-tabs-item.fi-active {
-    /* Latar kaca dengan sentuhan Biru untuk mode gelap */
-    @apply !bg-[#0A4F86]/10;
-    
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-bottom-color: transparent !important;
-    
-    /* Inset shadow putih tipis & Drop shadow memancar biru ke atas */
-    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2), 0 -4px 12px rgba(10, 79, 134, 0.3) !important;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.1) 50%, transparent 80%) !important;
-}
-
-/* Inputs & Form Fields (Liquid Glass Premium) */
+/* =========================================================
+   7. INPUTS & FORM FIELDS (Apple Clean Frosted Inputs)
+   ========================================================= */
 .fi-input-wrp, 
 .fi-select-wrp,
 .fi-textarea-wrp,
 .fi-fo-date-time-picker-display-text-input-wrp {
-    /* Hapus !backdrop-blur-xl untuk Safari iOS, dipindah ke ::before */
-    @apply !bg-white/40 dark:!bg-slate-900/40 !rounded-xl transition-all duration-300 !relative focus-within:!z-[999] hover:!z-[999];
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    border-top-color: rgba(255, 255, 255, 0.1) !important;
-    border-bottom-color: rgba(255, 255, 255, 0.6) !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 1px rgba(255, 255, 255, 0.5) !important;
-}
-
-.fi-input-wrp::before, 
-.fi-select-wrp::before,
-.fi-textarea-wrp::before,
-.fi-fo-date-time-picker-display-text-input-wrp::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    @apply backdrop-blur-xl;
-    z-index: -1;
-    pointer-events: none;
-}
-
-.fi-input-wrp:focus-within,
-.fi-select-wrp:focus-within,
-.fi-textarea-wrp:focus-within,
-.fi-fo-date-time-picker-display-text-input-wrp:focus-within {
-    @apply !bg-white/60 dark:!bg-slate-800/60;
-    border-color: rgba(var(--c-500), 0.5) !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02), 0 0 0 2px rgba(var(--c-500), 0.2) !important;
+    @apply !bg-slate-100/80 dark:!bg-slate-900/80 !rounded-xl !transition-all !duration-200 !relative focus-within:!z-[999] hover:!z-[999];
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
 }
 
 .dark .fi-input-wrp, 
 .dark .fi-select-wrp,
 .dark .fi-textarea-wrp,
 .dark .fi-fo-date-time-picker-display-text-input-wrp {
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-top-color: rgba(0, 0, 0, 0.2) !important;
-    border-bottom-color: rgba(255, 255, 255, 0.15) !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-.dark .fi-input-wrp:focus-within,
-.dark .fi-select-wrp:focus-within,
-.dark .fi-textarea-wrp:focus-within,
-.dark .fi-fo-date-time-picker-display-text-input-wrp:focus-within {
-    border-color: rgba(var(--c-500), 0.5) !important;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(var(--c-500), 0.2) !important;
+.fi-input-wrp:focus-within,
+.fi-select-wrp:focus-within,
+.fi-textarea-wrp:focus-within,
+.fi-fo-date-time-picker-display-text-input-wrp:focus-within {
+    @apply !bg-white dark:!bg-[#07111e];
+    border-color: #F47920 !important;
+    box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15) !important;
 }
 
-/* Pastikan opsi select tidak transparan */
+.fi-input, 
+.fi-textarea, 
+.fi-select-input,
+.fi-fo-date-time-picker-display-text-input,
+.fi-select-input-btn {
+    @apply !bg-transparent;
+}
+
 .fi-select-wrp select > option {
-    @apply !bg-white dark:!bg-gray-900 !text-gray-900 dark:!text-gray-100;
+    @apply !bg-white dark:!bg-[#0b1626] !text-slate-900 dark:!text-slate-100;
 }
 
-/* Glassmorphism Badges (Liquid Premium) */
+/* Field focus z-index lift */
+.fi-fo-field:focus-within,
+.fi-sc-component:focus-within,
+.fi-input-wrp:focus-within {
+    z-index: 999 !important;
+    position: relative;
+}
+
+/* =========================================================
+   8. DROPDOWNS, POPOVERS & GLOBAL SEARCH
+   ========================================================= */
+.fi-dropdown-panel,
+.fi-popover,
+.fi-global-search-results-ctn {
+    @apply !bg-white/90 dark:!bg-[#0d1b2e]/95 !backdrop-blur-2xl !rounded-2xl !z-[9999];
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
+}
+
+.dark .fi-dropdown-panel,
+.dark .fi-popover,
+.dark .fi-global-search-results-ctn {
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
+}
+
+.fi-dropdown-list {
+    @apply p-1.5 !bg-transparent;
+}
+
+.fi-dropdown-list-item,
+.fi-select-input-option {
+    @apply rounded-xl px-3 py-2 text-sm transition-colors duration-150;
+}
+
+.fi-dropdown-list-item:hover,
+.fi-dropdown-list-item:focus,
+.fi-dropdown-list-item.fi-focused,
+.fi-select-input-option:hover,
+.fi-select-input-option:focus,
+.fi-select-input-option.fi-focused {
+    @apply !bg-black/[0.04] dark:!bg-white/[0.08];
+}
+
+.fi-select-input-search-ctn {
+    @apply !bg-white/90 dark:!bg-slate-900/90 !backdrop-blur-xl border-b !border-black/[0.06] dark:!border-white/[0.08];
+}
+
+.fi-global-search-results,
+.fi-global-search-results > div,
+.fi-global-search-results ul {
+    @apply !bg-transparent;
+}
+
+/* =========================================================
+   9. MODALS (Apple Floating Sheet)
+   ========================================================= */
+.fi-modal-window {
+    @apply !bg-white/95 dark:!bg-[#0b1626]/95 !backdrop-blur-2xl !rounded-3xl;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .fi-modal-window {
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6) !important;
+}
+
+.fi-modal-header {
+    @apply !bg-transparent border-b !border-black/[0.06] dark:!border-white/[0.08] !px-6 !py-5;
+}
+
+.fi-modal-heading {
+    @apply !text-slate-900 dark:!text-white !font-bold tracking-tight text-lg;
+}
+
+.fi-modal-description {
+    @apply !text-slate-500 dark:!text-slate-400 !font-normal text-sm;
+}
+
+.fi-modal-footer {
+    @apply !bg-transparent border-t !border-black/[0.06] dark:!border-white/[0.08] !px-6 !py-4;
+}
+
+.fi-modal-close-overlay {
+    @apply !bg-slate-900/40 dark:!bg-black/60 !backdrop-blur-md;
+}
+
+/* =========================================================
+   10. BADGES (Apple Status Pills)
+   ========================================================= */
 .fi-badge {
-    @apply !backdrop-blur-xl transition-all duration-300;
+    @apply !rounded-full !px-3 !py-1 !text-xs !font-semibold !backdrop-blur-md !border-0 !shadow-none tracking-tight;
+}
+
+/* =========================================================
+   11. NOTIFICATIONS (Apple Notification Center Banners)
+   ========================================================= */
+.fi-no-notification {
+    @apply !bg-white/90 dark:!bg-[#0b1626]/95 !backdrop-blur-2xl !rounded-2xl transition-all duration-300 !relative;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+.dark .fi-no-notification {
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45) !important;
+}
+
+.fi-no-notification.fi-inline {
+    @apply !bg-white/90 dark:!bg-[#0b1626]/90 !backdrop-blur-md !rounded-none;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.dark .fi-no-notification.fi-inline {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.fi-no-notification-main,
+.fi-no-notification-content,
+.fi-no-notification-unread-indicator {
+    @apply !bg-transparent;
+}
+
+/* =========================================================
+   12. EASY FOOTER (Apple Minimalist Clean Footer)
+   ========================================================= */
+.fi-footer,
+footer.fi-footer {
+    background: transparent !important;
     background-color: transparent !important;
-    
-    /* Gabungan gradient putih (kilap kaca melintang) dan gradient warna badge bawaan */
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%), linear-gradient(135deg, rgba(var(--c-100), 0.7) 0%, rgba(var(--c-200), 0.7) 100%) !important;
-    border: 1px solid rgba(var(--c-400), 0.3) !important;
-    border-top-color: rgba(255, 255, 255, 0.8) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 2px 4px rgba(0,0,0,0.05) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+    margin-top: 3rem !important;
+    margin-bottom: 1.5rem !important;
+    padding-top: 1.5rem !important;
+    padding-bottom: 0.5rem !important;
+    color: #94a3b8 !important;
+    font-size: 0.75rem !important;
+    font-weight: 400 !important;
+    letter-spacing: -0.01em !important;
+    text-align: center !important;
 }
 
-.dark .fi-badge {
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 20%, transparent 40%), linear-gradient(135deg, rgba(var(--c-500), 0.15) 0%, rgba(var(--c-600), 0.25) 100%) !important;
-    border-color: rgba(var(--c-500), 0.3) !important;
-    border-top-color: rgba(255, 255, 255, 0.15) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0,0,0,0.2) !important;
+.dark .fi-footer,
+.dark footer.fi-footer {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    color: #64748b !important;
 }
 
-/* Fix Chrome Autofill Background on Glassmorphism Inputs */
+/* =========================================================
+   13. ACCESSIBILITY, CONTRAST & PLATFORM FIXES
+   ========================================================= */
 .fi-input:-webkit-autofill,
 .fi-input:-webkit-autofill:hover, 
 .fi-input:-webkit-autofill:focus, 
@@ -537,39 +665,33 @@ html.dark body {
     -webkit-text-fill-color: inherit !important;
 }
 
-/* Meningkatkan Kontras Teks Placeholder (Kosong) pada Tabel */
 .fi-ta-placeholder {
-    @apply !text-gray-700 dark:!text-gray-400;
+    @apply !text-slate-500 dark:!text-slate-400;
 }
 
-/* Meningkatkan Kontras Teks Deskripsi Tambahan pada Tabel (menimpa text-gray-500 bawaan) */
 .fi-ta-text-description,
 .fi-ta-text-description * {
-    @apply !text-gray-700 dark:!text-gray-400;
+    @apply !text-slate-500 dark:!text-slate-400;
 }
 
-/* Meningkatkan Kontras Teks pada Empty State */
 .fi-empty-state-heading {
-    @apply !text-gray-900 dark:!text-gray-100;
+    @apply !text-slate-900 dark:!text-white !font-bold;
 }
 
 .fi-empty-state-description {
-    @apply !text-gray-700 dark:!text-gray-300;
+    @apply !text-slate-500 dark:!text-slate-400;
 }
 
-/* Meningkatkan Kontras Placeholder (baik native ::placeholder maupun span dari Select Input) */
 .fi-input::placeholder,
 .fi-textarea::placeholder,
 .fi-select-input::placeholder,
 .fi-select-input-placeholder,
 .fi-fo-date-time-picker-display-text-input::placeholder {
-    /* Pertegas warna placeholder dan paksa opasitas 100% karena browser sering memudarkan placeholder secara default */
-    @apply !text-gray-400 dark:!text-gray-400 !opacity-100;
+    @apply !text-slate-400 dark:!text-slate-500 !opacity-100;
 }
 
-/* Memperjelas teks dan placeholder pada Input yang statusnya Disabled (Tidak Bisa Diedit) */
 .fi-disabled {
-    opacity: 0.85 !important; /* Jangan terlalu pudar */
+    opacity: 0.8 !important;
 }
 
 .fi-input:disabled,
@@ -580,192 +702,23 @@ html.dark body {
 .fi-textarea:disabled::placeholder,
 .fi-select-input:disabled::placeholder,
 .fi-fo-date-time-picker-display-text-input:disabled::placeholder {
-    @apply !text-gray-400 dark:!text-gray-400;
+    @apply !text-slate-400 dark:!text-slate-500;
 }
 
-/* Mengatasi bug Select / DatePicker Panel tertimpa komponen di bawahnya */
-/* Saat sebuah field sedang aktif/fokus, angkat z-index nya ke paling atas */
-.fi-fo-field:focus-within,
-.fi-sc-component:focus-within,
-.fi-input-wrp:focus-within {
-    z-index: 999 !important;
-    position: relative;
+/* Responsive tabs: always smooth single-row horizontal scroll with arrow navigation */
+.fi-tabs {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none !important;
 }
 
-/* Mempertegas Efek Hover pada List/Opsi di Dropdown (Mode Terang & Gelap) */
-.fi-dropdown-list-item:hover,
-.fi-dropdown-list-item:focus,
-.fi-dropdown-list-item.fi-focused,
-.fi-select-input-option:hover,
-.fi-select-input-option:focus,
-.fi-select-input-option.fi-focused {
-    background-color: rgba(0, 0, 0, 0.08) !important;
-    transition: background-color 0.2s ease;
+.fi-tabs::-webkit-scrollbar {
+    display: none !important;
 }
 
-.dark .fi-dropdown-list-item:hover,
-.dark .fi-dropdown-list-item:focus,
-.dark .fi-dropdown-list-item.fi-focused,
-.dark .fi-select-input-option:hover,
-.dark .fi-select-input-option:focus,
-.dark .fi-select-input-option.fi-focused {
-    background-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-/* =========================================================
-   D. STYLING INPUT AGAR LEBIH MENARIK (PREMIUM & GLASS)
-   Bagian ini sudah disatukan di atas.
-   ========================================================= */
-
-/* Pastikan background input aslinya transparan agar warna glass dari wrapper terlihat */
-.fi-input, 
-.fi-textarea, 
-.fi-select-input,
-.fi-fo-date-time-picker-display-text-input,
-.fi-select-input-btn {
-    @apply !bg-transparent;
-}
-
-/* =========================================================
-   E. STYLING DROPDOWN/SELECT AGAR LEBIH MENARIK
-   ========================================================= */
-
-/* Beri jarak/padding di dalam dropdown agar item tidak menempel ke tepi */
-.fi-dropdown-list {
-    @apply p-2 !bg-transparent;
-}
-
-/* Buat item di dalam dropdown (opsi) menjadi seperti pil/gelembung (rounded) */
-.fi-dropdown-list-item,
-.fi-select-input-option {
-    @apply rounded-lg mb-1 px-3 py-2 transition-colors duration-200;
-}
-
-/* Hilangkan margin bawah untuk item terakhir */
-.fi-dropdown-list-item:last-child,
-.fi-select-input-option:last-child {
-    @apply mb-0;
-}
-
-/* =========================================================
-   F. STYLING SIDEBAR TEXT AGAR TIDAK TERLALU GELAP
-   ========================================================= */
-
-/* Menggunakan warna abu-abu untuk ikon navigasi, sementara teks tetap gelap pekat */
-.fi-sidebar-item-label {
-    @apply !text-gray-800 dark:!text-gray-200;
-}
-
-.fi-sidebar-item-icon {
-    @apply !text-gray-500 dark:!text-gray-500;
-}
-
-.fi-sidebar-group-label {
-    @apply !text-gray-500 dark:!text-gray-400 !font-semibold tracking-wide uppercase text-[11px];
-}
-
-/* Sidebar Group Header / Button */
-.fi-sidebar-group-btn {
-    @apply transition-all duration-300 relative rounded-lg py-1 px-2 -mx-2;
-}
-
-.fi-sidebar-group-btn:hover {
-    @apply bg-white/30 dark:bg-white/5;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
-}
-
-.dark .fi-sidebar-group-btn:hover {
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Glass Highlight tipis pada saat kategori grup di-hover */
-.fi-sidebar-group-btn::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.2) 50%, transparent 80%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-
-.dark .fi-sidebar-group-btn::after {
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.05) 50%, transparent 80%);
-}
-
-.fi-sidebar-group-btn:hover::after {
-    opacity: 1;
-}
-
-/* Warna teks untuk menu yang sedang aktif (Active State) */
-.fi-sidebar-item-btn[data-current] .fi-sidebar-item-label,
-.fi-sidebar-item-btn[data-current] .fi-sidebar-item-icon {
-    @apply !text-primary-600 dark:!text-primary-400 !font-semibold;
-}
-
-/* =========================================================
-   G. STYLING NOTIFICATIONS (Premium Clean Glassmorphism)
-   ========================================================= */
-
-.fi-no-notification {
-    @apply !bg-white/80 dark:!bg-slate-900/80 !backdrop-blur-xl !rounded-xl transition-all duration-300 !relative;
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
-    border-top-color: rgba(255, 255, 255, 0.8) !important;
-    border-left-color: rgba(255, 255, 255, 0.6) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 8px 32px rgba(0,0,0,0.12) !important;
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%) !important;
-}
-
-.dark .fi-no-notification {
-    @apply !bg-slate-900/80;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    border-top-color: rgba(255, 255, 255, 0.15) !important;
-    border-left-color: rgba(255, 255, 255, 0.15) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 8px 32px rgba(0,0,0,0.3) !important;
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 20%, transparent 40%) !important;
-}
-
-/* Khusus untuk notifikasi di dalam panel/modal (Inline) agar kembali ke gaya aslinya yang mengotak dan menyatu seperti list */
-.fi-no-notification.fi-inline {
-    @apply !bg-white/90 dark:!bg-slate-900/90 !backdrop-blur-md !rounded-none;
-    box-shadow: none !important;
-    background-image: none !important;
-    border: none !important;
-    border-bottom: 1px solid rgba(156, 163, 175, 0.2) !important;
-}
-
-.dark .fi-no-notification.fi-inline {
-    @apply !bg-gray-900/90;
-    box-shadow: none !important;
-    background-image: none !important;
-    border: none !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-}
-
-/* Pastikan isinya transparan agar tidak tumpang tindih dengan background container utama */
-.fi-no-notification-main,
-.fi-no-notification-content,
-.fi-no-notification-unread-indicator {
-    @apply !bg-transparent;
-}
-
-/* =========================================================
-   H. FIX TABS ITEM AGAR TIDAK PENYET DI MOBILE
-   ========================================================= */
-@media (max-width: 768px) {
-    .fi-tabs {
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-    }
-    .fi-tabs::-webkit-scrollbar {
-        display: none;
-    }
-    .fi-tabs-item {
-        flex-shrink: 0 !important;
-        white-space: nowrap !important;
-        min-width: max-content !important;
-    }
+.fi-tabs-item {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    min-width: max-content !important;
 }

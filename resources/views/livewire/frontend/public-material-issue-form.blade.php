@@ -1,5 +1,4 @@
 <div
-    x-data="tourGuide()"
     class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-500 pt-28 pb-44 sm:pb-48 font-sans relative overflow-hidden">
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/css/shepherd.css"/>
@@ -51,6 +50,15 @@
                     <svg class="w-3.5 h-3.5 text-[#F47920]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
                     Tanda Tangan Digital Terverifikasi
                 </span>
+            </div>
+
+            <!-- Header Action Button: Buka Panduan Pengisian -->
+            <div class="mt-5 flex justify-center">
+                <button type="button" @click.prevent="startTour()"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/15 text-slate-800 dark:text-white text-xs font-semibold shadow-xs border border-black/[0.08] dark:border-white/[0.15] active:scale-95 transition-all cursor-pointer">
+                    <span class="text-amber-500">💡</span>
+                    <span>Buka Panduan Pengisian Interaktif (15 Langkah)</span>
+                </button>
             </div>
         </div>
 
@@ -306,7 +314,7 @@
                                 </div>
                                 <input type="text" x-model="departemen"
                                     class="w-full pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
-                                    required placeholder="Contoh: PPGP">
+                                    required placeholder="Contoh: PP&P">
                             </div>
                             @error('departemen')
                                 <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
@@ -993,49 +1001,47 @@
                 </div>
             </div>
 
-            <!-- STICKY BOTTOM ACTION BAR (Mempermudah user submit & cek status tanpa perlu scroll) -->
-            <div class="fixed bottom-0 inset-x-0 z-30 bg-white/90 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-white/10 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-all duration-300">
-                <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
+            <!-- STICKY BOTTOM ACTION BAR (Apple Floating Glass Bar) -->
+            <div class="fixed bottom-0 inset-x-0 z-30 bg-white/85 dark:bg-[#070e18]/90 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] shadow-[0_-8px_30px_rgba(0,0,0,0.08)] transition-all duration-300">
+                <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between gap-3 min-h-[3.5rem] sm:min-h-[4rem]">
                     <!-- Left: Status Indikator Field Kosong & Navigasi Cepat -->
-                    <div class="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 sm:gap-3 min-w-0">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
                         <template x-if="!isFormReady() && getFirstMissingField()">
                             <button type="button" @click="focusFirstMissingField()"
-                                class="group w-full sm:w-auto inline-flex items-center justify-between sm:justify-start gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 active:scale-98 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-xs sm:text-sm font-bold transition-all text-left cursor-pointer">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <span class="relative flex h-2.5 w-2.5 shrink-0">
-                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
-                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                                    </span>
-                                    <span class="truncate">
-                                        Perlu diisi: <strong class="underline decoration-amber-500/60 underline-offset-2" x-text="getFirstMissingField()?.name"></strong>
-                                    </span>
-                                </div>
-                                <span class="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0 ml-2">
-                                    Arahkan ke Field &rarr;
+                                class="group inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-amber-500/10 hover:bg-amber-500/15 active:scale-95 border border-amber-500/25 text-amber-800 dark:text-amber-200 text-xs sm:text-sm font-semibold transition-all text-left cursor-pointer truncate max-w-[220px] sm:max-w-md">
+                                <span class="relative flex h-2 w-2 shrink-0">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                </span>
+                                <span class="truncate">
+                                    Perlu diisi: <strong class="underline decoration-amber-500/60 underline-offset-2" x-text="getFirstMissingField()?.name"></strong>
+                                </span>
+                                <span class="hidden sm:inline-flex items-center text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0">
+                                    &rarr;
                                 </span>
                             </button>
                         </template>
                         <template x-if="isFormReady()">
-                            <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-bold">
+                            <div class="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-semibold truncate">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                <span>Formulir Lengkap & Siap Diajukan</span>
+                                <span class="truncate">Formulir Lengkap & Siap Diajukan</span>
                             </div>
                         </template>
                     </div>
 
                     <!-- Right: Tombol Kirim Sticky -->
-                    <div class="w-full sm:w-auto flex items-center justify-end gap-2 sm:gap-3">
+                    <div class="flex items-center gap-2 shrink-0">
                         <button type="button"
                             @click="handleFormSubmit()"
                             wire:loading.attr="disabled"
                             wire:target="confirmSubmit"
                             :class="isFormReady() 
-                                ? 'text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 shadow-md shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 active:scale-98 cursor-pointer' 
-                                : 'text-amber-900 dark:text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 active:scale-98 cursor-pointer shadow-xs'"
-                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-black rounded-xl sm:rounded-2xl transition-all duration-300">
+                                ? 'text-white bg-[#F47920] hover:bg-[#e06b18] shadow-md shadow-[#F47920]/25 hover:-translate-y-0.5 active:scale-95 cursor-pointer' 
+                                : 'text-amber-900 dark:text-amber-100 bg-amber-500/20 hover:bg-amber-500/25 border border-amber-500/30 active:scale-95 cursor-pointer'"
+                            class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-7 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200">
                             
                             <template x-if="isFormReady()">
-                                <svg wire:loading.remove wire:target="confirmSubmit" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                <svg wire:loading.remove wire:target="confirmSubmit" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             </template>
                             <template x-if="!isFormReady()">
                                 <svg class="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -1043,8 +1049,8 @@
                             
                             <svg wire:loading wire:target="confirmSubmit" class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
 
-                            <span wire:loading.remove wire:target="confirmSubmit" x-text="isFormReady() ? 'Kirim MIR Sekarang' : 'Cek & Isi Field Kosong'"></span>
-                            <span wire:loading wire:target="confirmSubmit">Memvalidasi Formulir...</span>
+                            <span wire:loading.remove wire:target="confirmSubmit" x-text="isFormReady() ? 'Kirim MIR' : 'Cek Form'"></span>
+                            <span wire:loading wire:target="confirmSubmit">Memvalidasi...</span>
                         </button>
                     </div>
                 </div>
@@ -1128,24 +1134,25 @@
         </div>
     @endif
 
-    <!-- Floating Guide Button (Panduan Pengisian Shepherd.js) -->
-    <div x-data="tourGuide"
+    <!-- Floating Guide Button (Panduan Pengisian Shepherd.js - Posisi Nyaman di Atas Sticky Bar) -->
+    <div x-data="tourGuide()"
          @chat-toggled.window="isChatOpen = $event.detail.isOpen"
          x-show="!isChatOpen"
-         class="fixed bottom-32 sm:bottom-22 left-4 md:left-8 z-40 group">
-        <!-- Ambient Glow -->
-        <div class="absolute -inset-1 rounded-full bg-gradient-to-r from-[#F47920] to-[#BE5A27] opacity-40 blur-md group-hover:opacity-75 transition duration-500 animate-pulse"></div>
+         class="fixed bottom-[4.75rem] sm:bottom-[5.25rem] left-4 sm:left-6 md:left-8 z-40 group select-none">
         <button type="button" @click.prevent="startTour()"
-            class="relative flex items-center gap-2.5 px-4 py-2.5 sm:px-5 sm:py-3 bg-slate-900/90 hover:bg-slate-900 dark:bg-slate-900/95 dark:hover:bg-slate-800 text-white rounded-full shadow-2xl border border-white/20 dark:border-white/10 backdrop-blur-xl active:scale-95 transition-all duration-300 cursor-pointer">
-            <span class="relative flex h-2.5 w-2.5 shrink-0">
+            class="relative flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-white/90 dark:bg-[#0c1626]/90 hover:bg-white dark:hover:bg-[#0f1d33] text-slate-800 dark:text-white rounded-full shadow-lg hover:shadow-xl border border-black/[0.08] dark:border-white/[0.12] backdrop-blur-2xl active:scale-95 transition-all duration-200 cursor-pointer">
+            <span class="relative flex h-2 w-2 shrink-0">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#F47920]"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-[#F47920]"></span>
             </span>
-            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#F47920] group-hover:rotate-12 transition-transform duration-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <svg class="w-4 h-4 text-[#F47920] group-hover:rotate-12 transition-transform duration-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
-            <span class="font-bold text-xs sm:text-sm tracking-wide text-white">Panduan Pengisian</span>
-            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-black uppercase text-[#F47920] tracking-wider border border-white/10">
+            <span class="font-semibold text-xs sm:text-sm tracking-wide text-slate-800 dark:text-white whitespace-nowrap">
+                <span class="sm:hidden">Panduan</span>
+                <span class="hidden sm:inline">Panduan Pengisian</span>
+            </span>
+            <span class="hidden md:inline-flex items-center px-2 py-0.5 rounded-full bg-[#F47920]/10 text-[10px] font-bold uppercase text-[#F47920] tracking-wider border border-[#F47920]/20">
                 15 Langkah
             </span>
         </button>
@@ -1296,12 +1303,12 @@
         }
 
         #chatbot-widget-container {
-            bottom: 8rem !important;
+            bottom: 4.75rem !important;
             right: 1rem !important;
         }
         @media (min-width: 640px) {
             #chatbot-widget-container {
-                bottom: 5.5rem !important;
+                bottom: 5.25rem !important;
                 right: 1.5rem !important;
             }
         }
@@ -1575,109 +1582,136 @@
         }
         window.mirFormMethods = mirFormMethods;
 
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('tourGuide', () => ({
+        function tourGuide() {
+            return {
                 isChatOpen: false,
                 tourObj: null,
                 init() {
                     window.startFormTour = () => this.startTour();
+                    window.startTour = () => this.startTour();
                     const checkShepherd = setInterval(() => {
                         if (window.Shepherd) {
                             clearInterval(checkShepherd);
-                            this.tourObj = new Shepherd.Tour({
-                                useModalOverlay: true,
-                                defaultStepOptions: {
-                                    cancelIcon: { enabled: true },
-                                    scrollTo: { behavior: 'smooth', block: 'center' }
-                                }
-                            });
-
-                            const steps = [
-                                { id: 'nama-peminta', icon: '👤', title: 'Nama Lengkap Peminta', text: 'Ketik nama lengkap karyawan yang mengajukan serah terima barang di gudang Receiving.', position: 'bottom' },
-                                { id: 'npk', icon: '🪪', title: 'NPK Karyawan', text: 'Masukkan Nomor Pokok Karyawan Pupuk Kaltim resmi Anda untuk validasi data pemohon.', position: 'bottom' },
-                                { id: 'no-hp', icon: '📱', title: 'No. WhatsApp / HP', text: 'Nomor aktif agar petugas gudang Receiving dapat berkoordinasi secara langsung.', position: 'bottom' },
-                                { id: 'departemen', icon: '🏢', title: 'Departemen Kerja', text: 'Pilih atau ketik departemen kerja Anda (misal: PPGP, Pemeliharaan, Pabrik 1, dll).', position: 'bottom' },
-                                { id: 'bagian', icon: '🏷️', title: 'Bagian / Seksi', text: 'Unit kerja atau seksi spesifik pemohon di bawah naungan departemen.', position: 'bottom' },
-                                { id: 'tanggal', icon: '📅', title: 'Tanggal Pengajuan', text: 'Tanggal transaksi serah terima material gudang (otomatis terisi hari ini).', position: 'bottom' },
-                                { id: 'search-mode', icon: '🔍', title: 'Mode Pencarian Dokumen', text: 'Pilih pencarian berdasarkan Nomor PO atau Stock Number SAP.', position: 'bottom' },
-                                { id: 'po', icon: '📄', title: 'Cari & Pilih PO', text: 'Ketikkan nomor PO / Stock No, lalu pilih dokumen penerimaan dari daftar hasil pencarian.', position: 'bottom' },
-                                { id: 'kegunaan', icon: '🎯', title: 'Peruntukan Material', text: 'Jelaskan tujuan pemakaian barang atau klik tombol rekomendasi cepat yang tersedia.', position: 'bottom' },
-                                { id: 'pilih-item', icon: '📦', title: 'Pilih Item Barang', text: 'Pilih nomor item material yang akan diambil dari PO yang sudah dipilih sebelumnya.', position: 'top' },
-                                { id: 'boh', icon: '📊', title: 'Stok Gudang (BOH)', text: 'Periksa sisa stok fisik Balance on Hand yang tersedia di gudang Receiving saat ini.', position: 'top' },
-                                { id: 'qty', icon: '⚖️', title: 'Jumlah Pengambilan', text: 'Ketik jumlah yang dibutuhkan atau klik tombol MAX untuk mengambil seluruh stok BOH.', position: 'top' },
-                                { id: 'ttd-peminta', icon: '✍️', title: 'Tanda Tangan Pemohon', text: 'Bubuhkan tanda tangan elektronik peminta langsung di atas area canvas ini.', position: 'top' },
-                                { id: 'ttd-istek', icon: '🛡️', title: 'Persetujuan ISTEK', text: 'Wajib diisi jika item yang diambil berstatus Belum GRS sesuai SOP pergudangan.', position: 'top' },
-                                { id: 'ttd-receiving', icon: '🤝', title: 'Tanda Tangan Petugas Gudang', text: 'Pilih staf gudang yang bertugas dan bubuhkan tanda tangan serah terima fisik material.', position: 'top' }
-                            ];
-
-                            const totalSteps = steps.length;
-
-                            steps.forEach((s, index) => {
-                                const currentStep = index + 1;
-                                const progressPercent = Math.round((currentStep / totalSteps) * 100);
-
-                                const stepTitleHtml = `
-                                    <div class="flex items-center justify-between w-full mb-1">
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-[#F47920] text-[11px] font-black uppercase tracking-wider">
-                                            Langkah ${currentStep} dari ${totalSteps}
-                                        </span>
-                                        <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500">${progressPercent}%</span>
-                                    </div>
-                                    <div class="flex items-center gap-2 text-slate-900 dark:text-white font-black text-sm sm:text-base mt-1">
-                                        <span class="text-base sm:text-lg">${s.icon}</span>
-                                        <span>${s.title}</span>
-                                    </div>
-                                `;
-
-                                const stepTextHtml = `
-                                    <div class="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full mb-3 overflow-hidden">
-                                        <div class="h-full bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-full transition-all duration-300" style="width: ${progressPercent}%"></div>
-                                    </div>
-                                    <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium m-0">${s.text}</p>
-                                `;
-
-                                const buttons = [];
-                                if (index > 0) {
-                                    buttons.push({
-                                        text: '← Kembali',
-                                        action: this.tourObj.back,
-                                        classes: 'shepherd-button-secondary'
-                                    });
-                                }
-                                if (index < totalSteps - 1) {
-                                    buttons.push({
-                                        text: 'Lanjut →',
-                                        action: this.tourObj.next,
-                                        classes: 'shepherd-button-primary'
-                                    });
-                                } else {
-                                    buttons.push({
-                                        text: 'Selesai ✨',
-                                        action: this.tourObj.complete,
-                                        classes: 'shepherd-button-primary !bg-emerald-600 hover:!bg-emerald-700'
-                                    });
-                                }
-
-                                this.tourObj.addStep({
-                                    id: s.id,
-                                    title: stepTitleHtml,
-                                    text: stepTextHtml,
-                                    attachTo: { element: `[data-tour="${s.id}"]`, on: s.position },
-                                    buttons: buttons,
-                                    showOn: () => document.querySelector(`[data-tour="${s.id}"]`) !== null
-                                });
-                            });
+                            this.initShepherdTour();
                         }
                     }, 100);
                 },
+                initShepherdTour() {
+                    if (this.tourObj || !window.Shepherd) return;
+                    this.tourObj = new Shepherd.Tour({
+                        useModalOverlay: true,
+                        defaultStepOptions: {
+                            cancelIcon: { enabled: true },
+                            scrollTo: { behavior: 'smooth', block: 'center' }
+                        }
+                    });
+
+                    const steps = [
+                        { id: 'nama-peminta', icon: '👤', title: 'Nama Lengkap Peminta', text: 'Ketik nama lengkap karyawan yang mengajukan serah terima barang di gudang Receiving.', position: 'bottom' },
+                        { id: 'npk', icon: '🪪', title: 'NPK Karyawan', text: 'Masukkan Nomor Pokok Karyawan Pupuk Kaltim resmi Anda untuk validasi data pemohon.', position: 'bottom' },
+                        { id: 'no-hp', icon: '📱', title: 'No. WhatsApp / HP', text: 'Nomor aktif agar petugas gudang Receiving dapat berkoordinasi secara langsung.', position: 'bottom' },
+                        { id: 'departemen', icon: '🏢', title: 'Departemen Kerja', text: 'Pilih atau ketik departemen kerja Anda (misal: PP&P, Pemeliharaan, Pabrik 1, dll).', position: 'bottom' },
+                        { id: 'bagian', icon: '🏷️', title: 'Bagian / Seksi', text: 'Unit kerja atau seksi spesifik pemohon di bawah naungan departemen.', position: 'bottom' },
+                        { id: 'tanggal', icon: '📅', title: 'Tanggal Pengajuan', text: 'Tanggal transaksi serah terima material gudang (otomatis terisi hari ini).', position: 'bottom' },
+                        { id: 'search-mode', icon: '🔍', title: 'Mode Pencarian Dokumen', text: 'Pilih pencarian berdasarkan Nomor PO atau Stock Number SAP.', position: 'bottom' },
+                        { id: 'po', icon: '📄', title: 'Cari & Pilih PO', text: 'Ketikkan nomor PO / Stock No, lalu pilih dokumen penerimaan dari daftar hasil pencarian.', position: 'bottom' },
+                        { id: 'kegunaan', icon: '🎯', title: 'Peruntukan Material', text: 'Jelaskan tujuan pemakaian barang atau klik tombol rekomendasi cepat yang tersedia.', position: 'bottom' },
+                        { id: 'pilih-item', icon: '📦', title: 'Pilih Item Barang', text: 'Pilih nomor item material yang akan diambil dari PO yang sudah dipilih sebelumnya.', position: 'top' },
+                        { id: 'boh', icon: '📊', title: 'Stok Gudang (BOH)', text: 'Periksa sisa stok fisik Balance on Hand yang tersedia di gudang Receiving saat ini.', position: 'top' },
+                        { id: 'qty', icon: '⚖️', title: 'Jumlah Pengambilan', text: 'Ketik jumlah yang dibutuhkan atau klik tombol MAX untuk mengambil seluruh stok BOH.', position: 'top' },
+                        { id: 'ttd-peminta', icon: '✍️', title: 'Tanda Tangan Pemohon', text: 'Bubuhkan tanda tangan elektronik peminta langsung di atas area canvas ini.', position: 'top' },
+                        { id: 'ttd-istek', icon: '🛡️', title: 'Persetujuan ISTEK', text: 'Wajib diisi jika item yang diambil berstatus Belum GRS sesuai SOP pergudangan.', position: 'top' },
+                        { id: 'ttd-receiving', icon: '🤝', title: 'Tanda Tangan Petugas Gudang', text: 'Pilih staf gudang yang bertugas dan bubuhkan tanda tangan serah terima fisik material.', position: 'top' }
+                    ];
+
+                    const totalSteps = steps.length;
+
+                    steps.forEach((s, index) => {
+                        const currentStep = index + 1;
+                        const progressPercent = Math.round((currentStep / totalSteps) * 100);
+
+                        const stepTitleHtml = `
+                            <div class="flex items-center justify-between w-full mb-1">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-[#F47920] text-[11px] font-black uppercase tracking-wider">
+                                    Langkah ${currentStep} dari ${totalSteps}
+                                </span>
+                                <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500">${progressPercent}%</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-slate-900 dark:text-white font-black text-sm sm:text-base mt-1">
+                                <span class="text-base sm:text-lg">${s.icon}</span>
+                                <span>${s.title}</span>
+                            </div>
+                        `;
+
+                        const stepTextHtml = `
+                            <div class="w-full h-1 bg-slate-100 dark:bg-slate-800 rounded-full mb-3 overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-[#F47920] to-[#BE5A27] rounded-full transition-all duration-300" style="width: ${progressPercent}%"></div>
+                            </div>
+                            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium m-0">${s.text}</p>
+                        `;
+
+                        const buttons = [];
+                        if (index > 0) {
+                            buttons.push({
+                                text: '← Kembali',
+                                action: this.tourObj.back,
+                                classes: 'shepherd-button-secondary'
+                            });
+                        }
+                        if (index < totalSteps - 1) {
+                            buttons.push({
+                                text: 'Lanjut →',
+                                action: this.tourObj.next,
+                                classes: 'shepherd-button-primary'
+                            });
+                        } else {
+                            buttons.push({
+                                text: 'Selesai ✨',
+                                action: this.tourObj.complete,
+                                classes: 'shepherd-button-primary !bg-emerald-600 hover:!bg-emerald-700'
+                            });
+                        }
+
+                        this.tourObj.addStep({
+                            id: s.id,
+                            title: stepTitleHtml,
+                            text: stepTextHtml,
+                            attachTo: { element: `[data-tour="${s.id}"]`, on: s.position },
+                            buttons: buttons,
+                            showOn: () => document.querySelector(`[data-tour="${s.id}"]`) !== null
+                        });
+                    });
+                },
                 startTour() {
+                    if (!this.tourObj && window.Shepherd) {
+                        this.initShepherdTour();
+                    }
                     if (this.tourObj) {
                         this.tourObj.start();
                     } else {
                         alert("Panduan sedang dimuat, mohon tunggu sebentar.");
                     }
                 }
-            }));
-        });
+            };
+        }
+
+        window.tourGuide = tourGuide;
+        window.startTour = function() {
+            if (window.startFormTour) {
+                window.startFormTour();
+            } else if (window.tourGuide) {
+                const guide = window.tourGuide();
+                guide.init();
+                setTimeout(() => guide.startTour(), 150);
+            }
+        };
+
+        if (window.Alpine) {
+            window.Alpine.data('tourGuide', tourGuide);
+        } else {
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('tourGuide', tourGuide);
+            });
+        }
     </script>
 </div>

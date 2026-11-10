@@ -313,276 +313,263 @@ class InvoicingReceiptsTable
                     ->relationship('pic', 'name', modifyQueryUsing: fn ($query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))),
             ])
             ->recordActions([
-                // ACTION TENTUKAN PIC (MUNCUL JIKA BELUM ADA PIC)
-                Action::make('setPic')
-                    ->label('Tentukan PIC')
-                    ->icon('heroicon-o-user-plus')
-                    ->color('warning')
-                    ->button()
-                    ->outlined()
-                    ->size(Size::Small)
-                    ->visible(fn (InvoicingReceipt $record) => is_null($record->pic_id))
-                    ->modalHeading(fn (InvoicingReceipt $record) => "Tentukan PIC - PO: {$record->no_po}")
-                    ->modalDescription('Pilih staf invoice yang akan bertanggung jawab menangani dokumen ini.')
-                    ->schema([
-                        Select::make('pic_id')
-                            ->label('Pilih Staff Invoice')
-                            ->relationship(
-                                name: 'pic',
-                                titleAttribute: 'name',
-                                modifyQueryUsing: fn ($query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
-                            )
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->helperText('Hanya pengguna dengan role "Staff Invoice" yang dapat dipilih.')
-                            ->default(function () {
-                                $user = Auth::user();
-
-                                return ($user && $user->hasRole('Staff Invoice')) ? $user->id : null;
-                            }),
-                    ])
-                    ->action(function (InvoicingReceipt $record, array $data) {
-                        $record->update(['pic_id' => $data['pic_id']]);
-
-                        $assignedUser = User::find($data['pic_id']);
-                        $assignedName = $assignedUser?->name ?? 'Staff Invoice';
-
-                        Notification::make()
-                            ->title('PIC Berhasil Ditentukan')
-                            ->body("Dokumen PO {$record->no_po} kini ditugaskan kepada {$assignedName}.")
-                            ->success()
-                            ->send();
-                    }),
-
-                // ACTION UTAMA 1: INPUT DATA INVOICE & NO. GRS
-                Action::make('inputInvoiceData')
-                    ->label('Input Invoice & GRS')
-                    ->icon('heroicon-o-pencil-square')
-                    ->color('warning')
-                    ->button()
-                    ->outlined()
-                    ->size(Size::Small)
-                    ->modalWidth('4xl')
-                    ->modalIcon('heroicon-o-document-currency-dollar')
-                    ->modalHeading(fn (InvoicingReceipt $record) => "Input Data Invoice & No. GRS - PO: {$record->no_po}")
-                    ->modalDescription('Lengkapi Nomor GRS resmi SAP, No. DO, serta Nomor Invoice dan Faktur Pajak (opsional, dapat diisi menyusul).')
-                    ->modalSubmitActionLabel('Simpan Data Invoice')
-                    ->modalCancelActionLabel('Tutup')
-                    ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.input-invoice-modal-header', ['record' => $record]))
-                    ->schema([
-                        Section::make('Dokumen Penagihan & Slip SAP')
-                            ->description('Nomor dokumen resmi penagihan vendor dan slip resmi GRS/RDTV dari SAP.')
-                            ->icon('heroicon-o-clipboard-document-check')
-                            ->schema([
-                                TextInput::make('no_grs')
-                                    ->label('No. GRS (Resmi SAP)')
-                                    ->placeholder('Contoh: 5000xxxxxx')
-                                    ->prefixIcon('heroicon-m-hashtag')
-                                    ->default(fn (InvoicingReceipt $record) => $record->no_grs)
-                                    ->required(fn (InvoicingReceipt $record) => $record->jenis === 'GRS')
-                                    ->visible(fn (InvoicingReceipt $record) => $record->jenis !== 'RDTV')
-                                    ->hint('Wajib dari SAP')
-                                    ->hintColor('danger')
-                                    ->hintIcon('heroicon-m-exclamation-circle')
-                                    ->helperText('Nomor GRS/105.'),
-
-                                TextInput::make('no_rdtv')
-                                    ->label('No. RDTV (Resmi)')
-                                    ->placeholder('Nomor dokumen RDTV')
-                                    ->prefixIcon('heroicon-m-hashtag')
-                                    ->default(fn (InvoicingReceipt $record) => $record->no_rdtv)
-                                    ->required(fn (InvoicingReceipt $record) => $record->jenis === 'RDTV')
-                                    ->visible(fn (InvoicingReceipt $record) => $record->jenis === 'RDTV')
-                                    ->hint('Wajib RDTV')
-                                    ->hintColor('danger')
-                                    ->helperText('Nomor RDTV resmi dari slip fisik.'),
-
-                                TextInput::make('no_invoice')
-                                    ->label('Nomor Invoice')
-                                    ->placeholder('Contoh: INV-2026/001 (Opsional)')
-                                    ->prefixIcon('heroicon-m-document-text')
-                                    ->default(fn (InvoicingReceipt $record) => $record->no_invoice)
-                                    ->helperText('Nomor invoice penagihan resmi vendor (opsional, dapat diisi menyusul saat berkas fisik diterima).'),
-
-                                TextInput::make('no_do')
-                                    ->label('Nomor DO (Delivery Order)')
-                                    ->placeholder('Nomor Delivery Order')
-                                    ->prefixIcon('heroicon-m-truck')
-                                    ->default(fn (InvoicingReceipt $record) => $record->no_do)
-                                    ->required()
-                                    ->hint('Wajib')
-                                    ->hintColor('danger')
-                                    ->helperText('Nomor surat jalan / Delivery Order yang ditagihkan.'),
-
-                                TextInput::make('faktur_pajak')
-                                    ->label('Nomor Faktur Pajak')
-                                    ->placeholder('Contoh: 010.001-26.12345678 (Opsional)')
-                                    ->prefixIcon('heroicon-m-receipt-percent')
-                                    ->default(fn (InvoicingReceipt $record) => $record->faktur_pajak)
-                                    ->helperText('Nomor seri Faktur Pajak elektronik / e-Faktur (opsional, dapat diisi menyusul).'),
-                            ])->columns(2),
-
-                        Section::make('Rincian Kuantitas & Nilai Penagihan')
-                            ->description('Kuantitas barang dan perhitungan nilai tagihan. Nilai Include PPN terhitung otomatis (+11%).')
-                            ->icon('heroicon-o-calculator')
-                            ->schema([
-                                TextInput::make('qty_penagihan')
-                                    ->label('Quantity Penagihan')
-                                    ->numeric()
-                                    ->prefixIcon('heroicon-m-archive-box')
-                                    ->default(fn (InvoicingReceipt $record) => $record->qty_penagihan)
-                                    ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI')
-                                    ->hint('Ditagihkan Vendor')
-                                    ->helperText('Jumlah kuantitas barang yang ditagihkan oleh vendor.'),
-
-                                TextInput::make('qty_po')
-                                    ->label('Quantity di PO')
-                                    ->numeric()
-                                    ->prefixIcon('heroicon-m-shopping-cart')
-                                    ->default(fn (InvoicingReceipt $record) => $record->qty_po)
-                                    ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI')
-                                    ->hint('Referensi PO')
-                                    ->helperText('Total kuantitas barang yang tertera pada PO terbit.'),
-
-                                TextInput::make('uoi')
-                                    ->label('Satuan Barang (UOI)')
-                                    ->prefixIcon('heroicon-m-tag')
-                                    ->placeholder('PCS, TON, SET, dll')
-                                    ->default(fn (InvoicingReceipt $record) => $record->uoi)
-                                    ->helperText('Satuan Unit of Issue barang.'),
-
-                                TextInput::make('subtotal_exclude_ppn')
-                                    ->label('Sub Total (Exclude PPN)')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->default(fn (InvoicingReceipt $record) => $record->subtotal_exclude_ppn)
-                                    ->live(onBlur: true)
-                                    ->hint('DPP Sebelum PPN')
-                                    ->hintColor('primary')
-                                    ->afterStateUpdated(function ($state, Set $set) {
-                                        if ($state !== null && is_numeric($state)) {
-                                            $subtotal = (float) $state;
-                                            $set('subtotal_include_ppn', round($subtotal + ($subtotal * 0.11), 2));
-                                        } else {
-                                            $set('subtotal_include_ppn', null);
-                                        }
-                                    })
-                                    ->helperText('Dasar Pengenaan Pajak (DPP) sebelum dikenakan PPN.'),
-
-                                TextInput::make('subtotal_include_ppn')
-                                    ->label('Sub Total (Include PPN 11%)')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->default(fn (InvoicingReceipt $record) => $record->subtotal_include_ppn)
-                                    ->hint('Otomatis +11% PPN')
-                                    ->hintColor('success')
-                                    ->hintIcon('heroicon-m-sparkles')
-                                    ->helperText('Rumus otomatis: Exclude PPN + (Exclude PPN × 11%).'),
-                            ])->columns(2),
-                    ])
-                    ->action(function (InvoicingReceipt $record, array $data) {
-                        $record->update([
-                            'no_grs' => $data['no_grs'] ?? $record->no_grs,
-                            'no_rdtv' => $data['no_rdtv'] ?? $record->no_rdtv,
-                            'no_invoice' => $data['no_invoice'] ?? null,
-                            'no_do' => $data['no_do'],
-                            'faktur_pajak' => $data['faktur_pajak'] ?? null,
-                            'qty_penagihan' => $data['qty_penagihan'] ?? $record->qty_penagihan,
-                            'qty_po' => $data['qty_po'] ?? $record->qty_po,
-                            'uoi' => $data['uoi'] ?? $record->uoi,
-                            'subtotal_exclude_ppn' => $data['subtotal_exclude_ppn'] ?? $record->subtotal_exclude_ppn,
-                            'subtotal_include_ppn' => $data['subtotal_include_ppn'] ?? $record->subtotal_include_ppn,
-                        ]);
-
-                        Notification::make()
-                            ->title('Data Invoice Berhasil Disimpan')
-                            ->body("Data penagihan untuk PO {$record->no_po} telah diperbarui.")
-                            ->success()
-                            ->send();
-                    }),
-
-                // ACTION UTAMA 2: SALIN KE MITRAKU (MODAL INTERAKTIF)
-                Action::make('copyMitraku')
-                    ->label('Salin ke Mitraku')
-                    ->icon('heroicon-o-clipboard-document-check')
-                    ->color('primary')
-                    ->button()
-                    ->outlined()
-                    ->size(Size::Small)
-                    ->modalHeading(fn (InvoicingReceipt $record) => "Format Salin Mitraku - PO: {$record->no_po}")
-                    ->modalDescription('Salin data secara instan untuk di-paste ke sistem Mitraku Pupuk Kaltim')
-                    ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.copy-to-mitraku-modal', ['record' => $record]))
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Tutup'),
-
-                // ACTION UTAMA 3: UPLOAD BERKAS (VERIFIKASI GRS ACC VP & INVOICE VENDOR)
-                Action::make('uploadBerkas')
-                    ->label('Upload Berkas')
-                    ->icon('heroicon-o-arrow-up-tray')
-                    ->color('info')
-                    ->button()
-                    ->outlined()
-                    ->size(Size::Small)
-                    ->modalHeading(fn (InvoicingReceipt $record) => "Upload Berkas - PO: {$record->no_po}")
-                    ->modalDescription('Unggah dokumen verifikasi GRS (setelah ACC VP) dan berkas invoice resmi (setelah vendor mengirim ke PKT).')
-                    ->schema([
-                        FileUpload::make('dokumen_verifikasi_grs')
-                            ->label('Surat / Dokumen Verifikasi GRS (ACC VP)')
-                            ->disk('public')
-                            ->directory('verifikasi-grs')
-                            ->acceptedFileTypes(['application/pdf', 'image/*'])
-                            ->default(fn (InvoicingReceipt $record) => $record->dokumen_verifikasi_grs)
-                            ->helperText('Unggah surat verifikasi GRS setelah mendapat persetujuan (ACC) dari VP.'),
-
-                        FileUpload::make('dokumen_invoice')
-                            ->label('Berkas Invoice Vendor')
-                            ->disk('public')
-                            ->directory('berkas-invoice')
-                            ->acceptedFileTypes(['application/pdf', 'image/*'])
-                            ->default(fn (InvoicingReceipt $record) => $record->dokumen_invoice)
-                            ->helperText('Unggah berkas invoice resmi setelah vendor mengirimkan berkas tagihan fisik ke PKT.'),
-                    ])
-                    ->action(function (InvoicingReceipt $record, array $data) {
-                        $verifikasiFile = $data['dokumen_verifikasi_grs'] ?? null;
-                        $invoiceFile = $data['dokumen_invoice'] ?? null;
-
-                        if (empty($verifikasiFile) && empty($invoiceFile) && empty($record->dokumen_verifikasi_grs) && empty($record->dokumen_invoice)) {
-                            Notification::make()
-                                ->title('Tidak Ada Berkas Dipilih')
-                                ->body('Silakan pilih setidaknya satu berkas (Verifikasi GRS ACC VP atau Invoice Vendor).')
-                                ->warning()
-                                ->send();
-
-                            return;
-                        }
-
-                        $updateData = [];
-
-                        if (array_key_exists('dokumen_verifikasi_grs', $data)) {
-                            $updateData['dokumen_verifikasi_grs'] = $verifikasiFile;
-                            if (! empty($verifikasiFile) && $record->status === 'Menunggu Verifikasi') {
-                                $updateData['status'] = 'Terverifikasi';
-                            }
-                        }
-
-                        if (array_key_exists('dokumen_invoice', $data)) {
-                            $updateData['dokumen_invoice'] = $invoiceFile;
-                        }
-
-                        if (! empty($updateData)) {
-                            $record->update($updateData);
-                        }
-
-                        Notification::make()
-                            ->title('Berkas Berhasil Disimpan')
-                            ->body("Dokumen verifikasi / invoice untuk PO {$record->no_po} telah diperbarui.")
-                            ->success()
-                            ->send();
-                    }),
-
-                // ACTION GROUP UNTUK AKSI LAINNYA
                 ActionGroup::make([
+                    // ACTION UTAMA 1: INPUT DATA INVOICE & NO. GRS
+                    Action::make('inputInvoiceData')
+                        ->label('Input Invoice & GRS')
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('warning')
+                        ->modalWidth('4xl')
+                        ->modalIcon('heroicon-o-document-currency-dollar')
+                        ->modalHeading(fn (InvoicingReceipt $record) => "Input Data Invoice & No. GRS - PO: {$record->no_po}")
+                        ->modalDescription('Lengkapi Nomor GRS resmi SAP, No. DO, serta Nomor Invoice dan Faktur Pajak (opsional, dapat diisi menyusul).')
+                        ->modalSubmitActionLabel('Simpan Data Invoice')
+                        ->modalCancelActionLabel('Tutup')
+                        ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.input-invoice-modal-header', ['record' => $record]))
+                        ->schema([
+                            Section::make('Dokumen Penagihan & Slip SAP')
+                                ->description('Nomor dokumen resmi penagihan vendor dan slip resmi GRS/RDTV dari SAP.')
+                                ->icon('heroicon-o-clipboard-document-check')
+                                ->schema([
+                                    TextInput::make('no_grs')
+                                        ->label('No. GRS (Resmi SAP)')
+                                        ->placeholder('Contoh: 5000xxxxxx')
+                                        ->prefixIcon('heroicon-m-hashtag')
+                                        ->default(fn (InvoicingReceipt $record) => $record->no_grs)
+                                        ->required(fn (InvoicingReceipt $record) => $record->jenis === 'GRS')
+                                        ->visible(fn (InvoicingReceipt $record) => $record->jenis !== 'RDTV')
+                                        ->hint('Wajib dari SAP')
+                                        ->hintColor('danger')
+                                        ->hintIcon('heroicon-m-exclamation-circle')
+                                        ->helperText('Nomor GRS/105.'),
+
+                                    TextInput::make('no_rdtv')
+                                        ->label('No. RDTV (Resmi)')
+                                        ->placeholder('Nomor dokumen RDTV')
+                                        ->prefixIcon('heroicon-m-hashtag')
+                                        ->default(fn (InvoicingReceipt $record) => $record->no_rdtv)
+                                        ->required(fn (InvoicingReceipt $record) => $record->jenis === 'RDTV')
+                                        ->visible(fn (InvoicingReceipt $record) => $record->jenis === 'RDTV')
+                                        ->hint('Wajib RDTV')
+                                        ->hintColor('danger')
+                                        ->helperText('Nomor RDTV resmi dari slip fisik.'),
+
+                                    TextInput::make('no_invoice')
+                                        ->label('Nomor Invoice')
+                                        ->placeholder('Contoh: INV-2026/001 (Opsional)')
+                                        ->prefixIcon('heroicon-m-document-text')
+                                        ->default(fn (InvoicingReceipt $record) => $record->no_invoice)
+                                        ->helperText('Nomor invoice penagihan resmi vendor (opsional, dapat diisi menyusul saat berkas fisik diterima).'),
+
+                                    TextInput::make('no_do')
+                                        ->label('Nomor DO (Delivery Order)')
+                                        ->placeholder('Nomor Delivery Order')
+                                        ->prefixIcon('heroicon-m-truck')
+                                        ->default(fn (InvoicingReceipt $record) => $record->no_do)
+                                        ->required()
+                                        ->hint('Wajib')
+                                        ->hintColor('danger')
+                                        ->helperText('Nomor surat jalan / Delivery Order yang ditagihkan.'),
+
+                                    TextInput::make('faktur_pajak')
+                                        ->label('Nomor Faktur Pajak')
+                                        ->placeholder('Contoh: 010.001-26.12345678 (Opsional)')
+                                        ->prefixIcon('heroicon-m-receipt-percent')
+                                        ->default(fn (InvoicingReceipt $record) => $record->faktur_pajak)
+                                        ->helperText('Nomor seri Faktur Pajak elektronik / e-Faktur (opsional, dapat diisi menyusul).'),
+                                ])->columns(2),
+
+                            Section::make('Rincian Kuantitas & Nilai Penagihan')
+                                ->description('Kuantitas barang dan perhitungan nilai tagihan. Nilai Include PPN terhitung otomatis (+11%).')
+                                ->icon('heroicon-o-calculator')
+                                ->schema([
+                                    TextInput::make('qty_penagihan')
+                                        ->label('Quantity Penagihan')
+                                        ->numeric()
+                                        ->prefixIcon('heroicon-m-archive-box')
+                                        ->default(fn (InvoicingReceipt $record) => $record->qty_penagihan)
+                                        ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI')
+                                        ->hint('Ditagihkan Vendor')
+                                        ->helperText('Jumlah kuantitas barang yang ditagihkan oleh vendor.'),
+
+                                    TextInput::make('qty_po')
+                                        ->label('Quantity di PO')
+                                        ->numeric()
+                                        ->prefixIcon('heroicon-m-shopping-cart')
+                                        ->default(fn (InvoicingReceipt $record) => $record->qty_po)
+                                        ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI')
+                                        ->hint('Referensi PO')
+                                        ->helperText('Total kuantitas barang yang tertera pada PO terbit.'),
+
+                                    TextInput::make('uoi')
+                                        ->label('Satuan Barang (UOI)')
+                                        ->prefixIcon('heroicon-m-tag')
+                                        ->placeholder('PCS, TON, SET, dll')
+                                        ->default(fn (InvoicingReceipt $record) => $record->uoi)
+                                        ->helperText('Satuan Unit of Issue barang.'),
+
+                                    TextInput::make('subtotal_exclude_ppn')
+                                        ->label('Sub Total (Exclude PPN)')
+                                        ->numeric()
+                                        ->prefix('Rp')
+                                        ->default(fn (InvoicingReceipt $record) => $record->subtotal_exclude_ppn)
+                                        ->live(onBlur: true)
+                                        ->hint('DPP Sebelum PPN')
+                                        ->hintColor('primary')
+                                        ->afterStateUpdated(function ($state, Set $set) {
+                                            if ($state !== null && is_numeric($state)) {
+                                                $subtotal = (float) $state;
+                                                $set('subtotal_include_ppn', round($subtotal + ($subtotal * 0.11), 2));
+                                            } else {
+                                                $set('subtotal_include_ppn', null);
+                                            }
+                                        })
+                                        ->helperText('Dasar Pengenaan Pajak (DPP) sebelum dikenakan PPN.'),
+
+                                    TextInput::make('subtotal_include_ppn')
+                                        ->label('Sub Total (Include PPN 11%)')
+                                        ->numeric()
+                                        ->prefix('Rp')
+                                        ->default(fn (InvoicingReceipt $record) => $record->subtotal_include_ppn)
+                                        ->hint('Otomatis +11% PPN')
+                                        ->hintColor('success')
+                                        ->hintIcon('heroicon-m-sparkles')
+                                        ->helperText('Rumus otomatis: Exclude PPN + (Exclude PPN × 11%).'),
+                                ])->columns(2),
+                        ])
+                        ->action(function (InvoicingReceipt $record, array $data) {
+                            $record->update([
+                                'no_grs' => $data['no_grs'] ?? $record->no_grs,
+                                'no_rdtv' => $data['no_rdtv'] ?? $record->no_rdtv,
+                                'no_invoice' => $data['no_invoice'] ?? null,
+                                'no_do' => $data['no_do'],
+                                'faktur_pajak' => $data['faktur_pajak'] ?? null,
+                                'qty_penagihan' => $data['qty_penagihan'] ?? $record->qty_penagihan,
+                                'qty_po' => $data['qty_po'] ?? $record->qty_po,
+                                'uoi' => $data['uoi'] ?? $record->uoi,
+                                'subtotal_exclude_ppn' => $data['subtotal_exclude_ppn'] ?? $record->subtotal_exclude_ppn,
+                                'subtotal_include_ppn' => $data['subtotal_include_ppn'] ?? $record->subtotal_include_ppn,
+                            ]);
+
+                            Notification::make()
+                                ->title('Data Invoice Berhasil Disimpan')
+                                ->body("Data penagihan untuk PO {$record->no_po} telah diperbarui.")
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ACTION UTAMA 2: SALIN KE MITRAKU (MODAL INTERAKTIF)
+                    Action::make('copyMitraku')
+                        ->label('Salin ke Mitraku')
+                        ->icon('heroicon-o-clipboard-document-check')
+                        ->color('primary')
+                        ->modalHeading(fn (InvoicingReceipt $record) => "Format Salin Mitraku - PO: {$record->no_po}")
+                        ->modalDescription('Salin data secara instan untuk di-paste ke sistem Mitraku Pupuk Kaltim')
+                        ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.copy-to-mitraku-modal', ['record' => $record]))
+                        ->modalSubmitAction(false)
+                        ->modalCancelActionLabel('Tutup'),
+
+                    // ACTION UTAMA 3: UPLOAD BERKAS (VERIFIKASI GRS ACC VP & INVOICE VENDOR)
+                    Action::make('uploadBerkas')
+                        ->label('Upload Berkas')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->color('info')
+                        ->modalHeading(fn (InvoicingReceipt $record) => "Upload Berkas - PO: {$record->no_po}")
+                        ->modalDescription('Unggah dokumen verifikasi GRS (setelah ACC VP) dan berkas invoice resmi (setelah vendor mengirim ke PKT).')
+                        ->schema([
+                            FileUpload::make('dokumen_verifikasi_grs')
+                                ->label('Surat / Dokumen Verifikasi GRS (ACC VP)')
+                                ->disk('public')
+                                ->directory('verifikasi-grs')
+                                ->acceptedFileTypes(['application/pdf', 'image/*'])
+                                ->default(fn (InvoicingReceipt $record) => $record->dokumen_verifikasi_grs)
+                                ->helperText('Unggah surat verifikasi GRS setelah mendapat persetujuan (ACC) dari VP.'),
+
+                            FileUpload::make('dokumen_invoice')
+                                ->label('Berkas Invoice Vendor')
+                                ->disk('public')
+                                ->directory('berkas-invoice')
+                                ->acceptedFileTypes(['application/pdf', 'image/*'])
+                                ->default(fn (InvoicingReceipt $record) => $record->dokumen_invoice)
+                                ->helperText('Unggah berkas invoice resmi setelah vendor mengirimkan berkas tagihan fisik ke PKT.'),
+                        ])
+                        ->action(function (InvoicingReceipt $record, array $data) {
+                            $verifikasiFile = $data['dokumen_verifikasi_grs'] ?? null;
+                            $invoiceFile = $data['dokumen_invoice'] ?? null;
+
+                            if (empty($verifikasiFile) && empty($invoiceFile) && empty($record->dokumen_verifikasi_grs) && empty($record->dokumen_invoice)) {
+                                Notification::make()
+                                    ->title('Tidak Ada Berkas Dipilih')
+                                    ->body('Silakan pilih setidaknya satu berkas (Verifikasi GRS ACC VP atau Invoice Vendor).')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $updateData = [];
+
+                            if (array_key_exists('dokumen_verifikasi_grs', $data)) {
+                                $updateData['dokumen_verifikasi_grs'] = $verifikasiFile;
+                                if (! empty($verifikasiFile) && $record->status === 'Menunggu Verifikasi') {
+                                    $updateData['status'] = 'Terverifikasi';
+                                }
+                            }
+
+                            if (array_key_exists('dokumen_invoice', $data)) {
+                                $updateData['dokumen_invoice'] = $invoiceFile;
+                            }
+
+                            if (! empty($updateData)) {
+                                $record->update($updateData);
+                            }
+
+                            Notification::make()
+                                ->title('Berkas Berhasil Disimpan')
+                                ->body("Dokumen verifikasi / invoice untuk PO {$record->no_po} telah diperbarui.")
+                                ->success()
+                                ->send();
+                        }),
+
+                    // ACTION TENTUKAN PIC (MUNCUL JIKA BELUM ADA PIC)
+                    Action::make('setPic')
+                        ->label('Tentukan PIC')
+                        ->icon('heroicon-o-user-plus')
+                        ->color('warning')
+                        ->visible(fn (InvoicingReceipt $record) => is_null($record->pic_id))
+                        ->modalHeading(fn (InvoicingReceipt $record) => "Tentukan PIC - PO: {$record->no_po}")
+                        ->modalDescription('Pilih staf invoice yang akan bertanggung jawab menangani dokumen ini.')
+                        ->schema([
+                            Select::make('pic_id')
+                                ->label('Pilih Staff Invoice')
+                                ->relationship(
+                                    name: 'pic',
+                                    titleAttribute: 'name',
+                                    modifyQueryUsing: fn ($query) => $query->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
+                                )
+                                ->searchable()
+                                ->preload()
+                                ->required()
+                                ->helperText('Hanya pengguna dengan role "Staff Invoice" yang dapat dipilih.')
+                                ->default(function () {
+                                    $user = Auth::user();
+
+                                    return ($user && $user->hasRole('Staff Invoice')) ? $user->id : null;
+                                }),
+                        ])
+                        ->action(function (InvoicingReceipt $record, array $data) {
+                            $record->update(['pic_id' => $data['pic_id']]);
+
+                            $assignedUser = User::find($data['pic_id']);
+                            $assignedName = $assignedUser?->name ?? 'Staff Invoice';
+
+                            Notification::make()
+                                ->title('PIC Berhasil Ditentukan')
+                                ->body("Dokumen PO {$record->no_po} kini ditugaskan kepada {$assignedName}.")
+                                ->success()
+                                ->send();
+                        }),
+
                     // Klaim PIC jika belum ada PIC
                     Action::make('claimPic')
                         ->label('Ambil Sebagai PIC')

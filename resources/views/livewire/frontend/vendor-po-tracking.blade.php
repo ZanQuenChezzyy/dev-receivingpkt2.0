@@ -33,21 +33,17 @@
             </div>
         </div>
 
-        <!-- 1. PO SEARCH BOX -->
+        <!-- 1. PO SEARCH BOX (Apple HIG Clean Elevated Panel) -->
         <div class="max-w-2xl sm:max-w-3xl mx-auto mb-14">
             <!-- Outer Elevated Card -->
-            <div class="p-4 sm:p-6 rounded-3xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-2xl border-2 border-slate-200 dark:border-slate-700 shadow-2xl relative">
+            <div class="glass-panel p-4 sm:p-6 rounded-3xl relative">
                 
-                <!-- Ambient Subtle Glow -->
-                <div class="absolute -top-12 -right-12 w-48 h-48 bg-[#F47920]/15 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="absolute -bottom-12 -left-12 w-48 h-48 bg-[#0A4F86]/15 rounded-full blur-3xl pointer-events-none"></div>
-
                 <form wire:submit="initiateSearch" class="relative z-10 space-y-3">
 
                     <!-- Input & Button Row -->
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <!-- Distinct High-Contrast Input Container -->
-                        <div class="relative flex-grow flex items-center rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 focus-within:border-[#F47920] dark:focus-within:border-[#F47920] focus-within:ring-4 focus-within:ring-[#F47920]/20 transition-all duration-200 shadow-inner">
+                        <!-- Apple-Style High-Contrast Input Container -->
+                        <div class="relative flex-grow flex items-center rounded-2xl bg-slate-100/80 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 focus-within:border-[#F47920] dark:focus-within:border-[#F47920] focus-within:ring-4 focus-within:ring-[#F47920]/15 transition-all duration-200 shadow-xs">
                             <!-- Left Search Icon -->
                             <div class="pl-4 pr-2 text-[#F47920] flex items-center pointer-events-none shrink-0">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -59,7 +55,7 @@
                             <input id="poNumberInput"
                                 wire:model="poNumber"
                                 type="text"
-                                placeholder="Ketik nomor PO"
+                                placeholder="Ketik nomor PO (misal: 53000xxxxx)"
                                 class="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3 py-3.5 sm:py-4 text-base sm:text-lg font-bold font-mono tracking-wider text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-sm sm:placeholder:text-base"
                                 autocomplete="off"
                                 maxlength="15"
@@ -77,16 +73,16 @@
                             @endif
 
                             <!-- Keyboard Hint Badge -->
-                            <div class="hidden md:flex items-center pr-3 select-none pointer-events-none shrink-0">
-                                <kbd class="px-2 py-1 text-[10px] font-bold font-mono text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+                            <div class="hidden md:flex items-center pr-3.5 select-none pointer-events-none shrink-0">
+                                <kbd class="px-2 py-1 text-[10px] font-bold font-mono text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-xs">
                                     ↵ Enter
                                 </kbd>
                             </div>
                         </div>
 
-                        <!-- Submit Button -->
+                        <!-- Submit Button: Apple Primary Pill -->
                         <button type="submit" wire:loading.attr="disabled"
-                            class="px-8 py-3.5 sm:py-4 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-[#F47920] via-orange-500 to-[#E06714] shadow-[0_4px_16px_rgba(244,121,32,0.35)] hover:shadow-[0_8px_24px_rgba(244,121,32,0.5)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 shrink-0 cursor-pointer">
+                            class="apple-btn-primary px-7 py-3.5 sm:py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 shrink-0 cursor-pointer">
                             <span wire:loading.remove wire:target="initiateSearch, selectSamplePo" class="flex items-center gap-2">
                                 <span>Lacak Dokumen</span>
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">

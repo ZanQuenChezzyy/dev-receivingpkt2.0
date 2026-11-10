@@ -8,95 +8,117 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Inter", ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 /* =========================================================
-   Frontend Liquid Glass Premium Components
-   (Sinkron dengan Filament Admin theme.css)
+   Apple Human Interface Guidelines (HIG) Design Tokens & Materials
+   Grounded in Apple's Liquid Glass (2025/2026) & Standard Materials
    ========================================================= */
 
-/* Glass Panel (Untuk Container, Card, Widget) */
+/* Functional Layer: Liquid Glass Navigation Bar */
+.glass-nav {
+    @apply bg-white/75 dark:bg-[#07111e]/80 backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02), 0 8px 24px -4px rgba(0, 0, 0, 0.04);
+}
+
+.dark .glass-nav {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), 0 8px 32px -4px rgba(0, 0, 0, 0.35);
+}
+
+/* Content Layer: Elevated Standard Material Panel (Cards, Bento, Widgets) */
 .glass-panel {
-    @apply bg-white/30 dark:bg-slate-900/30 backdrop-blur-2xl rounded-2xl transition-all duration-300;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-top-color: rgba(255, 255, 255, 0.6);
-    border-left-color: rgba(255, 255, 255, 0.5);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 8px 32px rgba(0,0,0,0.1);
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 20%, transparent 40%);
+    @apply bg-white/80 dark:bg-[#0b1626]/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl transition-all duration-300;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04), 0 12px 28px -6px rgba(0, 0, 0, 0.05);
 }
 
 .dark .glass-panel {
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-top-color: rgba(255, 255, 255, 0.15);
-    border-left-color: rgba(255, 255, 255, 0.15);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 8px 32px rgba(0,0,0,0.2);
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 20%, transparent 40%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.3), 0 12px 32px -6px rgba(0, 0, 0, 0.45);
 }
 
-/* Glass Nav (Untuk Topbar / Navbar) */
-.glass-nav {
-    @apply bg-white/30 dark:bg-gray-900/40 backdrop-blur-3xl border-b border-white/50 dark:border-gray-700/50 dark:border-b-gray-600/50 shadow-[0_4px_24px_rgba(0,0,0,0.05)];
+.glass-panel:hover {
+    border-color: rgba(244, 121, 32, 0.35);
 }
 
-/* Glass Buttons (Untuk Aksi / Tombol) */
+.dark .glass-panel:hover {
+    border-color: rgba(244, 121, 32, 0.4);
+}
+
+/* Apple-Style Segmented Control (Pill Track + Slider) */
+.apple-segmented-track {
+    @apply inline-flex p-1 rounded-2xl bg-slate-200/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-300/40 dark:border-white/5;
+}
+
+.apple-segmented-item {
+    @apply px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 ease-out select-none;
+}
+
+.apple-segmented-item-active {
+    @apply bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-black/[0.04] dark:border-white/[0.08];
+}
+
+.apple-segmented-item-inactive {
+    @apply text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200;
+}
+
+/* Apple-Style Tactile Buttons */
 .glass-btn {
-    --tw-bg-opacity: 0.6 !important;
-    @apply backdrop-blur-xl transition-all duration-300 relative overflow-hidden;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    border-top-color: rgba(255, 255, 255, 0.8) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 50%, transparent 80%) !important;
+    @apply inline-flex items-center justify-center font-semibold rounded-xl backdrop-blur-md transition-all duration-200 ease-out select-none active:scale-[0.98];
+    background-color: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .glass-btn:hover {
-    --tw-bg-opacity: 0.8 !important;
-    transform: translateY(-1px);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.5) 50%, transparent 80%) !important;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .dark .glass-btn {
-    --tw-bg-opacity: 0.3 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-top-color: rgba(255, 255, 255, 0.2) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.08) 50%, transparent 80%) !important;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .dark .glass-btn:hover {
-    --tw-bg-opacity: 0.5 !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 4px 6px rgba(0, 0, 0, 0.3) !important;
-    background-image: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.15) 50%, transparent 80%) !important;
+    background-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
-/* Glass Inputs (Untuk Form Fields) */
+/* Apple Primary Action Button (Tinted or Solid) */
+.apple-btn-primary {
+    @apply inline-flex items-center justify-center font-bold text-white rounded-2xl bg-[#F47920] hover:bg-[#e06b18] shadow-[0_4px_16px_rgba(244,121,32,0.35)] hover:shadow-[0_6px_24px_rgba(244,121,32,0.45)] active:scale-[0.98] transition-all duration-200 ease-out;
+}
+
+/* Apple Secondary Action Button (Tinted Translucent) */
+.apple-btn-secondary {
+    @apply inline-flex items-center justify-center font-semibold text-[#F47920] dark:text-orange-400 rounded-2xl bg-[#F47920]/10 hover:bg-[#F47920]/18 border border-[#F47920]/20 active:scale-[0.98] transition-all duration-200 ease-out;
+}
+
+/* Apple-Style Form Inputs */
 .glass-input {
-    @apply bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-xl transition-all duration-300 relative;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-top-color: rgba(255, 255, 255, 0.1);
-    border-bottom-color: rgba(255, 255, 255, 0.6);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 1px rgba(255, 255, 255, 0.5);
+    @apply w-full bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-200;
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.glass-input:focus-within, .glass-input:focus {
-    @apply bg-white/60 dark:bg-slate-800/60;
-    border-color: rgba(244, 121, 32, 0.5); /* Orange Primary */
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02), 0 0 0 2px rgba(244, 121, 32, 0.2);
-    outline: none;
+.glass-input:focus, .glass-input:focus-within {
+    @apply bg-white dark:bg-slate-900/95 ring-2 ring-[#F47920]/30 outline-none;
+    border-color: #F47920;
+    box-shadow: 0 0 0 4px rgba(244, 121, 32, 0.12);
 }
 
 .dark .glass-input {
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-top-color: rgba(0, 0, 0, 0.2);
-    border-bottom-color: rgba(255, 255, 255, 0.15);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
-.dark .glass-input:focus-within, .dark .glass-input:focus {
-    border-color: rgba(244, 121, 32, 0.5);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(244, 121, 32, 0.2);
+/* Apple Pill Status Badge */
+.apple-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md tracking-tight;
 }
 
 /* =========================================================
