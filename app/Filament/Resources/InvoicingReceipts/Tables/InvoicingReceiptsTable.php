@@ -27,6 +27,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -312,6 +313,8 @@ class InvoicingReceiptsTable
                     ->label('Filter PIC (Staff Invoice)')
                     ->relationship('pic', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))),
             ])
+            ->defaultSort('tanggal_terima_grs', 'desc')
+            ->modifyQueryUsing(fn (Builder $query) => $query->orderBy('id', 'desc'))
             ->recordActions([
                 ActionGroup::make([
                     // ACTION UTAMA 1: INPUT DATA INVOICE & NO. GRS

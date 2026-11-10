@@ -67,10 +67,26 @@ html.dark body {
     @apply !bg-transparent border-b !border-black/[0.04] dark:!border-white/[0.05] !px-4;
 }
 
-.fi-sidebar-nav,
-.fi-sidebar-footer {
+.fi-sidebar-nav {
     position: relative;
     z-index: 1;
+}
+
+.fi-sidebar-footer {
+    position: relative;
+    z-index: 10;
+    margin-top: auto;
+}
+
+.fi-sidebar-footer .fi-user-menu,
+.fi-sidebar-footer .fi-dropdown,
+.fi-sidebar-footer .fi-dropdown-trigger {
+    width: 100% !important;
+    display: block !important;
+}
+
+.fi-sidebar-footer .fi-user-card:hover {
+    border-color: rgba(244, 121, 32, 0.4) !important;
 }
 
 /* Corporate Pattern Watermarks */
@@ -353,8 +369,14 @@ html.dark body {
 .fi-resource-relation-manager,
 .fi-resource-relation-managers,
 .fi-sc-tabs-tab,
-.fi-sc-tabs:not(.fi-contained) > div:not(.fi-tabs-scroll-outer) {
+.fi-sc-tabs:not(.fi-contained) > div:not(.fi-tabs-scroll-outer),
+.fi-resource-relation-manager .fi-ta,
+.fi-resource-relation-manager .fi-ta-ctn,
+.fi-resource-relation-manager .fi-ta-main,
+.fi-resource-relation-manager .fi-ta-content-ctn,
+.fi-resource-relation-manager table.fi-ta-table {
     width: 100% !important;
+    min-width: 100% !important;
     max-width: 100% !important;
     align-self: stretch !important;
 }

@@ -119,6 +119,7 @@ class GrsRdtvItemsRelationManager extends RelationManager
             ->filters([
                 //
             ])
+            ->defaultSort('id', 'desc')
             ->headerActions([
                 //
             ])

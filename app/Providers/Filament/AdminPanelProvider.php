@@ -63,7 +63,7 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Amber,
             ])
             ->databaseNotifications()
-            ->userMenu(position: UserMenuPosition::Topbar)
+            ->userMenu(position: UserMenuPosition::Sidebar)
             ->renderHook(
                 'panels::global-search.after',
                 fn (): string => Blade::render('@livewire(\'ai-system-toggle\')')

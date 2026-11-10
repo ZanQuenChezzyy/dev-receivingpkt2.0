@@ -17,6 +17,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --livewire-progress-bar-color: #F47920;
+        }
+        #nprogress .bar {
+            background: #F47920 !important;
+            height: 3px !important;
+            box-shadow: 0 0 10px rgba(244, 121, 32, 0.7) !important;
+            z-index: 99999 !important;
+        }
+        #nprogress .peg {
+            box-shadow: 0 0 14px #F47920, 0 0 6px #F47920 !important;
+        }
+        #nprogress .spinner-icon {
+            border-top-color: #F47920 !important;
+            border-left-color: #F47920 !important;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Inter", system-ui, sans-serif;
             -webkit-font-smoothing: antialiased;
