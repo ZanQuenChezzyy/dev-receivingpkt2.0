@@ -80,6 +80,10 @@ class AdminPanelProvider extends PanelProvider
                 'panels::auth.login.form.after',
                 fn (): string => Blade::render('<div class="mt-2"><x-filament::button tag="a" :href="route(\'home\')" color="gray" outlined icon="heroicon-o-home-modern" class="w-full">Kembali ke Beranda</x-filament::button></div>')
             )
+            ->renderHook(
+                'panels::body.end',
+                fn (): string => '<script>document.addEventListener("livewire:navigated", () => { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); });</script>'
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')

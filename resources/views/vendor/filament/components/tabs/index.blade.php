@@ -54,17 +54,16 @@
                 const active = el.querySelector('.fi-tabs-item.fi-active');
                 if (!active) return;
 
+                const containerWidth = el.clientWidth;
+                if (containerWidth <= 0 || el.scrollWidth <= containerWidth) return;
+
                 const activeLeft = active.offsetLeft;
                 const activeWidth = active.offsetWidth;
-                const containerWidth = el.clientWidth;
                 const scrollLeft = el.scrollLeft;
 
                 if (activeLeft < scrollLeft || (activeLeft + activeWidth) > (scrollLeft + containerWidth)) {
                     const targetScrollLeft = activeLeft - (containerWidth / 2) + (activeWidth / 2);
-                    el.scrollTo({
-                        left: Math.max(0, targetScrollLeft),
-                        behavior: 'smooth'
-                    });
+                    el.scrollLeft = Math.max(0, targetScrollLeft);
                 }
             }
         }"
@@ -73,17 +72,13 @@
                 checkScroll();
             };
 
-            // Jalankan sinkronisasi pertama kali
+            // Jalankan sinkronisasi pertama kali tanpa mengganggu scroll window
             update();
 
             $nextTick(() => {
                 update();
                 scrollToActive();
             });
-
-            setTimeout(update, 80);
-            setTimeout(update, 250);
-            setTimeout(update, 500);
 
             if (window.ResizeObserver && $refs.tabNav) {
                 const ro = new ResizeObserver(() => update());

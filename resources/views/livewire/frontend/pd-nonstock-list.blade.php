@@ -52,7 +52,8 @@
                         </svg>
                     </div>
                     <input wire:model.live.debounce.300ms="search" type="text" 
-                           class="glass-input pl-10 pr-4 py-2.5 text-xs sm:text-sm font-medium w-full" 
+                           class="glass-input !pl-11 pr-4 py-2.5 text-xs sm:text-sm font-medium w-full" 
+                           style="padding-left: 2.75rem !important;"
                            placeholder="Cari PO, Deskripsi, Requisitioner...">
                 </div>
 

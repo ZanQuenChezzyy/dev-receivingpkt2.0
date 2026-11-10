@@ -85,8 +85,62 @@ html.dark body {
     display: block !important;
 }
 
-.fi-sidebar-footer .fi-user-card:hover {
+/* =========================================================
+   Apple Liquid Glass User Card (Floating Dock Material)
+   ========================================================= */
+.fi-user-card {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding: 0.75rem 0.875rem !important;
+    border-radius: 1.125rem !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.45) 100%) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.85) !important;
+    box-shadow: 
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 1px 0 rgba(0, 0, 0, 0.02),
+        0 4px 16px -2px rgba(0, 0, 0, 0.04),
+        0 1px 3px 0 rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    overflow: hidden !important;
+    text-align: left !important;
+}
+
+.fi-user-card:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.58) 100%) !important;
     border-color: rgba(244, 121, 32, 0.4) !important;
+    box-shadow: 
+        inset 0 1px 1px 0 rgba(255, 255, 255, 1),
+        0 8px 24px -4px rgba(244, 121, 32, 0.16),
+        0 2px 6px 0 rgba(0, 0, 0, 0.04) !important;
+    transform: translateY(-1px) !important;
+}
+
+.fi-user-card:active {
+    transform: scale(0.985) !important;
+}
+
+.dark .fi-user-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(11, 22, 38, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-top-color: rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 1px 0 rgba(0, 0, 0, 0.3),
+        0 8px 24px -4px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .fi-user-card:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%), rgba(11, 22, 38, 0.75) !important;
+    border-color: rgba(244, 121, 32, 0.5) !important;
+    box-shadow: 
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.28),
+        0 10px 28px -4px rgba(0, 0, 0, 0.65),
+        0 0 16px -2px rgba(244, 121, 32, 0.18) !important;
 }
 
 /* Corporate Pattern Watermarks */
@@ -181,8 +235,7 @@ html.dark body {
 .fi-in-repeatable-item,
 .fi-sc-tabs.fi-contained,
 .fi-tabs.fi-contained,
-.fi-empty-state,
-.fi-user-card {
+.fi-empty-state {
     @apply !bg-white/80 dark:!bg-[#0b1626]/80 !rounded-2xl !relative focus-within:!z-[90] transition-all duration-300;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
     box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04), 0 12px 28px -6px rgba(0, 0, 0, 0.05) !important;
@@ -199,8 +252,7 @@ html.dark body {
 .fi-in-repeatable-item::before,
 .fi-sc-tabs.fi-contained::before,
 .fi-tabs.fi-contained::before,
-.fi-empty-state::before,
-.fi-user-card::before {
+.fi-empty-state::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -220,8 +272,7 @@ html.dark body {
 .dark .fi-in-repeatable-item,
 .dark .fi-sc-tabs.fi-contained,
 .dark .fi-tabs.fi-contained,
-.dark .fi-empty-state,
-.dark .fi-user-card {
+.dark .fi-empty-state {
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.3), 0 12px 32px -6px rgba(0, 0, 0, 0.45) !important;
 }
@@ -374,11 +425,30 @@ html.dark body {
 .fi-resource-relation-manager .fi-ta-ctn,
 .fi-resource-relation-manager .fi-ta-main,
 .fi-resource-relation-manager .fi-ta-content-ctn,
-.fi-resource-relation-manager table.fi-ta-table {
+.fi-resource-relation-manager table.fi-ta-table,
+.fi-resource-relation-manager .fi-ta-empty-state,
+.fi-resource-relation-manager .fi-empty-state {
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100% !important;
     align-self: stretch !important;
+    box-sizing: border-box !important;
+}
+
+.fi-sidebar-footer .fi-dropdown-panel {
+    min-width: 240px !important;
+    margin-bottom: 8px !important;
+    background: rgba(255, 255, 255, 0.72) !important;
+    backdrop-filter: blur(28px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.8), 0 16px 40px -8px rgba(0, 0, 0, 0.12) !important;
+}
+
+.dark .fi-sidebar-footer .fi-dropdown-panel {
+    background: rgba(12, 22, 38, 0.65) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15), 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
 }
 
 .fi-tabs-scroll-outer {
