@@ -444,5 +444,3 @@ test('antrean pengiriman query ignores null delivery_order_receipt_detail_id wit
         ->toContain('not in')
         ->toContain('is not null');
 });
-
-

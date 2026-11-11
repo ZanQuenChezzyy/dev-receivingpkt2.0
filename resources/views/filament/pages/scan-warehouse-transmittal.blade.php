@@ -2,10 +2,6 @@
     <div x-data="{
         isCameraOpen: false,
         html5QrCode: null,
-        cameras: [],
-        selectedCameraId: null,
-        hasTorch: false,
-        isTorchOn: false,
         itemToDelete: null,
         lastScanned: null,
         lastScanTime: 0,
@@ -102,12 +98,8 @@
                 }
             };
 
-            const cameraConfig = this.selectedCameraId
-                ? { deviceId: { exact: this.selectedCameraId } }
-                : { facingMode: 'environment' };
-
             this.html5QrCode.start(
-                cameraConfig,
+                { facingMode: 'environment' },
                 config,
                 (decodedText, decodedResult) => {
                     const now = Date.now();
@@ -126,81 +118,12 @@
                 (errorMessage) => {
                     // Continuous search frame - ignore frame read misses
                 }
-            ).then(() => {
-                this.refreshCameraList();
-                this.checkTorchSupport();
-            }).catch(err => {
+            ).catch(err => {
                 console.error('Kamera gagal dimulai:', err);
-                if (this.selectedCameraId) {
-                    this.selectedCameraId = null;
-                    this.initHtml5Qr();
-                    return;
-                }
                 this.isCameraOpen = false;
             });
         },
-        refreshCameraList() {
-            if (!window.Html5Qrcode) return;
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length > 0) {
-                    this.cameras = devices;
-                    if (!this.selectedCameraId) {
-                        const video = document.querySelector('#qr-reader video');
-                        const track = video?.srcObject?.getVideoTracks?.()[0];
-                        const settings = track?.getSettings ? track.getSettings() : null;
-                        if (settings?.deviceId) {
-                            this.selectedCameraId = settings.deviceId;
-                        } else {
-                            const backCam = devices.find(d => /back|rear|environment/i.test(d.label));
-                            this.selectedCameraId = backCam ? backCam.id : devices[0].id;
-                        }
-                    }
-                }
-            }).catch(err => {
-                console.warn('Gagal membaca list kamera:', err);
-            });
-        },
-        switchCamera(cameraId) {
-            if (!cameraId || cameraId === this.selectedCameraId) return;
-            this.selectedCameraId = cameraId;
-            this.isTorchOn = false;
-            this.hasTorch = false;
-            if (this.html5QrCode) {
-                this.html5QrCode.stop().then(() => {
-                    this.initHtml5Qr();
-                }).catch(() => {
-                    this.initHtml5Qr();
-                });
-            }
-        },
-        checkTorchSupport() {
-            setTimeout(() => {
-                const video = document.querySelector('#qr-reader video');
-                const track = video?.srcObject?.getVideoTracks?.()[0];
-                if (track && typeof track.getCapabilities === 'function') {
-                    const caps = track.getCapabilities();
-                    this.hasTorch = Boolean(caps && caps.torch);
-                } else {
-                    this.hasTorch = false;
-                }
-            }, 600);
-        },
-        toggleTorch() {
-            this.isTorchOn = !this.isTorchOn;
-            const video = document.querySelector('#qr-reader video');
-            const track = video?.srcObject?.getVideoTracks?.()[0];
-            if (track && typeof track.applyConstraints === 'function') {
-                track.applyConstraints({
-                    advanced: [{ torch: this.isTorchOn }]
-                }).catch(err => {
-                    console.warn('Torch constraint error:', err);
-                    this.isTorchOn = false;
-                });
-            }
-        },
         stopCamera() {
-            this.isTorchOn = false;
-            this.hasTorch = false;
             if (this.html5QrCode) {
                 this.html5QrCode.stop().then(() => {
                     this.isCameraOpen = false;
@@ -341,43 +264,6 @@
                         </div>
                     </div>
 
-                    <!-- Camera Active Control Toolbar (Multi-camera switch & Flashlight Torch) -->
-                    <div x-show="isCameraOpen" style="display: none;" class="mb-3 p-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700/80 flex flex-wrap items-center justify-between gap-2.5 transition-all">
-                        <!-- Camera Switcher -->
-                        <div class="flex items-center gap-2 flex-1 min-w-[200px]">
-                            <x-heroicon-m-video-camera class="w-4 h-4 text-primary-500 shrink-0" />
-                            <template x-if="cameras.length > 1">
-                                <select
-                                    x-model="selectedCameraId"
-                                    x-on:change="switchCamera($event.target.value)"
-                                    class="w-full text-xs font-medium py-1 px-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-1 focus:ring-primary-500">
-                                    <template x-for="(cam, idx) in cameras" :key="cam.id">
-                                        <option :value="cam.id" x-text="cam.label || ('Kamera ' + (idx + 1))"></option>
-                                    </template>
-                                </select>
-                            </template>
-                            <template x-if="cameras.length <= 1">
-                                <span class="text-xs text-gray-600 dark:text-gray-300 font-medium truncate" x-text="cameras.length === 1 && cameras[0].label ? cameras[0].label : 'Kamera Belakang (Default)'"></span>
-                            </template>
-                        </div>
-
-                        <!-- Flashlight / Torch Toggle -->
-                        <div class="flex items-center gap-2">
-                            <button
-                                type="button"
-                                x-show="hasTorch"
-                                x-on:click="toggleTorch()"
-                                :class="isTorchOn ? 'bg-amber-500 text-white shadow-amber-500/30 ring-2 ring-amber-300' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg shadow-xs transition-all active:scale-95"
-                                title="Nyalakan/Matikan Senter Gudang">
-                                <span x-bind:class="isTorchOn ? 'text-white' : 'text-amber-500'">
-                                    <x-heroicon-m-bolt class="w-4 h-4" />
-                                </span>
-                                <span x-text="isTorchOn ? 'Flash ON' : 'Flash Senter'"></span>
-                            </button>
-                        </div>
-                    </div>
-
                     <!-- Camera Viewport Container -->
                     <div class="relative w-full overflow-hidden rounded-xl bg-gray-950 min-h-[260px] flex items-center justify-center border border-gray-800">
                         <!-- Placeholder when camera closed -->
@@ -412,10 +298,9 @@
                 <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
                     <span class="flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full" :class="isCameraOpen ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'"></span>
-                        <span x-text="isCameraOpen ? (isTorchOn ? 'Kamera Aktif (Flash ON)' : 'Kamera Aktif: Format QR Code 1:1') : 'Siap digunakan kapan saja'"></span>
+                        <span x-text="isCameraOpen ? 'Kamera Aktif: Format QR Code 1:1' : 'Siap digunakan kapan saja'"></span>
                     </span>
-                    <span x-show="isCameraOpen && cameras.length > 1" class="text-primary-600 dark:text-primary-400 font-medium" x-text="cameras.length + ' Kamera terdeteksi'"></span>
-                    <span x-show="!isCameraOpen || cameras.length <= 1">Continuous Auto-detect</span>
+                    <span>Continuous Auto-detect</span>
                 </div>
             </div>
 
