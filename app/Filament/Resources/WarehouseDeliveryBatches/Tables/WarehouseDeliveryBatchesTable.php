@@ -6,6 +6,7 @@ use App\Models\WarehouseDeliveryBatch;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
+use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -78,7 +79,7 @@ class WarehouseDeliveryBatchesTable
                     ->badge()
                     ->getStateUsing(function (WarehouseDeliveryBatch $record) {
                         $total = (int) $record->total_items;
-                        $delivered = $record->items()->where('status', 'delivered')->count();
+                        $delivered = $record->delivered_count ?? $record->items()->where('status', 'delivered')->count();
 
                         if ($total === 0) {
                             return '0 / 0 Terkirim';
@@ -88,7 +89,7 @@ class WarehouseDeliveryBatchesTable
                     })
                     ->color(function (WarehouseDeliveryBatch $record) {
                         $total = (int) $record->total_items;
-                        $delivered = $record->items()->where('status', 'delivered')->count();
+                        $delivered = $record->delivered_count ?? $record->items()->where('status', 'delivered')->count();
 
                         if ($total > 0 && $delivered === $total) {
                             return 'success';
@@ -145,6 +146,20 @@ class WarehouseDeliveryBatchesTable
                         }),
 
                     DeleteAction::make()
+                        ->before(function (DeleteAction $action, WarehouseDeliveryBatch $record) {
+                            $deliveredCount = $record->items()->where('status', 'delivered')->count();
+
+                            if ($deliveredCount > 0) {
+                                Notification::make()
+                                    ->title('Batch Tidak Dapat Dihapus!')
+                                    ->body("Terdapat {$deliveredCount} material dalam batch ini yang sudah berstatus 'Terkirim' pada dokumen Transmittal resmi. Hapus terlebih dahulu material dari dokumen transmittal jika ingin membatalkan pengiriman.")
+                                    ->danger()
+                                    ->persistent()
+                                    ->send();
+
+                                $action->halt();
+                            }
+                        })
                         ->modalHeading('Hapus Batch Pengiriman MB51')
                         ->modalDescription('Apakah Anda yakin ingin menghapus batch ini? Seluruh data item material di dalamnya akan ikut terhapus.')
                         ->successNotificationTitle('Batch pengiriman berhasil dihapus.'),

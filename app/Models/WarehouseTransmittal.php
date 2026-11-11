@@ -20,6 +20,49 @@ class WarehouseTransmittal extends Model
         'tanggal' => 'date',
     ];
 
+    protected static function booted(): void
+    {
+        static::deleting(function (WarehouseTransmittal $transmittal) {
+            foreach ($transmittal->items as $item) {
+                if ($item->batchItem) {
+                    $batch = $item->batchItem->batch;
+                    $item->batchItem->update([
+                        'status' => 'pending',
+                        'warehouse_transmittal_id' => null,
+                    ]);
+                    $batch?->updateProgressStatus();
+
+                    if ($item->batchItem->deliveryOrderReceiptDetail) {
+                        $item->batchItem->deliveryOrderReceiptDetail->update([
+                            'warehouse_destination_id' => null,
+                        ]);
+                    }
+                }
+
+                if ($item->detail) {
+                    $item->detail->update([
+                        'warehouse_destination_id' => null,
+                    ]);
+                }
+            }
+
+            foreach ($transmittal->batchItems as $batchItem) {
+                $batch = $batchItem->batch;
+                $batchItem->update([
+                    'status' => 'pending',
+                    'warehouse_transmittal_id' => null,
+                ]);
+                $batch?->updateProgressStatus();
+
+                if ($batchItem->deliveryOrderReceiptDetail) {
+                    $batchItem->deliveryOrderReceiptDetail->update([
+                        'warehouse_destination_id' => null,
+                    ]);
+                }
+            }
+        });
+    }
+
     public function destination()
     {
         return $this->belongsTo(WarehouseDestination::class, 'warehouse_destination_id');

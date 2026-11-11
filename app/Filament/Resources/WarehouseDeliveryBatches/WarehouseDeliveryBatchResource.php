@@ -8,6 +8,7 @@ use App\Filament\Resources\WarehouseDeliveryBatches\Tables\WarehouseDeliveryBatc
 use App\Models\WarehouseDeliveryBatch;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class WarehouseDeliveryBatchResource extends Resource
 {
@@ -41,6 +42,15 @@ class WarehouseDeliveryBatchResource extends Resource
     public static function table(Table $table): Table
     {
         return WarehouseDeliveryBatchesTable::configure($table);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with('uploader')
+            ->withCount([
+                'items as delivered_count' => fn ($query) => $query->where('status', 'delivered'),
+            ]);
     }
 
     public static function getPages(): array

@@ -113,9 +113,23 @@ class ScanWarehouseTransmittal extends Page implements HasForms
         }
 
         if (! $this->forceNewTransmittal) {
+            // Jika transmittal saat ini masih cocok dengan tujuan dan tanggal yang sama, pertahankan
+            if ($this->transmittalId) {
+                $current = WarehouseTransmittal::where('id', $this->transmittalId)
+                    ->where('warehouse_destination_id', $destinationId)
+                    ->whereDate('tanggal', Carbon::parse($dateStr)->toDateString())
+                    ->first();
+
+                if ($current) {
+                    $this->transmittal_no = $current->transmittal_no;
+
+                    return;
+                }
+            }
+
             $existing = WarehouseTransmittal::where('warehouse_destination_id', $destinationId)
                 ->whereDate('tanggal', Carbon::parse($dateStr)->toDateString())
-                ->latest()
+                ->latest('id')
                 ->first();
 
             if ($existing) {
@@ -280,6 +294,13 @@ class ScanWarehouseTransmittal extends Page implements HasForms
                 'status' => 'delivered',
             ]);
 
+            // Sinkronkan lokasi gudang tujuan ke detail penerimaan DO agar langsung tampil di Monitoring Material
+            if ($batchItem->deliveryOrderReceiptDetail) {
+                $batchItem->deliveryOrderReceiptDetail->update([
+                    'warehouse_destination_id' => $transmittal->warehouse_destination_id,
+                ]);
+            }
+
             $batchItem->batch?->updateProgressStatus();
             $newlyAddedCount++;
         }
@@ -319,7 +340,7 @@ class ScanWarehouseTransmittal extends Page implements HasForms
         if (! $this->forceNewTransmittal) {
             $existing = WarehouseTransmittal::where('warehouse_destination_id', $destinationId)
                 ->whereDate('tanggal', Carbon::parse($dateStr)->toDateString())
-                ->latest()
+                ->latest('id')
                 ->first();
 
             if ($existing) {
@@ -360,6 +381,18 @@ class ScanWarehouseTransmittal extends Page implements HasForms
                 'status' => 'pending',
             ]);
             $batch?->updateProgressStatus();
+
+            if ($item->batchItem->deliveryOrderReceiptDetail) {
+                $item->batchItem->deliveryOrderReceiptDetail->update([
+                    'warehouse_destination_id' => null,
+                ]);
+            }
+        }
+
+        if ($item->detail) {
+            $item->detail->update([
+                'warehouse_destination_id' => null,
+            ]);
         }
 
         $item->delete();
@@ -369,6 +402,40 @@ class ScanWarehouseTransmittal extends Page implements HasForms
             ->body('Item telah dikeluarkan dari transmittal dan status dikembalikan ke pending.')
             ->success()
             ->send();
+    }
+
+    public function selectTransmittal(int|string $id): void
+    {
+        $id = (int) $id;
+        $transmittal = WarehouseTransmittal::find($id);
+        if ($transmittal) {
+            $this->transmittalId = $transmittal->id;
+            $this->transmittal_no = $transmittal->transmittal_no;
+            $this->forceNewTransmittal = false;
+            $this->dispatch('focus-scanner-input');
+
+            Notification::make()
+                ->title('Beralih ke Transmittal')
+                ->body("Transmittal aktif: {$transmittal->transmittal_no}")
+                ->info()
+                ->send();
+        }
+    }
+
+    public function getAvailableTransmittalsProperty(): Collection
+    {
+        $destinationId = $this->data['warehouse_destination_id'] ?? null;
+        $dateStr = $this->data['tanggal'] ?? now()->toDateString();
+
+        if (! $destinationId) {
+            return collect();
+        }
+
+        return WarehouseTransmittal::where('warehouse_destination_id', $destinationId)
+            ->whereDate('tanggal', Carbon::parse($dateStr)->toDateString())
+            ->withCount('items')
+            ->orderByDesc('id')
+            ->get();
     }
 
     public function getScannedItemsProperty(): Collection

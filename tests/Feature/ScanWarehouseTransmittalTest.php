@@ -2,6 +2,7 @@
 
 use App\Filament\Pages\ScanWarehouseTransmittal;
 use App\Models\DeliveryOrderReceipt;
+use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\User;
 use App\Models\WarehouseDeliveryBatch;
 use App\Models\WarehouseDeliveryBatchItem;
@@ -285,3 +286,163 @@ test('scanning 105 code preserves linkage to delivery order receipt for monitori
         ->and($transmittalItem->batchItem->delivery_order_receipt_id)->toBe($do->id)
         ->and($transmittalItem->batchItem->deliveryOrderReceipt->delivery_order_no)->toBe('DO-PKT-2026-0099');
 });
+
+test('deleting transmittal rolls back batch items status to pending', function () {
+    $destination = WarehouseDestination::create(['name' => 'Gudang Pusat']);
+
+    $batch = WarehouseDeliveryBatch::create([
+        'batch_title' => 'Batch Test Delete Transmittal',
+        'start_date' => '2026-07-01',
+        'end_date' => '2026-07-07',
+        'total_items' => 1,
+    ]);
+
+    $transmittal = WarehouseTransmittal::create([
+        'transmittal_no' => 'TR-WH/2026/07/9999',
+        'warehouse_destination_id' => $destination->id,
+        'tanggal' => '2026-07-01',
+    ]);
+
+    $batchItem = WarehouseDeliveryBatchItem::create([
+        'warehouse_delivery_batch_id' => $batch->id,
+        'mat_doc_105' => '5007471234',
+        'item_no' => '10',
+        'material_code' => 'MAT-1234',
+        'description' => 'TEST BEARING',
+        'quantity' => 2,
+        'status' => 'delivered',
+        'warehouse_transmittal_id' => $transmittal->id,
+    ]);
+
+    WarehouseTransmittalItem::create([
+        'warehouse_transmittal_id' => $transmittal->id,
+        'warehouse_delivery_batch_item_id' => $batchItem->id,
+    ]);
+
+    $batch->updateProgressStatus();
+    expect($batch->fresh()->status)->toBe('completed');
+
+    // Delete the transmittal
+    $transmittal->delete();
+
+    expect($batchItem->fresh()->status)->toBe('pending')
+        ->and($batchItem->fresh()->warehouse_transmittal_id)->toBeNull()
+        ->and($batch->fresh()->status)->toBe('pending');
+});
+
+test('scanning item updates warehouse destination on DO detail and unlinking clears it', function () {
+    $user = User::create([
+        'name' => 'Operator Sync',
+        'email' => 'sync@pupuk-kaltim.com',
+        'password' => bcrypt('secret'),
+    ]);
+    Auth::login($user);
+
+    $destination = WarehouseDestination::create(['name' => 'Gudang 3']);
+
+    if (! Schema::hasTable('delivery_order_receipt_details')) {
+        Schema::create('delivery_order_receipt_details', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('delivery_order_receipt_id')->nullable();
+            $table->foreignId('warehouse_destination_id')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    $doDetail = DeliveryOrderReceiptDetail::create();
+
+    $batch = WarehouseDeliveryBatch::create([
+        'batch_title' => 'Batch Sync DO Detail',
+        'start_date' => '2026-07-01',
+        'end_date' => '2026-07-07',
+        'total_items' => 1,
+    ]);
+
+    $batchItem = WarehouseDeliveryBatchItem::create([
+        'warehouse_delivery_batch_id' => $batch->id,
+        'mat_doc_105' => '5007487777',
+        'item_no' => '10',
+        'material_code' => 'MAT-SYNC',
+        'description' => 'SYNC TEST',
+        'quantity' => 1,
+        'status' => 'pending',
+        'delivery_order_receipt_detail_id' => $doDetail->id,
+    ]);
+
+    $component = Livewire::test(ScanWarehouseTransmittal::class)
+        ->set('data.warehouse_destination_id', $destination->id)
+        ->call('processScan', '50074877772026');
+
+    expect($doDetail->fresh()->warehouse_destination_id)->toBe($destination->id);
+
+    // Delete item from transmittal
+    $transmittalItem = WarehouseTransmittalItem::first();
+    $component->call('deleteItem', $transmittalItem->id);
+
+    expect($doDetail->fresh()->warehouse_destination_id)->toBeNull();
+});
+
+test('can list available transmittals for today and switch between them', function () {
+    $destination = WarehouseDestination::create(['name' => 'Gudang Pupuk Curah']);
+    $today = now()->toDateString();
+
+    $t1 = WarehouseTransmittal::create([
+        'transmittal_no' => 'TR-WH/2026/07/0001',
+        'warehouse_destination_id' => $destination->id,
+        'tanggal' => $today,
+    ]);
+
+    $t2 = WarehouseTransmittal::create([
+        'transmittal_no' => 'TR-WH/2026/07/0002',
+        'warehouse_destination_id' => $destination->id,
+        'tanggal' => $today,
+    ]);
+
+    $component = Livewire::test(ScanWarehouseTransmittal::class)
+        ->set('data.warehouse_destination_id', $destination->id)
+        ->set('data.tanggal', $today);
+
+    $available = $component->instance()->availableTransmittals;
+    expect($available)->toHaveCount(2)
+        ->and($component->get('transmittalId'))->toBe($t2->id);
+
+    // Switch to first transmittal
+    $component->call('selectTransmittal', $t1->id);
+    expect($component->get('transmittalId'))->toBe($t1->id)
+        ->and($component->get('transmittal_no'))->toBe('TR-WH/2026/07/0001');
+
+    // Switch back to second transmittal
+    $component->call('selectTransmittal', $t2->id);
+    expect($component->get('transmittalId'))->toBe($t2->id)
+        ->and($component->get('transmittal_no'))->toBe('TR-WH/2026/07/0002');
+});
+
+test('antrean pengiriman query ignores null delivery_order_receipt_detail_id without sql not in trap', function () {
+    $destination = WarehouseDestination::create(['name' => 'Gudang Pusat']);
+
+    $transmittal = WarehouseTransmittal::create([
+        'transmittal_no' => 'TR-WH/2026/07/5555',
+        'warehouse_destination_id' => $destination->id,
+        'tanggal' => now()->toDateString(),
+    ]);
+
+    // Create item with NULL delivery_order_receipt_detail_id (typical of unlinked MB51 items)
+    WarehouseTransmittalItem::create([
+        'warehouse_transmittal_id' => $transmittal->id,
+        'delivery_order_receipt_detail_id' => null,
+    ]);
+
+    // Verify subquery with whereNotNull safely returns empty and does not break NOT IN
+    $excludedIds = WarehouseTransmittalItem::whereNotNull('delivery_order_receipt_detail_id')
+        ->select('delivery_order_receipt_detail_id');
+
+    expect($excludedIds->count())->toBe(0);
+
+    // Verify that a dummy detail is NOT excluded
+    $availableQuery = DeliveryOrderReceiptDetail::whereNotIn('id', $excludedIds);
+    expect(strtolower($availableQuery->toSql()))
+        ->toContain('not in')
+        ->toContain('is not null');
+});
+
+

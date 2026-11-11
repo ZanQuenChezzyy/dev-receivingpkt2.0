@@ -26,33 +26,68 @@ class ItemsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('id')
             ->columns([
-                TextColumn::make('detail.deliveryOrderReceipt.delivery_order_no')
-                    ->label('DO No'),
-                TextColumn::make('detail.purchaseOrderIssued.purchase_order_no')
-                    ->label('PO No'),
-                TextColumn::make('detail.material_code')
-                    ->label('Material No'),
-                TextColumn::make('detail.description')
+                TextColumn::make('do_no')
+                    ->label('DO No')
+                    ->getStateUsing(fn ($record) => $record->detail?->deliveryOrderReceipt?->delivery_order_no
+                        ?? $record->batchItem?->deliveryOrderReceipt?->delivery_order_no
+                        ?? ($record->batchItem?->reference_do_no ?: '-')
+                    )
+                    ->searchable(),
+
+                TextColumn::make('po_no')
+                    ->label('PO No')
+                    ->getStateUsing(fn ($record) => $record->detail?->purchaseOrderIssued?->purchase_order_no
+                        ?? $record->batchItem?->po_number
+                        ?? '-'
+                    )
+                    ->searchable(),
+
+                TextColumn::make('mat_doc_105')
+                    ->label('MatDoc 105')
+                    ->getStateUsing(fn ($record) => $record->batchItem?->mat_doc_105 ?? '-')
+                    ->badge()
+                    ->color('info')
+                    ->searchable(),
+
+                TextColumn::make('material_code')
+                    ->label('Material No')
+                    ->getStateUsing(fn ($record) => $record->detail?->material_code ?? $record->batchItem?->material_code ?? '-')
+                    ->searchable(),
+
+                TextColumn::make('description')
                     ->label('Description')
-                    ->limit(30),
-                TextColumn::make('detail.quantity')
-                    ->label('Qty DO')
-                    ->numeric(),
-                TextColumn::make('detail.qty_mir')
+                    ->getStateUsing(fn ($record) => $record->detail?->description ?? $record->batchItem?->description ?? '-')
+                    ->limit(35),
+
+                TextColumn::make('quantity')
+                    ->label('Qty')
+                    ->getStateUsing(fn ($record) => $record->detail?->quantity ?? $record->batchItem?->quantity ?? 0)
+                    ->numeric(decimalPlaces: 3),
+
+                TextColumn::make('qty_mir')
                     ->label('Qty MIR')
-                    ->state(function ($record) {
+                    ->getStateUsing(function ($record) {
+                        if (! $record->detail) {
+                            return 0;
+                        }
+
                         return $record->detail->materialIssueDetails()->sum('diserahkan');
                     })
-                    ->numeric(),
-                TextColumn::make('detail.qty_sisa')
+                    ->numeric(decimalPlaces: 3),
+
+                TextColumn::make('qty_sisa')
                     ->label('Sisa Dikirim')
-                    ->state(function ($record) {
+                    ->getStateUsing(function ($record) {
+                        if (! $record->detail) {
+                            return 0;
+                        }
+
                         $mirQty = $record->detail->materialIssueDetails()->sum('diserahkan');
 
-                        return $record->detail->quantity - $mirQty;
+                        return max(0, $record->detail->quantity - $mirQty);
                     })
-                    ->numeric()
-                    ->color(fn ($state) => $state > 0 ? 'success' : 'danger'),
+                    ->numeric(decimalPlaces: 3)
+                    ->color(fn ($state) => $state > 0 ? 'success' : 'gray'),
             ])
             ->filters([
                 //

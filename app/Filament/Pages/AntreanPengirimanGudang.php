@@ -67,7 +67,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                 return DeliveryOrderReceipt::query()
                     ->whereHas('grsRdtvItems')
                     ->whereHas('deliveryOrderReceiptDetails', function ($query) use ($user) {
-                        $query->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
+                        $query->whereNotIn('id', WarehouseTransmittalItem::whereNotNull('delivery_order_receipt_detail_id')->select('delivery_order_receipt_detail_id'))
                             ->where(function (Builder $q) use ($user) {
                                 if ($user->hasAnyRole(['Developer', 'AVP Receiving'])) {
                                     $q->whereIn('mrp_type', ['V1', 'NONSTOCK']);
@@ -152,7 +152,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                     TextColumn::make('total_items')
                         ->label('Total Item')
                         ->getStateUsing(fn (DeliveryOrderReceipt $record) => $record->deliveryOrderReceiptDetails()
-                            ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
+                            ->whereNotIn('id', WarehouseTransmittalItem::whereNotNull('delivery_order_receipt_detail_id')->select('delivery_order_receipt_detail_id'))
                             ->count().' Item')
                         ->badge()
                         ->color('info')
@@ -163,7 +163,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->iconColor('gray')
                         ->getStateUsing(function (DeliveryOrderReceipt $record) {
                             $details = $record->deliveryOrderReceiptDetails()
-                                ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
+                                ->whereNotIn('id', WarehouseTransmittalItem::whereNotNull('delivery_order_receipt_detail_id')->select('delivery_order_receipt_detail_id'))
                                 ->get();
 
                             if ($details->isEmpty()) {
@@ -185,7 +185,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         })
                         ->tooltip(function (DeliveryOrderReceipt $record) {
                             $details = $record->deliveryOrderReceiptDetails()
-                                ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
+                                ->whereNotIn('id', WarehouseTransmittalItem::whereNotNull('delivery_order_receipt_detail_id')->select('delivery_order_receipt_detail_id'))
                                 ->get();
 
                             $htmlList = '';
@@ -208,7 +208,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->getStateUsing(function (DeliveryOrderReceipt $record) {
                             // Ambil detail yang belum ditransmittal agar akurat dengan antrean
                             $details = $record->deliveryOrderReceiptDetails()
-                                ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
+                                ->whereNotIn('id', WarehouseTransmittalItem::whereNotNull('delivery_order_receipt_detail_id')->select('delivery_order_receipt_detail_id'))
                                 ->get();
 
                             if ($details->isEmpty()) {
@@ -231,7 +231,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         })
                         ->tooltip(function (DeliveryOrderReceipt $record) {
                             $details = $record->deliveryOrderReceiptDetails()
-                                ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
+                                ->whereNotIn('id', WarehouseTransmittalItem::whereNotNull('delivery_order_receipt_detail_id')->select('delivery_order_receipt_detail_id'))
                                 ->get();
 
                             $htmlList = '';
@@ -336,7 +336,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         $user = Auth::user();
 
                         $items = $record->deliveryOrderReceiptDetails()
-                            ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
+                            ->whereNotIn('id', WarehouseTransmittalItem::whereNotNull('delivery_order_receipt_detail_id')->select('delivery_order_receipt_detail_id'))
                             ->where(function (Builder $q) use ($user) {
                                 if ($user->hasAnyRole(['Developer', 'AVP Receiving'])) {
                                     $q->whereIn('mrp_type', ['V1', 'NONSTOCK']);
@@ -512,7 +512,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         foreach ($records as $doRecord) {
                             // Hanya ambil item yang belum ada di transmittal dan sesuai role
                             $items = $doRecord->deliveryOrderReceiptDetails()
-                                ->whereNotIn('id', WarehouseTransmittalItem::select('delivery_order_receipt_detail_id'))
+                                ->whereNotIn('id', WarehouseTransmittalItem::whereNotNull('delivery_order_receipt_detail_id')->select('delivery_order_receipt_detail_id'))
                                 ->where(function (Builder $q) use ($user) {
                                     if ($user->hasAnyRole(['Developer', 'AVP Receiving'])) {
                                         $q->whereIn('mrp_type', ['V1', 'NONSTOCK']);

@@ -80,6 +80,13 @@ class MonitoringMaterial extends Page implements HasTable
                 DeliveryOrderReceiptDetail::query()
                     ->leftJoin('delivery_order_receipts', 'delivery_order_receipt_details.delivery_order_receipt_id', '=', 'delivery_order_receipts.id')
                     ->select('delivery_order_receipt_details.*')
+                    ->with([
+                        'purchaseOrderIssued',
+                        'deliveryOrderReceipt.transmittalItems',
+                        'warehouseDestination',
+                        'locationReceiving',
+                    ])
+                    ->withSum('materialIssueDetails as issued_qty', 'diserahkan')
             )
             ->modifyQueryUsing(fn (Builder $query) => $this->modifyQueryWithActiveTab($query))
             ->defaultSort(function (Builder $query) {
@@ -147,7 +154,7 @@ class MonitoringMaterial extends Page implements HasTable
                         ->sortable(),
                     TextColumn::make('diambil')
                         ->label('Diambil')
-                        ->getStateUsing(fn ($record) => $record->issued_quantity)
+                        ->getStateUsing(fn ($record) => $record->issued_qty ?? $record->issued_quantity)
                         ->numeric(
                             decimalPlaces: 2,
                             decimalSeparator: ',',
@@ -156,7 +163,7 @@ class MonitoringMaterial extends Page implements HasTable
                         ->suffix(fn ($record) => ' '.$record->uoi),
                     TextColumn::make('sisa')
                         ->label('Sisa')
-                        ->getStateUsing(fn ($record) => max(0, $record->quantity - $record->issued_quantity))
+                        ->getStateUsing(fn ($record) => max(0, $record->quantity - ($record->issued_qty ?? $record->issued_quantity)))
                         ->numeric(
                             decimalPlaces: 2,
                             decimalSeparator: ',',

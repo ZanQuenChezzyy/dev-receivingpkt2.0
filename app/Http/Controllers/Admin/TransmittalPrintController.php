@@ -15,20 +15,11 @@ class TransmittalPrintController extends Controller
     {
         $transmittal->load(['items.detail.deliveryOrderReceipt', 'items.batchItem', 'destination.pic', 'createdBy']);
 
-        // Collect unique Material Issue Records
-        $mirRecords = collect();
-        foreach ($transmittal->items as $item) {
-            if (! empty($item->delivery_order_receipt_detail_id)) {
-                $mir = MaterialIssue::whereHas('materialIssueDetails', function ($query) use ($item) {
-                    $query->where('delivery_order_receipt_detail_id', $item->delivery_order_receipt_detail_id);
-                })->first();
-
-                if ($mir) {
-                    $mirRecords->push($mir);
-                }
-            }
-        }
-        $mirRecords = $mirRecords->unique('id')->values();
+        // Collect unique Material Issue Records in 1 query
+        $detailIds = $transmittal->items->pluck('delivery_order_receipt_detail_id')->filter()->unique();
+        $mirRecords = $detailIds->isNotEmpty()
+            ? MaterialIssue::whereHas('materialIssueDetails', fn ($query) => $query->whereIn('delivery_order_receipt_detail_id', $detailIds))->get()
+            : collect();
 
         // Generate Transmittal PDF (F4 Portrait)
         $transmittalPdfStr = Pdf::loadView('pdf.transmittal', [
@@ -70,22 +61,11 @@ class TransmittalPrintController extends Controller
             return redirect()->back()->with('error', 'Tidak ada data transmittal yang dipilih.');
         }
 
-        // Collect unique MIRs for all selected transmittals
-        $mirRecords = collect();
-        foreach ($transmittals as $transmittal) {
-            foreach ($transmittal->items as $item) {
-                if (! empty($item->delivery_order_receipt_detail_id)) {
-                    $mir = MaterialIssue::whereHas('materialIssueDetails', function ($query) use ($item) {
-                        $query->where('delivery_order_receipt_detail_id', $item->delivery_order_receipt_detail_id);
-                    })->first();
-
-                    if ($mir) {
-                        $mirRecords->push($mir);
-                    }
-                }
-            }
-        }
-        $mirRecords = $mirRecords->unique('id')->values();
+        // Collect unique MIRs for all selected transmittals in 1 query
+        $allDetailIds = $transmittals->flatMap->items->pluck('delivery_order_receipt_detail_id')->filter()->unique();
+        $mirRecords = $allDetailIds->isNotEmpty()
+            ? MaterialIssue::whereHas('materialIssueDetails', fn ($query) => $query->whereIn('delivery_order_receipt_detail_id', $allDetailIds))->get()
+            : collect();
 
         // Generate Bulk Transmittal PDF (F4 Portrait)
         $transmittalPdfStr = Pdf::loadView('pdf.transmittal_bulk', [

@@ -194,7 +194,7 @@
                             $matCode = $detail->material_code ?? ($batchItem->material_code ?? '-');
                             $desc = $detail->description ?? ($batchItem->description ?? '-');
                             $qty = $detail?->quantity !== null ? $detail->quantity : ($batchItem?->quantity ?? null);
-                            $uoi = $detail->uoi ?? ($batchItem->uoi ?? '-');
+                            $uoi = $detail->uoi ?? ($batchItem->uom ?? ($batchItem->uoi ?? '-'));
                         @endphp
                         <tr>
                             <td class="text-center font-bold" style="color: #475569;">{{ $index + 1 }}</td>

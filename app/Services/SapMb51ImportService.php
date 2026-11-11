@@ -27,6 +27,9 @@ class SapMb51ImportService
      */
     public function import(array $params): WarehouseDeliveryBatch
     {
+        @set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+
         $filePath = $params['file_path'];
         $fileName = $params['file_name'];
         $startDate = Carbon::parse($params['start_date'])->toDateString();
@@ -78,7 +81,10 @@ class SapMb51ImportService
             throw new \RuntimeException('Tidak ada data material valid yang dapat diimpor dari file tersebut.');
         }
 
-        return DB::transaction(function () use ($batchTitle, $startDate, $endDate, $fileName, $filePath, $uploadedBy, $parsedItems, $totalValue) {
+        // Preload relasi Delivery Order secara bulk untuk performa tinggi & pencegahan N+1 query
+        $lookups = $this->buildDeliveryOrderLookup($parsedItems);
+
+        return DB::transaction(function () use ($batchTitle, $startDate, $endDate, $fileName, $filePath, $uploadedBy, $parsedItems, $totalValue, $lookups) {
             $batch = WarehouseDeliveryBatch::create([
                 'batch_title' => $batchTitle,
                 'start_date' => $startDate,
@@ -119,7 +125,7 @@ class SapMb51ImportService
 
             $cleanChunk = [];
             foreach ($parsedItems as $itemData) {
-                $match = $this->matchToDeliveryOrder($itemData);
+                $match = $this->matchFast($itemData, $lookups);
                 $itemData['delivery_order_receipt_id'] = $match['delivery_order_receipt_id'] ?? null;
                 $itemData['delivery_order_receipt_detail_id'] = $match['delivery_order_receipt_detail_id'] ?? null;
                 $itemData['warehouse_delivery_batch_id'] = $batch->id;
@@ -135,13 +141,164 @@ class SapMb51ImportService
                 $cleanChunk[] = $cleanRow;
             }
 
-            // Simpan items per batch 100 baris
-            foreach (array_chunk($cleanChunk, 100) as $chunk) {
+            // Simpan items per batch 250 baris untuk kecepatan I/O optimal
+            foreach (array_chunk($cleanChunk, 250) as $chunk) {
                 WarehouseDeliveryBatchItem::insert($chunk);
             }
 
             return $batch;
         });
+    }
+
+    /**
+     * Melakukan batch preloading dan indexing untuk mencocokkan ribuan data MB51
+     * ke Delivery Order hanya dalam 3-4 query efisien (mencegah bottleneck N+1 query).
+     *
+     * @param  array<int, array<string, mixed>>  $parsedItems
+     * @return array{
+     *     poi_exact: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: int}>,
+     *     poi_po: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: int}>,
+     *     ref_103: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int}>,
+     *     ref_do: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int}>
+     * }
+     */
+    public function buildDeliveryOrderLookup(array $parsedItems): array
+    {
+        $poNumbers = [];
+        $refDocs103 = [];
+        $referenceDoNos = [];
+
+        foreach ($parsedItems as $item) {
+            if (! empty($item['po_number'])) {
+                $poNumbers[] = (string) $item['po_number'];
+            }
+            if (! empty($item['ref_doc_103'])) {
+                $refDocs103[] = (string) $item['ref_doc_103'];
+            }
+            if (! empty($item['reference_do_no'])) {
+                $referenceDoNos[] = (string) $item['reference_do_no'];
+            }
+        }
+
+        $poNumbers = array_values(array_unique($poNumbers));
+        $refDocs103 = array_values(array_unique($refDocs103));
+        $referenceDoNos = array_values(array_unique($referenceDoNos));
+
+        // 1. Preload PurchaseOrderIssued & DeliveryOrderReceiptDetail berdasarkan PO & Item No
+        $poiExactMap = [];
+        $poiPoMap = [];
+
+        if (! empty($poNumbers)) {
+            $pois = PurchaseOrderIssued::whereIn('purchase_order_no', $poNumbers)
+                ->select('id', 'purchase_order_no', 'item_no')
+                ->get();
+
+            if ($pois->isNotEmpty()) {
+                $poiIds = $pois->pluck('id')->toArray();
+                $details = DeliveryOrderReceiptDetail::whereIn('purchase_order_issued_id', $poiIds)
+                    ->select('id', 'delivery_order_receipt_id', 'purchase_order_issued_id')
+                    ->get()
+                    ->keyBy('purchase_order_issued_id');
+
+                foreach ($pois as $poi) {
+                    $detail = $details->get($poi->id);
+                    if ($detail) {
+                        $matchData = [
+                            'delivery_order_receipt_id' => $detail->delivery_order_receipt_id,
+                            'delivery_order_receipt_detail_id' => $detail->id,
+                        ];
+
+                        $itemKey = $poi->purchase_order_no.'_'.((int) $poi->item_no);
+                        $poiExactMap[$itemKey] = $matchData;
+
+                        if (! isset($poiPoMap[$poi->purchase_order_no])) {
+                            $poiPoMap[$poi->purchase_order_no] = $matchData;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Preload DeliveryOrderReceipt berdasarkan post_103
+        $refDoc103Map = [];
+        if (! empty($refDocs103)) {
+            $doReceipts103 = DeliveryOrderReceipt::whereIn('post_103', $refDocs103)
+                ->with(['deliveryOrderReceiptDetails' => fn ($q) => $q->select('id', 'delivery_order_receipt_id')])
+                ->get();
+
+            foreach ($doReceipts103 as $do) {
+                $firstDetail = $do->deliveryOrderReceiptDetails->first();
+                $refDoc103Map[$do->post_103] = [
+                    'delivery_order_receipt_id' => $do->id,
+                    'delivery_order_receipt_detail_id' => $firstDetail?->id,
+                ];
+            }
+        }
+
+        // 3. Preload DeliveryOrderReceipt berdasarkan delivery_order_no
+        $referenceDoMap = [];
+        if (! empty($referenceDoNos)) {
+            $doReceiptsRef = DeliveryOrderReceipt::whereIn('delivery_order_no', $referenceDoNos)
+                ->with(['deliveryOrderReceiptDetails' => fn ($q) => $q->select('id', 'delivery_order_receipt_id')])
+                ->get();
+
+            foreach ($doReceiptsRef as $do) {
+                $firstDetail = $do->deliveryOrderReceiptDetails->first();
+                $referenceDoMap[$do->delivery_order_no] = [
+                    'delivery_order_receipt_id' => $do->id,
+                    'delivery_order_receipt_detail_id' => $firstDetail?->id,
+                ];
+            }
+        }
+
+        return [
+            'poi_exact' => $poiExactMap,
+            'poi_po' => $poiPoMap,
+            'ref_103' => $refDoc103Map,
+            'ref_do' => $referenceDoMap,
+        ];
+    }
+
+    /**
+     * Pencocokan in-memory super cepat menggunakan indexed map hasil preloading.
+     *
+     * @param  array<string, mixed>  $itemData
+     * @param  array{
+     *     poi_exact: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: int}>,
+     *     poi_po: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: int}>,
+     *     ref_103: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int}>,
+     *     ref_do: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int}>
+     * }  $lookups
+     * @return array{delivery_order_receipt_id: ?int, delivery_order_receipt_detail_id: ?int}|null
+     */
+    public function matchFast(array $itemData, array $lookups): ?array
+    {
+        $poNumber = (string) ($itemData['po_number'] ?? '');
+        $itemNo = (int) ($itemData['item_no'] ?? 0);
+        $refDoc103 = (string) ($itemData['ref_doc_103'] ?? '');
+        $referenceDoNo = (string) ($itemData['reference_do_no'] ?? '');
+
+        // Prioritas 1: Cocokkan PO Number & Item No
+        if ($poNumber !== '') {
+            if ($itemNo > 0 && isset($lookups['poi_exact'][$poNumber.'_'.$itemNo])) {
+                return $lookups['poi_exact'][$poNumber.'_'.$itemNo];
+            }
+            if (isset($lookups['poi_po'][$poNumber])) {
+                return $lookups['poi_po'][$poNumber];
+            }
+        }
+
+        // Prioritas 2: Cocokkan Kode 103 ke DeliveryOrderReceipt.post_103
+        if ($refDoc103 !== '' && isset($lookups['ref_103'][$refDoc103])) {
+            return $lookups['ref_103'][$refDoc103];
+        }
+
+        // Prioritas 3: Cocokkan Reference DO ke DeliveryOrderReceipt.delivery_order_no
+        if ($referenceDoNo !== '' && isset($lookups['ref_do'][$referenceDoNo])) {
+            return $lookups['ref_do'][$referenceDoNo];
+        }
+
+        return null;
     }
 
     /**

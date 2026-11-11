@@ -2,7 +2,10 @@
     <div x-data="{
         isCameraOpen: false,
         html5QrCode: null,
+        cameras: [],
         selectedCameraId: null,
+        hasTorch: false,
+        isTorchOn: false,
         itemToDelete: null,
         lastScanned: null,
         lastScanTime: 0,
@@ -99,8 +102,12 @@
                 }
             };
 
+            const cameraConfig = this.selectedCameraId
+                ? { deviceId: { exact: this.selectedCameraId } }
+                : { facingMode: 'environment' };
+
             this.html5QrCode.start(
-                { facingMode: 'environment' },
+                cameraConfig,
                 config,
                 (decodedText, decodedResult) => {
                     const now = Date.now();
@@ -119,12 +126,81 @@
                 (errorMessage) => {
                     // Continuous search frame - ignore frame read misses
                 }
-            ).catch(err => {
+            ).then(() => {
+                this.refreshCameraList();
+                this.checkTorchSupport();
+            }).catch(err => {
                 console.error('Kamera gagal dimulai:', err);
+                if (this.selectedCameraId) {
+                    this.selectedCameraId = null;
+                    this.initHtml5Qr();
+                    return;
+                }
                 this.isCameraOpen = false;
             });
         },
+        refreshCameraList() {
+            if (!window.Html5Qrcode) return;
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length > 0) {
+                    this.cameras = devices;
+                    if (!this.selectedCameraId) {
+                        const video = document.querySelector('#qr-reader video');
+                        const track = video?.srcObject?.getVideoTracks?.()[0];
+                        const settings = track?.getSettings ? track.getSettings() : null;
+                        if (settings?.deviceId) {
+                            this.selectedCameraId = settings.deviceId;
+                        } else {
+                            const backCam = devices.find(d => /back|rear|environment/i.test(d.label));
+                            this.selectedCameraId = backCam ? backCam.id : devices[0].id;
+                        }
+                    }
+                }
+            }).catch(err => {
+                console.warn('Gagal membaca list kamera:', err);
+            });
+        },
+        switchCamera(cameraId) {
+            if (!cameraId || cameraId === this.selectedCameraId) return;
+            this.selectedCameraId = cameraId;
+            this.isTorchOn = false;
+            this.hasTorch = false;
+            if (this.html5QrCode) {
+                this.html5QrCode.stop().then(() => {
+                    this.initHtml5Qr();
+                }).catch(() => {
+                    this.initHtml5Qr();
+                });
+            }
+        },
+        checkTorchSupport() {
+            setTimeout(() => {
+                const video = document.querySelector('#qr-reader video');
+                const track = video?.srcObject?.getVideoTracks?.()[0];
+                if (track && typeof track.getCapabilities === 'function') {
+                    const caps = track.getCapabilities();
+                    this.hasTorch = Boolean(caps && caps.torch);
+                } else {
+                    this.hasTorch = false;
+                }
+            }, 600);
+        },
+        toggleTorch() {
+            this.isTorchOn = !this.isTorchOn;
+            const video = document.querySelector('#qr-reader video');
+            const track = video?.srcObject?.getVideoTracks?.()[0];
+            if (track && typeof track.applyConstraints === 'function') {
+                track.applyConstraints({
+                    advanced: [{ torch: this.isTorchOn }]
+                }).catch(err => {
+                    console.warn('Torch constraint error:', err);
+                    this.isTorchOn = false;
+                });
+            }
+        },
         stopCamera() {
+            this.isTorchOn = false;
+            this.hasTorch = false;
             if (this.html5QrCode) {
                 this.html5QrCode.stop().then(() => {
                     this.isCameraOpen = false;
@@ -153,15 +229,22 @@
                 </div>
 
                 <!-- Transmittal Badge & Control -->
-                <div class="lg:w-80 flex flex-col justify-center items-start lg:items-end gap-2 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 pt-4 lg:pt-0 lg:pl-6">
-                    <div class="text-xs font-semibold tracking-wider text-gray-500 dark:text-gray-400 uppercase">
-                        Nomor Transmittal
+                <div class="lg:w-96 flex flex-col justify-center items-start lg:items-end gap-2 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 pt-4 lg:pt-0 lg:pl-6">
+                    <div class="flex items-center justify-between w-full lg:justify-end gap-2">
+                        <span class="text-xs font-semibold tracking-wider text-gray-500 dark:text-gray-400 uppercase">
+                            Nomor Transmittal
+                        </span>
+                        @if($this->availableTransmittals->count() > 1)
+                            <span class="text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/50 px-2 py-0.5 rounded-full border border-primary-200 dark:border-primary-800">
+                                {{ $this->availableTransmittals->count() }} Transmittal Hari Ini
+                            </span>
+                        @endif
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="font-mono text-base font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 px-3 py-1.5 rounded-lg border border-primary-200 dark:border-primary-800/50">
                             {{ $transmittal_no }}
                         </span>
-                        @if($transmittalId)
+                        @if($transmittalId && ! $forceNewTransmittal)
                             <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-md border border-emerald-300 dark:border-emerald-800">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                 Aktif
@@ -172,6 +255,25 @@
                             </span>
                         @endif
                     </div>
+
+                    @if($this->availableTransmittals->count() > 1)
+                        <!-- Multi-Transmittal Dropdown Selector -->
+                        <div class="w-full flex items-center justify-start lg:justify-end gap-2 pt-1.5 border-t border-gray-100 dark:border-gray-800/80">
+                            <label class="text-[11px] font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Beralih:</label>
+                            <select
+                                wire:change="selectTransmittal($event.target.value)"
+                                class="text-xs font-mono font-medium py-1 px-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:ring-1 focus:ring-primary-500 focus:border-primary-500">
+                                @if($forceNewTransmittal)
+                                    <option value="" selected disabled>+ Baru: {{ $transmittal_no }} (Standby)</option>
+                                @endif
+                                @foreach($this->availableTransmittals as $at)
+                                    <option value="{{ $at->id }}" @selected($at->id === $transmittalId && ! $forceNewTransmittal)>
+                                        {{ $at->transmittal_no }} ({{ $at->items_count }} item) {{ $at->id === $transmittalId && ! $forceNewTransmittal ? '✓ Aktif' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
 
                     <div class="flex items-center gap-2 mt-1">
                         <button
@@ -239,6 +341,43 @@
                         </div>
                     </div>
 
+                    <!-- Camera Active Control Toolbar (Multi-camera switch & Flashlight Torch) -->
+                    <div x-show="isCameraOpen" style="display: none;" class="mb-3 p-2.5 rounded-xl bg-gray-100/90 dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700/80 flex flex-wrap items-center justify-between gap-2.5 transition-all">
+                        <!-- Camera Switcher -->
+                        <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                            <x-heroicon-m-video-camera class="w-4 h-4 text-primary-500 shrink-0" />
+                            <template x-if="cameras.length > 1">
+                                <select
+                                    x-model="selectedCameraId"
+                                    x-on:change="switchCamera($event.target.value)"
+                                    class="w-full text-xs font-medium py-1 px-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-1 focus:ring-primary-500">
+                                    <template x-for="(cam, idx) in cameras" :key="cam.id">
+                                        <option :value="cam.id" x-text="cam.label || ('Kamera ' + (idx + 1))"></option>
+                                    </template>
+                                </select>
+                            </template>
+                            <template x-if="cameras.length <= 1">
+                                <span class="text-xs text-gray-600 dark:text-gray-300 font-medium truncate" x-text="cameras.length === 1 && cameras[0].label ? cameras[0].label : 'Kamera Belakang (Default)'"></span>
+                            </template>
+                        </div>
+
+                        <!-- Flashlight / Torch Toggle -->
+                        <div class="flex items-center gap-2">
+                            <button
+                                type="button"
+                                x-show="hasTorch"
+                                x-on:click="toggleTorch()"
+                                :class="isTorchOn ? 'bg-amber-500 text-white shadow-amber-500/30 ring-2 ring-amber-300' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg shadow-xs transition-all active:scale-95"
+                                title="Nyalakan/Matikan Senter Gudang">
+                                <span x-bind:class="isTorchOn ? 'text-white' : 'text-amber-500'">
+                                    <x-heroicon-m-bolt class="w-4 h-4" />
+                                </span>
+                                <span x-text="isTorchOn ? 'Flash ON' : 'Flash Senter'"></span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Camera Viewport Container -->
                     <div class="relative w-full overflow-hidden rounded-xl bg-gray-950 min-h-[260px] flex items-center justify-center border border-gray-800">
                         <!-- Placeholder when camera closed -->
@@ -273,9 +412,10 @@
                 <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
                     <span class="flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full" :class="isCameraOpen ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'"></span>
-                        <span x-text="isCameraOpen ? 'Kamera Aktif: Format QR Code 1:1' : 'Siap digunakan kapan saja'"></span>
+                        <span x-text="isCameraOpen ? (isTorchOn ? 'Kamera Aktif (Flash ON)' : 'Kamera Aktif: Format QR Code 1:1') : 'Siap digunakan kapan saja'"></span>
                     </span>
-                    <span>Continuous Auto-detect</span>
+                    <span x-show="isCameraOpen && cameras.length > 1" class="text-primary-600 dark:text-primary-400 font-medium" x-text="cameras.length + ' Kamera terdeteksi'"></span>
+                    <span x-show="!isCameraOpen || cameras.length <= 1">Continuous Auto-detect</span>
                 </div>
             </div>
 

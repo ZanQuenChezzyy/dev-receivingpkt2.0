@@ -206,4 +206,63 @@ test('sap mb51 service can import user sample xlsx file with excel serial dates'
         ->and($batch->items()->count())->toBe($batch->total_items);
 });
 
+test('sap mb51 service scales efficiently for large datasets with bulk lookup', function () {
+    $user = User::create([
+        'name' => 'Tester Large Scale',
+        'email' => 'scale@example.com',
+        'password' => bcrypt('password'),
+    ]);
 
+    // Setup 10 POs and DOs
+    for ($p = 1; $p <= 10; $p++) {
+        $po = PurchaseOrderIssued::create([
+            'purchase_order_no' => 'PO-SCALE-'.$p,
+            'item_no' => 10,
+        ]);
+
+        $do = DeliveryOrderReceipt::create([
+            'delivery_order_no' => 'DO-SCALE-'.$p,
+        ]);
+
+        DeliveryOrderReceiptDetail::create([
+            'delivery_order_receipt_id' => $do->id,
+            'purchase_order_issued_id' => $po->id,
+        ]);
+    }
+
+    // Generate CSV with 500 rows
+    $csvLines = ['Posting Date,Material,Material Description,Item,Purchase Order,Reference Document,Material Document,Qty in Un. of Entry,Unit of Entry,Amount in LC'];
+    for ($i = 1; $i <= 500; $i++) {
+        $poIndex = ($i % 10) + 1;
+        $matDoc = '5007'.str_pad((string) $i, 6, '0', STR_PAD_LEFT);
+        $csvLines[] = "2026-07-15,MAT-{$i},Desc {$i},10,PO-SCALE-{$poIndex},5007415139,{$matDoc},1,EA,1000";
+    }
+
+    $tempPath = tempnam(sys_get_temp_dir(), 'mb51_scale_').'.csv';
+    file_put_contents($tempPath, implode("\n", $csvLines));
+
+    $service = new SapMb51ImportService;
+    $startTime = microtime(true);
+
+    $batch = $service->import([
+        'file_path' => $tempPath,
+        'file_name' => 'scale_500.csv',
+        'start_date' => '2026-07-01',
+        'end_date' => '2026-07-31',
+        'uploaded_by' => $user->id,
+    ]);
+
+    $elapsed = microtime(true) - $startTime;
+    @unlink($tempPath);
+
+    expect($batch->total_items)->toBe(500)
+        ->and($batch->items()->count())->toBe(500)
+        ->and($elapsed)->toBeLessThan(5.0);
+
+    // Verify all items matched to DOs
+    $matchedCount = WarehouseDeliveryBatchItem::where('warehouse_delivery_batch_id', $batch->id)
+        ->whereNotNull('delivery_order_receipt_id')
+        ->count();
+
+    expect($matchedCount)->toBe(500);
+});
