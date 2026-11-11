@@ -80,14 +80,12 @@
         },
         initHtml5Qr() {
             const qrBoxFunction = function(viewfinderWidth, viewfinderHeight) {
-                // Wide rectangle for standard 1D barcodes on physical paper sheets
-                const minEdgePercentage = 0.85;
-                const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-                const qrboxWidth = Math.floor(viewfinderWidth * 0.9);
-                const qrboxHeight = Math.floor(qrboxWidth * 0.45);
+                // Persegi 1:1 khusus QR Code
+                const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                const edge = Math.min(Math.max(Math.floor(minEdge * 0.72), 180), 280);
                 return {
-                    width: Math.min(qrboxWidth, 480),
-                    height: Math.min(qrboxHeight, 220)
+                    width: edge,
+                    height: edge
                 };
             };
 
@@ -95,6 +93,7 @@
             const config = {
                 fps: 15,
                 qrbox: qrBoxFunction,
+                aspectRatio: 1.0,
                 experimentalFeatures: {
                     useBarCodeDetectorIfSupported: true
                 }
@@ -212,7 +211,7 @@
                                     Pemindai Kamera Continuous
                                 </h3>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                                    Arahkan kamera ke barcode 1D GRS kertas tanpa klik berulang
+                                    Arahkan kamera ke QR Code GRS kertas tanpa klik berulang
                                 </p>
                             </div>
                         </div>
@@ -274,7 +273,7 @@
                 <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
                     <span class="flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full" :class="isCameraOpen ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'"></span>
-                        <span x-text="isCameraOpen ? 'Kamera Aktif: Mendukung Code 128 / QR' : 'Siap digunakan kapan saja'"></span>
+                        <span x-text="isCameraOpen ? 'Kamera Aktif: Format QR Code 1:1' : 'Siap digunakan kapan saja'"></span>
                     </span>
                     <span>Continuous Auto-detect</span>
                 </div>
@@ -518,4 +517,19 @@
         </x-filament::modal>
 
     </div>
+
+    @push('styles')
+    <style>
+        #qr-reader {
+            border: none !important;
+        }
+        #qr-reader video {
+            border-radius: 0.75rem;
+            object-fit: cover;
+        }
+        #qr-reader__scan_region {
+            border-radius: 0.75rem;
+        }
+    </style>
+    @endpush
 </x-filament-panels::page>
