@@ -91,21 +91,52 @@ class SapMb51ImportService
                 'uploaded_by' => $uploadedBy,
             ]);
 
-            foreach ($parsedItems as &$itemData) {
+            $template = [
+                'warehouse_delivery_batch_id' => $batch->id,
+                'posting_date' => null,
+                'material_code' => null,
+                'description' => null,
+                'po_number' => null,
+                'item_no' => null,
+                'ref_doc_103' => null,
+                'mat_doc_105' => null,
+                'doc_year' => null,
+                'quantity' => 0,
+                'uom' => 'EA',
+                'amount' => 0,
+                'storage_location' => null,
+                'plant' => null,
+                'vendor_code' => null,
+                'reference_do_no' => null,
+                'storage_text' => null,
+                'status' => 'pending',
+                'delivery_order_receipt_id' => null,
+                'delivery_order_receipt_detail_id' => null,
+                'warehouse_transmittal_id' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            $cleanChunk = [];
+            foreach ($parsedItems as $itemData) {
+                $match = $this->matchToDeliveryOrder($itemData);
+                $itemData['delivery_order_receipt_id'] = $match['delivery_order_receipt_id'] ?? null;
+                $itemData['delivery_order_receipt_detail_id'] = $match['delivery_order_receipt_detail_id'] ?? null;
                 $itemData['warehouse_delivery_batch_id'] = $batch->id;
+                $itemData['warehouse_transmittal_id'] = null;
                 $itemData['created_at'] = now();
                 $itemData['updated_at'] = now();
 
-                // Lakukan auto-matching ke Penerimaan DO jika data sudah ada
-                $match = $this->matchToDeliveryOrder($itemData);
-                if ($match) {
-                    $itemData['delivery_order_receipt_id'] = $match['delivery_order_receipt_id'] ?? null;
-                    $itemData['delivery_order_receipt_detail_id'] = $match['delivery_order_receipt_detail_id'] ?? null;
+                // Pastikan urutan dan jumlah kolom persis sama untuk setiap baris MySQL bulk insert
+                $cleanRow = [];
+                foreach ($template as $key => $defaultVal) {
+                    $cleanRow[$key] = array_key_exists($key, $itemData) ? $itemData[$key] : $defaultVal;
                 }
+                $cleanChunk[] = $cleanRow;
             }
 
-            // Simpan items per batch
-            foreach (array_chunk($parsedItems, 100) as $chunk) {
+            // Simpan items per batch 100 baris
+            foreach (array_chunk($cleanChunk, 100) as $chunk) {
                 WarehouseDeliveryBatchItem::insert($chunk);
             }
 
@@ -338,11 +369,15 @@ class SapMb51ImportService
             return null;
         }
 
-        // Parsing tanggal
-        try {
-            $postingDate = Carbon::parse(str_replace(['.', '/'], '-', $postingDateStr))->toDateString();
-        } catch (\Throwable $e) {
-            return null;
+        // Parsing tanggal (mendukung format tanggal standar dan nomor serial Excel)
+        if (is_numeric($postingDateStr) && (float) $postingDateStr > 20000 && (float) $postingDateStr < 70000) {
+            $postingDate = Carbon::createFromTimestampUTC(((int) $postingDateStr - 25569) * 86400)->toDateString();
+        } else {
+            try {
+                $postingDate = Carbon::parse(str_replace(['.', '/'], '-', $postingDateStr))->toDateString();
+            } catch (\Throwable $e) {
+                return null;
+            }
         }
 
         $itemNo = isset($headerMap['item_no']) ? trim($row[$headerMap['item_no']] ?? '10') : '10';
