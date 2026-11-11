@@ -34,4 +34,9 @@ class WarehouseTransmittal extends Model
     {
         return $this->hasMany(WarehouseTransmittalItem::class);
     }
+
+    public function batchItems()
+    {
+        return $this->hasMany(WarehouseDeliveryBatchItem::class, 'warehouse_transmittal_id');
+    }
 }

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
     <meta name="format-detection" content="telephone=no">
     <title>{{ $title ?? 'Welcome - Receiving Pupuk Kalimantan Timur' }}</title>
 
@@ -44,6 +44,25 @@
         @media (min-width: 1024px) {
             .nav-desktop { display: flex !important; }
             .nav-mobile-btn { display: none !important; }
+        }
+
+        /* Prevent iOS Safari / Mobile Browser auto-zoom when tapping inputs */
+        @media screen and (max-width: 768px) {
+            input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+            textarea,
+            select {
+                font-size: 16px !important;
+            }
+        }
+        @supports (-webkit-touch-callout: none) {
+            input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+            textarea,
+            select {
+                font-size: 16px !important;
+            }
+        }
+        input, textarea, select, button {
+            touch-action: manipulation;
         }
     </style>
     <script>

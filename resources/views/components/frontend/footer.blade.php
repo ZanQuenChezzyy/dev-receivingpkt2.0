@@ -46,9 +46,9 @@
             <div class="lg:col-span-3 space-y-3">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Bagian Receiving • Dept. PP&amp;P</h4>
                 <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
-                    Department of Planning, Receiving &amp; Warehousing<br>
+                    Department Perencanaan, Penerimaan &amp; Pergudangan<br>
                     PT Pupuk Kalimantan Timur<br>
-                    Bontang, Kalimantan Timur
+                    Kota Bontang, Kalimantan Timur, Indonesia
                 </p>
                 @auth
                     <div class="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5 pt-1">

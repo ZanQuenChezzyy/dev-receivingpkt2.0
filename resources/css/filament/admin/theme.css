@@ -830,3 +830,39 @@ footer.fi-footer {
     white-space: nowrap !important;
     min-width: max-content !important;
 }
+
+/* =========================================================
+   Prevent iOS Safari & Mobile Auto-Zoom on Form Inputs
+   Enforcing 16px font-size on mobile viewports (< 768px) and WebKit touch
+   devices prevents iOS Safari from automatically zooming into inputs.
+   ========================================================= */
+@media screen and (max-width: 768px) {
+    .fi-input,
+    .fi-select-input,
+    .fi-fo-date-time-picker-display-text-input,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+}
+
+@supports (-webkit-touch-callout: none) {
+    .fi-input,
+    .fi-select-input,
+    .fi-fo-date-time-picker-display-text-input,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+}
+
+html,
+body,
+input,
+textarea,
+select,
+button {
+    touch-action: manipulation;
+}

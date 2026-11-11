@@ -13,17 +13,19 @@ class TransmittalPrintController extends Controller
 {
     public function print(Request $request, WarehouseTransmittal $transmittal)
     {
-        $transmittal->load(['items.detail.deliveryOrderReceipt', 'destination.pic', 'createdBy']);
+        $transmittal->load(['items.detail.deliveryOrderReceipt', 'items.batchItem', 'destination.pic', 'createdBy']);
 
         // Collect unique Material Issue Records
         $mirRecords = collect();
         foreach ($transmittal->items as $item) {
-            $mir = MaterialIssue::whereHas('materialIssueDetails', function ($query) use ($item) {
-                $query->where('delivery_order_receipt_detail_id', $item->delivery_order_receipt_detail_id);
-            })->first();
+            if (! empty($item->delivery_order_receipt_detail_id)) {
+                $mir = MaterialIssue::whereHas('materialIssueDetails', function ($query) use ($item) {
+                    $query->where('delivery_order_receipt_detail_id', $item->delivery_order_receipt_detail_id);
+                })->first();
 
-            if ($mir) {
-                $mirRecords->push($mir);
+                if ($mir) {
+                    $mirRecords->push($mir);
+                }
             }
         }
         $mirRecords = $mirRecords->unique('id')->values();
@@ -61,7 +63,7 @@ class TransmittalPrintController extends Controller
         $ids = array_filter($ids);
 
         $transmittals = WarehouseTransmittal::whereIn('id', $ids)
-            ->with(['items.detail.deliveryOrderReceipt', 'destination.pic', 'createdBy'])
+            ->with(['items.detail.deliveryOrderReceipt', 'items.batchItem', 'destination.pic', 'createdBy'])
             ->get();
 
         if ($transmittals->isEmpty()) {
@@ -72,12 +74,14 @@ class TransmittalPrintController extends Controller
         $mirRecords = collect();
         foreach ($transmittals as $transmittal) {
             foreach ($transmittal->items as $item) {
-                $mir = MaterialIssue::whereHas('materialIssueDetails', function ($query) use ($item) {
-                    $query->where('delivery_order_receipt_detail_id', $item->delivery_order_receipt_detail_id);
-                })->first();
+                if (! empty($item->delivery_order_receipt_detail_id)) {
+                    $mir = MaterialIssue::whereHas('materialIssueDetails', function ($query) use ($item) {
+                        $query->where('delivery_order_receipt_detail_id', $item->delivery_order_receipt_detail_id);
+                    })->first();
 
-                if ($mir) {
-                    $mirRecords->push($mir);
+                    if ($mir) {
+                        $mirRecords->push($mir);
+                    }
                 }
             }
         }

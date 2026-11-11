@@ -178,21 +178,27 @@
             @foreach ($transmittal->items as $index => $item)
                 @php
                     $detail = $item->detail;
-                    $poNo = optional($detail->purchaseOrderIssued)->purchase_order_no ?? '-';
-                    $storeArea = optional($detail->locationReceiving)->name ?? '-';
+                    $batchItem = $item->batchItem;
+                    $poNo = optional($detail?->purchaseOrderIssued)->purchase_order_no ?? ($batchItem->po_number ?? '-');
+                    $storeArea = optional($detail?->locationReceiving)->name ?? '-';
                     if ($storeArea == '-' || empty($storeArea)) {
                         $storeArea = 'FLOOR-E';
                     }
+                    $itemNo = $detail->item_no ?? ($batchItem->item_no ?? '-');
+                    $matCode = $detail->material_code ?? ($batchItem->material_code ?? '-');
+                    $desc = $detail->description ?? ($batchItem->description ?? '-');
+                    $qty = $detail?->quantity !== null ? $detail->quantity : ($batchItem?->quantity ?? null);
+                    $uoi = $detail->uoi ?? ($batchItem->uoi ?? '-');
                 @endphp
                 <tr>
                     <td class="text-center font-bold" style="color: #475569;">{{ $index + 1 }}</td>
                     <td class="text-center">{{ $transmittal->tanggal->format('d/m/Y') }}</td>
                     <td class="text-center font-bold">{{ $poNo }}</td>
-                    <td class="text-center">{{ $detail->item_no ?? '-' }}</td>
-                    <td class="text-center">{{ $detail->material_code ?? '-' }}</td>
-                    <td class="text-left">{{ preg_replace('/\s+/', ' ', trim($detail->description ?? '-')) }}</td>
-                    <td class="text-center font-bold">{{ $detail->quantity !== null ? rtrim(rtrim(number_format((float) $detail->quantity, 3, ',', '.'), '0'), ',') : '-' }}</td>
-                    <td class="text-center">{{ $detail->uoi ?? '-' }}</td>
+                    <td class="text-center">{{ $itemNo }}</td>
+                    <td class="text-center">{{ $matCode }}</td>
+                    <td class="text-left">{{ preg_replace('/\s+/', ' ', trim($desc)) }}</td>
+                    <td class="text-center font-bold">{{ $qty !== null ? rtrim(rtrim(number_format((float) $qty, 3, ',', '.'), '0'), ',') : '-' }}</td>
+                    <td class="text-center">{{ $uoi }}</td>
                     @php
                         $destCol = strtoupper($transmittal->destination->name ?? '-');
                         if ($destCol === 'ISTEK') $destCol = 'INSPEKSI TEKNIK 2';

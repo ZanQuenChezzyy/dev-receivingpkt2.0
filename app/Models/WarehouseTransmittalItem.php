@@ -11,12 +11,18 @@ class WarehouseTransmittalItem extends Model
 
     protected $fillable = [
         'warehouse_transmittal_id',
+        'warehouse_delivery_batch_item_id',
         'delivery_order_receipt_detail_id',
     ];
 
     public function transmittal()
     {
         return $this->belongsTo(WarehouseTransmittal::class, 'warehouse_transmittal_id');
+    }
+
+    public function batchItem()
+    {
+        return $this->belongsTo(WarehouseDeliveryBatchItem::class, 'warehouse_delivery_batch_item_id');
     }
 
     public function detail()

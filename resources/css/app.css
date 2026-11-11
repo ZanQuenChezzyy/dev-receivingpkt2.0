@@ -154,6 +154,37 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* =========================================================
+   Prevent iOS Safari & Mobile Auto-Zoom on Form Inputs
+   iOS Safari automatically zooms in when an input has font-size < 16px.
+   Enforcing 16px on mobile viewports and WebKit touch devices disables auto-zoom.
+   ========================================================= */
+@media screen and (max-width: 768px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+}
+
+@supports (-webkit-touch-callout: none) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+}
+
+/* Eliminate 300ms double-tap zoom delay on mobile touch targets */
+html,
+body,
+input,
+textarea,
+select,
+button {
+    touch-action: manipulation;
+}
+
 /* Apple Pill Status Badge */
 .apple-badge {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md tracking-tight;

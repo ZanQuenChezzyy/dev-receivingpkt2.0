@@ -40,7 +40,7 @@ class AntreanPengirimanGudang extends Page implements HasTable
 
     protected static ?string $cluster = PengirimanGudangCluster::class;
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 4;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 
@@ -48,12 +48,12 @@ class AntreanPengirimanGudang extends Page implements HasTable
 
     public static function getNavigationLabel(): string
     {
-        return 'Daftar Pengiriman Gudang';
+        return 'Antrean Pengiriman (Lama)';
     }
 
     public function getTitle(): string|Htmlable
     {
-        return 'Daftar Pengiriman Gudang';
+        return 'Antrean Pengiriman Gudang (Lama)';
     }
 
     protected string $view = 'filament.pages.antrean-pengiriman-gudang';

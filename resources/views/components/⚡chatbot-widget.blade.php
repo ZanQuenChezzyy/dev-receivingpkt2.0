@@ -816,7 +816,7 @@ new class extends Component {
             >
 
                 <textarea wire:model="message" x-ref="input" placeholder="{{ $isAiActive ? 'Tanya ALEX seputar nomor PO, DO, atau material...' : 'ALEX Asisten AI sedang Offline...' }}"
-                    class="w-full pt-1.5 pb-1 pr-2 bg-transparent text-[14px] text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed font-normal resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 max-h-[120px] leading-relaxed"
+                    class="w-full pt-1.5 pb-1 pr-2 bg-transparent text-base md:text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed font-normal resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 max-h-[120px] leading-relaxed"
                     required autocomplete="off" @disabled($isTyping || !$isAiActive)
                     @input="resize()"
                     @keydown.enter.prevent="if(!$event.shiftKey && $wire.message.trim() !== '') { $wire.sendMessage(); $refs.input.style.height = 'auto'; }"

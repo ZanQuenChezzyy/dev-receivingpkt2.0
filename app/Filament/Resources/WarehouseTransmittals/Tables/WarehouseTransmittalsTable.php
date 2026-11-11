@@ -56,6 +56,14 @@ class WarehouseTransmittalsTable
                         ->color('info')
                         ->searchable()
                         ->sortable(),
+
+                    TextColumn::make('items_count')
+                        ->counts('items')
+                        ->label('Total Item')
+                        ->badge()
+                        ->color('gray')
+                        ->alignCenter()
+                        ->sortable(),
                 ]),
 
                 // 👤 GRUP 3: LOG SISTEM
