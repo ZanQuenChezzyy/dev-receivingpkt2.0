@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\DeliveryOrderReceipts\RelationManagers;
 
 use App\Models\Transmittal;
+use App\Services\UserBadgeRenderer;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -13,6 +14,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 
@@ -60,6 +62,9 @@ class QcHistoriesRelationManager extends RelationManager
                     ->wrap(),
                 TextColumn::make('createdBy.name')
                     ->label('Oleh')
+                    ->html()
+                    ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->createdBy))
+                    ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'createdBy', $search))
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')

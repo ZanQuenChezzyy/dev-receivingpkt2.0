@@ -7,6 +7,7 @@ use App\Models\MaterialIssue;
 use App\Models\PurchaseOrderIssued;
 use App\Models\WarehouseDeliveryBatchItem;
 use App\Models\WarehouseTransmittalItem;
+use App\Services\UserBadgeRenderer;
 use Carbon\Carbon;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -411,7 +412,7 @@ class DeliveryOrderReceiptInfolist
                                     foreach ($manualMirs as $manual) {
                                         $dokumenLink = '';
                                         if ($manual->image_path) {
-                                            $url = Storage::disk('public')->url($manual->image_path);
+                                            $url = Storage::url($manual->image_path);
                                             $dokumenLink = '<a href="'.$url.'" target="_blank" class="text-primary-600 hover:underline">Lihat Bukti Fisik</a>';
                                         } else {
                                             $dokumenLink = '<span class="text-gray-400">Tanpa Bukti</span>';
@@ -834,31 +835,16 @@ class DeliveryOrderReceiptInfolist
 
                                     foreach ($warehouseTransmittals as $wtData) {
                                         $transmittal = $wtData['transmittal'];
-                                        $destName = $transmittal->destination?->name;
-                                        $creator = $transmittal->createdBy?->name;
-                                        $matDocsUnique = $wtData['mat_docs']->unique()->filter()->values();
+                                        $destName = $transmittal->destination?->name ?? 'Gudang Tujuan';
+                                        $creator = $transmittal->createdBy?->name ?? 'Sistem';
 
-                                        $title = 'Dikirim ke Gudang'.($destName ? ': '.$destName : '');
-
-                                        $descParts = [];
-                                        $descParts[] = 'No. Transmittal: '.$transmittal->transmittal_no;
-
-                                        if ($wtData['items_count'] > 0) {
-                                            $descParts[] = $wtData['items_count'].' item material';
-                                        }
-
-                                        if ($matDocsUnique->isNotEmpty()) {
-                                            $descParts[] = 'GRS: '.$matDocsUnique->join(', ');
-                                        }
-
-                                        if ($creator) {
-                                            $descParts[] = 'Oleh: '.$creator;
-                                        }
+                                        $title = 'Dikirim Ke Gudang';
+                                        $desc = $destName.' - Oleh: '.$creator;
 
                                         $events[] = [
                                             'date' => $wtData['date'],
                                             'title' => $title,
-                                            'desc' => implode(' &bull; ', $descParts),
+                                            'desc' => $desc,
                                             'color' => 'bg-teal-500',
                                         ];
                                     }
@@ -1025,13 +1011,13 @@ class DeliveryOrderReceiptInfolist
                         ->schema([
                             TextEntry::make('receivedBy.name')
                                 ->label('Diterima Oleh')
-                                ->icon('heroicon-m-user')
-                                ->weight(FontWeight::Medium),
+                                ->html()
+                                ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->receivedBy, 'Belum Diterima')),
 
                             TextEntry::make('createdBy.name')
                                 ->label('Dibuat Oleh')
-                                ->icon('heroicon-m-computer-desktop')
-                                ->placeholder('Tidak diketahui'),
+                                ->html()
+                                ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->createdBy, 'Tidak diketahui')),
 
                             TextEntry::make('created_at')
                                 ->label('Dibuat Pada')

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DeliveryOrderReceipts\RelationManagers;
 
+use App\Services\UserBadgeRenderer;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -12,6 +13,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class DelayLogsRelationManager extends RelationManager
 {
@@ -100,8 +102,9 @@ class DelayLogsRelationManager extends RelationManager
                     ->searchable(),
                 TextColumn::make('createdBy.name')
                     ->label('Oleh')
-                    ->searchable()
-                    ->icon('heroicon-o-user-circle')
+                    ->html()
+                    ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->createdBy))
+                    ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'createdBy', $search))
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')

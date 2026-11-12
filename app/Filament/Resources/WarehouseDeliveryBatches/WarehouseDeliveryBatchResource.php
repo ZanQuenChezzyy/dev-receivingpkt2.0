@@ -24,7 +24,7 @@ class WarehouseDeliveryBatchResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Master MB51 (Batch)';
+        return 'Master MB51';
     }
 
     public static function getModelLabel(): string

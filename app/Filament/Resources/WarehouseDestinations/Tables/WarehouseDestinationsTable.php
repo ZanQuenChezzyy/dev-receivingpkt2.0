@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\WarehouseDestinations\Tables;
 
+use App\Services\UserBadgeRenderer;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class WarehouseDestinationsTable
 {
@@ -24,11 +26,11 @@ class WarehouseDestinationsTable
                         ->icon('heroicon-m-home-modern')
                         ->color('primary'),
                     TextColumn::make('pic.name')
-                        ->searchable()
-                        ->sortable()
                         ->label('PIC Gudang')
-                        ->icon('heroicon-m-user')
-                        ->color('gray'),
+                        ->html()
+                        ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->pic, 'Belum Ada PIC'))
+                        ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'pic', $search))
+                        ->sortable(),
                 ]),
                 ColumnGroup::make('Sistem', [
                     TextColumn::make('created_at')

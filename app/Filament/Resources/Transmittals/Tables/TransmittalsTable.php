@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Transmittals\Tables;
 
 use App\Filament\Resources\Transmittals\TransmittalResource;
 use App\Models\Transmittal;
+use App\Services\UserBadgeRenderer;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -87,10 +88,10 @@ class TransmittalsTable
                 ColumnGroup::make('Sistem', [
                     TextColumn::make('createdBy.name')
                         ->label('Dibuat Oleh')
-                        ->searchable()
-                        ->sortable()
-                        ->icon('heroicon-m-user-circle')
-                        ->color('gray'),
+                        ->html()
+                        ->formatStateUsing(fn ($state, ?Transmittal $record) => UserBadgeRenderer::render($record?->createdBy))
+                        ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'createdBy', $search))
+                        ->sortable(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')

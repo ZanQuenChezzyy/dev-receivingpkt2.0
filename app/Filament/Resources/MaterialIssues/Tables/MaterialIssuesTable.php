@@ -5,6 +5,7 @@ namespace App\Filament\Resources\MaterialIssues\Tables;
 use App\Filament\Exports\ExportMaterialIssueBulkAction;
 use App\Filament\Exports\MaterialIssueExporter;
 use App\Models\MaterialIssue;
+use App\Services\UserBadgeRenderer;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -20,6 +21,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Storage;
 
@@ -107,8 +109,9 @@ class MaterialIssuesTable
                 ColumnGroup::make('Log Sistem', [
                     TextColumn::make('createdBy.name')
                         ->label('Dibuat Oleh')
-                        ->icon(Heroicon::User)
-                        ->color('gray')
+                        ->html()
+                        ->formatStateUsing(fn ($state, ?MaterialIssue $record) => UserBadgeRenderer::render($record?->createdBy))
+                        ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'createdBy', $search))
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('created_at')
@@ -134,7 +137,7 @@ class MaterialIssuesTable
                     ->button()
                     ->outlined()
                     ->color('warning')
-                    ->url(fn (MaterialIssue $record): ?string => ($record->jenis_mir === 'manual' && ! empty($record->image_path)) ? Storage::disk('public')->url($record->image_path) : null)
+                    ->url(fn (MaterialIssue $record): ?string => ($record->jenis_mir === 'manual' && ! empty($record->image_path)) ? Storage::url($record->image_path) : null)
                     ->openUrlInNewTab()
                     ->visible(fn ($record) => $record->jenis_mir === 'manual' && ! empty($record->image_path)),
 

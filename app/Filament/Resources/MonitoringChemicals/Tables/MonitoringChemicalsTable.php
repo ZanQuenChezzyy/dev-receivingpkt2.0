@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\MonitoringChemicals\Tables;
 
+use App\Services\UserBadgeRenderer;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -14,6 +15,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 class MonitoringChemicalsTable
@@ -104,17 +106,15 @@ class MonitoringChemicalsTable
                 ColumnGroup::make('Log Sistem & Personil', [
                     TextColumn::make('receivedBy.name')
                         ->label('Penerima')
-                        ->icon(Heroicon::User)
-                        ->iconColor('warning')
-                        ->color('warning')
-                        ->badge()
-                        ->searchable(),
+                        ->html()
+                        ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->receivedBy))
+                        ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'receivedBy', $search)),
 
                     TextColumn::make('createdBy.name')
                         ->label('Dibuat Oleh')
-                        ->icon('heroicon-m-computer-desktop')
-                        ->color('gray')
-                        ->searchable()
+                        ->html()
+                        ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->createdBy))
+                        ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'createdBy', $search))
                         ->toggleable(isToggledHiddenByDefault: true),
 
                     TextColumn::make('created_at')

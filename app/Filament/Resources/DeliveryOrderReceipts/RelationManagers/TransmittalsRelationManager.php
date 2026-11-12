@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DeliveryOrderReceipts\RelationManagers;
 
+use App\Services\UserBadgeRenderer;
 use Filament\Actions\AttachAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DetachAction;
@@ -11,6 +12,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class TransmittalsRelationManager extends RelationManager
 {
@@ -62,6 +64,9 @@ class TransmittalsRelationManager extends RelationManager
 
                 TextColumn::make('createdBy.name')
                     ->label('Dibuat Oleh')
+                    ->html()
+                    ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->createdBy))
+                    ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'createdBy', $search))
                     ->sortable(),
             ])
             ->defaultSort('transmittals.created_at', 'desc')

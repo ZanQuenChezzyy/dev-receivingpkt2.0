@@ -5,6 +5,7 @@ namespace App\Filament\Resources\InvoicingReceipts\Tables;
 use App\Models\InvoicingReceipt;
 use App\Models\User;
 use App\Services\InvoicingAssignmentService;
+use App\Services\UserBadgeRenderer;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -127,12 +128,11 @@ class InvoicingReceiptsTable
 
                 ColumnGroup::make('PIC Penugasan', [
                     TextColumn::make('pic.name')
-                        ->label('PIC')
-                        ->placeholder('Belum Ada (Tentukan PIC)')
-                        ->badge()
-                        ->color(fn ($record) => $record->pic_id ? 'primary' : 'warning')
-                        ->icon(fn ($record) => $record->pic_id ? 'heroicon-m-user' : 'heroicon-m-user-plus')
-                        ->tooltip(fn ($record) => $record->pic_id ? "PIC: {$record->pic?->name}" : 'Klik untuk menentukan PIC dokumen ini')
+                        ->label('PIC Staff')
+                        ->html()
+                        ->formatStateUsing(fn ($state, ?InvoicingReceipt $record) => UserBadgeRenderer::render($record?->pic, 'Tentukan PIC'))
+                        ->tooltip(fn ($record) => $record->pic_id ? "PIC: {$record->pic?->name} (Klik untuk ubah)" : 'Klik untuk menentukan PIC dokumen ini')
+                        ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'pic', $search))
                         ->action(
                             Action::make('setPicFromColumn')
                                 ->modalHeading(fn (InvoicingReceipt $record) => "Tentukan PIC - PO: {$record->no_po}")

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\WarehouseDeliveryBatches\Tables;
 
 use App\Models\WarehouseDeliveryBatch;
+use App\Services\UserBadgeRenderer;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
@@ -10,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 class WarehouseDeliveryBatchesTable
@@ -104,9 +106,10 @@ class WarehouseDeliveryBatchesTable
 
                 TextColumn::make('uploader.name')
                     ->label('Diupload Oleh')
-                    ->icon('heroicon-m-user')
+                    ->html()
+                    ->formatStateUsing(fn ($state, ?WarehouseDeliveryBatch $record) => UserBadgeRenderer::render($record?->uploader))
                     ->description(fn (WarehouseDeliveryBatch $record) => $record->created_at ? Carbon::parse($record->created_at)->locale('id')->translatedFormat('d M Y, H:i') : null)
-                    ->color('gray')
+                    ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'uploader', $search))
                     ->sortable(),
 
                 TextColumn::make('total_value')

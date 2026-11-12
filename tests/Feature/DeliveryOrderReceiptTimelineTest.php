@@ -284,11 +284,8 @@ test('timeline shows Dikirim ke Gudang when DeliveryOrderReceipt items are linke
     $html = $timelineEntry->getState();
 
     expect($html)
-        ->toContain('Dikirim ke Gudang: Gudang Sparepart 3P01')
-        ->toContain('TR-WH/2026/11/0001')
-        ->toContain('1 item material')
-        ->toContain('GRS: 5007477274')
-        ->toContain('Budi Gudang')
+        ->toContain('Dikirim Ke Gudang')
+        ->toContain('Gudang Sparepart 3P01 - Oleh: Budi Gudang')
         ->toContain('bg-teal-500');
 
     // Test dikirim_ke_gudang grid card
@@ -401,10 +398,9 @@ test('timeline shows multiple warehouse transmittals when items are sent to diff
 
     $html = $timelineEntry->getState();
     expect($html)
-        ->toContain('Dikirim ke Gudang: Gudang 1 - Sparepart')
-        ->toContain('TR-WH/2026/11/0010')
-        ->toContain('Dikirim ke Gudang: Gudang 2 - Kimia')
-        ->toContain('TR-WH/2026/11/0011');
+        ->toContain('Dikirim Ke Gudang')
+        ->toContain('Gudang 1 - Sparepart - Oleh: Sistem')
+        ->toContain('Gudang 2 - Kimia - Oleh: Sistem');
 });
 
 test('DeliveryOrderReceipt model has warehouseDeliveryBatchItems relationship', function () {

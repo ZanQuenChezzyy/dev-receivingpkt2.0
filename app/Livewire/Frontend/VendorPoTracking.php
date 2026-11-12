@@ -704,10 +704,10 @@ class VendorPoTracking extends Component
                             'date' => $tDate->format('d M Y'),
                             'time' => $tDate->format('H:i') !== '00:00' ? $tDate->format('H:i') : '-',
                             'timestamp' => $tDate->timestamp,
-                            'title' => "Dikirim ke {$destName}",
+                            'title' => 'Dikirim Ke Gudang',
                             'badge' => 'Pengiriman Gudang',
                             'badge_color' => 'teal',
-                            'desc' => "Material ({$count} item) telah dikirim ke {$destName} dengan Transmittal No: {$transmittal->transmittal_no} oleh {$petugas}.",
+                            'desc' => "{$destName} - Oleh: {$petugas}",
                             'icon' => 'truck',
                         ];
                     }

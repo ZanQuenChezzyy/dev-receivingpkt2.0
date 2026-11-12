@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WarehouseTransmittals\Tables;
 
+use App\Services\UserBadgeRenderer;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -70,9 +71,9 @@ class WarehouseTransmittalsTable
                 ColumnGroup::make('Log Sistem', [
                     TextColumn::make('createdBy.name')
                         ->label('Dibuat Oleh')
-                        ->icon(Heroicon::User)
-                        ->iconColor('gray')
-                        ->searchable()
+                        ->html()
+                        ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->createdBy))
+                        ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'createdBy', $search))
                         ->sortable(),
 
                     TextColumn::make('created_at')
