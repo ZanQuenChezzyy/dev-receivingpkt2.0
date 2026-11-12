@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'delivery_order_receipt_id',
@@ -67,12 +68,12 @@ class DeliveryOrderReceiptDetail extends Model
         return $this->belongsTo(WarehouseDestination::class, 'warehouse_destination_id');
     }
 
-    public function materialIssueDetails()
+    public function materialIssueDetails(): HasMany
     {
         return $this->hasMany(MaterialIssueDetail::class);
     }
 
-    public function warehouseTransmittalItems()
+    public function warehouseTransmittalItems(): HasMany
     {
         return $this->hasMany(WarehouseTransmittalItem::class);
     }

@@ -124,6 +124,11 @@ class DeliveryOrderReceipt extends Model
         return $this->hasMany(InvoicingReceipt::class);
     }
 
+    public function warehouseDeliveryBatchItems(): HasMany
+    {
+        return $this->hasMany(WarehouseDeliveryBatchItem::class);
+    }
+
     protected static function booted()
     {
         static::updating(function ($record) {

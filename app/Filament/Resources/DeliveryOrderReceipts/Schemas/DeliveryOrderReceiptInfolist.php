@@ -5,6 +5,8 @@ namespace App\Filament\Resources\DeliveryOrderReceipts\Schemas;
 use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\MaterialIssue;
 use App\Models\PurchaseOrderIssued;
+use App\Models\WarehouseDeliveryBatchItem;
+use App\Models\WarehouseTransmittalItem;
 use Carbon\Carbon;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -77,7 +79,7 @@ class DeliveryOrderReceiptInfolist
                                             ->icon('heroicon-m-tag')
                                             ->badge()
                                             ->getStateUsing(function ($record) {
-                                                if ($record->receipt_mode === 'Termin') {
+                                                if ($record?->receipt_mode === 'Termin') {
                                                     if ($record->termins->isEmpty()) {
                                                         return ['Belum Ada Termin'];
                                                     }
@@ -89,11 +91,11 @@ class DeliveryOrderReceiptInfolist
                                                     })->toArray();
                                                 }
 
-                                                return empty($record->stage) ? ['-'] : [$record->stage];
+                                                return empty($record?->stage) ? ['-'] : [$record->stage];
                                             })
                                             ->listWithLineBreaks()
                                             ->color('info')
-                                            ->visible(fn ($record) => $record->receipt_mode === 'Termin' || ! empty($record->stage)),
+                                            ->visible(fn ($record) => $record?->receipt_mode === 'Termin' || ! empty($record?->stage)),
                                     ])->columnSpanFull(),
 
                                 Grid::make(2)
@@ -101,13 +103,13 @@ class DeliveryOrderReceiptInfolist
                                         TextEntry::make('dof_number')
                                             ->label('No. DOF')
                                             ->icon('heroicon-m-document')
-                                            ->visible(fn ($record) => ! empty($record->dof_number)),
+                                            ->visible(fn ($record) => ! empty($record?->dof_number)),
 
                                         TextEntry::make('dof_date')
                                             ->label('Tanggal DOF')
                                             ->icon('heroicon-m-calendar')
                                             ->date('d M Y')
-                                            ->visible(fn ($record) => ! empty($record->dof_date)),
+                                            ->visible(fn ($record) => ! empty($record?->dof_date)),
                                     ])->columnSpanFull(),
                             ]),
                         ]),
@@ -119,35 +121,35 @@ class DeliveryOrderReceiptInfolist
                                 TextEntry::make('is_physically_received')
                                     ->label('Status Kedatangan')
                                     ->badge()
-                                    ->formatStateUsing(fn ($state, $record) => ($record->receipt_mode === 'Standard' || $state) ? 'Fisik Tiba' : 'Menunggu / Transit')
-                                    ->color(fn ($state, $record) => ($record->receipt_mode === 'Standard' || $state) ? 'success' : 'warning')
-                                    ->icon(fn ($state, $record) => ($record->receipt_mode === 'Standard' || $state) ? 'heroicon-m-check-badge' : 'heroicon-m-truck'),
+                                    ->formatStateUsing(fn ($state, $record) => ($record?->receipt_mode === 'Standard' || $state) ? 'Fisik Tiba' : 'Menunggu / Transit')
+                                    ->color(fn ($state, $record) => ($record?->receipt_mode === 'Standard' || $state) ? 'success' : 'warning')
+                                    ->icon(fn ($state, $record) => ($record?->receipt_mode === 'Standard' || $state) ? 'heroicon-m-check-badge' : 'heroicon-m-truck'),
 
                                 TextEntry::make('arrival_sequence')
                                     ->label('Kedatangan Ke-')
-                                    ->visible(fn ($record) => ! empty($record->arrival_sequence)),
+                                    ->visible(fn ($record) => ! empty($record?->arrival_sequence)),
 
                                 TextEntry::make('physical_received_date')
                                     ->label('Tgl Fisik Tiba')
                                     ->date('d M Y')
-                                    ->visible(fn ($record) => ! empty($record->physical_received_date)),
+                                    ->visible(fn ($record) => ! empty($record?->physical_received_date)),
 
                                 TextEntry::make('current_location')
                                     ->label('Posisi Saat Ini')
-                                    ->visible(fn ($record) => ! empty($record->current_location)),
+                                    ->visible(fn ($record) => ! empty($record?->current_location)),
 
                                 TextEntry::make('incoterms')
                                     ->label('Incoterms')
-                                    ->visible(fn ($record) => ! empty($record->incoterms)),
+                                    ->visible(fn ($record) => ! empty($record?->incoterms)),
 
                                 TextEntry::make('eta_date')
                                     ->label('Estimasi Tiba (ETA)')
                                     ->date('d M Y')
-                                    ->visible(fn ($record) => ! empty($record->eta_date)),
+                                    ->visible(fn ($record) => ! empty($record?->eta_date)),
                             ]),
                         ])
                         ->collapsible()
-                        ->collapsed(fn ($record) => $record->receipt_mode === 'Standard' && empty($record->arrival_sequence)),
+                        ->collapsed(fn ($record) => $record?->receipt_mode === 'Standard' && empty($record?->arrival_sequence)),
 
                     Section::make('Riwayat Termin')
                         ->icon('heroicon-o-bars-3-bottom-left')
@@ -182,7 +184,7 @@ class DeliveryOrderReceiptInfolist
                                     ]),
                                 ]),
                         ])
-                        ->visible(fn ($record) => $record->receipt_mode === 'Termin'),
+                        ->visible(fn ($record) => $record?->receipt_mode === 'Termin'),
 
                     Section::make('Dokumen GRS & RDTV Terkait')
                         ->icon(Heroicon::OutlinedDocumentCurrencyDollar)
@@ -569,7 +571,7 @@ class DeliveryOrderReceiptInfolist
                                         // Placeholder digunakan ketika formatStateUsing mengembalikan string kosong
                                         // (namun logika di atas sudah menangani empty state, ini hanya lapisan keamanan ganda)
                                         ->placeholder('Tidak Ada Tahapan')
-                                        ->hidden(fn ($record) => $record->receipt_mode === 'Termin'),
+                                        ->hidden(fn ($record) => $record?->receipt_mode === 'Termin'),
 
                                     TextEntry::make('post_103')
                                         ->label('Status Post 103 (SAP)')
@@ -578,13 +580,13 @@ class DeliveryOrderReceiptInfolist
                                         ->icon(fn ($state) => $state ? 'heroicon-m-check-circle' : 'heroicon-m-clock')
                                         ->color(fn ($state) => $state ? 'success' : 'gray')
                                         ->weight(fn ($state) => $state ? FontWeight::Bold : FontWeight::Normal)
-                                        ->hidden(fn ($record) => $record->receipt_mode === 'Termin'),
+                                        ->hidden(fn ($record) => $record?->receipt_mode === 'Termin'),
 
                                     TextEntry::make('post_103_date')
                                         ->label('Waktu Post 103')
-                                        ->getStateUsing(fn ($record) => $record->post_103)
+                                        ->getStateUsing(fn ($record) => $record?->post_103)
                                         ->dateTime('l, d F Y')
-                                        ->visible(fn ($record) => $record->post_103 !== null && $record->receipt_mode !== 'Termin')
+                                        ->visible(fn ($record) => $record?->post_103 !== null && $record?->receipt_mode !== 'Termin')
                                         ->color('gray'),
 
                                     TextEntry::make('qr_103_code')
@@ -593,7 +595,7 @@ class DeliveryOrderReceiptInfolist
                                         ->copyable()
                                         ->weight(FontWeight::Bold)
                                         ->color('info')
-                                        ->visible(fn ($record) => ! empty($record->qr_103_code) && $record->receipt_mode !== 'Termin'),
+                                        ->visible(fn ($record) => ! empty($record?->qr_103_code) && $record?->receipt_mode !== 'Termin'),
                                 ]),
                         ]),
 
@@ -758,6 +760,109 @@ class DeliveryOrderReceiptInfolist
                                         }
                                     }
 
+                                    // Event Pengiriman ke Gudang (Warehouse Transmittal)
+                                    $warehouseTransmittals = collect();
+                                    $detailIds = $record->deliveryOrderReceiptDetails->pluck('id')->filter()->all();
+
+                                    $wtiQuery = WarehouseTransmittalItem::query()
+                                        ->with(['transmittal.destination', 'transmittal.createdBy', 'batchItem']);
+
+                                    if (! empty($detailIds)) {
+                                        $wtiQuery->where(function ($q) use ($detailIds, $record) {
+                                            $q->whereIn('delivery_order_receipt_detail_id', $detailIds)
+                                                ->orWhereHas('batchItem', function ($bQ) use ($record, $detailIds) {
+                                                    $bQ->where('delivery_order_receipt_id', $record->id)
+                                                        ->orWhereIn('delivery_order_receipt_detail_id', $detailIds);
+                                                });
+                                        });
+                                    } else {
+                                        $wtiQuery->whereHas('batchItem', function ($bQ) use ($record) {
+                                            $bQ->where('delivery_order_receipt_id', $record->id);
+                                        });
+                                    }
+
+                                    $transmittalItems = $wtiQuery->get();
+
+                                    foreach ($transmittalItems as $wti) {
+                                        $transmittal = $wti->transmittal;
+                                        if (! $transmittal) {
+                                            continue;
+                                        }
+
+                                        $tId = $transmittal->id;
+                                        if (! $warehouseTransmittals->has($tId)) {
+                                            $eventDate = $wti->created_at ?? ($transmittal->tanggal ? Carbon::parse($transmittal->tanggal) : $transmittal->created_at);
+                                            $warehouseTransmittals->put($tId, [
+                                                'transmittal' => $transmittal,
+                                                'date' => Carbon::parse($eventDate),
+                                                'items_count' => 0,
+                                                'mat_docs' => collect(),
+                                            ]);
+                                        }
+
+                                        $entry = $warehouseTransmittals->get($tId);
+                                        $entry['items_count']++;
+                                        if ($wti->batchItem?->mat_doc_105) {
+                                            $entry['mat_docs']->push($wti->batchItem->mat_doc_105);
+                                        }
+                                        $warehouseTransmittals->put($tId, $entry);
+                                    }
+
+                                    // Fallback: periksa WarehouseDeliveryBatchItem langsung
+                                    $directBatchItems = WarehouseDeliveryBatchItem::where('delivery_order_receipt_id', $record->id)
+                                        ->whereNotNull('warehouse_transmittal_id')
+                                        ->with(['warehouseTransmittal.destination', 'warehouseTransmittal.createdBy'])
+                                        ->get();
+
+                                    foreach ($directBatchItems as $bi) {
+                                        $transmittal = $bi->warehouseTransmittal;
+                                        if (! $transmittal) {
+                                            continue;
+                                        }
+
+                                        $tId = $transmittal->id;
+                                        if (! $warehouseTransmittals->has($tId)) {
+                                            $eventDate = $bi->updated_at ?? ($transmittal->tanggal ? Carbon::parse($transmittal->tanggal) : $transmittal->created_at);
+                                            $warehouseTransmittals->put($tId, [
+                                                'transmittal' => $transmittal,
+                                                'date' => Carbon::parse($eventDate),
+                                                'items_count' => 1,
+                                                'mat_docs' => collect($bi->mat_doc_105 ? [$bi->mat_doc_105] : []),
+                                            ]);
+                                        }
+                                    }
+
+                                    foreach ($warehouseTransmittals as $wtData) {
+                                        $transmittal = $wtData['transmittal'];
+                                        $destName = $transmittal->destination?->name;
+                                        $creator = $transmittal->createdBy?->name;
+                                        $matDocsUnique = $wtData['mat_docs']->unique()->filter()->values();
+
+                                        $title = 'Dikirim ke Gudang'.($destName ? ': '.$destName : '');
+
+                                        $descParts = [];
+                                        $descParts[] = 'No. Transmittal: '.$transmittal->transmittal_no;
+
+                                        if ($wtData['items_count'] > 0) {
+                                            $descParts[] = $wtData['items_count'].' item material';
+                                        }
+
+                                        if ($matDocsUnique->isNotEmpty()) {
+                                            $descParts[] = 'GRS: '.$matDocsUnique->join(', ');
+                                        }
+
+                                        if ($creator) {
+                                            $descParts[] = 'Oleh: '.$creator;
+                                        }
+
+                                        $events[] = [
+                                            'date' => $wtData['date'],
+                                            'title' => $title,
+                                            'desc' => implode(' &bull; ', $descParts),
+                                            'color' => 'bg-teal-500',
+                                        ];
+                                    }
+
                                     usort($events, fn ($a, $b) => $a['date'] <=> $b['date']);
 
                                     if (empty($events)) {
@@ -789,7 +894,7 @@ class DeliveryOrderReceiptInfolist
                                     return $html;
                                 }),
 
-                            Grid::make(3)
+                            Grid::make(['default' => 2, 'sm' => 2, 'lg' => 4])
                                 ->schema([
                                     TextEntry::make('dikirim_ke_istek')
                                         ->label('Dikirim ke ISTEK')
@@ -814,6 +919,41 @@ class DeliveryOrderReceiptInfolist
                                         ->placeholder('Belum Diproses')
                                         ->icon('heroicon-m-document-check')
                                         ->color(fn ($state) => $state ? 'primary' : 'gray'),
+
+                                    TextEntry::make('dikirim_ke_gudang')
+                                        ->label('Dikirim ke Gudang')
+                                        ->getStateUsing(function ($record) {
+                                            $detailIds = $record->deliveryOrderReceiptDetails->pluck('id')->filter()->all();
+                                            $wti = WarehouseTransmittalItem::whereIn('delivery_order_receipt_detail_id', $detailIds)
+                                                ->with(['transmittal.destination'])
+                                                ->latest('id')
+                                                ->first();
+
+                                            if ($wti && $wti->transmittal) {
+                                                $dest = $wti->transmittal->destination?->name;
+                                                $tgl = $wti->created_at ? Carbon::parse($wti->created_at)->format('d F Y') : ($wti->transmittal->tanggal ? Carbon::parse($wti->transmittal->tanggal)->format('d F Y') : null);
+
+                                                return $dest ? "{$tgl} ({$dest})" : $tgl;
+                                            }
+
+                                            $bi = WarehouseDeliveryBatchItem::where('delivery_order_receipt_id', $record->id)
+                                                ->whereNotNull('warehouse_transmittal_id')
+                                                ->with(['warehouseTransmittal.destination'])
+                                                ->latest('id')
+                                                ->first();
+
+                                            if ($bi && $bi->warehouseTransmittal) {
+                                                $dest = $bi->warehouseTransmittal->destination?->name;
+                                                $tgl = $bi->updated_at ? Carbon::parse($bi->updated_at)->format('d F Y') : ($bi->warehouseTransmittal->tanggal ? Carbon::parse($bi->warehouseTransmittal->tanggal)->format('d F Y') : null);
+
+                                                return $dest ? "{$tgl} ({$dest})" : $tgl;
+                                            }
+
+                                            return null;
+                                        })
+                                        ->placeholder('Belum Dikirim')
+                                        ->icon('heroicon-m-truck')
+                                        ->color(fn ($state) => $state ? 'success' : 'gray'),
 
                                     TextEntry::make('vendor_wait_time')
                                         ->label('Total Waktu Tunggu Vendor')

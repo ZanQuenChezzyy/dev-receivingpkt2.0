@@ -8,6 +8,7 @@ use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
 use App\Models\Vendor;
+use App\Models\WarehouseTransmittalItem;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -679,6 +680,38 @@ class VendorPoTracking extends Component
                         : "Penundaan: {$log->delay_reason}".($log->delay_notes ? " - {$log->delay_notes}" : ''),
                     'icon' => 'clock',
                 ];
+            }
+
+            // Pengiriman ke Gudang (Warehouse Transmittal)
+            $detailIds = $do->deliveryOrderReceiptDetails->pluck('id')->filter()->all();
+            if (! empty($detailIds)) {
+                $whTransmittalItems = WarehouseTransmittalItem::whereIn('delivery_order_receipt_detail_id', $detailIds)
+                    ->with(['transmittal.destination', 'transmittal.createdBy'])
+                    ->get()
+                    ->groupBy('warehouse_transmittal_id');
+
+                foreach ($whTransmittalItems as $tId => $items) {
+                    $transmittal = $items->first()?->transmittal;
+                    if ($transmittal) {
+                        $tDate = Carbon::parse($items->first()->created_at ?? ($transmittal->tanggal ?? $transmittal->created_at));
+                        $destName = $transmittal->destination?->name ?? 'Gudang Tujuan';
+                        $petugas = $transmittal->createdBy?->name ?? 'Petugas Gudang';
+                        $count = $items->count();
+
+                        $timeline[] = [
+                            'do_order' => $doOrder,
+                            'stage_order' => 65,
+                            'date' => $tDate->format('d M Y'),
+                            'time' => $tDate->format('H:i') !== '00:00' ? $tDate->format('H:i') : '-',
+                            'timestamp' => $tDate->timestamp,
+                            'title' => "Dikirim ke {$destName}",
+                            'badge' => 'Pengiriman Gudang',
+                            'badge_color' => 'teal',
+                            'desc' => "Material ({$count} item) telah dikirim ke {$destName} dengan Transmittal No: {$transmittal->transmittal_no} oleh {$petugas}.",
+                            'icon' => 'truck',
+                        ];
+                    }
+                }
             }
 
             // Material Issues (MIR)
