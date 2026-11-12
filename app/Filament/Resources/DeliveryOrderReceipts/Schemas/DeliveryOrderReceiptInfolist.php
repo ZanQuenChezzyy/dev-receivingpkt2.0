@@ -7,7 +7,6 @@ use App\Models\MaterialIssue;
 use App\Models\PurchaseOrderIssued;
 use App\Models\WarehouseDeliveryBatchItem;
 use App\Models\WarehouseTransmittalItem;
-use App\Services\UserBadgeRenderer;
 use Carbon\Carbon;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -1011,13 +1010,13 @@ class DeliveryOrderReceiptInfolist
                         ->schema([
                             TextEntry::make('receivedBy.name')
                                 ->label('Diterima Oleh')
-                                ->html()
-                                ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->receivedBy, 'Belum Diterima')),
+                                ->icon('heroicon-m-user')
+                                ->weight(FontWeight::Medium),
 
                             TextEntry::make('createdBy.name')
                                 ->label('Dibuat Oleh')
-                                ->html()
-                                ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->createdBy, 'Tidak diketahui')),
+                                ->icon('heroicon-m-computer-desktop')
+                                ->placeholder('Tidak diketahui'),
 
                             TextEntry::make('created_at')
                                 ->label('Dibuat Pada')

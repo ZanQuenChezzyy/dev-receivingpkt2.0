@@ -4,6 +4,7 @@
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../app/Livewire/**/*';
+@source '../../../../app/Services/**/*';
 @source '../../../../resources/views/chezzy/**/*';
 @source '../../../../resources/views/auth/**/*';
 @source '../../../../resources/views/filament/**/*';
