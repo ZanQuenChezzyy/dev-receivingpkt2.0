@@ -185,18 +185,22 @@ html.dark body {
 
 /* Sidebar Item Badge - Active State (High Contrast White Text on Orange Pill) */
 .fi-sidebar-item-btn[data-current] .fi-sidebar-item-badge-ctn .fi-badge,
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge {
-    background-color: rgba(0, 0, 0, 0.24) !important;
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge,
+.fi-sidebar-item.fi-active .fi-badge,
+.fi-sidebar-item-btn[data-current] .fi-badge {
+    background-color: rgba(0, 0, 0, 0.28) !important;
     color: #ffffff !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4) !important;
     backdrop-filter: blur(4px) !important;
 }
 
 .fi-sidebar-item-btn[data-current] .fi-sidebar-item-badge-ctn .fi-badge *,
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge * {
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge *,
+.fi-sidebar-item.fi-active .fi-badge *,
+.fi-sidebar-item-btn[data-current] .fi-badge * {
     color: #ffffff !important;
     font-weight: 700 !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 /* Sidebar Item Badge - Inactive State in Dark Mode (High Contrast & Clear) */

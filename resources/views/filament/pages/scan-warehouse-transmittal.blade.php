@@ -6,6 +6,7 @@
         lastScanned: null,
         lastScanTime: 0,
         isProcessing: false,
+        scanStatusMessage: '',
         playSuccess() {
             try {
                 let ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -58,41 +59,49 @@
             script.onload = callback;
             document.head.appendChild(script);
         },
-        startCamera() {
+        async startCamera() {
             if (!window.Html5Qrcode) {
                 this.loadScript(() => this.startCamera());
                 return;
             }
 
             this.isCameraOpen = true;
-            this.$nextTick(() => {
-                if (this.html5QrCode) {
-                    this.html5QrCode.stop().then(() => {
-                        this.initHtml5Qr();
-                    }).catch(() => {
-                        this.initHtml5Qr();
-                    });
-                } else {
-                    this.initHtml5Qr();
+            await this.$nextTick();
+
+            if (this.html5QrCode) {
+                try {
+                    if (this.html5QrCode.isScanning) {
+                        await this.html5QrCode.stop();
+                    }
+                    try {
+                        this.html5QrCode.clear();
+                    } catch (e) {}
+                } catch (e) {
+                    console.warn('Pre-start cleanup error:', e);
                 }
-            });
+            }
+
+            this.initHtml5Qr();
         },
         initHtml5Qr() {
             const qrBoxFunction = function(viewfinderWidth, viewfinderHeight) {
-                // Persegi 1:1 khusus QR Code
-                const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                const edge = Math.min(Math.max(Math.floor(minEdge * 0.72), 180), 280);
+                // Mendukung QR Code (persegi) maupun Barcode 1D GRS (persegi panjang horizontal)
+                const width = Math.min(Math.floor(viewfinderWidth * 0.85), 340);
+                const height = Math.min(Math.floor(viewfinderHeight * 0.65), 240);
                 return {
-                    width: edge,
-                    height: edge
+                    width: Math.max(width, 220),
+                    height: Math.max(height, 160)
                 };
             };
+
+            const qrElement = document.getElementById('qr-reader');
+            if (!qrElement) return;
 
             this.html5QrCode = new Html5Qrcode('qr-reader');
             const config = {
                 fps: 15,
                 qrbox: qrBoxFunction,
-                aspectRatio: 1.0,
+                aspectRatio: 1.333333,
                 experimentalFeatures: {
                     useBarCodeDetectorIfSupported: true
                 }
@@ -103,42 +112,74 @@
                 config,
                 (decodedText, decodedResult) => {
                     const now = Date.now();
-                    // Debounce duplicate scans within 2.5 seconds
-                    if (this.lastScanned === decodedText && (now - this.lastScanTime) < 2500) {
+
+                    // Kunci proses: cegah frame detection paralel saat request Livewire sedang berjalan
+                    if (this.isProcessing) {
                         return;
                     }
+
+                    // Cegah duplicate scan barcode yang sama persis dalam 6 detik
+                    if (this.lastScanned === decodedText && (now - this.lastScanTime) < 6000) {
+                        return;
+                    }
+
+                    // Jeda minimal 1.5 detik antar scan apa pun
+                    if ((now - this.lastScanTime) < 1500) {
+                        return;
+                    }
+
+                    this.isProcessing = true;
+                    this.scanStatusMessage = 'Memproses Barcode ' + decodedText + '...';
                     this.lastScanned = decodedText;
                     this.lastScanTime = now;
-                    this.isProcessing = true;
 
-                    $wire.processScan(decodedText).then(() => {
-                        this.isProcessing = false;
-                    });
+                    $wire.processScan(decodedText)
+                        .then(() => {
+                            this.scanStatusMessage = '✓ Berhasil Discan!';
+                        })
+                        .catch((err) => {
+                            console.error('Scan error:', err);
+                            this.scanStatusMessage = 'Gagal memproses barcode';
+                        })
+                        .finally(() => {
+                            // Beri waktu visual feedback 1.2 detik sebelum mengizinkan scan berikutnya
+                            setTimeout(() => {
+                                this.isProcessing = false;
+                                this.scanStatusMessage = '';
+                                this.lastScanTime = Date.now();
+                            }, 1200);
+                        });
                 },
                 (errorMessage) => {
-                    // Continuous search frame - ignore frame read misses
+                    // Continuous search frame - abaikan frame read misses
                 }
             ).catch(err => {
                 console.error('Kamera gagal dimulai:', err);
                 this.isCameraOpen = false;
+                this.isProcessing = false;
             });
         },
-        stopCamera() {
+        async stopCamera() {
             if (this.html5QrCode) {
-                this.html5QrCode.stop().then(() => {
-                    this.isCameraOpen = false;
-                }).catch(err => {
+                try {
+                    if (this.html5QrCode.isScanning) {
+                        await this.html5QrCode.stop();
+                    }
+                    try {
+                        this.html5QrCode.clear();
+                    } catch (e) {}
+                } catch (err) {
                     console.error('Error stopping camera:', err);
-                    this.isCameraOpen = false;
-                });
-            } else {
-                this.isCameraOpen = false;
+                }
             }
+            this.isCameraOpen = false;
+            this.isProcessing = false;
+            this.scanStatusMessage = '';
         }
     }"
     @play-success-sound.window="playSuccess()"
     @play-error-sound.window="playError()"
-    @focus-scanner-input.window="setTimeout(() => { document.getElementById('manual-barcode-input')?.focus(); }, 100)"
+    @focus-scanner-input.window="if (!isCameraOpen) { setTimeout(() => { document.getElementById('manual-barcode-input')?.focus(); }, 100); }"
     class="space-y-6">
 
         <!-- Header Card: Destination & Transmittal Status -->
@@ -265,7 +306,7 @@
                     </div>
 
                     <!-- Camera Viewport Container -->
-                    <div class="relative w-full overflow-hidden rounded-xl bg-gray-950 min-h-[260px] flex items-center justify-center border border-gray-800">
+                    <div wire:ignore class="relative w-full overflow-hidden rounded-xl bg-gray-950 min-h-[280px] flex items-center justify-center border border-gray-800">
                         <!-- Placeholder when camera closed -->
                         <div x-show="!isCameraOpen" class="flex flex-col items-center justify-center p-8 text-center text-gray-400">
                             <div class="w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center mb-3 text-gray-500">
@@ -279,16 +320,16 @@
 
                         <!-- Video Container -->
                         <div x-show="isCameraOpen" style="display: none;" class="w-full h-full relative">
-                            <div id="qr-reader" class="w-full"></div>
+                            <div id="qr-reader" wire:ignore class="w-full"></div>
 
-                            <!-- Processing Overlay -->
-                            <div x-show="isProcessing" style="display: none;" class="absolute inset-0 bg-primary-900/40 backdrop-blur-xs flex items-center justify-center z-20">
-                                <span class="inline-flex items-center gap-2 px-4 py-2 bg-black/80 text-white rounded-full text-xs font-bold shadow-lg">
+                            <!-- Processing / Success Overlay -->
+                            <div x-show="isProcessing" style="display: none;" class="absolute inset-0 bg-primary-950/60 backdrop-blur-xs flex items-center justify-center z-20 transition-opacity">
+                                <span class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-black/85 text-white rounded-full text-xs font-bold shadow-lg border border-white/10">
                                     <svg class="animate-spin h-4 w-4 text-primary-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                     </svg>
-                                    Memproses Barcode...
+                                    <span x-text="scanStatusMessage || 'Memproses Barcode...'"></span>
                                 </span>
                             </div>
                         </div>
@@ -298,7 +339,7 @@
                 <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/80 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
                     <span class="flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full" :class="isCameraOpen ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'"></span>
-                        <span x-text="isCameraOpen ? 'Kamera Aktif: Format QR Code 1:1' : 'Siap digunakan kapan saja'"></span>
+                        <span x-text="isCameraOpen ? 'Kamera Aktif: Format Barcode 1D / QR Code' : 'Siap digunakan kapan saja'"></span>
                     </span>
                     <span>Continuous Auto-detect</span>
                 </div>
