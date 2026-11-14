@@ -166,66 +166,221 @@ html.dark body {
     @apply !rounded-xl transition-all duration-200;
 }
 
-.fi-sidebar-item-btn:not([data-current]):hover {
+.fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:hover,
+.fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:focus-visible {
     @apply !bg-black/[0.04] dark:!bg-white/[0.06];
 }
 
 /* Sidebar Item - Active (Apple macOS Elevated Pill) */
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover,
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:focus,
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:focus-visible,
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:active,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:focus,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:focus-visible,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:active,
 .fi-sidebar-item-btn[data-current],
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
-    @apply !bg-[#F47920] !text-white !font-semibold !rounded-xl !shadow-[0_2px_8px_rgba(244,121,32,0.35)];
-}
-
-.fi-sidebar-item-btn[data-current] .fi-sidebar-item-label,
-.fi-sidebar-item-btn[data-current] .fi-sidebar-item-icon,
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-label,
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-icon {
-    @apply !text-white !font-semibold;
-}
-
-/* Sidebar Item Badge - Active State (High Contrast White Text on Orange Pill) */
-.fi-sidebar-item-btn[data-current] .fi-sidebar-item-badge-ctn .fi-badge,
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge,
-.fi-sidebar-item.fi-active .fi-badge,
-.fi-sidebar-item-btn[data-current] .fi-badge {
-    background-color: rgba(0, 0, 0, 0.28) !important;
+.fi-sidebar-item-btn[data-current]:hover,
+.fi-sidebar-item-btn[data-current]:focus {
+    background-color: #F47920 !important;
+    background-image: linear-gradient(135deg, #FF8A34 0%, #F47920 100%) !important;
     color: #ffffff !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4) !important;
-    backdrop-filter: blur(4px) !important;
+    font-weight: 600 !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 4px 14px rgba(244, 121, 32, 0.4) !important;
 }
 
-.fi-sidebar-item-btn[data-current] .fi-sidebar-item-badge-ctn .fi-badge *,
-.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge *,
-.fi-sidebar-item.fi-active .fi-badge *,
-.fi-sidebar-item-btn[data-current] .fi-badge * {
+/* Sidebar Item - Active Hover & Focus Glow (Never black) */
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover {
+    background-color: #e56d15 !important;
+    background-image: linear-gradient(135deg, #ff9647 0%, #e56d15 100%) !important;
+    box-shadow: 0 6px 20px rgba(244, 121, 32, 0.5) !important;
+}
+
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:active,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:active {
+    transform: scale(0.985) !important;
+    background-color: #d9600e !important;
+    background-image: linear-gradient(135deg, #f47920 0%, #d9600e 100%) !important;
+}
+
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-label,
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-icon,
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover .fi-sidebar-item-label,
+.fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover .fi-sidebar-item-icon,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-label,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-icon,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover .fi-sidebar-item-label,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover .fi-sidebar-item-icon,
+.fi-sidebar-item-btn[data-current] .fi-sidebar-item-label,
+.fi-sidebar-item-btn[data-current] .fi-sidebar-item-icon {
+    color: #ffffff !important;
+    fill: currentColor !important;
+    font-weight: 600 !important;
+}
+
+/* =========================================================
+   Sidebar Navigation Badges (Apple Luminous Status Capsules)
+   High-contrast, crystal clear in both Light & Dark modes
+   ========================================================= */
+
+/* General Sidebar Badge Shape & Sizing */
+.fi-sidebar-nav .fi-sidebar-item-badge-ctn .fi-badge {
+    @apply !px-2.5 !py-0.5 !text-[11px] !font-bold tracking-tight;
+    font-variant-numeric: tabular-nums;
+    border-radius: 9999px !important;
+    transition: all 0.2s ease;
+}
+
+/* 1. Inactive State - Light Mode */
+.fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge,
+.fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge {
+    background-color: rgba(0, 0, 0, 0.06) !important;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+    color: #475569 !important;
+    --text: #475569 !important;
+}
+
+.fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:hover .fi-sidebar-item-badge-ctn .fi-badge {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    color: #1e293b !important;
+}
+
+/* 2. Inactive State - Dark Mode (Default / Neutral Badge) */
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge,
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22) !important;
+    color: #f8fafc !important;
+    --text: #f8fafc !important;
+    --dark-text: #f8fafc !important;
+}
+
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge *,
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge * {
+    color: #f8fafc !important;
+    font-weight: 600 !important;
+}
+
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:hover .fi-sidebar-item-badge-ctn .fi-badge {
+    background-color: rgba(255, 255, 255, 0.18) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32) !important;
+    color: #ffffff !important;
+}
+
+/* 3. Inactive State - Semantic Colors in Dark Mode */
+/* Success (Green - e.g. Material Issue MIR) */
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge.fi-color-success,
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-success"],
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-success"] {
+    background-color: rgba(16, 185, 129, 0.22) !important;
+    box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.45) !important;
+    color: #34d399 !important;
+    --text: #34d399 !important;
+    --dark-text: #34d399 !important;
+}
+
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-success"] *,
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-success"] * {
+    color: #34d399 !important;
+    font-weight: 600 !important;
+}
+
+/* Warning / Amber (e.g. Monitoring Karung Pending SA) */
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge.fi-color-warning,
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-warning"],
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-warning"] {
+    background-color: rgba(245, 158, 11, 0.22) !important;
+    box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.45) !important;
+    color: #fbbf24 !important;
+    --text: #fbbf24 !important;
+    --dark-text: #fbbf24 !important;
+}
+
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-warning"] *,
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-warning"] * {
+    color: #fbbf24 !important;
+    font-weight: 600 !important;
+}
+
+/* Danger / Red */
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge.fi-color-danger,
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-danger"],
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-danger"] {
+    background-color: rgba(239, 68, 68, 0.22) !important;
+    box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.45) !important;
+    color: #f87171 !important;
+    --text: #f87171 !important;
+    --dark-text: #f87171 !important;
+}
+
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-danger"] *,
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-danger"] * {
+    color: #f87171 !important;
+    font-weight: 600 !important;
+}
+
+/* Primary / Orange (e.g. Purchase Order Terbit when inactive) */
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge.fi-color-primary,
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-primary"],
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-primary"] {
+    background-color: rgba(244, 121, 32, 0.22) !important;
+    box-shadow: inset 0 0 0 1px rgba(244, 121, 32, 0.45) !important;
+    color: #fb923c !important;
+    --text: #fb923c !important;
+    --dark-text: #fb923c !important;
+}
+
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-primary"] *,
+.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-primary"] * {
+    color: #fb923c !important;
+    font-weight: 600 !important;
+}
+
+/* =========================================================
+   4. ACTIVE STATE (Apple Elevated High-Contrast Capsule)
+   When ANY navigation item is active (Orange Background),
+   its badge MUST ALWAYS be pure crisp white on a frosted dark capsule.
+   This overrides all primary, success, warning, danger, gray colors.
+   ========================================================= */
+.fi-sidebar-nav .fi-sidebar-item.fi-active .fi-sidebar-item-badge-ctn .fi-badge,
+.fi-sidebar-nav .fi-sidebar-item.fi-active .fi-badge,
+.fi-sidebar-nav .fi-sidebar-item-btn[data-current] .fi-sidebar-item-badge-ctn .fi-badge,
+.fi-sidebar-nav .fi-sidebar-item-btn[data-current] .fi-badge,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active .fi-sidebar-item-badge-ctn .fi-badge,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active .fi-badge,
+.dark .fi-sidebar-nav .fi-sidebar-item-btn[data-current] .fi-sidebar-item-badge-ctn .fi-badge,
+.dark .fi-sidebar-nav .fi-sidebar-item-btn[data-current] .fi-badge,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-"],
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-"] {
+    background-color: rgba(0, 0, 0, 0.28) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    color: #ffffff !important;
+    --text: #ffffff !important;
+    --dark-text: #ffffff !important;
+}
+
+.fi-sidebar-nav .fi-sidebar-item.fi-active .fi-sidebar-item-badge-ctn .fi-badge *,
+.fi-sidebar-nav .fi-sidebar-item.fi-active .fi-badge *,
+.fi-sidebar-nav .fi-sidebar-item-btn[data-current] .fi-sidebar-item-badge-ctn .fi-badge *,
+.fi-sidebar-nav .fi-sidebar-item-btn[data-current] .fi-badge *,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active .fi-sidebar-item-badge-ctn .fi-badge *,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active .fi-badge *,
+.dark .fi-sidebar-nav .fi-sidebar-item-btn[data-current] .fi-sidebar-item-badge-ctn .fi-badge *,
+.dark .fi-sidebar-nav .fi-sidebar-item-btn[data-current] .fi-badge *,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-"] *,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-"] *,
+.fi-sidebar-nav .fi-sidebar-item.fi-active .fi-sidebar-item-badge-ctn .fi-badge .fi-badge-label,
+.dark .fi-sidebar-nav .fi-sidebar-item.fi-active .fi-sidebar-item-badge-ctn .fi-badge .fi-badge-label {
     color: #ffffff !important;
     font-weight: 700 !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-/* Sidebar Item Badge - Inactive State in Dark Mode (High Contrast & Clear) */
-.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([data-current]) .fi-sidebar-item-badge-ctn .fi-badge {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    color: #f8fafc !important;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18) !important;
-}
-
-.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([data-current]) .fi-sidebar-item-badge-ctn .fi-badge * {
-    color: #f8fafc !important;
-    font-weight: 600 !important;
-}
-
-.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([data-current]) .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-success"],
-.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([data-current]) .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-success"] {
-    background-color: rgba(16, 185, 129, 0.2) !important;
-    color: #34d399 !important;
-    box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.4) !important;
-}
-
-.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([data-current]) .fi-sidebar-item-badge-ctn .fi-badge[class*="fi-color-success"] *,
-.dark .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([data-current]) .fi-sidebar-item-badge-ctn .fi-badge[style*="--color-success"] * {
-    color: #34d399 !important;
-    font-weight: 600 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45) !important;
 }
 
 .fi-sidebar-item-label {
@@ -247,8 +402,16 @@ html.dark body {
 /* =========================================================
    2. TOPBAR (Apple Floating Glass Navigation Bar)
    ========================================================= */
+.fi-topbar-ctn {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+}
+
 .fi-topbar {
     @apply !bg-white/75 dark:!bg-[#07111e]/80 !backdrop-blur-2xl !backdrop-saturate-150 !border-b !border-black/[0.06] dark:!border-white/[0.08] !shadow-[0_1px_3px_rgba(0,0,0,0.02)];
+    position: relative !important;
+    z-index: 50 !important;
 }
 
 .fi-topbar nav {
@@ -285,7 +448,7 @@ html.dark body {
 .fi-sc-tabs.fi-contained,
 .fi-tabs.fi-contained,
 .fi-empty-state {
-    @apply !bg-white/80 dark:!bg-[#0b1626]/80 !rounded-2xl !relative focus-within:!z-[90] transition-all duration-300;
+    @apply !bg-white/80 dark:!bg-[#0b1626]/80 !rounded-2xl !relative focus-within:!z-10 transition-all duration-300;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
     box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04), 0 12px 28px -6px rgba(0, 0, 0, 0.05) !important;
 }
@@ -621,7 +784,7 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
 .fi-select-wrp,
 .fi-textarea-wrp,
 .fi-fo-date-time-picker-display-text-input-wrp {
-    @apply !bg-slate-100/80 dark:!bg-slate-900/80 !rounded-xl !transition-all !duration-200 !relative focus-within:!z-[999] hover:!z-[999];
+    @apply !bg-slate-100/80 dark:!bg-slate-900/80 !rounded-xl !transition-all !duration-200 !relative focus-within:!z-10 hover:!z-10;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
 }
@@ -654,11 +817,11 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
     @apply !bg-white dark:!bg-[#0b1626] !text-slate-900 dark:!text-slate-100;
 }
 
-/* Field focus z-index lift */
+/* Field focus z-index lift (kept below topbar z-50) */
 .fi-fo-field:focus-within,
 .fi-sc-component:focus-within,
 .fi-input-wrp:focus-within {
-    z-index: 999 !important;
+    z-index: 10 !important;
     position: relative;
 }
 
@@ -745,7 +908,7 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
 /* =========================================================
    10. BADGES (Apple Status Pills)
    ========================================================= */
-.fi-badge {
+.fi-badge:not(.fi-sidebar-item-badge-ctn *) {
     @apply !rounded-full !px-3 !py-1 !text-xs !font-semibold !backdrop-blur-md !border-0 !shadow-none tracking-tight;
 }
 

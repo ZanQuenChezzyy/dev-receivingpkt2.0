@@ -86,6 +86,11 @@ class PurchaseOrderIssued extends Model
         return $this->hasMany(MonitoringChemical::class);
     }
 
+    public function monitoringKarungs(): HasMany
+    {
+        return $this->hasMany(MonitoringKarung::class);
+    }
+
     public function chemicalQcTuvs(): HasMany
     {
         return $this->hasMany(ChemicalQcTuv::class);

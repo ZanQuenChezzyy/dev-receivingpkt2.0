@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 #[Fillable([
     'monitoring_npk_id',
     'monitoring_chemical_id',
+    'monitoring_karung_id',
     'delivery_order_no',
     'received_date',
     'received_by',
@@ -87,6 +88,16 @@ class DeliveryOrderReceipt extends Model
     public function monitoringChemical(): BelongsTo
     {
         return $this->belongsTo(MonitoringChemical::class);
+    }
+
+    public function monitoringKarung(): BelongsTo
+    {
+        return $this->belongsTo(MonitoringKarung::class);
+    }
+
+    public function monitoringKarungDeliveries(): HasMany
+    {
+        return $this->hasMany(MonitoringKarungDelivery::class);
     }
 
     public function receivedBy(): BelongsTo
