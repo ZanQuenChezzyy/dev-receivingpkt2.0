@@ -38,14 +38,19 @@ class MonitoringMaterial extends Page implements HasTable
 
     protected static string|BackedEnum|null $activeNavigationIcon = 'heroicon-s-chart-pie';
 
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Penerimaan Receiving');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Monitoring Material';
+        return __('Monitoring Material');
     }
 
     public function getTitle(): string|Htmlable
     {
-        return 'Monitoring Material';
+        return __('Monitoring Material');
     }
 
     protected string $view = 'filament.pages.monitoring-material';

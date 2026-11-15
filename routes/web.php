@@ -3,12 +3,15 @@
 use App\Http\Controllers\Admin\MaterialIssuePrintController;
 use App\Http\Controllers\Admin\QCTransmittalPrintController;
 use App\Http\Controllers\Admin\TransmittalPrintController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\QRCodeController;
 use App\Livewire\Frontend\Home;
 use App\Livewire\Frontend\PdNonstockList;
 use App\Livewire\Frontend\PublicMaterialIssueForm;
 use App\Livewire\Frontend\VendorPoTracking;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/lang/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
 Route::get('/', Home::class)->name('home');
 

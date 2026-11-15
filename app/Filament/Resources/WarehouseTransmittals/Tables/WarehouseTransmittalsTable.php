@@ -17,7 +17,6 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 
 class WarehouseTransmittalsTable
 {
@@ -44,7 +43,7 @@ class WarehouseTransmittalsTable
                         ->icon(Heroicon::CalendarDays)
                         ->iconColor('gray')
                         ->date('d F Y')
-                        ->description(fn($record) => Carbon::parse($record->tanggal)->translatedFormat('l'))
+                        ->description(fn ($record) => Carbon::parse($record->tanggal)->translatedFormat('l'))
                         ->sortable(),
                 ]),
 
@@ -72,8 +71,8 @@ class WarehouseTransmittalsTable
                     TextColumn::make('createdBy.name')
                         ->label('Dibuat Oleh')
                         ->html()
-                        ->formatStateUsing(fn($state, $record) => UserBadgeRenderer::render($record?->createdBy))
-                        ->searchable(query: fn(Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'createdBy', $search))
+                        ->formatStateUsing(fn ($state, $record) => UserBadgeRenderer::render($record?->createdBy))
+                        ->searchable(query: fn (Builder $query, string $search): Builder => UserBadgeRenderer::searchQuery($query, 'createdBy', $search))
                         ->sortable(),
 
                     TextColumn::make('created_at')
@@ -101,21 +100,21 @@ class WarehouseTransmittalsTable
                         return $query
                             ->when(
                                 $data['from'],
-                                fn(Builder $query, $date): Builder => $query->whereDate('tanggal', '>=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn(Builder $query, $date): Builder => $query->whereDate('tanggal', '<=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('tanggal', '<=', $date),
                             );
                     })
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
                         if ($data['from'] ?? null) {
-                            $indicators[] = Indicator::make('Dari: ' . Carbon::parse($data['from'])->toFormattedDateString())
+                            $indicators[] = Indicator::make('Dari: '.Carbon::parse($data['from'])->toFormattedDateString())
                                 ->removeField('from');
                         }
                         if ($data['until'] ?? null) {
-                            $indicators[] = Indicator::make('Sampai: ' . Carbon::parse($data['until'])->toFormattedDateString())
+                            $indicators[] = Indicator::make('Sampai: '.Carbon::parse($data['until'])->toFormattedDateString())
                                 ->removeField('until');
                         }
 
@@ -129,7 +128,7 @@ class WarehouseTransmittalsTable
                     ->color('success')
                     ->button()
                     ->outlined()
-                    ->url(fn($record) => route('filament.admin.resources.warehouse-transmittals.print', ['transmittal' => $record->transmittal_no]))
+                    ->url(fn ($record) => route('filament.admin.resources.warehouse-transmittals.print', ['transmittal' => $record->transmittal_no]))
                     ->openUrlInNewTab(),
             ])
             ->toolbarActions([

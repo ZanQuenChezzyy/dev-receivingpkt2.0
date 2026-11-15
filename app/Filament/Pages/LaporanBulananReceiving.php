@@ -10,6 +10,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 class LaporanBulananReceiving extends Page implements HasForms
@@ -22,9 +23,19 @@ class LaporanBulananReceiving extends Page implements HasForms
 
     protected static ?int $navigationSort = 1;
 
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Laporan');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Laporan Bulanan';
+        return __('Laporan Bulanan');
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return __('Laporan Bulanan');
     }
 
     protected string $view = 'filament.pages.laporan-bulanan-receiving';

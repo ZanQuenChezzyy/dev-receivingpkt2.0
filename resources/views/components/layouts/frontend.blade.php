@@ -40,7 +40,12 @@
         }
         .nav-desktop { display: none !important; }
         .nav-mobile-btn { display: flex !important; }
+        .nav-lang-switcher { display: none !important; }
         
+        @media (min-width: 640px) {
+            .nav-lang-switcher { display: grid !important; }
+        }
+
         @media (min-width: 1024px) {
             .nav-desktop { display: flex !important; }
             .nav-mobile-btn { display: none !important; }

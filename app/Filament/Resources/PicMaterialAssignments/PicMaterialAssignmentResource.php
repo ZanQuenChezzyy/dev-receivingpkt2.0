@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PicMaterialAssignments;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\PicMaterialAssignments\Pages\CreatePicMaterialAssignment;
 use App\Filament\Resources\PicMaterialAssignments\Pages\EditPicMaterialAssignment;
 use App\Filament\Resources\PicMaterialAssignments\Pages\ListPicMaterialAssignments;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class PicMaterialAssignmentResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = PicMaterialAssignment::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Data Master';
@@ -28,17 +31,17 @@ class PicMaterialAssignmentResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Aturan PIC Material';
+        return __('Aturan PIC Material');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Aturan PIC Material';
+        return __('Aturan PIC Material');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Aturan PIC Material';
+        return __('Aturan PIC Material');
     }
 
     public static function form(Schema $schema): Schema

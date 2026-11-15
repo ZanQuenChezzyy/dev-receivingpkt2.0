@@ -14,22 +14,22 @@
                 <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Portal Tracking Vendor PKT • Khusus Rekanan
+                {{ __('Portal Tracking Vendor PKT • Khusus Rekanan') }}
             </div>
             <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tight mb-4">
-                Lacak Pergerakan <br class="hidden sm:inline">
+                {{ __('Lacak Pergerakan') }} <br class="hidden sm:inline">
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] via-orange-400 to-[#BE5A27]">
-                    Dokumen & Fisik Material PO
+                    {{ __('Dokumen & Fisik Material PO') }}
                 </span>
             </h1>
             <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium max-w-2xl mx-auto">
-                Pantau status penerimaan surat jalan, Pengajuan QC, hingga GRS secara real-time khusus bagi Rekanan/Vendor PT Pupuk Kalimantan Timur (wajib verifikasi email resmi vendor).
+                {{ __('Pantau status penerimaan surat jalan, Pengajuan QC, hingga GRS secara real-time khusus bagi Rekanan/Vendor PT Pupuk Kalimantan Timur (wajib verifikasi email resmi vendor).') }}
             </p>
             <div class="mt-4 inline-flex flex-wrap items-center justify-center gap-2 px-4 py-2 rounded-2xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/25 text-xs text-slate-700 dark:text-slate-200">
-                <span class="font-bold text-[#0A4F86] dark:text-sky-400">Info User Internal PKT:</span>
-                <span>Untuk cek kedatangan barang atau pengambilan material, gunakan</span>
-                <a href="{{ route('frontend.list-material') }}" wire:navigate class="font-extrabold text-[#F47920] underline hover:text-[#BE5A27]">Daftar Material</a>
-                <span>atau tanya langsung pada <strong>ALEX Asisten AI Receiving</strong> di pojok kanan bawah.</span>
+                <span class="font-bold text-[#0A4F86] dark:text-sky-400">{{ __('Info User Internal PKT:') }}</span>
+                <span>{{ __('Untuk cek kedatangan barang atau pengambilan material, gunakan') }}</span>
+                <a href="{{ route('frontend.list-material') }}" wire:navigate class="font-extrabold text-[#F47920] underline hover:text-[#BE5A27]">{{ __('Daftar Material') }}</a>
+                <span>{{ __('atau tanya langsung pada ALEX Asisten AI Receiving di pojok kanan bawah.') }}</span>
             </div>
         </div>
 
@@ -55,7 +55,7 @@
                             <input id="poNumberInput"
                                 wire:model="poNumber"
                                 type="text"
-                                placeholder="Ketik nomor PO (misal: 53000xxxxx)"
+                                placeholder="{{ __('Ketik nomor PO (misal: 53000xxxxx)') }}"
                                 class="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3 py-3.5 sm:py-4 text-base sm:text-lg font-bold font-mono tracking-wider text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-sm sm:placeholder:text-base"
                                 autocomplete="off"
                                 maxlength="15"
@@ -65,7 +65,7 @@
                             @if (!empty($poNumber))
                                 <button type="button" wire:click="$set('poNumber', '')"
                                     class="p-2 mr-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
-                                    title="Hapus input">
+                                    title="{{ __('Hapus input') }}">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
@@ -84,7 +84,7 @@
                         <button type="submit" wire:loading.attr="disabled"
                             class="apple-btn-primary px-7 py-3.5 sm:py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 shrink-0 cursor-pointer">
                             <span wire:loading.remove wire:target="initiateSearch, selectSamplePo" class="flex items-center gap-2">
-                                <span>Lacak Dokumen</span>
+                                <span>{{ __('Lacak Dokumen') }}</span>
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                 </svg>
@@ -94,7 +94,7 @@
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                 </svg>
-                                <span>Mengecek PO...</span>
+                                <span>{{ __('Mengecek PO...') }}</span>
                             </span>
                         </button>
                     </div>
@@ -124,19 +124,19 @@
                     <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
-                    <span>Verifikasi Email Vendor</span>
+                    <span>{{ __('Verifikasi Email Vendor') }}</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    <span>Enkripsi Akses Berkas</span>
+                    <span>{{ __('Enkripsi Akses Berkas') }}</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span>Support SAP 103/105 (Update Bertahap)</span>
+                    <span>{{ __('Support SAP 103/105 (Update Bertahap)') }}</span>
                 </div>
             </div>
         </div>
@@ -181,12 +181,12 @@
                             </svg>
                         </div>
                         <div>
-                            <span class="text-[11px] font-black uppercase tracking-wider text-[#F47920] block">Verifikasi Keamanan</span>
+                            <span class="text-[11px] font-black uppercase tracking-wider text-[#F47920] block">{{ __('Verifikasi Keamanan') }}</span>
                             <h3 class="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                                Akses Riwayat Dokumen
+                                {{ __('Akses Riwayat Dokumen') }}
                             </h3>
                             <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
-                                Masukkan nomor PO & email terdaftar untuk melihat riwayat lengkap.
+                                {{ __('Masukkan nomor PO & email terdaftar untuk melihat riwayat lengkap.') }}
                             </p>
                         </div>
                     </div>
@@ -207,9 +207,9 @@
                         <div class="flex items-center justify-between mb-1.5">
                             <label for="modalPoNumberInput" class="block text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                                 <span class="w-2 h-2 rounded-full bg-[#F47920] animate-pulse"></span>
-                                Nomor Purchase Order (PO)
+                                {{ __('Nomor Purchase Order (PO)') }}
                             </label>
-                            <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">10 Digit SAP PO</span>
+                            <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">{{ __('10 Digit SAP PO') }}</span>
                         </div>
                         <div class="relative flex items-center rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus-within:border-[#F47920] dark:focus-within:border-[#F47920] focus-within:ring-4 focus-within:ring-[#F47920]/20 transition-all shadow-sm">
                             <div class="pl-3.5 pr-2 text-[#F47920] flex items-center pointer-events-none shrink-0">
@@ -223,14 +223,14 @@
                             <input id="modalPoNumberInput"
                                 wire:model.live.debounce.400ms="poNumber"
                                 type="text"
-                                placeholder="Ketik 10 digit nomor PO (contoh: 5300065628)..."
+                                placeholder="{{ __('Ketik 10 digit nomor PO (contoh: 5300065628)...') }}"
                                 class="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3 py-3 text-sm sm:text-base font-mono font-black text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-sans placeholder:font-normal placeholder:text-xs sm:placeholder:text-sm"
                                 autocomplete="off"
                                 maxlength="15">
                             @if (!empty($poNumber))
                                 <button type="button" wire:click="$set('poNumber', '')"
                                     class="p-1.5 mr-2 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
-                                    title="Hapus input PO">
+                                    title="{{ __('Hapus input PO') }}">
                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
@@ -249,7 +249,7 @@
                                     </svg>
                                 </div>
                                 <div class="truncate">
-                                    <span class="text-[10px] uppercase font-black text-emerald-700 dark:text-emerald-400 block tracking-wider">Vendor Teridentifikasi:</span>
+                                    <span class="text-[10px] uppercase font-black text-emerald-700 dark:text-emerald-400 block tracking-wider">{{ __('Vendor Teridentifikasi:') }}</span>
                                     <span class="font-black text-xs sm:text-sm text-slate-900 dark:text-white truncate block">{{ $vendorInfo['name'] }}</span>
                                 </div>
                             </div>
@@ -270,7 +270,7 @@
                                 </svg>
                             </div>
                             <div class="space-y-1">
-                                <span class="font-black block text-blue-950 dark:text-blue-100 text-xs">Petunjuk Email Terdaftar untuk PO Ini:</span>
+                                <span class="font-black block text-blue-950 dark:text-blue-100 text-xs">{{ __('Petunjuk Email Terdaftar untuk PO Ini:') }}</span>
                                 <div class="space-y-1 font-mono text-xs text-blue-900 dark:text-blue-300 font-black">
                                     @foreach ($vendorInfo['masked_emails'] as $masked)
                                         <div class="flex items-center gap-1.5">
@@ -289,7 +289,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <span class="font-black block mb-1 text-amber-950 dark:text-amber-100 text-xs">Informasi Kontak Master:</span>
+                                <span class="font-black block mb-1 text-amber-950 dark:text-amber-100 text-xs">{{ __('Informasi Kontak Master:') }}</span>
                                 <p class="leading-relaxed text-amber-900 dark:text-amber-200 font-semibold">{{ $vendorInfo['error_message'] }}</p>
                             </div>
                         </div>
@@ -299,7 +299,7 @@
                     <div>
                         <label for="verificationEmailInput" class="block text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                            Alamat Email Resmi Vendor
+                            {{ __('Alamat Email Resmi Vendor') }}
                         </label>
                         <div class="relative flex items-center rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/20 transition-all shadow-sm">
                             <div class="pl-3.5 pr-2 text-blue-500 flex items-center pointer-events-none shrink-0">
@@ -308,7 +308,7 @@
                                 </svg>
                             </div>
                             <input id="verificationEmailInput" wire:model="verificationEmail" type="email"
-                                placeholder="Masukkan email resmi perusahaan vendor..."
+                                placeholder="{{ __('Masukkan email resmi perusahaan vendor...') }}"
                                 class="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3 py-3 text-sm font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:text-xs sm:placeholder:text-sm"
                                 autocomplete="email">
                         </div>
@@ -328,17 +328,17 @@
                     <div class="flex items-center justify-end gap-3 pt-3">
                         <button type="button" wire:click="closeModal"
                             class="px-5 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 transition-colors cursor-pointer">
-                            Batal
+                            {{ __('Batal') }}
                         </button>
                         <button type="submit" wire:loading.attr="disabled"
                             class="px-6 py-2.5 rounded-xl font-black text-xs text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:shadow-[0_8px_20px_rgba(244,121,32,0.4)] active:scale-95 transition-all flex items-center gap-2 cursor-pointer shadow-md">
-                            <span wire:loading.remove wire:target="verifyVendorEmail">Verifikasi & Tampilkan Riwayat</span>
+                            <span wire:loading.remove wire:target="verifyVendorEmail">{{ __('Verifikasi & Tampilkan Riwayat') }}</span>
                             <span wire:loading wire:target="verifyVendorEmail" class="flex items-center gap-1.5">
                                 <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                 </svg>
-                                Memverifikasi...
+                                {{ __('Memverifikasi...') }}
                             </span>
                         </button>
                     </div>
@@ -359,7 +359,7 @@
                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>
-                                    Identitas Vendor Terverifikasi
+                                    {{ __('Identitas Vendor Terverifikasi') }}
                                 </span>
                                 <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-slate-300">
                                     Status PO: {{ $trackingData['po']['po_status'] ?? 'Active' }}
@@ -383,7 +383,7 @@
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
-                                Lacak PO Lain
+                                {{ __('Lacak PO Lain') }}
                             </button>
                         </div>
                     </div>
@@ -391,26 +391,26 @@
                     <!-- PO Key Attributes Grid -->
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 pt-6 text-xs sm:text-sm">
                         <div class="p-3.5 rounded-2xl bg-white/40 dark:bg-white/5 border border-white/60 dark:border-white/5">
-                            <span class="text-slate-400 dark:text-slate-500 text-[11px] font-bold block mb-1">Tanggal Terbit PO</span>
+                            <span class="text-slate-400 dark:text-slate-500 text-[11px] font-bold block mb-1">{{ __('Tanggal Terbit PO') }}</span>
                             <span class="font-bold text-slate-800 dark:text-white">{{ $trackingData['po']['date_create'] ?? '-' }}</span>
                         </div>
                         <div class="p-3.5 rounded-2xl bg-white/40 dark:bg-white/5 border border-white/60 dark:border-white/5">
-                            <span class="text-slate-400 dark:text-slate-500 text-[11px] font-bold block mb-1">Target Delivery PO</span>
+                            <span class="text-slate-400 dark:text-slate-500 text-[11px] font-bold block mb-1">{{ __('Target Delivery PO') }}</span>
                             <span class="font-bold text-slate-800 dark:text-white">{{ $trackingData['po']['delivery_date_po'] ?? '-' }}</span>
                         </div>
                         <div class="p-3.5 rounded-2xl bg-white/40 dark:bg-white/5 border border-white/60 dark:border-white/5">
-                            <span class="text-slate-400 dark:text-slate-500 text-[11px] font-bold block mb-1">Unit Pemohon</span>
+                            <span class="text-slate-400 dark:text-slate-500 text-[11px] font-bold block mb-1">{{ __('Unit Pemohon') }}</span>
                             <span class="font-bold text-slate-800 dark:text-white truncate block" title="{{ $trackingData['po']['requisitioner'] ?? '-' }}">
                                 {{ $trackingData['po']['requisitioner'] ?? '-' }}
                             </span>
                         </div>
                         <div class="p-3.5 rounded-2xl bg-white/40 dark:bg-white/5 border border-white/60 dark:border-white/5">
-                            <span class="text-slate-400 dark:text-slate-500 text-[11px] font-bold block mb-1">Total Item Material</span>
-                            <span class="font-bold text-slate-800 dark:text-white">{{ $trackingData['po']['total_items'] ?? 0 }} Baris Item</span>
+                            <span class="text-slate-400 dark:text-slate-500 text-[11px] font-bold block mb-1">{{ __('Total Item Material') }}</span>
+                            <span class="font-bold text-slate-800 dark:text-white">{{ $trackingData['po']['total_items'] ?? 0 }} {{ __('Baris Item') }}</span>
                         </div>
                         <div class="p-3.5 rounded-2xl bg-white/40 dark:bg-white/5 border border-white/60 dark:border-white/5 col-span-2 sm:col-span-1">
-                            <span class="text-slate-400 dark:text-slate-500 text-[11px] font-bold block mb-1">Surat Jalan (DO) Masuk</span>
-                            <span class="font-bold text-[#F47920]">{{ isset($trackingData['unique_dos']) ? $trackingData['unique_dos']->count() : 0 }} Surat Jalan</span>
+                            <span class="text-slate-400 dark:text-slate-500 text-[11px] font-bold block mb-1">{{ __('Surat Jalan (DO) Masuk') }}</span>
+                            <span class="font-bold text-[#F47920]">{{ isset($trackingData['unique_dos']) ? $trackingData['unique_dos']->count() : 0 }} {{ __('Surat Jalan') }}</span>
                         </div>
                     </div>
                 </div>
@@ -419,9 +419,9 @@
                 <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl">
                     <div class="flex items-center justify-between mb-8">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">Alur Proses Logistik</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">{{ __('Alur Proses Logistik') }}</span>
                             <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">
-                                Posisi Perjalanan Dokumen Saat Ini
+                                {{ __('Posisi Perjalanan Dokumen Saat Ini') }}
                             </h3>
                         </div>
                         <span class="px-3.5 py-1.5 rounded-full text-xs font-black bg-[#F47920]/15 text-[#F47920] border border-[#F47920]/30">
@@ -429,17 +429,27 @@
                         </span>
                     </div>
 
-                    <!-- Responsive Stepper -->
+                    <!-- Responsive Stepper (Framer Motion Animated Progress) -->
                     @php
                         $stageIdx = $trackingData['pipeline']['current_stage_index'] ?? 1;
                         $steps = [
-                            ['num' => 1, 'label' => 'PO Terbit', 'sub' => 'Diterbitkan PKT'],
-                            ['num' => 2, 'label' => 'DO & Fisik Tiba', 'sub' => 'Pintu Receiving'],
-                            ['num' => 3, 'label' => 'Post 103 SAP', 'sub' => 'Validasi Sistem'],
-                            ['num' => 4, 'label' => 'Inspeksi QC', 'sub' => 'Uji Mutu ISTEK'],
-                            ['num' => 5, 'label' => 'Slip GRS (105)', 'sub' => 'Arsip Penagihan'],
+                            ['num' => 1, 'label' => __('PO Terbit'), 'sub' => __('Diterbitkan PKT')],
+                            ['num' => 2, 'label' => __('DO & Fisik Tiba'), 'sub' => __('Pintu Receiving')],
+                            ['num' => 3, 'label' => __('Post 103 SAP'), 'sub' => __('Validasi Sistem')],
+                            ['num' => 4, 'label' => __('Inspeksi QC'), 'sub' => __('Uji Mutu ISTEK')],
+                            ['num' => 5, 'label' => __('Slip GRS (105)'), 'sub' => __('Arsip Penagihan')],
                         ];
+                        $progressPercent = min(100, max(10, (($stageIdx - 1) / 4) * 100));
                     @endphp
+
+                    <!-- Animated Progress Bar Connector (Desktop & Tablet) -->
+                    <div class="hidden sm:block relative mb-4 mx-3">
+                        <div class="h-1.5 w-full bg-slate-200/80 dark:bg-white/10 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-emerald-500 via-[#F47920] to-orange-500 rounded-full transition-all duration-700 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
+                                 style="width: {{ $progressPercent }}%;">
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                         @foreach ($steps as $step)
@@ -448,9 +458,9 @@
                                 $isCurrent = $stageIdx === $step['num'];
                                 $isPending = $stageIdx < $step['num'];
                             @endphp
-                            <div class="p-3.5 rounded-2xl transition-all duration-300 relative overflow-hidden
+                            <div class="p-3.5 rounded-2xl transition-all duration-300 relative overflow-hidden hover:-translate-y-0.5
                                 @if ($isCurrent)
-                                    bg-gradient-to-br from-[#F47920]/15 to-transparent border-2 border-[#F47920] shadow-[0_0_15px_rgba(244,121,32,0.2)]
+                                    bg-gradient-to-br from-[#F47920]/15 to-transparent border-2 border-[#F47920] shadow-[0_0_20px_rgba(244,121,32,0.22)] scale-[1.01]
                                 @elseif ($isDone)
                                     bg-emerald-500/10 border border-emerald-500/25
                                 @else
@@ -526,16 +536,16 @@
                 <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl relative overflow-hidden">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200/70 dark:border-white/10">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">Unduh Berkas Resmi</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">{{ __('Unduh Berkas Resmi') }}</span>
                             <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">
-                                Dokumen Resmi dari Receiving & Tim Invoice
+                                {{ __('Dokumen Resmi dari Receiving & Tim Invoice') }}
                             </h3>
                         </div>
                         <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                             <svg class="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
-                            Dokumen Resmi Terverifikasi Sistem
+                            {{ __('Dokumen Resmi Terverifikasi Sistem') }}
                         </div>
                     </div>
 
@@ -551,16 +561,16 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">Modul Receiving (Gudang)</span>
+                                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">{{ __('Modul Receiving (Gudang)') }}</span>
                                             <h4 class="text-base font-black text-slate-800 dark:text-white">
-                                                Berkas GRS (Good Receive Slip)
+                                                {{ __('Berkas GRS (Good Receive Slip)') }}
                                             </h4>
                                         </div>
                                     </div>
                                 </div>
 
                                 <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                    Slip bukti penerimaan material di gudang Receiving yang telah diposting ke sistem SAP (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip & penagihan vendor.
+                                    {{ __('Slip bukti penerimaan material di gudang Receiving yang telah diposting ke sistem SAP (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip & penagihan vendor.') }}
                                 </p>
 
                                 <!-- List of GRS Items -->
@@ -572,7 +582,7 @@
                                 @if ($grsItems->isEmpty())
                                     <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs flex items-center gap-2">
                                         <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        <span>Belum ada dokumen GRS yang diterbitkan untuk PO ini.</span>
+                                        <span>{{ __('Belum ada dokumen GRS yang diterbitkan untuk PO ini.') }}</span>
                                     </div>
                                 @else
                                     <div class="space-y-2.5 mb-4">
@@ -595,17 +605,17 @@
                                                         <a href="{{ Storage::disk('public')->url($gItem->file_path) }}" target="_blank"
                                                             class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors flex items-center gap-1.5">
                                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                                            Lihat
+                                                            {{ __('Lihat') }}
                                                         </a>
                                                         <button type="button" wire:click="downloadGrsReceiving({{ $gItem->id }})"
                                                             class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all flex items-center gap-1.5">
                                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                                            Unduh
+                                                            {{ __('Unduh') }}
                                                         </button>
                                                     </div>
                                                 @else
                                                     <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                                        Scan Belum Diunggah
+                                                        {{ __('Scan Belum Diunggah') }}
                                                     </span>
                                                 @endif
                                             </div>
@@ -615,8 +625,8 @@
                             </div>
 
                             <div class="pt-3 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
-                                <span>Sumber: Master Receiving Gudang</span>
-                                <span>{{ $grsWithFiles->count() }} Berkas Siap Diunduh</span>
+                                <span>{{ __('Sumber: Master Receiving Gudang') }}</span>
+                                <span>{{ $grsWithFiles->count() }} {{ __('Berkas Siap Diunduh') }}</span>
                             </div>
                         </div>
 
@@ -631,9 +641,9 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">Modul Invoicing (Keuangan)</span>
+                                            <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">{{ __('Modul Invoicing (Keuangan)') }}</span>
                                             <h4 class="text-base font-black text-slate-800 dark:text-white">
-                                                Surat Verifikasi GRS (ACC VP)
+                                                {{ __('Surat Verifikasi GRS (ACC VP)') }}
                                             </h4>
                                         </div>
                                     </div>
@@ -651,15 +661,15 @@
                                 </div>
 
                                 <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                    Surat lembar verifikasi resmi penerbitan GRS yang telah ditandatangani dan disetujui (ACC) oleh Vice President Keuangan & Akuntansi PT Pupuk Kalimantan Timur.
+                                    {{ __('Surat lembar verifikasi resmi penerbitan GRS yang telah ditandatangani dan disetujui (ACC) oleh Vice President Keuangan & Akuntansi PT Pupuk Kalimantan Timur.') }}
                                 </p>
 
                                 @if (!empty($invReceipt?->dokumen_verifikasi_grs))
                                     <div class="p-3.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/10 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div class="text-xs">
                                             <div class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                                <span>Surat Verifikasi GRS Resmi</span>
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600">ACC VP</span>
+                                                <span>{{ __('Surat Verifikasi GRS Resmi') }}</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600">{{ __('ACC VP') }}</span>
                                             </div>
                                             <div class="text-[11px] text-slate-400 mt-0.5">
                                                 PO: {{ $invReceipt->no_po }} • Status: {{ $invReceipt->status }}
@@ -670,26 +680,26 @@
                                             <a href="{{ Storage::disk('public')->url($invReceipt->dokumen_verifikasi_grs) }}" target="_blank"
                                                 class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors flex items-center gap-1.5">
                                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                                Lihat
+                                                {{ __('Lihat') }}
                                             </a>
                                             <button type="button" wire:click="downloadVerifikasiGrs({{ $invReceipt->id }})"
                                                 class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-1.5">
                                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                                Unduh
+                                                {{ __('Unduh') }}
                                             </button>
                                         </div>
                                     </div>
                                 @else
                                     <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs mb-4 flex items-center gap-2">
                                         <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                        <span>Surat verifikasi belum diunggah oleh Tim Invoice. Berkas akan tersedia setelah proses verifikasi berkas tagihan disetujui VP.</span>
+                                        <span>{{ __('Surat verifikasi belum diunggah oleh Tim Invoice. Berkas akan tersedia setelah proses verifikasi berkas tagihan disetujui VP.') }}</span>
                                     </div>
                                 @endif
                             </div>
 
                             <div class="pt-3 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
-                                <span>Persetujuan: VP Finance & Accounting PKT</span>
-                                <span>{{ !empty($invReceipt?->dokumen_verifikasi_grs) ? 'Berkas Tersedia' : 'Dalam Proses' }}</span>
+                                <span>{{ __('Persetujuan: VP Finance & Accounting PKT') }}</span>
+                                <span>{{ !empty($invReceipt?->dokumen_verifikasi_grs) ? __('Berkas Tersedia') : __('Dalam Proses') }}</span>
                             </div>
                         </div>
                     </div>
@@ -702,13 +712,13 @@
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200/70 dark:border-white/10">
                         <div>
                             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F47920]/10 border border-[#F47920]/25 text-[#F47920] text-xs font-black tracking-widest uppercase mb-2">
-                                Berkas Penagihan Invoice
+                                {{ __('Berkas Penagihan Invoice') }}
                             </div>
                             <h3 class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
-                                Upload Dokumen Persyaratan Penagihan
+                                {{ __('Upload Dokumen Persyaratan Penagihan') }}
                             </h3>
                             <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                                Seluruh dokumen persyaratan penagihan invoice wajib digabungkan menjadi <strong>1 file dokumen (PDF/ZIP)</strong> lalu diunggah di bawah ini. Dokumen akan langsung tersinkronisasi dan dapat diverifikasi oleh Tim Invoice PT Pupuk Kalimantan Timur.
+                                {!! __('Seluruh dokumen persyaratan penagihan invoice wajib digabungkan menjadi <strong>1 file dokumen (PDF/ZIP)</strong> lalu diunggah di bawah ini. Dokumen akan langsung tersinkronisasi dan dapat diverifikasi oleh Tim Invoice PT Pupuk Kalimantan Timur.') !!}
                             </p>
                         </div>
 
@@ -717,12 +727,12 @@
                             @if (!empty($trackingData['has_dossier']))
                                 <span class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                    Berkas Lengkap Terunggah
+                                    {{ __('Berkas Lengkap Terunggah') }}
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                    Menunggu Unggah Berkas
+                                    {{ __('Menunggu Unggah Berkas') }}
                                 </span>
                             @endif
                         </div>
@@ -745,17 +755,17 @@
                                         </div>
                                         <div>
                                             <div class="flex items-center gap-2 mb-1">
-                                                <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Berkas Penagihan Resmi</span>
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">Aktif</span>
+                                                <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{{ __('Berkas Penagihan Resmi') }}</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">{{ __('Aktif') }}</span>
                                             </div>
                                             <h4 class="text-base font-black text-slate-800 dark:text-white font-mono break-all">
                                                 {{ $dossier['original_name'] ?? 'Berkas_Penagihan_Invoice.pdf' }}
                                             </h4>
                                             <div class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-3">
-                                                <span>Diunggah: {{ isset($dossier['uploaded_at']) ? \Carbon\Carbon::parse($dossier['uploaded_at'])->format('d M Y, H:i') : '-' }}</span>
+                                                <span>{{ __('Diunggah:') }} {{ isset($dossier['uploaded_at']) ? \Carbon\Carbon::parse($dossier['uploaded_at'])->format('d M Y, H:i') : '-' }}</span>
                                                 @if (!empty($dossier['file_size']))
                                                     <span>•</span>
-                                                    <span>Ukuran: {{ number_format($dossier['file_size'] / (1024 * 1024), 2) }} MB</span>
+                                                    <span>{{ __('Ukuran:') }} {{ number_format($dossier['file_size'] / (1024 * 1024), 2) }} MB</span>
                                                 @endif
                                             </div>
                                         </div>
@@ -766,18 +776,18 @@
                                         <a href="{{ Storage::disk('public')->url($dossier['file_path']) }}" target="_blank"
                                             class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white/80 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/20 transition-all flex items-center gap-1.5 shadow-sm">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                            Lihat Berkas
+                                            {{ __('Lihat Berkas') }}
                                         </a>
                                         <button type="button" wire:click="downloadBerkasPenagihan"
                                             class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all flex items-center gap-1.5">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                            Unduh Berkas
+                                            {{ __('Unduh Berkas') }}
                                         </button>
                                         <button type="button" wire:click="deleteBerkasPenagihan"
-                                            wire:confirm="Yakin ingin menghapus berkas penagihan ini? Anda dapat mengunggah file baru setelahnya."
+                                            wire:confirm="{{ __('Yakin ingin menghapus berkas penagihan ini? Anda dapat mengunggah file baru setelahnya.') }}"
                                             class="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors flex items-center gap-1">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            Hapus / Ganti
+                                            {{ __('Hapus / Ganti') }}
                                         </button>
                                     </div>
                                 </div>
@@ -796,7 +806,7 @@
                                         <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 mb-4 shadow-sm">
                                             <div class="flex items-center justify-between gap-3 text-left">
                                                 <div class="min-w-0">
-                                                    <span class="text-[10px] font-bold uppercase tracking-wider text-[#F47920] block">Berkas Terpilih</span>
+                                                    <span class="text-[10px] font-bold uppercase tracking-wider text-[#F47920] block">{{ __('Berkas Terpilih') }}</span>
                                                     <span class="font-bold text-sm text-slate-800 dark:text-white truncate block font-mono">
                                                         {{ $berkasPenagihanFile->getClientOriginalName() }}
                                                     </span>
@@ -815,26 +825,26 @@
                                             <button type="button" wire:click="uploadBerkasPenagihan"
                                                 wire:loading.attr="disabled"
                                                 class="px-6 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:shadow-[0_8px_20px_rgba(244,121,32,0.4)] active:scale-95 transition-all flex items-center gap-2">
-                                                <span wire:loading.remove wire:target="uploadBerkasPenagihan">Unggah Berkas Sekarang</span>
+                                                <span wire:loading.remove wire:target="uploadBerkasPenagihan">{{ __('Unggah Berkas Sekarang') }}</span>
                                                 <span wire:loading wire:target="uploadBerkasPenagihan" class="flex items-center gap-2">
                                                     <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                                     </svg>
-                                                    Mengunggah Berkas...
+                                                    {{ __('Mengunggah Berkas...') }}
                                                 </span>
                                             </button>
                                             <button type="button" wire:click="$set('berkasPenagihanFile', null)"
                                                 class="px-4 py-3 rounded-xl font-bold text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
-                                                Batal
+                                                {{ __('Batal') }}
                                             </button>
                                         </div>
                                     @else
                                         <h4 class="text-base font-bold text-slate-800 dark:text-white mb-1">
-                                            Pilih atau Tarik Berkas Penagihan ke Sini
+                                            {{ __('Pilih atau Tarik Berkas Penagihan ke Sini') }}
                                         </h4>
                                         <p class="text-xs text-slate-500 dark:text-slate-400 mb-5">
-                                            Format: <strong>PDF (Sangat Disarankan)</strong>, ZIP, RAR, JPG, PNG (Maksimal 25 MB).
+                                            {!! __('Format: <strong>PDF (Sangat Disarankan)</strong>, ZIP, RAR, JPG, PNG (Maksimal 25 MB).') !!}
                                         </p>
 
                                         <label class="cursor-pointer inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:shadow-[0_8px_20px_rgba(244,121,32,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-md">
@@ -842,7 +852,7 @@
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                                             </svg>
-                                            Pilih Berkas Penagihan
+                                            {{ __('Pilih Berkas Penagihan') }}
                                         </label>
                                     @endif
 
@@ -861,17 +871,17 @@
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                             <div>
                                 <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-bold uppercase tracking-wider mb-1">
-                                    Pedoman Kelengkapan
+                                    {{ __('Pedoman Kelengkapan') }}
                                 </div>
                                 <h4 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">
-                                    16 Persyaratan Kelengkapan Dokumen Penagihan
+                                    {{ __('16 Persyaratan Kelengkapan Dokumen Penagihan') }}
                                 </h4>
                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                    Pastikan seluruh dokumen berikut telah tercakup di dalam 1 file bundel penagihan yang Anda unggah:
+                                    {{ __('Pastikan seluruh dokumen berikut telah tercakup di dalam 1 file bundel penagihan yang Anda unggah:') }}
                                 </p>
                             </div>
                             <span class="text-xs font-bold text-slate-400 font-mono">
-                                Total 16 Dokumen
+                                {{ __('Total 16 Dokumen') }}
                             </span>
                         </div>
 
@@ -920,8 +930,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <div class="leading-relaxed">
-                                <strong>Ketentuan Urutan Dokumen:</strong>
-                                Dokumen No. 01–05 bersifat <strong>Wajib</strong> bagi seluruh pengadaan. Dokumen No. 06–16 bersifat kondisional/pelengkap sesuai spesifikasi komoditas barang Anda. Susun dokumen secara berurutan di dalam file PDF Anda untuk mempercepat proses verifikasi oleh Tim Invoice PKT.
+                                <strong>{{ __('Ketentuan Urutan Dokumen:') }}</strong>
+                                {!! __('Dokumen No. 01–05 bersifat <strong>Wajib</strong> bagi seluruh pengadaan. Dokumen No. 06–16 bersifat kondisional/pelengkap sesuai spesifikasi komoditas barang Anda. Susun dokumen secara berurutan di dalam file PDF Anda untuk mempercepat proses verifikasi oleh Tim Invoice PKT.') !!}
                             </div>
                         </div>
                     </div>
@@ -935,19 +945,19 @@
                     <div class="lg:col-span-7 glass-panel p-6 sm:p-8 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl">
                         <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-200/70 dark:border-white/10">
                             <div>
-                                <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">Audit Trail</span>
+                                <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">{{ __('Audit Trail') }}</span>
                                 <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">
-                                    Riwayat Pergerakan Dokumen
+                                    {{ __('Riwayat Pergerakan Dokumen') }}
                                 </h3>
                             </div>
                             <span class="text-xs font-bold text-slate-500 dark:text-slate-400">
-                                {{ count($trackingData['timeline'] ?? []) }} Peristiwa
+                                {{ count($trackingData['timeline'] ?? []) }} {{ __('Peristiwa') }}
                             </span>
                         </div>
 
                         @if (empty($trackingData['timeline']))
                             <div class="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
-                                Belum ada riwayat pergerakan dokumen tercatat.
+                                {{ __('Belum ada riwayat pergerakan dokumen tercatat.') }}
                             </div>
                         @else
                             <div class="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700/80">
@@ -1010,9 +1020,9 @@
                         <div class="glass-panel p-6 sm:p-7 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl">
                             <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-200/70 dark:border-white/10">
                                 <div>
-                                    <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">Bukti Pengiriman</span>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">{{ __('Bukti Pengiriman') }}</span>
                                     <h3 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">
-                                        Surat Jalan (DO) Masuk
+                                        {{ __('Surat Jalan (DO) Masuk') }}
                                     </h3>
                                 </div>
                                 <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-[#F47920]/10 text-[#F47920]">
@@ -1025,8 +1035,8 @@
                                     <svg class="w-8 h-8 mx-auto mb-2 text-amber-500 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
-                                    <p class="font-bold">Belum Ada Surat Jalan Masuk</p>
-                                    <p class="mt-1 text-slate-600 dark:text-slate-400">Material PO ini belum diserahkan ke Pintu Gudang Receiving PKT.</p>
+                                    <p class="font-bold">{{ __('Belum Ada Surat Jalan Masuk') }}</p>
+                                    <p class="mt-1 text-slate-600 dark:text-slate-400">{{ __('Material PO ini belum diserahkan ke Pintu Gudang Receiving PKT.') }}</p>
                                 </div>
                             @else
                                 <div class="space-y-4">
@@ -1034,7 +1044,7 @@
                                         <div class="p-4 sm:p-5 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 hover:shadow-md transition-all">
                                             <div class="flex items-start justify-between gap-3 mb-3">
                                                 <div>
-                                                    <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 block">No. Surat Jalan (DO)</span>
+                                                    <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 block">{{ __('No. Surat Jalan (DO)') }}</span>
                                                     <h4 class="text-base font-black text-slate-800 dark:text-white tracking-tight">
                                                         {{ $do->delivery_order_no }}
                                                     </h4>
@@ -1053,33 +1063,33 @@
 
                                             <div class="space-y-2 text-xs">
                                                 <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                                                    <span class="text-slate-400 dark:text-slate-500">Kode Dokumen:</span>
+                                                    <span class="text-slate-400 dark:text-slate-500">{{ __('Kode Dokumen:') }}</span>
                                                     <span class="font-mono font-semibold">{{ $do->document_code }}</span>
                                                 </div>
                                                 <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                                                    <span class="text-slate-400 dark:text-slate-500">Tanggal Tiba:</span>
+                                                    <span class="text-slate-400 dark:text-slate-500">{{ __('Tanggal Tiba:') }}</span>
                                                     <span class="font-semibold">{{ $do->received_date ? \Carbon\Carbon::parse($do->received_date)->format('d M Y') : '-' }}</span>
                                                 </div>
                                                 <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                                                    <span class="text-slate-400 dark:text-slate-500">Mode Kedatangan:</span>
+                                                    <span class="text-slate-400 dark:text-slate-500">{{ __('Mode Kedatangan:') }}</span>
                                                     <span class="font-semibold">{{ $do->receipt_mode ?? 'Standard' }}</span>
                                                 </div>
                                                 <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
-                                                    <span class="text-slate-400 dark:text-slate-500">Status Post 103:</span>
+                                                    <span class="text-slate-400 dark:text-slate-500">{{ __('Status Post 103:') }}</span>
                                                     @if ($do->post_103)
                                                         <span class="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                                            Sudah di-Post
+                                                            {{ __('Sudah di-Post') }}
                                                         </span>
                                                     @else
-                                                        <span class="text-slate-400 font-medium">Belum Post 103</span>
+                                                        <span class="text-slate-400 font-medium">{{ __('Belum Post 103') }}</span>
                                                     @endif
                                                 </div>
 
                                                 <!-- QR 103 Code if exists -->
                                                 @if ($do->qr_103_code)
                                                     <div class="mt-2 pt-2 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between">
-                                                        <span class="text-slate-400 dark:text-slate-500">Kode QR 103:</span>
+                                                        <span class="text-slate-400 dark:text-slate-500">{{ __('Kode QR 103:') }}</span>
                                                         <span class="font-mono font-bold text-[#F47920]">{{ $do->qr_103_code }}</span>
                                                     </div>
                                                 @endif
@@ -1087,7 +1097,7 @@
                                                 <!-- GRS/RDTV indicator if exists -->
                                                 @if ($do->grsRdtvItems->isNotEmpty())
                                                     <div class="mt-2 pt-2 border-t border-slate-200/50 dark:border-white/5">
-                                                        <span class="text-slate-400 dark:text-slate-500 block mb-1">Slip Resmi Diterbitkan:</span>
+                                                        <span class="text-slate-400 dark:text-slate-500 block mb-1">{{ __('Slip Resmi Diterbitkan:') }}</span>
                                                         @foreach ($do->grsRdtvItems as $gItem)
                                                             <div class="flex items-center justify-between bg-emerald-500/5 p-2 rounded-lg text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                                                                 <span>{{ $gItem->grsRdtv?->category ?? 'GRS' }}</span>
@@ -1100,7 +1110,7 @@
                                                 <!-- Delay Reason if any -->
                                                 @if ($do->delay_reason)
                                                     <div class="mt-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px]">
-                                                        <span class="font-bold block">Catatan Penundaan:</span>
+                                                        <span class="font-bold block">{{ __('Catatan Penundaan:') }}</span>
                                                         <span>{{ $do->delay_reason }}</span>
                                                         @if ($do->delay_notes)
                                                             <span class="block text-slate-500 dark:text-slate-400 mt-0.5">{{ $do->delay_notes }}</span>
@@ -1120,14 +1130,14 @@
                                 <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                                 </svg>
-                                Butuh Bantuan Terkait Dokumen?
+                                {{ __('Butuh Bantuan Terkait Dokumen?') }}
                             </h4>
                             <p class="text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
-                                Jika terdapat ketidaksesuaian data surat jalan atau dokumen GRS belum terbit melebihi SLA operasional, silakan hubungi Tim Receiving Pupuk Kalimantan Timur.
+                                {{ __('Jika terdapat ketidaksesuaian data surat jalan atau dokumen GRS belum terbit melebihi SLA operasional, silakan hubungi Tim Receiving Pupuk Kalimantan Timur.') }}
                             </p>
                             <div class="font-semibold text-slate-700 dark:text-slate-200 space-y-1 text-[11px]">
-                                <div>• Lokasi: Gudang Pusat Receiving PKT, Bontang</div>
-                                <div>• Modul: Ekspedisi & Verifikasi Penagihan</div>
+                                <div>{{ __('• Lokasi: Gudang Pusat Receiving PKT, Bontang') }}</div>
+                                <div>{{ __('• Modul: Ekspedisi & Verifikasi Penagihan') }}</div>
                             </div>
                         </div>
                     </div>
@@ -1137,13 +1147,13 @@
                 <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl overflow-hidden">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200/70 dark:border-white/10">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">Daftar Material</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">{{ __('Daftar Material') }}</span>
                             <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">
-                                Rincian Item PO & Realisasi Penerimaan Fisik
+                                {{ __('Rincian Item PO & Realisasi Penerimaan Fisik') }}
                             </h3>
                         </div>
                         <span class="text-xs font-bold text-slate-500 dark:text-slate-400">
-                            Total: {{ count($trackingData['material_items'] ?? []) }} Item Material
+                            {{ __('Total') }}: {{ count($trackingData['material_items'] ?? []) }} {{ __('Item Material') }}
                         </span>
                     </div>
 
@@ -1152,13 +1162,13 @@
                         <table class="w-full text-left text-xs sm:text-sm">
                             <thead class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-200/60 dark:border-white/10">
                                 <tr>
-                                    <th class="pb-3 px-3">Item #</th>
-                                    <th class="pb-3 px-3">Kode Material</th>
-                                    <th class="pb-3 px-3">Deskripsi Barang</th>
-                                    <th class="pb-3 px-3 text-right">Target PO</th>
-                                    <th class="pb-3 px-3 text-right">Realisasi Tiba</th>
-                                    <th class="pb-3 px-3 text-center">Status</th>
-                                    <th class="pb-3 px-3">Lokasi Gudang</th>
+                                    <th class="pb-3 px-3">{{ __('Item #') }}</th>
+                                    <th class="pb-3 px-3">{{ __('Kode Material') }}</th>
+                                    <th class="pb-3 px-3">{{ __('Deskripsi Barang') }}</th>
+                                    <th class="pb-3 px-3 text-right">{{ __('Target PO') }}</th>
+                                    <th class="pb-3 px-3 text-right">{{ __('Realisasi Tiba') }}</th>
+                                    <th class="pb-3 px-3 text-center">{{ __('Status') }}</th>
+                                    <th class="pb-3 px-3">{{ __('Lokasi Gudang') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200/50 dark:divide-white/5 font-medium text-slate-700 dark:text-slate-300">
@@ -1169,7 +1179,7 @@
                                         <td class="py-4 px-3 max-w-xs">
                                             <div class="font-bold text-slate-800 dark:text-white">{{ $item['description'] }}</div>
                                             <div class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                                                MRP: {{ $item['mrp_type'] }} • Tipe: {{ $item['material_type'] }}
+                                                MRP: {{ $item['mrp_type'] }} • {{ __('Tipe:') }} {{ $item['material_type'] }}
                                             </div>
                                         </td>
                                         <td class="py-4 px-3 text-right font-mono font-bold">

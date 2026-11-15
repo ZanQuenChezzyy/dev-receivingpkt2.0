@@ -34,10 +34,10 @@ new class extends Component {
     public function generateSuggestions()
     {
         $pool = [
-            "Cek status Penerimaan untuk PO (Nomor PO)",
-            "Cari Material Issue untuk PO (Nomor PO)",
-            "Cek status Penerimaan Material yang memiliki SN (Nomor SN)",
-            "Cek riwayat pengambilan barang PO (Nomor PO)"
+            __('Cek status Penerimaan untuk PO (Nomor PO)'),
+            __('Cari Material Issue untuk PO (Nomor PO)'),
+            __('Cek status Penerimaan Material yang memiliki SN (Nomor SN)'),
+            __('Cek riwayat pengambilan barang PO (Nomor PO)'),
         ];
         shuffle($pool);
         // Ambil 2 atau 3 saran pertanyaan secara acak
@@ -77,8 +77,8 @@ new class extends Component {
         $this->chats[] = [
             'role' => 'assistant',
             'content' => $this->isAiActive
-                ? 'Halo! Saya **ALEX**, Asisten AI Receiving PT Pupuk Kalimantan Timur. Silakan ketik **Nomor PO**, **Nomor Surat Jalan (DO)**, **Stock Number**, atau **Nomor MIR** yang ingin Anda tanyakan.'
-                : 'Mohon maaf, **ALEX — Asisten AI Receiving** PT Pupuk Kalimantan Timur saat ini sedang **Offline / Maintenance** (dalam masa pemeliharaan & training). Silakan gunakan menu **Daftar Material** atau **Formulir MIR** untuk pengecekan manual.'
+                ? __('Halo! Saya **ALEX**, Asisten AI Receiving PT Pupuk Kalimantan Timur. Silakan ketik **Nomor PO**, **Nomor Surat Jalan (DO)**, **Stock Number**, atau **Nomor MIR** yang ingin Anda tanyakan.')
+                : __('Mohon maaf, **ALEX — Asisten AI Receiving** PT Pupuk Kalimantan Timur saat ini sedang **Offline / Maintenance** (dalam masa pemeliharaan & training). Silakan gunakan menu **Daftar Material** atau **Formulir MIR** untuk pengecekan manual.')
         ];
     }
 
@@ -88,7 +88,7 @@ new class extends Component {
         if (! $this->isAiActive) {
             $this->chats[] = [
                 'role' => 'assistant',
-                'content' => 'Mohon maaf, **ALEX — Asisten AI Receiving** saat ini sedang **Offline / Maintenance**. Silakan coba kembali saat layanan telah diaktifkan.'
+                'content' => __('Mohon maaf, **ALEX — Asisten AI Receiving** saat ini sedang **Offline / Maintenance**. Silakan coba kembali saat layanan telah diaktifkan.')
             ];
             $this->message = '';
 
@@ -145,9 +145,92 @@ new class extends Component {
         $recentReceipts = $query->latest('received_date')->take(20)->get();
 
         if ($recentReceipts->isEmpty()) {
-            return "Data Penerimaan, PO, atau DO tidak ditemukan untuk kata kunci: {$kataKunci}.";
+            // Intelligent Fallback: Deteksi typo nomor PO (misal 8-9 digit yang kurang angka nol dari standar 10 digit SAP)
+            $suggestedPos = [];
+            $typoDetails = [];
+
+            foreach ($searchTerms as $term) {
+                $cleanTerm = preg_replace('/[^0-9]/', '', $term);
+                if (strlen($cleanTerm) >= 7 && strlen($cleanTerm) <= 12 && strlen($cleanTerm) !== 10) {
+                    $prefix = substr($cleanTerm, 0, 3);
+                    $suffix = substr($cleanTerm, -5);
+
+                    $matches = \App\Models\PurchaseOrderIssued::where('purchase_order_no', 'LIKE', "{$prefix}%{$suffix}")
+                        ->whereRaw('LENGTH(purchase_order_no) = 10')
+                        ->pluck('purchase_order_no')
+                        ->unique()
+                        ->take(3);
+
+                    if ($matches->isEmpty()) {
+                        $suffix4 = substr($cleanTerm, -4);
+                        $matches = \App\Models\PurchaseOrderIssued::where('purchase_order_no', 'LIKE', "{$prefix}%{$suffix4}")
+                            ->whereRaw('LENGTH(purchase_order_no) = 10')
+                            ->pluck('purchase_order_no')
+                            ->unique()
+                            ->take(3);
+                    }
+
+                    foreach ($matches as $match) {
+                        $suggestedPos[] = $match;
+                        $typoDetails[$term] = $match;
+                    }
+                }
+            }
+
+            if (!empty($suggestedPos)) {
+                $suggestedPos = array_values(array_unique($suggestedPos));
+
+                $fallbackReceipts = DeliveryOrderReceipt::with([
+                    'deliveryOrderReceiptDetails.purchaseOrderIssued', 
+                    'deliveryOrderReceiptDetails.materialIssueDetails.materialIssue',
+                    'deliveryOrderReceiptDetails.warehouseTransmittalItems.transmittal',
+                    'deliveryOrderReceiptDetails.locationReceiving',
+                    'deliveryOrderReceiptDetails.warehouseDestination',
+                    'qcHistories', 
+                    'transmittals',
+                    'grsRdtvItems.grsRdtv',
+                    'delayLogs'
+                ])->whereHas('deliveryOrderReceiptDetails.purchaseOrderIssued', function ($qPo) use ($suggestedPos) {
+                    $qPo->whereIn('purchase_order_no', $suggestedPos);
+                })->latest('received_date')->take(20)->get();
+
+                if ($fallbackReceipts->isNotEmpty()) {
+                    $typoNotes = [];
+                    foreach ($typoDetails as $wrong => $correct) {
+                        $lenWrong = strlen($wrong);
+                        $diff = strlen($correct) - $lenWrong;
+                        if ($diff > 0) {
+                            $typoNotes[] = "- Nomor PO yang diketik '{$wrong}' ({$lenWrong} digit, kurang {$diff} angka nol dari standar 10 digit SAP). Sistem otomatis mencocokkannya ke nomor PO resmi: {$correct}.";
+                        } elseif ($diff < 0) {
+                            $typoNotes[] = "- Nomor PO yang diketik '{$wrong}' ({$lenWrong} digit, kelebihan " . abs($diff) . " angka nol). Sistem otomatis mencocokkannya ke nomor PO resmi: {$correct}.";
+                        } else {
+                            $typoNotes[] = "- Nomor PO yang diketik '{$wrong}', sistem otomatis mencocokkannya ke nomor PO resmi: {$correct}.";
+                        }
+                    }
+
+                    $notice = "CATATAN SISTEM: DETEKSI TYPO NOMOR PO AKTIF!\n" .
+                        implode("\n", $typoNotes) . "\n" .
+                        "INSTRUKSI UNTUK ALEX:\n" .
+                        "1. Sampaikan secara ramah kepada pengguna bahwa nomor PO yang diketik kurang angka nol (standar PO SAP adalah 10 digit).\n" .
+                        "2. Jelaskan bahwa sistem otomatis mendeteksi dan menampilkan data untuk nomor PO yang benar (" . implode(', ', $suggestedPos) . ").\n" .
+                        "3. Tampilkan ringkasan status penerimaannya seperti biasa secara lengkap dan akurat.\n\n" .
+                        "DATA PENERIMAAN PO " . implode(', ', $suggestedPos) . ":\n\n";
+
+                    return $notice . $this->formatReceiptsData($fallbackReceipts);
+                }
+
+                $matchedStr = implode(', ', $suggestedPos);
+                return "INFORMASI: Nomor PO '{$kataKunci}' kemungkinan salah ketik (kurang angka nol). Sistem menemukan PO terkait: {$matchedStr}. Namun, belum ada data Penerimaan fisik (Delivery Order) yang masuk di gudang Receiving untuk PO tersebut.";
+            }
+
+            return "Data Penerimaan, PO, atau DO tidak ditemukan untuk kata kunci: {$kataKunci}. Pastikan nomor PO terdiri dari 10 digit SAP (contoh: 5300063366).";
         }
 
+        return $this->formatReceiptsData($recentReceipts);
+    }
+
+    private function formatReceiptsData($recentReceipts): string
+    {
         \Carbon\Carbon::setLocale('id');
 
         return $recentReceipts->map(function ($receipt) {
@@ -277,9 +360,45 @@ new class extends Component {
         $recentMirs = $mirQuery->latest('tanggal')->take(50)->get();
         
         if ($recentMirs->isEmpty()) {
+            // Intelligent Fallback: Check if user entered an 8-9 digit PO number
+            $suggestedPos = [];
+            foreach ($searchTerms as $term) {
+                $cleanTerm = preg_replace('/[^0-9]/', '', $term);
+                if (strlen($cleanTerm) >= 7 && strlen($cleanTerm) <= 12 && strlen($cleanTerm) !== 10) {
+                    $prefix = substr($cleanTerm, 0, 3);
+                    $suffix = substr($cleanTerm, -5);
+                    $matches = \App\Models\PurchaseOrderIssued::where('purchase_order_no', 'LIKE', "{$prefix}%{$suffix}")
+                        ->whereRaw('LENGTH(purchase_order_no) = 10')
+                        ->pluck('purchase_order_no')
+                        ->unique()
+                        ->take(3);
+                    foreach ($matches as $match) {
+                        $suggestedPos[] = $match;
+                    }
+                }
+            }
+
+            if (!empty($suggestedPos)) {
+                $suggestedPos = array_values(array_unique($suggestedPos));
+                $fallbackMirs = \App\Models\MaterialIssue::with([
+                    'materialIssueDetails.deliveryOrderReceiptDetail.purchaseOrderIssued'
+                ])->whereHas('materialIssueDetails.deliveryOrderReceiptDetail.purchaseOrderIssued', function ($qPo) use ($suggestedPos) {
+                    $qPo->whereIn('purchase_order_no', $suggestedPos);
+                })->latest('tanggal')->take(50)->get();
+
+                if ($fallbackMirs->isNotEmpty()) {
+                    return "CATATAN: Nomor PO '{$kataKunci}' kurang angka nol. Sistem mencocokkannya ke PO: " . implode(', ', $suggestedPos) . ".\n\n" . $this->formatMirsData($fallbackMirs);
+                }
+            }
+
             return "Data Material Issue (MIR) / Pengambilan Barang tidak ditemukan.";
         }
 
+        return $this->formatMirsData($recentMirs);
+    }
+
+    private function formatMirsData($recentMirs): string
+    {
         return "DATA PENGAMBILAN BARANG (MIR / MATERIAL ISSUE):\n" . $recentMirs->map(function ($mir) {
             $details = $mir->materialIssueDetails->map(function ($detail) {
                 $desc = $detail->deliveryOrderReceiptDetail->description ?? 'N/A';
@@ -293,9 +412,52 @@ new class extends Component {
         })->implode("\n\n-------------------\n\n");
     }
 
+    /**
+     * Cek apakah pesan pengguna membutuhkan query database (tools).
+     * Jika hanya pertanyaan umum, SOP, chit-chat, atau pertanyaan lanjutan
+     * yang konteksnya sudah ada di riwayat chat ("jadi boleh diambil tidak?"),
+     * tools dimatikan agar AI langsung menjawab secara instan (< 1 detik).
+     */
+    private function shouldProvideTools(string $userMessage): bool
+    {
+        $message = trim($userMessage);
+
+        // 1. Cek nomor identifikasi spesifik (Nomor PO 10 digit, kode material 7-10 digit)
+        if (preg_match('/\b\d{7,10}\b/', $message)) {
+            return true;
+        }
+
+        // 2. Cek format Delivery Order (DO/SJ)
+        if (preg_match('/(?:DO|SJ|surat\s*jalan)\s*[:#]?\s*[A-Za-z0-9\/\-_]+/i', $message) || preg_match('/\b\d{4,}\/[A-Za-z0-9\/-]+/', $message)) {
+            return true;
+        }
+
+        // 3. Cek format dokumen MIR spesifik (misal: "MIR-2026-001" atau "MIR 12345")
+        if (preg_match('/\bMIR[-\s]?\d+/i', $message)) {
+            return true;
+        }
+
+        // 4. Cek pencarian daftar/rekap eksplisit (misal: "daftar MIR", "riwayat pengambilan bulan ini", "daftar DO")
+        if (preg_match('/\b(daftar|list|rekap|riwayat)\b.*\b(mir|pengambilan|penerimaan|po|do|material)\b/i', $message)) {
+            return true;
+        }
+
+        // 5. Cek kata kunci pencarian eksplisit dengan target entitas
+        if (preg_match('/\b(cek|lacak|cari|periksa|status)\b.*\b(po|do|surat jalan|mir)\b/i', $message)) {
+            return true;
+        }
+
+        return false;
+    }
+
     #[On('process-ai-response')]
     public function fetchAiResponse(string $userMessage)
     {
+        @set_time_limit(180);
+        @ini_set('max_execution_time', '180');
+
+        $needsTools = $this->shouldProvideTools($userMessage);
+
         $userName = auth()->check() ? auth()->user()->name : 'Tamu';
         $sapaan = auth()->check() ? "Kak {$userName}" : "Kak";
         
@@ -348,13 +510,13 @@ new class extends Component {
                 'type' => 'function',
                 'function' => [
                     'name' => 'cari_data_penerimaan',
-                    'description' => 'Mencari data penerimaan barang (Delivery Order / PO), Transmittal, QC, dan GRS.',
+                    'description' => 'Mencari data penerimaan barang (Delivery Order / PO), Transmittal, QC, dan GRS di database. HANYA gunakan jika pengguna menyebutkan Nomor PO / DO / Material baru. JANGAN gunakan untuk pertanyaan lanjutan jika data status sudah ada di riwayat obrolan.',
                     'parameters' => [
                         'type' => 'object',
                         'properties' => [
                             'kata_kunci' => [
                                 'type' => 'string',
-                                'description' => 'Nomor PO, Nomor DO, atau kode material (gabungkan dengan spasi jika lebih dari satu).'
+                                'description' => 'Nomor PO (10 digit SAP), Nomor DO, atau kode material.'
                             ]
                         ],
                         'required' => ['kata_kunci']
@@ -365,7 +527,7 @@ new class extends Component {
                 'type' => 'function',
                 'function' => [
                     'name' => 'cari_data_pengambilan',
-                    'description' => 'Mencari riwayat data pengambilan barang (Material Issue Request / MIR).',
+                    'description' => 'Mencari riwayat data pengambilan barang (Material Issue Request / MIR) di database. HANYA gunakan jika pengguna menyebutkan nomor MIR spesifik atau meminta rekap riwayat pengambilan barang.',
                     'parameters' => [
                         'type' => 'object',
                         'properties' => [
@@ -391,32 +553,51 @@ new class extends Component {
         $ollamaUrl = config('services.ollama.url') . '/api/chat';
         $ollamaModel = 'llama3.1';
 
+        $isFirstIteration = true;
+        $isTypingStarted = false;
+
         try {
             while (true) {
-                $response = Http::withOptions([
-                    'curl' => [
-                        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
-                        CURLOPT_RESOLVE => [
-                            "ai.receivingpkt.com:443:104.21.73.54"
-                        ]
-                    ]
-                ])
-                ->connectTimeout(30)
-                ->timeout(120)
-                ->post($ollamaUrl, [
+                if ($isFirstIteration) {
+                    $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-[#F47920] font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-[#F47920] animate-pulse"></span> <span>' . __('ALEX • Menganalisis pertanyaan...') . '</span></span>', replace: true);
+                    $isFirstIteration = false;
+                }
+
+                $curlOptions = [
+                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                ];
+                if (str_contains($ollamaUrl, 'ai.receivingpkt.com')) {
+                    $curlOptions[CURLOPT_RESOLVE] = [
+                        "ai.receivingpkt.com:443:104.21.73.54",
+                    ];
+                }
+
+                $payload = [
                     'model' => $ollamaModel,
                     'messages' => $ollamaMessages,
-                    'tools' => $tools,
                     'stream' => true,
+                    'keep_alive' => '60m',
                     'options' => [
                         'temperature' => 0.15,
                         'top_p' => 0.4,
-                    ]
-                ]);
+                        'num_predict' => 384,
+                    ],
+                ];
 
-                if (!$response->successful()) {
-                    \Illuminate\Support\Facades\Log::error('Ollama API Error: ' . $response->body());
-                    $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, API mengalami gangguan: ' . $response->body()];
+                if ($needsTools) {
+                    $payload['tools'] = $tools;
+                }
+
+                $response = Http::withOptions([
+                    'curl' => $curlOptions,
+                ])
+                ->connectTimeout(15)
+                ->timeout(180)
+                ->post($ollamaUrl, $payload);
+
+                if (! $response->successful()) {
+                    \Illuminate\Support\Facades\Log::error('Ollama API Error: '.$response->body());
+                    $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, API mengalami gangguan: '.$response->body()];
                     break;
                 }
 
@@ -424,9 +605,10 @@ new class extends Component {
                 $fullReply = '';
                 $toolCalls = [];
 
-                while (!$body->eof()) {
+                while (! $body->eof()) {
+                    @set_time_limit(120);
                     $line = '';
-                    while (!$body->eof()) {
+                    while (! $body->eof()) {
                         $char = $body->read(1);
                         $line .= $char;
                         if ($char === "\n") {
@@ -439,6 +621,11 @@ new class extends Component {
                     $data = json_decode($line, true);
                     if ($data) {
                         if (isset($data['message']['content']) && $data['message']['content'] !== '') {
+                            if (!$isTypingStarted) {
+                                $isTypingStarted = true;
+                                $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-[#F47920] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-[#F47920] animate-ping"></span> <span>' . __('ALEX • Mengetik...') . '</span></span>', replace: true);
+                            }
+
                             $fullReply .= $data['message']['content'];
                             $renderedHtml = str($fullReply)->markdown([
                                 'html_input' => 'escape',
@@ -469,12 +656,34 @@ new class extends Component {
                     break;
                 }
 
-                $this->stream(to: 'ai-reply-stream', content: '<div class="italic text-slate-500 dark:text-slate-400 text-[12px] flex items-center gap-1.5 py-1"><svg class="w-3.5 h-3.5 animate-spin text-[#F47920]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Mencari data ke database...</div>', replace: true);
+                // AI is actively querying the database
+                $toolDetail = __('Mencari data ke database...');
+                foreach ($toolCalls as $call) {
+                    $funcName = $call['function']['name'] ?? '';
+                    $args = $call['function']['arguments'] ?? [];
+                    $keyword = trim($args['kata_kunci'] ?? '');
+
+                    if ($funcName === 'cari_data_penerimaan') {
+                        $toolDetail = $keyword ? __('Mencari data PO/DO: :key di database...', ['key' => '"' . $keyword . '"']) : __('Mencari data penerimaan PO/DO di database...');
+                    } elseif ($funcName === 'cari_data_pengambilan') {
+                        $toolDetail = $keyword ? __('Mencari data MIR: :key di database...', ['key' => '"' . $keyword . '"']) : __('Mencari data pengeluaran (MIR) di database...');
+                    }
+                }
+
+                // 1. Status header: Realtime Sky Blue "ALEX • Mencari ke database..."
+                $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-sky-500 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-ping"></span> <span>' . __('ALEX • Mencari ke database...') . '</span></span>', replace: true);
+
+                // 2. Bubble content: Spinner + detail pencarian yang selaras
+                $bubbleSearchHtml = '<div class="italic text-slate-600 dark:text-slate-300 text-[12.5px] flex items-center gap-2 py-1 px-1">' .
+                    '<svg class="w-3.5 h-3.5 animate-spin text-sky-500 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' .
+                    '<span>' . e($toolDetail) . '</span>' .
+                    '</div>';
+                $this->stream(to: 'ai-reply-stream', content: $bubbleSearchHtml, replace: true);
 
                 foreach ($toolCalls as $call) {
                     $funcName = $call['function']['name'];
                     $args = $call['function']['arguments'] ?? [];
-                    
+
                     $result = '';
                     if ($funcName === 'cari_data_penerimaan') {
                         $result = $this->toolCariDataPenerimaan($args['kata_kunci'] ?? '');
@@ -483,20 +692,35 @@ new class extends Component {
                     } else {
                         $result = 'Unknown tool';
                     }
-                    
-                    $toolMsg = ['role' => 'tool', 'name' => $funcName, 'content' => (string)$result];
+
+                    $toolMsg = ['role' => 'tool', 'name' => $funcName, 'content' => (string) $result];
                     $ollamaMessages[] = $toolMsg;
                     $this->chats[] = $toolMsg;
                 }
-            }
-            
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Ollama Connection Exception: ' . $e->getMessage());
-            $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, koneksi ke AI terputus. Silakan coba lagi.'];
-        }
 
-        $this->isTyping = false;
-        $this->generateSuggestions();
+                // 3. Database query selesai! Status beralih ke "Menyusun rangkuman..."
+                $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-amber-500 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> <span>' . __('ALEX • Menyusun rangkuman...') . '</span></span>', replace: true);
+
+                $bubbleFinHtml = '<div class="italic text-slate-600 dark:text-slate-300 text-[12.5px] flex items-center gap-2 py-1 px-1">' .
+                    '<svg class="w-3.5 h-3.5 animate-spin text-amber-500 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' .
+                    '<span>' . __('Data ditemukan, merangkum jawaban...') . '</span>' .
+                    '</div>';
+                $this->stream(to: 'ai-reply-stream', content: $bubbleFinHtml, replace: true);
+
+                // Reset flag typing dan matikan tools untuk iterasi berikutnya (karena data sudah berhasil diambil)
+                $isTypingStarted = false;
+                $needsTools = false;
+            }
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Ollama Connection Exception: '.$e->getMessage());
+            $this->chats[] = ['role' => 'assistant', 'content' => __('Maaf, respon AI membutuhkan waktu terlalu lama atau koneksi terputus. Silakan coba lagi.')];
+            $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-rose-500 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> <span>'.__('Koneksi Terputus').'</span></span>', replace: true);
+            $this->stream(to: 'ai-reply-stream', content: '<div class="text-rose-500 dark:text-rose-400 text-xs py-1">'.__('Maaf, respon AI membutuhkan waktu terlalu lama atau koneksi terputus. Silakan ajukan pertanyaan yang lebih spesifik atau coba lagi.').'</div>', replace: true);
+        } finally {
+            $this->isTyping = false;
+            $this->generateSuggestions();
+        }
     }
 };
 ?>
@@ -520,11 +744,11 @@ new class extends Component {
             </span>
             <div class="text-left leading-tight">
                 @if($isAiActive)
-                    <span class="block text-[10px] font-bold uppercase tracking-wider text-[#F47920]">ALEX AI</span>
-                    <span class="block text-xs font-semibold text-slate-800 dark:text-white whitespace-nowrap">Tanya ALEX • Cek PO/DO</span>
+                    <span class="block text-[10px] font-bold uppercase tracking-wider text-[#F47920]">{{ __('ALEX AI') }}</span>
+                    <span class="block text-xs font-semibold text-slate-800 dark:text-white whitespace-nowrap">{{ __('Tanya ALEX • Cek PO/DO') }}</span>
                 @else
-                    <span class="block text-[10px] font-bold uppercase tracking-wider text-amber-500">ALEX AI</span>
-                    <span class="block text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">Offline • Maintenance</span>
+                    <span class="block text-[10px] font-bold uppercase tracking-wider text-amber-500">{{ __('ALEX AI') }}</span>
+                    <span class="block text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">{{ __('Offline • Maintenance') }}</span>
                 @endif
             </div>
         </div>
@@ -537,8 +761,8 @@ new class extends Component {
             @endif
 
             <button wire:click="toggleChat"
-                aria-label="Buka ALEX Asisten AI Receiving"
-                class="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full flex items-center justify-center {{ $isAiActive ? 'bg-[#F47920] hover:bg-[#e06b18] shadow-[0_8px_24px_rgba(244,121,32,0.45)]' : 'bg-slate-700 hover:bg-slate-800 shadow-md' }} text-white border border-white/20 transition-all duration-200 active:scale-95 cursor-pointer">
+                aria-label="{{ __('Buka ALEX Asisten AI Receiving') }}"
+                class="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full flex items-center justify-center {{ $isAiActive ? 'bg-[#F47920] hover:bg-[#e06b18] shadow-[0_8px_24px_rgba(244,121,32,0.45)]' : 'bg-slate-700 hover:bg-slate-800 shadow-md' }} text-white border border-white/20 transition-transform duration-200 ease-[cubic-bezier(0.34,1.4,0.64,1)] active:scale-90 hover:scale-105 cursor-pointer">
 
                 <!-- Badge Notifikasi Online/Offline -->
                 <span x-show="!$wire.isOpen"
@@ -566,12 +790,12 @@ new class extends Component {
         </div>
     </div>
 
-    <!-- Jendela Chat (Apple Sheet Elevated UI) -->
+    <!-- Jendela Chat (Apple Sheet Elevated UI with Framer Motion Spring) -->
     <div x-show="$wire.isOpen" style="display: none;" 
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-y-6 scale-95"
+        x-transition:enter="transition duration-350 ease-[cubic-bezier(0.34,1.25,0.64,1)] transform origin-bottom-right"
+        x-transition:enter-start="opacity-0 translate-y-8 scale-90"
         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave="transition duration-200 ease-in transform origin-bottom-right"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-6 scale-95"
         class="fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:w-[410px] md:max-w-[410px] h-[100dvh] md:h-[39rem] bg-white/95 dark:bg-[#07111e]/95 backdrop-blur-3xl md:rounded-[2rem] border-0 md:border border-black/[0.08] dark:border-white/[0.1] shadow-2xl overflow-hidden flex flex-col z-[100] md:z-auto" id="tour-chatbot-window">
@@ -601,27 +825,27 @@ new class extends Component {
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">ALEX</h3>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{{ __('ALEX') }}</h3>
                         <span class="px-2 py-0.5 rounded-full text-[9px] font-semibold {{ $isAiActive ? 'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/12 text-amber-600 dark:text-amber-400' }}">
                             {{ $isAiActive ? 'Online' : 'Offline' }}
                         </span>
                     </div>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium tracking-tight">
-                        Asisten AI Receiving • Pupuk Kaltim
+                        {{ __('Asisten AI Receiving • Pupuk Kaltim') }}
                     </p>
                 </div>
             </div>
 
             <div class="flex items-center gap-1.5">
                 <button wire:click="clearChat"
-                    title="Mulai Ulang Obrolan"
+                    title="{{ __('Mulai Ulang Obrolan') }}"
                     class="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all p-2 rounded-full hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-95 cursor-pointer">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                 </button>
                 <button wire:click="toggleChat"
-                    title="Tutup Jendela ALEX"
+                    title="{{ __('Tutup Jendela ALEX') }}"
                     class="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all p-2 rounded-full hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-95 cursor-pointer">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
@@ -632,13 +856,13 @@ new class extends Component {
 
         <!-- Sub-Header Pintasan Cepat (Apple Pill Shortcuts) -->
         <div class="px-4 py-2 bg-slate-50/90 dark:bg-[#0c1626]/90 border-b border-black/[0.05] dark:border-white/[0.08] flex items-center justify-between gap-2 text-[11px]">
-            <span class="font-medium text-slate-500 dark:text-slate-400 truncate">Pintasan:</span>
+            <span class="font-medium text-slate-500 dark:text-slate-400 truncate">{{ __('Pintasan:') }}</span>
             <div class="flex items-center gap-1.5 shrink-0">
                 <a href="{{ route('frontend.list-material') }}" wire:navigate class="px-2.5 py-1 rounded-full bg-white dark:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.1] font-semibold text-slate-700 dark:text-slate-200 hover:border-[#F47920] hover:text-[#F47920] transition-colors shadow-2xs">
-                    Daftar Material
+                    {{ __('Daftar Material') }}
                 </a>
                 <a href="{{ route('frontend.mir.create') }}" wire:navigate class="px-2.5 py-1 rounded-full bg-white dark:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.1] font-semibold text-slate-700 dark:text-slate-200 hover:border-[#F47920] hover:text-[#F47920] transition-colors shadow-2xs">
-                    Formulir MIR
+                    {{ __('Formulir MIR') }}
                 </a>
             </div>
         </div>
@@ -650,7 +874,7 @@ new class extends Component {
             <div class="flex justify-center">
                 <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.06] dark:border-white/[0.08]">
                     <span class="w-1.5 h-1.5 rounded-full {{ $isAiActive ? 'bg-[#F47920]' : 'bg-amber-500' }}"></span>
-                    <span class="text-[10px] font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400">Percakapan Hari Ini</span>
+                    <span class="text-[10px] font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400">{{ __('Percakapan Hari Ini') }}</span>
                 </div>
             </div>
 
@@ -661,17 +885,17 @@ new class extends Component {
                         <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <span>Mode Pemeliharaan (ALEX Offline)</span>
+                        <span>{{ __('Mode Pemeliharaan (ALEX Offline)') }}</span>
                     </div>
                     <p class="leading-relaxed text-[11.5px] text-amber-800 dark:text-amber-200/90">
-                        ALEX — Asisten AI Receiving sedang dinonaktifkan sementara oleh Administrator. Bagi User PKT, silakan cek kedatangan barang atau ajukan pengambilan melalui tombol di bawah ini:
+                        {{ __('ALEX — Asisten AI Receiving sedang dinonaktifkan sementara oleh Administrator. Bagi User PKT, silakan cek kedatangan barang atau ajukan pengambilan melalui tombol di bawah ini:') }}
                     </p>
                     <div class="grid grid-cols-2 gap-2 pt-1">
                         <a href="{{ route('frontend.list-material') }}" wire:navigate class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-[#F47920] hover:bg-[#e06b18] text-white font-semibold text-[11px] shadow-sm transition-colors text-center">
-                            <span>Daftar Material</span>
+                            <span>{{ __('Daftar Material') }}</span>
                         </a>
                         <a href="{{ route('frontend.mir.create') }}" wire:navigate class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-white dark:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.1] text-slate-800 dark:text-white font-semibold text-[11px] hover:bg-black/[0.02] transition-colors text-center">
-                            <span>Formulir MIR</span>
+                            <span>{{ __('Formulir MIR') }}</span>
                         </a>
                     </div>
                 </div>
@@ -702,7 +926,7 @@ new class extends Component {
                             </div>
                         </div>
                         <div class="flex flex-col gap-1 min-w-0">
-                            <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 ml-1">ALEX</span>
+                            <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 ml-1">{{ __('ALEX') }}</span>
                             <div class="bg-white dark:bg-[#0c1626] px-4 py-3 rounded-2xl rounded-tl-sm shadow-xs border border-black/[0.06] dark:border-white/[0.08] text-[13.5px] text-slate-800 dark:text-slate-100 leading-relaxed ai-markdown-content min-w-0 overflow-hidden">
                                 {!! str($chat['content'])->markdown([
                                     'html_input' => 'escape',
@@ -714,7 +938,7 @@ new class extends Component {
                 @else
                     <!-- Bubble User (Apple Accent Bubble) -->
                     <div class="flex flex-col items-end w-full animate-fade-in-up">
-                        <span class="text-[10px] font-medium text-slate-400 mr-1 mb-1">Anda</span>
+                        <span class="text-[10px] font-medium text-slate-400 mr-1 mb-1">{{ __('Anda') }}</span>
                         <div class="bg-[#F47920] text-white px-4 py-2.5 rounded-2xl rounded-tr-sm shadow-xs text-[13.5px] font-medium leading-relaxed max-w-[85%] relative overflow-hidden">
                             <span class="relative z-10 block">{{ $chat['content'] }}</span>
                         </div>
@@ -724,33 +948,9 @@ new class extends Component {
 
             <!-- Loading Indicator & Streaming Bubble -->
             @if($isTyping)
-                <div class="flex items-start gap-2.5 max-w-[94%] group" wire:key="typing-indicator" x-data="{
-                    texts: [
-                        'Menganalisis pertanyaan...',
-                        'Mencari data PO/DO terkait...',
-                        'Menyusun riwayat pergerakan material...',
-                        'ALEX sedang merangkai balasan...'
-                    ],
-                    currentIndex: 0,
-                    interval: null,
-                    isStreaming: false,
-                    init() {
-                        this.interval = setInterval(() => {
-                            this.currentIndex = (this.currentIndex + 1) % this.texts.length;
-                        }, 2500);
-                        
-                        const observer = new MutationObserver(() => {
-                            this.isStreaming = true;
-                            if (this.interval) clearInterval(this.interval);
-                        });
-                        observer.observe(this.$refs.streamContainer, { childList: true, subtree: true, characterData: true });
-                    },
-                    destroy() {
-                        if (this.interval) clearInterval(this.interval);
-                    }
-                }">
+                <div class="flex items-start gap-2.5 max-w-[94%] group" wire:key="typing-indicator">
                     <div class="relative flex-shrink-0 mt-1">
-                        <div class="w-7 h-7 rounded-full bg-[#F47920]/15 text-[#F47920] flex items-center justify-center" :class="{'animate-pulse': !isStreaming}">
+                        <div class="w-7 h-7 rounded-full bg-[#F47920]/15 text-[#F47920] flex items-center justify-center animate-pulse">
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 8V4H8"></path>
                                 <rect width="16" height="12" x="4" y="8" rx="2"></rect>
@@ -762,14 +962,22 @@ new class extends Component {
                         </div>
                     </div>
                     <div class="flex flex-col gap-1 min-w-0 w-full overflow-hidden">
-                        <span class="text-[10px] font-semibold text-[#F47920] ml-1" x-text="isStreaming ? 'ALEX • Mengetik...' : texts[currentIndex]">Berpikir...</span>
+                        <!-- Realtime AI Status Header Stream -->
+                        <span class="text-[10px] font-semibold text-[#F47920] ml-1 flex items-center gap-1.5 select-none transition-all duration-200" 
+                              wire:stream="ai-status-stream">
+                            <span class="inline-flex items-center gap-1.5 text-[#F47920]">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#F47920] animate-pulse"></span>
+                                <span>{{ __('ALEX • Menganalisis...') }}</span>
+                            </span>
+                        </span>
+
                         <div class="bg-white dark:bg-[#0c1626] px-4 py-3 rounded-2xl rounded-tl-sm shadow-xs border border-[#F47920]/30 text-[13.5px] text-slate-800 dark:text-slate-100 leading-relaxed ai-markdown-content min-w-[60px] w-fit"
                              wire:stream="ai-reply-stream" 
                              x-ref="streamContainer">
                             <div class="flex items-center gap-1.5 h-5 px-1">
-                                <span class="w-2 h-2 bg-[#F47920] rounded-full animate-bounce"></span>
-                                <span class="w-2 h-2 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.15s"></span>
-                                <span class="w-2 h-2 bg-[#F47920] rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+                                <span class="w-2 h-2 bg-[#F47920] rounded-full animate-spring-wave" style="animation-delay: 0s"></span>
+                                <span class="w-2 h-2 bg-[#F47920] rounded-full animate-spring-wave" style="animation-delay: 0.18s"></span>
+                                <span class="w-2 h-2 bg-[#F47920] rounded-full animate-spring-wave" style="animation-delay: 0.36s"></span>
                             </div>
                         </div>
                     </div>
@@ -784,7 +992,7 @@ new class extends Component {
                             <svg class="w-3.5 h-3.5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
-                            Saran Pertanyaan
+                            {{ __('Saran Pertanyaan') }}
                         </span>
                     </div>
                     <div class="flex flex-col gap-1.5">
@@ -815,7 +1023,7 @@ new class extends Component {
                  x-init="$watch('$wire.message', () => { setTimeout(() => resize(), 10) })"
             >
 
-                <textarea wire:model="message" x-ref="input" placeholder="{{ $isAiActive ? 'Tanya ALEX seputar nomor PO, DO, atau material...' : 'ALEX Asisten AI sedang Offline...' }}"
+                <textarea wire:model="message" x-ref="input" placeholder="{{ $isAiActive ? __('Tanya ALEX seputar nomor PO, DO, atau material...') : __('ALEX Asisten AI sedang Offline...') }}"
                     class="w-full pt-1.5 pb-1 pr-2 bg-transparent text-base md:text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed font-normal resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 max-h-[120px] leading-relaxed"
                     required autocomplete="off" @disabled($isTyping || !$isAiActive)
                     @input="resize()"
@@ -827,7 +1035,7 @@ new class extends Component {
                     <div class="flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full {{ $isAiActive ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
                         <span class="text-[10px] font-medium text-slate-400 tracking-tight">
-                            ALEX • <span class="{{ $isAiActive ? 'text-[#F47920]' : 'text-amber-500' }}">{{ $isAiActive ? 'Online' : 'Offline' }}</span>
+                            {{ __('ALEX •') }} <span class="{{ $isAiActive ? 'text-[#F47920]' : 'text-amber-500' }}">{{ $isAiActive ? 'Online' : 'Offline' }}</span>
                         </span>
                     </div>
 
@@ -835,7 +1043,7 @@ new class extends Component {
                     <button type="submit"
                         class="px-3.5 py-1.5 {{ $isAiActive ? 'bg-[#F47920] hover:bg-[#e06b18]' : 'bg-slate-400 dark:bg-slate-700' }} rounded-full flex items-center justify-center gap-1.5 text-white text-xs font-semibold shadow-xs transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
                         @disabled($isTyping || !$isAiActive)>
-                        <span>Kirim</span>
+                        <span>{{ __('Kirim') }}</span>
                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path>
                         </svg>

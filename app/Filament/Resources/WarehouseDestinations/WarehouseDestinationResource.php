@@ -22,22 +22,22 @@ class WarehouseDestinationResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Data Master';
+        return __('Data Master');
     }
 
     public static function getNavigationLabel(): string
     {
-        return 'Gudang Tujuan';
+        return __('Gudang Tujuan');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Gudang Tujuan';
+        return __('Gudang Tujuan');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Gudang Tujuan';
+        return __('Gudang Tujuan');
     }
 
     protected static ?string $recordTitleAttribute = 'name';

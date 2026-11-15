@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ChemicalQcTuvs;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\ChemicalQcTuvs\Pages\ManageChemicalQcTuvs;
 use App\Models\ChemicalQcTuv;
 use BackedEnum;
@@ -27,6 +28,8 @@ use UnitEnum;
 
 class ChemicalQcTuvResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = ChemicalQcTuv::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Data Master';
@@ -37,17 +40,17 @@ class ChemicalQcTuvResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'QC Karung';
+        return __('QC Karung');
     }
 
     public static function getModelLabel(): string
     {
-        return 'QC Karung';
+        return __('QC Karung');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'QC Karung';
+        return __('QC Karung');
     }
 
     public static function form(Schema $schema): Schema

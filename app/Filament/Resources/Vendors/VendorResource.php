@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Vendors;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\Vendors\Pages\CreateVendor;
 use App\Filament\Resources\Vendors\Pages\EditVendor;
 use App\Filament\Resources\Vendors\Pages\ListVendors;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class VendorResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = Vendor::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Data Master';
@@ -28,17 +31,17 @@ class VendorResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Data Vendor';
+        return __('Data Vendor');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Vendor';
+        return __('Vendor');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Data Vendor';
+        return __('Data Vendor');
     }
 
     public static function form(Schema $schema): Schema

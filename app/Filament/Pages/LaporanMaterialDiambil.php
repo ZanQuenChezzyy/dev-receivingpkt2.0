@@ -32,14 +32,19 @@ class LaporanMaterialDiambil extends Page implements HasTable
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-document-magnifying-glass';
 
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Laporan');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Laporan Material Diambil';
+        return __('Laporan Material Diambil');
     }
 
     public function getTitle(): string|Htmlable
     {
-        return 'Laporan Material Diambil (PD & Nonstock)';
+        return __('Laporan Material Diambil (PD & Nonstock)');
     }
 
     protected string $view = 'filament.pages.laporan-material-diambil';

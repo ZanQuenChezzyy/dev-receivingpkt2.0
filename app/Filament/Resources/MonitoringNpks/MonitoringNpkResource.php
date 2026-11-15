@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\MonitoringNpks;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\MonitoringNpks\Pages\CreateMonitoringNpk;
 use App\Filament\Resources\MonitoringNpks\Pages\EditMonitoringNpk;
 use App\Filament\Resources\MonitoringNpks\Pages\ListMonitoringNpks;
@@ -22,6 +23,8 @@ use UnitEnum;
 
 class MonitoringNpkResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = MonitoringNpk::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Penerimaan Receiving';
@@ -34,17 +37,17 @@ class MonitoringNpkResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Monitoring NPK';
+        return __('Monitoring NPK');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Monitoring NPK';
+        return __('Monitoring NPK');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Monitoring NPK';
+        return __('Monitoring NPK');
     }
 
     public static function hitungSisaDbByItem(int $poTerbitId, ?int $currentMonitoringId): array

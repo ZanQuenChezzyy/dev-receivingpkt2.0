@@ -30,17 +30,17 @@ class WarehouseTransmittalResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Transmittal Gudang';
+        return __('Transmittal Gudang');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Transmittal Gudang';
+        return __('Transmittal Gudang');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Transmittal Gudang';
+        return __('Transmittal Gudang');
     }
 
     protected static ?string $recordTitleAttribute = 'transmittal_no';

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DeliveryOrderReceiptDetails;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\DeliveryOrderReceiptDetails\Pages\ManageDeliveryOrderReceiptDetails;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\DeliveryOrderReceiptDetail;
@@ -35,6 +36,8 @@ use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 class DeliveryOrderReceiptDetailResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = DeliveryOrderReceiptDetail::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;
@@ -47,17 +50,17 @@ class DeliveryOrderReceiptDetailResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Detail Penerimaan DO';
+        return __('Detail Penerimaan DO');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Detail Penerimaan DO';
+        return __('Detail Penerimaan DO');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Detail Penerimaan DO';
+        return __('Detail Penerimaan DO');
     }
 
     public static function form(Schema $schema): Schema

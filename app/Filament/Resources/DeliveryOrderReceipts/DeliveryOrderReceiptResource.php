@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DeliveryOrderReceipts;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\DeliveryOrderReceipts\Pages\CreateDeliveryOrderReceipt;
 use App\Filament\Resources\DeliveryOrderReceipts\Pages\EditDeliveryOrderReceipt;
 use App\Filament\Resources\DeliveryOrderReceipts\Pages\ListDeliveryOrderReceipts;
@@ -22,6 +23,8 @@ use UnitEnum;
 
 class DeliveryOrderReceiptResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = DeliveryOrderReceipt::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Penerimaan Receiving';
@@ -34,17 +37,17 @@ class DeliveryOrderReceiptResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Penerimaan DO';
+        return __('Penerimaan DO');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Penerimaan DO';
+        return __('Penerimaan DO');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Penerimaan DO';
+        return __('Penerimaan DO');
     }
 
     public static function form(Schema $schema): Schema

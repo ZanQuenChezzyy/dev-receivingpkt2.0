@@ -3,11 +3,9 @@
 namespace App\Livewire\Frontend;
 
 use App\Models\DeliveryOrderReceiptDetail;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-#[Title('Daftar Material PD & Non-Stock')]
 class PdNonstockList extends Component
 {
     use WithPagination;
@@ -27,6 +25,11 @@ class PdNonstockList extends Component
     public function setTab($tab)
     {
         $this->activeTab = $tab;
+        $this->resetPage();
+    }
+
+    public function updatedActiveTab(): void
+    {
         $this->resetPage();
     }
 
@@ -68,6 +71,8 @@ class PdNonstockList extends Component
 
     public function render()
     {
-        return view('livewire.frontend.pd-nonstock-list')->layout('components.layouts.frontend');
+        return view('livewire.frontend.pd-nonstock-list')
+            ->layout('components.layouts.frontend')
+            ->title(__('Daftar Material PD & Non-Stock'));
     }
 }

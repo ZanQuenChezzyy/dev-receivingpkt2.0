@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InvoicingReceipts;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\InvoicingReceipts\Pages\CreateInvoicingReceipt;
 use App\Filament\Resources\InvoicingReceipts\Pages\EditInvoicingReceipt;
 use App\Filament\Resources\InvoicingReceipts\Pages\ListInvoicingReceipts;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class InvoicingReceiptResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = InvoicingReceipt::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Penerimaan Jasa / Invoice';
@@ -28,17 +31,17 @@ class InvoicingReceiptResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Invoice Barang';
+        return __('Invoice Barang');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Invoice Barang';
+        return __('Invoice Barang');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Invoice Barang';
+        return __('Invoice Barang');
     }
 
     public static function form(Schema $schema): Schema

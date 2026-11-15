@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PurchaseOrderIssueds;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\PurchaseOrderIssueds\Pages\CreatePurchaseOrderIssued;
 use App\Filament\Resources\PurchaseOrderIssueds\Pages\EditPurchaseOrderIssued;
 use App\Filament\Resources\PurchaseOrderIssueds\Pages\ListPurchaseOrderIssueds;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 class PurchaseOrderIssuedResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = PurchaseOrderIssued::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Data Master';
@@ -29,17 +32,17 @@ class PurchaseOrderIssuedResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Purchase Order Terbit';
+        return __('Purchase Order Terbit');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Purchase Order Terbit';
+        return __('Purchase Order Terbit');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Purchase Order Terbit';
+        return __('Purchase Order Terbit');
     }
 
     protected static ?string $recordTitleAttribute = 'purchase_order_and_item';

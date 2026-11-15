@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\LocationReceivings;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\LocationReceivings\Pages\ManageLocationReceivings;
 use App\Models\LocationReceiving;
 use BackedEnum;
@@ -23,6 +24,8 @@ use UnitEnum;
 
 class LocationReceivingResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = LocationReceiving::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Data Master';
@@ -33,17 +36,17 @@ class LocationReceivingResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Lokasi Receiving';
+        return __('Lokasi Receiving');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Lokasi Receiving';
+        return __('Lokasi Receiving');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Lokasi Receiving';
+        return __('Lokasi Receiving');
     }
 
     public static function form(Schema $schema): Schema

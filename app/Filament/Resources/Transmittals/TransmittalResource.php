@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Transmittals;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\Transmittals\Pages\BulkScanTransmittal;
 use App\Filament\Resources\Transmittals\Pages\CreateTransmittal;
 use App\Filament\Resources\Transmittals\Pages\EditTransmittal;
@@ -20,6 +21,8 @@ use UnitEnum;
 
 class TransmittalResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = Transmittal::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Transaksi';
@@ -32,17 +35,17 @@ class TransmittalResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Pengajuan QC';
+        return __('Pengajuan QC');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Pengajuan QC';
+        return __('Pengajuan QC');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Pengajuan QC';
+        return __('Pengajuan QC');
     }
 
     public static function form(Schema $schema): Schema

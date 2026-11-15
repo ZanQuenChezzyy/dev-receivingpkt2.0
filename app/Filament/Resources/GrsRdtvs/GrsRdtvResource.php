@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\GrsRdtvs;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\GrsRdtvs\Pages\CreateGrsRdtv;
 use App\Filament\Resources\GrsRdtvs\Pages\EditGrsRdtv;
 use App\Filament\Resources\GrsRdtvs\Pages\ListGrsRdtvs;
@@ -17,6 +18,8 @@ use Filament\Tables\Table;
 
 class GrsRdtvResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = GrsRdtv::class;
 
     protected static string|\UnitEnum|null $navigationGroup = 'Transaksi';
@@ -29,17 +32,17 @@ class GrsRdtvResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'GRS & RDTV';
+        return __('GRS & RDTV');
     }
 
     public static function getModelLabel(): string
     {
-        return 'GRS & RDTV';
+        return __('GRS & RDTV');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'GRS & RDTV';
+        return __('GRS & RDTV');
     }
 
     public static function form(Schema $schema): Schema

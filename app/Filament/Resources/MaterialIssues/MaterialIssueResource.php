@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\MaterialIssues;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\MaterialIssues\Pages\CreateMaterialIssue;
 use App\Filament\Resources\MaterialIssues\Pages\EditMaterialIssue;
 use App\Filament\Resources\MaterialIssues\Pages\ListMaterialIssues;
@@ -18,6 +19,8 @@ use UnitEnum;
 
 class MaterialIssueResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = MaterialIssue::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Pengeluaran Material';
@@ -30,17 +33,17 @@ class MaterialIssueResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Material Issue (MIR)';
+        return __('Material Issue (MIR)');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Material Issue (MIR)';
+        return __('Material Issue (MIR)');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Material Issue (MIR)';
+        return __('Material Issue (MIR)');
     }
 
     public static function getNavigationBadge(): ?string

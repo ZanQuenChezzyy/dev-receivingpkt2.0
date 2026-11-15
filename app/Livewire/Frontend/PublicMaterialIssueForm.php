@@ -538,6 +538,7 @@ class PublicMaterialIssueForm extends Component
     #[Layout('components.layouts.frontend')]
     public function render()
     {
-        return view('livewire.frontend.public-material-issue-form');
+        return view('livewire.frontend.public-material-issue-form')
+            ->title(__('Formulir Pengambilan Barang (MIR)'));
     }
 }

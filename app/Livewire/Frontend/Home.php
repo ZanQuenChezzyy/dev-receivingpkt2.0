@@ -3,10 +3,8 @@
 namespace App\Livewire\Frontend;
 
 use App\Models\Setting;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Title('Welcome - Receiving Pupuk Kalimantan Timur v2.0')]
 class Home extends Component
 {
     public string $quickSearch = '';
@@ -37,6 +35,6 @@ class Home extends Component
 
         return view('livewire.frontend.home', [
             'aiSettingActive' => $aiSettingActive,
-        ])->layout('components.layouts.frontend');
+        ])->layout('components.layouts.frontend')->title(__('Welcome - Receiving Pupuk Kalimantan Timur v2.0'));
     }
 }

@@ -15,31 +15,49 @@
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#F47920]"></span>
                 </span>
-                <span class="text-xs font-bold tracking-widest uppercase text-slate-600 dark:text-[#F47920]">Receiving Pupuk Kalimantan Timur</span>
+                <span class="text-xs font-bold tracking-widest uppercase text-slate-600 dark:text-[#F47920]">{{ __('Receiving Pupuk Kalimantan Timur') }}</span>
             </div>
             
             <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-800 dark:text-white tracking-tight mb-6">
-                Material <br class="hidden sm:block"/>
-                <span class="text-transparent bg-clip-text bg-linear-to-r from-[#F47920] to-[#BE5A27] dark:from-orange-400 dark:to-[#F47920]">Siap Ambil</span>
+                {{ __('Material') }} <br class="hidden sm:block"/>
+                <span class="text-transparent bg-clip-text bg-linear-to-r from-[#F47920] to-[#BE5A27] dark:from-orange-400 dark:to-[#F47920]">{{ __('Siap Ambil') }}</span>
             </h1>
             
             <p class="text-base sm:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
-                Daftar barang berjenis PD (Pembelian Langsung) dan Non-Stock yang sudah tiba di gudang Receiving.
+                {{ __('Daftar barang berjenis PD (Pembelian Langsung) dan Non-Stock yang sudah tiba di gudang Receiving.') }}
             </p>
         </div>
 
         <!-- Apple-Style Segmented Controls (Tabs) & Search -->
         <div class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
             
-            <!-- Apple Segmented Control Tabs -->
-            <div class="apple-segmented-track w-full md:w-auto">
-                <button wire:click="setTab('PD')" 
-                        class="apple-segmented-item flex-1 md:w-44 {{ $activeTab === 'PD' ? 'apple-segmented-item-active' : 'apple-segmented-item-inactive' }}">
-                    Material PD
+            <!-- Apple Segmented Control Tabs (Framer Motion Spring Slider) -->
+            <div x-data="{ pressing: false }"
+                 @mousedown="pressing = true"
+                 @mouseup="pressing = false"
+                 @mouseleave="pressing = false"
+                 wire:key="material-tabs-segmented-control"
+                 class="relative grid grid-cols-2 p-1 rounded-2xl bg-slate-200/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-300/70 dark:border-white/10 shadow-[inset_0_1px_3px_rgba(0,0,0,0.12)] w-full md:w-96 select-none overflow-hidden transition-transform duration-150 ease-out"
+                 :class="pressing ? 'scale-[0.98]' : 'scale-100'">
+                <!-- Spring Pill Indicator -->
+                <div class="segmented-spring-pill bg-white dark:bg-slate-700/95 border border-black/5 dark:border-white/20 shadow-[0_3px_12px_-1px_rgba(0,0,0,0.14),0_1px_3px_0_rgba(0,0,0,0.08)] dark:shadow-[0_4px_14px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.25)]"
+                     style="transform: translateX({{ $activeTab === 'NONSTOCK' ? '100%' : '0%' }});"
+                     :style="`transform: translateX(${$wire.activeTab === 'NONSTOCK' ? '100%' : '0%'});`"
+                ></div>
+
+                <button type="button"
+                        wire:click="setTab('PD')" 
+                        @click="$wire.activeTab = 'PD'"
+                        class="relative z-10 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-center transition-all duration-200 select-none cursor-pointer {{ $activeTab === 'PD' ? 'text-slate-900 dark:text-white scale-[1.01]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200' }}"
+                        :class="$wire.activeTab === 'PD' ? 'text-slate-900 dark:text-white scale-[1.01]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
+                    {{ __('Material PD') }}
                 </button>
-                <button wire:click="setTab('NONSTOCK')" 
-                        class="apple-segmented-item flex-1 md:w-44 {{ $activeTab === 'NONSTOCK' ? 'apple-segmented-item-active' : 'apple-segmented-item-inactive' }}">
-                    Material Non-Stock
+                <button type="button"
+                        wire:click="setTab('NONSTOCK')" 
+                        @click="$wire.activeTab = 'NONSTOCK'"
+                        class="relative z-10 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-center transition-all duration-200 select-none cursor-pointer {{ $activeTab === 'NONSTOCK' ? 'text-slate-900 dark:text-white scale-[1.01]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200' }}"
+                        :class="$wire.activeTab === 'NONSTOCK' ? 'text-slate-900 dark:text-white scale-[1.01]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'">
+                    {{ __('Material Non-Stock') }}
                 </button>
             </div>
 
@@ -54,17 +72,35 @@
                     <input wire:model.live.debounce.300ms="search" type="text" 
                            class="glass-input !pl-11 pr-4 py-2.5 text-base sm:text-sm font-medium w-full" 
                            style="padding-left: 2.75rem !important;"
-                           placeholder="Cari PO, Deskripsi, Requisitioner...">
+                           placeholder="{{ __('Cari PO, Deskripsi, Requisitioner...') }}">
                 </div>
 
-                <!-- Apple Layout Segmented Buttons (Grid / Table) -->
-                <div class="apple-segmented-track">
-                    <button wire:click="$set('layout', 'grid')" title="Tampilan Grid"
-                            class="apple-segmented-item p-2 {{ $layout === 'grid' ? 'apple-segmented-item-active' : 'apple-segmented-item-inactive' }}">
+                <!-- Apple Layout Segmented Buttons (Grid / Table) with Spring Feedback -->
+                <div x-data="{ pressing: false }" 
+                     @mousedown="pressing = true"
+                     @mouseup="pressing = false"
+                     @mouseleave="pressing = false"
+                     wire:key="material-layout-segmented-control"
+                     class="relative grid grid-cols-2 p-1 rounded-xl bg-slate-200/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-300/70 dark:border-white/10 select-none overflow-hidden w-20 transition-transform duration-150 ease-out"
+                     :class="pressing ? 'scale-[0.96]' : 'scale-100'">
+                    <div class="segmented-spring-pill-compact bg-white dark:bg-slate-700/95 border border-black/5 dark:border-white/20 shadow-[0_2px_6px_rgba(0,0,0,0.12)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.25)]"
+                         style="transform: translateX({{ $layout === 'table' ? '100%' : '0%' }});"
+                         :style="`transform: translateX(${$wire.layout === 'table' ? '100%' : '0%'});`"
+                    ></div>
+                    <button type="button"
+                            wire:click="$set('layout', 'grid')" 
+                            @click="$wire.layout = 'grid'" 
+                            title="{{ __('Tampilan Grid') }}"
+                            class="relative z-10 p-2 flex items-center justify-center rounded-lg transition-colors cursor-pointer {{ $layout === 'grid' ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400' }}"
+                            :class="$wire.layout === 'grid' ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                     </button>
-                    <button wire:click="$set('layout', 'table')" title="Tampilan Tabel"
-                            class="apple-segmented-item p-2 {{ $layout === 'table' ? 'apple-segmented-item-active' : 'apple-segmented-item-inactive' }}">
+                    <button type="button"
+                            wire:click="$set('layout', 'table')" 
+                            @click="$wire.layout = 'table'" 
+                            title="{{ __('Tampilan Tabel') }}"
+                            class="relative z-10 p-2 flex items-center justify-center rounded-lg transition-colors cursor-pointer {{ $layout === 'table' ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400' }}"
+                            :class="$wire.layout === 'table' ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
                     </button>
                 </div>
@@ -106,13 +142,13 @@
                                 @endif
                             </div>
                             <span class="text-xs font-medium text-slate-500 dark:text-slate-400 text-right">
-                                Kedatangan:<br/>{{ $item->deliveryOrderReceipt?->received_date ? \Carbon\Carbon::parse($item->deliveryOrderReceipt->received_date)->translatedFormat('d M Y') : '-' }}
+                                {{ __('Kedatangan:') }}<br/>{{ $item->deliveryOrderReceipt?->received_date ? \Carbon\Carbon::parse($item->deliveryOrderReceipt->received_date)->translatedFormat('d M Y') : '-' }}
                             </span>
                         </div>
 
                         <!-- PO Info -->
                         <div class="mb-3">
-                            <p class="text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">PO Number</p>
+                            <p class="text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">{{ __('Nomor PO') }}</p>
                             <p class="text-lg font-black text-slate-800 dark:text-white">{{ $item->purchaseOrderIssued?->purchase_order_no ?? '-' }}</p>
                         </div>
                         
@@ -122,21 +158,21 @@
                                 {{ $item->description }}
                             </p>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
-                                Material Code: <span class="font-semibold">{{ $item->material_code ?? '-' }}</span>
+                                {{ __('Kode Material') }}: <span class="font-semibold">{{ $item->material_code ?? '-' }}</span>
                             </p>
                             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Requisitioner: <span class="font-semibold">{{ $item->purchaseOrderIssued?->requisitioner ?? '-' }}</span>
+                                {{ __('Peminta') }}: <span class="font-semibold">{{ $item->purchaseOrderIssued?->requisitioner ?? '-' }}</span>
                             </p>
                         </div>
 
                         <!-- Quantities -->
                         <div class="grid grid-cols-2 gap-3 mb-6">
                             <div class="bg-white/50 dark:bg-white/5 rounded-xl p-3 border border-slate-200/50 dark:border-white/5 text-center">
-                                <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Tiba di Gudang</p>
+                                <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">{{ __('Tiba di Gudang') }}</p>
                                 <p class="text-xl font-black text-slate-800 dark:text-white">{{ number_format($item->quantity, 0, ',', '.') }} <span class="text-xs font-medium text-slate-500">{{ $item->uoi }}</span></p>
                             </div>
                             <div class="bg-green-500/10 dark:bg-green-500/20 rounded-xl p-3 border border-green-500/20 text-center">
-                                <p class="text-[10px] uppercase font-bold text-green-600 dark:text-green-400 mb-1">Sisa Tersedia</p>
+                                <p class="text-[10px] uppercase font-bold text-green-600 dark:text-green-400 mb-1">{{ __('Sisa Tersedia') }}</p>
                                 <p class="text-xl font-black text-green-700 dark:text-green-300">{{ number_format($item->quantity - $item->issued_quantity, 0, ',', '.') }} <span class="text-xs font-medium text-green-600/80">{{ $item->uoi }}</span></p>
                             </div>
                         </div>
@@ -145,7 +181,7 @@
                     <!-- Action Button: Apple Primary Pill -->
                     <a href="{{ route('frontend.mir.create', ['po' => $item->purchaseOrderIssued?->purchase_order_no]) }}" wire:navigate 
                        class="apple-btn-primary w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold shadow-xs">
-                        <span>Buat Pengambilan (MIR)</span>
+                        <span>{{ __('Buat Pengambilan (MIR)') }}</span>
                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
@@ -156,9 +192,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
                     </div>
-                    <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Tidak Ada Data</h3>
+                    <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">{{ __('Tidak Ada Data') }}</h3>
                     <p class="text-slate-500 dark:text-slate-400 max-w-md">
-                        Belum ada material {{ $activeTab === 'PD' ? 'PD' : 'Non-Stock' }} yang tersedia di gudang receiving, atau mungkin tidak cocok dengan pencarian Anda.
+                        {{ __('Belum ada material :type yang tersedia di gudang receiving, atau mungkin tidak cocok dengan pencarian Anda.', ['type' => $activeTab === 'PD' ? 'PD' : 'Non-Stock']) }}
                     </p>
                 </div>
             @endforelse
@@ -171,13 +207,13 @@
                 <table class="w-full text-left border-collapse min-w-max">
                     <thead>
                         <tr class="bg-white/40 dark:bg-white/5 border-b border-slate-200/50 dark:border-white/10 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            <th class="p-4 font-bold">PO / Tipe</th>
-                            <th class="p-4 font-bold max-w-md">Material Info</th>
-                            <th class="p-4 font-bold">Requisitioner</th>
-                            <th class="p-4 font-bold">Status / Tgl Kedatangan</th>
-                            <th class="p-4 font-bold text-center">Tiba</th>
-                            <th class="p-4 font-bold text-center">Sisa</th>
-                            <th class="p-4 font-bold text-center">Aksi</th>
+                            <th class="p-4 font-bold">{{ __('PO / Tipe') }}</th>
+                            <th class="p-4 font-bold max-w-md">{{ __('Info Material') }}</th>
+                            <th class="p-4 font-bold">{{ __('Peminta') }}</th>
+                            <th class="p-4 font-bold">{{ __('Status / Tgl Kedatangan') }}</th>
+                            <th class="p-4 font-bold text-center">{{ __('Tiba') }}</th>
+                            <th class="p-4 font-bold text-center">{{ __('Sisa') }}</th>
+                            <th class="p-4 font-bold text-center">{{ __('Aksi') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200/50 dark:divide-white/5">
@@ -194,7 +230,7 @@
                                         {{ $item->description }}
                                     </p>
                                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                        Kode: <span class="font-semibold">{{ $item->material_code ?? '-' }}</span>
+                                        {{ __('Kode:') }} <span class="font-semibold">{{ $item->material_code ?? '-' }}</span>
                                     </p>
                                 </td>
                                 <td class="p-4 align-top">
@@ -221,10 +257,10 @@
                                             {{ $docStatus }}
                                         </span>
                                         <span class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">
-                                            Tiba: {{ $item->deliveryOrderReceipt?->received_date ? \Carbon\Carbon::parse($item->deliveryOrderReceipt->received_date)->translatedFormat('d M Y') : '-' }}
+                                            {{ __('Tiba:') }} {{ $item->deliveryOrderReceipt?->received_date ? \Carbon\Carbon::parse($item->deliveryOrderReceipt->received_date)->translatedFormat('d M Y') : '-' }}
                                         </span>
                                         @if($statusDate && $docStatus !== 'Pending')
-                                            <span class="text-[10px] text-slate-400">Upd: {{ $statusDate }}</span>
+                                            <span class="text-[10px] text-slate-400">{{ __('Upd:') }} {{ $statusDate }}</span>
                                         @endif
                                     </div>
                                     @else
@@ -245,7 +281,7 @@
                                 </td>
                                 <td class="p-4 align-middle text-center">
                                     <a href="{{ route('frontend.mir.create', ['po' => $item->purchaseOrderIssued?->purchase_order_no]) }}" wire:navigate class="inline-flex items-center justify-center gap-1.5 bg-[#0A4F86] hover:bg-[#083A63] text-white py-2 px-4 rounded-xl font-bold text-xs shadow-lg transition-transform hover:-translate-y-0.5 whitespace-nowrap">
-                                        <span>Buat MIR</span>
+                                        <span>{{ __('Buat MIR') }}</span>
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                                     </a>
                                 </td>
@@ -259,9 +295,9 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                             </svg>
                                         </div>
-                                        <h3 class="text-lg font-black text-slate-800 dark:text-white mb-2">Tidak Ada Data</h3>
+                                        <h3 class="text-lg font-black text-slate-800 dark:text-white mb-2">{{ __('Tidak Ada Data') }}</h3>
                                         <p class="text-slate-500 dark:text-slate-400 text-sm max-w-sm">
-                                            Belum ada material {{ $activeTab === 'PD' ? 'PD' : 'Non-Stock' }} yang tersedia di gudang receiving, atau mungkin tidak cocok dengan pencarian Anda.
+                                            {{ __('Belum ada material :type yang tersedia di gudang receiving, atau mungkin tidak cocok dengan pencarian Anda.', ['type' => $activeTab === 'PD' ? 'PD' : 'Non-Stock']) }}
                                         </p>
                                     </div>
                                 </td>

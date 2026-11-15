@@ -20,35 +20,34 @@
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#F47920]"></span>
                 </span>
                 <span class="text-xs font-bold tracking-widest uppercase text-slate-600 dark:text-[#F47920]">
-                    Formulir Pengambilan Barang
+                    {{ __('Formulir Pengambilan Barang') }}
                 </span>
             </div>
 
             <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-800 dark:text-white tracking-tight mb-4">
                 Material Issue <br class="hidden sm:inline" />
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#BE5A27] dark:from-orange-400 dark:to-[#F47920]">
-                    Request (MIR)
+                    {{ __('Request (MIR)') }}
                 </span>
             </h1>
 
             <p class="text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-medium leading-relaxed">
-                Formulir resmi serah terima material gudang. Pastikan jumlah yang diminta tidak melebihi
-                <span class="text-[#F47920] font-bold border-b border-[#F47920]/40 pb-0.5">stok gudang Receiving (BOH)</span>.
+                {{ __('Formulir resmi serah terima material gudang. Pastikan jumlah yang diminta tidak melebihi stok gudang Receiving (BOH).') }}
             </p>
 
             <!-- Quick Trust Badges -->
             <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-4 mt-6 text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
                     <svg class="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                    Tersimpan Otomatis di Browser
+                    {{ __('Tersimpan Otomatis di Browser') }}
                 </span>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
                     <svg class="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                    Validasi Stok Realtime
+                    {{ __('Validasi Stok Realtime') }}
                 </span>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/80 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
                     <svg class="w-3.5 h-3.5 text-[#F47920]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
-                    Tanda Tangan Digital Terverifikasi
+                    {{ __('Tanda Tangan Digital Terverifikasi') }}
                 </span>
             </div>
 
@@ -57,7 +56,7 @@
                 <button type="button" @click.prevent="startTour()"
                     class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/15 text-slate-800 dark:text-white text-xs font-semibold shadow-xs border border-black/[0.08] dark:border-white/[0.15] active:scale-95 transition-all cursor-pointer">
                     <span class="text-amber-500">💡</span>
-                    <span>Buka Panduan Pengisian Interaktif (15 Langkah)</span>
+                    <span>{{ __('Buka Panduan Pengisian Interaktif (15 Langkah)') }}</span>
                 </button>
             </div>
         </div>
@@ -92,7 +91,7 @@
         }"
         @signature-updated.window="onSignatureChange($event.detail)"
         @item-added.window="
-            triggerToast('✨ Baris material #' + ($event.detail.itemIndex || '') + ' berhasil ditambahkan!', 'success');
+            triggerToast(@js(__('✨ Baris material #:row berhasil ditambahkan!')).replace(':row', ($event.detail.itemIndex || '')), 'success');
             setTimeout(() => {
                 const cards = document.querySelectorAll('.material-item-card');
                 const lastCard = cards[cards.length - 1];
@@ -110,7 +109,7 @@
             }, 80);
         "
         @item-removed.window="
-            triggerToast('Baris material berhasil dihapus', 'info');
+            triggerToast(@js(__('Baris material berhasil dihapus')), 'info');
         "
         @validation-failed.window="setTimeout(() => {
             const firstError = document.querySelector('.text-red-500');
@@ -173,8 +172,8 @@
                             @endif
                         </div>
                         <div class="min-w-0">
-                            <span class="hidden sm:block text-xs uppercase tracking-wider text-slate-400">Langkah 1</span>
-                            <span class="block text-xs sm:text-sm truncate font-bold">Peminta</span>
+                            <span class="hidden sm:block text-xs uppercase tracking-wider text-slate-400">{{ __('Langkah 1') }}</span>
+                            <span class="block text-xs sm:text-sm truncate font-bold">{{ __('Peminta') }}</span>
                         </div>
                     </div>
 
@@ -188,8 +187,8 @@
                             @endif
                         </div>
                         <div class="min-w-0">
-                            <span class="hidden sm:block text-xs uppercase tracking-wider text-slate-400">Langkah 2</span>
-                            <span class="block text-xs sm:text-sm truncate font-bold">Dokumen PO</span>
+                            <span class="hidden sm:block text-xs uppercase tracking-wider text-slate-400">{{ __('Langkah 2') }}</span>
+                            <span class="block text-xs sm:text-sm truncate font-bold">{{ __('Dokumen PO') }}</span>
                         </div>
                     </div>
 
@@ -203,8 +202,8 @@
                             @endif
                         </div>
                         <div class="min-w-0">
-                            <span class="hidden sm:block text-xs uppercase tracking-wider text-slate-400">Langkah 3</span>
-                            <span class="block text-xs sm:text-sm truncate font-bold">Material</span>
+                            <span class="hidden sm:block text-xs uppercase tracking-wider text-slate-400">{{ __('Langkah 3') }}</span>
+                            <span class="block text-xs sm:text-sm truncate font-bold">{{ __('Material') }}</span>
                         </div>
                     </div>
 
@@ -221,8 +220,8 @@
                             @endif
                         </div>
                         <div class="min-w-0">
-                            <span class="hidden sm:block text-xs uppercase tracking-wider text-slate-400">Langkah 4</span>
-                            <span class="block text-xs sm:text-sm truncate font-bold">Tanda Tangan</span>
+                            <span class="hidden sm:block text-xs uppercase tracking-wider text-slate-400">{{ __('Langkah 4') }}</span>
+                            <span class="block text-xs sm:text-sm truncate font-bold">{{ __('Tanda Tangan') }}</span>
                         </div>
                     </div>
                 </div>
@@ -236,10 +235,10 @@
                     </div>
                     <div>
                         <h2 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
-                            Informasi Peminta
+                            {{ __('Informasi Peminta') }}
                         </h2>
                         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                            Identitas karyawan Pupuk Kaltim yang mengajukan pengambilan material.
+                            {{ __('Identitas karyawan Pupuk Kaltim yang mengajukan pengambilan material.') }}
                         </p>
                     </div>
                 </div>
@@ -250,7 +249,7 @@
                         <!-- Nama Peminta -->
                         <div data-tour="nama-peminta">
                             <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                Nama Peminta <span class="text-[#F47920]">*</span>
+                                {{ __('Nama Peminta') }} <span class="text-[#F47920]">*</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -258,7 +257,7 @@
                                 </div>
                                 <input type="text" x-model.debounce.300ms="diminta_oleh"
                                     class="w-full pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
-                                    required placeholder="Contoh: Budi Santoso">
+                                    required placeholder="{{ __('Contoh: Budi Santoso') }}">
                             </div>
                             @error('diminta_oleh')
                                 <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
@@ -268,7 +267,7 @@
                         <!-- NPK -->
                         <div data-tour="npk">
                             <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                NPK Karyawan <span class="text-[#F47920]">*</span>
+                                {{ __('NPK Karyawan') }} <span class="text-[#F47920]">*</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -276,7 +275,7 @@
                                 </div>
                                 <input type="text" x-model="npk"
                                     class="w-full pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
-                                    required placeholder="Contoh: 4095624">
+                                    required placeholder="{{ __('Contoh: 4095624') }}">
                             </div>
                             @error('npk')
                                 <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
@@ -288,7 +287,7 @@
                         <!-- No HP -->
                         <div data-tour="no-hp">
                             <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                No. Handphone (WhatsApp) <span class="text-[#F47920]">*</span>
+                                {{ __('No. Handphone (WhatsApp)') }} <span class="text-[#F47920]">*</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -296,7 +295,7 @@
                                 </div>
                                 <input type="text" x-model="no_hp"
                                     class="w-full pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
-                                    required placeholder="Contoh: 081234567890">
+                                    required placeholder="{{ __('Contoh: 081234567890') }}">
                             </div>
                             @error('no_hp')
                                 <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
@@ -306,7 +305,7 @@
                         <!-- Departemen -->
                         <div data-tour="departemen">
                             <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                Departemen <span class="text-[#F47920]">*</span>
+                                {{ __('Departemen') }} <span class="text-[#F47920]">*</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -314,7 +313,7 @@
                                 </div>
                                 <input type="text" x-model="departemen"
                                     class="w-full pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
-                                    required placeholder="Contoh: PP&P">
+                                    required placeholder="{{ __('Contoh: PP&P') }}">
                             </div>
                             @error('departemen')
                                 <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
@@ -324,7 +323,7 @@
                         <!-- Bagian -->
                         <div data-tour="bagian">
                             <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                Bagian / Seksi <span class="text-[#F47920]">*</span>
+                                {{ __('Bagian / Seksi') }} <span class="text-[#F47920]">*</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -332,7 +331,7 @@
                                 </div>
                                 <input type="text" x-model="bagian"
                                     class="w-full pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
-                                    required placeholder="Contoh: Operasi Pabrik 1">
+                                    required placeholder="{{ __('Contoh: Operasi Pabrik 1') }}">
                             </div>
                             @error('bagian')
                                 <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
@@ -350,10 +349,10 @@
                     </div>
                     <div>
                         <h2 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
-                            Dokumen & Referensi PO
+                            {{ __('Dokumen & Referensi PO') }}
                         </h2>
                         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                            Pilih Purchase Order yang akan diambil barangnya serta isi rincian keperluan.
+                            {{ __('Pilih Purchase Order yang akan diambil barangnya serta isi rincian keperluan.') }}
                         </p>
                     </div>
                 </div>
@@ -364,7 +363,7 @@
                         <!-- Tanggal Pengajuan -->
                         <div data-tour="tanggal" class="min-w-0">
                             <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                Tanggal Pengajuan <span class="text-[#F47920]">*</span>
+                                {{ __('Tanggal Pengajuan') }} <span class="text-[#F47920]">*</span>
                             </label>
                             <div class="relative w-full min-w-0">
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 z-10">
@@ -383,17 +382,17 @@
                         <div>
                             <div class="flex items-center justify-between mb-2">
                                 <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
-                                    Cari & Pilih PO <span class="text-[#F47920]">*</span>
+                                    {{ __('Cari & Pilih PO') }} <span class="text-[#F47920]">*</span>
                                 </label>
                                 <!-- Segmented Mode Switch -->
                                 <div class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl" data-tour="search-mode">
                                     <button type="button" wire:click="$set('search_mode', 'po')"
                                         class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all {{ $search_mode === 'po' ? 'bg-[#F47920] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400' }}">
-                                        No. PO
+                                        {{ __('No. PO') }}
                                     </button>
                                     <button type="button" wire:click="$set('search_mode', 'sn')"
                                         class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all {{ $search_mode === 'sn' ? 'bg-[#F47920] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400' }}">
-                                        Stock No
+                                        {{ __('Stock No') }}
                                     </button>
                                 </div>
                             </div>
@@ -411,7 +410,7 @@
                                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                             </div>
                                             <div class="min-w-0">
-                                                <span class="text-xs font-bold text-blue-600 dark:text-blue-400 block uppercase">PO Terpilih</span>
+                                                <span class="text-xs font-bold text-blue-600 dark:text-blue-400 block uppercase">{{ __('PO Terpilih') }}</span>
                                                 <span class="text-sm font-black text-slate-800 dark:text-white truncate block">
                                                     {{ $activePoModel?->purchase_order_no ?? 'PO #' . $purchase_order_issued_id }}
                                                 </span>
@@ -419,13 +418,13 @@
                                         </div>
                                         <button type="button" wire:click="clearSelectedPo"
                                             class="px-3 py-1.5 text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all">
-                                            Ganti PO
+                                            {{ __('Ganti PO') }}
                                         </button>
                                     </div>
                                     @if ($hasAnyNonGrsInPo)
                                         <div class="mt-2.5 pt-2.5 border-t border-blue-200/60 dark:border-blue-800/40 flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-400">
                                             <svg class="w-4 h-4 shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                            <span>PO ini memiliki item material <strong>Belum GRS</strong>. Pengambilan item tersebut mewajibkan tanda tangan ISTEK.</span>
+                                            <span>{!! __('PO ini memiliki item material <strong>Belum GRS</strong>. Pengambilan item tersebut mewajibkan tanda tangan ISTEK.') !!}</span>
                                         </div>
                                     @endif
                                 </div>
@@ -435,7 +434,7 @@
                                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                     </div>
                                     <input type="text" wire:model.live.debounce.300ms="po_search"
-                                        placeholder="{{ $search_mode === 'po' ? 'Ketik nomor PO (misal: 530006...)' : 'Ketik Stock Number (misal: 600...)' }}"
+                                        placeholder="{{ $search_mode === 'po' ? __('Ketik nomor PO (misal: 530006...)') : __('Ketik Stock Number (misal: 600...)') }}"
                                         class="w-full pl-11 pr-4 py-3 sm:py-3.5 text-sm sm:text-base font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all">
                                 </div>
 
@@ -454,14 +453,14 @@
                                                     </span>
                                                 </div>
                                                 <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-orange-100 dark:bg-orange-500/20 text-[#F47920]">
-                                                    Pilih
+                                                    {{ __('Pilih') }}
                                                 </span>
                                             </button>
                                         @endforeach
                                     </div>
                                 @elseif (!empty($po_search) && count($available_pos) === 0)
                                     <p class="text-xs text-slate-400 mt-2 italic px-1">
-                                        PO tidak ditemukan atau belum ada penerimaan barang di Receiving.
+                                        {{ __('PO tidak ditemukan atau belum ada penerimaan barang di Receiving.') }}
                                     </p>
                                 @endif
                             @endif
@@ -476,53 +475,53 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 pt-4 border-t border-slate-200/60 dark:border-white/5">
                         <!-- No Reservasi -->
                         <div data-tour="reservasi">
-                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">No. Reservasi</label>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">{{ __('No. Reservasi') }}</label>
                             <input type="text" wire:model="no_reservasi"
                                 class="w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920]"
-                                placeholder="Opsional">
+                                placeholder="{{ __('Opsional') }}">
                         </div>
 
                         <!-- No JOR/WO -->
                         <div data-tour="jor">
-                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">No. JOR / WO</label>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">{{ __('No. JOR / WO') }}</label>
                             <input type="text" wire:model="no_jor_wo"
                                 class="w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920]"
-                                placeholder="Opsional">
+                                placeholder="{{ __('Opsional') }}">
                         </div>
 
                         <!-- No Alat -->
                         <div data-tour="alat">
-                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">No. Alat / Unit</label>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">{{ __('No. Alat / Unit') }}</label>
                             <input type="text" wire:model="no_alat"
                                 class="w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920]"
-                                placeholder="Contoh: K-101">
+                                placeholder="{{ __('Contoh: K-101') }}">
                         </div>
 
                         <!-- Kode Biaya -->
                         <div data-tour="kode-biaya">
-                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Kode Biaya</label>
+                            <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">{{ __('Kode Biaya') }}</label>
                             <input type="text" wire:model="kode_biaya"
                                 class="w-full px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920]"
-                                placeholder="Opsional">
+                                placeholder="{{ __('Opsional') }}">
                         </div>
                     </div>
 
                     <!-- Digunakan Untuk (Wajib) with Quick Chips -->
                     <div data-tour="kegunaan">
                         <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                            Digunakan Untuk (Peruntukan Material) <span class="text-[#F47920]">*</span>
+                            {{ __('Digunakan Untuk (Peruntukan Material)') }} <span class="text-[#F47920]">*</span>
                         </label>
                         <textarea wire:model.live.debounce.300ms="digunakan_untuk" x-model="digunakan_untuk" rows="2"
                             class="w-full px-4 py-3 text-sm sm:text-base font-medium text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
-                            placeholder="Jelaskan kebutuhan operasional pengambilan material ini secara rinci..."></textarea>
+                            placeholder="{{ __('Jelaskan kebutuhan operasional pengambilan material ini secara rinci...') }}"></textarea>
                         
                         <!-- Quick Click Chips -->
                         <div class="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
-                            <span class="text-xs text-slate-400 font-semibold self-center mr-1">Rekomendasi:</span>
+                            <span class="text-xs text-slate-400 font-semibold self-center mr-1">{{ __('Rekomendasi:') }}</span>
                             @foreach (['Pemeliharaan Rutin Pabrik', 'Overhaul Mesin', 'Perbaikan Urgent / Breakdown', 'Turn Around (TA)', 'Operasional Bulanan'] as $chip)
                                 <button type="button" @click="setKegunaan('{{ $chip }}')"
                                     class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-orange-100 dark:bg-white/5 dark:hover:bg-[#F47920]/20 text-slate-600 hover:text-[#F47920] dark:text-slate-300 dark:hover:text-orange-400 transition-colors">
-                                    + {{ $chip }}
+                                    + {{ __($chip) }}
                                 </button>
                             @endforeach
                         </div>
@@ -543,10 +542,10 @@
                         </div>
                         <div>
                             <h2 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
-                                Daftar Material yang Diambil
+                                {{ __('Daftar Material yang Diambil') }}
                             </h2>
                             <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                                Pilih item material dari PO dan tentukan jumlah pengambilan sesuai stok BOH.
+                                {{ __('Pilih item material dari PO dan tentukan jumlah pengambilan sesuai stok BOH.') }}
                             </p>
                         </div>
                     </div>
@@ -561,8 +560,8 @@
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            <span wire:loading.remove wire:target="addDetail">Tambah Baris Material</span>
-                            <span wire:loading wire:target="addDetail">Menambahkan...</span>
+                            <span wire:loading.remove wire:target="addDetail">{{ __('Tambah Baris Material') }}</span>
+                            <span wire:loading wire:target="addDetail">{{ __('Menambahkan...') }}</span>
                             <span class="ml-0.5 px-2 py-0.5 rounded-lg bg-white/20 text-[11px] font-black tracking-wide">
                                 {{ count($details) }}/{{ count($available_po_items) }}
                             </span>
@@ -577,10 +576,10 @@
                             <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                         </div>
                         <h3 class="text-base sm:text-lg font-bold text-slate-800 dark:text-white mb-1">
-                            Belum Ada PO yang Dipilih
+                            {{ __('Belum Ada PO yang Dipilih') }}
                         </h3>
                         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                            Silakan cari dan pilih Nomor PO pada <span class="font-bold text-[#F47920]">Langkah 2</span> di atas untuk memuat daftar material yang tersedia di gudang.
+                            {!! __('Silakan cari dan pilih Nomor PO pada Langkah 2 di atas untuk memuat daftar material yang tersedia di gudang.') !!}
                         </p>
                     </div>
                 @else
@@ -597,7 +596,7 @@
                                             #{{ $index + 1 }}
                                         </span>
                                         <span class="text-sm sm:text-base font-bold text-slate-800 dark:text-white">
-                                            Item Pengambilan
+                                            {{ __('Item Pengambilan') }}
                                         </span>
                                     </div>
                                     @if (count($details) > 1)
@@ -613,12 +612,12 @@
                                     <!-- Pilih Item (Spans 3 cols on desktop) -->
                                     <div class="md:col-span-4 lg:col-span-3" data-tour="pilih-item">
                                         <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                            Pilih Item <span class="text-[#F47920]">*</span>
+                                            {{ __('Pilih Item') }} <span class="text-[#F47920]">*</span>
                                         </label>
                                         <select wire:model.live="details.{{ $index }}.delivery_order_receipt_detail_id"
                                             @change="if (details && details[{{ $index }}]) { details[{{ $index }}].delivery_order_receipt_detail_id = $event.target.value; }"
                                             class="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all">
-                                            <option value="">-- Pilih Item --</option>
+                                            <option value="">-- {{ __('Pilih Item') }} --</option>
                                             @foreach ($available_po_items as $item)
                                                 @php
                                                     $isAlreadySelected = collect($details)->contains(function($d, $k) use ($item, $index) {
@@ -626,7 +625,7 @@
                                                     });
                                                 @endphp
                                                 <option value="{{ $item['id'] }}" {{ $isAlreadySelected ? 'disabled' : '' }}>
-                                                    Item {{ $item['item_no'] }}{{ $isAlreadySelected ? ' (Dipilih)' : '' }}
+                                                    {{ __('Item') }} {{ $item['item_no'] }}{{ $isAlreadySelected ? ' (' . __('Dipilih') . ')' : '' }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -638,7 +637,7 @@
                                     <!-- Deskripsi Material (Spans 5 cols on desktop) -->
                                     <div class="md:col-span-8 lg:col-span-5" data-tour="deskripsi">
                                         <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                            Deskripsi
+                                            {{ __('Deskripsi') }}
                                         </label>
                                         <div class="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 min-h-[48px] sm:min-h-[52px] flex items-center">
                                             @if (!empty($detail['description']))
@@ -647,7 +646,7 @@
                                                 </span>
                                             @else
                                                 <span class="text-slate-400 dark:text-slate-500 italic font-normal">
-                                                    Pilih item terlebih dahulu...
+                                                    {{ __('Pilih item terlebih dahulu...') }}
                                                 </span>
                                             @endif
                                         </div>
@@ -658,11 +657,11 @@
                                         <div>
                                             <div class="flex items-center justify-between mb-2">
                                                 <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
-                                                    Jumlah Diminta <span class="text-[#F47920]">*</span>
+                                                    {{ __('Jumlah Diminta') }} <span class="text-[#F47920]">*</span>
                                                 </label>
                                                 <!-- Available BOH Badge -->
                                                 <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" data-tour="boh">
-                                                    Stok BOH: <strong>{{ (float)($detail['boh'] ?? 0) }}</strong> {{ $detail['uoi'] ?? '' }}
+                                                    {{ __('Stok BOH:') }} <strong>{{ (float)($detail['boh'] ?? 0) }}</strong> {{ $detail['uoi'] ?? '' }}
                                                 </span>
                                             </div>
 
@@ -676,7 +675,7 @@
                                                 <!-- One-Tap "Ambil Max" Quick Fill Button -->
                                                 <button type="button" wire:click="fillMaxBoh({{ $index }})"
                                                     class="absolute right-2 px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-xl bg-orange-100 hover:bg-orange-200 dark:bg-orange-500/20 dark:hover:bg-orange-500/30 text-[#F47920] transition-all">
-                                                    Max
+                                                    {{ __('Max') }}
                                                 </button>
                                             </div>
 
@@ -688,7 +687,7 @@
                                         @if ((float)($detail['diminta'] ?? 0) > (float)($detail['boh'] ?? 0) && (float)($detail['boh'] ?? 0) > 0)
                                             <div class="mt-2 text-xs font-bold text-red-500 flex items-center gap-1.5">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                                Melebihi sisa stok BOH gudang!
+                                                {{ __('Melebihi sisa stok BOH gudang!') }}
                                             </div>
                                         @endif
                                     </div>
@@ -699,23 +698,23 @@
                                     <div class="mt-3.5 pt-3.5 border-t border-slate-200/60 dark:border-white/5 flex flex-wrap items-center justify-between gap-2.5">
                                         <div class="flex flex-wrap items-center gap-2" data-tour="stock-no">
                                             <span class="px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200/60 dark:border-blue-500/20">
-                                                SN: {{ $detail['stock_no'] ?: 'Non-Stock' }}
+                                                SN: {{ $detail['stock_no'] ?: __('Non-Stock') }}
                                             </span>
                                             <span class="px-2.5 py-1 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 text-xs font-bold border border-purple-200/60 dark:border-purple-500/20">
-                                                Lokasi: {{ $detail['location'] ?: 'Receiving' }}
+                                                {{ __('Lokasi:') }} {{ $detail['location'] ?: __('Receiving') }}
                                             </span>
                                             <span class="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-200/60 dark:border-emerald-500/20">
-                                                Satuan: {{ $detail['uoi'] ?: 'EA' }}
+                                                {{ __('Satuan:') }} {{ $detail['uoi'] ?: 'EA' }}
                                             </span>
                                             @if(!empty($detail['has_non_grs']))
                                                 <span class="px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs font-black flex items-center gap-1.5 border border-amber-300/80 dark:border-amber-500/30">
                                                     <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                                                    Belum GRS
+                                                    {{ __('Belum GRS') }}
                                                 </span>
                                             @else
                                                 <span class="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-1.5 border border-emerald-300/80 dark:border-emerald-500/30">
                                                     <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                                                    Sudah GRS
+                                                    {{ __('Sudah GRS') }}
                                                 </span>
                                             @endif
                                         </div>
@@ -732,8 +731,8 @@
                                     <svg wire:loading.remove wire:target="addDetail" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                                     <svg wire:loading wire:target="addDetail" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 </div>
-                                <span wire:loading.remove wire:target="addDetail">Tambah Baris Material Berikutnya (Item #{{ count($details) + 1 }})</span>
-                                <span wire:loading wire:target="addDetail">Menambahkan baris material...</span>
+                                <span wire:loading.remove wire:target="addDetail">{{ __('Tambah Baris Material Berikutnya') }} (Item #{{ count($details) + 1 }})</span>
+                                <span wire:loading wire:target="addDetail">{{ __('Menambahkan baris material...') }}</span>
                                 <span class="px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs font-black">
                                     {{ count($details) }}/{{ count($available_po_items) }}
                                 </span>
@@ -751,10 +750,10 @@
                     </div>
                     <div>
                         <h2 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
-                            Tanda Tangan Digital
+                            {{ __('Tanda Tangan Digital') }}
                         </h2>
                         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                            Bubuhkan tanda tangan elektronik pemohon, pihak gudang Receiving{{ $requiresIstekSignature ? ', dan persetujuan ISTEK (karena material belum GRS)' : '' }}.
+                            {{ __('Bubuhkan tanda tangan elektronik pemohon, pihak gudang Receiving') }}{{ $requiresIstekSignature ? __(', dan persetujuan ISTEK (karena material belum GRS)') : '' }}.
                         </p>
                     </div>
                 </div>
@@ -768,9 +767,9 @@
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                             </div>
                             <div class="text-xs sm:text-sm">
-                                <span class="font-bold text-amber-800 dark:text-amber-300 block mb-0.5">Material Belum GRS (Wajib Persetujuan ISTEK)</span>
+                                <span class="font-bold text-amber-800 dark:text-amber-300 block mb-0.5">{{ __('Material Belum GRS (Wajib Persetujuan ISTEK)') }}</span>
                                 <p class="text-amber-700/90 dark:text-amber-300/80 leading-relaxed font-medium">
-                                    Item yang Anda ambil berstatus <strong>Belum GRS</strong>. Sesuai SOP gudang Pupuk Kaltim, serah terima material yang belum terbit GRS <strong>wajib</strong> mendapatkan persetujuan dan tanda tangan dari pihak ISTEK.
+                                    {!! __('Item yang Anda ambil berstatus <strong>Belum GRS</strong>. Sesuai SOP gudang Pupuk Kaltim, serah terima material yang belum terbit GRS <strong>wajib</strong> mendapatkan persetujuan dan tanda tangan dari pihak ISTEK.') !!}
                                 </p>
                             </div>
                         </div>
@@ -778,7 +777,7 @@
                         <!-- Info Banner: Material Sudah GRS -->
                         <div class="mb-6 p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-800/30 flex items-center gap-3 text-xs sm:text-sm text-emerald-800 dark:text-emerald-300 font-semibold">
                             <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span>Seluruh material terpilih <strong>Sudah GRS</strong>. Tanda tangan persetujuan ISTEK tidak diperlukan.</span>
+                            <span>{!! __('Seluruh material terpilih <strong>Sudah GRS</strong>. Tanda tangan persetujuan ISTEK tidak diperlukan.') !!}</span>
                         </div>
                     @endif
 
@@ -788,15 +787,15 @@
                         <div class="p-5 rounded-2xl bg-slate-50/70 dark:bg-black/20 border border-slate-200/60 dark:border-white/5 flex flex-col justify-between" data-tour="ttd-peminta">
                             <div>
                                 <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-200/60 dark:border-white/5">
-                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Pihak 1</span>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ __('Pihak 1') }}</span>
                                     <span class="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 text-xs font-bold">
-                                        Peminta (Karyawan)
+                                        {{ __('Peminta (Karyawan)') }}
                                     </span>
                                 </div>
                                 <div class="mb-3">
-                                    <span class="block text-xs text-slate-400 font-medium">Nama Pemohon:</span>
+                                    <span class="block text-xs text-slate-400 font-medium">{{ __('Nama Pemohon:') }}</span>
                                     <span class="block text-sm sm:text-base font-bold text-slate-800 dark:text-white truncate">
-                                        {{ !empty($diminta_oleh) ? $diminta_oleh : '(Belum diisi di Langkah 1)' }}
+                                        {{ !empty($diminta_oleh) ? $diminta_oleh : __('(Belum diisi di Langkah 1)') }}
                                     </span>
                                     <span class="block text-xs text-slate-500 dark:text-slate-400">
                                         NPK: {{ !empty($npk) ? $npk : '-' }}
@@ -806,10 +805,10 @@
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                    Tanda Tangan Peminta <span class="text-red-500">*</span>
+                                    {{ __('Tanda Tangan Peminta') }} <span class="text-red-500">*</span>
                                 </label>
                                 <x-signature-pad wire:model="diminta_signature" id="diminta_signature"
-                                    placeholder="Tanda tangan peminta di sini..." />
+                                    placeholder="{{ __('Tanda tangan peminta di sini...') }}" />
                                 @error('diminta_signature')
                                     <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
                                 @enderror
@@ -821,20 +820,20 @@
                             <div class="p-5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-500/40 flex flex-col justify-between shadow-xs" data-tour="ttd-istek">
                                 <div>
                                     <div class="flex items-center justify-between mb-3 pb-3 border-b border-amber-200/80 dark:border-amber-500/20">
-                                        <span class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Pihak 2</span>
+                                        <span class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">{{ __('Pihak 2') }}</span>
                                         <span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-black">
-                                            ISTEK
+                                            {{ __('ISTEK') }}
                                         </span>
                                     </div>
 
                                     <div class="space-y-3 mb-3">
                                         <div>
                                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                                Pilih Pihak ISTEK <span class="text-red-500">*</span>
+                                                {{ __('Pilih Pihak ISTEK') }} <span class="text-red-500">*</span>
                                             </label>
                                             <select wire:model.live="pilihan_istek"
                                                 class="w-full px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500">
-                                                <option value="">-- Pilih Penyetuju ISTEK --</option>
+                                                <option value="">-- {{ __('Pilih Penyetuju ISTEK') }} --</option>
                                                 <option value="Pasarela">Pasarela</option>
                                                 <option value="Joko">Joko</option>
                                                 <option value="Lainnya">Lainnya...</option>
@@ -843,15 +842,15 @@
 
                                         @if ($pilihan_istek === 'Lainnya')
                                             <div>
-                                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nama ISTEK</label>
+                                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('Nama ISTEK') }}</label>
                                                 <input type="text" wire:model.live.debounce.300ms="disetujui_oleh" x-model="disetujui_oleh"
                                                     class="w-full px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200"
-                                                    placeholder="Nama lengkap pejabat ISTEK">
+                                                    placeholder="{{ __('Nama lengkap pejabat ISTEK') }}">
                                             </div>
                                         @endif
 
                                         <div>
-                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">NPK ISTEK</label>
+                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('NPK ISTEK') }}</label>
                                             <input type="text" wire:model.live.debounce.300ms="disetujui_npk" x-model="disetujui_npk"
                                                 class="w-full px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200 disabled:opacity-60"
                                                 placeholder="NPK" {{ $pilihan_istek !== 'Lainnya' ? 'disabled' : '' }}>
@@ -861,10 +860,10 @@
 
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                        Tanda Tangan ISTEK <span class="text-red-500">*</span>
+                                        {{ __('Tanda Tangan ISTEK') }} <span class="text-red-500">*</span>
                                     </label>
                                     <x-signature-pad wire:model="disetujui_signature" id="disetujui_signature"
-                                        placeholder="Tanda tangan pihak ISTEK di sini..." />
+                                        placeholder="{{ __('Tanda tangan pihak ISTEK di sini...') }}" />
                                     @error('disetujui_signature')
                                         <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
                                     @enderror
@@ -882,20 +881,20 @@
                         <div class="p-5 rounded-2xl bg-slate-50/70 dark:bg-black/20 border border-slate-200/60 dark:border-white/5 flex flex-col justify-between" data-tour="ttd-receiving">
                             <div>
                                 <div class="flex items-center justify-between mb-3 pb-3 border-b border-slate-200/60 dark:border-white/5">
-                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Petugas</span>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ __('Petugas') }}</span>
                                     <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 text-xs font-bold">
-                                        Gudang Receiving
+                                        {{ __('Gudang Receiving') }}
                                     </span>
                                 </div>
 
                                 <div class="space-y-3 mb-3">
                                     <div>
                                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                            Pilih Petugas Gudang <span class="text-red-500">*</span>
+                                            {{ __('Pilih Petugas Gudang') }} <span class="text-red-500">*</span>
                                         </label>
                                         <select wire:model.live="pilihan_receiving"
                                             class="w-full px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10">
-                                            <option value="">-- Pilih Staf Gudang --</option>
+                                            <option value="">-- {{ __('Pilih Staf Gudang') }} --</option>
                                             @foreach ($receiving_users as $user)
                                                 <option value="{{ $user['id'] }}">{{ $user['name'] }}</option>
                                             @endforeach
@@ -905,15 +904,15 @@
 
                                     @if ($pilihan_receiving === 'Lainnya')
                                         <div>
-                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Petugas</label>
+                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('Nama Petugas') }}</label>
                                             <input type="text" wire:model.live.debounce.300ms="diserahkan_oleh" x-model="diserahkan_oleh"
                                                 class="w-full px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200"
-                                                placeholder="Nama lengkap">
+                                                placeholder="{{ __('Nama lengkap') }}">
                                         </div>
                                     @endif
 
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">NPK Petugas</label>
+                                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">{{ __('NPK Petugas') }}</label>
                                         <input type="text" wire:model.live.debounce.300ms="diserahkan_npk" x-model="diserahkan_npk"
                                             class="w-full px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white bg-white dark:bg-slate-800 rounded-xl border border-slate-200 disabled:opacity-60"
                                             placeholder="NPK" {{ $pilihan_receiving !== 'Lainnya' ? 'disabled' : '' }}>
@@ -923,10 +922,10 @@
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                    Tanda Tangan Receiving <span class="text-red-500">*</span>
+                                    {{ __('Tanda Tangan Receiving') }} <span class="text-red-500">*</span>
                                 </label>
                                 <x-signature-pad wire:model="diserahkan_signature" id="diserahkan_signature"
-                                    placeholder="Tanda tangan pihak receiving di sini..." />
+                                    placeholder="{{ __('Tanda tangan pihak receiving di sini...') }}" />
                                 @error('diserahkan_signature')
                                     <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
                                 @enderror
@@ -952,7 +951,7 @@
                         </div>
                         <div class="flex-1">
                             <span class="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors leading-relaxed">
-                                Saya menyatakan bahwa data di atas diisi dengan sebenar-benarnya dan setuju untuk melakukan serah terima fisik material di Gudang Receiving Pupuk Kalimantan Timur.
+                                {{ __('Saya menyatakan bahwa data di atas diisi dengan sebenar-benarnya dan setuju untuk melakukan serah terima fisik material di Gudang Receiving Pupuk Kalimantan Timur.') }}
                             </span>
                             @error('agreement')
                                 <span class="text-red-500 text-xs font-bold mt-1.5 block">{{ $message }}</span>
@@ -965,7 +964,7 @@
                 <div class="pt-6 border-t border-slate-200/60 dark:border-white/10 flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
                     <a href="{{ url('/') }}" wire:navigate
                         class="w-full sm:w-auto text-center px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-2xl transition-all">
-                        &larr; Kembali ke Beranda
+                        {!! __('&larr; Kembali ke Beranda') !!}
                     </a>
 
                     <div class="w-full sm:w-auto flex flex-col items-center sm:items-end gap-2">
@@ -987,15 +986,15 @@
 
                             <svg wire:loading wire:target="confirmSubmit" class="animate-spin h-5 w-5 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
 
-                            <span wire:loading.remove wire:target="confirmSubmit" x-text="isFormReady() ? 'Kirim MIR' : 'Lengkapi & Kirim MIR'"></span>
-                            <span wire:loading wire:target="confirmSubmit">Memvalidasi Formulir...</span>
+                            <span wire:loading.remove wire:target="confirmSubmit" x-text="isFormReady() ? '{{ __('Kirim MIR') }}' : '{{ __('Lengkapi & Kirim MIR') }}'"></span>
+                            <span wire:loading wire:target="confirmSubmit">{{ __('Memvalidasi Formulir...') }}</span>
                         </button>
 
                         <div x-show="!isFormReady() && getFirstMissingField()" 
                              @click="focusFirstMissingField()"
                              class="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-amber-600 dark:text-amber-400 text-center sm:text-right cursor-pointer hover:underline transition-all">
                             <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span>Belum lengkap: <strong class="underline font-bold" x-text="getFirstMissingField()?.name"></strong> (Klik untuk langsung ke field ini)</span>
+                            <span>{{ __('Belum lengkap:') }} <strong class="underline font-bold" x-text="getFirstMissingField()?.name"></strong> {{ __('(Klik untuk langsung ke field ini)') }}</span>
                         </div>
                     </div>
                 </div>
@@ -1014,7 +1013,7 @@
                                     <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                                 </span>
                                 <span class="truncate">
-                                    Perlu diisi: <strong class="underline decoration-amber-500/60 underline-offset-2" x-text="getFirstMissingField()?.name"></strong>
+                                    {{ __('Perlu diisi:') }} <strong class="underline decoration-amber-500/60 underline-offset-2" x-text="getFirstMissingField()?.name"></strong>
                                 </span>
                                 <span class="hidden sm:inline-flex items-center text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0">
                                     &rarr;
@@ -1024,7 +1023,7 @@
                         <template x-if="isFormReady()">
                             <div class="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-semibold truncate">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                <span class="truncate">Formulir Lengkap & Siap Diajukan</span>
+                                <span class="truncate">{{ __('Formulir Lengkap & Siap Diajukan') }}</span>
                             </div>
                         </template>
                     </div>
@@ -1049,8 +1048,8 @@
                             
                             <svg wire:loading wire:target="confirmSubmit" class="animate-spin h-4 w-4 text-current" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
 
-                            <span wire:loading.remove wire:target="confirmSubmit" x-text="isFormReady() ? 'Kirim MIR' : 'Cek Form'"></span>
-                            <span wire:loading wire:target="confirmSubmit">Memvalidasi...</span>
+                            <span wire:loading.remove wire:target="confirmSubmit" x-text="isFormReady() ? '{{ __('Kirim MIR') }}' : '{{ __('Cek Form') }}'"></span>
+                            <span wire:loading wire:target="confirmSubmit">{{ __('Memvalidasi...') }}</span>
                         </button>
                     </div>
                 </div>
@@ -1076,37 +1075,37 @@
                     </div>
 
                     <div class="text-center mb-6">
-                        <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Konfirmasi Pengajuan MIR</h3>
+                        <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">{{ __('Konfirmasi Pengajuan MIR') }}</h3>
                         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
-                            Pastikan data pemohon, nomor PO, dan jumlah material yang diambil sudah sesuai dengan kebutuhan sebelum disimpan ke sistem.
+                            {{ __('Pastikan data pemohon, nomor PO, dan jumlah material yang diambil sudah sesuai dengan kebutuhan sebelum disimpan ke sistem.') }}
                         </p>
                     </div>
 
                     <div class="p-4 rounded-2xl bg-slate-50 dark:bg-black/20 border border-slate-200/60 dark:border-white/5 space-y-2 mb-6 text-xs sm:text-sm">
                         <div class="flex justify-between">
-                            <span class="text-slate-400">Peminta:</span>
+                            <span class="text-slate-400">{{ __('Peminta:') }}</span>
                             <span class="font-bold text-slate-800 dark:text-white">{{ $diminta_oleh }} (NPK: {{ $npk }})</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-400">Departemen:</span>
+                            <span class="text-slate-400">{{ __('Departemen:') }}</span>
                             <span class="font-bold text-slate-800 dark:text-white">{{ $departemen }} / {{ $bagian }}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-400">Total Material:</span>
-                            <span class="font-bold text-[#F47920]">{{ count($details) }} Item</span>
+                            <span class="text-slate-400">{{ __('Total Material:') }}</span>
+                            <span class="font-bold text-[#F47920]">{{ count($details) }} {{ __('Item') }}</span>
                         </div>
                     </div>
 
                     <div class="flex flex-col-reverse sm:flex-row gap-3">
                         <button type="button" wire:click="$set('showConfirmModal', false)"
                             class="flex-1 px-5 py-3 text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors">
-                            Batal
+                            {{ __('Batal') }}
                         </button>
                         <button type="button" wire:click="submit"
                             class="flex-1 px-5 py-3 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 rounded-xl transition-all shadow-md shadow-orange-500/30 flex items-center justify-center gap-2">
-                            <span wire:loading.remove wire:target="submit">Ya, Kirim Sekarang</span>
+                            <span wire:loading.remove wire:target="submit">{{ __('Ya, Kirim Sekarang') }}</span>
                             <svg wire:loading wire:target="submit" class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span wire:loading wire:target="submit">Memproses...</span>
+                            <span wire:loading wire:target="submit">{{ __('Memproses...') }}</span>
                         </button>
                     </div>
                 </div>
@@ -1122,13 +1121,13 @@
                 <div class="w-16 h-16 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 </div>
-                <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Pengajuan Berhasil!</h3>
+                <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">{{ __('Pengajuan Berhasil!') }}</h3>
                 <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6 font-medium">
-                    Dokumen Material Issue Request (MIR) telah berhasil dibuat dan disimpan ke sistem database gudang Receiving.
+                    {{ __('Dokumen Material Issue Request (MIR) telah berhasil dibuat dan disimpan ke sistem database gudang Receiving.') }}
                 </p>
                 <button type="button" wire:click="$set('showSuccessMessage', false)"
                     class="w-full py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-600/30">
-                    Selesai
+                    {{ __('Selesai') }}
                 </button>
             </div>
         </div>
@@ -1149,11 +1148,11 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
             </svg>
             <span class="font-semibold text-xs sm:text-sm tracking-wide text-slate-800 dark:text-white whitespace-nowrap">
-                <span class="sm:hidden">Panduan</span>
-                <span class="hidden sm:inline">Panduan Pengisian</span>
+                <span class="sm:hidden">{{ __('Panduan') }}</span>
+                <span class="hidden sm:inline">{{ __('Panduan Pengisian') }}</span>
             </span>
             <span class="hidden md:inline-flex items-center px-2 py-0.5 rounded-full bg-[#F47920]/10 text-[10px] font-bold uppercase text-[#F47920] tracking-wider border border-[#F47920]/20">
-                15 Langkah
+                {{ __('15 Langkah') }}
             </span>
         </button>
     </div>
@@ -1338,46 +1337,46 @@
                     const diminta = this.diminta_oleh ?? (this.$wire ? this.$wire.diminta_oleh : null);
                     if (!this.hasVal(diminta)) {
                         return {
-                            name: 'Nama Peminta',
+                            name: @js(__('Nama Peminta')),
                             step: 1,
                             selector: '[data-tour="nama-peminta"] input',
-                            message: 'Silakan isi Nama Peminta terlebih dahulu'
+                            message: @js(__('Silakan isi Nama Peminta terlebih dahulu'))
                         };
                     }
                     const npk = this.npk ?? (this.$wire ? this.$wire.npk : null);
                     if (!this.hasVal(npk)) {
                         return {
-                            name: 'NPK Karyawan',
+                            name: @js(__('NPK Karyawan')),
                             step: 1,
                             selector: '[data-tour="npk"] input',
-                            message: 'Silakan isi NPK Karyawan terlebih dahulu'
+                            message: @js(__('Silakan isi NPK Karyawan terlebih dahulu'))
                         };
                     }
                     const noHp = this.no_hp ?? (this.$wire ? this.$wire.no_hp : null);
                     if (!this.hasVal(noHp)) {
                         return {
-                            name: 'No. Handphone (WA)',
+                            name: @js(__('No. Handphone (WA)')),
                             step: 1,
                             selector: '[data-tour="no-hp"] input',
-                            message: 'Silakan isi No. Handphone (WhatsApp) terlebih dahulu'
+                            message: @js(__('Silakan isi No. Handphone (WhatsApp) terlebih dahulu'))
                         };
                     }
                     const dept = this.departemen ?? (this.$wire ? this.$wire.departemen : null);
                     if (!this.hasVal(dept)) {
                         return {
-                            name: 'Departemen',
+                            name: @js(__('Departemen')),
                             step: 1,
                             selector: '[data-tour="departemen"] input',
-                            message: 'Silakan isi nama Departemen terlebih dahulu'
+                            message: @js(__('Silakan isi nama Departemen terlebih dahulu'))
                         };
                     }
                     const bagian = this.bagian ?? (this.$wire ? this.$wire.bagian : null);
                     if (!this.hasVal(bagian)) {
                         return {
-                            name: 'Bagian / Seksi',
+                            name: @js(__('Bagian / Seksi')),
                             step: 1,
                             selector: '[data-tour="bagian"] input',
-                            message: 'Silakan isi Bagian / Seksi terlebih dahulu'
+                            message: @js(__('Silakan isi Bagian / Seksi terlebih dahulu'))
                         };
                     }
 
@@ -1385,28 +1384,28 @@
                     const tgl = this.tanggal ?? (this.$wire ? this.$wire.tanggal : null);
                     if (!this.hasVal(tgl)) {
                         return {
-                            name: 'Tanggal Pengajuan',
+                            name: @js(__('Tanggal Pengajuan')),
                             step: 2,
                             selector: '[data-tour="tanggal"] input',
-                            message: 'Silakan pilih Tanggal Pengajuan'
+                            message: @js(__('Silakan pilih Tanggal Pengajuan'))
                         };
                     }
                     const poId = this.purchase_order_issued_id ?? (this.$wire ? this.$wire.purchase_order_issued_id : null);
                     if (!poId) {
                         return {
-                            name: 'Nomor Purchase Order (PO)',
+                            name: @js(__('Nomor Purchase Order (PO)')),
                             step: 2,
                             selector: '[data-tour="po"] input, [data-tour="search-mode"]',
-                            message: 'Silakan cari dan pilih Nomor PO terlebih dahulu'
+                            message: @js(__('Silakan cari dan pilih Nomor PO terlebih dahulu'))
                         };
                     }
                     const kegunaan = this.digunakan_untuk ?? (this.$wire ? this.$wire.digunakan_untuk : null);
                     if (!this.hasVal(kegunaan)) {
                         return {
-                            name: 'Peruntukan / Keperluan Material',
+                            name: @js(__('Peruntukan / Keperluan Material')),
                             step: 2,
                             selector: '[data-tour="kegunaan"] textarea',
-                            message: 'Silakan isi tujuan / peruntukan material'
+                            message: @js(__('Silakan isi tujuan / peruntukan material'))
                         };
                     }
 
@@ -1415,38 +1414,38 @@
                     const items = Array.isArray(rawDetails) ? rawDetails : Object.values(rawDetails || {});
                     if (items.length === 0) {
                         return {
-                            name: 'Tambah Baris Material',
+                            name: @js(__('Tambah Baris Material')),
                             step: 3,
                             selector: '[data-tour="tambah-item"], button[wire\\:click*="addDetail"]',
-                            message: 'Silakan tambahkan minimal 1 baris material'
+                            message: @js(__('Silakan tambahkan minimal 1 baris material'))
                         };
                     }
                     for (let i = 0; i < items.length; i++) {
                         const item = items[i];
                         if (!item || !item.delivery_order_receipt_detail_id) {
                             return {
-                                name: `Pilih Item Material (Baris #${i + 1})`,
+                                name: @js(__('Pilih Item Material (Baris #:row)')).replace(':row', i + 1),
                                 step: 3,
                                 selector: `.material-item-card:nth-of-type(${i + 1}) select, [data-tour="pilih-item"] select`,
-                                message: `Silakan pilih item material pada baris #${i + 1}`
+                                message: @js(__('Silakan pilih item material pada baris #:row')).replace(':row', i + 1)
                             };
                         }
                         const qty = parseFloat(item.diminta);
                         if (isNaN(qty) || qty <= 0) {
                             return {
-                                name: `Jumlah Diminta (Baris #${i + 1})`,
+                                name: @js(__('Jumlah Diminta (Baris #:row)')).replace(':row', i + 1),
                                 step: 3,
                                 selector: `.material-item-card:nth-of-type(${i + 1}) input[type="number"], [data-tour="qty"] input`,
-                                message: `Silakan tentukan kuantitas yang diminta pada baris #${i + 1}`
+                                message: @js(__('Silakan tentukan kuantitas yang diminta pada baris #:row')).replace(':row', i + 1)
                             };
                         }
                         const boh = parseFloat(item.boh || 0);
                         if (boh > 0 && qty > boh) {
                             return {
-                                name: `Qty Melebihi Stok BOH (Baris #${i + 1})`,
+                                name: @js(__('Qty Melebihi Stok BOH (Baris #:row)')).replace(':row', i + 1),
                                 step: 3,
                                 selector: `.material-item-card:nth-of-type(${i + 1}) input[type="number"]`,
-                                message: `Jumlah diminta baris #${i + 1} melebihi sisa stok gudang`
+                                message: @js(__('Jumlah diminta baris #:row melebihi sisa stok gudang')).replace(':row', i + 1)
                             };
                         }
                     }
@@ -1455,10 +1454,10 @@
                     const hasPeminta = Boolean(this.hasDimintaSig || this.diminta_signature || (this.$wire ? this.$wire.diminta_signature : null));
                     if (!hasPeminta) {
                         return {
-                            name: 'Tanda Tangan Peminta',
+                            name: @js(__('Tanda Tangan Peminta')),
                             step: 4,
                             selector: '[data-tour="ttd-peminta"]',
-                            message: 'Silakan bubuhkan tanda tangan peminta'
+                            message: @js(__('Silakan bubuhkan tanda tangan peminta'))
                         };
                     }
 
@@ -1467,19 +1466,19 @@
                     const diserahkanNpk = this.diserahkan_npk ?? (this.$wire ? this.$wire.diserahkan_npk : null);
                     if (!this.hasVal(diserahkanOleh) || !this.hasVal(diserahkanNpk)) {
                         return {
-                            name: 'Petugas Gudang Receiving',
+                            name: @js(__('Petugas Gudang Receiving')),
                             step: 4,
                             selector: '[data-tour="ttd-receiving"] select, [data-tour="ttd-receiving"] input',
-                            message: 'Silakan tentukan atau isi nama dan NPK petugas gudang Receiving'
+                            message: @js(__('Silakan tentukan atau isi nama dan NPK petugas gudang Receiving'))
                         };
                     }
                     const hasReceiving = Boolean(this.hasDiserahkanSig || this.diserahkan_signature || (this.$wire ? this.$wire.diserahkan_signature : null));
                     if (!hasReceiving) {
                         return {
-                            name: 'Tanda Tangan Petugas Receiving',
+                            name: @js(__('Tanda Tangan Petugas Receiving')),
                             step: 4,
                             selector: '[data-tour="ttd-receiving"]',
-                            message: 'Silakan bubuhkan tanda tangan petugas gudang Receiving'
+                            message: @js(__('Silakan bubuhkan tanda tangan petugas gudang Receiving'))
                         };
                     }
 
@@ -1490,19 +1489,19 @@
                         const disetujuiNpk = this.disetujui_npk ?? (this.$wire ? this.$wire.disetujui_npk : null);
                         if (!this.hasVal(disetujuiOleh) || !this.hasVal(disetujuiNpk)) {
                             return {
-                                name: 'Penyetuju ISTEK',
+                                name: @js(__('Penyetuju ISTEK')),
                                 step: 4,
                                 selector: '[data-tour="ttd-istek"] select, [data-tour="ttd-istek"] input',
-                                message: 'Silakan pilih atau isi nama pejabat penyetuju ISTEK'
+                                message: @js(__('Silakan pilih atau isi nama pejabat penyetuju ISTEK'))
                             };
                         }
                         const hasIstek = Boolean(this.hasDisetujuiSig || this.disetujui_signature || (this.$wire ? this.$wire.disetujui_signature : null));
                         if (!hasIstek) {
                             return {
-                                name: 'Tanda Tangan ISTEK',
+                                name: @js(__('Tanda Tangan ISTEK')),
                                 step: 4,
                                 selector: '[data-tour="ttd-istek"]',
-                                message: 'Silakan bubuhkan tanda tangan persetujuan pihak ISTEK'
+                                message: @js(__('Silakan bubuhkan tanda tangan persetujuan pihak ISTEK'))
                             };
                         }
                     }
@@ -1511,10 +1510,10 @@
                     const agreed = Boolean(this.agreement ?? (this.$wire ? this.$wire.agreement : null));
                     if (!agreed) {
                         return {
-                            name: 'Centang Pernyataan & Persetujuan',
+                            name: @js(__('Centang Pernyataan & Persetujuan')),
                             step: 4,
                             selector: 'input[x-model="agreement"], input[wire\\:model*="agreement"]',
-                            message: 'Silakan centang persetujuan serah terima di bagian bawah'
+                            message: @js(__('Silakan centang persetujuan serah terima di bagian bawah'))
                         };
                     }
 
@@ -1589,10 +1588,14 @@
                 init() {
                     window.startFormTour = () => this.startTour();
                     window.startTour = () => this.startTour();
+                    let shepherdAttempts = 0;
                     const checkShepherd = setInterval(() => {
+                        shepherdAttempts++;
                         if (window.Shepherd) {
                             clearInterval(checkShepherd);
                             this.initShepherdTour();
+                        } else if (shepherdAttempts >= 100) {
+                            clearInterval(checkShepherd);
                         }
                     }, 100);
                 },
@@ -1607,21 +1610,21 @@
                     });
 
                     const steps = [
-                        { id: 'nama-peminta', icon: '👤', title: 'Nama Lengkap Peminta', text: 'Ketik nama lengkap karyawan yang mengajukan serah terima barang di gudang Receiving.', position: 'bottom' },
-                        { id: 'npk', icon: '🪪', title: 'NPK Karyawan', text: 'Masukkan Nomor Pokok Karyawan Pupuk Kaltim resmi Anda untuk validasi data pemohon.', position: 'bottom' },
-                        { id: 'no-hp', icon: '📱', title: 'No. WhatsApp / HP', text: 'Nomor aktif agar petugas gudang Receiving dapat berkoordinasi secara langsung.', position: 'bottom' },
-                        { id: 'departemen', icon: '🏢', title: 'Departemen Kerja', text: 'Pilih atau ketik departemen kerja Anda (misal: PP&P, Pemeliharaan, Pabrik 1, dll).', position: 'bottom' },
-                        { id: 'bagian', icon: '🏷️', title: 'Bagian / Seksi', text: 'Unit kerja atau seksi spesifik pemohon di bawah naungan departemen.', position: 'bottom' },
-                        { id: 'tanggal', icon: '📅', title: 'Tanggal Pengajuan', text: 'Tanggal transaksi serah terima material gudang (otomatis terisi hari ini).', position: 'bottom' },
-                        { id: 'search-mode', icon: '🔍', title: 'Mode Pencarian Dokumen', text: 'Pilih pencarian berdasarkan Nomor PO atau Stock Number SAP.', position: 'bottom' },
-                        { id: 'po', icon: '📄', title: 'Cari & Pilih PO', text: 'Ketikkan nomor PO / Stock No, lalu pilih dokumen penerimaan dari daftar hasil pencarian.', position: 'bottom' },
-                        { id: 'kegunaan', icon: '🎯', title: 'Peruntukan Material', text: 'Jelaskan tujuan pemakaian barang atau klik tombol rekomendasi cepat yang tersedia.', position: 'bottom' },
-                        { id: 'pilih-item', icon: '📦', title: 'Pilih Item Barang', text: 'Pilih nomor item material yang akan diambil dari PO yang sudah dipilih sebelumnya.', position: 'top' },
-                        { id: 'boh', icon: '📊', title: 'Stok Gudang (BOH)', text: 'Periksa sisa stok fisik Balance on Hand yang tersedia di gudang Receiving saat ini.', position: 'top' },
-                        { id: 'qty', icon: '⚖️', title: 'Jumlah Pengambilan', text: 'Ketik jumlah yang dibutuhkan atau klik tombol MAX untuk mengambil seluruh stok BOH.', position: 'top' },
-                        { id: 'ttd-peminta', icon: '✍️', title: 'Tanda Tangan Pemohon', text: 'Bubuhkan tanda tangan elektronik peminta langsung di atas area canvas ini.', position: 'top' },
-                        { id: 'ttd-istek', icon: '🛡️', title: 'Persetujuan ISTEK', text: 'Wajib diisi jika item yang diambil berstatus Belum GRS sesuai SOP pergudangan.', position: 'top' },
-                        { id: 'ttd-receiving', icon: '🤝', title: 'Tanda Tangan Petugas Gudang', text: 'Pilih staf gudang yang bertugas dan bubuhkan tanda tangan serah terima fisik material.', position: 'top' }
+                        { id: 'nama-peminta', icon: '👤', title: @js(__('Nama Lengkap Peminta')), text: @js(__('Ketik nama lengkap karyawan yang mengajukan serah terima barang di gudang Receiving.')), position: 'bottom' },
+                        { id: 'npk', icon: '🪪', title: @js(__('NPK Karyawan')), text: @js(__('Masukkan Nomor Pokok Karyawan Pupuk Kaltim resmi Anda untuk validasi data pemohon.')), position: 'bottom' },
+                        { id: 'no-hp', icon: '📱', title: @js(__('No. WhatsApp / HP')), text: @js(__('Nomor aktif agar petugas gudang Receiving dapat berkoordinasi secara langsung.')), position: 'bottom' },
+                        { id: 'departemen', icon: '🏢', title: @js(__('Departemen Kerja')), text: @js(__('Pilih atau ketik departemen kerja Anda (misal: PP&P, Pemeliharaan, Pabrik 1, dll).')), position: 'bottom' },
+                        { id: 'bagian', icon: '🏷️', title: @js(__('Bagian / Seksi')), text: @js(__('Unit kerja atau seksi spesifik pemohon di bawah naungan departemen.')), position: 'bottom' },
+                        { id: 'tanggal', icon: '📅', title: @js(__('Tanggal Pengajuan')), text: @js(__('Tanggal transaksi serah terima material gudang (otomatis terisi hari ini).')), position: 'bottom' },
+                        { id: 'search-mode', icon: '🔍', title: @js(__('Mode Pencarian Dokumen')), text: @js(__('Pilih pencarian berdasarkan Nomor PO atau Stock Number SAP.')), position: 'bottom' },
+                        { id: 'po', icon: '📄', title: @js(__('Cari & Pilih PO')), text: @js(__('Ketikkan nomor PO / Stock No, lalu pilih dokumen penerimaan dari daftar hasil pencarian.')), position: 'bottom' },
+                        { id: 'kegunaan', icon: '🎯', title: @js(__('Peruntukan Material')), text: @js(__('Jelaskan tujuan pemakaian barang atau klik tombol rekomendasi cepat yang tersedia.')), position: 'bottom' },
+                        { id: 'pilih-item', icon: '📦', title: @js(__('Pilih Item Barang')), text: @js(__('Pilih nomor item material yang akan diambil dari PO yang sudah dipilih sebelumnya.')), position: 'top' },
+                        { id: 'boh', icon: '📊', title: @js(__('Stok Gudang (BOH)')), text: @js(__('Periksa sisa stok fisik Balance on Hand yang tersedia di gudang Receiving saat ini.')), position: 'top' },
+                        { id: 'qty', icon: '⚖️', title: @js(__('Jumlah Pengambilan')), text: @js(__('Ketik jumlah yang dibutuhkan atau klik tombol MAX untuk mengambil seluruh stok BOH.')), position: 'top' },
+                        { id: 'ttd-peminta', icon: '✍️', title: @js(__('Tanda Tangan Pemohon')), text: @js(__('Bubuhkan tanda tangan elektronik peminta langsung di atas area canvas ini.')), position: 'top' },
+                        { id: 'ttd-istek', icon: '🛡️', title: @js(__('Persetujuan ISTEK')), text: @js(__('Wajib diisi jika item yang diambil berstatus Belum GRS sesuai SOP pergudangan.')), position: 'top' },
+                        { id: 'ttd-receiving', icon: '🤝', title: @js(__('Tanda Tangan Petugas Gudang')), text: @js(__('Pilih staf gudang yang bertugas dan bubuhkan tanda tangan serah terima fisik material.')), position: 'top' }
                     ];
 
                     const totalSteps = steps.length;
@@ -1633,7 +1636,7 @@
                         const stepTitleHtml = `
                             <div class="flex items-center justify-between w-full mb-1">
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-[#F47920] text-[11px] font-black uppercase tracking-wider">
-                                    Langkah ${currentStep} dari ${totalSteps}
+                                    ${@js(__('Langkah'))} ${currentStep} ${@js(__('dari'))} ${totalSteps}
                                 </span>
                                 <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500">${progressPercent}%</span>
                             </div>
@@ -1653,20 +1656,20 @@
                         const buttons = [];
                         if (index > 0) {
                             buttons.push({
-                                text: '← Kembali',
+                                text: @js(__('← Kembali')),
                                 action: this.tourObj.back,
                                 classes: 'shepherd-button-secondary'
                             });
                         }
                         if (index < totalSteps - 1) {
                             buttons.push({
-                                text: 'Lanjut →',
+                                text: @js(__('Lanjut →')),
                                 action: this.tourObj.next,
                                 classes: 'shepherd-button-primary'
                             });
                         } else {
                             buttons.push({
-                                text: 'Selesai ✨',
+                                text: @js(__('Selesai ✨')),
                                 action: this.tourObj.complete,
                                 classes: 'shepherd-button-primary !bg-emerald-600 hover:!bg-emerald-700'
                             });
@@ -1689,7 +1692,7 @@
                     if (this.tourObj) {
                         this.tourObj.start();
                     } else {
-                        alert("Panduan sedang dimuat, mohon tunggu sebentar.");
+                        alert(@js(__('Panduan sedang dimuat, mohon tunggu sebentar.')));
                     }
                 }
             };

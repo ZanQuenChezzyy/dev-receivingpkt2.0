@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\MonitoringChemicals;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\MonitoringChemicals\Pages\CreateMonitoringChemical;
 use App\Filament\Resources\MonitoringChemicals\Pages\EditMonitoringChemical;
 use App\Filament\Resources\MonitoringChemicals\Pages\ListMonitoringChemicals;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 class MonitoringChemicalResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = MonitoringChemical::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Penerimaan Receiving';
@@ -31,17 +34,17 @@ class MonitoringChemicalResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Monitoring Chemical';
+        return __('Monitoring Chemical');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Monitoring Chemical';
+        return __('Monitoring Chemical');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Monitoring Chemical';
+        return __('Monitoring Chemical');
     }
 
     public static function form(Schema $schema): Schema

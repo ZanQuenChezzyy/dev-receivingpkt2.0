@@ -128,14 +128,14 @@
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
-/* Apple Primary Action Button (Tinted or Solid) */
+/* Apple Primary Action Button (Tinted or Solid with Framer Motion Spring) */
 .apple-btn-primary {
-    @apply inline-flex items-center justify-center font-bold text-white rounded-2xl bg-[#F47920] hover:bg-[#e06b18] shadow-[0_4px_16px_rgba(244,121,32,0.35)] hover:shadow-[0_6px_24px_rgba(244,121,32,0.45)] active:scale-[0.98] transition-all duration-200 ease-out;
+    @apply inline-flex items-center justify-center font-bold text-white rounded-2xl bg-[#F47920] hover:bg-[#e06b18] shadow-[0_4px_16px_rgba(244,121,32,0.35)] hover:shadow-[0_6px_24px_rgba(244,121,32,0.45)] active:scale-[0.96] transition-all duration-150 ease-[cubic-bezier(0.34,1.4,0.64,1)];
 }
 
-/* Apple Secondary Action Button (Tinted Translucent) */
+/* Apple Secondary Action Button (Tinted Translucent with Spring) */
 .apple-btn-secondary {
-    @apply inline-flex items-center justify-center font-semibold text-[#F47920] dark:text-orange-400 rounded-2xl bg-[#F47920]/10 hover:bg-[#F47920]/18 border border-[#F47920]/20 active:scale-[0.98] transition-all duration-200 ease-out;
+    @apply inline-flex items-center justify-center font-semibold text-[#F47920] dark:text-orange-400 rounded-2xl bg-[#F47920]/10 hover:bg-[#F47920]/18 border border-[#F47920]/20 active:scale-[0.96] transition-all duration-150 ease-[cubic-bezier(0.34,1.4,0.64,1)];
 }
 
 /* Apple-Style Form Inputs */
@@ -232,3 +232,87 @@ button {
 .dark .pkt-card-watermark {
     background-image: url('/images/pattern/pkt-pattern-white.png');
 }
+
+/* =========================================================
+   Framer Motion Spring Physics & Micro-Interaction Tokens
+   ========================================================= */
+@keyframes springPop {
+    0% { transform: scale(0.92); opacity: 0; }
+    60% { transform: scale(1.04); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes springWave {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes pulseGlowRing {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 121, 32, 0.5); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(244, 121, 32, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(244, 121, 32, 0); }
+}
+
+.animate-spring-pop {
+    animation: springPop 0.4s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+.animate-spring-wave {
+    animation: springWave 1.4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+    animation: pulseGlowRing 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.spring-tactile {
+    transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.18s ease-out;
+}
+
+.spring-tactile:active {
+    transform: scale(0.96);
+}
+
+/* =========================================================
+   Apple Segmented Control Spring Physics Sliders
+   Permanent CSS dimensions so Alpine :style never erases size
+   ========================================================= */
+.segmented-spring-pill {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    border-radius: 0.75rem; /* rounded-xl */
+    pointer-events: none;
+    z-index: 0;
+    transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+    box-shadow: 0 3px 12px -1px rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+}
+
+.segmented-spring-pill-compact {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    border-radius: 0.5rem; /* rounded-lg */
+    pointer-events: none;
+    z-index: 0;
+    transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.segmented-spring-pill-round {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    border-radius: 9999px; /* rounded-full */
+    pointer-events: none;
+    z-index: 0;
+    transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+    box-shadow: 0 3px 10px -1px rgba(0, 0, 0, 0.16), 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+}
+

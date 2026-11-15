@@ -13,12 +13,10 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-#[Title('Lacak Pergerakan Dokumen PO - Portal Vendor Pupuk Kalimantan Timur')]
 class VendorPoTracking extends Component
 {
     use WithFileUploads;
@@ -1188,6 +1186,7 @@ class VendorPoTracking extends Component
     public function render()
     {
         return view('livewire.frontend.vendor-po-tracking')
-            ->layout('components.layouts.frontend');
+            ->layout('components.layouts.frontend')
+            ->title(__('Lacak Pergerakan Dokumen PO - Portal Vendor Pupuk Kalimantan Timur'));
     }
 }

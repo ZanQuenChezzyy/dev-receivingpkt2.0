@@ -10,12 +10,11 @@ use Filament\Pages\Dashboard\Concerns\HasFiltersAction;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 
 class Dashboard extends BaseDashboard
 {
     use HasFiltersAction;
-
-    protected static ?string $title = 'Halaman Utama';
 
     protected static string $routePath = '/';
 
@@ -24,6 +23,16 @@ class Dashboard extends BaseDashboard
     protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::Home;
 
     protected static ?int $navigationSort = -2;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Halaman Utama');
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return __('Halaman Utama');
+    }
 
     protected function getHeaderActions(): array
     {

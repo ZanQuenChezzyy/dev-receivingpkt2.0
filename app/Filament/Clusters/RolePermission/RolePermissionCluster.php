@@ -20,4 +20,14 @@ class RolePermissionCluster extends Cluster
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
     protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::ShieldCheck;
+
+    public static function getNavigationGroup(): string|UnitEnum|null
+    {
+        return static::$navigationGroup ? __(static::$navigationGroup) : null;
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Akses dan Perizinan');
+    }
 }

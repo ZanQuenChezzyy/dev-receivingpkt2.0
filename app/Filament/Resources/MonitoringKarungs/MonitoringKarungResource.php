@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\MonitoringKarungs;
 
+use App\Filament\Concerns\TranslatableResource;
 use App\Filament\Resources\MonitoringKarungs\Pages\CreateMonitoringKarung;
 use App\Filament\Resources\MonitoringKarungs\Pages\EditMonitoringKarung;
 use App\Filament\Resources\MonitoringKarungs\Pages\ListMonitoringKarungs;
@@ -18,6 +19,8 @@ use UnitEnum;
 
 class MonitoringKarungResource extends Resource
 {
+    use TranslatableResource;
+
     protected static ?string $model = MonitoringKarung::class;
 
     protected static string|UnitEnum|null $navigationGroup = 'Penerimaan Jasa / Invoice';
@@ -30,17 +33,17 @@ class MonitoringKarungResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Monitoring Karung';
+        return __('Monitoring Karung');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Monitoring Karung';
+        return __('Monitoring Karung');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Monitoring Karung';
+        return __('Monitoring Karung');
     }
 
     public static function getNavigationBadge(): ?string

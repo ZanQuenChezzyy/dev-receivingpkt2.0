@@ -48,18 +48,18 @@
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
                         <span class="relative inline-flex rounded-full w-2 h-2 bg-[#F47920]"></span>
                     </span>
-                    <span class="tracking-tight">Bagian Receiving • Dept. PP&amp;P Pupuk Kaltim</span>
+                    <span class="tracking-tight">{{ __('Bagian Receiving • Dept. PP&P Pupuk Kaltim') }}</span>
                 </div>
 
                 <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.08] text-slate-900 dark:text-white mb-6 tracking-[-0.035em]">
-                    Pusat Layanan <br class="hidden sm:block">
+                    {{ __('Pusat Layanan') }} <br class="hidden sm:block">
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#ff9b52] relative inline-block">
-                        Unit Receiving
+                        {{ __('Unit Receiving') }}
                     </span>
                 </h1>
 
                 <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-6 max-w-lg leading-relaxed font-normal">
-                    Platform resmi <span class="text-[#0A4F86] dark:text-sky-400 font-semibold">Department Perencanaan, Penerimaan &amp; Pergudangan (PP&amp;P)</span> PT Pupuk Kalimantan Timur untuk integrasi <strong>Penerimaan Barang</strong>, <strong>Invoicing Barang</strong>, serta <strong>Penerimaan &amp; Invoicing Jasa (SA)</strong>.
+                    {!! __('hero.description') !!}
                 </p>
 
                 @auth
@@ -67,15 +67,15 @@
                     <div class="flex flex-wrap items-center gap-2 mb-8">
                         <a href="#alur-proses" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all duration-200 active:scale-95">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            <span>1. Penerimaan Barang</span>
+                            <span>1. {{ __('Penerimaan Barang') }}</span>
                         </a>
                         <a href="#alur-proses" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 text-[#0A4F86] dark:text-sky-300 border border-blue-500/20 hover:bg-blue-500/20 transition-all duration-200 active:scale-95">
                             <span class="w-1.5 h-1.5 rounded-full bg-[#0A4F86] dark:bg-sky-400"></span>
-                            <span>2. Invoicing Barang</span>
+                            <span>2. {{ __('Invoicing Barang') }}</span>
                         </a>
                         <a href="#alur-proses" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20 hover:bg-teal-500/20 transition-all duration-200 active:scale-95">
                             <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
-                            <span>3. SA Jasa</span>
+                            <span>3. {{ __('SA Jasa') }}</span>
                         </a>
                     </div>
                 @endauth
@@ -84,45 +84,45 @@
                 <div class="flex flex-col sm:flex-row items-center gap-3.5 w-full sm:w-auto">
                     <a href="{{ auth()->check() ? filament()->getUrl() : filament()->getLoginUrl() }}"
                         class="apple-btn-primary w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 text-sm sm:text-base font-semibold rounded-full shadow-md">
-                        <span>Masuk Dashboard</span>
+                        <span>{{ __('Masuk Dashboard') }}</span>
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </a>
                     <a href="{{ route('frontend.list-material') }}" wire:navigate 
                        class="glass-btn w-full sm:w-auto flex items-center justify-center px-7 py-3.5 text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100 rounded-full">
-                        <span>Daftar PD &amp; Non-Stock</span>
+                        <span>{{ __('Daftar PD & Non-Stock') }}</span>
                     </a>
                 </div>
 
                 <!-- Material Types Tiles (Apple App-Icon Look) -->
                 <div class="mt-8 sm:mt-10 w-full max-w-lg">
                     <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
-                        Tipe Material SAP (MTART)
+                        {{ __('Tipe Material SAP (MTART)') }}
                     </p>
                     <div class="grid grid-cols-5 gap-2 sm:gap-2.5">
                         <!-- ZSP -->
                         <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
                             <span class="text-xs sm:text-sm font-extrabold text-[#F47920] block tracking-tight">ZSP</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">Sparepart</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">{{ __('Sparepart') }}</span>
                         </div>
                         <!-- ZRM -->
                         <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
                             <span class="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block tracking-tight">ZRM</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">Raw Mat.</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">{{ __('Raw Mat.') }}</span>
                         </div>
                         <!-- ZPM -->
                         <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
                             <span class="text-xs sm:text-sm font-extrabold text-purple-600 dark:text-purple-400 block tracking-tight">ZPM</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">Packaging</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">{{ __('Packaging') }}</span>
                         </div>
                         <!-- ZSM -->
                         <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
                             <span class="text-xs sm:text-sm font-extrabold text-[#0A4F86] dark:text-sky-400 block tracking-tight">ZSM</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">Support</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">{{ __('Support') }}</span>
                         </div>
                         <!-- ZFP -->
                         <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
                             <span class="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 block tracking-tight">ZFP</span>
-                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">Finish Prod.</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">{{ __('Finish Prod.') }}</span>
                         </div>
                     </div>
                 </div>
@@ -147,30 +147,58 @@
 
                         <!-- Dashboard Content -->
                         <div class="p-5 sm:p-8 flex-1 flex flex-col gap-5 sm:gap-6 bg-linear-to-b from-transparent to-black/20">
-                            <!-- Top Stats (Data Aktual Sistem) -->
-                            <div class="grid grid-cols-3 gap-3 sm:gap-5">
-                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
+                            <!-- Top Stats (Data Aktual Sistem with Spring Rolling Counters) -->
+                            <div class="grid grid-cols-3 gap-3 sm:gap-5"
+                                 x-data="{
+                                     count1: 0,
+                                     count2: 0,
+                                     count3: 0,
+                                     target1: {{ $totalItemsCount }},
+                                     target2: {{ $grsCount }},
+                                     target3: {{ $pendingQcCount }},
+                                     duration: 1200,
+                                     init() {
+                                         let startTime = null;
+                                         const step = (timestamp) => {
+                                             if (!startTime) startTime = timestamp;
+                                             const progress = Math.min((timestamp - startTime) / this.duration, 1);
+                                             const ease = 1 - Math.pow(1 - progress, 3);
+                                             this.count1 = Math.floor(ease * this.target1);
+                                             this.count2 = Math.floor(ease * this.target2);
+                                             this.count3 = Math.floor(ease * this.target3);
+                                             if (progress < 1) {
+                                                 window.requestAnimationFrame(step);
+                                             } else {
+                                                 this.count1 = this.target1;
+                                                 this.count2 = this.target2;
+                                                 this.count3 = this.target3;
+                                             }
+                                         };
+                                         window.requestAnimationFrame(step);
+                                     }
+                                 }">
+                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                                     <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#0A4F86]/40 blur-xl rounded-full"></div>
                                     <div>
-                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">{{ number_format($totalItemsCount) }}</div>
+                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white" x-text="count1.toLocaleString()">{{ number_format($totalItemsCount) }}</div>
                                         <div class="w-12 sm:w-20 h-1.5 mt-2 rounded-full bg-[#0A4F86]"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Total Item DO</p>
+                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">{{ __('Total Item DO') }}</p>
                                 </div>
-                                <div class="h-24 sm:h-32 rounded-2xl bg-[#F47920]/10 border border-[#F47920]/30 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden shadow-[inset_0_0_20px_rgba(244,121,32,0.1)]">
+                                <div class="h-24 sm:h-32 rounded-2xl bg-[#F47920]/10 border border-[#F47920]/30 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden shadow-[inset_0_0_20px_rgba(244,121,32,0.1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                                     <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#F47920]/30 blur-xl rounded-full"></div>
                                     <div>
-                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">{{ number_format($grsCount) }}</div>
+                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white" x-text="count2.toLocaleString()">{{ number_format($grsCount) }}</div>
                                         <div class="w-12 sm:w-20 h-1.5 mt-2 rounded-full bg-[#F47920]"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-[#F47920] font-medium">DO Sudah GRS</p>
+                                    <p class="text-[10px] sm:text-xs text-[#F47920] font-medium">{{ __('DO Sudah GRS') }}</p>
                                 </div>
-                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between shadow-sm">
+                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                                     <div>
-                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white">{{ number_format($pendingQcCount) }}</div>
+                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white" x-text="count3.toLocaleString()">{{ number_format($pendingQcCount) }}</div>
                                         <div class="w-10 sm:w-16 h-1.5 mt-2 rounded-full bg-slate-600"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">Proses / QC</p>
+                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">{{ __('Proses / QC') }}</p>
                                 </div>
                             </div>
 
@@ -204,15 +232,15 @@
                             </svg>
                         </div>
                         <div class="pr-1 sm:pr-2">
-                            <p class="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 tracking-wide">Support SAP</p>
-                            <p class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Update Data Bertahap</p>
+                            <p class="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 tracking-wide">{{ __('Support SAP') }}</p>
+                            <p class="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">{{ __('Update Data Bertahap') }}</p>
                         </div>
                     </div>
 
                     <!-- Floating Glass Widget 2 (Informational Badge) -->
                     <div class="absolute -top-5 right-2 sm:top-8 sm:-right-8 glass-panel px-3.5 py-2.5 sm:px-5 sm:py-3 rounded-2xl flex items-center gap-2.5 z-20 pointer-events-none select-none opacity-95">
                         <div class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-emerald-500/80"></div>
-                        <p class="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-wide">Data Receiving Terpusat</p>
+                        <p class="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-wide">{{ __('Data Receiving Terpusat') }}</p>
                     </div>
 
                 </div>
@@ -246,23 +274,23 @@
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">ALEX • Asisten AI Receiving Aktif</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm">ALEX Asisten AI Receiving sudah dapat digunakan</p>
+                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">{{ __('ALEX • Asisten AI Receiving Aktif') }}</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm">{{ __('ALEX Asisten AI Receiving sudah dapat digunakan') }}</p>
                         </div>
                     @else
                         <div class="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">ALEX • Asisten AI Receiving Maintenance</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm">Sedang dalam masa pemeliharaan &amp; pelatihan model</p>
+                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">{{ __('ALEX • Asisten AI Receiving Maintenance') }}</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm">{{ __('Sedang dalam masa pemeliharaan & pelatihan model') }}</p>
                         </div>
                     @endif
                 </div>
 
                 <div class="text-slate-600 dark:text-slate-300 mb-6 sm:mb-8 leading-relaxed">
                     @if($aiSettingActive)
-                        <p class="text-sm sm:text-base"><strong>ALEX — Asisten AI Receiving</strong> PT Pupuk Kalimantan Timur saat ini telah aktif! ALEX siap membantu Anda mengecek status PO/DO dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.</p>
+                        <p class="text-sm sm:text-base">{{ __('ALEX — Asisten AI Receiving PT Pupuk Kalimantan Timur saat ini telah aktif! ALEX siap membantu Anda mengecek status PO/DO dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.') }}</p>
 
                         <div class="mt-4 sm:mt-6 relative group overflow-hidden rounded-2xl">
                             <!-- Animated Glow Background -->
@@ -272,39 +300,39 @@
                                 <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-[#F47920]/20 to-orange-500/5 border border-[#F47920]/30 rounded-2xl flex items-center justify-center mb-3 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-inner">
                                     <svg class="w-6 h-6 sm:w-7 sm:h-7 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                 </div>
-                                <h4 class="text-base sm:text-lg font-black text-slate-800 dark:text-white mb-1.5 tracking-tight">Baru Pertama Kali Menggunakan Sistem?</h4>
+                                <h4 class="text-base sm:text-lg font-black text-slate-800 dark:text-white mb-1.5 tracking-tight">{{ __('Baru Pertama Kali Menggunakan Sistem?') }}</h4>
                                 <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mb-4 max-w-sm leading-relaxed font-medium">
-                                    Ikuti panduan interaktif 4 langkah cepat untuk mengetahui cara melacak PO, surat jalan DO, dan status material bersama ALEX Asisten AI Receiving.
+                                    {{ __('Ikuti panduan interaktif 4 langkah cepat untuk mengetahui cara melacak PO, surat jalan DO, dan status material bersama ALEX Asisten AI Receiving.') }}
                                 </p>
                                 
                                 <div class="grid grid-cols-2 gap-2 w-full max-w-xs mb-4 text-[11px] font-bold text-slate-600 dark:text-slate-300">
                                     <div class="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                                        <span>🤖</span> <span>Tanya ALEX</span>
+                                        <span>🤖</span> <span>{{ __('Tanya ALEX') }}</span>
                                     </div>
                                     <div class="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                                        <span>⚡</span> <span>Saran Cepat</span>
+                                        <span>⚡</span> <span>{{ __('Saran Cepat') }}</span>
                                     </div>
                                     <div class="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                                        <span>🔎</span> <span>Ketik No. PO</span>
+                                        <span>🔎</span> <span>{{ __('Ketik No. PO') }}</span>
                                     </div>
                                     <div class="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
-                                        <span>🎯</span> <span>Status Gudang</span>
+                                        <span>🎯</span> <span>{{ __('Status Gudang') }}</span>
                                     </div>
                                 </div>
 
                                 <button @click="closeModal(); startAiTour()" class="flex items-center justify-center w-full sm:w-auto gap-2.5 px-6 py-3 bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-orange-500 hover:to-orange-700 text-white text-xs sm:text-sm font-black rounded-xl shadow-[0_8px_20px_-6px_rgba(244,121,32,0.6)] hover:shadow-[0_12px_25px_-6px_rgba(244,121,32,0.8)] transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer">
-                                    <span>Mulai Panduan ALEX (4 Langkah)</span>
+                                    <span>{{ __('Mulai Panduan ALEX (4 Langkah)') }}</span>
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                                 </button>
                             </div>
                         </div>
                     @else
-                        <p class="text-sm sm:text-base"><strong>ALEX — Asisten AI Receiving</strong> PT Pupuk Kalimantan Timur saat ini sedang dalam masa pemeliharaan dan pelatihan model (Training). Layanan asisten AI untuk pengecekan status otomatis sementara tidak dapat digunakan, namun Anda tetap dapat mengecek kedatangan barang melalui menu <strong>Daftar Material (PD &amp; Non-Stock)</strong> atau mengajukan <strong>Pengambilan Barang (MIR)</strong> secara manual.</p>
+                        <p class="text-sm sm:text-base">{{ __('ALEX — Asisten AI Receiving PT Pupuk Kalimantan Timur saat ini sedang dalam masa pemeliharaan dan pelatihan model (Training). Layanan asisten AI untuk pengecekan status otomatis sementara tidak dapat digunakan, namun Anda tetap dapat mengecek kedatangan barang melalui menu Daftar Material (PD & Non-Stock) atau mengajukan Pengambilan Barang (MIR) secara manual.') }}</p>
                     @endif
                 </div>
 
                 <button @click="closeModal()" class="w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold rounded-xl transition-colors">
-                    Mengerti
+                    {{ __('Mengerti') }}
                 </button>
             </div>
         </div>
@@ -533,44 +561,46 @@
                     id: 'step-1',
                     num: 1,
                     icon: '🤖',
-                    title: 'Buka ALEX — Asisten AI Receiving',
-                    text: 'Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela ALEX Asisten AI Receiving.',
+                    title: @js(__('Buka ALEX — Asisten AI Receiving')),
+                    text: @js(__('Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela ALEX Asisten AI Receiving.')),
                     attachTo: { element: '#tour-chatbot-button', on: 'left' }
                 },
                 {
                     id: 'step-2',
                     num: 2,
                     icon: '💡',
-                    title: 'Rekomendasi Pertanyaan Cepat',
-                    text: 'Pilih salah satu saran pertanyaan ini untuk memeriksa status PO, stok barang, atau panduan secara instan tanpa perlu mengetik.',
+                    title: @js(__('Rekomendasi Pertanyaan Cepat')),
+                    text: @js(__('Pilih salah satu saran pertanyaan ini untuk memeriksa status PO, stok barang, atau panduan secara instan tanpa perlu mengetik.')),
                     attachTo: { element: '#tour-chatbot-suggestions', on: 'top' }
                 },
                 {
                     id: 'step-3',
                     num: 3,
                     icon: '💬',
-                    title: 'Ketik Pertanyaan Bebas',
-                    text: 'Atau ketikkan nomor Purchase Order (PO), nomor Surat Jalan (DO), Stock Number, atau MIR di sini lalu tekan Enter.',
+                    title: @js(__('Ketik Pertanyaan Bebas')),
+                    text: @js(__('Atau ketikkan nomor Purchase Order (PO), nomor Surat Jalan (DO), Stock Number, atau MIR di sini lalu tekan Enter.')),
                     attachTo: { element: '#tour-chatbot-input', on: 'top' }
                 },
                 {
                     id: 'step-4',
                     num: 4,
                     icon: '⚡',
-                    title: 'Jawaban Cerdas & Real-Time',
-                    text: 'ALEX akan mencari data langsung di sistem Receiving dan menyajikan status lengkap dokumen Anda secara otomatis di sini.',
+                    title: @js(__('Jawaban Cerdas & Real-Time')),
+                    text: @js(__('ALEX akan mencari data langsung di sistem Receiving dan menyajikan status lengkap dokumen Anda secara otomatis di sini.')),
                     attachTo: { element: '#tour-chatbot-window', on: 'left' }
                 }
             ];
 
             const totalSteps = aiSteps.length;
+            const stepLabel = @js(__('Langkah'));
+            const fromLabel = @js(__('dari'));
 
             const makeHeaderHtml = (step) => {
                 const percent = Math.round((step.num / totalSteps) * 100);
                 return `
                     <div class="flex items-center justify-between w-full mb-1">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-[#F47920] text-[11px] font-black uppercase tracking-wider">
-                            Langkah ${step.num} dari ${totalSteps}
+                            ${stepLabel} ${step.num} ${fromLabel} ${totalSteps}
                         </span>
                         <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500">${percent}%</span>
                     </div>
@@ -599,7 +629,7 @@
                 attachTo: aiSteps[0].attachTo,
                 buttons: [
                     {
-                        text: 'Buka Chat & Lanjut →',
+                        text: @js(__('Buka Chat & Lanjut →')),
                         classes: 'shepherd-button-primary',
                         action: function() {
                             const chatBtn = document.querySelector('#tour-chatbot-button button');
@@ -635,7 +665,7 @@
                 attachTo: aiSteps[1].attachTo,
                 buttons: [
                     {
-                        text: '← Kembali',
+                        text: @js(__('← Kembali')),
                         classes: 'shepherd-button-secondary',
                         action: function() {
                             const chatBtn = document.querySelector('#tour-chatbot-button button');
@@ -661,7 +691,7 @@
                         }
                     },
                     {
-                        text: 'Lanjut →',
+                        text: @js(__('Lanjut →')),
                         classes: 'shepherd-button-primary',
                         action: tour.next
                     }
@@ -676,12 +706,12 @@
                 attachTo: aiSteps[2].attachTo,
                 buttons: [
                     {
-                        text: '← Kembali',
+                        text: @js(__('← Kembali')),
                         classes: 'shepherd-button-secondary',
                         action: tour.back
                     },
                     {
-                        text: 'Lanjut →',
+                        text: @js(__('Lanjut →')),
                         classes: 'shepherd-button-primary',
                         action: tour.next
                     }
@@ -696,12 +726,12 @@
                 attachTo: aiSteps[3].attachTo,
                 buttons: [
                     {
-                        text: '← Kembali',
+                        text: @js(__('← Kembali')),
                         classes: 'shepherd-button-secondary',
                         action: tour.back
                     },
                     {
-                        text: 'Selesai ✨',
+                        text: @js(__('Selesai ✨')),
                         classes: 'shepherd-button-primary !bg-emerald-600 hover:!bg-emerald-700',
                         action: tour.complete
                     }
@@ -725,4 +755,14 @@
             }, 300);
         }
         window.startAiTour = startAiTour;
+
+        (function checkAutoStartAiTour() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tour') === 'ai') {
+                params.delete('tour');
+                const cleanUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
+                window.history.replaceState({}, '', cleanUrl);
+                setTimeout(() => startAiTour(), 400);
+            }
+        })();
     </script>

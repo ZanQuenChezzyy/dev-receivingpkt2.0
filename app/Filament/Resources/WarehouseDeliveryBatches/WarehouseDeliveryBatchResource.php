@@ -24,17 +24,17 @@ class WarehouseDeliveryBatchResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Master MB51';
+        return __('Master MB51');
     }
 
     public static function getModelLabel(): string
     {
-        return 'Master MB51';
+        return __('Master MB51');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Master Pengiriman MB51';
+        return __('Master Pengiriman MB51');
     }
 
     protected static ?string $recordTitleAttribute = 'batch_title';
