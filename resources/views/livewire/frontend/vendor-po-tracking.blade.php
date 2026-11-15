@@ -362,11 +362,11 @@
                                     {{ __('Identitas Vendor Terverifikasi') }}
                                 </span>
                                 <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-slate-300">
-                                    Status PO: {{ $trackingData['po']['po_status'] ?? 'Active' }}
+                                    {{ __('Status PO:') }} {{ __($trackingData['po']['po_status'] ?? 'Active') }}
                                 </span>
                             </div>
                             <h2 class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white tracking-tight">
-                                Purchase Order #{{ $trackingData['po']['number'] ?? '-' }}
+                                {{ __('Purchase Order') }} #{{ $trackingData['po']['number'] ?? '-' }}
                             </h2>
                             <p class="text-sm font-semibold text-[#F47920] mt-1">
                                 {{ $trackingData['po']['vendor_name'] ?? '-' }}
@@ -425,7 +425,7 @@
                             </h3>
                         </div>
                         <span class="px-3.5 py-1.5 rounded-full text-xs font-black bg-[#F47920]/15 text-[#F47920] border border-[#F47920]/30">
-                            {{ $trackingData['pipeline']['current_stage_label'] ?? 'Menunggu' }}
+                            {{ $trackingData['pipeline']['current_stage_label'] ?? __('Menunggu') }}
                         </span>
                     </div>
 
@@ -596,7 +596,7 @@
                                                         </span>
                                                     </div>
                                                     <div class="text-[11px] text-slate-400 mt-0.5">
-                                                        DO: {{ $gItem->deliveryOrderReceipt?->delivery_order_no ?? '-' }} • Tgl: {{ $gItem->grsRdtv?->transaction_date ? \Carbon\Carbon::parse($gItem->grsRdtv->transaction_date)->format('d M Y') : '-' }}
+                                                        {{ __('DO:') }} {{ $gItem->deliveryOrderReceipt?->delivery_order_no ?? '-' }} • {{ __('Tgl:') }} {{ $gItem->grsRdtv?->transaction_date ? \Carbon\Carbon::parse($gItem->grsRdtv->transaction_date)->locale(app()->getLocale())->translatedFormat('d M Y') : '-' }}
                                                     </div>
                                                 </div>
 
@@ -762,7 +762,7 @@
                                                 {{ $dossier['original_name'] ?? 'Berkas_Penagihan_Invoice.pdf' }}
                                             </h4>
                                             <div class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-3">
-                                                <span>{{ __('Diunggah:') }} {{ isset($dossier['uploaded_at']) ? \Carbon\Carbon::parse($dossier['uploaded_at'])->format('d M Y, H:i') : '-' }}</span>
+                                                <span>{{ __('Diunggah:') }} {{ isset($dossier['uploaded_at']) ? \Carbon\Carbon::parse($dossier['uploaded_at'])->locale(app()->getLocale())->translatedFormat('d M Y, H:i') : '-' }}</span>
                                                 @if (!empty($dossier['file_size']))
                                                     <span>•</span>
                                                     <span>{{ __('Ukuran:') }} {{ number_format($dossier['file_size'] / (1024 * 1024), 2) }} MB</span>
@@ -1057,7 +1057,7 @@
                                                     @else
                                                         bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20
                                                     @endif">
-                                                    {{ $do->status ?? 'Diterima' }}
+                                                    {{ __($do->status ?? 'Diterima') }}
                                                 </span>
                                             </div>
 
@@ -1068,11 +1068,11 @@
                                                 </div>
                                                 <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
                                                     <span class="text-slate-400 dark:text-slate-500">{{ __('Tanggal Tiba:') }}</span>
-                                                    <span class="font-semibold">{{ $do->received_date ? \Carbon\Carbon::parse($do->received_date)->format('d M Y') : '-' }}</span>
+                                                    <span class="font-semibold">{{ $do->received_date ? \Carbon\Carbon::parse($do->received_date)->locale(app()->getLocale())->translatedFormat('d M Y') : '-' }}</span>
                                                 </div>
                                                 <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
                                                     <span class="text-slate-400 dark:text-slate-500">{{ __('Mode Kedatangan:') }}</span>
-                                                    <span class="font-semibold">{{ $do->receipt_mode ?? 'Standard' }}</span>
+                                                    <span class="font-semibold">{{ __($do->receipt_mode ?? 'Standard') }}</span>
                                                 </div>
                                                 <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
                                                     <span class="text-slate-400 dark:text-slate-500">{{ __('Status Post 103:') }}</span>
@@ -1101,7 +1101,7 @@
                                                         @foreach ($do->grsRdtvItems as $gItem)
                                                             <div class="flex items-center justify-between bg-emerald-500/5 p-2 rounded-lg text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
                                                                 <span>{{ $gItem->grsRdtv?->category ?? 'GRS' }}</span>
-                                                                <span>{{ $gItem->grsRdtv?->transaction_date ? \Carbon\Carbon::parse($gItem->grsRdtv->transaction_date)->format('d M Y') : '-' }}</span>
+                                                                <span>{{ $gItem->grsRdtv?->transaction_date ? \Carbon\Carbon::parse($gItem->grsRdtv->transaction_date)->locale(app()->getLocale())->translatedFormat('d M Y') : '-' }}</span>
                                                             </div>
                                                         @endforeach
                                                     </div>

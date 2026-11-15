@@ -201,6 +201,8 @@ class VendorPoTracking extends Component
 
     public function mount(): void
     {
+        $this->restoreVerificationFromSession();
+
         if (! empty($this->poNumber)) {
             $this->initiateSearch();
         }
@@ -218,6 +220,7 @@ class VendorPoTracking extends Component
             $this->showVerificationModal = false;
             $this->verificationError = null;
             $this->searchError = null;
+            $this->persistVerificationToSession($this->activePo);
             $this->loadTrackingData();
 
             return;
@@ -255,7 +258,7 @@ class VendorPoTracking extends Component
         }
 
         if (! $this->resolvePoAndVendor($trimmedPo)) {
-            $this->verificationError = "Nomor PO \"{$trimmedPo}\" tidak ditemukan dalam sistem.";
+            $this->verificationError = __('Nomor PO ":po" tidak ditemukan dalam sistem.', ['po' => $trimmedPo]);
             $this->isVerified = false;
             $this->trackingData = [];
 
@@ -278,7 +281,7 @@ class VendorPoTracking extends Component
         $trimmedPo = trim($this->poNumber);
 
         if (empty($trimmedPo)) {
-            $this->searchError = 'Harap masukkan nomor Purchase Order (PO).';
+            $this->searchError = __('Harap masukkan nomor Purchase Order (PO).');
 
             return;
         }
@@ -286,7 +289,7 @@ class VendorPoTracking extends Component
         $poItems = PurchaseOrderIssued::where('purchase_order_no', $trimmedPo)->get();
 
         if ($poItems->isEmpty()) {
-            $this->searchError = "Nomor PO \"{$trimmedPo}\" tidak ditemukan dalam sistem. Harap periksa kembali nomor PO yang Anda masukkan.";
+            $this->searchError = __('Nomor PO ":po" tidak ditemukan dalam sistem. Harap periksa kembali nomor PO yang Anda masukkan.', ['po' => $trimmedPo]);
             $this->isVerified = false;
             $this->activePo = null;
             $this->trackingData = [];
@@ -296,12 +299,14 @@ class VendorPoTracking extends Component
 
         $firstPo = $poItems->first();
         $this->activePo = $firstPo->purchase_order_no;
+        $this->poNumber = $firstPo->purchase_order_no;
         $this->resolvePoAndVendor($trimmedPo);
 
         // Jika user sudah terverifikasi untuk vendor yang sama dengan email yang valid, langsung tampilkan data
         if ($this->isPoVerified($firstPo)) {
             $this->isVerified = true;
             $this->showVerificationModal = false;
+            $this->persistVerificationToSession($this->activePo);
             $this->loadTrackingData();
 
             return;
@@ -375,7 +380,7 @@ class VendorPoTracking extends Component
                 'vendor_number' => $vendor?->vendor_number ?? $firstPo->vendor_id,
                 'masked_emails' => [],
                 'has_registered_email' => false,
-                'error_message' => 'Vendor untuk PO ini belum memiliki kontak email resmi yang terdaftar pada sistem Master Data Pupuk Kaltim. Silakan hubungi Tim Receiving / Pengadaan PKT untuk validasi berkas.',
+                'error_message' => __('Vendor untuk PO ini belum memiliki kontak email resmi yang terdaftar pada sistem Master Data Pupuk Kaltim. Silakan hubungi Tim Receiving / Pengadaan PKT untuk validasi berkas.'),
             ];
         } else {
             $masked = array_map(fn (string $email): string => $this->maskEmail($email), $registeredEmails);
@@ -399,14 +404,14 @@ class VendorPoTracking extends Component
         $targetPo = trim($this->poNumber ?: ($this->activePo ?? ''));
 
         if (empty($targetPo)) {
-            $this->verificationError = 'Harap masukkan nomor Purchase Order (PO).';
+            $this->verificationError = __('Harap masukkan nomor Purchase Order (PO).');
 
             return;
         }
 
         if ($this->activePo !== $targetPo) {
             if (! $this->resolvePoAndVendor($targetPo)) {
-                $this->verificationError = "Nomor PO \"{$targetPo}\" tidak ditemukan dalam sistem.";
+                $this->verificationError = __('Nomor PO ":po" tidak ditemukan dalam sistem.', ['po' => $targetPo]);
 
                 return;
             }
@@ -415,7 +420,7 @@ class VendorPoTracking extends Component
         $inputEmail = strtolower(trim($this->verificationEmail));
 
         if (empty($inputEmail) || ! filter_var($inputEmail, FILTER_VALIDATE_EMAIL)) {
-            $this->verificationError = 'Harap masukkan format alamat email yang valid.';
+            $this->verificationError = __('Harap masukkan format alamat email yang valid.');
 
             return;
         }
@@ -423,7 +428,7 @@ class VendorPoTracking extends Component
         $po = PurchaseOrderIssued::where('purchase_order_no', $this->activePo)->first();
 
         if (! $po) {
-            $this->verificationError = 'Data PO tidak ditemukan.';
+            $this->verificationError = __('Data PO tidak ditemukan.');
 
             return;
         }
@@ -432,14 +437,14 @@ class VendorPoTracking extends Component
         $registeredEmails = $this->extractEmailsFromVendor($vendor);
 
         if (empty($registeredEmails)) {
-            $this->verificationError = 'Tidak ada email terdaftar untuk vendor ini. Silakan hubungi administrator Receiving PKT.';
+            $this->verificationError = __('Tidak ada email terdaftar untuk vendor ini. Silakan hubungi administrator Receiving PKT.');
 
             return;
         }
 
         // Cek kecocokan email
         if (! in_array($inputEmail, $registeredEmails, true)) {
-            $this->verificationError = 'Email yang Anda masukkan tidak sesuai dengan email vendor terdaftar untuk PO ini. Pastikan Anda menggunakan email resmi yang didaftarkan ke Pupuk Kaltim.';
+            $this->verificationError = __('Email yang Anda masukkan tidak sesuai dengan email vendor terdaftar untuk PO ini. Pastikan Anda menggunakan email resmi yang didaftarkan ke Pupuk Kaltim.');
 
             return;
         }
@@ -449,8 +454,11 @@ class VendorPoTracking extends Component
         $this->verifiedEmail = $inputEmail;
         $this->verifiedVendorNumber = $vendor?->vendor_number ?? $po->vendor_id;
         $this->verifiedVendorId = $vendor?->id;
+        $this->poNumber = $po->purchase_order_no;
+        $this->activePo = $po->purchase_order_no;
         $this->showVerificationModal = false;
         $this->verificationError = null;
+        $this->persistVerificationToSession($po->purchase_order_no);
         $this->loadTrackingData();
     }
 
@@ -481,6 +489,42 @@ class VendorPoTracking extends Component
         $this->searchError = null;
         $this->verificationError = null;
         $this->showVerificationModal = false;
+        session()->forget('vendor_po_tracking.verified');
+    }
+
+    protected function persistVerificationToSession(string $poNumber): void
+    {
+        session([
+            'vendor_po_tracking.verified' => [
+                'email' => $this->verifiedEmail,
+                'vendor_number' => $this->verifiedVendorNumber,
+                'vendor_id' => $this->verifiedVendorId,
+                'po_number' => $poNumber,
+            ],
+        ]);
+    }
+
+    protected function restoreVerificationFromSession(): void
+    {
+        $justSwitchedLocale = (bool) session()->pull('locale_just_switched', false);
+        $verified = session('vendor_po_tracking.verified');
+
+        if (! is_array($verified) || empty($verified['email'])) {
+            return;
+        }
+
+        $this->verifiedEmail = (string) $verified['email'];
+        $this->verifiedVendorNumber = isset($verified['vendor_number']) && $verified['vendor_number'] !== ''
+            ? (string) $verified['vendor_number']
+            : null;
+        $this->verifiedVendorId = isset($verified['vendor_id']) && $verified['vendor_id'] !== null
+            ? (int) $verified['vendor_id']
+            : null;
+        $this->isVerified = true;
+
+        if (empty($this->poNumber) && $justSwitchedLocale && ! empty($verified['po_number'])) {
+            $this->poNumber = (string) $verified['po_number'];
+        }
     }
 
     public function selectDoTab(string $doId): void
@@ -493,6 +537,8 @@ class VendorPoTracking extends Component
         if (empty($this->activePo)) {
             return;
         }
+
+        Carbon::setLocale(app()->getLocale());
 
         $poItems = PurchaseOrderIssued::where('purchase_order_no', $this->activePo)->get();
 
@@ -542,13 +588,17 @@ class VendorPoTracking extends Component
             $timeline[] = [
                 'do_order' => 0,
                 'stage_order' => 10,
-                'date' => $firstPo->date_create->format('d M Y'),
+                'date' => $firstPo->date_create->copy()->locale(app()->getLocale())->translatedFormat('d M Y'),
                 'time' => '08:00',
                 'timestamp' => $firstPo->date_create->timestamp,
-                'title' => 'Purchase Order (PO) Diterbitkan',
-                'badge' => 'PO Issued',
+                'title' => __('Purchase Order (PO) Diterbitkan'),
+                'badge' => __('PO Issued'),
                 'badge_color' => 'blue',
-                'desc' => "Nomor PO: {$firstPo->purchase_order_no} resmi diterbitkan oleh PT Pupuk Kalimantan Timur kepada {$firstPo->vendor_name} ({$poItems->count()} item material).",
+                'desc' => __('Nomor PO: :po resmi diterbitkan oleh PT Pupuk Kalimantan Timur kepada :vendor (:count item material).', [
+                    'po' => $firstPo->purchase_order_no,
+                    'vendor' => $firstPo->vendor_name,
+                    'count' => $poItems->count(),
+                ]),
                 'icon' => 'document-check',
             ];
         }
@@ -559,36 +609,44 @@ class VendorPoTracking extends Component
 
             $arrDate = $do->physical_received_date ?? $do->received_date;
             if ($arrDate) {
-                $cDate = Carbon::parse($arrDate);
-                $penerima = $do->receivedBy->name ?? 'Staff Receiving';
-                $mode = $do->receipt_mode ?? 'Standard';
+                $cDate = Carbon::parse($arrDate)->locale(app()->getLocale());
+                $penerima = $do->receivedBy->name ?? __('Staff Receiving');
+                $mode = __($do->receipt_mode ?? 'Standard');
                 $timeline[] = [
                     'do_order' => $doOrder,
                     'stage_order' => 20,
-                    'date' => $cDate->format('d M Y'),
+                    'date' => $cDate->translatedFormat('d M Y'),
                     'time' => $cDate->format('H:i') !== '00:00' ? $cDate->format('H:i') : '-',
                     'timestamp' => $cDate->timestamp,
-                    'title' => 'Kedatangan Fisik Barang',
-                    'badge' => 'Receiving Entry',
+                    'title' => __('Kedatangan Fisik Barang'),
+                    'badge' => __('Receiving Entry'),
                     'badge_color' => 'emerald',
-                    'desc' => "Surat Jalan (DO) No: {$do->delivery_order_no} diterima di Pintu Receiving oleh {$penerima} (Mode: {$mode}, Kode: {$do->document_code}).",
+                    'desc' => __('Surat Jalan (DO) No: :do diterima di Pintu Receiving oleh :receiver (Mode: :mode, Kode: :code).', [
+                        'do' => $do->delivery_order_no,
+                        'receiver' => $penerima,
+                        'mode' => $mode,
+                        'code' => $do->document_code,
+                    ]),
                     'icon' => 'truck',
                 ];
             }
 
             // Post 103 (Pengajuan QC)
             if ($do->post_103) {
-                $pDate = Carbon::parse($do->post_103);
+                $pDate = Carbon::parse($do->post_103)->locale(app()->getLocale());
+                $qr103Suffix = $do->qr_103_code
+                    ? ' '.__('Terbit Kode QR 103: :code.', ['code' => $do->qr_103_code])
+                    : '';
                 $timeline[] = [
                     'do_order' => $doOrder,
                     'stage_order' => 30,
-                    'date' => $pDate->format('d M Y'),
+                    'date' => $pDate->translatedFormat('d M Y'),
                     'time' => $pDate->format('H:i') !== '00:00' ? $pDate->format('H:i') : '-',
                     'timestamp' => $pDate->timestamp,
-                    'title' => 'Post 103 (Pengajuan QC)',
-                    'badge' => 'Post 103 (Pengajuan QC)',
+                    'title' => __('Post 103 (Pengajuan QC)'),
+                    'badge' => __('Post 103 (Pengajuan QC)'),
                     'badge_color' => 'indigo',
-                    'desc' => 'Pencatatan MIGO 103 (Pengajuan QC) di sistem SAP berhasil.'.($do->qr_103_code ? " Terbit Kode QR 103: {$do->qr_103_code}." : ''),
+                    'desc' => __('Pencatatan MIGO 103 (Pengajuan QC) di sistem SAP berhasil.').$qr103Suffix,
                     'icon' => 'qr-code',
                 ];
             }
@@ -597,17 +655,26 @@ class VendorPoTracking extends Component
             if ($do->receipt_mode === 'Termin' && $do->termins->isNotEmpty()) {
                 foreach ($do->termins as $termin) {
                     if ($termin->post_103) {
-                        $tDate = Carbon::parse($termin->post_103);
+                        $tDate = Carbon::parse($termin->post_103)->locale(app()->getLocale());
+                        $terminQrSuffix = $termin->qr_103_code
+                            ? ' '.__('Kode QR: :code', ['code' => $termin->qr_103_code])
+                            : '';
                         $timeline[] = [
                             'do_order' => $doOrder,
                             'stage_order' => 31,
-                            'date' => $tDate->format('d M Y'),
+                            'date' => $tDate->translatedFormat('d M Y'),
                             'time' => $tDate->format('H:i') !== '00:00' ? $tDate->format('H:i') : '-',
                             'timestamp' => $tDate->timestamp,
-                            'title' => "Post 103 (Pengajuan QC) - {$termin->stage} ({$termin->percentage}%)",
-                            'badge' => 'Termin Post 103',
+                            'title' => __('Post 103 (Pengajuan QC) - :stage (:percentage%)', [
+                                'stage' => $termin->stage,
+                                'percentage' => $termin->percentage,
+                            ]),
+                            'badge' => __('Termin Post 103'),
                             'badge_color' => 'indigo',
-                            'desc' => "Tahapan {$termin->stage} dengan porsi {$termin->percentage}% berhasil di-post 103.".($termin->qr_103_code ? " Kode QR: {$termin->qr_103_code}" : ''),
+                            'desc' => __('Tahapan :stage dengan porsi :percentage% berhasil di-post 103.', [
+                                'stage' => $termin->stage,
+                                'percentage' => $termin->percentage,
+                            ]).$terminQrSuffix,
                             'icon' => 'chart-pie',
                         ];
                     }
@@ -616,24 +683,24 @@ class VendorPoTracking extends Component
 
             // QC Histories (Transmittal Kirim & Kembali)
             foreach ($do->qcHistories as $qc) {
-                $qcDate = Carbon::parse($qc->created_at);
+                $qcDate = Carbon::parse($qc->created_at)->locale(app()->getLocale());
                 $isKirim = $qc->status === 'Kirim';
-                $petugas = $qc->createdBy->name ?? 'Staff Receiving';
+                $petugas = $qc->createdBy->name ?? __('Staff Receiving');
 
                 $timeline[] = [
                     'do_order' => $doOrder,
                     'stage_order' => $isKirim ? 40 : 50,
-                    'date' => $qcDate->format('d M Y'),
+                    'date' => $qcDate->translatedFormat('d M Y'),
                     'time' => $qcDate->format('H:i'),
                     'timestamp' => $qcDate->timestamp,
                     'title' => $isKirim
-                        ? 'Dokumen Dikirim dari Receiving ke ISTEK (Transmittal QC Kirim)'
-                        : 'Dokumen Kembali dari ISTEK ke Receiving (Transmittal QC Kembali)',
-                    'badge' => $isKirim ? 'Transmittal QC Kirim' : 'Transmittal QC Kembali',
+                        ? __('Dokumen Dikirim dari Receiving ke ISTEK (Transmittal QC Kirim)')
+                        : __('Dokumen Kembali dari ISTEK ke Receiving (Transmittal QC Kembali)'),
+                    'badge' => $isKirim ? __('Transmittal QC Kirim') : __('Transmittal QC Kembali'),
                     'badge_color' => $isKirim ? 'sky' : 'purple',
-                    'desc' => ($isKirim
-                        ? "Berkas Surat Jalan diserahkan dari Receiving ke tim ISTEK (Inspeksi Teknik) untuk proses uji mutu & kesesuaian fisik oleh {$petugas}."
-                        : "Pemeriksaan mutu oleh ISTEK selesai dan dokumen telah dikembalikan dari ISTEK ke Gudang Receiving oleh {$petugas}."),
+                    'desc' => $isKirim
+                        ? __('Berkas Surat Jalan diserahkan dari Receiving ke tim ISTEK (Inspeksi Teknik) untuk proses uji mutu & kesesuaian fisik oleh :officer.', ['officer' => $petugas])
+                        : __('Pemeriksaan mutu oleh ISTEK selesai dan dokumen telah dikembalikan dari ISTEK ke Gudang Receiving oleh :officer.', ['officer' => $petugas]),
                     'icon' => 'beaker',
                 ];
             }
@@ -641,20 +708,26 @@ class VendorPoTracking extends Component
             // GRS / RDTV
             foreach ($do->grsRdtvItems as $item) {
                 if ($item->grsRdtv) {
-                    $grsDate = Carbon::parse($item->grsRdtv->transaction_date ?? $item->created_at);
+                    $grsDate = Carbon::parse($item->grsRdtv->transaction_date ?? $item->created_at)->locale(app()->getLocale());
                     $cat = $item->grsRdtv->category;
-                    $petugas = $item->grsRdtv->createdBy->name ?? 'Staff Gudang';
+                    $petugas = $item->grsRdtv->createdBy->name ?? __('Staff Gudang');
+                    $reasonSuffix = $item->reason
+                        ? ' '.__('Catatan: :reason', ['reason' => $item->reason])
+                        : '';
 
                     $timeline[] = [
                         'do_order' => $doOrder,
                         'stage_order' => 60,
-                        'date' => $grsDate->format('d M Y'),
+                        'date' => $grsDate->translatedFormat('d M Y'),
                         'time' => $grsDate->format('H:i') !== '00:00' ? $grsDate->format('H:i') : '-',
                         'timestamp' => $grsDate->timestamp,
-                        'title' => "Dokumen {$cat} Terbit",
-                        'badge' => "Dokumen {$cat} Terbit",
+                        'title' => __('Dokumen :category Terbit', ['category' => $cat]),
+                        'badge' => __('Dokumen :category Terbit', ['category' => $cat]),
                         'badge_color' => $cat === 'GRS' ? 'emerald' : 'rose',
-                        'desc' => "Dokumen {$cat} (SAP 105) resmi terbit dan ditautkan ke sistem penagihan oleh {$petugas}.".($item->reason ? " Catatan: {$item->reason}" : ''),
+                        'desc' => __('Dokumen :category (SAP 105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer.', [
+                            'category' => $cat,
+                            'officer' => $petugas,
+                        ]).$reasonSuffix,
                         'icon' => 'clipboard-check',
                     ];
                 }
@@ -662,20 +735,21 @@ class VendorPoTracking extends Component
 
             // Delay / Pending Logs
             foreach ($do->delayLogs as $log) {
-                $logDate = Carbon::parse($log->created_at);
+                $logDate = Carbon::parse($log->created_at)->locale(app()->getLocale());
                 $isClear = $log->delay_reason === 'Penundaan Selesai (Clear)';
+                $notesSuffix = $log->delay_notes ? " - {$log->delay_notes}" : '';
                 $timeline[] = [
                     'do_order' => $doOrder,
                     'stage_order' => 35,
-                    'date' => $logDate->format('d M Y'),
+                    'date' => $logDate->translatedFormat('d M Y'),
                     'time' => $logDate->format('H:i'),
                     'timestamp' => $logDate->timestamp,
-                    'title' => $isClear ? 'Status Pending Diselesaikan' : 'Catatan Penundaan (Pending Status)',
-                    'badge' => $isClear ? 'Pending Resolved' : 'Pending',
+                    'title' => $isClear ? __('Status Pending Diselesaikan') : __('Catatan Penundaan (Pending Status)'),
+                    'badge' => $isClear ? __('Pending Resolved') : __('Pending'),
                     'badge_color' => $isClear ? 'emerald' : 'amber',
                     'desc' => $isClear
-                        ? 'Status penundaan telah diselesaikan, alur penerimaan dilanjutkan kembali.'
-                        : "Penundaan: {$log->delay_reason}".($log->delay_notes ? " - {$log->delay_notes}" : ''),
+                        ? __('Status penundaan telah diselesaikan, alur penerimaan dilanjutkan kembali.')
+                        : __('Penundaan: :reason', ['reason' => __($log->delay_reason)]).$notesSuffix,
                     'icon' => 'clock',
                 ];
             }
@@ -691,21 +765,24 @@ class VendorPoTracking extends Component
                 foreach ($whTransmittalItems as $tId => $items) {
                     $transmittal = $items->first()?->transmittal;
                     if ($transmittal) {
-                        $tDate = Carbon::parse($items->first()->created_at ?? ($transmittal->tanggal ?? $transmittal->created_at));
-                        $destName = $transmittal->destination?->name ?? 'Gudang Tujuan';
-                        $petugas = $transmittal->createdBy?->name ?? 'Petugas Gudang';
+                        $tDate = Carbon::parse($items->first()->created_at ?? ($transmittal->tanggal ?? $transmittal->created_at))->locale(app()->getLocale());
+                        $destName = $transmittal->destination?->name ?? __('Gudang Tujuan');
+                        $petugas = $transmittal->createdBy?->name ?? __('Petugas Gudang');
                         $count = $items->count();
 
                         $timeline[] = [
                             'do_order' => $doOrder,
                             'stage_order' => 65,
-                            'date' => $tDate->format('d M Y'),
+                            'date' => $tDate->translatedFormat('d M Y'),
                             'time' => $tDate->format('H:i') !== '00:00' ? $tDate->format('H:i') : '-',
                             'timestamp' => $tDate->timestamp,
-                            'title' => 'Dikirim Ke Gudang',
-                            'badge' => 'Pengiriman Gudang',
+                            'title' => __('Dikirim Ke Gudang'),
+                            'badge' => __('Pengiriman Gudang'),
                             'badge_color' => 'teal',
-                            'desc' => "{$destName} - Oleh: {$petugas}",
+                            'desc' => __(':destination - Oleh: :officer', [
+                                'destination' => $destName,
+                                'officer' => $petugas,
+                            ]),
                             'icon' => 'truck',
                         ];
                     }
@@ -716,17 +793,23 @@ class VendorPoTracking extends Component
             foreach ($do->deliveryOrderReceiptDetails as $dDetail) {
                 foreach ($dDetail->materialIssueDetails as $miDetail) {
                     if ($miDetail->materialIssue) {
-                        $miDate = Carbon::parse($miDetail->materialIssue->tanggal ?? $miDetail->created_at);
+                        $miDate = Carbon::parse($miDetail->materialIssue->tanggal ?? $miDetail->created_at)->locale(app()->getLocale());
                         $timeline[] = [
                             'do_order' => $doOrder,
                             'stage_order' => 70,
-                            'date' => $miDate->format('d M Y'),
+                            'date' => $miDate->translatedFormat('d M Y'),
                             'time' => $miDate->format('H:i') !== '00:00' ? $miDate->format('H:i') : '-',
                             'timestamp' => $miDate->timestamp,
-                            'title' => "Pengambilan Barang (MIR: {$miDetail->materialIssue->mir_number})",
-                            'badge' => 'Material Issued',
+                            'title' => __('Pengambilan Barang (MIR: :mir)', ['mir' => $miDetail->materialIssue->mir_number]),
+                            'badge' => __('Material Issued'),
                             'badge_color' => 'teal',
-                            'desc' => "Material '{$dDetail->description}' sebanyak {$miDetail->diserahkan} {$dDetail->uoi} diserahkan kepada {$miDetail->materialIssue->diminta_oleh} (Stage: {$miDetail->stage_when_issued}).",
+                            'desc' => __("Material ':material' sebanyak :qty :uoi diserahkan kepada :recipient (Stage: :stage).", [
+                                'material' => $dDetail->description,
+                                'qty' => $miDetail->diserahkan,
+                                'uoi' => $dDetail->uoi,
+                                'recipient' => $miDetail->materialIssue->diminta_oleh,
+                                'stage' => $miDetail->stage_when_issued,
+                            ]),
                             'icon' => 'arrow-right-on-rectangle',
                         ];
                     }
@@ -736,33 +819,36 @@ class VendorPoTracking extends Component
             // Invoicing Receipts
             foreach ($do->invoicingReceipts as $inv) {
                 if ($inv->tanggal_terima_grs) {
-                    $invDate = Carbon::parse($inv->tanggal_terima_grs);
+                    $invDate = Carbon::parse($inv->tanggal_terima_grs)->locale(app()->getLocale());
+                    $invoiceNoSuffix = $inv->no_invoice
+                        ? ' '.__('No Invoice: :invoice', ['invoice' => $inv->no_invoice])
+                        : '';
                     $timeline[] = [
                         'do_order' => $doOrder,
                         'stage_order' => 80,
-                        'date' => $invDate->format('d M Y'),
+                        'date' => $invDate->translatedFormat('d M Y'),
                         'time' => '-',
                         'timestamp' => $invDate->timestamp,
-                        'title' => 'Penerimaan Berkas Penagihan (Invoicing)',
-                        'badge' => 'Invoicing Entry',
+                        'title' => __('Penerimaan Berkas Penagihan (Invoicing)'),
+                        'badge' => __('Invoicing Entry'),
                         'badge_color' => 'cyan',
-                        'desc' => "Berkas penagihan untuk DO {$inv->no_do} diterima oleh Bagian Keuangan/Invoice.".($inv->no_invoice ? " No Invoice: {$inv->no_invoice}" : ''),
+                        'desc' => __('Berkas penagihan untuk DO :do diterima oleh Bagian Keuangan/Invoice.', ['do' => $inv->no_do]).$invoiceNoSuffix,
                         'icon' => 'currency-dollar',
                     ];
                 }
 
                 if ($inv->tanggal_kirim_kasir) {
-                    $kasirDate = Carbon::parse($inv->tanggal_kirim_kasir);
+                    $kasirDate = Carbon::parse($inv->tanggal_kirim_kasir)->locale(app()->getLocale());
                     $timeline[] = [
                         'do_order' => $doOrder,
                         'stage_order' => 90,
-                        'date' => $kasirDate->format('d M Y'),
+                        'date' => $kasirDate->translatedFormat('d M Y'),
                         'time' => '-',
                         'timestamp' => $kasirDate->timestamp,
-                        'title' => 'Berkas Dikirim ke Kasir untuk Pembayaran',
-                        'badge' => 'Kasir / Payment',
+                        'title' => __('Berkas Dikirim ke Kasir untuk Pembayaran'),
+                        'badge' => __('Kasir / Payment'),
                         'badge_color' => 'emerald',
-                        'desc' => 'Dokumen penagihan telah diverifikasi dan diserahkan ke bagian Kasir untuk proses pembayaran.',
+                        'desc' => __('Dokumen penagihan telah diverifikasi dan diserahkan ke bagian Kasir untuk proses pembayaran.'),
                         'icon' => 'banknotes',
                     ];
                 }
@@ -778,34 +864,34 @@ class VendorPoTracking extends Component
 
         // Tentukan Current Pipeline Stage
         $currentStageIndex = 1;
-        $currentStageLabel = 'PO Diterbitkan';
+        $currentStageLabel = __('PO Diterbitkan');
 
         if ($uniqueDos->isNotEmpty()) {
             $currentStageIndex = 2;
-            $currentStageLabel = 'Fisik Tiba di Receiving';
+            $currentStageLabel = __('Fisik Tiba di Receiving');
 
             $hasPost103 = $uniqueDos->contains(fn (DeliveryOrderReceipt $do): bool => $do->post_103 !== null);
             if ($hasPost103) {
                 $currentStageIndex = 3;
-                $currentStageLabel = 'Posting MIGO 103 Selesai';
+                $currentStageLabel = __('Posting MIGO 103 Selesai');
             }
 
             $hasQcKirim = $uniqueDos->contains(fn (DeliveryOrderReceipt $do): bool => $do->qcHistories->where('status', 'Kirim')->isNotEmpty());
             if ($hasQcKirim) {
                 $currentStageIndex = 4;
-                $currentStageLabel = 'Inspeksi ISTEK (QC)';
+                $currentStageLabel = __('Inspeksi ISTEK (QC)');
             }
 
             $hasQcKembali = $uniqueDos->contains(fn (DeliveryOrderReceipt $do): bool => $do->qcHistories->where('status', 'Kembali')->isNotEmpty());
             if ($hasQcKembali) {
                 $currentStageIndex = 4;
-                $currentStageLabel = 'Inspeksi ISTEK Selesai';
+                $currentStageLabel = __('Inspeksi ISTEK Selesai');
             }
 
             $hasGrs = $uniqueDos->contains(fn (DeliveryOrderReceipt $do): bool => $do->grsRdtvItems->where('grsRdtv.category', 'GRS')->isNotEmpty() || $do->status === 'GRS');
             if ($hasGrs) {
                 $currentStageIndex = 5;
-                $currentStageLabel = 'GRS Terbit (105)';
+                $currentStageLabel = __('GRS Terbit (105)');
             }
         }
 
@@ -815,14 +901,14 @@ class VendorPoTracking extends Component
             $receivedQty = (float) $details->where('purchase_order_issued_id', $item->id)->sum('quantity');
             $poQty = (float) $item->qty_po;
 
-            $statusText = 'Belum Diterima';
+            $statusText = __('Belum Diterima');
             $statusColor = 'gray';
 
             if ($receivedQty >= $poQty && $poQty > 0) {
-                $statusText = 'Diterima Lengkap';
+                $statusText = __('Diterima Lengkap');
                 $statusColor = 'emerald';
             } elseif ($receivedQty > 0) {
-                $statusText = 'Diterima Parsial';
+                $statusText = __('Diterima Parsial');
                 $statusColor = 'amber';
             }
 
@@ -844,7 +930,7 @@ class VendorPoTracking extends Component
                 'material_type' => $item->material_type ?? '-',
                 'status_text' => $statusText,
                 'status_color' => $statusColor,
-                'locations' => ! empty($itemLocations) ? implode(', ', $itemLocations) : 'Belum diatur',
+                'locations' => ! empty($itemLocations) ? implode(', ', $itemLocations) : __('Belum diatur'),
             ];
         }
 
@@ -871,9 +957,9 @@ class VendorPoTracking extends Component
                 'number' => $firstPo->purchase_order_no,
                 'vendor_id' => $firstPo->vendor_id,
                 'vendor_name' => $vendor?->name ?? $firstPo->vendor_name,
-                'date_create' => $firstPo->date_create?->format('d M Y') ?? '-',
-                'delivery_date_po' => $firstPo->delivery_date_po?->format('d M Y') ?? '-',
-                'po_status' => $firstPo->po_status ?? 'Active',
+                'date_create' => $firstPo->date_create?->copy()->locale(app()->getLocale())->translatedFormat('d M Y') ?? '-',
+                'delivery_date_po' => $firstPo->delivery_date_po?->copy()->locale(app()->getLocale())->translatedFormat('d M Y') ?? '-',
+                'po_status' => __($firstPo->po_status ?? 'Active'),
                 'requisitioner' => $firstPo->requisitioner,
                 'currency' => $firstPo->currency ?? 'IDR',
                 'total_amount' => (float) $firstPo->total_amount_in_lc,
@@ -889,7 +975,7 @@ class VendorPoTracking extends Component
             'timeline' => $timeline,
             'invoicing_receipt' => $invoicingReceipt,
             'grs_items' => $grsItems,
-            'checklist_definitions' => self::INVOICE_CHECKLIST,
+            'checklist_definitions' => $this->getTranslatedChecklistDefinitions(),
             'dossier_file' => $dossierInfo,
             'has_dossier' => ! empty($invoicingReceipt?->dokumen_invoice),
             'uploaded_checklist' => $invoicingReceipt?->dokumen_kelengkapan ?? [],
@@ -897,20 +983,37 @@ class VendorPoTracking extends Component
         ];
     }
 
+    /**
+     * Return the invoice checklist definitions translated for the active locale.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    protected function getTranslatedChecklistDefinitions(): array
+    {
+        return array_map(static function (array $item): array {
+            return [
+                ...$item,
+                'name' => __($item['name']),
+                'desc' => __($item['desc']),
+                'badge' => __($item['badge']),
+            ];
+        }, self::INVOICE_CHECKLIST);
+    }
+
     public function uploadBerkasPenagihan(): void
     {
         $this->validate([
             'berkasPenagihanFile' => ['required', 'file', 'mimes:pdf,zip,rar,jpg,jpeg,png', 'max:25600'],
         ], [
-            'berkasPenagihanFile.required' => 'Harap pilih berkas penagihan invoice terlebih dahulu.',
-            'berkasPenagihanFile.file' => 'Berkas tidak valid.',
-            'berkasPenagihanFile.mimes' => 'Format berkas wajib berupa PDF, ZIP, RAR, JPG, JPEG, atau PNG.',
-            'berkasPenagihanFile.max' => 'Ukuran berkas maksimal 25 MB.',
+            'berkasPenagihanFile.required' => __('Harap pilih berkas penagihan invoice terlebih dahulu.'),
+            'berkasPenagihanFile.file' => __('Berkas tidak valid.'),
+            'berkasPenagihanFile.mimes' => __('Format berkas wajib berupa PDF, ZIP, RAR, JPG, JPEG, atau PNG.'),
+            'berkasPenagihanFile.max' => __('Ukuran berkas maksimal 25 MB.'),
         ]);
 
         $invoicingReceipt = $this->resolveOrCreateInvoicingReceipt();
         if (! $invoicingReceipt) {
-            session()->flash('upload_error', 'Gagal menemukan atau membuat berkas penagihan untuk PO ini.');
+            session()->flash('upload_error', __('Gagal menemukan atau membuat berkas penagihan untuk PO ini.'));
 
             return;
         }
@@ -935,7 +1038,7 @@ class VendorPoTracking extends Component
         $this->berkasPenagihanFile = null;
         $this->loadTrackingData();
 
-        session()->flash('upload_success', "Berkas penagihan invoice \"{$origName}\" berhasil diunggah.");
+        session()->flash('upload_success', __('Berkas penagihan invoice ":name" berhasil diunggah.', ['name' => $origName]));
     }
 
     public function downloadBerkasPenagihan(): mixed
@@ -944,13 +1047,13 @@ class VendorPoTracking extends Component
         $path = $invoicingReceipt?->dokumen_invoice;
 
         if (empty($path)) {
-            session()->flash('download_error', 'Berkas penagihan invoice belum diunggah.');
+            session()->flash('download_error', __('Berkas penagihan invoice belum diunggah.'));
 
             return null;
         }
 
         if (! Storage::disk('public')->exists($path)) {
-            session()->flash('download_error', 'File tidak ditemukan di penyimpanan server.');
+            session()->flash('download_error', __('File tidak ditemukan di penyimpanan server.'));
 
             return null;
         }
@@ -981,7 +1084,7 @@ class VendorPoTracking extends Component
 
         $this->loadTrackingData();
 
-        session()->flash('upload_success', 'Berkas dokumen penagihan berhasil dihapus.');
+        session()->flash('upload_success', __('Berkas dokumen penagihan berhasil dihapus.'));
     }
 
     // Backward-compatibility methods for checklist calls
@@ -1011,13 +1114,13 @@ class VendorPoTracking extends Component
             : $this->resolveOrCreateInvoicingReceipt();
 
         if (! $receipt || empty($receipt->dokumen_verifikasi_grs)) {
-            session()->flash('download_error', 'Surat Verifikasi GRS belum diunggah oleh Tim Invoice.');
+            session()->flash('download_error', __('Surat Verifikasi GRS belum diunggah oleh Tim Invoice.'));
 
             return null;
         }
 
         if (! Storage::disk('public')->exists($receipt->dokumen_verifikasi_grs)) {
-            session()->flash('download_error', 'File Surat Verifikasi GRS tidak ditemukan di penyimpanan server.');
+            session()->flash('download_error', __('File Surat Verifikasi GRS tidak ditemukan di penyimpanan server.'));
 
             return null;
         }
@@ -1032,13 +1135,13 @@ class VendorPoTracking extends Component
         $item = GrsRdtvItem::find($grsItemId);
 
         if (! $item || empty($item->file_path)) {
-            session()->flash('download_error', 'Berkas GRS belum diunggah oleh Tim Receiving.');
+            session()->flash('download_error', __('Berkas GRS belum diunggah oleh Tim Receiving.'));
 
             return null;
         }
 
         if (! Storage::disk('public')->exists($item->file_path)) {
-            session()->flash('download_error', 'File Berkas GRS tidak ditemukan di penyimpanan server.');
+            session()->flash('download_error', __('File Berkas GRS tidak ditemukan di penyimpanan server.'));
 
             return null;
         }

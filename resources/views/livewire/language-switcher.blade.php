@@ -21,7 +21,7 @@
     <!-- Indonesia Button -->
     <a
         href="{{ route('locale.switch', 'id') }}"
-        @click="current = 'id'"
+        @click.prevent="current = 'id'; window.location.assign($el.href + ($el.href.includes('?') ? '&' : '?') + 'redirect=' + encodeURIComponent(window.location.pathname + window.location.search + window.location.hash))"
         :class="{
             'text-blue-600 dark:text-white font-bold scale-[1.02]': current === 'id',
             'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white': current !== 'id'
@@ -35,7 +35,7 @@
     <!-- English Button -->
     <a
         href="{{ route('locale.switch', 'en') }}"
-        @click="current = 'en'"
+        @click.prevent="current = 'en'; window.location.assign($el.href + ($el.href.includes('?') ? '&' : '?') + 'redirect=' + encodeURIComponent(window.location.pathname + window.location.search + window.location.hash))"
         :class="{
             'text-blue-600 dark:text-white font-bold scale-[1.02]': current === 'en',
             'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white': current !== 'en'

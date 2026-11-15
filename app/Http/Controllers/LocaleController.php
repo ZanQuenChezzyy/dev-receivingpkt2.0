@@ -16,6 +16,20 @@ class LocaleController extends Controller
         if (in_array($locale, SetLocale::SUPPORTED_LOCALES, true)) {
             $request->session()->put('locale', $locale);
             cookie()->queue(cookie()->forever('locale', $locale));
+            $request->session()->flash('locale_just_switched', true);
+        }
+
+        $redirect = $request->query('redirect');
+        if (
+            is_string($redirect)
+            && $redirect !== ''
+            && str_starts_with($redirect, '/')
+            && ! str_starts_with($redirect, '//')
+            && ! str_starts_with($redirect, '/\\')
+            && ! preg_match('/[\x00-\x1F\x7F]/', $redirect)
+            && ! str_contains($redirect, '/lang/')
+        ) {
+            return redirect()->to($redirect);
         }
 
         $referer = $request->header('Referer');
@@ -23,6 +37,11 @@ class LocaleController extends Controller
             return redirect()->to($referer);
         }
 
-        return redirect()->back(fallback: route('home'));
+        $previous = url()->previous();
+        if ($previous && ! str_contains($previous, '/lang/')) {
+            return redirect()->to($previous);
+        }
+
+        return redirect()->route('home');
     }
 }
