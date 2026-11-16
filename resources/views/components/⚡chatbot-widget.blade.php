@@ -329,33 +329,67 @@ new class extends Component {
 
     private function toolCariDataPengambilan($kataKunci, $tanggalMulai = null, $tanggalSelesai = null)
     {
-        $searchTerms = preg_split('/\s+/', $kataKunci, -1, PREG_SPLIT_NO_EMPTY);
+        $searchTerms = preg_split('/\s+/', trim((string) $kataKunci), -1, PREG_SPLIT_NO_EMPTY);
+        $stopWords = ['mir', 'status', 'data', 'pengambilan', 'barang', 'nya', 'ada', 'tidak', 'cek', 'cari', 'apakah', 'info', 'riwayat'];
+
+        $filteredTerms = array_values(array_filter($searchTerms, function ($term) use ($stopWords) {
+            return ! in_array(strtolower($term), $stopWords, true);
+        }));
+
+        // Jika hanya berisi kata umum (misal: "mir", "status mir", "ada status mir nya"), cari konteks PO aktif dari riwayat chat
+        if (empty($filteredTerms)) {
+            $activePo = null;
+            for ($i = count($this->chats) - 1; $i >= 0; $i--) {
+                $chatText = $this->chats[$i]['content'] ?? '';
+                if (preg_match('/\b(53\d{8})\b/', $chatText, $matches)) {
+                    $activePo = $matches[1];
+                    break;
+                }
+            }
+
+            if (! empty($activePo)) {
+                $mirs = \App\Models\MaterialIssue::with([
+                    'materialIssueDetails.deliveryOrderReceiptDetail.purchaseOrderIssued',
+                ])->whereHas('materialIssueDetails.deliveryOrderReceiptDetail.purchaseOrderIssued', function ($qPo) use ($activePo) {
+                    $qPo->where('purchase_order_no', $activePo);
+                })->latest('tanggal')->take(50)->get();
+
+                if ($mirs->isEmpty()) {
+                    return "INFORMASI: Tidak ada catatan atau status pengeluaran barang (Material Issue / MIR) untuk PO {$activePo}. Belum pernah ada pengambilan barang yang diproses untuk PO tersebut.";
+                }
+
+                return $this->formatMirsData($mirs);
+            }
+
+            return 'Silakan sebutkan Nomor PO, Nomor MIR spesifik, atau kode material yang ingin Anda periksa riwayat pengambilannya.';
+        }
+
         $mirQuery = \App\Models\MaterialIssue::with([
-            'materialIssueDetails.deliveryOrderReceiptDetail.purchaseOrderIssued'
+            'materialIssueDetails.deliveryOrderReceiptDetail.purchaseOrderIssued',
         ]);
 
         if ($tanggalMulai && $tanggalSelesai) {
             $mirQuery->whereBetween('tanggal', [$tanggalMulai, $tanggalSelesai]);
         }
 
-        if (!empty($searchTerms)) {
-            $mirQuery->where(function ($q) use ($searchTerms) {
-                foreach ($searchTerms as $term) {
-                    if (strlen($term) < 3 && !is_numeric($term)) continue;
-
-                    $q->orWhere('mir_number', 'LIKE', "%{$term}%")
-                      ->orWhere('diminta_oleh', 'LIKE', "%{$term}%")
-                      ->orWhere('departemen', 'LIKE', "%{$term}%")
-                      ->orWhereHas('materialIssueDetails.deliveryOrderReceiptDetail', function ($qDetail) use ($term) {
-                          $qDetail->where('material_code', 'LIKE', "%{$term}%")
-                              ->orWhere('description', 'LIKE', "%{$term}%")
-                              ->orWhereHas('purchaseOrderIssued', function ($qPo) use ($term) {
-                                  $qPo->where('purchase_order_no', 'LIKE', "%{$term}%");
-                              });
-                      });
+        $mirQuery->where(function ($q) use ($filteredTerms) {
+            foreach ($filteredTerms as $term) {
+                if (strlen($term) < 3 && ! is_numeric($term)) {
+                    continue;
                 }
-            });
-        }
+
+                $q->orWhere('mir_number', 'LIKE', "%{$term}%")
+                    ->orWhere('diminta_oleh', 'LIKE', "%{$term}%")
+                    ->orWhere('departemen', 'LIKE', "%{$term}%")
+                    ->orWhereHas('materialIssueDetails.deliveryOrderReceiptDetail', function ($qDetail) use ($term) {
+                        $qDetail->where('material_code', 'LIKE', "%{$term}%")
+                            ->orWhere('description', 'LIKE', "%{$term}%")
+                            ->orWhereHas('purchaseOrderIssued', function ($qPo) use ($term) {
+                                $qPo->where('purchase_order_no', 'LIKE', "%{$term}%");
+                            });
+                    });
+            }
+        });
 
         $recentMirs = $mirQuery->latest('tanggal')->take(50)->get();
         
@@ -450,6 +484,186 @@ new class extends Component {
         return false;
     }
 
+    public function looksLikeJsonOrToolCall(string $text): bool
+    {
+        $trimmed = ltrim($text);
+        if ($trimmed === '') {
+            return false;
+        }
+
+        if (str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[') || str_starts_with($trimmed, '```json') || str_starts_with($trimmed, '<tool_call')) {
+            return true;
+        }
+
+        if (str_contains($text, '"name": "cari_data_') || str_contains($text, '"name":"cari_data_') || str_contains($text, 'cari_data_penerimaan') || str_contains($text, 'cari_data_pengambilan')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function extractToolCallsFromContent(string $content): array
+    {
+        $trimmed = trim($content);
+        if (empty($trimmed)) {
+            return [];
+        }
+
+        if (preg_match('/^```(?:json)?\s*([\s\S]*?)\s*```$/i', $trimmed, $m)) {
+            $trimmed = trim($m[1]);
+        }
+
+        if (preg_match('/<tool_call>([\s\S]*?)<\/tool_call>/i', $trimmed, $m)) {
+            $trimmed = trim($m[1]);
+        }
+
+        $decoded = json_decode($trimmed, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $calls = $this->normalizeToolCalls($decoded);
+            if (! empty($calls)) {
+                return $calls;
+            }
+        }
+
+        if (preg_match('/(\{[\s\S]*"name"\s*:\s*"(?:cari_data_penerimaan|cari_data_pengambilan)"[\s\S]*\})/s', $content, $matches)) {
+            $subDecoded = json_decode($matches[1], true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($subDecoded)) {
+                $calls = $this->normalizeToolCalls($subDecoded);
+                if (! empty($calls)) {
+                    return $calls;
+                }
+            }
+        }
+
+        return [];
+    }
+
+    private function normalizeToolCalls(array $data): array
+    {
+        $validTools = ['cari_data_penerimaan', 'cari_data_pengambilan'];
+
+        if (isset($data['name']) && in_array($data['name'], $validTools, true)) {
+            $rawArgs = $data['parameters'] ?? $data['arguments'] ?? [];
+            if (is_string($rawArgs)) {
+                $rawArgs = json_decode($rawArgs, true) ?? ['kata_kunci' => $rawArgs];
+            }
+
+            return [[
+                'function' => [
+                    'name' => $data['name'],
+                    'arguments' => is_array($rawArgs) ? $rawArgs : ['kata_kunci' => (string) $rawArgs],
+                ],
+            ]];
+        }
+
+        if (isset($data['function']['name']) && in_array($data['function']['name'], $validTools, true)) {
+            $rawArgs = $data['function']['arguments'] ?? $data['function']['parameters'] ?? [];
+            if (is_string($rawArgs)) {
+                $rawArgs = json_decode($rawArgs, true) ?? ['kata_kunci' => $rawArgs];
+            }
+
+            return [[
+                'function' => [
+                    'name' => $data['function']['name'],
+                    'arguments' => is_array($rawArgs) ? $rawArgs : ['kata_kunci' => (string) $rawArgs],
+                ],
+            ]];
+        }
+
+        if (isset($data[0]) && is_array($data[0])) {
+            $calls = [];
+            foreach ($data as $item) {
+                if (is_array($item)) {
+                    $sub = $this->normalizeToolCalls($item);
+                    if (! empty($sub)) {
+                        $calls[] = $sub[0];
+                    }
+                }
+            }
+            if (! empty($calls)) {
+                return $calls;
+            }
+        }
+
+        if (isset($data['tool_calls']) && is_array($data['tool_calls'])) {
+            return $this->normalizeToolCalls($data['tool_calls']);
+        }
+        if (isset($data['tool_uses']) && is_array($data['tool_uses'])) {
+            return $this->normalizeToolCalls($data['tool_uses']);
+        }
+
+        return [];
+    }
+
+    private function cleanAssistantResponse(string $content): string
+    {
+        $trimmed = trim($content);
+        if ($trimmed === '') {
+            return '';
+        }
+
+        $trimmed = preg_replace('/<tool_call>[\s\S]*?<\/tool_call>/i', '', $trimmed);
+        $trimmed = preg_replace('/^(?:Maaf,?\s*)?(?:saya\s+tidak\s+bisa\s+menampilkan\s+data\s+dalam\s+format\s+JSON[^\n\.]*[\n\.]*)/iu', '', $trimmed);
+        $trimmed = preg_replace('/^(?:Tapi|Namun)\s+saya\s+bisa\s+menjelaskannya\s+secara\s+naratif[\:\.\,]*/iu', '', $trimmed);
+        $trimmed = trim((string) $trimmed);
+
+        if (preg_match('/^```(?:json)?\s*([\s\S]*?)\s*```$/i', $trimmed, $m)) {
+            $inner = trim($m[1]);
+            $decoded = json_decode($inner, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $extracted = $this->extractTextFromJson($decoded);
+                if ($extracted !== null) {
+                    return $extracted;
+                }
+            }
+        }
+
+        if (str_starts_with($trimmed, '{') && str_ends_with($trimmed, '}')) {
+            $decoded = json_decode($trimmed, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $extracted = $this->extractTextFromJson($decoded);
+                if ($extracted !== null) {
+                    return $extracted;
+                }
+            }
+        }
+
+        $cleaned = preg_replace('/```(?:json)?\s*\{[\s\S]*?\}\s*```/i', '', $trimmed);
+        $cleaned = trim((string) $cleaned);
+        if (! empty($cleaned)) {
+            return $cleaned;
+        }
+
+        return $trimmed;
+    }
+
+    private function extractTextFromJson(array $data): ?string
+    {
+        if (isset($data['name']) && str_starts_with((string) $data['name'], 'cari_data_')) {
+            return null;
+        }
+
+        $keys = ['response', 'message', 'content', 'jawaban', 'answer', 'text', 'ringkasan', 'summary'];
+        foreach ($keys as $k) {
+            if (isset($data[$k]) && is_string($data[$k]) && trim($data[$k]) !== '') {
+                return trim($data[$k]);
+            }
+        }
+
+        $parts = [];
+        foreach ($data as $k => $v) {
+            if (is_string($v) || is_numeric($v)) {
+                $label = ucwords(str_replace('_', ' ', (string) $k));
+                $parts[] = "**{$label}**: {$v}";
+            }
+        }
+        if (! empty($parts)) {
+            return implode("\n", $parts);
+        }
+
+        return null;
+    }
+
     #[On('process-ai-response')]
     public function fetchAiResponse(string $userMessage)
     {
@@ -485,24 +699,16 @@ new class extends Component {
         ];
 
         foreach ($this->chats as $chat) {
-            if (isset($chat['tool_calls'])) {
-                $ollamaMessages[] = [
-                    'role' => $chat['role'],
-                    'content' => $chat['content'] ?? '',
-                    'tool_calls' => $chat['tool_calls']
-                ];
-            } elseif (isset($chat['name'])) {
-                $ollamaMessages[] = [
-                    'role' => $chat['role'],
-                    'name' => $chat['name'],
-                    'content' => $chat['content'] ?? ''
-                ];
-            } else {
-                $ollamaMessages[] = [
-                    'role' => $chat['role'],
-                    'content' => $chat['content'] ?? ''
-                ];
+            if ($chat['role'] === 'tool') {
+                continue;
             }
+            if ($chat['role'] === 'assistant' && (empty($chat['content']) || $this->looksLikeJsonOrToolCall($chat['content']))) {
+                continue;
+            }
+            $ollamaMessages[] = [
+                'role' => $chat['role'],
+                'content' => $chat['content'] ?? '',
+            ];
         }
 
         $tools = [
@@ -555,9 +761,12 @@ new class extends Component {
 
         $isFirstIteration = true;
         $isTypingStarted = false;
+        $maxIterations = 5;
+        $iterationCount = 0;
+        $finalAssistantReplied = false;
 
         try {
-            while (true) {
+            while ($iterationCount++ < $maxIterations) {
                 if ($isFirstIteration) {
                     $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-[#F47920] font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-[#F47920] animate-pulse"></span> <span>' . __('ALEX • Menganalisis pertanyaan...') . '</span></span>', replace: true);
                     $isFirstIteration = false;
@@ -598,6 +807,7 @@ new class extends Component {
                 if (! $response->successful()) {
                     \Illuminate\Support\Facades\Log::error('Ollama API Error: '.$response->body());
                     $this->chats[] = ['role' => 'assistant', 'content' => 'Maaf, API mengalami gangguan: '.$response->body()];
+                    $finalAssistantReplied = true;
                     break;
                 }
 
@@ -621,17 +831,26 @@ new class extends Component {
                     $data = json_decode($line, true);
                     if ($data) {
                         if (isset($data['message']['content']) && $data['message']['content'] !== '') {
-                            if (!$isTypingStarted) {
-                                $isTypingStarted = true;
-                                $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-[#F47920] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-[#F47920] animate-ping"></span> <span>' . __('ALEX • Mengetik...') . '</span></span>', replace: true);
-                            }
+                            $chunk = $data['message']['content'];
+                            $fullReply .= $chunk;
 
-                            $fullReply .= $data['message']['content'];
-                            $renderedHtml = str($fullReply)->markdown([
-                                'html_input' => 'escape',
-                                'allow_unsafe_links' => false,
-                            ]);
-                            $this->stream(to: 'ai-reply-stream', content: $renderedHtml, replace: true);
+                            if ($this->looksLikeJsonOrToolCall($fullReply)) {
+                                if (!$isTypingStarted) {
+                                    $isTypingStarted = true;
+                                    $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-sky-500 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-ping"></span> <span>' . __('ALEX • Mencari ke database...') . '</span></span>', replace: true);
+                                }
+                            } else {
+                                if (!$isTypingStarted) {
+                                    $isTypingStarted = true;
+                                    $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-[#F47920] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-[#F47920] animate-ping"></span> <span>' . __('ALEX • Mengetik...') . '</span></span>', replace: true);
+                                }
+
+                                $renderedHtml = str($fullReply)->markdown([
+                                    'html_input' => 'escape',
+                                    'allow_unsafe_links' => false,
+                                ]);
+                                $this->stream(to: 'ai-reply-stream', content: $renderedHtml, replace: true);
+                            }
                         }
 
                         if (isset($data['message']['tool_calls']) && !empty($data['message']['tool_calls'])) {
@@ -642,74 +861,116 @@ new class extends Component {
                     }
                 }
 
-                if (!empty($fullReply) || !empty($toolCalls)) {
-                    $assistantMsg = ['role' => 'assistant', 'content' => $fullReply];
-                    if (!empty($toolCalls)) {
-                        $assistantMsg['tool_calls'] = $toolCalls;
+                // Fallback: If native tool_calls were empty, check if fullReply has tool calls in text
+                if (empty($toolCalls) && !empty($fullReply)) {
+                    $extracted = $this->extractToolCallsFromContent($fullReply);
+                    if (!empty($extracted)) {
+                        $toolCalls = $extracted;
+                        $fullReply = ''; // Clear so the JSON tool call is never treated as human text
                     }
+                }
+
+                // If tools are being called:
+                if (!empty($toolCalls)) {
+                    // Save assistant message to $ollamaMessages for Ollama API conversation context
+                    $assistantMsg = [
+                        'role' => 'assistant',
+                        'content' => '',
+                        'tool_calls' => $toolCalls,
+                    ];
                     $ollamaMessages[] = $assistantMsg;
-                    $this->chats[] = $assistantMsg;
-                }
+                    // NOTE: Do NOT add $assistantMsg or $toolMsg to $this->chats (user-facing UI)
 
-                // If no tools were called, we are done
-                if (empty($toolCalls)) {
-                    break;
-                }
+                    $toolDetail = __('Mencari data ke database...');
+                    foreach ($toolCalls as $call) {
+                        $funcName = $call['function']['name'] ?? '';
+                        $args = $call['function']['arguments'] ?? [];
+                        if (is_string($args)) {
+                            $args = json_decode($args, true) ?? [];
+                        }
+                        $keyword = trim($args['kata_kunci'] ?? '');
 
-                // AI is actively querying the database
-                $toolDetail = __('Mencari data ke database...');
-                foreach ($toolCalls as $call) {
-                    $funcName = $call['function']['name'] ?? '';
-                    $args = $call['function']['arguments'] ?? [];
-                    $keyword = trim($args['kata_kunci'] ?? '');
-
-                    if ($funcName === 'cari_data_penerimaan') {
-                        $toolDetail = $keyword ? __('Mencari data PO/DO: :key di database...', ['key' => '"' . $keyword . '"']) : __('Mencari data penerimaan PO/DO di database...');
-                    } elseif ($funcName === 'cari_data_pengambilan') {
-                        $toolDetail = $keyword ? __('Mencari data MIR: :key di database...', ['key' => '"' . $keyword . '"']) : __('Mencari data pengeluaran (MIR) di database...');
-                    }
-                }
-
-                // 1. Status header: Realtime Sky Blue "ALEX • Mencari ke database..."
-                $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-sky-500 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-ping"></span> <span>' . __('ALEX • Mencari ke database...') . '</span></span>', replace: true);
-
-                // 2. Bubble content: Spinner + detail pencarian yang selaras
-                $bubbleSearchHtml = '<div class="italic text-slate-600 dark:text-slate-300 text-[12.5px] flex items-center gap-2 py-1 px-1">' .
-                    '<svg class="w-3.5 h-3.5 animate-spin text-sky-500 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' .
-                    '<span>' . e($toolDetail) . '</span>' .
-                    '</div>';
-                $this->stream(to: 'ai-reply-stream', content: $bubbleSearchHtml, replace: true);
-
-                foreach ($toolCalls as $call) {
-                    $funcName = $call['function']['name'];
-                    $args = $call['function']['arguments'] ?? [];
-
-                    $result = '';
-                    if ($funcName === 'cari_data_penerimaan') {
-                        $result = $this->toolCariDataPenerimaan($args['kata_kunci'] ?? '');
-                    } elseif ($funcName === 'cari_data_pengambilan') {
-                        $result = $this->toolCariDataPengambilan($args['kata_kunci'] ?? '', $args['tanggal_mulai'] ?? null, $args['tanggal_selesai'] ?? null);
-                    } else {
-                        $result = 'Unknown tool';
+                        if ($funcName === 'cari_data_penerimaan') {
+                            $toolDetail = $keyword ? __('Mencari data PO/DO: :key di database...', ['key' => '"' . $keyword . '"']) : __('Mencari data penerimaan PO/DO di database...');
+                        } elseif ($funcName === 'cari_data_pengambilan') {
+                            $toolDetail = $keyword ? __('Mencari data MIR: :key di database...', ['key' => '"' . $keyword . '"']) : __('Mencari data pengeluaran (MIR) di database...');
+                        }
                     }
 
-                    $toolMsg = ['role' => 'tool', 'name' => $funcName, 'content' => (string) $result];
-                    $ollamaMessages[] = $toolMsg;
-                    $this->chats[] = $toolMsg;
+                    // 1. Status header: Realtime Sky Blue "ALEX • Mencari ke database..."
+                    $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-sky-500 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-ping"></span> <span>' . __('ALEX • Mencari ke database...') . '</span></span>', replace: true);
+
+                    // 2. Bubble content: Spinner + detail pencarian yang selaras
+                    $bubbleSearchHtml = '<div class="italic text-slate-600 dark:text-slate-300 text-[12.5px] flex items-center gap-2 py-1 px-1">' .
+                        '<svg class="w-3.5 h-3.5 animate-spin text-sky-500 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' .
+                        '<span>' . e($toolDetail) . '</span>' .
+                        '</div>';
+                    $this->stream(to: 'ai-reply-stream', content: $bubbleSearchHtml, replace: true);
+
+                    foreach ($toolCalls as $call) {
+                        $funcName = $call['function']['name'] ?? '';
+                        $args = $call['function']['arguments'] ?? [];
+                        if (is_string($args)) {
+                            $args = json_decode($args, true) ?? [];
+                        }
+
+                        $result = '';
+                        if ($funcName === 'cari_data_penerimaan') {
+                            $result = $this->toolCariDataPenerimaan($args['kata_kunci'] ?? '');
+                        } elseif ($funcName === 'cari_data_pengambilan') {
+                            $result = $this->toolCariDataPengambilan($args['kata_kunci'] ?? '', $args['tanggal_mulai'] ?? null, $args['tanggal_selesai'] ?? null);
+                        } else {
+                            $result = 'Unknown tool';
+                        }
+
+                        $toolMsg = ['role' => 'tool', 'name' => $funcName, 'content' => (string) $result];
+                        $ollamaMessages[] = $toolMsg;
+                    }
+
+                    // 3. Database query selesai! Status beralih ke "Menyusun rangkuman..."
+                    $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-amber-500 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> <span>' . __('ALEX • Menyusun rangkuman...') . '</span></span>', replace: true);
+
+                    $bubbleFinHtml = '<div class="italic text-slate-600 dark:text-slate-300 text-[12.5px] flex items-center gap-2 py-1 px-1">' .
+                        '<svg class="w-3.5 h-3.5 animate-spin text-amber-500 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' .
+                        '<span>' . __('Data ditemukan, merangkum jawaban...') . '</span>' .
+                        '</div>';
+                    $this->stream(to: 'ai-reply-stream', content: $bubbleFinHtml, replace: true);
+
+                    // Reset flag typing dan matikan tools untuk iterasi berikutnya (karena data sudah berhasil diambil)
+                    $isTypingStarted = false;
+                    $needsTools = false;
+                    continue;
                 }
 
-                // 3. Database query selesai! Status beralih ke "Menyusun rangkuman..."
-                $this->stream(to: 'ai-status-stream', content: '<span class="inline-flex items-center gap-1.5 text-amber-500 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> <span>' . __('ALEX • Menyusun rangkuman...') . '</span></span>', replace: true);
+                // If no tools were called, this is the final human response!
+                $cleanReply = $this->cleanAssistantResponse($fullReply);
+                if (trim($cleanReply) === '') {
+                    $cleanReply = __('Maaf, saya tidak dapat menemukan data yang cocok atau terjadi kendala pemrosesan. Silakan tanyakan kembali.');
+                }
 
-                $bubbleFinHtml = '<div class="italic text-slate-600 dark:text-slate-300 text-[12.5px] flex items-center gap-2 py-1 px-1">' .
-                    '<svg class="w-3.5 h-3.5 animate-spin text-amber-500 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>' .
-                    '<span>' . __('Data ditemukan, merangkum jawaban...') . '</span>' .
-                    '</div>';
-                $this->stream(to: 'ai-reply-stream', content: $bubbleFinHtml, replace: true);
+                $this->chats[] = ['role' => 'assistant', 'content' => $cleanReply];
+                $finalAssistantReplied = true;
+                $renderedHtml = str($cleanReply)->markdown([
+                    'html_input' => 'escape',
+                    'allow_unsafe_links' => false,
+                ]);
+                $this->stream(to: 'ai-reply-stream', content: $renderedHtml, replace: true);
+                $this->stream(to: 'ai-status-stream', content: '', replace: true);
+                break;
+            }
 
-                // Reset flag typing dan matikan tools untuk iterasi berikutnya (karena data sudah berhasil diambil)
-                $isTypingStarted = false;
-                $needsTools = false;
+            // Fallback safety: ensure assistant replied if loop finished without reply
+            if (! $finalAssistantReplied) {
+                $cleanReply = $this->cleanAssistantResponse($fullReply ?? '');
+                if (trim($cleanReply) === '') {
+                    $cleanReply = __('Maaf, proses penyiapan data memakan waktu terlalu lama. Silakan coba ajukan pertanyaan kembali.');
+                }
+                $this->chats[] = ['role' => 'assistant', 'content' => $cleanReply];
+                $this->stream(to: 'ai-reply-stream', content: str($cleanReply)->markdown([
+                    'html_input' => 'escape',
+                    'allow_unsafe_links' => false,
+                ]), replace: true);
+                $this->stream(to: 'ai-status-stream', content: '', replace: true);
             }
 
         } catch (\Throwable $e) {
@@ -753,16 +1014,23 @@ new class extends Component {
             </div>
         </div>
 
-        <!-- Tombol Utama Apple-Style Circle Control -->
-        <div class="relative">
+        <!-- Tombol Utama Apple-Style Circle Control with Framer Motion Spring -->
+        <div class="relative" x-data="{ pressing: false }">
             @if($isAiActive)
                 <span x-show="!$wire.isOpen"
-                    class="animate-ping absolute -inset-1 rounded-full bg-[#F47920] opacity-35 duration-1000"></span>
+                    class="animate-ping absolute -inset-1 rounded-full bg-[#F47920] opacity-35 duration-1000 pointer-events-none"></span>
             @endif
 
             <button wire:click="toggleChat"
+                @mousedown="pressing = true"
+                @mouseup="pressing = false"
+                @mouseleave="pressing = false"
+                @touchstart.passive="pressing = true"
+                @touchend.passive="pressing = false"
+                @touchcancel.passive="pressing = false"
                 aria-label="{{ __('Buka ALEX Asisten AI Receiving') }}"
-                class="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full flex items-center justify-center {{ $isAiActive ? 'bg-[#F47920] hover:bg-[#e06b18] shadow-[0_8px_24px_rgba(244,121,32,0.45)]' : 'bg-slate-700 hover:bg-slate-800 shadow-md' }} text-white border border-white/20 transition-transform duration-200 ease-[cubic-bezier(0.34,1.4,0.64,1)] active:scale-90 hover:scale-105 cursor-pointer">
+                :class="pressing ? 'scale-[0.90]' : 'hover:scale-[1.08]'"
+                class="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full flex items-center justify-center {{ $isAiActive ? 'bg-[#F47920] hover:bg-[#e06b18] shadow-[0_8px_24px_rgba(244,121,32,0.45)]' : 'bg-slate-700 hover:bg-slate-800 shadow-md' }} text-white border border-white/20 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] cursor-pointer select-none">
 
                 <!-- Badge Notifikasi Online/Offline -->
                 <span x-show="!$wire.isOpen"
@@ -770,34 +1038,39 @@ new class extends Component {
                     {{ $isAiActive ? 'ON' : 'OFF' }}
                 </span>
 
-                <!-- Icon Chatbot (Saat Tertutup) -->
-                <svg x-show="!$wire.isOpen" class="w-6 h-6 sm:w-7 sm:h-7 text-white transition-transform duration-200 group-hover:scale-105" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 8V4H8"></path>
-                    <rect width="16" height="12" x="4" y="8" rx="2"></rect>
-                    <path d="M2 14h2"></path>
-                    <path d="M20 14h2"></path>
-                    <path d="M15 13v2"></path>
-                    <path d="M9 13v2"></path>
-                </svg>
+                <!-- Overlapping Morphing Icons (Robot & Close X) with Spring Rotation -->
+                <span class="relative w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center pointer-events-none">
+                    <!-- Icon Chatbot (Saat Tertutup) -->
+                    <svg class="w-6 h-6 sm:w-7 sm:h-7 absolute text-white transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                         :class="$wire.isOpen ? 'rotate-90 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'"
+                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 8V4H8"></path>
+                        <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+                        <path d="M2 14h2"></path>
+                        <path d="M20 14h2"></path>
+                        <path d="M15 13v2"></path>
+                        <path d="M9 13v2"></path>
+                    </svg>
 
-                <!-- Icon Close (Saat Terbuka) -->
-                <svg x-show="$wire.isOpen" style="display: none;"
-                    class="w-5 h-5 transition-transform duration-200 text-white" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+                    <!-- Icon Close (Saat Terbuka) -->
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6 absolute text-white transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                         :class="$wire.isOpen ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'"
+                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </span>
             </button>
         </div>
     </div>
 
     <!-- Jendela Chat (Apple Sheet Elevated UI with Framer Motion Spring) -->
     <div x-show="$wire.isOpen" style="display: none;" 
-        x-transition:enter="transition duration-350 ease-[cubic-bezier(0.34,1.25,0.64,1)] transform origin-bottom-right"
-        x-transition:enter-start="opacity-0 translate-y-8 scale-90"
+        x-transition:enter="transition duration-400 ease-[cubic-bezier(0.34,1.4,0.64,1)] transform origin-bottom-right"
+        x-transition:enter-start="opacity-0 translate-y-6 scale-[0.88]"
         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-        x-transition:leave="transition duration-200 ease-in transform origin-bottom-right"
+        x-transition:leave="transition duration-250 ease-[cubic-bezier(0.4,0,0.6,1)] transform origin-bottom-right"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-        x-transition:leave-end="opacity-0 translate-y-6 scale-95"
+        x-transition:leave-end="opacity-0 translate-y-6 scale-[0.92]"
         class="fixed top-0 left-0 right-0 bottom-0 md:absolute md:top-auto md:left-auto md:bottom-20 md:right-0 w-full md:w-[410px] md:max-w-[410px] h-[100dvh] md:h-[39rem] bg-white/95 dark:bg-[#07111e]/95 backdrop-blur-3xl md:rounded-[2rem] border-0 md:border border-black/[0.08] dark:border-white/[0.1] shadow-2xl overflow-hidden flex flex-col z-[100] md:z-auto" id="tour-chatbot-window">
 
         <!-- Header: Apple Liquid Glass Top Bar -->
@@ -906,7 +1179,7 @@ new class extends Component {
                     @continue
                 @endif
                 
-                @if($chat['role'] === 'assistant' && empty($chat['content']))
+                @if($chat['role'] === 'assistant' && (empty($chat['content']) || (is_string($chat['content']) && (str_contains($chat['content'], '"name": "cari_data_') || str_contains($chat['content'], '"name":"cari_data_')))))
                     @continue
                 @endif
 
@@ -996,11 +1269,12 @@ new class extends Component {
                         </span>
                     </div>
                     <div class="flex flex-col gap-1.5">
-                        @foreach($suggestedQuestions as $suggestion)
+                        @foreach($suggestedQuestions as $qIndex => $suggestion)
                             <button wire:click="useSuggestedMessage('{{ $suggestion }}')"
-                                class="px-3.5 py-2 bg-white dark:bg-[#0c1626] border border-black/[0.06] dark:border-white/[0.08] rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-[#F47920]/40 hover:text-[#F47920] transition-all duration-200 shadow-2xs text-left w-full group flex items-center justify-between gap-2 cursor-pointer active:scale-[0.99]">
+                                style="animation-delay: {{ $qIndex * 70 }}ms;"
+                                class="animate-fade-in-up px-3.5 py-2.5 bg-white dark:bg-[#0c1626] border border-black/[0.06] dark:border-white/[0.08] rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:border-[#F47920]/50 hover:text-[#F47920] hover:bg-[#F47920]/[0.03] dark:hover:bg-[#F47920]/[0.08] hover:-translate-y-0.5 hover:shadow-xs active:scale-[0.97] transition-all duration-200 ease-[cubic-bezier(0.34,1.4,0.64,1)] text-left w-full group flex items-center justify-between gap-2 cursor-pointer">
                                 <span class="truncate">{{ $suggestion }}</span>
-                                <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-[#F47920] group-hover:translate-x-0.5 transition-all shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-[#F47920] group-hover:translate-x-1 transition-all duration-200 ease-[cubic-bezier(0.34,1.4,0.64,1)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                                 </svg>
                             </button>
@@ -1039,12 +1313,12 @@ new class extends Component {
                         </span>
                     </div>
 
-                    <!-- Button (Right: Apple Pill Action) -->
+                    <!-- Button (Right: Apple Pill Action with Spring Tactile) -->
                     <button type="submit"
-                        class="px-3.5 py-1.5 {{ $isAiActive ? 'bg-[#F47920] hover:bg-[#e06b18]' : 'bg-slate-400 dark:bg-slate-700' }} rounded-full flex items-center justify-center gap-1.5 text-white text-xs font-semibold shadow-xs transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 cursor-pointer"
+                        class="group/btn px-3.5 py-1.5 {{ $isAiActive ? 'bg-[#F47920] hover:bg-[#e06b18]' : 'bg-slate-400 dark:bg-slate-700' }} rounded-full flex items-center justify-center gap-1.5 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all duration-150 ease-[cubic-bezier(0.34,1.4,0.64,1)] disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.04] active:scale-[0.92] cursor-pointer"
                         @disabled($isTyping || !$isAiActive)>
                         <span>{{ __('Kirim') }}</span>
-                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <svg class="w-3 h-3 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path>
                         </svg>
                     </button>
@@ -1156,19 +1430,23 @@ new class extends Component {
             color: #F89B53;
         }
 
-        @keyframes fadeInUp {
-            from {
+        @keyframes chatBubbleSpringIn {
+            0% {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(14px) scale(0.96);
             }
-            to {
+            65% {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(-2px) scale(1.008);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
             }
         }
 
         .animate-fade-in-up {
-            animation: fadeInUp 0.4s ease-out forwards;
+            animation: chatBubbleSpringIn 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
         }
     </style>
 </div>

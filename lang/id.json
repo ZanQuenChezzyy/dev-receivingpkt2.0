@@ -991,6 +991,15 @@
     "Jika terdapat ketidaksesuaian data surat jalan atau dokumen GRS belum terbit melebihi SLA operasional, silakan hubungi Tim Receiving Pupuk Kalimantan Timur.": "Jika terdapat ketidaksesuaian data surat jalan atau dokumen GRS belum terbit melebihi SLA operasional, silakan hubungi Tim Receiving Pupuk Kalimantan Timur.",
     "• Lokasi: Gudang Pusat Receiving PKT, Bontang": "• Lokasi: Gudang Pusat Receiving PKT, Bontang",
     "• Modul: Ekspedisi & Verifikasi Penagihan": "• Modul: Ekspedisi & Verifikasi Penagihan",
+    "Gudang Pusat Receiving PKT, Bontang": "Gudang Pusat Receiving PKT, Bontang",
+    "Modul: Ekspedisi & Verifikasi Penagihan": "Modul: Ekspedisi & Verifikasi Penagihan",
+    "Belum Ada Tahap QC": "Belum Ada Tahap QC",
+    "Pengujian QC & SA SAP": "Pengujian QC & SA SAP",
+    "Pengiriman & DO Fisik": "Pengiriman & DO Fisik",
+    "Tahapan QC & SA SAP": "Tahapan QC & SA SAP",
+    "Pengiriman DO Fisik": "Pengiriman DO Fisik",
+    "Rekapitulasi SIK": "Rekapitulasi SIK",
+    "Rekonsiliasi QC vs Fisik": "Rekonsiliasi QC vs Fisik",
     "Rincian Item PO & Realisasi Penerimaan Fisik": "Rincian Item PO & Realisasi Penerimaan Fisik",
     "Item Material": "Item Material",
     "Baris material berhasil dihapus": "Baris material berhasil dihapus",
@@ -1052,5 +1061,11 @@
     "Laporan": "Laporan",
     "Laporan Bulanan": "Laporan Bulanan",
     "Laporan Material Diambil": "Laporan Material Diambil",
-    "Laporan Material Diambil (PD & Nonstock)": "Laporan Material Diambil (PD & Nonstock)"
+    "Laporan Material Diambil (PD & Nonstock)": "Laporan Material Diambil (PD & Nonstock)",
+    "Tema Tampilan": "Tema Tampilan",
+    "Mode Terang": "Mode Terang",
+    "Mode Gelap": "Mode Gelap",
+    "Terang": "Terang",
+    "Gelap": "Gelap",
+    "Semua DO": "Semua DO"
 }

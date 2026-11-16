@@ -328,6 +328,17 @@ class VendorPoTracking extends Component
             return false;
         }
 
+        $sessionVerified = session('vendor_po_tracking.verified');
+        if (
+            is_array($sessionVerified)
+            && ! empty($sessionVerified['email'])
+            && strtolower(trim($sessionVerified['email'])) === strtolower(trim($this->verifiedEmail))
+            && ! empty($sessionVerified['po_number'])
+            && trim($sessionVerified['po_number']) === trim($firstPo->purchase_order_no)
+        ) {
+            return true;
+        }
+
         $vendor = $this->resolveVendorForPo($firstPo);
         $registeredEmails = $this->extractEmailsFromVendor($vendor);
 
@@ -506,7 +517,6 @@ class VendorPoTracking extends Component
 
     protected function restoreVerificationFromSession(): void
     {
-        $justSwitchedLocale = (bool) session()->pull('locale_just_switched', false);
         $verified = session('vendor_po_tracking.verified');
 
         if (! is_array($verified) || empty($verified['email'])) {
@@ -522,8 +532,11 @@ class VendorPoTracking extends Component
             : null;
         $this->isVerified = true;
 
-        if (empty($this->poNumber) && $justSwitchedLocale && ! empty($verified['po_number'])) {
-            $this->poNumber = (string) $verified['po_number'];
+        if (! empty($verified['po_number'])) {
+            if (empty($this->poNumber)) {
+                $this->poNumber = (string) $verified['po_number'];
+            }
+            $this->activePo = (string) $verified['po_number'];
         }
     }
 
@@ -1288,6 +1301,10 @@ class VendorPoTracking extends Component
 
     public function render()
     {
+        if ($this->isVerified && ! empty($this->activePo)) {
+            $this->loadTrackingData();
+        }
+
         return view('livewire.frontend.vendor-po-tracking')
             ->layout('components.layouts.frontend')
             ->title(__('Lacak Pergerakan Dokumen PO - Portal Vendor Pupuk Kalimantan Timur'));

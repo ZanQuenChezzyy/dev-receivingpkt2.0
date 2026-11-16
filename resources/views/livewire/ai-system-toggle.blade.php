@@ -12,6 +12,7 @@
                 size="md"
                 :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-s-moon'"
                 tooltip="{{ $isActive ? 'Matikan ALEX Asisten AI Receiving' : 'Hidupkan ALEX Asisten AI Receiving' }}"
+                class="alex-ai-toggle-btn {{ $isActive ? 'alex-ai-active' : '' }}"
             />
         </div>
 
@@ -26,6 +27,7 @@
                 size="sm"
                 :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-s-moon'"
                 tooltip="{{ $isActive ? 'ALEX Asisten AI Receiving Aktif (Klik untuk mematikan)' : 'ALEX Asisten AI Receiving Sedang Maintenance (Klik untuk mengaktifkan)' }}"
+                class="alex-ai-toggle-btn {{ $isActive ? 'alex-ai-active' : '' }}"
             >
                 {{ $isActive ? 'ALEX AI ON' : 'ALEX AI OFF' }}
             </x-filament::button>

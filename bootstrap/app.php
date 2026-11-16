@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        $middleware->encryptCookies(except: [
+            'theme',
+        ]);
         $middleware->web(append: [
             SetLocale::class,
         ]);

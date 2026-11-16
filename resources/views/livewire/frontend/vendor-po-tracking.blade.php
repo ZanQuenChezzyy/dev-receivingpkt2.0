@@ -1,4 +1,4 @@
-<div class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-500 pt-28 pb-24 font-sans relative overflow-hidden">
+<div class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-200 pt-28 pb-24 font-sans relative overflow-hidden">
 
     <!-- Sophisticated Ambient Background Glows -->
     <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
@@ -867,71 +867,95 @@
                     </div>
 
                     <!-- DAFTAR 16 PERSYARATAN KELENGKAPAN DOKUMEN PENAGIHAN -->
-                    <div class="pt-6 border-t border-slate-200/70 dark:border-white/10">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-                            <div>
-                                <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[11px] font-bold uppercase tracking-wider mb-1">
-                                    {{ __('Pedoman Kelengkapan') }}
+                    <div class="pt-6 border-t border-slate-200/70 dark:border-white/10" x-data="{ accordionOpen: true }">
+                        <div @click="accordionOpen = !accordionOpen" 
+                             class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 cursor-pointer select-none group/acc">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-[#F47920]/10 text-[#F47920] flex items-center justify-center shrink-0 border border-[#F47920]/20 shadow-xs group-hover/acc:scale-105 transition-transform duration-200 ease-[cubic-bezier(0.34,1.4,0.64,1)]">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
                                 </div>
-                                <h4 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">
-                                    {{ __('16 Persyaratan Kelengkapan Dokumen Penagihan') }}
-                                </h4>
-                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                <div>
+                                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider mb-0.5">
+                                        {{ __('Pedoman Kelengkapan') }}
+                                    </div>
+                                    <h4 class="text-base sm:text-lg font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
+                                        <span>{{ __('16 Persyaratan Kelengkapan Dokumen Penagihan') }}</span>
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 self-end sm:self-center">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-black/[0.04] dark:bg-white/[0.06] text-slate-600 dark:text-slate-300">
+                                    {{ __('Total 16 Dokumen') }}
+                                </span>
+                                <div class="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 group-hover/acc:text-[#F47920] transition-colors">
+                                    <svg class="w-4 h-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)]"
+                                         :class="accordionOpen ? 'rotate-180' : 'rotate-0'"
+                                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Smooth Accordion Content using CSS Grid -->
+                        <div class="grid transition-all duration-350 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                             :style="accordionOpen ? 'grid-template-rows: 1fr; opacity: 1;' : 'grid-template-rows: 0fr; opacity: 0; pointer-events: none;'">
+                            <div class="overflow-hidden min-h-0 pt-2">
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
                                     {{ __('Pastikan seluruh dokumen berikut telah tercakup di dalam 1 file bundel penagihan yang Anda unggah:') }}
                                 </p>
-                            </div>
-                            <span class="text-xs font-bold text-slate-400 font-mono">
-                                {{ __('Total 16 Dokumen') }}
-                            </span>
-                        </div>
 
-                        <!-- Grid 16 Items (2 Columns) -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                            @foreach (($trackingData['checklist_definitions'] ?? []) as $key => $item)
-                                <div class="p-4 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 hover:border-[#F47920]/30 transition-all flex items-start gap-3.5">
-                                    <div class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-black shrink-0 font-mono">
-                                        {{ sprintf('%02d', $item['number']) }}
-                                    </div>
-                                    <div class="min-w-0 flex-grow">
-                                        <div class="flex flex-wrap items-center gap-2 mb-1">
-                                            <h5 class="text-xs font-bold text-slate-800 dark:text-white truncate">
-                                                {{ $item['name'] }}
-                                            </h5>
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold
-                                                @if ($item['badge_color'] === 'rose')
-                                                    bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20
-                                                @elseif ($item['badge_color'] === 'amber')
-                                                    bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20
-                                                @elseif ($item['badge_color'] === 'indigo')
-                                                    bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20
-                                                @elseif ($item['badge_color'] === 'teal')
-                                                    bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20
-                                                @elseif ($item['badge_color'] === 'sky')
-                                                    bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20
-                                                @elseif ($item['badge_color'] === 'purple')
-                                                    bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20
-                                                @else
-                                                    bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400
-                                                @endif">
-                                                {{ $item['badge'] }}
-                                            </span>
+                                <!-- Grid 16 Items (2 Columns) -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                    @foreach (($trackingData['checklist_definitions'] ?? []) as $key => $item)
+                                        <div class="p-4 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 hover:border-[#F47920]/30 hover:shadow-xs transition-all duration-200 flex items-start gap-3.5">
+                                            <div class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-black shrink-0 font-mono">
+                                                {{ sprintf('%02d', $item['number']) }}
+                                            </div>
+                                            <div class="min-w-0 flex-grow">
+                                                <div class="flex flex-wrap items-center gap-2 mb-1">
+                                                    <h5 class="text-xs font-bold text-slate-800 dark:text-white truncate">
+                                                        {{ $item['name'] }}
+                                                    </h5>
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold
+                                                        @if ($item['badge_color'] === 'rose')
+                                                            bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20
+                                                        @elseif ($item['badge_color'] === 'amber')
+                                                            bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20
+                                                        @elseif ($item['badge_color'] === 'indigo')
+                                                            bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20
+                                                        @elseif ($item['badge_color'] === 'teal')
+                                                            bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20
+                                                        @elseif ($item['badge_color'] === 'sky')
+                                                            bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20
+                                                        @elseif ($item['badge_color'] === 'purple')
+                                                            bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20
+                                                        @else
+                                                            bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400
+                                                        @endif">
+                                                        {{ $item['badge'] }}
+                                                    </span>
+                                                </div>
+                                                <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                                    {{ $item['desc'] }}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                                            {{ $item['desc'] }}
-                                        </p>
+                                    @endforeach
+                                </div>
+
+                                <!-- Important Note Alert -->
+                                <div class="mt-5 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300 text-xs flex items-start gap-2.5">
+                                    <svg class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div class="leading-relaxed">
+                                        <strong>{{ __('Ketentuan Urutan Dokumen:') }}</strong>
+                                        {!! __('Dokumen No. 01–05 bersifat <strong>Wajib</strong> bagi seluruh pengadaan. Dokumen No. 06–16 bersifat kondisional/pelengkap sesuai spesifikasi komoditas barang Anda. Susun dokumen secara berurutan di dalam file PDF Anda untuk mempercepat proses verifikasi oleh Tim Invoice PKT.') !!}
                                     </div>
                                 </div>
-                            @endforeach
-                        </div>
-
-                        <!-- Important Note Alert -->
-                        <div class="mt-5 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300 text-xs flex items-start gap-2.5">
-                            <svg class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div class="leading-relaxed">
-                                <strong>{{ __('Ketentuan Urutan Dokumen:') }}</strong>
-                                {!! __('Dokumen No. 01–05 bersifat <strong>Wajib</strong> bagi seluruh pengadaan. Dokumen No. 06–16 bersifat kondisional/pelengkap sesuai spesifikasi komoditas barang Anda. Susun dokumen secara berurutan di dalam file PDF Anda untuk mempercepat proses verifikasi oleh Tim Invoice PKT.') !!}
                             </div>
                         </div>
                     </div>
@@ -963,9 +987,39 @@
                             <div class="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700/80">
                                 @foreach (($trackingData['timeline'] ?? []) as $event)
                                     <div class="relative group">
-                                        <!-- Timeline Node Dot -->
-                                        <div class="absolute -left-6 sm:-left-8 top-1 w-6 h-6 sm:w-8 sm:h-8 rounded-xl bg-white dark:bg-slate-900 border-2 border-[#F47920] flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                                            <div class="w-2 h-2 rounded-full bg-[#F47920]"></div>
+                                        <!-- Timeline Node Icon -->
+                                        <div class="absolute -left-6 sm:-left-8 top-1 w-6 h-6 sm:w-8 sm:h-8 rounded-xl bg-white dark:bg-slate-900 border-2
+                                            @if (str_contains($event['badge_color'], 'emerald'))
+                                                border-emerald-500 text-emerald-600 dark:text-emerald-400 shadow-emerald-500/10
+                                            @elseif (str_contains($event['badge_color'], 'indigo'))
+                                                border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-indigo-500/10
+                                            @elseif (str_contains($event['badge_color'], 'sky'))
+                                                border-sky-500 text-sky-600 dark:text-sky-400 shadow-sky-500/10
+                                            @elseif (str_contains($event['badge_color'], 'purple'))
+                                                border-purple-500 text-purple-600 dark:text-purple-400 shadow-purple-500/10
+                                            @elseif (str_contains($event['badge_color'], 'rose') || str_contains($event['badge_color'], 'red'))
+                                                border-rose-500 text-rose-600 dark:text-rose-400 shadow-rose-500/10
+                                            @elseif (str_contains($event['badge_color'], 'amber'))
+                                                border-amber-500 text-amber-600 dark:text-amber-400 shadow-amber-500/10
+                                            @else
+                                                border-[#F47920] text-[#F47920] shadow-orange-500/10
+                                            @endif
+                                            flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                                            @if (($event['icon'] ?? '') === 'truck')
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                                            @elseif (($event['icon'] ?? '') === 'qr-code')
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                            @elseif (($event['icon'] ?? '') === 'beaker')
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                                            @elseif (($event['icon'] ?? '') === 'clipboard-check')
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                            @elseif (($event['icon'] ?? '') === 'exclamation-triangle')
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                            @elseif (($event['icon'] ?? '') === 'chart-pie')
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                                            @else
+                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            @endif
                                         </div>
 
                                         <!-- Event Card -->
@@ -987,7 +1041,7 @@
                                                     @else
                                                         bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20
                                                     @endif">
-                                                    {{ $event['badge'] }}
+                                                    {{ __($event['badge']) }}
                                                 </span>
                                                 <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -1001,7 +1055,7 @@
                                             </div>
 
                                             <h4 class="text-sm sm:text-base font-black text-slate-800 dark:text-white mb-1.5">
-                                                {{ $event['title'] }}
+                                                {{ __($event['title']) }}
                                             </h4>
                                             <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
                                                 {{ $event['desc'] }}
@@ -1014,11 +1068,29 @@
                     </div>
 
                     <!-- RIGHT COLUMN (5 Cols): SURAT JALAN & GRS RECAP -->
-                    <div class="lg:col-span-5 space-y-6">
+                    <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
 
-                        <!-- Surat Jalan (DO) Cards -->
-                        <div class="glass-panel p-6 sm:p-7 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl">
-                            <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-200/70 dark:border-white/10">
+                        <!-- Surat Jalan (DO) Cards with Spring Tab Selector -->
+                        <div class="glass-panel p-6 sm:p-7 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl"
+                             x-data="{
+                                activeDo: 'all',
+                                pillLeft: 0,
+                                pillWidth: 0,
+                                init() {
+                                    this.$nextTick(() => {
+                                        const first = this.$refs.tabContainer?.querySelector('[data-do-tab]');
+                                        if (first) this.setTab(first);
+                                    });
+                                },
+                                setTab(el) {
+                                    if (!el || !this.$refs.tabContainer) return;
+                                    const containerRect = this.$refs.tabContainer.getBoundingClientRect();
+                                    const rect = el.getBoundingClientRect();
+                                    this.pillLeft = rect.left - containerRect.left;
+                                    this.pillWidth = rect.width;
+                                }
+                             }">
+                            <div class="flex items-center justify-between mb-5 pb-4 border-b border-slate-200/70 dark:border-white/10">
                                 <div>
                                     <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">{{ __('Bukti Pengiriman') }}</span>
                                     <h3 class="text-lg font-black text-slate-800 dark:text-white tracking-tight">
@@ -1039,9 +1111,41 @@
                                     <p class="mt-1 text-slate-600 dark:text-slate-400">{{ __('Material PO ini belum diserahkan ke Pintu Gudang Receiving PKT.') }}</p>
                                 </div>
                             @else
+                                @if ($trackingData['unique_dos']->count() > 1)
+                                    <!-- Segmented Spring Tab Switcher for Multiple DOs -->
+                                    <div x-ref="tabContainer" class="relative p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 flex items-center gap-1 mb-5 overflow-x-auto scrollbar-none">
+                                        <!-- Sliding Spring Indicator -->
+                                        <div class="absolute inset-y-1 rounded-xl bg-white dark:bg-slate-700/95 border border-black/5 dark:border-white/10 shadow-xs pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)]"
+                                             :style="`left: ${pillLeft}px; width: ${pillWidth}px;`">
+                                        </div>
+
+                                        <button type="button" 
+                                                data-do-tab="all"
+                                                @click="activeDo = 'all'; setTab($el)"
+                                                class="relative z-10 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 cursor-pointer"
+                                                :class="activeDo === 'all' ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'">
+                                            {{ __('Semua DO') }} ({{ $trackingData['unique_dos']->count() }})
+                                        </button>
+
+                                        @foreach ($trackingData['unique_dos'] as $dIndex => $do)
+                                            <button type="button" 
+                                                    data-do-tab="{{ $do->id }}"
+                                                    @click="activeDo = '{{ $do->id }}'; setTab($el)"
+                                                    class="relative z-10 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 shrink-0 cursor-pointer"
+                                                    :class="activeDo == '{{ $do->id }}' ? 'text-[#F47920] dark:text-[#F47920]' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'">
+                                                DO #{{ $dIndex + 1 }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                @endif
+
                                 <div class="space-y-4">
                                     @foreach ($trackingData['unique_dos'] as $do)
-                                        <div class="p-4 sm:p-5 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 hover:shadow-md transition-all">
+                                        <div x-show="activeDo === 'all' || activeDo == '{{ $do->id }}'"
+                                             x-transition:enter="transition duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)]"
+                                             x-transition:enter-start="opacity-0 translate-y-3 scale-[0.98]"
+                                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                                             class="p-4 sm:p-5 rounded-2xl bg-white/40 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 group/card">
                                             <div class="flex items-start justify-between gap-3 mb-3">
                                                 <div>
                                                     <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500 block">{{ __('No. Surat Jalan (DO)') }}</span>
@@ -1088,7 +1192,7 @@
 
                                                 <!-- QR 103 Code if exists -->
                                                 @if ($do->qr_103_code)
-                                                    <div class="mt-2 pt-2 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between">
+                                                    <div class="flex items-center justify-between text-slate-600 dark:text-slate-300">
                                                         <span class="text-slate-400 dark:text-slate-500">{{ __('Kode QR 103:') }}</span>
                                                         <span class="font-mono font-bold text-[#F47920]">{{ $do->qr_103_code }}</span>
                                                     </div>
@@ -1096,12 +1200,15 @@
 
                                                 <!-- GRS/RDTV indicator if exists -->
                                                 @if ($do->grsRdtvItems->isNotEmpty())
-                                                    <div class="mt-2 pt-2 border-t border-slate-200/50 dark:border-white/5">
-                                                        <span class="text-slate-400 dark:text-slate-500 block mb-1">{{ __('Slip Resmi Diterbitkan:') }}</span>
+                                                    <div class="pt-2 border-t border-slate-200/50 dark:border-white/5 space-y-1.5">
+                                                        <span class="text-slate-400 dark:text-slate-500 block text-[11px] font-semibold">{{ __('Slip Resmi Diterbitkan:') }}</span>
                                                         @foreach ($do->grsRdtvItems as $gItem)
-                                                            <div class="flex items-center justify-between bg-emerald-500/5 p-2 rounded-lg text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-                                                                <span>{{ $gItem->grsRdtv?->category ?? 'GRS' }}</span>
-                                                                <span>{{ $gItem->grsRdtv?->transaction_date ? \Carbon\Carbon::parse($gItem->grsRdtv->transaction_date)->locale(app()->getLocale())->translatedFormat('d M Y') : '-' }}</span>
+                                                            <div class="flex items-center justify-between bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                                                                <span class="flex items-center gap-1.5">
+                                                                    <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                                    {{ $gItem->grsRdtv?->category ?? 'GRS' }}
+                                                                </span>
+                                                                <span class="font-mono text-[11px]">{{ $gItem->grsRdtv?->transaction_date ? \Carbon\Carbon::parse($gItem->grsRdtv->transaction_date)->locale(app()->getLocale())->translatedFormat('d M Y') : '-' }}</span>
                                                             </div>
                                                         @endforeach
                                                     </div>
@@ -1125,19 +1232,27 @@
                         </div>
 
                         <!-- Help / Vendor Contact Card -->
-                        <div class="p-5 rounded-3xl bg-gradient-to-br from-[#0A4F86]/10 to-transparent border border-blue-500/20 text-xs">
-                            <h4 class="font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
+                        <div class="glass-panel p-6 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl bg-gradient-to-br from-[#0A4F86]/10 via-transparent to-[#F47920]/5 text-xs">
+                            <h4 class="font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2 text-sm">
+                                <div class="p-1.5 rounded-lg bg-[#F47920]/10 text-[#F47920]">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
+                                </div>
                                 {{ __('Butuh Bantuan Terkait Dokumen?') }}
                             </h4>
-                            <p class="text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                            <p class="text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
                                 {{ __('Jika terdapat ketidaksesuaian data surat jalan atau dokumen GRS belum terbit melebihi SLA operasional, silakan hubungi Tim Receiving Pupuk Kalimantan Timur.') }}
                             </p>
-                            <div class="font-semibold text-slate-700 dark:text-slate-200 space-y-1 text-[11px]">
-                                <div>{{ __('• Lokasi: Gudang Pusat Receiving PKT, Bontang') }}</div>
-                                <div>{{ __('• Modul: Ekspedisi & Verifikasi Penagihan') }}</div>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
+                                    <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                    <span>{{ __('Gudang Pusat Receiving PKT, Bontang') }}</span>
+                                </div>
+                                <div class="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
+                                    <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                    <span>{{ __('Modul: Ekspedisi & Verifikasi Penagihan') }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>

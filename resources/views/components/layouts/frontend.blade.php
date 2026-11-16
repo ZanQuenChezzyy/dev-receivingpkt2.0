@@ -1,11 +1,68 @@
+@php
+    $cookieTheme = request()->cookie('theme');
+    $isDark = $cookieTheme === 'dark';
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth bg-[#F5F5F7] dark:bg-[#070E18] {{ $isDark ? 'dark' : '' }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
     <meta name="format-detection" content="telephone=no">
     <title>{{ $title ?? 'Welcome - Receiving Pupuk Kalimantan Timur' }}</title>
+
+    <!-- Zero-FOUC Immediate Theme Hydration Script -->
+    <script>
+        (function() {
+            function checkDark() {
+                var stored = localStorage.getItem('theme');
+                if (stored === 'dark') return true;
+                if (stored === 'light') return false;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+
+            function syncTheme() {
+                var isDark = checkDark();
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                    document.cookie = "theme=dark; path=/; max-age=31536000; SameSite=Lax";
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.cookie = "theme=light; path=/; max-age=31536000; SameSite=Lax";
+                }
+            }
+
+            // 1. Synchronously execute immediately before stylesheets & DOM render
+            syncTheme();
+
+            // 2. Guard against Livewire SPA navigation stripping 'dark' before morphing
+            document.addEventListener('livewire:navigating', function () {
+                if (checkDark()) {
+                    document.documentElement.classList.add('dark');
+                }
+            });
+
+            // 3. After Livewire completes navigation
+            document.addEventListener('livewire:navigated', syncTheme);
+
+            // 4. Hook into Livewire morph lifecycle to guarantee 'dark' class is never dropped
+            document.addEventListener('livewire:init', function () {
+                if (window.Livewire && window.Livewire.hook) {
+                    window.Livewire.hook('morph.updating', function (payload) {
+                        var el = payload.el;
+                        var toEl = payload.toEl;
+                        if (el === document.documentElement && toEl) {
+                            if (checkDark()) {
+                                toEl.classList.add('dark');
+                            } else {
+                                toEl.classList.remove('dark');
+                            }
+                        }
+                    });
+                }
+            });
+        })();
+    </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -70,35 +127,30 @@
             touch-action: manipulation;
         }
     </style>
-    <script>
-        function applyTheme() {
-            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        }
-        applyTheme();
-        document.addEventListener('livewire:navigated', applyTheme);
-    </script>
 </head>
 
 <body x-data="{ isDark: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches) }" 
-      x-init="$watch('isDark', val => { localStorage.setItem('theme', val ? 'dark' : 'light'); if(val) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); })"
-      class="bg-[#F5F5F7] dark:bg-[#070E18] text-[#1D1D1F] dark:text-[#F5F5F7] antialiased overflow-x-hidden transition-colors duration-500 flex flex-col min-h-screen selection:bg-[#F47920] selection:text-white">
+      x-init="$watch('isDark', val => { 
+          localStorage.setItem('theme', val ? 'dark' : 'light'); 
+          document.cookie = 'theme=' + (val ? 'dark' : 'light') + '; path=/; max-age=31536000; SameSite=Lax';
+          if(val) document.documentElement.classList.add('dark'); 
+          else document.documentElement.classList.remove('dark'); 
+      })"
+      class="bg-[#F5F5F7] dark:bg-[#070E18] text-[#1D1D1F] dark:text-[#F5F5F7] antialiased overflow-x-hidden transition-colors duration-200 flex flex-col min-h-screen selection:bg-[#F47920] selection:text-white">
 
     <x-frontend.navbar />
 
     <!-- Ambient Subtle Apple-Style Canvas Background -->
     <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
-        <div x-show="!isDark" class="absolute inset-0 bg-[radial-gradient(#0A4F86_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.035]"></div>
-        <div x-show="isDark" style="display: none;" class="absolute inset-0 bg-[radial-gradient(#F47920_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.03]"></div>
+        <div x-show="!isDark" {!! $isDark ? 'style="display: none;"' : '' !!} class="absolute inset-0 bg-[radial-gradient(#0A4F86_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.035]"></div>
+        <div x-show="isDark" {!! !$isDark ? 'style="display: none;"' : '' !!} class="absolute inset-0 bg-[radial-gradient(#F47920_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.03]"></div>
 
         <!-- Refined PKT Corporate Watermark Top-Right -->
         <div class="absolute -top-16 -right-16 w-[420px] md:w-[600px] h-[520px] md:h-[720px] pointer-events-none overflow-hidden">
-            <img :src="isDark ? '{{ asset('images/pattern/pkt-pattern-white.png') }}' : '{{ asset('images/pattern/pkt-pattern-dark.png') }}'" 
+            <img src="{{ $isDark ? asset('images/pattern/pkt-pattern-white.png') : asset('images/pattern/pkt-pattern-dark.png') }}"
+                :src="isDark ? '{{ asset('images/pattern/pkt-pattern-white.png') }}' : '{{ asset('images/pattern/pkt-pattern-dark.png') }}'" 
                 alt="Pupuk Kalimantan Timur Pattern" 
-                class="w-full h-full object-contain opacity-[0.05] dark:opacity-[0.04] transition-opacity duration-500">
+                class="w-full h-full object-contain opacity-[0.05] dark:opacity-[0.04] transition-opacity duration-300">
         </div>
     </div>
 

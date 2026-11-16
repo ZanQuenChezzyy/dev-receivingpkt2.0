@@ -21,7 +21,7 @@ class MonitoringKarungInfolist
             ->components([
                 // 1. Apple-Style Executive KPI Hero Cards
                 TextEntry::make('hero_kpi')
-                    ->label('')
+                    ->hiddenLabel()
                     ->getStateUsing(fn (MonitoringKarung $record): HtmlString => self::renderHeroKpi($record))
                     ->columnSpanFull(),
 
@@ -29,55 +29,60 @@ class MonitoringKarungInfolist
                 Section::make(__('Informasi Kontrak & Master PO'))
                     ->icon('heroicon-m-document-text')
                     ->collapsible()
+                    ->columnSpanFull()
                     ->schema([
-                        Grid::make(4)->schema([
-                            TextEntry::make('no_po')
-                                ->label(__('Nomor Purchase Order'))
-                                ->weight(FontWeight::Bold)
-                                ->color('primary')
-                                ->icon('heroicon-m-document-duplicate')
-                                ->copyable()
-                                ->copyMessage(__('Nomor PO disalin')),
+                        Grid::make(['default' => 1, 'sm' => 2, 'lg' => 4])
+                            ->schema([
+                                TextEntry::make('no_po')
+                                    ->label(__('Nomor Purchase Order'))
+                                    ->weight(FontWeight::Bold)
+                                    ->color('primary')
+                                    ->icon('heroicon-m-document-duplicate')
+                                    ->copyable()
+                                    ->copyMessage(__('Nomor PO disalin')),
 
-                            TextEntry::make('vendor_name')
-                                ->label(__('Nama Vendor'))
-                                ->weight(FontWeight::SemiBold)
-                                ->icon('heroicon-m-building-office-2'),
+                                TextEntry::make('vendor_name')
+                                    ->label(__('Nama Vendor'))
+                                    ->weight(FontWeight::SemiBold)
+                                    ->icon('heroicon-m-building-office-2'),
 
-                            TextEntry::make('kategori_karung')
-                                ->label(__('Kategori Karung'))
-                                ->badge()
-                                ->color('info')
-                                ->placeholder('-'),
+                                TextEntry::make('kategori_karung')
+                                    ->label(__('Kategori Karung'))
+                                    ->badge(fn ($state) => filled($state))
+                                    ->color('info')
+                                    ->placeholder('-'),
 
-                            TextEntry::make('lokasi_pabrik')
-                                ->label(__('Lokasi Pabrik / Gudang'))
-                                ->badge()
-                                ->color('gray')
-                                ->placeholder('-'),
-                        ]),
+                                TextEntry::make('lokasi_pabrik')
+                                    ->label(__('Lokasi Pabrik / Gudang'))
+                                    ->badge(fn ($state) => filled($state))
+                                    ->color('gray')
+                                    ->placeholder('-'),
 
-                        Grid::make(3)->schema([
-                            TextEntry::make('qty_po')
-                                ->label(__('Alokasi Total PO'))
-                                ->formatStateUsing(fn ($state) => number_format((int) $state, 0, ',', '.').' '.__('Lembar'))
-                                ->weight(FontWeight::Bold),
+                                TextEntry::make('qty_po')
+                                    ->label(__('Alokasi Total PO'))
+                                    ->formatStateUsing(fn ($state) => number_format((int) $state, 0, ',', '.').' '.__('Lembar'))
+                                    ->weight(FontWeight::Bold),
 
-                            TextEntry::make('status')
-                                ->label(__('Status Monitoring'))
-                                ->badge()
-                                ->formatStateUsing(fn (string $state): string => __($state))
-                                ->color(fn (string $state): string => match ($state) {
-                                    'Selesai' => 'success',
-                                    'Terkendala' => 'danger',
-                                    default => 'primary',
-                                }),
+                                TextEntry::make('status')
+                                    ->label(__('Status Monitoring'))
+                                    ->badge()
+                                    ->formatStateUsing(fn (string $state): string => __($state))
+                                    ->color(fn (string $state): string => match ($state) {
+                                        'Selesai' => 'success',
+                                        'Terkendala' => 'danger',
+                                        default => 'primary',
+                                    }),
 
-                            TextEntry::make('created_at')
-                                ->label(__('Terdaftar Sejak'))
-                                ->dateTime('d F Y, H:i')
-                                ->placeholder('-'),
-                        ]),
+                                TextEntry::make('created_at')
+                                    ->label(__('Terdaftar Sejak'))
+                                    ->dateTime('d F Y, H:i')
+                                    ->placeholder('-'),
+
+                                TextEntry::make('catatan')
+                                    ->label(__('Catatan PO'))
+                                    ->placeholder(__('Tidak ada catatan khusus.'))
+                                    ->color('gray'),
+                            ]),
 
                         TextEntry::make('po_terbit_info')
                             ->hiddenLabel()
@@ -93,7 +98,7 @@ class MonitoringKarungInfolist
                                 $desc = $po ? htmlspecialchars($po->description ?: __('PO Terbit SAP')) : __('PO Belum Terdaftar di SAP');
 
                                 $poButton = $poUrl
-                                    ? "<a href='{$poUrl}' class='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 border border-amber-500/30 transition-all'>
+                                    ? "<a href='{$poUrl}' class='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/15 dark:hover:bg-amber-500/25 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-500/30 transition-all shadow-2xs'>
                                         <svg class='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'/></svg>
                                         PO SAP #{$po->purchase_order_no}
                                     </a>"
@@ -105,52 +110,52 @@ class MonitoringKarungInfolist
                                     $tglLabel = $tglDo ? ' ('.__('Tgl').': '.$tglDo.')' : '';
                                     $doLatestTitle = __('Buka dokumen DO Receipt terakhir');
                                     $doLatestLabel = __('DO Receipt Terakhir');
-                                    $doButton = "<a href='{$doUrl}' class='inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 border border-sky-500/40 transition-all ring-1 ring-sky-500/30 shadow-xs' title='{$doLatestTitle}'>
+                                    $doButton = "<a href='{$doUrl}' class='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-50 hover:bg-sky-100 dark:bg-sky-500/15 dark:hover:bg-sky-500/25 text-sky-700 dark:text-sky-400 border border-sky-200/80 dark:border-sky-500/30 transition-all shadow-2xs' title='{$doLatestTitle}'>
                                         <svg class='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14'/></svg>
                                         {$doLatestLabel}: #{$latestDo->delivery_order_no}{$tglLabel}
                                     </a>";
                                 } elseif ($doUrl) {
                                     $cariDoLabel = __('Cari di Penerimaan DO');
-                                    $doButton = "<a href='{$doUrl}' class='inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all'>
-                                        <svg class='w-3.5 h-3.5 text-slate-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'/></svg>
+                                    $doButton = "<a href='{$doUrl}' class='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all shadow-2xs'>
+                                        <svg class='w-3.5 h-3.5 text-slate-500 dark:text-slate-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'/></svg>
                                         {$cariDoLabel}
                                     </a>";
                                 }
 
                                 $doConnectedLabel = __('DO Terhubung');
-                                $badgeDo = "<span class='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'>
-                                    <svg class='w-3.5 h-3.5 text-emerald-500' fill='currentColor' viewBox='0 0 20 20'><path fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/></svg>
+                                $badgeDo = "<span class='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-500/30 shadow-2xs'>
+                                    <svg class='w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400' fill='currentColor' viewBox='0 0 20 20'><path fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/></svg>
                                     {$linkedDos} {$doConnectedLabel}
                                 </span>";
 
                                 $headerTitle = __('Integrasi PO Terbit & DO Receipt');
                                 $headerHint = __('Klik untuk melihat data DO Receipt');
-                                $headerLink = $doUrl ? "<a href='{$doUrl}' class='flex items-center gap-2 group text-xs font-bold uppercase tracking-wider text-slate-300 hover:text-sky-400 transition-colors' title='{$headerHint}'>
-                                    <div class='p-1.5 rounded-lg bg-sky-500/20 text-sky-400 group-hover:scale-105 transition-transform'>
+                                $headerLink = $doUrl ? "<a href='{$doUrl}' class='flex items-center gap-2 group text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 hover:text-sky-600 dark:hover:text-sky-400 transition-colors' title='{$headerHint}'>
+                                    <div class='p-1.5 rounded-lg bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 group-hover:scale-105 transition-transform'>
                                         <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M13 10V3L4 14h7v7l9-11h-7z'/></svg>
                                     </div>
                                     <span>{$headerTitle}</span>
                                     <svg class='w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9 5l7 7-7 7'/></svg>
-                                </a>" : "<div class='flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-300'>
-                                    <div class='p-1.5 rounded-lg bg-sky-500/20 text-sky-400'>
+                                </a>" : "<div class='flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200'>
+                                    <div class='p-1.5 rounded-lg bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400'>
                                         <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M13 10V3L4 14h7v7l9-11h-7z'/></svg>
                                     </div>
                                     <span>{$headerTitle}</span>
                                 </div>";
 
                                 return new HtmlString("
-                                    <div class='w-full rounded-2xl bg-slate-900/60 dark:bg-white/[0.03] border border-slate-800 dark:border-white/10 p-3.5 shadow-xs'>
+                                    <div class='w-full rounded-2xl bg-gradient-to-r from-slate-50/90 via-sky-50/20 to-slate-50/90 dark:from-white/[0.04] dark:to-white/[0.02] border border-slate-200/90 dark:border-white/10 p-3.5 sm:p-4 shadow-2xs'>
                                         <div class='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3'>
-                                            <div class='flex flex-wrap items-center gap-3'>
+                                            <div class='flex flex-wrap items-center gap-2.5 sm:gap-3'>
                                                 {$headerLink}
-                                                <div class='h-4 w-px bg-slate-700/60 dark:border-white/10 hidden sm:block'></div>
+                                                <div class='h-4 w-px bg-slate-200 dark:bg-white/10 hidden sm:block'></div>
                                                 <div class='flex flex-wrap items-center gap-2'>
                                                     {$doButton}
                                                     {$poButton}
                                                     {$badgeDo}
                                                 </div>
                                             </div>
-                                            <div class='text-xs font-mono text-slate-400 dark:text-slate-300 truncate max-w-[420px]'>
+                                            <div class='text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white/90 dark:bg-black/30 px-3.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-2xs truncate max-w-full lg:max-w-[420px]' title='{$desc}'>
                                                 {$desc}
                                             </div>
                                         </div>
@@ -158,50 +163,46 @@ class MonitoringKarungInfolist
                                 ");
                             })
                             ->columnSpanFull(),
-
-                        TextEntry::make('catatan')
-                            ->label(__('Catatan PO'))
-                            ->placeholder(__('Tidak ada catatan khusus.'))
-                            ->columnSpanFull(),
                     ]),
 
                 // 3. Tabbed Multi-Perspective Logs
                 Tabs::make(__('Rincian Log Monitoring & Tahapan'))
+                    ->columnSpanFull()
                     ->tabs([
-                        Tab::make(__('Data Pengujian QC & SA SAP'))
+                        Tab::make(__('Tahapan QC & SA SAP'))
                             ->icon('heroicon-m-shield-check')
-                            ->badge(fn (MonitoringKarung $record): int => $record->qcItems()->count())
+                            ->badge(fn (MonitoringKarung $record): ?int => $record->qcItems()->count() ?: null)
                             ->schema([
                                 TextEntry::make('table_qc')
-                                    ->label('')
+                                    ->hiddenLabel()
                                     ->getStateUsing(fn (MonitoringKarung $record): HtmlString => self::renderQcTable($record))
                                     ->columnSpanFull(),
                             ]),
 
-                        Tab::make(__('Data Pengiriman & Penagihan DO'))
+                        Tab::make(__('Pengiriman DO Fisik'))
                             ->icon('heroicon-m-truck')
-                            ->badge(fn (MonitoringKarung $record): int => $record->deliveryItems()->count())
+                            ->badge(fn (MonitoringKarung $record): ?int => $record->deliveryItems()->count() ?: null)
                             ->schema([
                                 TextEntry::make('table_delivery')
-                                    ->label('')
+                                    ->hiddenLabel()
                                     ->getStateUsing(fn (MonitoringKarung $record): HtmlString => self::renderDeliveryTable($record))
                                     ->columnSpanFull(),
                             ]),
 
-                        Tab::make(__('Rekapitulasi Bulanan SIK & Estimasi Jasa'))
+                        Tab::make(__('Rekapitulasi SIK'))
                             ->icon('heroicon-m-chart-bar')
                             ->schema([
                                 TextEntry::make('rekap_bulanan')
-                                    ->label('')
+                                    ->hiddenLabel()
                                     ->getStateUsing(fn (MonitoringKarung $record): HtmlString => self::renderMonthlyQcSummary($record))
                                     ->columnSpanFull(),
                             ]),
 
-                        Tab::make(__('Rekonsiliasi & Analisis (QC vs Fisik)'))
+                        Tab::make(__('Rekonsiliasi QC vs Fisik'))
                             ->icon('heroicon-m-arrows-right-left')
                             ->schema([
                                 TextEntry::make('rekonsiliasi')
-                                    ->label('')
+                                    ->hiddenLabel()
                                     ->getStateUsing(fn (MonitoringKarung $record): HtmlString => self::renderReconciliationSummary($record))
                                     ->columnSpanFull(),
                             ]),
@@ -230,6 +231,7 @@ class MonitoringKarungInfolist
 
         $belumsSaText = __('Belum SA');
         $semuaSaLengkapText = __('Semua SA Lengkap');
+        $belumAdaTahapText = __('Belum Ada Tahap QC');
         $lbrText = __('Lbr');
         $alokasiPoText = __('Alokasi Total PO');
         $realisasiQcText = __('Realisasi Uji QC');
@@ -249,10 +251,14 @@ class MonitoringKarungInfolist
                 <svg class='w-3.5 h-3.5' fill='currentColor' viewBox='0 0 20 20'><path fill-rule='evenodd' d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z' clip-rule='evenodd'/></svg>
                 {$pendingSa} {$belumsSaText}
                </span>"
-            : "<span class='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'>
-                <svg class='w-3.5 h-3.5' fill='currentColor' viewBox='0 0 20 20'><path fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/></svg>
-                {$semuaSaLengkapText}
-               </span>";
+            : ($qcCount === 0
+                ? "<span class='inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10'>
+                    {$belumAdaTahapText}
+                   </span>"
+                : "<span class='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'>
+                    <svg class='w-3.5 h-3.5' fill='currentColor' viewBox='0 0 20 20'><path fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd'/></svg>
+                    {$semuaSaLengkapText}
+                   </span>");
 
         $statusColor = match ($record->status) {
             'Selesai' => 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
@@ -263,68 +269,76 @@ class MonitoringKarungInfolist
         return new HtmlString("
             <div class='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4'>
                 <!-- Card 1: Total Alokasi PO -->
-                <div class='relative overflow-hidden p-5 rounded-2xl bg-white/70 dark:bg-[#0b1626]/75 backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all duration-300'>
-                    <div class='flex items-center justify-between mb-3'>
-                        <span class='text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'>{$alokasiPoText}</span>
-                        <span class='px-2 py-0.5 rounded-full text-[10.5px] font-bold border {$statusColor}'>{$statusTranslated}</span>
+                <div class='relative overflow-hidden p-5 rounded-2xl bg-white/80 dark:bg-[#0b1626]/75 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full'>
+                    <div>
+                        <div class='flex items-center justify-between mb-3'>
+                            <span class='text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'>{$alokasiPoText}</span>
+                            <span class='px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border {$statusColor}'>{$statusTranslated}</span>
+                        </div>
+                        <div class='text-2xl font-black font-mono text-slate-900 dark:text-white tracking-tight'>
+                            {$poQtyFormatted} <span class='text-xs font-semibold text-slate-400'>{$lbrText}</span>
+                        </div>
                     </div>
-                    <div class='text-2xl font-black font-mono text-slate-900 dark:text-white tracking-tight'>
-                        {$poQtyFormatted} <span class='text-xs font-semibold text-slate-400'>{$lbrText}</span>
-                    </div>
-                    <div class='mt-3 pt-3 border-t border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between text-xs text-slate-500 dark:text-slate-400'>
+                    <div class='mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-xs text-slate-500 dark:text-slate-400'>
                         <span class='truncate max-w-[140px]' title='{$record->vendor_name}'>{$record->vendor_name}</span>
                         <span class='font-semibold text-slate-700 dark:text-slate-300'>PO #{$record->no_po}</span>
                     </div>
                 </div>
 
                 <!-- Card 2: Realisasi QC -->
-                <div class='relative overflow-hidden p-5 rounded-2xl bg-white/70 dark:bg-[#0b1626]/75 backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all duration-300'>
-                    <div class='flex items-center justify-between mb-3'>
-                        <span class='text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'>{$realisasiQcText}</span>
-                        <span class='text-xs font-extrabold font-mono text-emerald-600 dark:text-emerald-400'>{$qcPercent}%</span>
+                <div class='relative overflow-hidden p-5 rounded-2xl bg-white/80 dark:bg-[#0b1626]/75 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full'>
+                    <div>
+                        <div class='flex items-center justify-between mb-3'>
+                            <span class='text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'>{$realisasiQcText}</span>
+                            <span class='text-xs font-extrabold font-mono text-emerald-600 dark:text-emerald-400'>{$qcPercent}%</span>
+                        </div>
+                        <div class='text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 tracking-tight'>
+                            {$qcQtyFormatted} <span class='text-xs font-semibold text-slate-400'>{$lbrText}</span>
+                        </div>
+                        <!-- Progress Bar -->
+                        <div class='w-full bg-slate-100 dark:bg-white/10 rounded-full h-1.5 mt-3 overflow-hidden'>
+                            <div class='bg-emerald-500 h-1.5 rounded-full transition-all duration-500' style='width: {$qcPercent}%'></div>
+                        </div>
                     </div>
-                    <div class='text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 tracking-tight'>
-                        {$qcQtyFormatted} <span class='text-xs font-semibold text-slate-400'>{$lbrText}</span>
-                    </div>
-                    <!-- Progress Bar -->
-                    <div class='w-full bg-slate-100 dark:bg-white/10 rounded-full h-2 mt-3 overflow-hidden'>
-                        <div class='bg-emerald-500 h-2 rounded-full transition-all duration-500' style='width: {$qcPercent}%'></div>
-                    </div>
-                    <div class='mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400'>
+                    <div class='mt-3 pt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400'>
                         <span>{$progressQcText}</span>
                         <span class='font-semibold text-slate-700 dark:text-slate-300'>{$qcCount} {$tahapUjiText}</span>
                     </div>
                 </div>
 
                 <!-- Card 3: Realisasi Kirim DO -->
-                <div class='relative overflow-hidden p-5 rounded-2xl bg-white/70 dark:bg-[#0b1626]/75 backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all duration-300'>
-                    <div class='flex items-center justify-between mb-3'>
-                        <span class='text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'>{$realisasiKirimText}</span>
-                        <span class='text-xs font-extrabold font-mono text-[#F47920]'>{$kirimPercent}%</span>
+                <div class='relative overflow-hidden p-5 rounded-2xl bg-white/80 dark:bg-[#0b1626]/75 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full'>
+                    <div>
+                        <div class='flex items-center justify-between mb-3'>
+                            <span class='text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'>{$realisasiKirimText}</span>
+                            <span class='text-xs font-extrabold font-mono text-[#F47920]'>{$kirimPercent}%</span>
+                        </div>
+                        <div class='text-2xl font-black font-mono text-[#F47920] tracking-tight'>
+                            {$kirimQtyFormatted} <span class='text-xs font-semibold text-slate-400'>{$lbrText}</span>
+                        </div>
+                        <!-- Progress Bar -->
+                        <div class='w-full bg-slate-100 dark:bg-white/10 rounded-full h-1.5 mt-3 overflow-hidden'>
+                            <div class='bg-[#F47920] h-1.5 rounded-full transition-all duration-500' style='width: {$kirimPercent}%'></div>
+                        </div>
                     </div>
-                    <div class='text-2xl font-black font-mono text-[#F47920] tracking-tight'>
-                        {$kirimQtyFormatted} <span class='text-xs font-semibold text-slate-400'>{$lbrText}</span>
-                    </div>
-                    <!-- Progress Bar -->
-                    <div class='w-full bg-slate-100 dark:bg-white/10 rounded-full h-2 mt-3 overflow-hidden'>
-                        <div class='bg-[#F47920] h-2 rounded-full transition-all duration-500' style='width: {$kirimPercent}%'></div>
-                    </div>
-                    <div class='mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400'>
+                    <div class='mt-3 pt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400'>
                         <span>{$sisaText}: <strong class='text-slate-700 dark:text-slate-300'>{$sisaQtyFormatted} {$lbrText}</strong></span>
                         <span class='font-semibold text-slate-700 dark:text-slate-300'>{$deliveryCount} {$pengirimanText}</span>
                     </div>
                 </div>
 
                 <!-- Card 4: Administrasi SA SAP -->
-                <div class='relative overflow-hidden p-5 rounded-2xl bg-white/70 dark:bg-[#0b1626]/75 backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all duration-300'>
-                    <div class='flex items-center justify-between mb-3'>
-                        <span class='text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'>{$statusSaText}</span>
-                        {$saBadge}
+                <div class='relative overflow-hidden p-5 rounded-2xl bg-white/80 dark:bg-[#0b1626]/75 backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.08] shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full'>
+                    <div>
+                        <div class='flex items-center justify-between mb-3'>
+                            <span class='text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400'>{$statusSaText}</span>
+                            {$saBadge}
+                        </div>
+                        <div class='text-2xl font-black font-mono text-slate-900 dark:text-white tracking-tight'>
+                            {$completedSa} <span class='text-sm font-semibold text-slate-400'>/ {$qcCount} {$selesaiText}</span>
+                        </div>
                     </div>
-                    <div class='text-2xl font-black font-mono text-slate-900 dark:text-white tracking-tight'>
-                        {$completedSa} <span class='text-sm font-semibold text-slate-400'>/ {$qcCount} {$selesaiText}</span>
-                    </div>
-                    <div class='mt-3 pt-3 border-t border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between text-xs text-slate-500 dark:text-slate-400'>
+                    <div class='mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-xs text-slate-500 dark:text-slate-400'>
                         <span>{$drafterText}</span>
                         <span class='font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[120px]'>{$timDrafterText}</span>
                     </div>
@@ -345,10 +359,12 @@ class MonitoringKarungInfolist
             $emptyDesc = __('Klik tombol Ubah atau gunakan tab Tambah Tahap QC untuk mencatat data baru.');
 
             return new HtmlString("
-                <div class='p-8 text-center rounded-2xl bg-slate-50/50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'>
-                    <svg class='w-12 h-12 mx-auto mb-2 text-slate-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'/></svg>
-                    <p class='font-semibold'>{$emptyTitle}</p>
-                    <p class='text-xs mt-1'>{$emptyDesc}</p>
+                <div class='py-12 px-6 text-center rounded-2xl bg-slate-50/60 dark:bg-white/[0.02] border border-dashed border-slate-300 dark:border-white/10'>
+                    <div class='w-12 h-12 mx-auto mb-3 rounded-2xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200/60 dark:border-sky-500/20 flex items-center justify-center text-sky-600 dark:text-sky-400 shadow-2xs'>
+                        <svg class='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'/></svg>
+                    </div>
+                    <h4 class='text-sm font-bold text-slate-800 dark:text-white'>{$emptyTitle}</h4>
+                    <p class='text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto'>{$emptyDesc}</p>
                 </div>
             ");
         }
@@ -443,7 +459,7 @@ class MonitoringKarungInfolist
 
         return new HtmlString("
             <div class='overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs bg-white/70 dark:bg-[#0b1626]/75 backdrop-blur-md'>
-                <table class='w-full text-left text-xs'>
+                <table class='w-full text-left text-xs whitespace-nowrap'>
                     <thead class='bg-slate-50/80 dark:bg-white/5 border-b border-slate-200 dark:border-white/10 text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400'>
                         <tr>
                             <th class='px-3.5 py-3 text-center w-10'>#</th>
@@ -462,12 +478,12 @@ class MonitoringKarungInfolist
                     <tbody class='divide-y divide-slate-100 dark:divide-white/5'>
                         {$rows}
                     </tbody>
-                    <tfoot class='bg-slate-50/90 dark:bg-white/5 border-t-2 border-slate-200 dark:border-white/10 font-bold text-xs'>
+                    <tfoot class='bg-slate-50/90 dark:bg-white/5 border-t-2 border-slate-200 dark:border-white/10 font-bold text-xs whitespace-nowrap'>
                         <tr>
-                            <td colspan='2' class='px-3.5 py-3.5 text-slate-900 dark:text-white uppercase font-black'>{$tfootTotal}</td>
-                            <td class='px-3.5 py-3.5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-black text-sm'>{$totalQtyFormatted} {$lbrText}</td>
-                            <td colspan='5' class='px-3.5 py-3.5 text-right text-slate-500 dark:text-slate-400 font-medium'>{$rekapSaLabel}</td>
-                            <td class='px-3.5 py-3.5 text-center font-mono font-bold text-slate-900 dark:text-white'>{$totalSaFilled} / {$itemCount} {$terbitLabel}</td>
+                            <td colspan='2' class='px-3.5 py-3.5 text-slate-900 dark:text-white uppercase font-black whitespace-nowrap'>{$tfootTotal}</td>
+                            <td class='px-3.5 py-3.5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-black text-sm whitespace-nowrap'>{$totalQtyFormatted} {$lbrText}</td>
+                            <td colspan='5' class='px-3.5 py-3.5 text-right text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap'>{$rekapSaLabel}</td>
+                            <td class='px-3.5 py-3.5 text-center font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap'>{$totalSaFilled} / {$itemCount} {$terbitLabel}</td>
                             <td colspan='2'></td>
                         </tr>
                     </tfoot>
@@ -488,10 +504,12 @@ class MonitoringKarungInfolist
             $emptyDesc = __('Klik tombol Ubah atau gunakan tab Tambah Tahap Pengiriman untuk mencatat surat jalan.');
 
             return new HtmlString("
-                <div class='p-8 text-center rounded-2xl bg-slate-50/50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400'>
-                    <svg class='w-12 h-12 mx-auto mb-2 text-slate-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0'/></svg>
-                    <p class='font-semibold'>{$emptyTitle}</p>
-                    <p class='text-xs mt-1'>{$emptyDesc}</p>
+                <div class='py-12 px-6 text-center rounded-2xl bg-slate-50/60 dark:bg-white/[0.02] border border-dashed border-slate-300 dark:border-white/10'>
+                    <div class='w-12 h-12 mx-auto mb-3 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-2xs'>
+                        <svg class='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0'/></svg>
+                    </div>
+                    <h4 class='text-sm font-bold text-slate-800 dark:text-white'>{$emptyTitle}</h4>
+                    <p class='text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto'>{$emptyDesc}</p>
                 </div>
             ");
         }
@@ -577,7 +595,7 @@ class MonitoringKarungInfolist
 
         return new HtmlString("
             <div class='overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs bg-white/70 dark:bg-[#0b1626]/75 backdrop-blur-md'>
-                <table class='w-full text-left text-xs'>
+                <table class='w-full text-left text-xs whitespace-nowrap'>
                     <thead class='bg-slate-50/80 dark:bg-white/5 border-b border-slate-200 dark:border-white/10 text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400'>
                         <tr>
                             <th class='px-3.5 py-3 text-center w-10'>#</th>
@@ -595,13 +613,13 @@ class MonitoringKarungInfolist
                     <tbody class='divide-y divide-slate-100 dark:divide-white/5'>
                         {$rows}
                     </tbody>
-                    <tfoot class='bg-slate-50/90 dark:bg-white/5 border-t-2 border-slate-200 dark:border-white/10 font-bold text-xs'>
+                    <tfoot class='bg-slate-50/90 dark:bg-white/5 border-t-2 border-slate-200 dark:border-white/10 font-bold text-xs whitespace-nowrap'>
                         <tr>
-                            <td colspan='2' class='px-3.5 py-3.5 text-slate-900 dark:text-white uppercase font-black'>{$tfootKirimTotal}</td>
-                            <td class='px-3.5 py-3.5 text-right font-mono text-[#F47920] font-black text-sm'>{$totalQtyFormatted} {$lbrText}</td>
+                            <td colspan='2' class='px-3.5 py-3.5 text-slate-900 dark:text-white uppercase font-black whitespace-nowrap'>{$tfootKirimTotal}</td>
+                            <td class='px-3.5 py-3.5 text-right font-mono text-[#F47920] font-black text-sm whitespace-nowrap'>{$totalQtyFormatted} {$lbrText}</td>
                             <td colspan='4'></td>
-                            <td class='px-3.5 py-3.5 text-right font-mono text-slate-700 dark:text-slate-300'>{$totalSupplyFormatted}</td>
-                            <td class='px-3.5 py-3.5 text-right font-mono text-slate-700 dark:text-slate-300'>{$totalSuratFormatted}</td>
+                            <td class='px-3.5 py-3.5 text-right font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap'>{$totalSupplyFormatted}</td>
+                            <td class='px-3.5 py-3.5 text-right font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap'>{$totalSuratFormatted}</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -711,7 +729,7 @@ class MonitoringKarungInfolist
                 </div>
 
                 <div class='overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10 shadow-xs bg-white/70 dark:bg-[#0b1626]/75 backdrop-blur-md'>
-                    <table class='w-full text-left'>
+                    <table class='w-full text-left whitespace-nowrap'>
                         <thead class='bg-slate-50/80 dark:bg-white/5 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-white/10'>
                             <tr>
                                 <th class='px-4 py-3'>{$thBulan}</th>
@@ -726,15 +744,15 @@ class MonitoringKarungInfolist
                         <tbody class='divide-y divide-slate-100 dark:divide-white/5'>
                             {$rowsHtml}
                         </tbody>
-                        <tfoot class='bg-slate-50/90 dark:bg-white/5 font-bold text-xs border-t-2 border-slate-200 dark:border-white/10'>
+                        <tfoot class='bg-slate-50/90 dark:bg-white/5 font-bold text-xs border-t-2 border-slate-200 dark:border-white/10 whitespace-nowrap'>
                             <tr>
-                                <td class='px-4 py-3.5 text-slate-900 dark:text-white uppercase font-black'>{$totalSetahun}</td>
-                                <td class='px-4 py-3.5 text-center font-mono font-bold text-slate-900 dark:text-white'>{$grandTotalSik} SIK</td>
-                                <td class='px-4 py-3.5 text-right font-mono text-slate-600 dark:text-slate-400'>{$grandTotalAwalStr}</td>
-                                <td class='px-4 py-3.5 text-right font-mono text-slate-800 dark:text-slate-200'>{$grandTotalAnnualStr}</td>
-                                <td class='px-4 py-3.5 text-right font-mono text-[#F47920] font-black text-sm'>{$grandTotalLembarStr} {$lbrText}</td>
-                                <td class='px-4 py-3.5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-bold'>{$totalCost25}</td>
-                                <td class='px-4 py-3.5 text-right font-mono text-sky-600 dark:text-sky-400 font-bold'>{$totalCost50}</td>
+                                <td class='px-4 py-3.5 text-slate-900 dark:text-white uppercase font-black whitespace-nowrap'>{$totalSetahun}</td>
+                                <td class='px-4 py-3.5 text-center font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap'>{$grandTotalSik} SIK</td>
+                                <td class='px-4 py-3.5 text-right font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap'>{$grandTotalAwalStr}</td>
+                                <td class='px-4 py-3.5 text-right font-mono text-slate-800 dark:text-slate-200 whitespace-nowrap'>{$grandTotalAnnualStr}</td>
+                                <td class='px-4 py-3.5 text-right font-mono text-[#F47920] font-black text-sm whitespace-nowrap'>{$grandTotalLembarStr} {$lbrText}</td>
+                                <td class='px-4 py-3.5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap'>{$totalCost25}</td>
+                                <td class='px-4 py-3.5 text-right font-mono text-sky-600 dark:text-sky-400 font-bold whitespace-nowrap'>{$totalCost50}</td>
                             </tr>
                         </tfoot>
                     </table>

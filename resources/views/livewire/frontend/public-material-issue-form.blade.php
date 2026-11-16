@@ -1,5 +1,5 @@
 <div
-    class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-500 pt-28 pb-44 sm:pb-48 font-sans relative overflow-hidden">
+    class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-200 pt-28 pb-44 sm:pb-48 font-sans relative overflow-hidden">
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/css/shepherd.css"/>
     <script src="https://cdn.jsdelivr.net/npm/shepherd.js@11.0.1/dist/js/shepherd.min.js"></script>
@@ -91,7 +91,7 @@
         }"
         @signature-updated.window="onSignatureChange($event.detail)"
         @item-added.window="
-            triggerToast(@js(__('✨ Baris material #:row berhasil ditambahkan!')).replace(':row', ($event.detail.itemIndex || '')), 'success');
+            triggerToast(@js(__('Baris material #:row berhasil ditambahkan!')).replace(':row', ($event.detail.itemIndex || '')), 'success');
             setTimeout(() => {
                 const cards = document.querySelectorAll('.material-item-card');
                 const lastCard = cards[cards.length - 1];
@@ -384,14 +384,40 @@
                                 <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
                                     {{ __('Cari & Pilih PO') }} <span class="text-[#F47920]">*</span>
                                 </label>
-                                <!-- Segmented Mode Switch -->
-                                <div class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl" data-tour="search-mode">
-                                    <button type="button" wire:click="$set('search_mode', 'po')"
-                                        class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all {{ $search_mode === 'po' ? 'bg-[#F47920] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400' }}">
+                                <!-- Segmented Mode Switch (Framer Motion Spring Slider) -->
+                                <div 
+                                    x-data="{ pressing: false }"
+                                    @mousedown="pressing = true"
+                                    @mouseup="pressing = false"
+                                    @mouseleave="pressing = false"
+                                    class="relative grid grid-cols-2 p-[3px] rounded-xl bg-slate-200/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-300/70 dark:border-white/10 shadow-[inset_0_1px_3px_rgba(0,0,0,0.12)] select-none overflow-hidden transition-transform duration-150 ease-out"
+                                    :class="pressing ? 'scale-[0.98]' : 'scale-100'"
+                                    data-tour="search-mode"
+                                    wire:key="search-mode-segmented-control"
+                                >
+                                    <!-- Framer Motion Spring Pill Indicator -->
+                                    <div 
+                                        class="segmented-spring-pill-compact bg-[#F47920] shadow-[0_2px_8px_rgba(244,121,32,0.4)]"
+                                        style="transform: translateX({{ $search_mode === 'sn' ? '100%' : '0%' }});"
+                                        :style="`transform: translateX(${$wire.search_mode === 'sn' ? '100%' : '0%'});`"
+                                    ></div>
+
+                                    <button 
+                                        type="button" 
+                                        wire:click="$set('search_mode', 'po')"
+                                        @click="$wire.search_mode = 'po'"
+                                        class="relative z-10 px-3 py-1 text-xs font-bold rounded-lg transition-all duration-200 text-center select-none cursor-pointer {{ $search_mode === 'po' ? 'text-white font-black' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold' }}"
+                                        :class="$wire.search_mode === 'po' ? 'text-white font-black' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold'"
+                                    >
                                         {{ __('No. PO') }}
                                     </button>
-                                    <button type="button" wire:click="$set('search_mode', 'sn')"
-                                        class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all {{ $search_mode === 'sn' ? 'bg-[#F47920] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400' }}">
+                                    <button 
+                                        type="button" 
+                                        wire:click="$set('search_mode', 'sn')"
+                                        @click="$wire.search_mode = 'sn'"
+                                        class="relative z-10 px-3 py-1 text-xs font-bold rounded-lg transition-all duration-200 text-center select-none cursor-pointer {{ $search_mode === 'sn' ? 'text-white font-black' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold' }}"
+                                        :class="$wire.search_mode === 'sn' ? 'text-white font-black' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold'"
+                                    >
                                         {{ __('Stock No') }}
                                     </button>
                                 </div>
@@ -552,8 +578,8 @@
 
                     @if (!empty($purchase_order_issued_id) && count($details) < count($available_po_items))
                         <button type="button" wire:click="addDetail(true)" wire:loading.attr="disabled" data-tour="tambah-item"
-                            class="group inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold text-xs sm:text-sm transition-all duration-200 shadow-md shadow-emerald-500/25 hover:shadow-emerald-500/40 self-start sm:self-auto cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-                            <svg wire:loading.remove wire:target="addDetail" class="w-4 h-4 transition-transform group-hover:rotate-90 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                            class="group inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 active:scale-[0.96] text-white font-bold text-xs sm:text-sm transition-all duration-200 ease-[cubic-bezier(0.34,1.4,0.64,1)] shadow-md shadow-emerald-500/25 hover:shadow-emerald-500/40 self-start sm:self-auto cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                            <svg wire:loading.remove wire:target="addDetail" class="w-4 h-4 transition-transform group-hover:rotate-90 duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                             </svg>
                             <svg wire:loading wire:target="addDetail" class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -583,151 +609,159 @@
                         </p>
                     </div>
                 @else
-                    <!-- Items Repeater Cards -->
+                    <!-- Items Repeater Cards with Framer Motion Spring Dynamics -->
                     <div class="space-y-4 sm:space-y-6">
                         @foreach ($details as $index => $detail)
-                            <div wire:key="detail-row-{{ $index }}"
-                                 class="material-item-card p-5 sm:p-7 rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/70 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-500 relative overflow-hidden group">
-                                
-                                <!-- Card Header -->
-                                <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200/60 dark:border-white/5">
-                                    <div class="flex items-center gap-3">
-                                        <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center font-black text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-                                            #{{ $index + 1 }}
-                                        </span>
-                                        <span class="text-sm sm:text-base font-bold text-slate-800 dark:text-white">
-                                            {{ __('Item Pengambilan') }}
-                                        </span>
-                                    </div>
-                                    @if (count($details) > 1)
-                                        <button type="button" wire:click="removeDetail({{ $index }})"
-                                            class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
-                                            title="Hapus baris item">
-                                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
-                                    @endif
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
-                                    <!-- Pilih Item (Spans 3 cols on desktop) -->
-                                    <div class="md:col-span-4 lg:col-span-3" data-tour="pilih-item">
-                                        <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                            {{ __('Pilih Item') }} <span class="text-[#F47920]">*</span>
-                                        </label>
-                                        <select wire:model.live="details.{{ $index }}.delivery_order_receipt_detail_id"
-                                            @change="if (details && details[{{ $index }}]) { details[{{ $index }}].delivery_order_receipt_detail_id = $event.target.value; }"
-                                            class="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all">
-                                            <option value="">-- {{ __('Pilih Item') }} --</option>
-                                            @foreach ($available_po_items as $item)
-                                                @php
-                                                    $isAlreadySelected = collect($details)->contains(function($d, $k) use ($item, $index) {
-                                                        return $k != $index && ($d['delivery_order_receipt_detail_id'] == $item['id']);
-                                                    });
-                                                @endphp
-                                                <option value="{{ $item['id'] }}" {{ $isAlreadySelected ? 'disabled' : '' }}>
-                                                    {{ __('Item') }} {{ $item['item_no'] }}{{ $isAlreadySelected ? ' (' . __('Dipilih') . ')' : '' }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error("details.{$index}.delivery_order_receipt_detail_id")
-                                            <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-
-                                    <!-- Deskripsi Material (Spans 5 cols on desktop) -->
-                                    <div class="md:col-span-8 lg:col-span-5" data-tour="deskripsi">
-                                        <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                            {{ __('Deskripsi') }}
-                                        </label>
-                                        <div class="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 min-h-[48px] sm:min-h-[52px] flex items-center">
-                                            @if (!empty($detail['description']))
-                                                <span class="line-clamp-2 leading-relaxed" title="{{ $detail['description'] }}">
-                                                    {{ $detail['description'] }}
+                            <div wire:key="detail-row-{{ $index }}-{{ $detail['delivery_order_receipt_detail_id'] ?? 'empty' }}"
+                                 x-data="{ isRemoving: false }"
+                                 :class="isRemoving ? 'repeater-card-collapsing' : ''"
+                                 class="repeater-item-wrapper animate-repeater-enter">
+                                <div class="repeater-item-inner">
+                                    <div class="material-item-card p-5 sm:p-7 rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-slate-200/70 dark:border-white/10 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group">
+                                        
+                                        <!-- Card Header -->
+                                        <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200/60 dark:border-white/5">
+                                            <div class="flex items-center gap-3">
+                                                <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center font-black text-xs sm:text-sm text-slate-600 dark:text-slate-300 border border-black/[0.04] dark:border-white/[0.06] shadow-xs">
+                                                    #{{ $index + 1 }}
                                                 </span>
-                                            @else
-                                                <span class="text-slate-400 dark:text-slate-500 italic font-normal">
-                                                    {{ __('Pilih item terlebih dahulu...') }}
+                                                <span class="text-sm sm:text-base font-bold text-slate-800 dark:text-white">
+                                                    {{ __('Item Pengambilan') }}
                                                 </span>
+                                            </div>
+                                            @if (count($details) > 1)
+                                                <button type="button" 
+                                                    @click="isRemoving = true; setTimeout(() => $wire.removeDetail({{ $index }}), 260)"
+                                                    :disabled="isRemoving"
+                                                    class="group/btn p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all duration-200 active:scale-90 cursor-pointer disabled:opacity-50"
+                                                    title="{{ __('Hapus baris item') }}">
+                                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover/btn:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
                                             @endif
                                         </div>
-                                    </div>
 
-                                    <!-- Quantity Input & Max BOH (Spans 4 cols on desktop) -->
-                                    <div class="md:col-span-12 lg:col-span-4 flex flex-col justify-between">
-                                        <div>
-                                            <div class="flex items-center justify-between mb-2">
-                                                <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
-                                                    {{ __('Jumlah Diminta') }} <span class="text-[#F47920]">*</span>
+                                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6">
+                                            <!-- Pilih Item (Spans 3 cols on desktop) -->
+                                            <div class="md:col-span-4 lg:col-span-3" data-tour="pilih-item">
+                                                <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                                    {{ __('Pilih Item') }} <span class="text-[#F47920]">*</span>
                                                 </label>
-                                                <!-- Available BOH Badge -->
-                                                <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" data-tour="boh">
-                                                    {{ __('Stok BOH:') }} <strong>{{ (float)($detail['boh'] ?? 0) }}</strong> {{ $detail['uoi'] ?? '' }}
-                                                </span>
+                                                <select wire:model.live="details.{{ $index }}.delivery_order_receipt_detail_id"
+                                                    @change="if (details && details[{{ $index }}]) { details[{{ $index }}].delivery_order_receipt_detail_id = $event.target.value; }"
+                                                    class="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all">
+                                                    <option value="">-- {{ __('Pilih Item') }} --</option>
+                                                    @foreach ($available_po_items as $item)
+                                                        @php
+                                                            $isAlreadySelected = collect($details)->contains(function($d, $k) use ($item, $index) {
+                                                                return $k != $index && ($d['delivery_order_receipt_detail_id'] == $item['id']);
+                                                            });
+                                                        @endphp
+                                                        <option value="{{ $item['id'] }}" {{ $isAlreadySelected ? 'disabled' : '' }}>
+                                                            {{ __('Item') }} {{ $item['item_no'] }}{{ $isAlreadySelected ? ' (' . __('Dipilih') . ')' : '' }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                @error("details.{$index}.delivery_order_receipt_detail_id")
+                                                    <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
+                                                @enderror
                                             </div>
 
-                                            <div class="relative flex items-center" data-tour="qty">
-                                                <input type="number" step="any" min="0.01" max="{{ $detail['boh'] ?? 99999 }}"
-                                                    wire:model.live.debounce.300ms="details.{{ $index }}.diminta"
-                                                    @input="if (details && details[{{ $index }}]) { details[{{ $index }}].diminta = $event.target.value; }"
-                                                    class="w-full pr-24 pl-4 py-3 sm:py-3.5 text-base sm:text-lg font-black text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
-                                                    placeholder="0.00">
-                                                
-                                                <!-- One-Tap "Ambil Max" Quick Fill Button -->
-                                                <button type="button" wire:click="fillMaxBoh({{ $index }})"
-                                                    class="absolute right-2 px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-xl bg-orange-100 hover:bg-orange-200 dark:bg-orange-500/20 dark:hover:bg-orange-500/30 text-[#F47920] transition-all">
-                                                    {{ __('Max') }}
-                                                </button>
+                                            <!-- Deskripsi Material (Spans 5 cols on desktop) -->
+                                            <div class="md:col-span-8 lg:col-span-5" data-tour="deskripsi">
+                                                <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                                    {{ __('Deskripsi') }}
+                                                </label>
+                                                <div class="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 min-h-[48px] sm:min-h-[52px] flex items-center">
+                                                    @if (!empty($detail['description']))
+                                                        <span class="line-clamp-2 leading-relaxed" title="{{ $detail['description'] }}">
+                                                            {{ $detail['description'] }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-slate-400 dark:text-slate-500 italic font-normal">
+                                                            {{ __('Pilih item terlebih dahulu...') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </div>
 
-                                            @error("details.{$index}.diminta")
-                                                <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
-                                            @enderror
+                                            <!-- Quantity Input & Max BOH (Spans 4 cols on desktop) -->
+                                            <div class="md:col-span-12 lg:col-span-4 flex flex-col justify-between">
+                                                <div>
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <label class="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
+                                                            {{ __('Jumlah Diminta') }} <span class="text-[#F47920]">*</span>
+                                                        </label>
+                                                        <!-- Available BOH Badge -->
+                                                        <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" data-tour="boh">
+                                                            {{ __('Stok BOH:') }} <strong>{{ (float)($detail['boh'] ?? 0) }}</strong> {{ $detail['uoi'] ?? '' }}
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="relative flex items-center" data-tour="qty">
+                                                        <input type="number" step="any" min="0.01" max="{{ $detail['boh'] ?? 99999 }}"
+                                                            wire:model.live.debounce.300ms="details.{{ $index }}.diminta"
+                                                            @input="if (details && details[{{ $index }}]) { details[{{ $index }}].diminta = $event.target.value; }"
+                                                            class="w-full pr-24 pl-4 py-3 sm:py-3.5 text-base sm:text-lg font-black text-slate-900 dark:text-white bg-slate-50/80 dark:bg-black/20 rounded-2xl border border-slate-200/80 dark:border-white/10 focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920] transition-all"
+                                                            placeholder="0.00">
+                                                        
+                                                        <!-- One-Tap "Ambil Max" Quick Fill Button with Spring Tactile -->
+                                                        <button type="button" wire:click="fillMaxBoh({{ $index }})"
+                                                            class="absolute right-2 px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-xl bg-orange-100 hover:bg-orange-200 dark:bg-orange-500/20 dark:hover:bg-orange-500/30 text-[#F47920] active:scale-90 hover:scale-105 transition-all duration-150 ease-[cubic-bezier(0.34,1.4,0.64,1)] cursor-pointer shadow-xs">
+                                                            {{ __('Max') }}
+                                                        </button>
+                                                    </div>
+
+                                                    @error("details.{$index}.diminta")
+                                                        <span class="text-red-500 text-xs font-semibold mt-1.5 block">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+
+                                                @if ((float)($detail['diminta'] ?? 0) > (float)($detail['boh'] ?? 0) && (float)($detail['boh'] ?? 0) > 0)
+                                                    <div class="mt-2 text-xs font-bold text-red-500 flex items-center gap-1.5">
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                        {{ __('Melebihi sisa stok BOH gudang!') }}
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </div>
 
-                                        @if ((float)($detail['diminta'] ?? 0) > (float)($detail['boh'] ?? 0) && (float)($detail['boh'] ?? 0) > 0)
-                                            <div class="mt-2 text-xs font-bold text-red-500 flex items-center gap-1.5">
-                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                                {{ __('Melebihi sisa stok BOH gudang!') }}
+                                        <!-- Selected Material Quick Specs Summary (SN, Lokasi, Satuan, Status 105) -->
+                                        @if (!empty($detail['delivery_order_receipt_detail_id']))
+                                            <div class="mt-3.5 pt-3.5 border-t border-slate-200/60 dark:border-white/5 flex flex-wrap items-center justify-between gap-2.5 animate-spring-pop">
+                                                <div class="flex flex-wrap items-center gap-2" data-tour="stock-no">
+                                                    <span class="px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200/60 dark:border-blue-500/20">
+                                                        SN: {{ $detail['stock_no'] ?: __('Non-Stock') }}
+                                                    </span>
+                                                    <span class="px-2.5 py-1 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 text-xs font-bold border border-purple-200/60 dark:border-purple-500/20">
+                                                        {{ __('Lokasi:') }} {{ $detail['location'] ?: __('Receiving') }}
+                                                    </span>
+                                                    <span class="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-200/60 dark:border-emerald-500/20">
+                                                        {{ __('Satuan:') }} {{ $detail['uoi'] ?: 'EA' }}
+                                                    </span>
+                                                    @if(!empty($detail['has_non_grs']))
+                                                        <span class="px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs font-black flex items-center gap-1.5 border border-amber-300/80 dark:border-amber-500/30">
+                                                            <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                                            {{ __('Belum GRS') }}
+                                                        </span>
+                                                    @else
+                                                        <span class="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-1.5 border border-emerald-300/80 dark:border-emerald-500/30">
+                                                            <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                                            {{ __('Sudah GRS') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </div>
                                         @endif
                                     </div>
                                 </div>
-
-                                <!-- Selected Material Quick Specs Summary (SN, Lokasi, Satuan, Status 105) -->
-                                @if (!empty($detail['delivery_order_receipt_detail_id']))
-                                    <div class="mt-3.5 pt-3.5 border-t border-slate-200/60 dark:border-white/5 flex flex-wrap items-center justify-between gap-2.5">
-                                        <div class="flex flex-wrap items-center gap-2" data-tour="stock-no">
-                                            <span class="px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 text-xs font-bold border border-blue-200/60 dark:border-blue-500/20">
-                                                SN: {{ $detail['stock_no'] ?: __('Non-Stock') }}
-                                            </span>
-                                            <span class="px-2.5 py-1 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 text-xs font-bold border border-purple-200/60 dark:border-purple-500/20">
-                                                {{ __('Lokasi:') }} {{ $detail['location'] ?: __('Receiving') }}
-                                            </span>
-                                            <span class="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-200/60 dark:border-emerald-500/20">
-                                                {{ __('Satuan:') }} {{ $detail['uoi'] ?: 'EA' }}
-                                            </span>
-                                            @if(!empty($detail['has_non_grs']))
-                                                <span class="px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs font-black flex items-center gap-1.5 border border-amber-300/80 dark:border-amber-500/30">
-                                                    <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                                                    {{ __('Belum GRS') }}
-                                                </span>
-                                            @else
-                                                <span class="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-1.5 border border-emerald-300/80 dark:border-emerald-500/30">
-                                                    <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                                                    {{ __('Sudah GRS') }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
                             </div>
                         @endforeach
 
                         @if (!empty($purchase_order_issued_id) && count($details) < count($available_po_items))
-                            <!-- Interactive Add Next Item Card Button at Bottom of List -->
+                            <!-- Interactive Add Next Item Card Button at Bottom of List with Spring Tactile -->
                             <button type="button" wire:click="addDetail(true)" wire:loading.attr="disabled"
-                                class="w-full py-4 px-6 rounded-3xl border-2 border-dashed border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-500 dark:hover:border-emerald-400 bg-emerald-50/40 hover:bg-emerald-50 dark:bg-emerald-950/10 dark:hover:bg-emerald-950/25 text-emerald-700 dark:text-emerald-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-3 transition-all duration-200 active:scale-98 group cursor-pointer shadow-xs hover:shadow-md">
-                                <div class="w-7 h-7 rounded-xl bg-emerald-500 text-white flex items-center justify-center group-hover:scale-110 group-hover:rotate-90 transition-all duration-300 shadow-sm">
+                                class="w-full py-4 px-6 rounded-3xl border-2 border-dashed border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-500 dark:hover:border-emerald-400 bg-emerald-50/40 hover:bg-emerald-50 dark:bg-emerald-950/10 dark:hover:bg-emerald-950/25 text-emerald-700 dark:text-emerald-300 font-bold text-xs sm:text-sm flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98] ease-[cubic-bezier(0.34,1.4,0.64,1)] group cursor-pointer shadow-xs hover:shadow-md">
+                                <div class="w-7 h-7 rounded-xl bg-emerald-500 text-white flex items-center justify-center group-hover:scale-110 group-hover:rotate-90 transition-all duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)] shadow-sm">
                                     <svg wire:loading.remove wire:target="addDetail" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                                     <svg wire:loading wire:target="addDetail" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 </div>

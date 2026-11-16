@@ -37,6 +37,7 @@ class MonitoringKarungForm
                     ->description('Lengkapi nomor PO karung. Sistem otomatis menghubungkan vendor, alokasi total, dan riwayat Surat Jalan DO.')
                     ->icon('heroicon-m-document-text')
                     ->columns(['default' => 1, 'md' => 2])
+                    ->columnSpanFull()
                     ->schema([
                         Select::make('no_po')
                             ->label('Nomor Purchase Order (PO)')
@@ -328,6 +329,7 @@ class MonitoringKarungForm
                 Section::make('Rincian Log Tahapan QC & Pengiriman Fisik')
                     ->description('Kelola log tahapan pengujian laboratorium QC dan tahapan pengiriman fisik karung dalam tata letak 2 kolom yang lega.')
                     ->icon('heroicon-m-clipboard-document-list')
+                    ->columnSpanFull()
                     ->schema([
                         Tabs::make('Tabs Tahapan')
                             ->tabs([

@@ -68,7 +68,7 @@ class AdminPanelProvider extends PanelProvider
             ->userMenu(position: UserMenuPosition::Sidebar)
             ->renderHook(
                 'panels::global-search.after',
-                fn (): string => Blade::render('<div class="flex items-center gap-1 sm:gap-1.5 shrink-0">@livewire(\'ai-system-toggle\')@livewire(\'language-switcher\')</div>')
+                fn (): string => Blade::render('<div class="flex items-center gap-1.5 sm:gap-2 shrink-0">@livewire(\'ai-system-toggle\')<div class="shrink-0 flex items-center">@livewire(\'language-switcher\')</div></div>')
             )
             ->renderHook(
                 'panels::sidebar.footer',
@@ -84,7 +84,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 'panels::body.end',
-                fn (): string => '<script>document.addEventListener("livewire:navigated", () => { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); });</script>'
+                fn (): string => view('filament.components.framer-motion-effects')->render()
             )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

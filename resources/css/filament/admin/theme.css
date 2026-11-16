@@ -161,14 +161,35 @@ html.dark body {
     display: block !important;
 }
 
-/* Sidebar Item - Inactive & Hover */
+/* Sidebar Item - Inactive & Hover with Spring Physics */
 .fi-sidebar-item-btn {
-    @apply !rounded-xl transition-all duration-200;
+    @apply !rounded-xl;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.2s ease !important;
+    will-change: transform;
 }
 
 .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:hover,
 .fi-sidebar-nav .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:focus-visible {
     @apply !bg-black/[0.04] dark:!bg-white/[0.06];
+    transform: translateX(4px) !important;
+}
+
+.fi-sidebar-item-btn:active {
+    transform: scale(0.97) translateX(1px) !important;
+    transition-duration: 0.1s !important;
+}
+
+.fi-sidebar-item-icon {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.15s ease !important;
+    will-change: transform;
+}
+
+.fi-sidebar-item-btn:hover .fi-sidebar-item-icon {
+    transform: scale(1.15) rotate(-3deg) !important;
+}
+
+.fi-sidebar-group-items {
+    transition: all 0.35s cubic-bezier(0.34, 1.3, 0.64, 1) !important;
 }
 
 /* Sidebar Item - Active (Apple macOS Elevated Pill) */
@@ -530,13 +551,45 @@ html.dark body {
     content: none !important;
 }
 
-/* Stat card subtle hover accent */
+/* Stat card Apple Framer Motion Spring Lift & Parallax Sheen */
+.fi-wi-stats-overview-stat {
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.25s ease !important;
+    will-change: transform, box-shadow;
+    position: relative;
+    overflow: hidden;
+}
+
 .fi-wi-stats-overview-stat:hover {
-    border-color: rgba(244, 121, 32, 0.35) !important;
+    transform: translateY(-4px) scale(1.012) !important;
+    border-color: rgba(244, 121, 32, 0.4) !important;
+    box-shadow: 0 16px 36px -8px rgba(244, 121, 32, 0.16), 0 4px 12px -2px rgba(0, 0, 0, 0.04) !important;
 }
 
 .dark .fi-wi-stats-overview-stat:hover {
-    border-color: rgba(244, 121, 32, 0.4) !important;
+    transform: translateY(-4px) scale(1.012) !important;
+    border-color: rgba(244, 121, 32, 0.45) !important;
+    box-shadow: 0 18px 40px -8px rgba(0, 0, 0, 0.65), 0 0 20px -2px rgba(244, 121, 32, 0.2) !important;
+}
+
+.fi-wi-stats-overview-stat:active {
+    transform: translateY(-1px) scale(0.992) !important;
+    transition-duration: 0.12s !important;
+}
+
+.fi-wi-stats-overview-stat::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(244, 121, 32, 0.09) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    border-radius: inherit;
+    z-index: 1;
+}
+
+.fi-wi-stats-overview-stat:hover::after {
+    opacity: 1;
 }
 
 .fi-wi-stats-overview-stat-description,
@@ -562,29 +615,133 @@ html.dark body {
     @apply !bg-transparent;
 }
 
+/* Eliminate unnecessary inner vertical scrollbars while keeping smooth horizontal scroll */
+.fi-ta-content-ctn {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: thin;
+}
+
+.fi-ta-ctn,
+.fi-ta-main,
+.fi-ta-content {
+    overflow-y: hidden !important;
+}
+
+/* Sleek Apple-style horizontal scrollbar for tables on small viewports */
+.fi-ta-content-ctn::-webkit-scrollbar {
+    height: 6px;
+    width: 0px !important; /* Hide vertical scrollbar completely */
+}
+
+.fi-ta-content-ctn::-webkit-scrollbar:vertical,
+.fi-ta-ctn::-webkit-scrollbar:vertical,
+.fi-ta-main::-webkit-scrollbar:vertical {
+    display: none !important;
+    width: 0px !important;
+    max-width: 0px !important;
+}
+
+.fi-ta-content-ctn::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fi-ta-content-ctn::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 9999px;
+}
+
+.dark .fi-ta-content-ctn::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.fi-ta-content-ctn::-webkit-scrollbar-thumb:hover {
+    background: rgba(244, 121, 32, 0.5);
+}
+
+@keyframes apple-table-row-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 .fi-ta-row {
-    @apply transition-colors duration-150;
+    animation: apple-table-row-in 0.25s ease-out backwards;
+    transition: background-color 0.15s ease, box-shadow 0.2s ease !important;
     border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
 }
+
+.fi-ta-row:nth-child(1) { animation-delay: 15ms; }
+.fi-ta-row:nth-child(2) { animation-delay: 30ms; }
+.fi-ta-row:nth-child(3) { animation-delay: 45ms; }
+.fi-ta-row:nth-child(4) { animation-delay: 60ms; }
+.fi-ta-row:nth-child(5) { animation-delay: 75ms; }
+.fi-ta-row:nth-child(6) { animation-delay: 90ms; }
+.fi-ta-row:nth-child(7) { animation-delay: 105ms; }
+.fi-ta-row:nth-child(8) { animation-delay: 120ms; }
+.fi-ta-row:nth-child(9) { animation-delay: 135ms; }
+.fi-ta-row:nth-child(10) { animation-delay: 150ms; }
+.fi-ta-row:nth-child(n+11) { animation-delay: 165ms; }
 
 .dark .fi-ta-row {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
-.fi-ta-row.fi-clickable:hover {
-    background-color: rgba(0, 0, 0, 0.02) !important;
+/* Elevate table row and cell containing an active/open dropdown above sibling rows */
+.fi-ta-row:has(.fi-dropdown:focus-within),
+.fi-ta-row:has(.fi-dropdown-panel:not([style*="display: none"])) {
+    position: relative !important;
+    z-index: 100 !important;
 }
 
-.dark .fi-ta-row.fi-clickable:hover {
-    background-color: rgba(255, 255, 255, 0.03) !important;
+.fi-ta-cell:has(.fi-dropdown:focus-within),
+.fi-ta-cell:has(.fi-dropdown-panel:not([style*="display: none"])) {
+    position: relative !important;
+    z-index: 100 !important;
 }
 
+.fi-dropdown:has(.fi-dropdown-panel:not([style*="display: none"])) {
+    position: relative !important;
+    z-index: 9999 !important;
+}
+
+/* Unselected Row Hover (pure subtle ambient tint, no transform) */
+.fi-ta-row:not(.fi-selected).fi-clickable:hover,
+.fi-ta-row:not(.fi-selected):hover {
+    background-color: rgba(244, 121, 32, 0.03) !important;
+}
+
+.dark .fi-ta-row:not(.fi-selected).fi-clickable:hover,
+.dark .fi-ta-row:not(.fi-selected):hover {
+    background-color: rgba(244, 121, 32, 0.05) !important;
+}
+
+/* Selected Row State (PKT Brand Orange Tint) */
 .fi-ta-row.fi-selected {
-    background-color: rgba(244, 121, 32, 0.06) !important;
+    background-color: rgba(244, 121, 32, 0.08) !important;
 }
 
 .dark .fi-ta-row.fi-selected {
-    background-color: rgba(244, 121, 32, 0.12) !important;
+    background-color: rgba(244, 121, 32, 0.14) !important;
+}
+
+/* Selected Row + Hover (stays orange and becomes richer/brighter, never reverts to normal) */
+.fi-ta-row.fi-selected:hover,
+.fi-ta-row.fi-selected.fi-clickable:hover {
+    background-color: rgba(244, 121, 32, 0.14) !important;
+}
+
+.dark .fi-ta-row.fi-selected:hover,
+.dark .fi-ta-row.fi-selected.fi-clickable:hover {
+    background-color: rgba(244, 121, 32, 0.22) !important;
+}
+
+.fi-ta-row.fi-selected > td,
+.fi-ta-row.fi-selected > th {
+    background-color: transparent !important;
 }
 
 .fi-section-header,
@@ -593,11 +750,60 @@ html.dark body {
     @apply !bg-transparent;
 }
 
+/* Collapsible Sections & Accordion Fluid Motion */
+.fi-section-header {
+    transition: background-color 0.2s ease !important;
+}
+
+.fi-section:has(.fi-section-collapse-btn) .fi-section-header {
+    cursor: pointer;
+}
+
+.fi-section:has(.fi-section-collapse-btn) .fi-section-header:hover {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+.dark .fi-section:has(.fi-section-collapse-btn) .fi-section-header:hover {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+.fi-section-collapse-btn {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.fi-section-collapse-btn:hover {
+    transform: scale(1.15) !important;
+}
+
+.fi-section-collapse-btn:active {
+    transform: scale(0.9) !important;
+}
+
 /* =========================================================
-   5. BUTTONS (Apple Tactile Pill Buttons)
+   5. BUTTONS & ICON BUTTONS (Apple Tactile Pill Buttons)
    ========================================================= */
+.fi-btn,
+.fi-icon-btn {
+    @apply select-none;
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.15s ease !important;
+}
+
 .fi-btn {
-    @apply !rounded-xl !font-semibold !tracking-tight transition-all duration-200 select-none active:scale-[0.98];
+    @apply !rounded-xl !font-semibold !tracking-tight;
+}
+
+.fi-btn:hover {
+    transform: translateY(-1px) scale(1.015) !important;
+}
+
+.fi-icon-btn:hover {
+    transform: scale(1.08) !important;
+}
+
+.fi-btn:active,
+.fi-icon-btn:active {
+    transform: scale(0.94) !important;
+    transition-duration: 0.06s !important;
 }
 
 /* Primary Button */
@@ -610,6 +816,36 @@ html.dark body {
 .fi-btn-color-gray:not(.fi-btn-ghost),
 .fi-btn.fi-outlined {
     @apply !bg-black/[0.03] dark:!bg-white/[0.06] hover:!bg-black/[0.06] dark:hover:!bg-white/[0.1] !border !border-black/[0.08] dark:!border-white/[0.1];
+}
+
+/* =========================================================
+   ALEX AI Ambient Aurora Glow & Shimmer
+   ========================================================= */
+@keyframes alex-ai-aurora-glow {
+    0%, 100% {
+        box-shadow: 0 0 12px -2px rgba(244, 121, 32, 0.45), 0 2px 8px rgba(0, 0, 0, 0.12);
+        border-color: rgba(244, 121, 32, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 22px 2px rgba(244, 121, 32, 0.7), 0 0 10px rgba(251, 191, 36, 0.5), 0 2px 12px rgba(0, 0, 0, 0.18);
+        border-color: rgba(251, 191, 36, 0.85);
+    }
+}
+
+.alex-ai-toggle-btn.alex-ai-active {
+    position: relative;
+    animation: alex-ai-aurora-glow 3.5s ease-in-out infinite;
+    background: linear-gradient(135deg, #F47920 0%, #E06510 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+.alex-ai-toggle-btn.alex-ai-active:hover {
+    transform: scale(1.04) translateY(-1px) !important;
+}
+
+.alex-ai-toggle-btn:active {
+    transform: scale(0.94) !important;
+    transition-duration: 0.06s !important;
 }
 
 /* =========================================================
@@ -650,17 +886,15 @@ html.dark body {
 .fi-sidebar-footer .fi-dropdown-panel {
     min-width: 240px !important;
     margin-bottom: 8px !important;
-    background: rgba(255, 255, 255, 0.72) !important;
-    backdrop-filter: blur(28px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.6) !important;
-    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.8), 0 16px 40px -8px rgba(0, 0, 0, 0.12) !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.15) !important;
 }
 
 .dark .fi-sidebar-footer .fi-dropdown-panel {
-    background: rgba(12, 22, 38, 0.65) !important;
+    background: #0c1829 !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15), 0 20px 48px -8px rgba(0, 0, 0, 0.6) !important;
+    box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.7) !important;
 }
 
 .fi-tabs-scroll-outer {
@@ -668,6 +902,8 @@ html.dark body {
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
+    padding-top: 1.25rem !important;
+    padding-bottom: 0.75rem !important;
     margin-left: auto !important;
     margin-right: auto !important;
 }
@@ -753,7 +989,7 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none !important;
     scroll-behavior: smooth !important;
-    max-width: calc(100% - 90px) !important;
+    max-width: 100% !important;
     min-width: 0 !important;
 }
 
@@ -761,20 +997,119 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
     display: none !important;
 }
 
+.fi-tabs {
+    position: relative !important;
+}
+
 .fi-tabs-item {
-    @apply !rounded-xl !px-4 !py-2 !text-xs sm:!text-sm !font-semibold !transition-all !duration-200 !text-slate-600 dark:!text-slate-400;
+    @apply !rounded-xl !px-4 !py-2 !text-xs sm:!text-sm !font-semibold !transition-all !duration-200 select-none;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     flex-shrink: 0 !important;
     white-space: nowrap !important;
     min-width: max-content !important;
-    border: none !important;
+    position: relative !important;
+    z-index: 2 !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+}
+
+.dark .fi-tabs-item {
+    color: #94a3b8 !important;
 }
 
 .fi-tabs-item:hover {
-    @apply !text-slate-900 dark:!text-white;
+    color: #0f172a !important;
 }
 
-.fi-tabs-item.fi-active {
-    @apply !bg-white dark:!bg-slate-800 !text-slate-900 dark:!text-white !shadow-[0_2px_8px_rgba(0,0,0,0.08)] !border !border-black/[0.04] dark:!border-white/[0.08];
+.dark .fi-tabs-item:hover {
+    color: #ffffff !important;
+}
+
+.fi-tabs-item:active {
+    transform: scale(0.96) !important;
+}
+
+/* Active Tab & Optimistic Click State: Brand Orange */
+.fi-tabs-item.fi-active,
+.fi-tabs-item.fi-optimistic-active,
+.fi-tabs-item[data-optimistic-active='true'] {
+    color: #F47920 !important;
+    font-weight: 700 !important;
+}
+
+.fi-tabs-item.fi-active .fi-tabs-item-label,
+.fi-tabs-item.fi-active > .fi-icon,
+.fi-tabs-item.fi-active svg,
+.fi-tabs-item.fi-optimistic-active .fi-tabs-item-label,
+.fi-tabs-item.fi-optimistic-active > .fi-icon,
+.fi-tabs-item.fi-optimistic-active svg,
+.fi-tabs-item[data-optimistic-active='true'] .fi-tabs-item-label,
+.fi-tabs-item[data-optimistic-active='true'] > .fi-icon,
+.fi-tabs-item[data-optimistic-active='true'] svg {
+    color: #F47920 !important;
+}
+
+/* Optimistic Inactive State (instantly suppresses stale .fi-active during tab switch) */
+.fi-tabs-item[data-optimistic-inactive='true'],
+.fi-tabs-item[data-optimistic-inactive='true'].fi-active {
+    color: #64748b !important;
+    font-weight: 500 !important;
+}
+
+.dark .fi-tabs-item[data-optimistic-inactive='true'],
+.dark .fi-tabs-item[data-optimistic-inactive='true'].fi-active {
+    color: #94a3b8 !important;
+}
+
+.fi-tabs-item[data-optimistic-inactive='true'] .fi-tabs-item-label,
+.fi-tabs-item[data-optimistic-inactive='true'] > .fi-icon,
+.fi-tabs-item[data-optimistic-inactive='true'] svg,
+.fi-tabs-item[data-optimistic-inactive='true'].fi-active .fi-tabs-item-label,
+.fi-tabs-item[data-optimistic-inactive='true'].fi-active > .fi-icon,
+.fi-tabs-item[data-optimistic-inactive='true'].fi-active svg {
+    color: #64748b !important;
+}
+
+.dark .fi-tabs-item[data-optimistic-inactive='true'] .fi-tabs-item-label,
+.dark .fi-tabs-item[data-optimistic-inactive='true'] > .fi-icon,
+.dark .fi-tabs-item[data-optimistic-inactive='true'] svg,
+.dark .fi-tabs-item[data-optimistic-inactive='true'].fi-active .fi-tabs-item-label,
+.dark .fi-tabs-item[data-optimistic-inactive='true'].fi-active > .fi-icon,
+.dark .fi-tabs-item[data-optimistic-inactive='true'].fi-active svg {
+    color: #94a3b8 !important;
+}
+
+/* Fallback static pill when dynamic sliding pill is not active */
+.fi-tabs:not(:has(.fi-tabs-spring-indicator)) .fi-tabs-item.fi-active {
+    @apply !bg-white dark:!bg-slate-800 !shadow-[0_2px_8px_rgba(0,0,0,0.08)] !border !border-black/[0.04] dark:!border-white/[0.08];
+}
+
+/* Apple Framer Motion Sliding Spring Pill Indicator */
+.fi-tabs-spring-indicator {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    z-index: 1 !important;
+    pointer-events: none !important;
+    border-radius: 0.75rem !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    transition: none !important;
+    will-change: transform, width, height;
+}
+
+.fi-tabs-spring-indicator.fi-tabs-spring-indicator-ready {
+    transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.12), width 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.12), height 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.12) !important;
+}
+
+.dark .fi-tabs-spring-indicator {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 100%), #142133 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
 }
 
 /* =========================================================
@@ -831,16 +1166,48 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
 .fi-dropdown-panel,
 .fi-popover,
 .fi-global-search-results-ctn {
-    @apply !bg-white/90 dark:!bg-[#0d1b2e]/95 !backdrop-blur-2xl !rounded-2xl !z-[9999];
+    @apply !rounded-2xl;
+    z-index: 99999 !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.16), 0 4px 16px -2px rgba(0, 0, 0, 0.08) !important;
+    max-height: min(24rem, calc(100vh - 120px)) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    scrollbar-width: thin;
+    /* Do NOT use CSS animation with transform here, as it clobbers Alpine x-float / Floating UI inline positioning */
+}
+
+/* Apple Sleek Scrollbar for Long Dropdown Menus */
+.fi-dropdown-panel::-webkit-scrollbar {
+    width: 5px !important;
+}
+
+.fi-dropdown-panel::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.fi-dropdown-panel::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.18) !important;
+    border-radius: 9999px !important;
+}
+
+.dark .fi-dropdown-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.22) !important;
+}
+
+.fi-dropdown-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(244, 121, 32, 0.6) !important;
 }
 
 .dark .fi-dropdown-panel,
 .dark .fi-popover,
 .dark .fi-global-search-results-ctn {
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
+    background-color: #0c1829 !important;
+    background: #0c1829 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 20px 50px -4px rgba(0, 0, 0, 0.85), 0 8px 24px -2px rgba(0, 0, 0, 0.6) !important;
 }
 
 .fi-dropdown-list {
@@ -849,7 +1216,7 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
 
 .fi-dropdown-list-item,
 .fi-select-input-option {
-    @apply rounded-xl px-3 py-2 text-sm transition-colors duration-150;
+    @apply rounded-xl px-3 py-2 text-sm transition-all duration-150;
 }
 
 .fi-dropdown-list-item:hover,
@@ -859,6 +1226,23 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
 .fi-select-input-option:focus,
 .fi-select-input-option.fi-focused {
     @apply !bg-black/[0.04] dark:!bg-white/[0.08];
+    transform: translateX(2px);
+}
+
+/* Red Danger Accent for Destructive Actions (e.g. Hapus) */
+.fi-dropdown-list-item.fi-color-danger,
+.fi-dropdown-list-item:has(.text-danger-600),
+.fi-dropdown-list-item:has(.text-danger-500),
+.fi-dropdown-list-item:has(svg.text-danger-600),
+.fi-dropdown-list-item:has(svg.text-danger-500) {
+    color: #ef4444 !important;
+}
+
+.fi-dropdown-list-item.fi-color-danger:hover,
+.fi-dropdown-list-item:has(.text-danger-600):hover,
+.fi-dropdown-list-item:has(.text-danger-500):hover {
+    @apply !bg-red-500/10 dark:!bg-red-500/15;
+    color: #dc2626 !important;
 }
 
 .fi-select-input-search-ctn {
@@ -871,18 +1255,99 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
     @apply !bg-transparent;
 }
 
+/* Global Search Bar Fluid Expansion */
+.fi-global-search-field {
+    transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease !important;
+}
+
+@media (min-width: 640px) {
+    .fi-global-search-field {
+        width: 200px;
+    }
+    .fi-global-search-field:focus-within {
+        width: 320px;
+    }
+    .fi-global-search-field:focus-within .fi-input-wrp {
+        border-color: rgba(244, 121, 32, 0.6) !important;
+        box-shadow: 0 0 16px -2px rgba(244, 121, 32, 0.25), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    }
+}
+
 /* =========================================================
-   9. MODALS (Apple Floating Sheet)
+   Apple Badges & Filter Chips Spring Pop
    ========================================================= */
-.fi-modal-window {
+@keyframes apple-badge-spring {
+    0% {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+    65% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.fi-badge {
+    animation: apple-badge-spring 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease !important;
+}
+
+.fi-badge:hover {
+    transform: scale(1.05);
+}
+
+.fi-badge-delete-btn {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.fi-badge-delete-btn:hover {
+    transform: scale(1.22) rotate(90deg);
+}
+
+/* =========================================================
+   9. MODALS & SLIDE-OVERS (Apple Floating Sheet & Drawers)
+   ========================================================= */
+
+/* Ensure Modals always sit ABOVE the Topbar (z-50) */
+.fi-modal-close-overlay {
+    @apply !bg-slate-900/40 dark:!bg-black/60 !backdrop-blur-md;
+    z-index: 99 !important;
+}
+
+.fi-modal-window-ctn {
+    z-index: 100 !important;
+}
+
+/* 9A. Standard Centered Modals (Apple Floating Sheet) */
+.fi-modal:not(.fi-modal-slide-over) .fi-modal-window {
     @apply !bg-white/95 dark:!bg-[#0b1626]/95 !backdrop-blur-2xl !rounded-3xl;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2) !important;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease !important;
 }
 
-.dark .fi-modal-window {
+.dark .fi-modal:not(.fi-modal-slide-over) .fi-modal-window {
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 9B. Slide-over Drawers (e.g. Database Notifications Slide-Over) */
+.fi-modal.fi-modal-slide-over .fi-modal-window {
+    @apply !bg-white/95 dark:!bg-[#0b1626]/95 !backdrop-blur-2xl h-dvh;
+    border-radius: 1.5rem 0 0 1.5rem !important;
+    border: none !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: -16px 0 48px rgba(0, 0, 0, 0.2) !important;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease !important;
+}
+
+.dark .fi-modal.fi-modal-slide-over .fi-modal-window {
+    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: -20px 0 64px rgba(0, 0, 0, 0.6) !important;
 }
 
 .fi-modal-header {
@@ -901,10 +1366,6 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
     @apply !bg-transparent border-t !border-black/[0.06] dark:!border-white/[0.08] !px-6 !py-4;
 }
 
-.fi-modal-close-overlay {
-    @apply !bg-slate-900/40 dark:!bg-black/60 !backdrop-blur-md;
-}
-
 /* =========================================================
    10. BADGES (Apple Status Pills)
    ========================================================= */
@@ -913,7 +1374,7 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
 }
 
 /* =========================================================
-   11. NOTIFICATIONS (Apple Notification Center Banners)
+   11. NOTIFICATIONS (Apple Elastic Spring Drop Banners)
    ========================================================= */
 .fi-no-notification {
     @apply !bg-white/90 dark:!bg-[#0b1626]/95 !backdrop-blur-2xl !rounded-2xl transition-all duration-300 !relative;
@@ -921,9 +1382,88 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.12) !important;
 }
 
+.fi-no-notification:not(.fi-inline) {
+    animation: apple-notification-spring-drop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform-origin: top right;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, opacity 0.2s ease !important;
+    will-change: transform, opacity;
+}
+
+@keyframes apple-notification-spring-drop {
+    0% {
+        opacity: 0;
+        transform: translateY(-24px) scale(0.92);
+    }
+    60% {
+        opacity: 1;
+        transform: translateY(4px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.fi-no-notification:not(.fi-inline):hover {
+    transform: translateY(-2px) scale(1.01) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14) !important;
+}
+
 .dark .fi-no-notification {
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45) !important;
+}
+
+.dark .fi-no-notification:not(.fi-inline):hover {
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.65) !important;
+}
+
+/* =========================================================
+   11B. FLOATING BATCH ACTION BAR (Apple Dynamic Island Spring Pop)
+   ========================================================= */
+.fi-ta-selection-indicator,
+.fi-ta-reorder-indicator {
+    @apply !bg-[#F47920]/10 dark:!bg-[#F47920]/15 !backdrop-blur-xl !border !border-[#F47920]/30 dark:!border-[#F47920]/40 !rounded-2xl !py-2.5 !px-5 !my-3.5 !shadow-[0_8px_24px_rgba(244,121,32,0.12)] dark:!shadow-[0_8px_32px_rgba(244,121,32,0.18)];
+    margin-left: 1rem !important;
+    margin-right: 1rem !important;
+    width: auto !important;
+    animation: dynamic-island-spring-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform-origin: center top;
+}
+
+@media (min-width: 640px) {
+    .fi-ta-selection-indicator,
+    .fi-ta-reorder-indicator {
+        margin-left: 1.5rem !important;
+        margin-right: 1.5rem !important;
+    }
+}
+
+@keyframes dynamic-island-spring-pop {
+    0% {
+        opacity: 0;
+        transform: translateY(-14px) scale(0.95);
+    }
+    60% {
+        opacity: 1;
+        transform: translateY(3px) scale(1.015);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.fi-ta-selection-cell input[type="checkbox"] {
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease !important;
+}
+
+.fi-ta-selection-cell input[type="checkbox"]:checked {
+    transform: scale(1.15) !important;
+}
+
+.fi-ta-selection-cell input[type="checkbox"]:active {
+    transform: scale(0.85) !important;
 }
 
 .fi-no-notification.fi-inline {

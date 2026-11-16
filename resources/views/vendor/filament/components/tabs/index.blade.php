@@ -25,33 +25,135 @@
     <div
         x-data="{
             canScrollLeft: false,
-            canScrollRight: true,
-            hasOverflow: true,
+            canScrollRight: false,
+            hasOverflow: false,
+            pillLeft: 0,
+            pillWidth: 0,
+            pillTop: 0,
+            pillHeight: 0,
+            pillVisible: false,
+            isReady: false,
+            targetIndex: null,
+            lockUntil: 0,
+
+            movePillTo(tab) {
+                if (!tab || tab.offsetWidth === 0) return;
+                this.pillLeft = tab.offsetLeft;
+                this.pillWidth = tab.offsetWidth;
+                this.pillTop = tab.offsetTop;
+                this.pillHeight = tab.offsetHeight;
+                this.pillVisible = true;
+            },
+
+            handleTabClick(e) {
+                const tab = e.target.closest('.fi-tabs-item');
+                if (!tab) return;
+                const el = this.$refs.tabNav;
+                if (!el) return;
+
+                const tabs = Array.from(el.querySelectorAll('.fi-tabs-item'));
+                const index = tabs.indexOf(tab);
+                if (index === -1) return;
+
+                // 1. Optimistic slide: move the pill immediately with 0ms latency
+                this.targetIndex = index;
+                this.lockUntil = Date.now() + 800; // Guard against in-flight resets while Livewire finishes
+                this.movePillTo(tab);
+
+                // 2. Optimistic active color on clicked tab
+                tabs.forEach((item, i) => {
+                    if (i === index) {
+                        item.setAttribute('data-optimistic-active', 'true');
+                        item.removeAttribute('data-optimistic-inactive');
+                    } else {
+                        item.removeAttribute('data-optimistic-active');
+                        item.setAttribute('data-optimistic-inactive', 'true');
+                    }
+                });
+            },
+
+            updatePill() {
+                const el = this.$refs.tabNav;
+                if (!el) return;
+
+                const tabs = Array.from(el.querySelectorAll('.fi-tabs-item'));
+                if (!tabs.length) {
+                    this.pillVisible = false;
+                    return;
+                }
+
+                // Honor optimistic target if user clicked recently
+                if (this.targetIndex !== null && Date.now() < this.lockUntil) {
+                    const targetTab = tabs[this.targetIndex];
+                    if (targetTab) {
+                        // Release lock as soon as Livewire has confirmed this tab as active
+                        if (targetTab.classList.contains('fi-active') || targetTab.getAttribute('aria-selected') === 'true') {
+                            this.targetIndex = null;
+                            this.lockUntil = 0;
+                            tabs.forEach(item => {
+                                item.removeAttribute('data-optimistic-active');
+                                item.removeAttribute('data-optimistic-inactive');
+                            });
+                        }
+                        this.movePillTo(targetTab);
+                        return;
+                    }
+                }
+
+                // Clear any stale optimistic attributes if lock expired
+                if (this.targetIndex !== null && Date.now() >= this.lockUntil) {
+                    this.targetIndex = null;
+                    tabs.forEach(item => {
+                        item.removeAttribute('data-optimistic-active');
+                        item.removeAttribute('data-optimistic-inactive');
+                    });
+                }
+
+                // Normal sync with server/Alpine active tab
+                const active = el.querySelector('.fi-tabs-item.fi-active') || 
+                               el.querySelector('.fi-tabs-item[aria-selected=\'true\']');
+                if (!active) {
+                    this.pillVisible = false;
+                    return;
+                }
+                this.movePillTo(active);
+            },
+
             checkScroll() {
                 const el = this.$refs.tabNav;
                 if (!el) return;
-                this.hasOverflow = el.scrollWidth > (el.clientWidth + 4);
-                this.canScrollLeft = el.scrollLeft > 4;
-                this.canScrollRight = Math.ceil(el.scrollLeft + el.clientWidth) < (el.scrollWidth - 4);
+                const hasMore = (el.scrollWidth - el.clientWidth) > 24;
+                this.hasOverflow = hasMore;
+                this.canScrollLeft = hasMore && el.scrollLeft > 6;
+                this.canScrollRight = hasMore && Math.ceil(el.scrollLeft + el.clientWidth) < (el.scrollWidth - 6);
             },
+
             scrollLeft() {
                 const el = this.$refs.tabNav;
                 if (!el) return;
                 const distance = Math.max(el.clientWidth * 0.55, 180);
                 el.scrollBy({ left: -distance, behavior: 'smooth' });
-                setTimeout(() => this.checkScroll(), 250);
+                setTimeout(() => {
+                    this.checkScroll();
+                    this.updatePill();
+                }, 250);
             },
+
             scrollRight() {
                 const el = this.$refs.tabNav;
                 if (!el) return;
                 const distance = Math.max(el.clientWidth * 0.55, 180);
                 el.scrollBy({ left: distance, behavior: 'smooth' });
-                setTimeout(() => this.checkScroll(), 250);
+                setTimeout(() => {
+                    this.checkScroll();
+                    this.updatePill();
+                }, 250);
             },
+
             scrollToActive() {
                 const el = this.$refs.tabNav;
                 if (!el) return;
-                const active = el.querySelector('.fi-tabs-item.fi-active');
+                const active = el.querySelector('.fi-tabs-item.fi-active') || el.querySelector('.fi-tabs-item[aria-selected=\'true\']');
                 if (!active) return;
 
                 const containerWidth = el.clientWidth;
@@ -70,36 +172,43 @@
         x-init="
             const update = () => {
                 checkScroll();
+                updatePill();
             };
 
-            // Jalankan sinkronisasi pertama kali tanpa mengganggu scroll window
+            // First-time sync without animation jump
             update();
 
             $nextTick(() => {
                 update();
                 scrollToActive();
+                setTimeout(() => {
+                    isReady = true;
+                }, 50);
             });
 
             if (window.ResizeObserver && $refs.tabNav) {
                 const ro = new ResizeObserver(() => update());
                 ro.observe($refs.tabNav);
-                Array.from($refs.tabNav.children).forEach(child => ro.observe(child));
             }
 
             if (window.MutationObserver && $refs.tabNav) {
-                const mo = new MutationObserver(() => update());
+                const mo = new MutationObserver((mutations) => {
+                    const isOnlyIndicator = mutations.every(m => m.target.classList && m.target.classList.contains('fi-tabs-spring-indicator'));
+                    if (isOnlyIndicator) return;
+                    update();
+                });
                 mo.observe($refs.tabNav, {
                     childList: true,
                     subtree: true,
                     attributes: true,
-                    attributeFilter: ['class', 'aria-selected', 'style']
+                    attributeFilter: ['class', 'aria-selected']
                 });
             }
         "
-        class="fi-tabs-scroll-outer w-full flex items-center justify-center my-2"
+        class="fi-tabs-scroll-outer w-full flex items-center justify-center pt-5 pb-3 sm:pt-6 sm:pb-4"
     >
         <!-- Kontainer Tengah: [ < ] [ Tabs ] [ > ] -->
-        <div class="fi-tabs-scroll-inner flex items-center justify-center gap-2 max-w-full min-w-0 px-1">
+        <div class="fi-tabs-scroll-inner flex items-center justify-center gap-2 max-w-full min-w-0 px-2">
             <!-- Tombol Panah Kiri (<) -->
             <button
                 type="button"
@@ -124,10 +233,11 @@
                 </svg>
             </button>
 
-            <!-- Nav Tablist di Tengah -->
+            <!-- Nav Tablist -->
             <nav
                 x-ref="tabNav"
-                @scroll.passive="checkScroll()"
+                @click="handleTabClick($event)"
+                @scroll.passive="checkScroll(); updatePill();"
                 {{
                     $attributes
                         ->merge([
@@ -141,6 +251,16 @@
                         ])
                 }}
             >
+                <!-- Apple Framer Motion Sliding Spring Pill Indicator -->
+                <div
+                    x-show="pillVisible"
+                    x-cloak
+                    aria-hidden="true"
+                    class="fi-tabs-spring-indicator pointer-events-none absolute"
+                    :class="{ 'fi-tabs-spring-indicator-ready': isReady }"
+                    :style="`transform: translate3d(${pillLeft}px, ${pillTop}px, 0); width: ${pillWidth}px; height: ${pillHeight}px;`"
+                ></div>
+
                 {{ $slot }}
             </nav>
 

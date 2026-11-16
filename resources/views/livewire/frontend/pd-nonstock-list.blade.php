@@ -1,4 +1,4 @@
-<div class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-500 pt-28 pb-24 font-sans relative overflow-hidden">
+<div class="min-h-screen text-slate-800 dark:text-slate-200 transition-colors duration-200 pt-28 pb-24 font-sans relative overflow-hidden">
     <!-- Sophisticated Abstract Background Glows -->
     <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
         <!-- Glow Orbs -->

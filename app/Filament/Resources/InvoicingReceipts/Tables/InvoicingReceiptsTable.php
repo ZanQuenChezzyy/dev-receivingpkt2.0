@@ -665,7 +665,10 @@ class InvoicingReceiptsTable
                     ->size(Size::Small)
                     ->color('info')
                     ->outlined()
-                    ->button(),
+                    ->button()
+                    ->dropdownTeleport()
+                    ->dropdownFlip()
+                    ->dropdownMaxHeight('24rem'),
             ], position: RecordActionsPosition::BeforeCells)
             ->toolbarActions([
                 BulkActionGroup::make([

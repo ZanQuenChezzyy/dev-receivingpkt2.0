@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
     {
         DatePicker::configureUsing(function (DatePicker $component) {
             $component->displayFormat('d F Y');
+        });
+
+        ActionGroup::configureUsing(function (ActionGroup $group) {
+            $group->dropdownTeleport();
         });
     }
 }
