@@ -10,9 +10,11 @@ use App\Models\PurchaseOrderIssued;
 use App\Models\Vendor;
 use App\Models\WarehouseTransmittalItem;
 use Carbon\Carbon;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -1076,7 +1078,7 @@ class VendorPoTracking extends Component
             ? $kelengkapan['original_name']
             : basename($path);
 
-        return Storage::disk('public')->download($path, $filename);
+        return $this->publicDisk()->download($path, $filename);
     }
 
     public function deleteBerkasPenagihan(): void
@@ -1140,7 +1142,7 @@ class VendorPoTracking extends Component
 
         $safeName = "Surat_Verifikasi_GRS_PO_{$this->activePo}.pdf";
 
-        return Storage::disk('public')->download($receipt->dokumen_verifikasi_grs, $safeName);
+        return $this->publicDisk()->download($receipt->dokumen_verifikasi_grs, $safeName);
     }
 
     public function downloadGrsReceiving(int $grsItemId): mixed
@@ -1161,7 +1163,18 @@ class VendorPoTracking extends Component
 
         $filename = basename($item->file_path);
 
-        return Storage::disk('public')->download($item->file_path, $filename);
+        return $this->publicDisk()->download($item->file_path, $filename);
+    }
+
+    /**
+     * Get the public storage disk adapter with full FilesystemAdapter typing.
+     */
+    protected function publicDisk(): FilesystemAdapter
+    {
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+
+        return $disk;
     }
 
     protected function resolveOrCreateInvoicingReceipt(): ?InvoicingReceipt
@@ -1299,14 +1312,16 @@ class VendorPoTracking extends Component
         return $maskedName.'@'.$domain;
     }
 
+    #[Layout('components.layouts.frontend')]
     public function render()
     {
         if ($this->isVerified && ! empty($this->activePo)) {
             $this->loadTrackingData();
         }
 
-        return view('livewire.frontend.vendor-po-tracking')
-            ->layout('components.layouts.frontend')
-            ->title(__('Lacak Pergerakan Dokumen PO - Portal Vendor Pupuk Kalimantan Timur'));
+        /** @var mixed $view */
+        $view = view('livewire.frontend.vendor-po-tracking');
+
+        return $view->title(__('Lacak Pergerakan Dokumen PO - Portal Vendor Pupuk Kalimantan Timur'));
     }
 }

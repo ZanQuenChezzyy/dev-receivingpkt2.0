@@ -15,6 +15,8 @@ class MaterialItemOverview extends BaseWidget
 
     protected static ?int $sort = 2;
 
+    protected ?string $pollingInterval = '5s';
+
     protected int|string|array $columnSpan = 'full';
 
     protected int|array|null $columns = [
@@ -118,7 +120,7 @@ class MaterialItemOverview extends BaseWidget
                 ->orderByDesc('total')
                 ->get();
 
-            // Susun tampilan deskripsi yang rapi dan beranimasi staggered halus ("dikit-dikit animasi")
+            // Susun tampilan deskripsi yang rapi dan beranimasi staggered halus
             $descriptionHtml = '<div class="w-full block text-xs mt-3 space-y-1.5">';
 
             // Baris: Kedatangan Murni (Warna Biru Netral)
@@ -186,40 +188,18 @@ class MaterialItemOverview extends BaseWidget
             $numericTarget = (float) $totalGrsBulanIni;
 
             $htmlValue = new HtmlString('
-                <div 
-                    x-data="{ 
-                        val: '.($numericTarget > 0 ? 0 : $numericTarget).', 
-                        target: '.$numericTarget.',
-                        init() {
-                            if (this.target <= 0) return;
-                            let start = null;
-                            let dur = 900;
-                            let frame = (t) => {
-                                if (!start) start = t;
-                                let p = Math.min((t - start) / dur, 1);
-                                let ease = 1 - Math.pow(1 - p, 3);
-                                this.val = Math.floor(ease * this.target);
-                                if (p < 1) requestAnimationFrame(frame);
-                                else this.val = this.target;
-                            };
-                            requestAnimationFrame(frame);
-                        }
-                    }"
-                    class="flex items-baseline gap-1 whitespace-nowrap max-w-full overflow-hidden leading-tight py-0.5"
-                >
+                <div class="flex items-baseline gap-1 whitespace-nowrap max-w-full overflow-hidden leading-tight py-0.5">
                     <span 
-                        class="text-base sm:text-lg xl:text-xl font-bold tracking-tight font-mono truncate"
-                        x-text="new Intl.NumberFormat(\'id-ID\').format(val)"
+                        class="fi-stat-num text-base sm:text-lg xl:text-xl font-bold tracking-tight font-mono truncate"
+                        data-raw-value="'.$numericTarget.'"
+                        data-stat-key="item_'.$mrpType.'"
                         title="'.$exactTotal.' Item"
                     >'.$exactTotal.'</span>
                     <span class="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 select-none shrink-0">Item</span>
                 </div>
             ');
 
-            $stats[] = Stat::make($title, $htmlValue)
-                ->description(new HtmlString($descriptionHtml))
-                ->color($color);
-
+            // Exactly ONE stat card per MRP type (no duplicate)
             $stats[] = Stat::make($title, $htmlValue)
                 ->description(new HtmlString($descriptionHtml))
                 ->color($color);

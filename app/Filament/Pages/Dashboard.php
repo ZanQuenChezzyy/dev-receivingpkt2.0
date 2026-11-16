@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\MaterialItemOverview;
+use App\Filament\Widgets\MaterialValueOverview;
 use BackedEnum;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard\Actions\FilterAction;
@@ -86,6 +88,14 @@ class Dashboard extends BaseDashboard
                                 ]),
                         ]),
                 ]),
+        ];
+    }
+
+    public function getWidgets(): array
+    {
+        return [
+            MaterialValueOverview::class,
+            MaterialItemOverview::class,
         ];
     }
 }

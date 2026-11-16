@@ -86,6 +86,7 @@ test('lacak po vendor page is accessible via route', function () {
     $response->assertSuccessful();
     $response->assertSee('Portal Tracking Vendor PKT');
     $response->assertSee('Lacak Dokumen');
+    $response->assertSee('Lacak Pergerakan Dokumen PO - Portal Vendor Pupuk Kalimantan Timur');
 });
 
 test('frontend navbar contains link to lacak po vendor on home page', function () {

@@ -32,29 +32,69 @@
         }
 
         // =========================================================
-        // 2. Spring Number Counter (Ticker) on Stat Values
+        // 2. Persistent Cache & Smart Counter (Only on First Load or Actual Value Change)
         // =========================================================
-        function animateValue(el) {
+        window.__statValuesCache = window.__statValuesCache || {};
+        window.__statPageLoaded = window.__statPageLoaded || false;
+
+        function markPageLoaded() {
+            if (window.__statPageLoaded) return;
+            setTimeout(() => {
+                window.__statPageLoaded = true;
+                document.body.classList.add('stats-already-loaded');
+            }, 1200);
+        }
+
+        function animateValue(container) {
+            const numEl = container.querySelector('.fi-stat-num') || container;
+            const statKey = numEl.dataset.statKey || container.closest('.fi-wi-stats-overview-stat')?.querySelector('.fi-wi-stats-overview-stat-label')?.textContent?.trim() || container.textContent.trim();
+            if (!statKey) return;
+
+            const originalText = numEl.textContent.trim();
+            if (!originalText) return;
+
+            let targetNum = numEl.dataset.rawValue ? parseFloat(numEl.dataset.rawValue) : null;
+            let prefix = '';
+            let suffix = '';
+
+            if (targetNum === null || isNaN(targetNum)) {
+                const match = originalText.match(/^([^\d]*)([\d.,]+)(.*)$/);
+                if (!match) return;
+                prefix = match[1];
+                const numStr = match[2];
+                suffix = match[3];
+                targetNum = parseFloat(numStr.replace(/\./g, '').replace(/,/g, '.'));
+            }
+
+            if (isNaN(targetNum) || targetNum < 0) return;
+
+            const prevVal = window.__statValuesCache[statKey];
+
+            // Kasus 1: Pertama kali halaman dimuat (animate from 0)
+            if (prevVal === undefined) {
+                window.__statValuesCache[statKey] = targetNum;
+                if (targetNum === 0) return;
+                runCounter(numEl, 0, targetNum, prefix, suffix, originalText);
+                return;
+            }
+
+            // Kasus 2: Livewire polling rutin (misal tiap 5 detik)
+            // Jika nilainya SAMA PERSIS dengan sebelumnya, JANGAN MAINKAN ANIMASI
+            if (prevVal === targetNum) {
+                return;
+            }
+
+            // Kasus 3: Jika data di database BENAR-BENAR BERUBAH
+            const oldVal = prevVal;
+            window.__statValuesCache[statKey] = targetNum;
+            runCounter(numEl, oldVal, targetNum, prefix, suffix, originalText);
+        }
+
+        function runCounter(el, fromVal, toVal, prefix, suffix, finalFormattedText) {
             if (el.dataset.animating === 'true') return;
-            const originalText = el.textContent.trim();
-            if (!originalText || el.dataset.animatedValue === originalText) return;
-
-            // Match currency/numbers with prefix & suffix (e.g., "Rp 1.250.000", "263.600 Lbr", "15 Item")
-            const match = originalText.match(/^([^\d]*)([\d.,]+)(.*)$/);
-            if (!match) return;
-
-            const prefix = match[1];
-            const numStr = match[2];
-            const suffix = match[3];
-
-            // Normalize dots & commas
-            const cleanNum = parseFloat(numStr.replace(/\./g, '').replace(/,/g, '.'));
-            if (isNaN(cleanNum) || cleanNum <= 0) return;
-
             el.dataset.animating = 'true';
-            el.dataset.animatedValue = originalText;
 
-            const duration = 750; // ms
+            const duration = 800;
             const startTime = performance.now();
 
             function formatNumber(val) {
@@ -64,16 +104,15 @@
             function update(now) {
                 const elapsed = now - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                // Apple spring ease-out curve
-                const easeProgress = 1 - Math.pow(1 - progress, 3.5);
-                const currentVal = cleanNum * easeProgress;
+                const easeProgress = 1 - Math.pow(1 - progress, 3.2);
+                const currentVal = fromVal + (toVal - fromVal) * easeProgress;
 
                 el.textContent = `${prefix}${formatNumber(currentVal)}${suffix}`;
 
                 if (progress < 1) {
                     requestAnimationFrame(update);
                 } else {
-                    el.textContent = originalText;
+                    el.textContent = finalFormattedText;
                     el.dataset.animating = 'false';
                 }
             }
@@ -89,6 +128,7 @@
         function runAll() {
             initStatsSpringPhysics();
             initStatsCounter();
+            markPageLoaded();
         }
 
         // Lifecycle Attachments
@@ -100,6 +140,8 @@
 
         document.addEventListener('livewire:navigated', () => {
             window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            window.__statPageLoaded = false;
+            document.body.classList.remove('stats-already-loaded');
             setTimeout(runAll, 60);
         });
 

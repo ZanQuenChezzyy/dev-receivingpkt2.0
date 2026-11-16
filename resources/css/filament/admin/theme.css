@@ -605,7 +605,7 @@ html.dark body {
     word-break: keep-all !important;
 }
 
-/* Staggered Row Reveal for Stat Cards ("dikit-dikit animasi") */
+/* Staggered Row Reveal for Stat Cards - Only plays on first page load, never on Livewire 5s poll */
 @keyframes stat-row-stagger-in {
     0% {
         opacity: 0;
@@ -617,9 +617,15 @@ html.dark body {
     }
 }
 
-.stat-row-animated {
+body:not(.stats-already-loaded) .stat-row-animated {
     animation: stat-row-stagger-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
     will-change: transform, opacity;
+}
+
+body.stats-already-loaded .stat-row-animated {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
 }
 .stat-row-delay-1 { animation-delay: 60ms; }
 .stat-row-delay-2 { animation-delay: 110ms; }
