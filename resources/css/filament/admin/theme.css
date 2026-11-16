@@ -598,6 +598,40 @@ html.dark body {
     display: block !important;
 }
 
+/* Stat card value - strictly prevent wrapping or breaking */
+.fi-wi-stats-overview-stat-value {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    word-break: keep-all !important;
+}
+
+/* Staggered Row Reveal for Stat Cards ("dikit-dikit animasi") */
+@keyframes stat-row-stagger-in {
+    0% {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stat-row-animated {
+    animation: stat-row-stagger-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    will-change: transform, opacity;
+}
+.stat-row-delay-1 { animation-delay: 60ms; }
+.stat-row-delay-2 { animation-delay: 110ms; }
+.stat-row-delay-3 { animation-delay: 160ms; }
+.stat-row-delay-4 { animation-delay: 210ms; }
+.stat-row-delay-5 { animation-delay: 260ms; }
+.stat-row-delay-6 { animation-delay: 310ms; }
+.stat-row-delay-7 { animation-delay: 360ms; }
+.stat-row-delay-8 { animation-delay: 410ms; }
+.stat-row-delay-9 { animation-delay: 460ms; }
+.stat-row-delay-10 { animation-delay: 510ms; }
+
 /* Auth / Login container */
 .fi-simple-page-content {
     @apply !bg-white/0 dark:!bg-gray-900/0 relative z-10;
