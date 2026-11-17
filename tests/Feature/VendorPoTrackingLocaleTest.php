@@ -167,6 +167,7 @@ beforeEach(function (): void {
             $table->string('no_rdtv')->nullable();
             $table->string('no_po')->nullable();
             $table->string('no_do')->nullable();
+            $table->string('material_type')->nullable();
             $table->string('vendor_name')->nullable();
             $table->string('email_vendor')->nullable();
             $table->string('no_invoice')->nullable();

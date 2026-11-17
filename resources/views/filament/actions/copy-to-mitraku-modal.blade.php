@@ -256,11 +256,12 @@
             <div class="min-w-0 pr-2">
                 <div class="flex items-center gap-1.5">
                     <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Material / Nama Barang</span>
-                    @if ($record->material_type)
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                            {{ $record->material_type }}
-                        </span>
-                    @endif
+                    @php
+                        $materialTypeLabel = \App\Models\InvoicingReceipt::normalizeMaterialType($record->material_type);
+                    @endphp
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold {{ $materialTypeLabel === \App\Models\InvoicingReceipt::DEFAULT_MATERIAL_TYPE ? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' }}">
+                        {{ $materialTypeLabel }}
+                    </span>
                 </div>
                 <span class="font-bold text-gray-900 dark:text-white truncate block text-sm mt-0.5" title="{{ $materialName }}">
                     {{ $materialName }}

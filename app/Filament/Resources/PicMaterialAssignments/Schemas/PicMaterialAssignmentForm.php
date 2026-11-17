@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PicMaterialAssignments\Schemas;
 
+use App\Models\InvoicingReceipt;
 use App\Models\User;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -24,13 +25,7 @@ class PicMaterialAssignmentForm
                     ->schema([
                         Select::make('material_type')
                             ->label('Tipe Material')
-                            ->options([
-                                'ZSP' => 'ZSP',
-                                'ZFP' => 'ZFP',
-                                'ZPM' => 'ZPM',
-                                'ZRM' => 'ZRM',
-                                'ZSM' => 'ZSM',
-                            ])
+                            ->options(InvoicingReceipt::materialTypeOptions())
                             ->unique(ignoreRecord: true)
                             ->required(),
 

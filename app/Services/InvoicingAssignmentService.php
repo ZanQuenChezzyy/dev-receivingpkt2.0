@@ -105,8 +105,8 @@ class InvoicingAssignmentService
 
     /**
      * Tentukan PIC untuk dokumen Invoicing:
-     * - Jika material_type kosong, null, atau 'none' -> Bagi rata ke Staff Invoice (Fair Round-Robin).
-     * - Jika material_type spesifik (ZSP, ZFP, ZPM, ZRM, ZSM):
+     * - Jika material_type kosong, null, atau 'none' -> Dinormalkan sebagai 'Non Stock'.
+     * - Jika material_type terdaftar di PicMaterialAssignment (termasuk 'Non Stock'):
      *     - Jika mode 'user':
      *         - Pertama, cek apakah ada conditional_rules (aturan pengecualian kode material / keyword deskripsi).
      *           Jika cocok, tugaskan ke user_ids aturan tersebut (dibagi rata jika > 1).
@@ -119,12 +119,7 @@ class InvoicingAssignmentService
      */
     public function determinePicId(?string $materialType, string|array|null $materialCode = null, string|array|null $description = null): ?int
     {
-        $cleanType = trim((string) $materialType);
-        $isNoneOrEmpty = empty($cleanType) || in_array(strtolower($cleanType), ['none', 'null', '-', 'kosong'], true);
-
-        if ($isNoneOrEmpty) {
-            return $this->getNextStaffInvoiceId();
-        }
+        $cleanType = InvoicingReceipt::normalizeMaterialType($materialType);
 
         $rule = PicMaterialAssignment::with('users')->where('material_type', $cleanType)->first();
 

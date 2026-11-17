@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InvoicingReceipts\Schemas;
 
+use App\Models\InvoicingReceipt;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Section;
@@ -74,8 +75,10 @@ class InvoicingReceiptInfolist
                         TextEntry::make('material_type')
                             ->label('Tipe Material')
                             ->badge()
-                            ->color('info')
-                            ->placeholder('-'),
+                            ->default(InvoicingReceipt::DEFAULT_MATERIAL_TYPE)
+                            ->formatStateUsing(fn (?string $state): string => InvoicingReceipt::normalizeMaterialType($state))
+                            ->color(fn (?string $state): string => InvoicingReceipt::normalizeMaterialType($state) === InvoicingReceipt::DEFAULT_MATERIAL_TYPE ? 'gray' : 'info')
+                            ->placeholder(InvoicingReceipt::DEFAULT_MATERIAL_TYPE),
 
                         TextEntry::make('pic.name')
                             ->label('PIC Ditugaskan')

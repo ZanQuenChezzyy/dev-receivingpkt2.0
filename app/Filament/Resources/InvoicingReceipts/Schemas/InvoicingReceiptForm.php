@@ -106,8 +106,8 @@ class InvoicingReceiptForm
                                     if (! $get('uoi') && $po->uoi) {
                                         $set('uoi', $po->uoi);
                                     }
-                                    if (! $get('material_type') && $po->material_type) {
-                                        $set('material_type', $po->material_type);
+                                    if (! $get('material_type') || $get('material_type') === InvoicingReceipt::DEFAULT_MATERIAL_TYPE) {
+                                        $set('material_type', InvoicingReceipt::normalizeMaterialType($po->material_type));
                                     }
                                     if (! $get('nama_barang') && $po->description) {
                                         $set('nama_barang', $po->description);
@@ -184,13 +184,10 @@ class InvoicingReceiptForm
 
                         Select::make('material_type')
                             ->label('Tipe Material')
-                            ->options([
-                                'ZSP' => 'ZSP',
-                                'ZFP' => 'ZFP',
-                                'ZPM' => 'ZPM',
-                                'ZRM' => 'ZRM',
-                                'ZSM' => 'ZSM',
-                            ])
+                            ->options(InvoicingReceipt::materialTypeOptions())
+                            ->default(InvoicingReceipt::DEFAULT_MATERIAL_TYPE)
+                            ->formatStateUsing(fn (?string $state): string => InvoicingReceipt::normalizeMaterialType($state))
+                            ->dehydrateStateUsing(fn (?string $state): string => InvoicingReceipt::normalizeMaterialType($state))
                             ->placeholder('Pilih Tipe Material'),
 
                         Select::make('pic_id')

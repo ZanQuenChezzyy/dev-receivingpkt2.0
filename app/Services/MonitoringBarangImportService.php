@@ -1164,7 +1164,10 @@ class MonitoringBarangImportService
 
         $doDetails = $matchedDo?->deliveryOrderReceiptDetails ?? collect();
         $firstDetail = $doDetails->first();
-        $materialType = $this->cleanMaterialType($receipt->material_type ?? $firstDetail?->material_type ?? $poRecord?->material_type);
+        $existingMaterialType = ($receipt->material_type !== null && InvoicingReceipt::normalizeMaterialType($receipt->material_type) !== InvoicingReceipt::DEFAULT_MATERIAL_TYPE)
+            ? $receipt->material_type
+            : null;
+        $materialType = $this->cleanMaterialType($existingMaterialType ?? $firstDetail?->material_type ?? $poRecord?->material_type);
 
         $subtotalInclude = $item['subtotal_include_ppn'] ?? $receipt->subtotal_include_ppn;
         $receipt->preserveExplicitIncludePpn = $subtotalInclude !== null;
@@ -1903,14 +1906,9 @@ class MonitoringBarangImportService
         return ! empty($validParts) ? implode(', ', $validParts) : null;
     }
 
-    protected function cleanMaterialType(?string $rawType): ?string
+    protected function cleanMaterialType(?string $rawType): string
     {
-        $clean = trim((string) $rawType);
-        if ($clean === '' || in_array(strtolower($clean), ['none', 'null', '-', 'kosong'], true)) {
-            return null;
-        }
-
-        return $clean;
+        return InvoicingReceipt::normalizeMaterialType($rawType);
     }
 
     protected function parseDate(?string $value): ?string

@@ -148,6 +148,8 @@ test('material type options are restricted to 5 standard types', function () {
 });
 
 test('invoicing assignment service distributes 40 items evenly across 4 staff invoice members', function () {
+    ensurePicAssignmentTablesExist();
+
     $service = new InvoicingAssignmentService;
     $service->setStaffWorkloads([
         101 => 0,
@@ -171,6 +173,8 @@ test('invoicing assignment service distributes 40 items evenly across 4 staff in
 });
 
 test('invoicing assignment service treats empty string, none, and null as free fair distribution', function () {
+    ensurePicAssignmentTablesExist();
+
     $service = new InvoicingAssignmentService;
     $service->setStaffWorkloads([
         1 => 0,
@@ -843,6 +847,7 @@ test('CreateGrsRdtv leaves tanggal_info_grs null for RDTV so staff invoice must 
         $rdtvReceipt = InvoicingReceipt::where('jenis', 'RDTV')->first();
 
         expect($rdtvReceipt)->not->toBeNull()
+            ->and($rdtvReceipt->material_type)->toBe('Non Stock')
             ->and($rdtvReceipt->tanggal_terima_grs->format('Y-m-d'))->toBe('2026-11-17')
             ->and($rdtvReceipt->tanggal_info_grs)->toBeNull()
             ->and($rdtvReceipt->tanggal_terima_koreksi_invoice)->toBeNull()
@@ -851,6 +856,49 @@ test('CreateGrsRdtv leaves tanggal_info_grs null for RDTV so staff invoice must 
         foreach (array_reverse($createdExtraTables) as $tableName) {
             Illuminate\Support\Facades\Schema::dropIfExists($tableName);
         }
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});
+
+test('InvoicingReceipt defaults empty or null material_type to Non Stock across model, options, and PIC rules', function () {
+    ensurePicAssignmentTablesExist();
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    try {
+        DB::table('invoicing_receipts')->delete();
+
+        $nullReceipt = InvoicingReceipt::create(['no_po' => 'PO-MT-NULL', 'material_type' => null]);
+        $emptyReceipt = InvoicingReceipt::create(['no_po' => 'PO-MT-EMPTY', 'material_type' => '   ']);
+        $dashReceipt = InvoicingReceipt::create(['no_po' => 'PO-MT-DASH', 'material_type' => '-']);
+        $noneReceipt = InvoicingReceipt::create(['no_po' => 'PO-MT-NONE', 'material_type' => 'none']);
+        $nonstockReceipt = InvoicingReceipt::create(['no_po' => 'PO-MT-NS', 'material_type' => 'NONSTOCK']);
+        $zspReceipt = InvoicingReceipt::create(['no_po' => 'PO-MT-ZSP', 'material_type' => 'ZSP']);
+
+        expect($nullReceipt->material_type)->toBe('Non Stock')
+            ->and($emptyReceipt->material_type)->toBe('Non Stock')
+            ->and($dashReceipt->material_type)->toBe('Non Stock')
+            ->and($noneReceipt->material_type)->toBe('Non Stock')
+            ->and($nonstockReceipt->material_type)->toBe('Non Stock')
+            ->and($zspReceipt->material_type)->toBe('ZSP')
+            ->and(InvoicingReceipt::materialTypeOptions())->toHaveKey('Non Stock', 'Non Stock');
+
+        // Aturan PIC untuk 'Non Stock' harus bisa menangkap material_type null/kosong
+        PicMaterialAssignment::updateOrCreate(
+            ['material_type' => 'Non Stock'],
+            [
+                'assignment_mode' => 'user',
+                'user_id' => 77,
+            ]
+        );
+
+        $service = new InvoicingAssignmentService;
+        expect($service->determinePicId(null))->toBe(77)
+            ->and($service->determinePicId(''))->toBe(77)
+            ->and($service->determinePicId('Non Stock'))->toBe(77);
+    } finally {
+        PicMaterialAssignment::where('material_type', 'Non Stock')->delete();
         if ($createdInvoicingTable) {
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
         }

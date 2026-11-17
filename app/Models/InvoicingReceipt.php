@@ -51,6 +51,42 @@ class InvoicingReceipt extends Model
     /** @use HasFactory<InvoicingReceiptFactory> */
     use HasFactory;
 
+    public const DEFAULT_MATERIAL_TYPE = 'Non Stock';
+
+    /**
+     * Daftar pilihan Tipe Material standar pada modul Invoicing & PIC Material.
+     *
+     * @return array<string, string>
+     */
+    public static function materialTypeOptions(): array
+    {
+        return [
+            'ZSP' => 'ZSP',
+            'ZFP' => 'ZFP',
+            'ZPM' => 'ZPM',
+            'ZRM' => 'ZRM',
+            'ZSM' => 'ZSM',
+            self::DEFAULT_MATERIAL_TYPE => self::DEFAULT_MATERIAL_TYPE,
+        ];
+    }
+
+    /**
+     * Menormalkan nilai Tipe Material; jika kosong, null, atau placeholder tidak valid maka dikembalikan sebagai "Non Stock".
+     */
+    public static function normalizeMaterialType(?string $rawType): string
+    {
+        $clean = trim((string) $rawType);
+
+        if (
+            $clean === ''
+            || in_array(strtolower($clean), ['none', 'null', '-', 'kosong', 'non stock', 'non-stock', 'nonstock'], true)
+        ) {
+            return self::DEFAULT_MATERIAL_TYPE;
+        }
+
+        return $clean;
+    }
+
     /**
      * Menjaga nilai subtotal_include_ppn eksplisit dari file impor agar tidak dihitung ulang.
      */
@@ -121,6 +157,9 @@ class InvoicingReceipt extends Model
     protected static function booted(): void
     {
         static::saving(function (InvoicingReceipt $record) {
+            // Tipe material yang kosong/null otomatis diisi "Non Stock"
+            $record->material_type = self::normalizeMaterialType($record->material_type);
+
             // Auto hitung Subtotal Include PPN: rumus = Exclude + (Exclude * 11%)
             // Hanya dijalankan bila subtotal_include_ppn kosong atau exclude diubah tanpa mempertahankan include eksplisit.
             if ($record->subtotal_exclude_ppn !== null) {

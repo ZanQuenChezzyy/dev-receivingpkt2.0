@@ -358,9 +358,7 @@ class CreateGrsRdtv extends CreateRecord
         $po = $firstDetail?->purchaseOrderIssued;
 
         $rawMaterialType = $firstDetail?->material_type ?? $po?->material_type;
-        $cleanType = trim((string) $rawMaterialType);
-        $isNoneOrEmpty = empty($cleanType) || in_array(strtolower($cleanType), ['none', 'null', '-', 'kosong'], true);
-        $materialType = $isNoneOrEmpty ? null : $cleanType;
+        $materialType = InvoicingReceipt::normalizeMaterialType($rawMaterialType);
 
         // Ambil kode material dan deskripsi dari detail DO atau PO
         $materialCodes = $details->isNotEmpty()

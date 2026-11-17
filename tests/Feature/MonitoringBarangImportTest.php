@@ -460,6 +460,7 @@ CSV;
     expect($first['created'])->toBe(1)
         ->and($rdtv)->not->toBeNull()
         ->and($rdtv->jenis)->toBe('RDTV')
+        ->and($rdtv->material_type)->toBe('Non Stock')
         ->and($rdtv->tanggal_info_grs)->toBeNull()
         ->and($rdtv->status)->toBe('Menunggu Verifikasi');
 
@@ -476,9 +477,28 @@ CSV;
     expect($second['updated'])->toBe(1)
         ->and($second['fallback_kasir_count'])->toBe(0)
         ->and($second['incomplete_invoiced_rows'])->toBeEmpty()
+        ->and($rdtv->material_type)->toBe('Non Stock')
         ->and($rdtv->tanggal_info_grs->format('Y-m-d'))->toBe('2026-10-14')
         ->and($rdtv->tanggal_kirim_kasir)->toBeNull()
         ->and($rdtv->status)->toBe('Selesai');
+
+    // Re-import persis sama tanpa PO material_type -> tetap unchanged
+    $third = $service->importFromString($csvInformedRdtv);
+    expect($third['unchanged'])->toBe(1);
+
+    // Jika master PO kemudian terisi material_type spesifik -> re-import memperbarui Non Stock menjadi ZSP
+    PurchaseOrderIssued::create([
+        'purchase_order_and_item' => '5300088881-10',
+        'purchase_order_no' => '5300088881',
+        'item_no' => 10,
+        'material_type' => 'ZSP',
+        'description' => 'VALVE REJECT',
+    ]);
+
+    $fourth = $service->importFromString($csvInformedRdtv);
+    $rdtv->refresh();
+    expect($fourth['updated'])->toBe(1)
+        ->and($rdtv->material_type)->toBe('ZSP');
 });
 
 it('directly imports an Excel (.xlsx) Monitoring Barang workbook with formula cells, title row, and CLI command', function () {

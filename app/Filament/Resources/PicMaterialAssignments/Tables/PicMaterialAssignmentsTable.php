@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PicMaterialAssignments\Tables;
 
+use App\Models\InvoicingReceipt;
 use App\Models\PicMaterialAssignment;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -127,13 +128,7 @@ class PicMaterialAssignmentsTable
             ->filters([
                 SelectFilter::make('material_type')
                     ->label('Tipe Material')
-                    ->options([
-                        'ZSP' => 'ZSP',
-                        'ZFP' => 'ZFP',
-                        'ZPM' => 'ZPM',
-                        'ZRM' => 'ZRM',
-                        'ZSM' => 'ZSM',
-                    ]),
+                    ->options(InvoicingReceipt::materialTypeOptions()),
             ])
             ->recordActions([
                 ActionGroup::make([

@@ -1229,6 +1229,7 @@ class VendorPoTracking extends Component
             'vendor_name' => $vendor?->name ?? $firstPo->vendor_name,
             'email_vendor' => is_array($vendor?->email) ? implode(', ', $vendor->email) : $vendor?->email,
             'no_do' => $do?->delivery_order_no ?? '-',
+            'material_type' => InvoicingReceipt::normalizeMaterialType($detail?->material_type ?? $firstPo->material_type),
             'jenis' => 'GRS',
             'status' => 'Menunggu Verifikasi',
             'keterangan' => 'Didaftarkan melalui Portal Tracking Vendor (Self-service penagihan)',

@@ -719,7 +719,10 @@ class InvoicingCsvImportService
 
         // 10. Siapkan atribut dari Penerimaan Barang (DO) & PO Terbit
         $firstDetail = $doDetails->first();
-        $rawMaterialType = $receipt->material_type
+        $existingMaterialType = ($receipt->material_type !== null && InvoicingReceipt::normalizeMaterialType($receipt->material_type) !== InvoicingReceipt::DEFAULT_MATERIAL_TYPE)
+            ? $receipt->material_type
+            : null;
+        $rawMaterialType = $existingMaterialType
             ?? $firstDetail?->material_type
             ?? $poRecord?->material_type;
         $cleanMaterialType = $this->cleanMaterialType($rawMaterialType);
@@ -1049,14 +1052,9 @@ class InvoicingCsvImportService
         return ltrim($alnum, '0') ?: $alnum;
     }
 
-    protected function cleanMaterialType(?string $rawType): ?string
+    protected function cleanMaterialType(?string $rawType): string
     {
-        $clean = trim((string) $rawType);
-        if ($clean === '' || in_array(strtolower($clean), ['none', 'null', '-', 'kosong'], true)) {
-            return null;
-        }
-
-        return $clean;
+        return InvoicingReceipt::normalizeMaterialType($rawType);
     }
 
     protected function parseDate(?string $value): ?string

@@ -35,6 +35,7 @@ beforeEach(function () {
             $table->unsignedBigInteger('vendor_id')->nullable();
             $table->string('no_po')->nullable();
             $table->string('no_do')->nullable();
+            $table->string('material_type')->nullable();
             $table->string('vendor_name')->nullable();
             $table->string('email_vendor')->nullable();
             $table->string('jenis')->nullable();

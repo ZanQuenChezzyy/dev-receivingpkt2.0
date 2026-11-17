@@ -17,11 +17,12 @@
                         <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold {{ ($record->jenis ?? 'GRS') === 'GRS' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-warning-100 text-warning-700 dark:bg-warning-900/60 dark:text-warning-300' }}">
                             {{ $record->jenis ?? 'GRS' }}
                         </span>
-                        @if ($record->material_type)
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                                {{ $record->material_type }}
-                            </span>
-                        @endif
+                        @php
+                            $materialTypeLabel = \App\Models\InvoicingReceipt::normalizeMaterialType($record->material_type);
+                        @endphp
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium {{ $materialTypeLabel === \App\Models\InvoicingReceipt::DEFAULT_MATERIAL_TYPE ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' }}">
+                            {{ $materialTypeLabel }}
+                        </span>
                     </div>
                     <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                         Lengkapi dokumen resmi penagihan vendor dan nomor slip GRS fisik dari SAP.

@@ -115,7 +115,9 @@ class InvoicingReceiptsTable
                     TextColumn::make('material_type')
                         ->label('Tipe Mat.')
                         ->badge()
-                        ->color('info')
+                        ->default(InvoicingReceipt::DEFAULT_MATERIAL_TYPE)
+                        ->formatStateUsing(fn (?string $state): string => InvoicingReceipt::normalizeMaterialType($state))
+                        ->color(fn (?string $state): string => InvoicingReceipt::normalizeMaterialType($state) === InvoicingReceipt::DEFAULT_MATERIAL_TYPE ? 'gray' : 'info')
                         ->searchable(),
                 ]),
 
@@ -330,13 +332,7 @@ class InvoicingReceiptsTable
 
                 SelectFilter::make('material_type')
                     ->label('Filter Tipe Material')
-                    ->options([
-                        'ZSP' => 'ZSP',
-                        'ZFP' => 'ZFP',
-                        'ZPM' => 'ZPM',
-                        'ZRM' => 'ZRM',
-                        'ZSM' => 'ZSM',
-                    ]),
+                    ->options(InvoicingReceipt::materialTypeOptions()),
 
                 SelectFilter::make('pic_id')
                     ->label('Filter PIC (Staff Invoice)')
