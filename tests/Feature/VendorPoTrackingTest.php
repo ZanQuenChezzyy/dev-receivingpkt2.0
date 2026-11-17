@@ -221,7 +221,7 @@ test('invoice checklist constant defines all 16 required items in correct order'
 
     expect($checklist['po_asli']['name'])->toBe('PO ASLI');
     expect($checklist['invoice']['name'])->toBe('INVOICE (NOTA PENJUALAN)');
-    expect($checklist['grs']['name'])->toBe('GRS (GOOD RECEIVE SLIP)');
+    expect($checklist['grs']['name'])->toBe('GRS (GOODS RECEIPT SLIP)');
     expect($checklist['do']['name'])->toBe('DO (DELIVERY ORDER)');
     expect($checklist['faktur_pajak']['name'])->toBe('FAKTUR PAJAK');
     expect($checklist['enofa']['name'])->toBe('ENOFA (NO. SERI FAKTUR PAJAK ONLINE)');
@@ -351,7 +351,7 @@ test('vendor tracking view displays single dossier file status and 16 requiremen
         ->assertSee('16 Persyaratan Kelengkapan Dokumen Penagihan')
         ->assertSee('PO ASLI')
         ->assertSee('INVOICE (NOTA PENJUALAN)')
-        ->assertSee('GRS (GOOD RECEIVE SLIP)')
+        ->assertSee('GRS (GOODS RECEIPT SLIP)')
         ->assertSee('BA TRANSFERING');
 });
 

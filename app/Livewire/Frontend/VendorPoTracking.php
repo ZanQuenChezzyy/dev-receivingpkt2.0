@@ -42,7 +42,7 @@ class VendorPoTracking extends Component
         ],
         'grs' => [
             'number' => 3,
-            'name' => 'GRS (GOOD RECEIVE SLIP)',
+            'name' => 'GRS (GOODS RECEIPT SLIP)',
             'desc' => 'Salinan lembar GRS resmi yang telah diunduh dari sistem Receiving.',
             'badge' => 'Wajib',
             'badge_color' => 'rose',

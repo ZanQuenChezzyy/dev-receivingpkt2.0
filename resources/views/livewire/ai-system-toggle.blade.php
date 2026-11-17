@@ -1,8 +1,8 @@
-<div>
+<div class="shrink-0 inline-flex items-center">
     @if(auth()->user()?->hasRole('Developer'))
-    <div class="flex items-center shrink-0" wire:key="ai-toggle-container">
+    <div class="inline-flex items-center shrink-0" wire:key="ai-toggle-container">
         <!-- Tampilan Mobile (Icon Button saja) -->
-        <div class="block sm:hidden">
+        <div class="block sm:hidden shrink-0">
             <x-filament::icon-button
                 wire:key="ai-toggle-icon-btn-{{ $isActive ? 'on' : 'off' }}"
                 wire:click="toggle"
@@ -18,7 +18,7 @@
         </div>
 
         <!-- Tampilan Tablet & Desktop (Button lengkap dengan teks) -->
-        <div class="hidden sm:block">
+        <div class="hidden sm:block shrink-0">
             <x-filament::button
                 wire:key="ai-toggle-full-btn-{{ $isActive ? 'on' : 'off' }}"
                 wire:click="toggle"

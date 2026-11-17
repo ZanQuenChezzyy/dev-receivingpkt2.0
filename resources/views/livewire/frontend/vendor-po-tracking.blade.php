@@ -563,7 +563,7 @@
                                         <div>
                                             <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">{{ __('Modul Receiving (Gudang)') }}</span>
                                             <h4 class="text-base font-black text-slate-800 dark:text-white">
-                                                {{ __('Berkas GRS (Good Receive Slip)') }}
+                                                {{ __('Berkas GRS (Goods Receipt Slip)') }}
                                             </h4>
                                         </div>
                                     </div>

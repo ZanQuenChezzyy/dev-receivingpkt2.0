@@ -296,7 +296,7 @@
                     </a>
                 </div>
 
-                <!-- Card 7: Good Receipt Slip (GRS / RDTV) -->
+                <!-- Card 7: Goods Receipt Slip (GRS / RDTV) -->
                 <div class="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:shadow-2xl transition-all duration-500 flex flex-col justify-between border border-white/80 dark:border-white/10">
                     <div class="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
 
@@ -312,7 +312,7 @@
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-                            {{ __('Good Receive Slip (GRS / RDTV)') }}
+                            {{ __('Goods Receipt Slip (GRS / RDTV)') }}
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
                             {{ __('Penerbitan GRS untuk barang lolos QC (rasio kelulusan ~95,9%) serta penerbitan RDTV untuk barang QC tolak lengkap dengan mekanisme Surat Klarifikasi Kebenaran Barang.') }}
@@ -1303,7 +1303,7 @@
                                 <tr>
                                     <td class="py-3 px-4 font-bold text-slate-800 dark:text-white">{{ __('7. GUDANG') }}</td>
                                     <td class="py-3 px-4">{{ __('Melakukan penyimpanan fisik material ke rak/staging setelah GRS terbit') }}</td>
-                                    <td class="py-3 px-4">{!! __('Good Receipt Slip (GRS / MIGO 105) &amp; Lokasi Rak') !!}</td>
+                                    <td class="py-3 px-4">{!! __('Goods Receipt Slip (GRS / MIGO 105) &amp; Lokasi Rak') !!}</td>
                                     <td class="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">{{ __('Penyimpanan Fisik Aman di Gudang') }}</td>
                                 </tr>
                             </tbody>
@@ -1618,7 +1618,7 @@
                                     <rect x="69" y="512" width="26" height="11" rx="2" fill="var(--diagram-green)" fill-opacity="0.25"/>
                                     <text x="82" y="520.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-green)">{{ __('RCV') }}</text>
                                     <text x="162" y="527" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-green)">{!! __('Menerbitkan GRS &rarr; Selesai') !!}</text>
-                                    <text x="162" y="540" text-anchor="middle" class="mono" font-size="7" font-weight="600" fill="var(--diagram-ink)">{{ __('GOOD RECEIVE SLIP (SAP 105)') }}</text>
+                                    <text x="162" y="540" text-anchor="middle" class="mono" font-size="7" font-weight="600" fill="var(--diagram-ink)">{{ __('GOODS RECEIPT SLIP (SAP 105)') }}</text>
                                     <rect x="98" y="544" width="124" height="12" rx="2" fill="var(--diagram-green)" fill-opacity="0.15"/>
                                     <text x="160" y="552.5" text-anchor="middle" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-green)">{{ __('KLARIFIKASI DISETUJUI ISTEK') }}</text>
                                 </g>
@@ -1800,7 +1800,7 @@
                                     <g class="node-group">
                                         <rect x="42" y="112" width="168" height="56" rx="6" fill="var(--diagram-node)" stroke="var(--diagram-node-stroke)" stroke-width="1.2"/>
                                         <text x="126" y="136" text-anchor="middle" font-size="10.5" font-weight="800" fill="var(--diagram-ink)">{{ __('Penerbitan GRS') }}</text>
-                                        <text x="126" y="151" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-muted)">{{ __('Good Receive Slip') }}</text>
+                                        <text x="126" y="151" text-anchor="middle" class="mono" font-size="7" fill="var(--diagram-muted)">{{ __('Goods Receipt Slip') }}</text>
                                     </g>
 
                                     <g class="node-group">
@@ -1899,7 +1899,7 @@
                                 <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/70 border border-amber-500/20">
                                     <div class="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase">{{ __('Tahap Awal') }}</div>
                                     <div class="text-xs font-bold text-slate-800 dark:text-white mt-0.5">{!! __('Mulai &rarr; Penerbitan GRS') !!}</div>
-                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{{ __('Menerbitkan dokumen Good Receive Slip (GRS) atas barang yang telah lolos QC.') }}</p>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{{ __('Menerbitkan dokumen Goods Receipt Slip (GRS) atas barang yang telah lolos QC.') }}</p>
                                 </div>
                             </div>
 
@@ -2004,7 +2004,7 @@
                                     </div>
                                     <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
                                         <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">3</span>
-                                        <span class="font-bold text-slate-800 dark:text-white">{{ __('GRS (Good Receive Slip)') }}</span>
+                                        <span class="font-bold text-slate-800 dark:text-white">{{ __('GRS (Goods Receipt Slip)') }}</span>
                                     </div>
                                     <div class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-100/80 dark:bg-white/5">
                                         <span class="w-6 h-6 rounded-lg bg-[#00529B] text-white font-black flex items-center justify-center shrink-0 text-[11px]">4</span>
