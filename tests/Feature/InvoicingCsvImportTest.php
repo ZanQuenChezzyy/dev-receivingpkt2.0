@@ -352,6 +352,7 @@ it('falls back to matching by DO number when arrival date does not match, and up
         ->and($existingInvoice->no_invoice)->toBe('INV-20260036')
         ->and($existingInvoice->no_grs)->toBe('5007705001')
         ->and($existingInvoice->faktur_pajak)->toBe('03002600453809710')
+        ->and($existingInvoice->status)->toBe('Selesai')
         ->and($existingInvoice->tanggal_terima_grs->format('Y-m-d'))->toBe('2026-11-01');
 });
 

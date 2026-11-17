@@ -769,6 +769,12 @@ class InvoicingCsvImportService
         $tanggalTerimaGrs = $receipt->tanggal_terima_grs
             ?? $grsRdtvItem?->grsRdtv?->transaction_date;
 
+        $resolvedInvoiceNo = $invoiceNo !== '' ? $invoiceNo : $receipt->no_invoice;
+        $currentStatus = $receipt->status ?: 'Menunggu Verifikasi';
+        $resolvedStatus = ($currentStatus === 'Menunggu Verifikasi' && InvoicingReceipt::isMeaningfulText($resolvedInvoiceNo))
+            ? 'Selesai'
+            : $currentStatus;
+
         $receipt->fill([
             'grs_rdtv_item_id' => $receipt->grs_rdtv_item_id ?? $grsRdtvItem?->id,
             'delivery_order_receipt_id' => $matchedDo?->id ?? $receipt->delivery_order_receipt_id,
@@ -784,7 +790,7 @@ class InvoicingCsvImportService
             'vendor_name' => $cleanVendorName ?? $receipt->vendor_name ?? $poRecord?->vendor_name ?? $vendor?->name,
             'deskripsi' => $deskripsi,
             'email_vendor' => $receipt->email_vendor ?? (is_array($vendor?->email) ? implode(', ', $vendor->email) : $vendor?->email),
-            'no_invoice' => $invoiceNo !== '' ? $invoiceNo : $receipt->no_invoice,
+            'no_invoice' => $resolvedInvoiceNo,
             'faktur_pajak' => $fakturPajak ?? $receipt->faktur_pajak,
             'nama_barang' => $namaBarang,
             'qty_penagihan' => $qtyPenagihan,
@@ -792,7 +798,7 @@ class InvoicingCsvImportService
             'uoi' => $uoi,
             'subtotal_exclude_ppn' => $subtotalExclude,
             'subtotal_include_ppn' => $subtotalInclude,
-            'status' => $receipt->status ?: 'Menunggu Verifikasi',
+            'status' => $resolvedStatus,
         ]);
 
         return $receipt;

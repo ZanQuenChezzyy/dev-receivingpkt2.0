@@ -518,7 +518,11 @@ class InvoicingReceiptsTable
 
                             Notification::make()
                                 ->title('Data Invoice Berhasil Disimpan')
-                                ->body("Data penagihan untuk PO {$record->no_po} telah diperbarui.")
+                                ->body(
+                                    $record->wasChanged('status') && $record->status === 'Selesai'
+                                        ? "Data penagihan untuk PO {$record->no_po} telah diperbarui dan status otomatis menjadi Selesai."
+                                        : "Data penagihan untuk PO {$record->no_po} telah diperbarui."
+                                )
                                 ->success()
                                 ->send();
                         }),

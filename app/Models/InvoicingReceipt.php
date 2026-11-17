@@ -54,6 +54,11 @@ class InvoicingReceipt extends Model
     public const DEFAULT_MATERIAL_TYPE = 'Non Stock';
 
     /**
+     * @var list<string>
+     */
+    private const EMPTY_PLACEHOLDERS = ['none', 'null', '-', 'kosong'];
+
+    /**
      * Daftar pilihan Tipe Material standar pada modul Invoicing & PIC Material.
      *
      * @return array<string, string>
@@ -71,6 +76,16 @@ class InvoicingReceipt extends Model
     }
 
     /**
+     * Memeriksa apakah nilai teks bukan kosong atau placeholder standar.
+     */
+    public static function isMeaningfulText(?string $value): bool
+    {
+        $clean = trim((string) $value);
+
+        return $clean !== '' && ! in_array(strtolower($clean), self::EMPTY_PLACEHOLDERS, true);
+    }
+
+    /**
      * Menormalkan nilai Tipe Material; jika kosong, null, atau placeholder tidak valid maka dikembalikan sebagai "Non Stock".
      */
     public static function normalizeMaterialType(?string $rawType): string
@@ -78,13 +93,21 @@ class InvoicingReceipt extends Model
         $clean = trim((string) $rawType);
 
         if (
-            $clean === ''
-            || in_array(strtolower($clean), ['none', 'null', '-', 'kosong', 'non stock', 'non-stock', 'nonstock'], true)
+            ! self::isMeaningfulText($clean)
+            || in_array(strtolower($clean), ['non stock', 'non-stock', 'nonstock'], true)
         ) {
             return self::DEFAULT_MATERIAL_TYPE;
         }
 
         return $clean;
+    }
+
+    /**
+     * Menentukan apakah record sudah memiliki data nomor invoice yang valid.
+     */
+    public function hasInvoiceData(): bool
+    {
+        return self::isMeaningfulText($this->no_invoice);
     }
 
     /**
@@ -184,6 +207,13 @@ class InvoicingReceipt extends Model
                 ) {
                     $record->status = 'Menunggu Verifikasi';
                 }
+            }
+
+            // Dokumen yang masih "Menunggu Verifikasi" tetapi data invoice-nya sudah ada otomatis menjadi "Selesai"
+            $currentStatus = trim((string) $record->status);
+            $isWaitingVerification = $currentStatus === '' || $currentStatus === 'Menunggu Verifikasi';
+            if ($isWaitingVerification && $record->hasInvoiceData()) {
+                $record->status = 'Selesai';
             }
 
             // Auto hitung Lama Pekerjaan

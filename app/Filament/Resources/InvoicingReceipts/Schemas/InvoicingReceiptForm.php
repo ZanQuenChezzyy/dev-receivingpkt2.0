@@ -243,7 +243,18 @@ class InvoicingReceiptForm
                     ->schema([
                         TextInput::make('no_invoice')
                             ->label('Nomor Invoice')
-                            ->placeholder('Nomor tagihan vendor (opsional)'),
+                            ->placeholder('Nomor tagihan vendor (opsional)')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Set $set, Get $get): void {
+                                $currentStatus = (string) ($get('status') ?? '');
+                                if (
+                                    InvoicingReceipt::isMeaningfulText(is_string($state) ? $state : null)
+                                    && ($currentStatus === '' || $currentStatus === 'Menunggu Verifikasi')
+                                ) {
+                                    $set('status', 'Selesai');
+                                }
+                            })
+                            ->helperText('Jika status masih Menunggu Verifikasi, pengisian nomor invoice otomatis menandai status sebagai Selesai.'),
 
                         TextInput::make('faktur_pajak')
                             ->label('Nomor Faktur Pajak')

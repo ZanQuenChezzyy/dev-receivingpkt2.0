@@ -904,3 +904,68 @@ test('InvoicingReceipt defaults empty or null material_type to Non Stock across 
         }
     }
 });
+
+test('Menunggu Verifikasi receipt automatically completes to Selesai once invoice number exists and leaves Tugas Saya', function () {
+    ensurePicAssignmentTablesExist();
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    try {
+        DB::table('invoicing_receipts')->delete();
+
+        $staffId = DB::table('users')->insertGetId([
+            'name' => 'Staff Verif',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Placeholder kosong atau berkas vendor saja tanpa no_invoice tetap Menunggu Verifikasi
+        $pendingEmpty = InvoicingReceipt::create([
+            'pic_id' => $staffId,
+            'no_po' => 'PO-WAIT-1',
+            'no_invoice' => '-',
+            'dokumen_invoice' => 'berkas-penagihan/PO-WAIT-1.pdf',
+            'status' => 'Menunggu Verifikasi',
+        ]);
+
+        // Langsung dibuat dengan status Menunggu Verifikasi tetapi no_invoice sudah ada -> otomatis Selesai
+        $createdWithInvoice = InvoicingReceipt::create([
+            'pic_id' => $staffId,
+            'no_po' => 'PO-INV-CREATED',
+            'no_invoice' => 'INV-2026/001',
+            'status' => 'Menunggu Verifikasi',
+        ]);
+
+        // Status Terkirim Kasir tidak tertimpa kembali
+        $sentCashier = InvoicingReceipt::create([
+            'pic_id' => $staffId,
+            'no_po' => 'PO-KASIR-1',
+            'no_invoice' => 'INV-2026/002',
+            'status' => 'Terkirim Kasir',
+        ]);
+
+        // Update record Menunggu Verifikasi dengan nomor invoice -> otomatis berubah ke Selesai
+        $willFinish = InvoicingReceipt::create([
+            'pic_id' => $staffId,
+            'no_po' => 'PO-WAIT-2',
+            'no_invoice' => null,
+            'status' => 'Menunggu Verifikasi',
+        ]);
+        $willFinish->update(['no_invoice' => 'INV-2026/003']);
+
+        Auth::loginUsingId($staffId);
+        $tabs = app(ListInvoicingReceipts::class)->getTabs();
+
+        expect($pendingEmpty->status)->toBe('Menunggu Verifikasi')
+            ->and($createdWithInvoice->status)->toBe('Selesai')
+            ->and($sentCashier->status)->toBe('Terkirim Kasir')
+            ->and($willFinish->fresh()->status)->toBe('Selesai')
+            ->and($tabs['my_tasks']->getBadge())->toBe('1')
+            ->and($tabs['waiting_verification']->getBadge())->toBe('1')
+            ->and($tabs['selesai']->getBadge())->toBe('2');
+    } finally {
+        Auth::logout();
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});
