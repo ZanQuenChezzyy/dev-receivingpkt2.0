@@ -12,7 +12,8 @@
                 size="md"
                 :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-s-moon'"
                 tooltip="{{ $isActive ? 'Matikan ALEX Asisten AI Receiving' : 'Hidupkan ALEX Asisten AI Receiving' }}"
-                class="alex-ai-toggle-btn {{ $isActive ? 'alex-ai-active !text-white [&_svg]:!text-white [&_svg]:!fill-white' : '[&_svg]:!text-slate-400' }}"
+                style="margin: 0;"
+                class="alex-ai-toggle-btn !m-0 shrink-0 {{ $isActive ? 'alex-ai-active !text-white [&_svg]:!text-white [&_svg]:!fill-white' : '[&_svg]:!text-slate-400' }}"
             />
         </div>
 

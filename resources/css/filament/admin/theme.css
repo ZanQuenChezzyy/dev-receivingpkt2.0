@@ -439,6 +439,44 @@ html.dark body {
     @apply !bg-transparent;
 }
 
+@media (max-width: 639px) {
+    .fi-topbar {
+        padding-inline: 0.75rem !important;
+        gap: 0.5rem !important;
+    }
+
+    .fi-topbar-open-sidebar-btn,
+    .fi-topbar-close-sidebar-btn,
+    .fi-topbar-end .fi-topbar-database-notifications-btn {
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .fi-topbar-end {
+        gap: 0.5rem !important;
+        min-width: 0 !important;
+        flex: 1 1 0% !important;
+        justify-content: flex-end !important;
+    }
+
+    .fi-topbar-end .fi-global-search-ctn {
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+
+    .fi-topbar-end .fi-global-search,
+    .fi-topbar-end .fi-global-search-field,
+    .fi-topbar-end .fi-global-search-field .fi-input-wrp {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+
+    .fi-topbar-end .fi-global-search-field .fi-input {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+}
+
 /* Page Transition Animation */
 @keyframes pageLoadTransition {
     0% {
@@ -877,6 +915,8 @@ body.stats-already-loaded .stat-row-animated {
     align-items: center !important;
     justify-content: center !important;
     border-radius: 0.75rem !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
 }
 
 /* State: ACTIVE (ALEX AI ON - Bright Solid White Icon on Glowing Orange) */

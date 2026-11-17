@@ -7,8 +7,7 @@
     @mousedown="pressing = true"
     @mouseup="pressing = false"
     @mouseleave="pressing = false"
-    class="relative inline-grid grid-cols-2 p-[3px] rounded-full bg-slate-200/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-300/70 dark:border-white/10 shadow-[inset_0_1px_3px_rgba(0,0,0,0.12)] shrink-0 select-none overflow-hidden w-[84px] min-w-[84px] max-w-[84px] transition-transform duration-150 ease-out items-center"
-    style="width: 84px; min-width: 84px;"
+    class="relative inline-grid grid-cols-2 p-[3px] rounded-full bg-slate-200/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-300/70 dark:border-white/10 shadow-[inset_0_1px_3px_rgba(0,0,0,0.12)] shrink-0 select-none overflow-hidden w-[74px] min-w-[74px] max-w-[74px] sm:w-[84px] sm:min-w-[84px] sm:max-w-[84px] transition-transform duration-150 ease-out items-center"
     :class="pressing ? 'scale-[0.97]' : 'scale-100'"
     wire:key="language-switcher-pill-{{ $currentLocale }}"
 >

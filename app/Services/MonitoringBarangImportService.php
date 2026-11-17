@@ -196,6 +196,7 @@ class MonitoringBarangImportService
         }
 
         $lookups = $this->preloadLookups($parsedItems);
+        $reservedDoOwners = $this->resolveStrictBatchDoClaims($parsedItems, $lookups);
 
         $createdCount = 0;
         $updatedCount = 0;
@@ -209,6 +210,7 @@ class MonitoringBarangImportService
         DB::transaction(function () use (
             $parsedItems,
             &$lookups,
+            $reservedDoOwners,
             &$createdCount,
             &$updatedCount,
             &$unchangedCount,
@@ -219,7 +221,7 @@ class MonitoringBarangImportService
             &$claimedDoMap
         ): void {
             foreach ($parsedItems as $item) {
-                $result = $this->upsertItem($item, $lookups, $claimedDoMap);
+                $result = $this->upsertItem($item, $lookups, $claimedDoMap, $reservedDoOwners);
 
                 if ($result['status'] === 'created') {
                     $createdCount++;
@@ -1115,6 +1117,7 @@ class MonitoringBarangImportService
      *     existing_by_po: array<string, Collection<int, InvoicingReceipt>>
      * }  $lookups
      * @param  array<int, string>  $claimedDoMap
+     * @param  array<int, string>  $reservedDoOwners
      * @return array{
      *     status: 'created'|'updated'|'unchanged',
      *     linked_do: bool,
@@ -1122,17 +1125,15 @@ class MonitoringBarangImportService
      *     incomplete_info: ?array{row_number: int, no_po: string, no_invoice: string, no_grs: ?string, missing_fields: array<int, string>}
      * }
      */
-    protected function upsertItem(array $item, array &$lookups, array &$claimedDoMap): array
+    protected function upsertItem(array $item, array &$lookups, array &$claimedDoMap, array $reservedDoOwners = []): array
     {
         $poRecord = $lookups['pos_by_no'][$item['no_po']] ?? null;
         $vendor = $this->resolveVendor($item['vendor_name'], $poRecord, $lookups['vendors_by_name'], $lookups['vendors_by_number']);
         $matchedDo = $this->matchDeliveryOrderReceipt(
-            $item['no_po'],
-            $item['no_do'],
-            $item['no_grs'],
-            $item['no_invoice'],
+            $item,
             $lookups['dos_by_po'][$item['no_po']] ?? collect(),
             $claimedDoMap,
+            $reservedDoOwners,
             $lookups['dos_by_do'] ?? []
         );
         $grsRdtvItem = $matchedDo?->grsRdtvItems?->sortByDesc('id')->first();
@@ -1213,7 +1214,7 @@ class MonitoringBarangImportService
         }
 
         if ($receipt->delivery_order_receipt_id !== null) {
-            $claimedDoMap[$receipt->delivery_order_receipt_id] = (string) ($receipt->no_grs ?? $receipt->no_rdtv ?? $receipt->no_invoice ?? $receipt->id);
+            $claimedDoMap[$receipt->delivery_order_receipt_id] = $this->resolveItemClaimKey($item);
         }
 
         $incompleteInfo = null;
@@ -1358,57 +1359,120 @@ class MonitoringBarangImportService
     }
 
     /**
-     * Cocokkan ke DeliveryOrderReceipt di dalam PO yang sama (mendukung DO tunggal, multi-DO dipisah baris/koma,
-     * serta format slash), dan fallback langsung via No. DO unik bila PO tidak tertaut di DO.
+     * Reservasi DO yang cocok persis / normalisasi No. DO dalam batch agar fallback PO-level tidak merebut DO milik baris lain.
      *
+     * @param  array<int, array<string, mixed>>  $parsedItems
+     * @param  array<string, mixed>  $lookups
+     * @return array<int, string>
+     */
+    protected function resolveStrictBatchDoClaims(array $parsedItems, array $lookups): array
+    {
+        $reserved = [];
+
+        foreach ($parsedItems as $item) {
+            $noDo = $item['no_do'] ?? null;
+            if ($noDo === null) {
+                continue;
+            }
+
+            $noPo = (string) ($item['no_po'] ?? '-');
+            $claimKey = $this->resolveItemClaimKey($item);
+            $poCandidates = $lookups['dos_by_po'][$noPo] ?? collect();
+
+            if ($noPo !== '' && $noPo !== '-' && $poCandidates->isNotEmpty()) {
+                $strictMatches = $this->findDoMatchesWithinCandidates($noDo, $poCandidates);
+                if ($strictMatches->isNotEmpty()) {
+                    $picked = $this->selectPreferredMatchingDo($strictMatches, $reserved, $item['no_invoice'] ?? null);
+                    if ($picked !== null) {
+                        $reserved[$picked->id] ??= $claimKey;
+                    }
+                }
+            } elseif (! empty($lookups['dos_by_do'])) {
+                $direct = $this->matchDirectByDoNumber($noPo, $noDo, $lookups['dos_by_do']);
+                if ($direct !== null) {
+                    $reserved[$direct->id] ??= $claimKey;
+                }
+            }
+        }
+
+        return $reserved;
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     */
+    protected function resolveItemClaimKey(array $item): string
+    {
+        return (string) ($item['no_grs'] ?? $item['no_rdtv'] ?? $item['no_invoice'] ?? "row-{$item['row_number']}");
+    }
+
+    /**
+     * Cocokkan ke DeliveryOrderReceipt melalui 4 lapis pencocokan:
+     * 1. Kecocokan No. DO (penuh, alfanumerik, multi-DO, slash) dalam PO yang sama
+     * 2. Fallback PO sama saat No. DO salah ketik / diisi sembarangan (typo, DO tunggal tersisa, atau qty & tanggal)
+     * 3. Fallback langsung via No. DO unik bila PO tidak tertaut
+     *
+     * @param  array<string, mixed>  $item
      * @param  Collection<int, DeliveryOrderReceipt>  $candidates
      * @param  array<int, string>  $claimedDoMap
+     * @param  array<int, string>  $reservedDoOwners
      * @param  array<string, Collection<int, DeliveryOrderReceipt>>  $dosByDo
      */
     protected function matchDeliveryOrderReceipt(
-        string $noPo,
-        ?string $noDo,
-        ?string $noGrs,
-        ?string $noInvoice,
+        array $item,
         Collection $candidates,
         array $claimedDoMap,
+        array $reservedDoOwners = [],
         array $dosByDo = []
     ): ?DeliveryOrderReceipt {
+        $noPo = (string) ($item['no_po'] ?? '-');
+        $noDo = $item['no_do'] ?? null;
+        $noGrs = $item['no_grs'] ?? null;
+        $noInvoice = $item['no_invoice'] ?? null;
+        $jenis = (string) ($item['jenis'] ?? 'GRS');
+        $claimKey = $this->resolveItemClaimKey($item);
+
         if ($noPo !== '' && $noPo !== '-' && $candidates->isNotEmpty()) {
             if ($noDo !== null) {
                 $matched = $this->findDoMatchesWithinCandidates($noDo, $candidates);
                 if ($matched->isNotEmpty()) {
                     return $this->selectPreferredMatchingDo($matched, $claimedDoMap, $noInvoice);
                 }
+            }
 
+            $eligible = $candidates->filter(
+                fn (DeliveryOrderReceipt $do): bool => $this->isEligibleFallbackDo(
+                    $do,
+                    $noGrs,
+                    $noInvoice,
+                    $jenis,
+                    $claimedDoMap,
+                    $reservedDoOwners,
+                    $claimKey
+                )
+            )->values();
+
+            if ($eligible->isEmpty()) {
                 return null;
             }
 
-            if ($candidates->count() === 1) {
-                $onlyDo = $candidates->first();
-                if ($onlyDo->status === 'GRS' && $noGrs === null && $noInvoice === null) {
-                    return null;
+            if ($noDo !== null) {
+                $typoMatch = $this->findBestTypoMatchInCandidates($noDo, $eligible);
+                if ($typoMatch !== null) {
+                    return $typoMatch;
                 }
+            }
 
-                $currentKey = (string) ($noGrs ?? $noInvoice ?? '');
-                if (isset($claimedDoMap[$onlyDo->id]) && ($currentKey === '' || strcasecmp($claimedDoMap[$onlyDo->id], $currentKey) !== 0)) {
-                    return null;
-                }
+            if ($eligible->count() === 1) {
+                return $eligible->first();
+            }
 
-                $conflictingGrs = $noGrs !== null && $onlyDo->invoicingReceipts->contains(function (InvoicingReceipt $ir) use ($noGrs, $noInvoice): bool {
-                    if (blank($ir->no_grs)) {
-                        return false;
-                    }
-
-                    $diffGrs = strcasecmp($ir->no_grs, $noGrs) !== 0;
-                    $diffInv = $noInvoice !== null && filled($ir->no_invoice) && strcasecmp($ir->no_invoice, $noInvoice) !== 0;
-
-                    return $diffGrs || $diffInv;
-                });
-
-                if (! $conflictingGrs) {
-                    return $onlyDo;
-                }
+            if ($noDo !== null) {
+                return $this->disambiguateEligibleDosByQtyAndDate(
+                    $eligible,
+                    $item['qty_penagihan'] ?? null,
+                    $item['tanggal_terima_grs'] ?? null
+                );
             }
 
             return null;
@@ -1416,6 +1480,146 @@ class MonitoringBarangImportService
 
         if ($noDo !== null && ! empty($dosByDo)) {
             return $this->matchDirectByDoNumber($noPo, $noDo, $dosByDo);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<int, string>  $claimedDoMap
+     * @param  array<int, string>  $reservedDoOwners
+     */
+    protected function isEligibleFallbackDo(
+        DeliveryOrderReceipt $do,
+        ?string $noGrs,
+        ?string $noInvoice,
+        string $jenis,
+        array $claimedDoMap,
+        array $reservedDoOwners,
+        string $claimKey
+    ): bool {
+        if (isset($reservedDoOwners[$do->id]) && strcasecmp($reservedDoOwners[$do->id], $claimKey) !== 0) {
+            return false;
+        }
+
+        if (isset($claimedDoMap[$do->id]) && strcasecmp($claimedDoMap[$do->id], $claimKey) !== 0) {
+            return false;
+        }
+
+        if ($jenis === 'RDTV' && $do->status === 'GRS') {
+            return false;
+        }
+
+        if ($do->status === 'GRS' && $noGrs === null && $noInvoice === null) {
+            return false;
+        }
+
+        return ! $do->invoicingReceipts->contains(function (InvoicingReceipt $ir) use ($noGrs, $noInvoice): bool {
+            if (filled($ir->no_grs) && ($noGrs === null || strcasecmp($ir->no_grs, $noGrs) !== 0)) {
+                return true;
+            }
+
+            if (filled($ir->no_invoice) && ($noInvoice === null || strcasecmp($ir->no_invoice, $noInvoice) !== 0)) {
+                return true;
+            }
+
+            return false;
+        });
+    }
+
+    /**
+     * Mencari kecocokan typo ringan (edit distance <= 2) pada No. DO di dalam PO yang sama.
+     *
+     * @param  Collection<int, DeliveryOrderReceipt>  $eligible
+     */
+    protected function findBestTypoMatchInCandidates(string $noDo, Collection $eligible): ?DeliveryOrderReceipt
+    {
+        $normTarget = $this->normalizeAlnum($noDo);
+        if (strlen($normTarget) < 6 || strlen($normTarget) > 250) {
+            return null;
+        }
+
+        $scored = [];
+        foreach ($eligible as $do) {
+            $normDb = $this->normalizeAlnum((string) $do->delivery_order_no);
+            if (strlen($normDb) < 6 || strlen($normDb) > 250) {
+                continue;
+            }
+
+            $distance = levenshtein($normTarget, $normDb);
+            if ($distance <= 2) {
+                $scored[] = ['do' => $do, 'distance' => $distance];
+            }
+        }
+
+        if (empty($scored)) {
+            return null;
+        }
+
+        usort($scored, fn (array $a, array $b): int => $a['distance'] <=> $b['distance']);
+
+        if (count($scored) === 1 || $scored[0]['distance'] < $scored[1]['distance']) {
+            return $scored[0]['do'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Memilah kandidat DO pada PO yang sama menggunakan kecocokan kuantitas penagihan dan kedekatan tanggal terima.
+     *
+     * @param  Collection<int, DeliveryOrderReceipt>  $eligible
+     */
+    protected function disambiguateEligibleDosByQtyAndDate(
+        Collection $eligible,
+        ?float $qtyPenagihan,
+        ?string $tanggalTerimaGrs
+    ): ?DeliveryOrderReceipt {
+        $pool = $eligible;
+
+        if ($qtyPenagihan !== null && $qtyPenagihan > 0) {
+            $qtyMatches = $pool->filter(function (DeliveryOrderReceipt $do) use ($qtyPenagihan): bool {
+                $doQty = (float) $do->deliveryOrderReceiptDetails->sum('quantity');
+
+                return $doQty > 0 && abs($doQty - $qtyPenagihan) <= 0.01;
+            })->values();
+
+            if ($qtyMatches->count() === 1) {
+                return $qtyMatches->first();
+            }
+
+            if ($qtyMatches->isNotEmpty()) {
+                $pool = $qtyMatches;
+            }
+        }
+
+        if ($tanggalTerimaGrs !== null) {
+            $grsDate = Carbon::parse($tanggalTerimaGrs)->startOfDay();
+            $dateScored = [];
+
+            foreach ($pool as $do) {
+                $arrivalRaw = $do->physical_received_date ?? $do->received_date;
+                if ($arrivalRaw === null) {
+                    continue;
+                }
+
+                $arrivalDate = Carbon::parse($arrivalRaw)->startOfDay();
+                $daysBeforeGrs = (int) $arrivalDate->diffInDays($grsDate, false);
+                if ($daysBeforeGrs >= 0 && $daysBeforeGrs <= 90) {
+                    $dateScored[] = ['do' => $do, 'days' => $daysBeforeGrs];
+                }
+            }
+
+            if (count($dateScored) === 1) {
+                return $dateScored[0]['do'];
+            }
+
+            if (count($dateScored) > 1) {
+                usort($dateScored, fn (array $a, array $b): int => $a['days'] <=> $b['days']);
+                if ($dateScored[0]['days'] < $dateScored[1]['days']) {
+                    return $dateScored[0]['do'];
+                }
+            }
         }
 
         return null;

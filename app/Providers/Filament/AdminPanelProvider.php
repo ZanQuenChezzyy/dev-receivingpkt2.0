@@ -68,7 +68,7 @@ class AdminPanelProvider extends PanelProvider
             ->userMenu(position: UserMenuPosition::Sidebar)
             ->renderHook(
                 'panels::global-search.after',
-                fn (): string => Blade::render('<div class="flex items-center gap-1.5 sm:gap-2 shrink-0">@livewire(\'ai-system-toggle\')<div class="shrink-0 flex items-center">@livewire(\'language-switcher\')</div></div>')
+                fn (): string => view('filament.components.topbar-actions')->render()
             )
             ->renderHook(
                 'panels::sidebar.footer',

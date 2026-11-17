@@ -1131,3 +1131,128 @@ CSV;
         ->and(InvoicingReceipt::where('no_grs', '5009100004')->value('delivery_order_receipt_id'))->toBe($doOrphan->id)
         ->and(InvoicingReceipt::where('no_grs', '5009100005')->value('delivery_order_receipt_id'))->toBeNull();
 });
+
+it('handles arbitrary operator DO inputs on matching PO via single-DO fallback, typo edit distance, qty/date disambiguation, and strict reservation protection', function () {
+    seedMonitoringPicUsers();
+
+    // 1. PO dengan 1 DO yang nomor DO-nya diisi sembarangan oleh operator ("61874" padahal di invoice "250930UXL0")
+    $poSingle = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300061874',
+        'vendor_name' => 'PT SINGLE DO',
+    ]);
+    $doSingle = DeliveryOrderReceipt::create([
+        'delivery_order_no' => '61874',
+        'document_code' => 'DO-5300061874-1',
+        'status' => 'Posted 103',
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $doSingle->id,
+        'purchase_order_issued_id' => $poSingle->id,
+        'quantity' => 5,
+    ]);
+
+    // 2. PO dengan 2 DO, salah satunya typo 1 karakter (DO2551030GMAB vs DO251030GMAB)
+    $poTypo = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300062057',
+        'vendor_name' => 'PT TYPO DO',
+    ]);
+    $doTypoMatch = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'DO2551030GMAB',
+        'document_code' => 'DO-5300062057-1',
+        'status' => 'Posted 103',
+    ]);
+    $doTypoOther = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'DO999999XYZ',
+        'document_code' => 'DO-5300062057-2',
+        'status' => 'Posted 103',
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $doTypoMatch->id,
+        'purchase_order_issued_id' => $poTypo->id,
+        'quantity' => 10,
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $doTypoOther->id,
+        'purchase_order_issued_id' => $poTypo->id,
+        'quantity' => 10,
+    ]);
+
+    // 3. PO parsial dengan 2 DO bernomor sembarangan, dibedakan oleh qty_penagihan (20 vs 80) & tanggal kedatangan
+    $poPartial = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300077777',
+        'vendor_name' => 'PT PARTIAL QTY',
+    ]);
+    $doPartial1 = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'asal-operator-a',
+        'document_code' => 'DO-5300077777-1',
+        'received_date' => '2026-10-05',
+        'physical_received_date' => '2026-10-05',
+        'status' => 'Posted 103',
+    ]);
+    $doPartial2 = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'asal-operator-b',
+        'document_code' => 'DO-5300077777-2',
+        'received_date' => '2026-10-15',
+        'physical_received_date' => '2026-10-15',
+        'status' => 'Posted 103',
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $doPartial1->id,
+        'purchase_order_issued_id' => $poPartial->id,
+        'quantity' => 20,
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $doPartial2->id,
+        'purchase_order_issued_id' => $poPartial->id,
+        'quantity' => 80,
+    ]);
+
+    // 4. PO parsial ambigu: 2 DO identik (qty sama, tanggal sama, nomor sembarangan) -> tidak boleh menebak acak
+    $poAmbiguous = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300088888',
+        'vendor_name' => 'PT AMBIGU',
+    ]);
+    $doAmb1 = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'sembarang-1',
+        'document_code' => 'DO-5300088888-1',
+        'received_date' => '2026-10-10',
+        'physical_received_date' => '2026-10-10',
+        'status' => 'Posted 103',
+    ]);
+    $doAmb2 = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'sembarang-2',
+        'document_code' => 'DO-5300088888-2',
+        'received_date' => '2026-10-10',
+        'physical_received_date' => '2026-10-10',
+        'status' => 'Posted 103',
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $doAmb1->id,
+        'purchase_order_issued_id' => $poAmbiguous->id,
+        'quantity' => 10,
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $doAmb2->id,
+        'purchase_order_issued_id' => $poAmbiguous->id,
+        'quantity' => 10,
+    ]);
+
+    $csv = <<<'CSV'
+Tanggal Terima GRS,Jenis,No. GRS,No. PO,PIC,Vendor,Tanggal Info GRS,No. Invoice,No. DO,Quantity Penagihan
+2026-10-10,Sparepart,5009200001,5300061874,ALEX,PT SINGLE DO,2026-10-11,INV-FALLBACK-1,250930UXL0,5
+2026-10-12,Sparepart,5009200002,5300062057,ALEX,PT TYPO DO,2026-10-13,INV-FALLBACK-2,DO251030GMAB,10
+2026-10-08,Sparepart,5009200003,5300077777,ALEX,PT PARTIAL QTY,2026-10-09,INV-FALLBACK-3,DO-INVOICE-20,20
+2026-10-18,Sparepart,5009200004,5300077777,ALEX,PT PARTIAL QTY,2026-10-19,INV-FALLBACK-4,DO-INVOICE-80,80
+2026-10-12,Sparepart,5009200005,5300088888,ALEX,PT AMBIGU,2026-10-13,INV-FALLBACK-5,DO-INVOICE-UNKNOWN,10
+CSV;
+
+    $summary = app(MonitoringBarangImportService::class)->importFromString($csv);
+
+    expect($summary['created'])->toBe(5)
+        ->and($summary['linked_do'])->toBe(4)
+        ->and(InvoicingReceipt::where('no_grs', '5009200001')->value('delivery_order_receipt_id'))->toBe($doSingle->id)
+        ->and(InvoicingReceipt::where('no_grs', '5009200002')->value('delivery_order_receipt_id'))->toBe($doTypoMatch->id)
+        ->and(InvoicingReceipt::where('no_grs', '5009200003')->value('delivery_order_receipt_id'))->toBe($doPartial1->id)
+        ->and(InvoicingReceipt::where('no_grs', '5009200004')->value('delivery_order_receipt_id'))->toBe($doPartial2->id)
+        ->and(InvoicingReceipt::where('no_grs', '5009200005')->value('delivery_order_receipt_id'))->toBeNull();
+});
