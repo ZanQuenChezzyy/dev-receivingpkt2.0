@@ -651,7 +651,7 @@
                                         $invReceipt = $trackingData['invoicing_receipt'] ?? null;
                                     @endphp
                                     <span class="px-2.5 py-1 rounded-full text-[11px] font-bold
-                                        @if ($invReceipt?->status === 'Terverifikasi' || $invReceipt?->status === 'Terkirim Kasir')
+                                        @if (in_array($invReceipt?->status, ['Terverifikasi', 'Terkirim Kasir', 'Selesai'], true))
                                             bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20
                                         @else
                                             bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20

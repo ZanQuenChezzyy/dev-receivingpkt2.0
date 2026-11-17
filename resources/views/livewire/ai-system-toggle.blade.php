@@ -1,6 +1,6 @@
 <div>
     @if(auth()->user()?->hasRole('Developer'))
-    <div class="flex items-center px-3" wire:key="ai-toggle-container">
+    <div class="flex items-center shrink-0" wire:key="ai-toggle-container">
         <!-- Tampilan Mobile (Icon Button saja) -->
         <div class="block sm:hidden">
             <x-filament::icon-button
@@ -12,7 +12,7 @@
                 size="md"
                 :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-s-moon'"
                 tooltip="{{ $isActive ? 'Matikan ALEX Asisten AI Receiving' : 'Hidupkan ALEX Asisten AI Receiving' }}"
-                class="alex-ai-toggle-btn {{ $isActive ? 'alex-ai-active' : '' }}"
+                class="alex-ai-toggle-btn {{ $isActive ? 'alex-ai-active !text-white [&_svg]:!text-white [&_svg]:!fill-white' : '[&_svg]:!text-slate-400' }}"
             />
         </div>
 
@@ -27,7 +27,7 @@
                 size="sm"
                 :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-s-moon'"
                 tooltip="{{ $isActive ? 'ALEX Asisten AI Receiving Aktif (Klik untuk mematikan)' : 'ALEX Asisten AI Receiving Sedang Maintenance (Klik untuk mengaktifkan)' }}"
-                class="alex-ai-toggle-btn {{ $isActive ? 'alex-ai-active' : '' }}"
+                class="alex-ai-toggle-btn {{ $isActive ? 'alex-ai-active !text-white [&_svg]:!text-white [&_svg]:!fill-white' : '' }}"
             >
                 {{ $isActive ? 'ALEX AI ON' : 'ALEX AI OFF' }}
             </x-filament::button>

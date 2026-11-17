@@ -61,6 +61,14 @@ class InvoicingReceiptsTable
                             default => 'heroicon-m-document',
                         }),
 
+                    TextColumn::make('kategori_barang')
+                        ->label('Kategori')
+                        ->badge()
+                        ->color('gray')
+                        ->placeholder('-')
+                        ->searchable()
+                        ->toggleable(),
+
                     TextColumn::make('no_grs')
                         ->label('No. GRS')
                         ->placeholder('-')
@@ -231,7 +239,9 @@ class InvoicingReceiptsTable
                     TextColumn::make('tanggal_kirim_kasir')
                         ->label('Tgl Kirim Kasir')
                         ->date('d/m/Y')
-                        ->placeholder('Belum Dikirim')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->status === 'Selesai' ? 'Tanggal Kosong' : 'Belum Dikirim')
+                        ->color(fn ($state, InvoicingReceipt $record): ?string => ($record->status === 'Selesai' && blank($state)) ? 'warning' : null)
+                        ->tooltip(fn ($state, InvoicingReceipt $record): ?string => ($record->status === 'Selesai' && blank($state)) ? 'Invoice sudah ada (Selesai), namun tanggal kirim kasir masih kosong.' : null)
                         ->icon('heroicon-m-arrow-right-circle')
                         ->sortable(),
 
@@ -249,13 +259,14 @@ class InvoicingReceiptsTable
                         ->color(fn (string $state): string => match ($state) {
                             'Menunggu Verifikasi' => 'warning',
                             'Terverifikasi' => 'info',
-                            'Terkirim Kasir' => 'success',
+                            'Terkirim Kasir', 'Selesai' => 'success',
                             default => 'gray',
                         })
                         ->icon(fn (string $state): string => match ($state) {
                             'Menunggu Verifikasi' => 'heroicon-m-clock',
                             'Terverifikasi' => 'heroicon-m-check-badge',
                             'Terkirim Kasir' => 'heroicon-m-paper-airplane',
+                            'Selesai' => 'heroicon-m-check-circle',
                             default => 'heroicon-m-document',
                         }),
 
@@ -291,12 +302,23 @@ class InvoicingReceiptsTable
                         'RDTV' => 'RDTV',
                     ]),
 
+                SelectFilter::make('kategori_barang')
+                    ->label('Filter Jenis Barang')
+                    ->options(fn (): array => InvoicingReceipt::query()
+                        ->whereNotNull('kategori_barang')
+                        ->where('kategori_barang', '!=', '')
+                        ->distinct()
+                        ->orderBy('kategori_barang')
+                        ->pluck('kategori_barang', 'kategori_barang')
+                        ->all()),
+
                 SelectFilter::make('status')
                     ->label('Status Verifikasi')
                     ->options([
                         'Menunggu Verifikasi' => 'Menunggu Verifikasi',
                         'Terverifikasi' => 'Terverifikasi',
                         'Terkirim Kasir' => 'Terkirim Kasir',
+                        'Selesai' => 'Selesai',
                     ]),
 
                 SelectFilter::make('material_type')
@@ -639,7 +661,7 @@ class InvoicingReceiptsTable
                         ->label('Kirim ke Kasir')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('info')
-                        ->visible(fn (InvoicingReceipt $record) => $record->status !== 'Terkirim Kasir')
+                        ->visible(fn (InvoicingReceipt $record) => ! in_array($record->status, ['Terkirim Kasir', 'Selesai'], true))
                         ->requiresConfirmation()
                         ->modalHeading('Kirim Berkas ke Kasir')
                         ->modalDescription('Sistem akan mengisi Tanggal Kirim Kasir hari ini dan menghitung lama pekerjaan.')

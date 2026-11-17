@@ -65,6 +65,10 @@ class InvoicingReceiptForm
                         DatePicker::make('tanggal_info_grs')
                             ->label('Tanggal Info GRS ke Vendor')
                             ->native(false),
+
+                        TextInput::make('kategori_barang')
+                            ->label('Kategori / Jenis Barang')
+                            ->placeholder('Contoh: Karung, Sparepart, Chemical/Bahan Baku'),
                     ])->columns(2),
 
                 Section::make('Referensi PO & DO')
@@ -301,6 +305,7 @@ class InvoicingReceiptForm
                                 'Menunggu Verifikasi' => 'Menunggu Verifikasi',
                                 'Terverifikasi' => 'Terverifikasi',
                                 'Terkirim Kasir' => 'Terkirim Kasir',
+                                'Selesai' => 'Selesai',
                             ])
                             ->default('Menunggu Verifikasi')
                             ->required(),

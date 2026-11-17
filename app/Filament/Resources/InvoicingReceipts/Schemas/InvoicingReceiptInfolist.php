@@ -33,6 +33,12 @@ class InvoicingReceiptInfolist
                                 default => 'gray',
                             }),
 
+                        TextEntry::make('kategori_barang')
+                            ->label('Kategori / Jenis Barang')
+                            ->badge()
+                            ->color('gray')
+                            ->placeholder('-'),
+
                         TextEntry::make('no_grs')
                             ->label('No. GRS')
                             ->copyable()
@@ -151,7 +157,7 @@ class InvoicingReceiptInfolist
                         TextEntry::make('tanggal_kirim_kasir')
                             ->label('Tanggal Kirim Kasir')
                             ->date('d F Y')
-                            ->placeholder('Belum Dikirim'),
+                            ->placeholder(fn ($record): string => $record->status === 'Selesai' ? 'Tanggal Kosong' : 'Belum Dikirim'),
 
                         TextEntry::make('lama_pekerjaan')
                             ->label('Lama Pekerjaan')
@@ -166,7 +172,7 @@ class InvoicingReceiptInfolist
                             ->color(fn (string $state): string => match ($state) {
                                 'Menunggu Verifikasi' => 'warning',
                                 'Terverifikasi' => 'info',
-                                'Terkirim Kasir' => 'success',
+                                'Terkirim Kasir', 'Selesai' => 'success',
                                 default => 'gray',
                             }),
 

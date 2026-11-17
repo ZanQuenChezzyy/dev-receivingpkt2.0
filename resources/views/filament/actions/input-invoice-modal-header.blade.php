@@ -36,7 +36,7 @@
                     $status = $record->status ?? 'Menunggu Verifikasi';
                     $statusClasses = match ($status) {
                         'Terverifikasi' => 'bg-info-100 text-info-700 dark:bg-info-900/60 dark:text-info-300 border-info-200 dark:border-info-800',
-                        'Terkirim Kasir' => 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300 border-success-200 dark:border-success-800',
+                        'Terkirim Kasir', 'Selesai' => 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300 border-success-200 dark:border-success-800',
                         default => 'bg-warning-100 text-warning-700 dark:bg-warning-900/60 dark:text-warning-300 border-warning-200 dark:border-warning-800',
                     };
                 @endphp

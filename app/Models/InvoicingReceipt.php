@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
     'pic_id',
     'tanggal_terima_grs',
     'jenis',
+    'kategori_barang',
     'no_grs',
     'no_rdtv',
     'no_po',
@@ -49,6 +50,11 @@ class InvoicingReceipt extends Model
 {
     /** @use HasFactory<InvoicingReceiptFactory> */
     use HasFactory;
+
+    /**
+     * Menjaga nilai subtotal_include_ppn eksplisit dari file impor agar tidak dihitung ulang.
+     */
+    public bool $preserveExplicitIncludePpn = false;
 
     protected function casts(): array
     {
@@ -116,8 +122,12 @@ class InvoicingReceipt extends Model
     {
         static::saving(function (InvoicingReceipt $record) {
             // Auto hitung Subtotal Include PPN: rumus = Exclude + (Exclude * 11%)
+            // Hanya dijalankan bila subtotal_include_ppn kosong atau exclude diubah tanpa mempertahankan include eksplisit.
             if ($record->subtotal_exclude_ppn !== null) {
-                if ($record->subtotal_include_ppn === null || $record->isDirty('subtotal_exclude_ppn')) {
+                $shouldComputeInclude = $record->subtotal_include_ppn === null
+                    || (! $record->preserveExplicitIncludePpn && $record->isDirty('subtotal_exclude_ppn') && ! $record->isDirty('subtotal_include_ppn'));
+
+                if ($shouldComputeInclude) {
                     $exclude = (float) $record->subtotal_exclude_ppn;
                     $record->subtotal_include_ppn = round($exclude + ($exclude * 0.11), 2);
                 }
@@ -127,10 +137,10 @@ class InvoicingReceipt extends Model
             if ($record->tanggal_terima_koreksi_invoice && $record->tanggal_kirim_kasir) {
                 $start = Carbon::parse($record->tanggal_terima_koreksi_invoice);
                 $end = Carbon::parse($record->tanggal_kirim_kasir);
-                $record->lama_pekerjaan = (int) $start->diffInDays($end);
+                $record->lama_pekerjaan = (int) $start->diffInDays($end, absolute: true);
             } elseif ($record->tanggal_terima_koreksi_invoice && ! $record->tanggal_kirim_kasir) {
                 $start = Carbon::parse($record->tanggal_terima_koreksi_invoice);
-                $record->lama_pekerjaan = (int) $start->diffInDays(now());
+                $record->lama_pekerjaan = (int) $start->diffInDays(now(), absolute: true);
             }
         });
     }

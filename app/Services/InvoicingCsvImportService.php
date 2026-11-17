@@ -194,6 +194,68 @@ class InvoicingCsvImportService
     }
 
     /**
+     * Mengecek apakah file (.xlsx atau .csv) merupakan format ekspor Mitraku.
+     */
+    public function canHandleFile(string $filePath): bool
+    {
+        if (! is_file($filePath) || ! is_readable($filePath)) {
+            return false;
+        }
+
+        $content = file_get_contents($filePath);
+        if ($content === false || trim($content) === '') {
+            return false;
+        }
+
+        if ($this->isXlsxContent($content)) {
+            $content = $this->convertXlsxFileToRawCsvString($filePath);
+            if ($content === '') {
+                return false;
+            }
+        }
+
+        $content = preg_replace('/^\xEF\xBB\xBF/', '', $content) ?? $content;
+        $stream = fopen('php://temp', 'r+');
+        if ($stream === false) {
+            return false;
+        }
+
+        fwrite($stream, $content);
+        rewind($stream);
+
+        $checked = 0;
+        while (($row = fgetcsv($stream)) !== false && $checked < 30) {
+            $checked++;
+            $trimmed = array_map(fn (?string $val): string => trim((string) $val), $row);
+            $firstCol = $trimmed[0] ?? '';
+
+            if (strcasecmp($firstCol, 'Invoice Number') === 0) {
+                $mitrakuHeaders = [
+                    'SAP Document Number',
+                    'Transaction Type',
+                    'Tax Number',
+                    'Invoice Amount',
+                    'PO Number',
+                    'PO Numbers',
+                    'GR / SA / BA-BL Number',
+                ];
+
+                foreach ($mitrakuHeaders as $expected) {
+                    if (in_array($expected, $trimmed, true)) {
+                        fclose($stream);
+
+                        return true;
+                    }
+                }
+            }
+        }
+
+        fclose($stream);
+
+        return false;
+    }
+
+    /**
      * Mengecek apakah konten CSV merupakan format Multi-Section Mitraku
      * (memiliki lebih dari 1 baris header "Invoice Number").
      */

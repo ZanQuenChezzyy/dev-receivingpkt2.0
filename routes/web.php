@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ChunkedImportUploadController;
 use App\Http\Controllers\Admin\MaterialIssuePrintController;
 use App\Http\Controllers\Admin\QCTransmittalPrintController;
 use App\Http\Controllers\Admin\TransmittalPrintController;
@@ -50,3 +51,11 @@ Route::get('/admin/delivery-order-receipts/{deliveryOrderReceipt:document_code}/
     ->where('deliveryOrderReceipt', '.*')
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.delivery-order-receipts.print_qr');
+
+Route::post('/admin/invoicing-receipts/import-chunks', [ChunkedImportUploadController::class, 'store'])
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.resources.invoicing-receipts.import_chunks');
+
+Route::delete('/admin/invoicing-receipts/import-chunks', [ChunkedImportUploadController::class, 'destroy'])
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.resources.invoicing-receipts.import_chunks.destroy');
