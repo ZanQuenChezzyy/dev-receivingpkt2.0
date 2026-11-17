@@ -157,7 +157,11 @@ class InvoicingReceiptInfolist
                         TextEntry::make('tanggal_kirim_kasir')
                             ->label('Tanggal Kirim Kasir')
                             ->date('d F Y')
-                            ->placeholder(fn ($record): string => $record->status === 'Selesai' ? 'Tanggal Kosong' : 'Belum Dikirim'),
+                            ->placeholder(fn ($record): string => match (true) {
+                                $record->jenis === 'RDTV' => 'Tidak Perlu (RDTV)',
+                                $record->status === 'Selesai' => 'Tanggal Kosong',
+                                default => 'Belum Dikirim',
+                            }),
 
                         TextEntry::make('lama_pekerjaan')
                             ->label('Lama Pekerjaan')

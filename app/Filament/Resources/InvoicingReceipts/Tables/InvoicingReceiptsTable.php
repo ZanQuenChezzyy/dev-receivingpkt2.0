@@ -14,6 +14,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -87,7 +88,9 @@ class InvoicingReceiptsTable
                     TextColumn::make('tanggal_info_grs')
                         ->label('Tgl Info GRS')
                         ->date('d/m/Y')
-                        ->toggleable(isToggledHiddenByDefault: true),
+                        ->placeholder('Belum Diinfokan')
+                        ->sortable()
+                        ->toggleable(),
                 ]),
 
                 ColumnGroup::make('Referensi PO & DO', [
@@ -239,9 +242,13 @@ class InvoicingReceiptsTable
                     TextColumn::make('tanggal_kirim_kasir')
                         ->label('Tgl Kirim Kasir')
                         ->date('d/m/Y')
-                        ->placeholder(fn (InvoicingReceipt $record): string => $record->status === 'Selesai' ? 'Tanggal Kosong' : 'Belum Dikirim')
-                        ->color(fn ($state, InvoicingReceipt $record): ?string => ($record->status === 'Selesai' && blank($state)) ? 'warning' : null)
-                        ->tooltip(fn ($state, InvoicingReceipt $record): ?string => ($record->status === 'Selesai' && blank($state)) ? 'Invoice sudah ada (Selesai), namun tanggal kirim kasir masih kosong.' : null)
+                        ->placeholder(fn (InvoicingReceipt $record): string => match (true) {
+                            $record->jenis === 'RDTV' => 'Tidak Perlu (RDTV)',
+                            $record->status === 'Selesai' => 'Tanggal Kosong',
+                            default => 'Belum Dikirim',
+                        })
+                        ->color(fn ($state, InvoicingReceipt $record): ?string => ($record->jenis !== 'RDTV' && $record->status === 'Selesai' && blank($state)) ? 'warning' : null)
+                        ->tooltip(fn ($state, InvoicingReceipt $record): ?string => ($record->jenis !== 'RDTV' && $record->status === 'Selesai' && blank($state)) ? 'Invoice sudah ada (Selesai), namun tanggal kirim kasir masih kosong.' : null)
                         ->icon('heroicon-m-arrow-right-circle')
                         ->sortable(),
 
@@ -339,11 +346,48 @@ class InvoicingReceiptsTable
             ->modifyQueryUsing(fn (Builder $query) => $query->orderBy('id', 'desc'))
             ->recordActions([
                 ActionGroup::make([
+                    // ACTION KHUSUS RDTV: INFO GRS / INFO RDTV KE VENDOR -> SELESAI
+                    Action::make('infoRdtv')
+                        ->label(fn (?InvoicingReceipt $record): string => $record?->status === 'Selesai' ? 'Ubah Info RDTV' : 'Info RDTV (Selesai)')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis === 'RDTV')
+                        ->modalHeading(fn (?InvoicingReceipt $record): string => 'Info RDTV ke Vendor - PO: '.($record?->no_po ?? '-'))
+                        ->modalDescription('Isi Tanggal Info GRS sebagai tanda RDTV sudah diinfokan ke vendor. Dokumen RDTV otomatis berstatus Selesai tanpa tahap Invoice maupun Kasir.')
+                        ->modalSubmitActionLabel('Simpan & Selesaikan')
+                        ->schema([
+                            TextInput::make('no_rdtv')
+                                ->label('No. RDTV (Opsional)')
+                                ->placeholder('Nomor dokumen RDTV resmi')
+                                ->prefixIcon('heroicon-m-hashtag')
+                                ->default(fn (?InvoicingReceipt $record): ?string => $record?->no_rdtv),
+
+                            DatePicker::make('tanggal_info_grs')
+                                ->label('Tanggal Info GRS (Info RDTV ke Vendor)')
+                                ->native(false)
+                                ->required()
+                                ->default(fn (?InvoicingReceipt $record) => $record?->tanggal_info_grs ?? now()->toDateString()),
+                        ])
+                        ->action(function (InvoicingReceipt $record, array $data): void {
+                            $record->update([
+                                'no_rdtv' => filled($data['no_rdtv'] ?? null) ? $data['no_rdtv'] : $record->no_rdtv,
+                                'tanggal_info_grs' => $data['tanggal_info_grs'],
+                                'status' => 'Selesai',
+                            ]);
+
+                            Notification::make()
+                                ->title('Info RDTV Disimpan')
+                                ->body("Dokumen RDTV PO {$record->no_po} telah ditandai Selesai.")
+                                ->success()
+                                ->send();
+                        }),
+
                     // ACTION UTAMA 1: INPUT DATA INVOICE & NO. GRS
                     Action::make('inputInvoiceData')
                         ->label('Input Invoice & GRS')
                         ->icon('heroicon-o-pencil-square')
                         ->color('warning')
+                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
                         ->modalWidth('4xl')
                         ->modalIcon('heroicon-o-document-currency-dollar')
                         ->modalHeading(fn (InvoicingReceipt $record) => "Input Data Invoice & No. GRS - PO: {$record->no_po}")
@@ -488,6 +532,7 @@ class InvoicingReceiptsTable
                         ->label('Salin ke Mitraku')
                         ->icon('heroicon-o-clipboard-document-check')
                         ->color('primary')
+                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
                         ->modalHeading(fn (InvoicingReceipt $record) => "Format Salin Mitraku - PO: {$record->no_po}")
                         ->modalDescription('Salin data secara instan untuk di-paste ke sistem Mitraku Pupuk Kaltim')
                         ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.copy-to-mitraku-modal', ['record' => $record]))
@@ -499,6 +544,7 @@ class InvoicingReceiptsTable
                         ->label('Upload Berkas')
                         ->icon('heroicon-o-arrow-up-tray')
                         ->color('info')
+                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
                         ->modalHeading(fn (InvoicingReceipt $record) => "Upload Berkas - PO: {$record->no_po}")
                         ->modalDescription('Unggah dokumen verifikasi GRS (setelah ACC VP) dan berkas invoice resmi (setelah vendor mengirim ke PKT).')
                         ->schema([
@@ -661,7 +707,7 @@ class InvoicingReceiptsTable
                         ->label('Kirim ke Kasir')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('info')
-                        ->visible(fn (InvoicingReceipt $record) => ! in_array($record->status, ['Terkirim Kasir', 'Selesai'], true))
+                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV' && ! in_array($record?->status, ['Terkirim Kasir', 'Selesai'], true))
                         ->requiresConfirmation()
                         ->modalHeading('Kirim Berkas ke Kasir')
                         ->modalDescription('Sistem akan mengisi Tanggal Kirim Kasir hari ini dan menghitung lama pekerjaan.')

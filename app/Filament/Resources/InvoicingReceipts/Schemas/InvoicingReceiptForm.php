@@ -46,6 +46,11 @@ class InvoicingReceiptForm
                             ->default('GRS')
                             ->inline()
                             ->live()
+                            ->afterStateUpdated(function ($state, Set $set, Get $get): void {
+                                if ($state === 'RDTV' && filled($get('tanggal_info_grs'))) {
+                                    $set('status', 'Selesai');
+                                }
+                            })
                             ->required(),
 
                         TextInput::make('no_grs')
@@ -58,13 +63,21 @@ class InvoicingReceiptForm
                         TextInput::make('no_rdtv')
                             ->label('No. RDTV')
                             ->placeholder('Nomor dokumen RDTV')
-                            ->required(fn (Get $get) => $get('jenis') === 'RDTV')
                             ->visible(fn (Get $get) => $get('jenis') === 'RDTV')
-                            ->helperText('Wajib diisi dengan Nomor RDTV resmi.'),
+                            ->helperText('Nomor dokumen RDTV resmi (opsional jika belum tersedia).'),
 
                         DatePicker::make('tanggal_info_grs')
                             ->label('Tanggal Info GRS ke Vendor')
-                            ->native(false),
+                            ->native(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, Set $set, Get $get): void {
+                                if ($get('jenis') === 'RDTV' && filled($state)) {
+                                    $set('status', 'Selesai');
+                                }
+                            })
+                            ->helperText(fn (Get $get): ?string => $get('jenis') === 'RDTV'
+                                ? 'Untuk dokumen RDTV, mengisi tanggal ini menandakan info RDTV sudah disampaikan ke vendor dan status otomatis Selesai.'
+                                : null),
 
                         TextInput::make('kategori_barang')
                             ->label('Kategori / Jenis Barang')

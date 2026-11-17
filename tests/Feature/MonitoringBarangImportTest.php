@@ -404,7 +404,8 @@ CSV;
     $grsRow2 = InvoicingReceipt::where('no_grs', '5009000002')->first();
 
     expect($rdtvRow)->not->toBeNull()
-        ->and($rdtvRow->status)->toBe('Menunggu Verifikasi')
+        ->and($rdtvRow->status)->toBe('Selesai')
+        ->and($rdtvRow->tanggal_kirim_kasir)->toBeNull()
         ->and($rdtvRow->vendor_id)->toBe($vendor->id)
         ->and($grsRow1)->not->toBeNull()
         ->and($grsRow1->jenis)->toBe('GRS')
@@ -441,6 +442,43 @@ CSV;
     expect($grsRow1->status)->toBe('Selesai')
         ->and($grsRow1->no_invoice)->toBe('INV-TAHAP-1')
         ->and($grsRow1->tanggal_kirim_kasir->format('Y-m-d'))->toBe('2026-10-19');
+});
+
+it('keeps RDTV in Menunggu Verifikasi until Tanggal Info GRS is filled, then finishes at Selesai without Kasir fallback', function () {
+    seedMonitoringPicUsers();
+
+    $csvPendingRdtv = <<<'CSV'
+ ,Tanggal Terima GRS,Jenis,No. GRS,No. RDTV,No. PO,PIC,Vendor,Deskripsi,Email,Tanggal Info GRS,,Vendor,PO,No. Invoice,No. DO,Faktur Pajak,Nama Barang,Quantity Penagihan,Quantity di PO,UOI,Sub Total (Exclude PPN),Sub Total (Include PPN),Tanggal terima & koreksi Invoice,Tanggal Kirim Kasir,Lama Pekerjaan,Keterangan
+1,2026-10-12,Sparepart,,RDTV-PEND-1,5300088881,ALEX,PT SINAR JAYA,VALVE REJECT,,,,PT SINAR JAYA,5300088881,,DO-PEND-1,,VALVE REJECT,2,2,UNIT,,,,,,,,,
+CSV;
+
+    $service = app(MonitoringBarangImportService::class);
+    $first = $service->importFromString($csvPendingRdtv);
+
+    $rdtv = InvoicingReceipt::where('no_rdtv', 'RDTV-PEND-1')->first();
+
+    expect($first['created'])->toBe(1)
+        ->and($rdtv)->not->toBeNull()
+        ->and($rdtv->jenis)->toBe('RDTV')
+        ->and($rdtv->tanggal_info_grs)->toBeNull()
+        ->and($rdtv->status)->toBe('Menunggu Verifikasi');
+
+    // Setelah kolom Tanggal Info GRS diisi saat impor ulang -> otomatis Selesai tanpa fallback tgl kirim kasir
+    $csvInformedRdtv = str_replace(
+        'VALVE REJECT,,,,PT SINAR JAYA',
+        'VALVE REJECT,,2026-10-14,,PT SINAR JAYA',
+        $csvPendingRdtv
+    );
+
+    $second = $service->importFromString($csvInformedRdtv);
+    $rdtv->refresh();
+
+    expect($second['updated'])->toBe(1)
+        ->and($second['fallback_kasir_count'])->toBe(0)
+        ->and($second['incomplete_invoiced_rows'])->toBeEmpty()
+        ->and($rdtv->tanggal_info_grs->format('Y-m-d'))->toBe('2026-10-14')
+        ->and($rdtv->tanggal_kirim_kasir)->toBeNull()
+        ->and($rdtv->status)->toBe('Selesai');
 });
 
 it('directly imports an Excel (.xlsx) Monitoring Barang workbook with formula cells, title row, and CLI command', function () {

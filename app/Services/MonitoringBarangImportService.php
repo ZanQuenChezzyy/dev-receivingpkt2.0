@@ -887,7 +887,10 @@ class MonitoringBarangImportService
         }
 
         $finalNoPo = $noPo ?? '-';
-        $jenis = $noGrs !== null ? 'GRS' : ($noRdtv !== null ? 'RDTV' : 'GRS');
+        $isRdtvInGrsCol = $noGrs !== null && preg_match('/^rdtv\b/i', $noGrs) === 1;
+        $jenis = ($noGrs !== null && ! $isRdtvInGrsCol)
+            ? 'GRS'
+            : (($noRdtv !== null || $isRdtvInGrsCol) ? 'RDTV' : 'GRS');
         $kategoriBarang = $this->limitString($this->nullIfEmpty($this->cellByKey($row, $map, 'kategori_barang')), 255);
         $padi = $this->limitString($this->nullIfEmpty($this->cellByKey($row, $map, 'padi')), 255);
         $picName = $this->nullIfEmpty($this->cellByKey($row, $map, 'pic'));
@@ -898,6 +901,7 @@ class MonitoringBarangImportService
         $rawTanggalKirimKasir = $this->parseDate($this->cellByKey($row, $map, 'tanggal_kirim_kasir'));
 
         $hasInvoice = $noInvoice !== null;
+        $isRdtvInformed = $jenis === 'RDTV' && $tanggalInfoGrs !== null;
         $usedKasirFallback = false;
 
         if ($hasInvoice) {
@@ -914,6 +918,10 @@ class MonitoringBarangImportService
             } else {
                 $finalTanggalKirimKasir = null;
             }
+        } elseif ($isRdtvInformed) {
+            // Dokumen RDTV selesai di tahap Info GRS (menginfokan RDTV ke vendor) tanpa tahap kasir
+            $status = 'Selesai';
+            $finalTanggalKirimKasir = $rawTanggalKirimKasir;
         } else {
             $status = 'Menunggu Verifikasi';
             $finalTanggalKirimKasir = $rawTanggalKirimKasir;
@@ -1328,6 +1336,16 @@ class MonitoringBarangImportService
             $candidates = $poCandidates->filter(
                 fn (InvoicingReceipt $r): bool => $r->no_rdtv === $noRdtv && $r->jenis === 'RDTV' && blank($r->no_grs)
             );
+
+            if ($candidates->isEmpty()) {
+                return $poCandidates->first(
+                    fn (InvoicingReceipt $r): bool => $r->jenis === 'RDTV'
+                        && blank($r->no_grs)
+                        && blank($r->no_rdtv)
+                        && blank($r->no_invoice)
+                        && ($noDo === null || $r->no_do === $noDo)
+                );
+            }
 
             if ($noInvoice !== null) {
                 $sameInvoice = $candidates->first(

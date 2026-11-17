@@ -399,6 +399,8 @@ class CreateGrsRdtv extends CreateRecord
             ? round((float) $subtotalExclude + ((float) $subtotalExclude * 0.11), 2)
             : null;
 
+        $isRdtv = $category === 'RDTV';
+
         InvoicingReceipt::create([
             'grs_rdtv_item_id' => $grsRdtvItem->id,
             'delivery_order_receipt_id' => $do->id,
@@ -415,14 +417,14 @@ class CreateGrsRdtv extends CreateRecord
             'vendor_name' => $po?->vendor_name ?? $vendor?->name,
             'deskripsi' => $firstDetail?->description ?? $po?->description,
             'email_vendor' => is_array($vendor?->email) ? implode(', ', $vendor->email) : $vendor?->email,
-            'tanggal_info_grs' => $transactionDate ?? now(),
+            'tanggal_info_grs' => $isRdtv ? null : ($transactionDate ?? now()),
             'nama_barang' => $firstDetail?->description ?? $po?->description,
             'qty_penagihan' => $qtyPenagihan,
             'qty_po' => $qtyPo,
             'uoi' => $uoi,
             'subtotal_exclude_ppn' => $subtotalExclude,
             'subtotal_include_ppn' => $subtotalInclude,
-            'tanggal_terima_koreksi_invoice' => $transactionDate ?? now(),
+            'tanggal_terima_koreksi_invoice' => $isRdtv ? null : ($transactionDate ?? now()),
             'keterangan' => "Auto-generate dari {$category}: {$grsRdtvItem->document_code} (DO: {$do->delivery_order_no})",
             'status' => 'Menunggu Verifikasi',
         ]);

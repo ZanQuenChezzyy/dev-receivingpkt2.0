@@ -133,12 +133,26 @@ class InvoicingReceipt extends Model
                 }
             }
 
+            // Dokumen RDTV selesai sampai tahap Info GRS (info RDTV ke vendor)
+            if ($record->jenis === 'RDTV') {
+                if ($record->tanggal_info_grs !== null) {
+                    $record->status = 'Selesai';
+                } elseif (
+                    $record->exists
+                    && $record->isDirty('tanggal_info_grs')
+                    && ! $record->isDirty('status')
+                    && $record->getOriginal('status') === 'Selesai'
+                ) {
+                    $record->status = 'Menunggu Verifikasi';
+                }
+            }
+
             // Auto hitung Lama Pekerjaan
             if ($record->tanggal_terima_koreksi_invoice && $record->tanggal_kirim_kasir) {
                 $start = Carbon::parse($record->tanggal_terima_koreksi_invoice);
                 $end = Carbon::parse($record->tanggal_kirim_kasir);
                 $record->lama_pekerjaan = (int) $start->diffInDays($end, absolute: true);
-            } elseif ($record->tanggal_terima_koreksi_invoice && ! $record->tanggal_kirim_kasir) {
+            } elseif ($record->jenis !== 'RDTV' && $record->tanggal_terima_koreksi_invoice && ! $record->tanggal_kirim_kasir) {
                 $start = Carbon::parse($record->tanggal_terima_koreksi_invoice);
                 $record->lama_pekerjaan = (int) $start->diffInDays(now(), absolute: true);
             }

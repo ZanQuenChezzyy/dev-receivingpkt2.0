@@ -1,9 +1,12 @@
 <?php
 
+use App\Filament\Resources\GrsRdtvs\Pages\CreateGrsRdtv;
 use App\Filament\Resources\InvoicingReceipts\Pages\ListInvoicingReceipts;
 use App\Filament\Resources\InvoicingReceipts\Schemas\InvoicingReceiptForm;
 use App\Filament\Resources\InvoicingReceipts\Tables\InvoicingReceiptsTable;
 use App\Filament\Resources\PicMaterialAssignments\Schemas\PicMaterialAssignmentForm;
+use App\Models\DeliveryOrderReceipt;
+use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
 use App\Models\PicMaterialAssignment;
 use App\Models\PurchaseOrderIssued;
@@ -524,50 +527,56 @@ test('pic material assignment form configures conditional_rules repeater with cr
         ->and($allFields)->toHaveKey('conditional_rules');
 });
 
+function ensureInvoicingReceiptTableExists(): bool
+{
+    if (Illuminate\Support\Facades\Schema::hasTable('invoicing_receipts')) {
+        return false;
+    }
+
+    Illuminate\Support\Facades\Schema::create('invoicing_receipts', function ($table) {
+        $table->id();
+        $table->unsignedBigInteger('grs_rdtv_item_id')->nullable();
+        $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+        $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
+        $table->unsignedBigInteger('vendor_id')->nullable();
+        $table->unsignedBigInteger('pic_id')->nullable();
+        $table->date('tanggal_terima_grs')->nullable();
+        $table->string('jenis')->default('GRS');
+        $table->string('no_grs')->nullable();
+        $table->string('no_rdtv')->nullable();
+        $table->string('no_po')->nullable();
+        $table->string('no_do')->nullable();
+        $table->string('padi')->nullable();
+        $table->string('material_type')->nullable();
+        $table->string('vendor_name')->nullable();
+        $table->text('deskripsi')->nullable();
+        $table->string('email_vendor')->nullable();
+        $table->date('tanggal_info_grs')->nullable();
+        $table->string('no_invoice')->nullable();
+        $table->string('faktur_pajak')->nullable();
+        $table->text('nama_barang')->nullable();
+        $table->decimal('qty_penagihan', 15, 4)->nullable();
+        $table->decimal('qty_po', 15, 4)->nullable();
+        $table->string('uoi', 20)->nullable();
+        $table->decimal('subtotal_exclude_ppn', 18, 2)->nullable();
+        $table->decimal('subtotal_include_ppn', 18, 2)->nullable();
+        $table->date('tanggal_terima_koreksi_invoice')->nullable();
+        $table->date('tanggal_kirim_kasir')->nullable();
+        $table->integer('lama_pekerjaan')->nullable();
+        $table->text('keterangan')->nullable();
+        $table->string('dokumen_verifikasi_grs')->nullable();
+        $table->string('dokumen_invoice')->nullable();
+        $table->json('dokumen_kelengkapan')->nullable();
+        $table->string('status')->default('Menunggu Verifikasi');
+        $table->timestamps();
+    });
+
+    return true;
+}
+
 test('my_tasks tab on ListInvoicingReceipts shows only active tasks and excludes Selesai and Terkirim Kasir', function () {
     ensurePicAssignmentTablesExist();
-
-    $createdInvoicingTable = false;
-    if (! Illuminate\Support\Facades\Schema::hasTable('invoicing_receipts')) {
-        $createdInvoicingTable = true;
-        Illuminate\Support\Facades\Schema::create('invoicing_receipts', function ($table) {
-            $table->id();
-            $table->unsignedBigInteger('grs_rdtv_item_id')->nullable();
-            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
-            $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
-            $table->unsignedBigInteger('vendor_id')->nullable();
-            $table->unsignedBigInteger('pic_id')->nullable();
-            $table->date('tanggal_terima_grs')->nullable();
-            $table->string('jenis')->default('GRS');
-            $table->string('no_grs')->nullable();
-            $table->string('no_rdtv')->nullable();
-            $table->string('no_po')->nullable();
-            $table->string('no_do')->nullable();
-            $table->string('padi')->nullable();
-            $table->string('material_type')->nullable();
-            $table->string('vendor_name')->nullable();
-            $table->text('deskripsi')->nullable();
-            $table->string('email_vendor')->nullable();
-            $table->date('tanggal_info_grs')->nullable();
-            $table->string('no_invoice')->nullable();
-            $table->string('faktur_pajak')->nullable();
-            $table->text('nama_barang')->nullable();
-            $table->decimal('qty_penagihan', 15, 4)->nullable();
-            $table->decimal('qty_po', 15, 4)->nullable();
-            $table->string('uoi', 20)->nullable();
-            $table->decimal('subtotal_exclude_ppn', 18, 2)->nullable();
-            $table->decimal('subtotal_include_ppn', 18, 2)->nullable();
-            $table->date('tanggal_terima_koreksi_invoice')->nullable();
-            $table->date('tanggal_kirim_kasir')->nullable();
-            $table->integer('lama_pekerjaan')->nullable();
-            $table->text('keterangan')->nullable();
-            $table->string('dokumen_verifikasi_grs')->nullable();
-            $table->string('dokumen_invoice')->nullable();
-            $table->json('dokumen_kelengkapan')->nullable();
-            $table->string('status')->default('Menunggu Verifikasi');
-            $table->timestamps();
-        });
-    }
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
 
     try {
         DB::table('invoicing_receipts')->delete();
@@ -637,6 +646,211 @@ test('my_tasks tab on ListInvoicingReceipts shows only active tasks and excludes
             ->and($tabs['selesai']->getBadge())->toBe('1');
     } finally {
         Auth::logout();
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});
+
+test('RDTV receipt automatically completes at Info GRS and leaves Tugas Saya while GRS remains Menunggu Verifikasi', function () {
+    ensurePicAssignmentTablesExist();
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    try {
+        DB::table('invoicing_receipts')->delete();
+
+        $staffId = DB::table('users')->insertGetId([
+            'name' => 'Staff RDTV',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $rdtv = InvoicingReceipt::create([
+            'pic_id' => $staffId,
+            'jenis' => 'RDTV',
+            'no_po' => 'PO-RDTV-01',
+            'no_do' => 'DO-RDTV-01',
+            'tanggal_terima_grs' => '2026-11-10',
+            'tanggal_info_grs' => null,
+            'status' => 'Menunggu Verifikasi',
+        ]);
+
+        $grs = InvoicingReceipt::create([
+            'pic_id' => $staffId,
+            'jenis' => 'GRS',
+            'no_po' => 'PO-GRS-01',
+            'no_do' => 'DO-GRS-01',
+            'tanggal_terima_grs' => '2026-11-10',
+            'tanggal_info_grs' => '2026-11-11',
+            'status' => 'Menunggu Verifikasi',
+        ]);
+
+        Auth::loginUsingId($staffId);
+        $page = app(ListInvoicingReceipts::class);
+
+        // Sebelum Info GRS diisi: RDTV dan GRS sama-sama ada di Tugas Saya
+        expect($rdtv->status)->toBe('Menunggu Verifikasi')
+            ->and($grs->status)->toBe('Menunggu Verifikasi')
+            ->and($page->getTabs()['my_tasks']->getBadge())->toBe('2');
+
+        // Setelah Staff Invoice mengisi tanggal_info_grs pada RDTV -> otomatis Selesai & keluar dari Tugas Saya
+        $rdtv->update(['tanggal_info_grs' => '2026-11-17']);
+        $rdtv->refresh();
+
+        $tabsAfter = $page->getTabs();
+        $myTaskPos = $tabsAfter['my_tasks']->modifyQuery(InvoicingReceipt::query())
+            ->pluck('no_po')
+            ->all();
+
+        expect($rdtv->status)->toBe('Selesai')
+            ->and($rdtv->lama_pekerjaan)->toBeNull()
+            ->and($tabsAfter['my_tasks']->getBadge())->toBe('1')
+            ->and($myTaskPos)->toBe(['PO-GRS-01'])
+            ->and($tabsAfter['selesai']->getBadge())->toBe('1');
+
+        // Jika tanggal_info_grs dikosongkan kembali pada RDTV -> kembali Menunggu Verifikasi
+        $rdtv->update(['tanggal_info_grs' => null]);
+        expect($rdtv->fresh()->status)->toBe('Menunggu Verifikasi');
+    } finally {
+        Auth::logout();
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});
+
+test('invoicing receipts table exposes infoRdtv action and hides invoice/cashier actions for RDTV records', function () {
+    $livewire = app(ListInvoicingReceipts::class);
+
+    $resolveActionsFor = function (InvoicingReceipt $record) use ($livewire) {
+        $table = new Table($livewire);
+        InvoicingReceiptsTable::configure($table);
+
+        return collect($table->getRecordActions())
+            ->flatMap(function ($a) use ($record) {
+                if ($a instanceof ActionGroup) {
+                    $a->record($record);
+
+                    return collect($a->getActions())->map->record($record);
+                }
+
+                return [$a->record($record)];
+            })
+            ->filter(fn ($a) => method_exists($a, 'getName'))
+            ->keyBy(fn ($a) => $a->getName());
+    };
+
+    $rdtvPending = (new InvoicingReceipt)->forceFill([
+        'id' => 101,
+        'jenis' => 'RDTV',
+        'no_po' => 'PO-RDTV-ACT',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $grsPending = (new InvoicingReceipt)->forceFill([
+        'id' => 102,
+        'jenis' => 'GRS',
+        'no_po' => 'PO-GRS-ACT',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $rdtvActions = $resolveActionsFor($rdtvPending);
+    $grsActions = $resolveActionsFor($grsPending);
+
+    expect($rdtvActions)->toHaveKey('infoRdtv')
+        ->and($rdtvActions['infoRdtv']->isVisible())->toBeTrue()
+        ->and($rdtvActions['inputInvoiceData']->isVisible())->toBeFalse()
+        ->and($rdtvActions['copyMitraku']->isVisible())->toBeFalse()
+        ->and($rdtvActions['uploadBerkas']->isVisible())->toBeFalse()
+        ->and($rdtvActions['sendToCashier']->isVisible())->toBeFalse()
+        ->and($grsActions['infoRdtv']->isVisible())->toBeFalse()
+        ->and($grsActions['inputInvoiceData']->isVisible())->toBeTrue()
+        ->and($grsActions['sendToCashier']->isVisible())->toBeTrue();
+});
+
+test('CreateGrsRdtv leaves tanggal_info_grs null for RDTV so staff invoice must inform vendor to finish it', function () {
+    ensurePicAssignmentTablesExist();
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    $createdExtraTables = [];
+    if (! Illuminate\Support\Facades\Schema::hasTable('delivery_order_receipts')) {
+        $createdExtraTables[] = 'delivery_order_receipts';
+        Illuminate\Support\Facades\Schema::create('delivery_order_receipts', function ($table) {
+            $table->id();
+            $table->string('delivery_order_no')->nullable();
+            $table->string('document_code')->nullable();
+            $table->string('status')->nullable();
+            $table->timestamps();
+        });
+    }
+    if (! Illuminate\Support\Facades\Schema::hasTable('delivery_order_receipt_details')) {
+        $createdExtraTables[] = 'delivery_order_receipt_details';
+        Illuminate\Support\Facades\Schema::create('delivery_order_receipt_details', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
+            $table->decimal('quantity', 12, 3)->default(0);
+            $table->string('material_code')->nullable();
+            $table->string('description')->nullable();
+            $table->string('uoi')->nullable();
+            $table->string('material_type')->nullable();
+            $table->decimal('total_amount_snapshot', 18, 2)->default(0);
+            $table->timestamps();
+        });
+    }
+    if (! Illuminate\Support\Facades\Schema::hasTable('grs_rdtv_items')) {
+        $createdExtraTables[] = 'grs_rdtv_items';
+        Illuminate\Support\Facades\Schema::create('grs_rdtv_items', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('grs_rdtv_id')->nullable();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->string('document_code')->nullable();
+            $table->string('file_path')->nullable();
+            $table->string('status')->nullable();
+            $table->text('reason')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    try {
+        DB::table('invoicing_receipts')->delete();
+
+        $mockAssignment = Mockery::mock(InvoicingAssignmentService::class);
+        $mockAssignment->shouldReceive('determinePicId')->andReturn(null);
+        app()->instance(InvoicingAssignmentService::class, $mockAssignment);
+
+        $do = DeliveryOrderReceipt::create([
+            'delivery_order_no' => 'DO-TEST-RDTV',
+            'document_code' => 'DOC-RDTV-01',
+            'status' => 'RDTV',
+        ]);
+        $item = GrsRdtvItem::create([
+            'grs_rdtv_id' => 1,
+            'delivery_order_receipt_id' => $do->id,
+            'document_code' => 'DOC-RDTV-01',
+            'file_path' => 'grs-rdtv-docs/DOC-RDTV-01.pdf',
+            'status' => 'Matched',
+        ]);
+
+        $page = new class extends CreateGrsRdtv
+        {
+            public function createForTest(GrsRdtvItem $item, DeliveryOrderReceipt $do, string $category, string $date): void
+            {
+                $this->createInvoicingReceiptFor($item, $do, $category, $date);
+            }
+        };
+
+        $page->createForTest($item, $do, 'RDTV', '2026-11-17');
+        $rdtvReceipt = InvoicingReceipt::where('jenis', 'RDTV')->first();
+
+        expect($rdtvReceipt)->not->toBeNull()
+            ->and($rdtvReceipt->tanggal_terima_grs->format('Y-m-d'))->toBe('2026-11-17')
+            ->and($rdtvReceipt->tanggal_info_grs)->toBeNull()
+            ->and($rdtvReceipt->tanggal_terima_koreksi_invoice)->toBeNull()
+            ->and($rdtvReceipt->status)->toBe('Menunggu Verifikasi');
+    } finally {
+        foreach (array_reverse($createdExtraTables) as $tableName) {
+            Illuminate\Support\Facades\Schema::dropIfExists($tableName);
+        }
         if ($createdInvoicingTable) {
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
         }
