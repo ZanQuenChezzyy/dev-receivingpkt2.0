@@ -174,8 +174,8 @@ class ListInvoicingReceipts extends ListRecords
 
             'my_tasks' => Tab::make('Tugas Saya')
                 ->icon('heroicon-m-user')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('pic_id', Auth::id()))
-                ->badge(InvoicingReceipt::where('pic_id', Auth::id())->count())
+                ->modifyQueryUsing(fn (Builder $query): Builder => $this->applyMyTasksFilter($query))
+                ->badge($this->applyMyTasksFilter(InvoicingReceipt::query())->count())
                 ->badgeColor('primary'),
 
             'free_pool' => Tab::make('Bebas (Belum Ada PIC)')
@@ -208,5 +208,20 @@ class ListInvoicingReceipts extends ListRecords
                 ->badge(InvoicingReceipt::where('status', 'Selesai')->count())
                 ->badgeColor('success'),
         ];
+    }
+
+    /**
+     * Terapkan filter tugas aktif untuk tab "Tugas Saya" (tidak termasuk Terkirim Kasir & Selesai).
+     */
+    private function applyMyTasksFilter(Builder $query): Builder
+    {
+        $userId = Auth::id();
+        if ($userId === null) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query
+            ->where('pic_id', $userId)
+            ->whereIn('status', ['Menunggu Verifikasi', 'Terverifikasi']);
     }
 }

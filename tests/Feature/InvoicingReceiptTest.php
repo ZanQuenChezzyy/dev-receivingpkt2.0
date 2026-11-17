@@ -18,6 +18,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 test('vendor model has all 13 required columns and handles multiple emails', function () {
@@ -520,4 +522,123 @@ test('pic material assignment form configures conditional_rules repeater with cr
         ->and($allFields)->toHaveKey('assignment_mode')
         ->and($allFields)->toHaveKey('users')
         ->and($allFields)->toHaveKey('conditional_rules');
+});
+
+test('my_tasks tab on ListInvoicingReceipts shows only active tasks and excludes Selesai and Terkirim Kasir', function () {
+    ensurePicAssignmentTablesExist();
+
+    $createdInvoicingTable = false;
+    if (! Illuminate\Support\Facades\Schema::hasTable('invoicing_receipts')) {
+        $createdInvoicingTable = true;
+        Illuminate\Support\Facades\Schema::create('invoicing_receipts', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('grs_rdtv_item_id')->nullable();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
+            $table->unsignedBigInteger('vendor_id')->nullable();
+            $table->unsignedBigInteger('pic_id')->nullable();
+            $table->date('tanggal_terima_grs')->nullable();
+            $table->string('jenis')->default('GRS');
+            $table->string('no_grs')->nullable();
+            $table->string('no_rdtv')->nullable();
+            $table->string('no_po')->nullable();
+            $table->string('no_do')->nullable();
+            $table->string('padi')->nullable();
+            $table->string('material_type')->nullable();
+            $table->string('vendor_name')->nullable();
+            $table->text('deskripsi')->nullable();
+            $table->string('email_vendor')->nullable();
+            $table->date('tanggal_info_grs')->nullable();
+            $table->string('no_invoice')->nullable();
+            $table->string('faktur_pajak')->nullable();
+            $table->text('nama_barang')->nullable();
+            $table->decimal('qty_penagihan', 15, 4)->nullable();
+            $table->decimal('qty_po', 15, 4)->nullable();
+            $table->string('uoi', 20)->nullable();
+            $table->decimal('subtotal_exclude_ppn', 18, 2)->nullable();
+            $table->decimal('subtotal_include_ppn', 18, 2)->nullable();
+            $table->date('tanggal_terima_koreksi_invoice')->nullable();
+            $table->date('tanggal_kirim_kasir')->nullable();
+            $table->integer('lama_pekerjaan')->nullable();
+            $table->text('keterangan')->nullable();
+            $table->string('dokumen_verifikasi_grs')->nullable();
+            $table->string('dokumen_invoice')->nullable();
+            $table->json('dokumen_kelengkapan')->nullable();
+            $table->string('status')->default('Menunggu Verifikasi');
+            $table->timestamps();
+        });
+    }
+
+    try {
+        DB::table('invoicing_receipts')->delete();
+
+        $myUserId = DB::table('users')->insertGetId([
+            'name' => 'PIC Saya',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $otherUserId = DB::table('users')->insertGetId([
+            'name' => 'PIC Lain',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        InvoicingReceipt::create([
+            'pic_id' => $myUserId,
+            'no_po' => 'PO-MY-WAIT',
+            'status' => 'Menunggu Verifikasi',
+        ]);
+        InvoicingReceipt::create([
+            'pic_id' => $myUserId,
+            'no_po' => 'PO-MY-VERIFIED',
+            'status' => 'Terverifikasi',
+        ]);
+        InvoicingReceipt::create([
+            'pic_id' => $myUserId,
+            'no_po' => 'PO-MY-CASHIER',
+            'status' => 'Terkirim Kasir',
+        ]);
+        InvoicingReceipt::create([
+            'pic_id' => $myUserId,
+            'no_po' => 'PO-MY-DONE',
+            'status' => 'Selesai',
+        ]);
+        InvoicingReceipt::create([
+            'pic_id' => $otherUserId,
+            'no_po' => 'PO-OTHER-WAIT',
+            'status' => 'Menunggu Verifikasi',
+        ]);
+        InvoicingReceipt::create([
+            'pic_id' => null,
+            'no_po' => 'PO-FREE-POOL',
+            'status' => 'Menunggu Verifikasi',
+        ]);
+
+        $page = app(ListInvoicingReceipts::class);
+
+        Auth::logout();
+        $guestTabs = $page->getTabs();
+
+        expect($guestTabs['my_tasks']->getBadge())->toBe('0')
+            ->and($guestTabs['my_tasks']->modifyQuery(InvoicingReceipt::query())->count())->toBe(0);
+
+        Auth::loginUsingId($myUserId);
+        $tabs = $page->getTabs();
+        $myTaskPos = $tabs['my_tasks']->modifyQuery(InvoicingReceipt::query())
+            ->orderBy('id')
+            ->pluck('no_po')
+            ->all();
+
+        expect($tabs['my_tasks']->getBadge())->toBe('2')
+            ->and($myTaskPos)->toBe(['PO-MY-WAIT', 'PO-MY-VERIFIED'])
+            ->and($tabs['all']->getBadge())->toBe('6')
+            ->and($tabs['sent_cashier']->getBadge())->toBe('1')
+            ->and($tabs['selesai']->getBadge())->toBe('1');
+    } finally {
+        Auth::logout();
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
 });
