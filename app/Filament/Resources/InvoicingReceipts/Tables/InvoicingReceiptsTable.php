@@ -22,8 +22,8 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Wizard\Step;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
@@ -399,10 +399,11 @@ class InvoicingReceiptsTable
                         ->modalSubmitActionLabel('Simpan Data Invoice')
                         ->modalCancelActionLabel('Tutup')
                         ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.input-invoice-modal-header', ['record' => $record]))
-                        ->schema([
-                            Section::make('Dokumen Penagihan & Slip SAP')
-                                ->description('Nomor dokumen resmi penagihan vendor dan slip resmi GRS/RDTV dari SAP.')
+                        ->steps([
+                            Step::make('Dokumen Penagihan')
+                                ->description('Nomor dokumen resmi SAP & DO')
                                 ->icon('heroicon-o-clipboard-document-check')
+                                ->columns(2)
                                 ->schema([
                                     TextInput::make('no_grs')
                                         ->label('No. GRS Utama (Resmi SAP)')
@@ -450,10 +451,10 @@ class InvoicingReceiptsTable
                                         ->prefixIcon('heroicon-m-receipt-percent')
                                         ->default(fn (InvoicingReceipt $record) => $record->faktur_pajak)
                                         ->helperText('Nomor seri Faktur Pajak elektronik / e-Faktur (opsional, dapat diisi menyusul).'),
-                                ])->columns(2),
+                                ]),
 
-                            Section::make('Rincian Barang yang Ditagihkan (Multi-Item)')
-                                ->description('Daftar barang dalam invoice ini. Jika PO memiliki beberapa item (misal item 10, 20, 30), kuantitas dan harga item otomatis terisi dari PO.')
+                            Step::make('Rincian Barang')
+                                ->description('Daftar item barang yang ditagihkan')
                                 ->icon('heroicon-o-queue-list')
                                 ->schema([
                                     Repeater::make('items')
@@ -567,10 +568,10 @@ class InvoicingReceiptsTable
                                         ]),
                                 ]),
 
-                            Section::make('Ringkasan Total Invoice')
-                                ->description('Nilai total invoice yang terakumulasi dari rincian barang di atas.')
+                            Step::make('Ringkasan Total')
+                                ->description('Total kuantitas & nilai invoice')
                                 ->icon('heroicon-o-calculator')
-                                ->collapsed()
+                                ->columns(2)
                                 ->schema([
                                     TextInput::make('qty_penagihan')
                                         ->label('Total Quantity Penagihan')
@@ -664,8 +665,9 @@ class InvoicingReceiptsTable
 
                                             return null;
                                         }),
-                                ])->columns(2),
+                                ]),
                         ])
+                        ->skippableSteps()
                         ->action(function (InvoicingReceipt $record, array $data) {
                             $record->update([
                                 'no_grs' => $data['no_grs'] ?? $record->no_grs,
