@@ -237,14 +237,46 @@ class InvoicingReceipt extends Model
                 }
             }
 
-            $itemNames = $this->items->pluck('nama_barang')->filter(fn ($n) => filled($n))->unique()->values();
+            $itemNames = $this->items->pluck('nama_barang')->filter(fn ($n) => filled($n))->values();
             if ($itemNames->isNotEmpty()) {
-                $this->nama_barang = $itemNames->implode(', ');
+                $this->nama_barang = $itemNames->unique()->implode(', ');
+
+                if ($itemNames->count() > 1) {
+                    $lines = [];
+                    foreach ($itemNames as $idx => $name) {
+                        $lines[] = ($idx + 1).'. '.trim($name);
+                    }
+                    $this->deskripsi = implode("\n", $lines);
+                } elseif (blank($this->deskripsi)) {
+                    $this->deskripsi = trim($itemNames->first());
+                }
             }
 
             $itemGrs = $this->items->pluck('no_grs')->filter(fn ($g) => filled($g))->unique()->values();
             if ($itemGrs->isNotEmpty() && blank($this->no_grs)) {
                 $this->no_grs = $itemGrs->implode(', ');
+            }
+        } elseif (filled($this->no_po) && $this->no_po !== '-') {
+            $poDescriptions = PurchaseOrderIssued::where('purchase_order_no', trim($this->no_po))
+                ->orderBy('item_no')
+                ->pluck('description')
+                ->filter(fn ($d) => filled($d))
+                ->values();
+
+            if ($poDescriptions->count() > 1) {
+                $lines = [];
+                foreach ($poDescriptions as $idx => $desc) {
+                    $lines[] = ($idx + 1).'. '.trim($desc);
+                }
+                $this->deskripsi = implode("\n", $lines);
+                if (blank($this->nama_barang)) {
+                    $this->nama_barang = $poDescriptions->unique()->implode(', ');
+                }
+            } elseif ($poDescriptions->count() === 1 && blank($this->deskripsi)) {
+                $this->deskripsi = trim($poDescriptions->first());
+                if (blank($this->nama_barang)) {
+                    $this->nama_barang = $this->deskripsi;
+                }
             }
         }
     }

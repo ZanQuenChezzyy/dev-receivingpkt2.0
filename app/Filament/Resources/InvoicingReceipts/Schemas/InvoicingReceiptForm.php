@@ -143,7 +143,13 @@ class InvoicingReceiptForm
                                         $set('nama_barang', $names ?: $po->description);
                                     }
                                     if (! $get('deskripsi') && $po->description) {
-                                        $set('deskripsi', $po->description);
+                                        $descList = $poRecords->pluck('description')->filter()->values();
+                                        if ($descList->count() > 1) {
+                                            $lines = $descList->map(fn ($d, $i) => ($i + 1).'. '.trim($d))->implode("\n");
+                                            $set('deskripsi', $lines);
+                                        } else {
+                                            $set('deskripsi', $po->description);
+                                        }
                                     }
                                     if (! $get('vendor_name') && $po->vendor_name) {
                                         $set('vendor_name', $po->vendor_name);
@@ -276,8 +282,8 @@ class InvoicingReceiptForm
                             ->placeholder('vendor@email.com (bisa lebih dari 1 email)'),
 
                         Textarea::make('deskripsi')
-                            ->label('Deskripsi Pekerjaan / Catatan Pengadaan')
-                            ->rows(2)
+                            ->label('Deskripsi')
+                            ->rows(5)
                             ->columnSpanFull(),
                     ])->columns(2),
 

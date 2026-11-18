@@ -1347,3 +1347,36 @@ test('InvoicingReceiptsTable has correct column order: tanggal terima invoice, n
         ->and($table->getFilter('pic_id', withHidden: true))->not->toBeNull()
         ->and(count($table->getFilters()))->toBe(4);
 });
+
+test('syncSummaryFromItems formats multi-item deskripsi as numbered list and command runs cleanly', function () {
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    try {
+        $receipt = InvoicingReceipt::create([
+            'no_po' => 'PO-TEST-DESC',
+            'jenis' => 'GRS',
+            'status' => 'Menunggu Verifikasi',
+        ]);
+
+        $receipt->items()->createMany([
+            ['item_no' => 10, 'nama_barang' => 'BUSHING:FISHER 1IN-EZ VALVE;1E791214012', 'qty_penagihan' => 3, 'qty_po' => 3, 'uoi' => 'EA'],
+            ['item_no' => 20, 'nama_barang' => 'PACKING SET: FISHER;RPACKX00022', 'qty_penagihan' => 1, 'qty_po' => 1, 'uoi' => 'SET'],
+            ['item_no' => 30, 'nama_barang' => 'RINGVALVE SEAT:FISHER;1V550805092', 'qty_penagihan' => 2, 'qty_po' => 2, 'uoi' => 'EA'],
+        ]);
+
+        $receipt->syncSummaryFromItems();
+
+        $expectedDesc = "1. BUSHING:FISHER 1IN-EZ VALVE;1E791214012\n2. PACKING SET: FISHER;RPACKX00022\n3. RINGVALVE SEAT:FISHER;1V550805092";
+        expect($receipt->deskripsi)->toBe($expectedDesc);
+
+        $receipt->save();
+
+        // Run sync command
+        $this->artisan('invoicing:sync-descriptions')->assertSuccessful();
+    } finally {
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});

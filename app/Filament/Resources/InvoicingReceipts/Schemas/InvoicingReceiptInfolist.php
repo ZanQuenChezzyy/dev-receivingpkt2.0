@@ -104,9 +104,10 @@ class InvoicingReceiptInfolist
                             ->placeholder('-'),
 
                         TextEntry::make('deskripsi')
-                            ->label('Deskripsi Pekerjaan')
+                            ->label('Deskripsi')
                             ->columnSpanFull()
-                            ->placeholder('-'),
+                            ->formatStateUsing(fn ($state) => filled($state) ? nl2br(e($state)) : '-')
+                            ->html(),
                     ])->columns(2),
 
                 Section::make('Rincian Penagihan & Mitraku')
