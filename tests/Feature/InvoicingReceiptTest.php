@@ -1326,7 +1326,7 @@ test('InvoicingReceiptsTable has correct column order: tanggal terima grs, no_po
     expect($dateFilter)->not->toBeNull()
         ->and($dateFilter)->toBeInstanceOf(DateRangeFilter::class);
 
-    // 3. Columns check: exact order: tanggal terima grs, no_po, no_grs, pic.name
+    // 3. Columns check: exact order: tanggal terima grs, no_po, no_grs, pic.name, vendor_name
     $columns = collect($table->getColumns());
     $columnNames = $columns->map(fn ($c) => method_exists($c, 'getName') ? $c->getName() : null)->values();
 
@@ -1334,11 +1334,13 @@ test('InvoicingReceiptsTable has correct column order: tanggal terima grs, no_po
     $noPoIndex = $columnNames->search('no_po');
     $noGrsIndex = $columnNames->search('no_grs');
     $picIndex = $columnNames->search('pic.name');
+    $vendorIndex = $columnNames->search('vendor_name');
 
     expect($tglGrsIndex)->toBe(0)
         ->and($noPoIndex)->toBe(1)
         ->and($noGrsIndex)->toBe(2)
-        ->and($picIndex)->toBe(3);
+        ->and($picIndex)->toBe(3)
+        ->and($vendorIndex)->toBe(4);
 
     // 4. On my_tasks tab, only 4 filters are visible (pic_id & material_type are hidden)
     $page->activeTab = 'my_tasks';

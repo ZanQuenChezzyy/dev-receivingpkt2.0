@@ -130,16 +130,6 @@ class InvoicingReceiptsTable
                                         ->send();
                                 })
                         ),
-                ]),
-
-                ColumnGroup::make('Referensi DO & Vendor', [
-                    TextColumn::make('no_do')
-                        ->label('No. DO')
-                        ->icon('heroicon-m-truck')
-                        ->copyable()
-                        ->copyMessage('Nomor DO disalin')
-                        ->searchable()
-                        ->sortable(),
 
                     TextColumn::make('vendor_name')
                         ->label('Nama Vendor')
@@ -148,6 +138,16 @@ class InvoicingReceiptsTable
                         ->searchable()
                         ->limit(25)
                         ->tooltip(fn ($record) => $record->vendor_name),
+                ]),
+
+                ColumnGroup::make('Referensi DO', [
+                    TextColumn::make('no_do')
+                        ->label('No. DO')
+                        ->icon('heroicon-m-truck')
+                        ->copyable()
+                        ->copyMessage('Nomor DO disalin')
+                        ->searchable()
+                        ->sortable(),
 
                     TextColumn::make('kategori_barang')
                         ->label('Kategori')
