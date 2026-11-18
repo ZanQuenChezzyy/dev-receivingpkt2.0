@@ -173,15 +173,16 @@
 
         <!-- Modal Staff Invoice Workload List -->
         @if ($showStaffModal)
-            <div
-                class="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden p-3 sm:p-6 bg-black/60 backdrop-blur-sm flex items-center justify-center transition-all"
-                wire:keydown.escape="closeStaffModal"
-                style="-webkit-overflow-scrolling: touch;"
-            >
+            @teleport('body')
                 <div
-                    class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[85vh] my-auto animate-in fade-in zoom-in-95 duration-150"
-                    @click.outside="$wire.closeStaffModal()"
+                    class="fixed inset-0 z-[99999] overflow-y-auto overflow-x-hidden p-3 sm:p-6 bg-slate-950/70 backdrop-blur-md flex items-center justify-center transition-all"
+                    wire:keydown.escape="closeStaffModal"
+                    style="-webkit-overflow-scrolling: touch;"
                 >
+                    <div
+                        class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[85vh] my-auto animate-in fade-in zoom-in-95 duration-150"
+                        @click.outside="$wire.closeStaffModal()"
+                    >
                     <!-- Modal Header -->
                     <div class="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] shrink-0">
                         <div class="flex items-center gap-3">
@@ -311,7 +312,7 @@
                         </x-filament::button>
                     </div>
                 </div>
-            </div>
+            @endteleport
         @endif
     </div>
 </x-filament-widgets::widget>
