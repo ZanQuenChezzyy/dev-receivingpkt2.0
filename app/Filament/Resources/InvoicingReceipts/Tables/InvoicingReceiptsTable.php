@@ -564,22 +564,6 @@ class InvoicingReceiptsTable
                                                 ->numeric()
                                                 ->placeholder('0.00')
                                                 ->columnSpan(['default' => 1, 'md' => 1]),
-
-                                            TextInput::make('subtotal_exclude_ppn')
-                                                ->label('Harga Total Item (DPP)')
-                                                ->numeric()
-                                                ->prefix('Rp')
-                                                ->live(onBlur: true)
-                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                    $items = $get('../../items') ?? [];
-                                                    $totalDpp = 0;
-                                                    foreach ($items as $item) {
-                                                        $totalDpp += (float) ($item['subtotal_exclude_ppn'] ?? 0);
-                                                    }
-                                                    $set('../../subtotal_exclude_ppn', $totalDpp > 0 ? $totalDpp : null);
-                                                    $set('../../subtotal_include_ppn', $totalDpp > 0 ? round($totalDpp * 1.11, 2) : null);
-                                                })
-                                                ->columnSpan(['default' => 1, 'md' => 1]),
                                         ]),
                                 ]),
 
