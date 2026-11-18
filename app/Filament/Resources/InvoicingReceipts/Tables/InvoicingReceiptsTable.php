@@ -528,20 +528,15 @@ class InvoicingReceiptsTable
                                             return [];
                                         })
                                         ->columnSpanFull()
-                                        ->columns(['default' => 1, 'md' => 3])
+                                        ->columns(['default' => 1, 'sm' => 2, 'md' => 12])
                                         ->schema([
                                             Hidden::make('item_no'),
 
                                             TextInput::make('nama_barang')
-                                                ->label('Nama / Deskripsi Barang')
-                                                ->placeholder('Nama atau spesifikasi barang')
+                                                ->label('Deskripsi')
+                                                ->placeholder('Nama atau deskripsi spesifikasi barang')
                                                 ->required()
-                                                ->columnSpan(['default' => 1, 'md' => 2]),
-
-                                            TextInput::make('uoi')
-                                                ->label('Satuan')
-                                                ->placeholder('PCS, SET...')
-                                                ->columnSpan(['default' => 1, 'md' => 1]),
+                                                ->columnSpan(['default' => 1, 'sm' => 2, 'md' => 5]),
 
                                             TextInput::make('qty_penagihan')
                                                 ->label('Qty Ditagihkan')
@@ -557,13 +552,18 @@ class InvoicingReceiptsTable
                                                     }
                                                     $set('../../qty_penagihan', $totalQty > 0 ? $totalQty : null);
                                                 })
-                                                ->columnSpan(['default' => 1, 'md' => 1]),
+                                                ->columnSpan(['default' => 1, 'sm' => 1, 'md' => 3]),
 
                                             TextInput::make('qty_po')
                                                 ->label('Qty PO')
                                                 ->numeric()
                                                 ->placeholder('0.00')
-                                                ->columnSpan(['default' => 1, 'md' => 1]),
+                                                ->columnSpan(['default' => 1, 'sm' => 1, 'md' => 2]),
+
+                                            TextInput::make('uoi')
+                                                ->label('Satuan')
+                                                ->placeholder('PCS, EA, SET...')
+                                                ->columnSpan(['default' => 1, 'sm' => 2, 'md' => 2]),
                                         ]),
                                 ]),
 
