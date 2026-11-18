@@ -1313,7 +1313,7 @@ test('inputInvoiceData automatically inherits header GRS and DO to items and def
     }
 });
 
-test('InvoicingReceiptsTable has correct column order: tanggal terima invoice, no_po, no_grs/rdtv, pic, and date range filter', function () {
+test('InvoicingReceiptsTable has correct column order: tanggal terima grs, no_po, no_grs/rdtv, pic, and date range filter', function () {
     $page = app(ListInvoicingReceipts::class);
     $table = new Table($page);
     InvoicingReceiptsTable::configure($table);
@@ -1326,16 +1326,16 @@ test('InvoicingReceiptsTable has correct column order: tanggal terima invoice, n
     expect($dateFilter)->not->toBeNull()
         ->and($dateFilter)->toBeInstanceOf(DateRangeFilter::class);
 
-    // 3. Columns check: exact order: tanggal terima invoice, no_po, no_grs, pic.name
+    // 3. Columns check: exact order: tanggal terima grs, no_po, no_grs, pic.name
     $columns = collect($table->getColumns());
     $columnNames = $columns->map(fn ($c) => method_exists($c, 'getName') ? $c->getName() : null)->values();
 
-    $tglInvoiceIndex = $columnNames->search('tanggal_terima_koreksi_invoice');
+    $tglGrsIndex = $columnNames->search('tanggal_terima_grs');
     $noPoIndex = $columnNames->search('no_po');
     $noGrsIndex = $columnNames->search('no_grs');
     $picIndex = $columnNames->search('pic.name');
 
-    expect($tglInvoiceIndex)->toBe(0)
+    expect($tglGrsIndex)->toBe(0)
         ->and($noPoIndex)->toBe(1)
         ->and($noGrsIndex)->toBe(2)
         ->and($picIndex)->toBe(3);

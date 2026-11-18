@@ -49,28 +49,12 @@ class InvoicingReceiptsTable
         return $table
             ->columns([
                 ColumnGroup::make('Dokumen Utama & PIC', [
-                    TextColumn::make('tanggal_terima_koreksi_invoice')
-                        ->label('Tanggal Terima Invoice')
-                        ->formatStateUsing(function ($state, InvoicingReceipt $record): string {
-                            if ($state) {
-                                return Carbon::parse($state)->format('d/m/Y');
-                            }
-                            if ($record->tanggal_terima_grs) {
-                                return Carbon::parse($record->tanggal_terima_grs)->format('d/m/Y');
-                            }
-
-                            return '-';
-                        })
-                        ->description(function ($state, InvoicingReceipt $record): ?string {
-                            if (! $state && $record->tanggal_terima_grs) {
-                                return 'Tgl GRS';
-                            }
-
-                            return null;
-                        })
+                    TextColumn::make('tanggal_terima_grs')
+                        ->label('Tanggal Terima GRS')
+                        ->date('d/m/Y')
                         ->icon('heroicon-m-calendar')
                         ->iconColor('primary')
-                        ->sortable(query: fn (Builder $query, string $direction) => $query->orderBy(DB::raw('COALESCE(tanggal_terima_koreksi_invoice, tanggal_terima_grs)'), $direction)),
+                        ->sortable(),
 
                     TextColumn::make('no_po')
                         ->label('No. PO')
@@ -289,9 +273,11 @@ class InvoicingReceiptsTable
                 ]),
 
                 // Kolom pelengkap (toggleable)
-                TextColumn::make('tanggal_terima_grs')
-                    ->label('Tgl Terima GRS')
+                TextColumn::make('tanggal_terima_koreksi_invoice')
+                    ->label('Tanggal Terima Invoice')
                     ->date('d/m/Y')
+                    ->placeholder('-')
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('jenis')
@@ -340,36 +326,16 @@ class InvoicingReceiptsTable
             ])
             ->filters([
                 DateRangeFilter::make('tanggal_terima_grs')
-                    ->label('Rentang Tgl Terima Invoice')
+                    ->label('Rentang Tgl Terima GRS')
                     ->placeholder('Pilih rentang tanggal')
                     ->modifyQueryUsing(function (Builder $query, ?Carbon $startDate, ?Carbon $endDate): Builder {
                         return $query
-                            ->when($startDate && $endDate, fn ($q) => $q->where(function ($sub) use ($startDate, $endDate) {
-                                $sub->whereBetween('tanggal_terima_koreksi_invoice', [
-                                    $startDate->toDateString(),
-                                    $endDate->toDateString(),
-                                ])->orWhere(function ($fallback) use ($startDate, $endDate) {
-                                    $fallback->whereNull('tanggal_terima_koreksi_invoice')
-                                        ->whereBetween('tanggal_terima_grs', [
-                                            $startDate->toDateString(),
-                                            $endDate->toDateString(),
-                                        ]);
-                                });
-                            }))
-                            ->when($startDate && ! $endDate, fn ($q) => $q->where(function ($sub) use ($startDate) {
-                                $sub->where('tanggal_terima_koreksi_invoice', '>=', $startDate->toDateString())
-                                    ->orWhere(function ($fallback) use ($startDate) {
-                                        $fallback->whereNull('tanggal_terima_koreksi_invoice')
-                                            ->where('tanggal_terima_grs', '>=', $startDate->toDateString());
-                                    });
-                            }))
-                            ->when(! $startDate && $endDate, fn ($q) => $q->where(function ($sub) use ($endDate) {
-                                $sub->where('tanggal_terima_koreksi_invoice', '<=', $endDate->toDateString())
-                                    ->orWhere(function ($fallback) use ($endDate) {
-                                        $fallback->whereNull('tanggal_terima_koreksi_invoice')
-                                            ->where('tanggal_terima_grs', '<=', $endDate->toDateString());
-                                    });
-                            }));
+                            ->when($startDate && $endDate, fn ($q) => $q->whereBetween('tanggal_terima_grs', [
+                                $startDate->toDateString(),
+                                $endDate->toDateString(),
+                            ]))
+                            ->when($startDate && ! $endDate, fn ($q) => $q->where('tanggal_terima_grs', '>=', $startDate->toDateString()))
+                            ->when(! $startDate && $endDate, fn ($q) => $q->where('tanggal_terima_grs', '<=', $endDate->toDateString()));
                     }),
 
                 SelectFilter::make('jenis')
