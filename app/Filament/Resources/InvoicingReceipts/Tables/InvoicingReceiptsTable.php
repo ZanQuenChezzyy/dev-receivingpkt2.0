@@ -17,6 +17,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -527,18 +528,20 @@ class InvoicingReceiptsTable
                                             return [];
                                         })
                                         ->columnSpanFull()
+                                        ->columns(['default' => 1, 'md' => 3])
                                         ->schema([
-                                            TextInput::make('item_no')
-                                                ->label('Item No.')
-                                                ->placeholder('10, 20...')
-                                                ->numeric()
-                                                ->columnSpan(2),
+                                            Hidden::make('item_no'),
 
                                             TextInput::make('nama_barang')
                                                 ->label('Nama / Deskripsi Barang')
                                                 ->placeholder('Nama atau spesifikasi barang')
                                                 ->required()
-                                                ->columnSpan(4),
+                                                ->columnSpan(['default' => 1, 'md' => 2]),
+
+                                            TextInput::make('uoi')
+                                                ->label('Satuan')
+                                                ->placeholder('PCS, SET...')
+                                                ->columnSpan(['default' => 1, 'md' => 1]),
 
                                             TextInput::make('qty_penagihan')
                                                 ->label('Qty Ditagihkan')
@@ -554,18 +557,13 @@ class InvoicingReceiptsTable
                                                     }
                                                     $set('../../qty_penagihan', $totalQty > 0 ? $totalQty : null);
                                                 })
-                                                ->columnSpan(2),
+                                                ->columnSpan(['default' => 1, 'md' => 1]),
 
                                             TextInput::make('qty_po')
                                                 ->label('Qty PO')
                                                 ->numeric()
                                                 ->placeholder('0.00')
-                                                ->columnSpan(1),
-
-                                            TextInput::make('uoi')
-                                                ->label('Satuan')
-                                                ->placeholder('PCS, SET...')
-                                                ->columnSpan(1),
+                                                ->columnSpan(['default' => 1, 'md' => 1]),
 
                                             TextInput::make('subtotal_exclude_ppn')
                                                 ->label('Harga Total Item (DPP)')
@@ -581,9 +579,8 @@ class InvoicingReceiptsTable
                                                     $set('../../subtotal_exclude_ppn', $totalDpp > 0 ? $totalDpp : null);
                                                     $set('../../subtotal_include_ppn', $totalDpp > 0 ? round($totalDpp * 1.11, 2) : null);
                                                 })
-                                                ->columnSpan(2),
-                                        ])
-                                        ->columns(12),
+                                                ->columnSpan(['default' => 1, 'md' => 1]),
+                                        ]),
                                 ]),
 
                             Section::make('Ringkasan Total Invoice')
