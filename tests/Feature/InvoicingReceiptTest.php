@@ -133,7 +133,7 @@ test('invoicing receipt casts numeric and date fields properly', function () {
 });
 
 test('pic selection query builder filters strictly by Staff Invoice role', function () {
-    $query = User::whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'));
+    $query = User::whereHas('roles', fn($q) => $q->where('name', 'Staff Invoice'));
 
     expect($query->toSql())->toContain('model_has_roles')
         ->and($query->getBindings())->toContain('Staff Invoice')
@@ -190,7 +190,7 @@ test('invoicing assignment service treats empty string, none, and null as free f
 
 function ensurePicAssignmentTablesExist(): void
 {
-    if (! Illuminate\Support\Facades\Schema::hasTable('users')) {
+    if (!Illuminate\Support\Facades\Schema::hasTable('users')) {
         Illuminate\Support\Facades\Schema::create('users', function ($table) {
             $table->id();
             $table->string('name')->nullable();
@@ -198,7 +198,7 @@ function ensurePicAssignmentTablesExist(): void
         });
     }
 
-    if (! Illuminate\Support\Facades\Schema::hasTable('pic_material_assignments')) {
+    if (!Illuminate\Support\Facades\Schema::hasTable('pic_material_assignments')) {
         Illuminate\Support\Facades\Schema::create('pic_material_assignments', function ($table) {
             $table->id();
             $table->string('material_type')->unique();
@@ -208,13 +208,13 @@ function ensurePicAssignmentTablesExist(): void
             $table->json('conditional_rules')->nullable();
             $table->timestamps();
         });
-    } elseif (! Illuminate\Support\Facades\Schema::hasColumn('pic_material_assignments', 'conditional_rules')) {
+    } elseif (!Illuminate\Support\Facades\Schema::hasColumn('pic_material_assignments', 'conditional_rules')) {
         Illuminate\Support\Facades\Schema::table('pic_material_assignments', function ($table) {
             $table->json('conditional_rules')->nullable();
         });
     }
 
-    if (! Illuminate\Support\Facades\Schema::hasTable('pic_material_assignment_user')) {
+    if (!Illuminate\Support\Facades\Schema::hasTable('pic_material_assignment_user')) {
         Illuminate\Support\Facades\Schema::create('pic_material_assignment_user', function ($table) {
             $table->id();
             $table->unsignedBigInteger('pic_material_assignment_id');
@@ -283,9 +283,11 @@ test('purchase order issued model defines invoicing receipts relationship', func
 });
 
 test('user model allows querying invoicing receipts with count on pic_id', function () {
-    $query = User::withCount(['invoicingReceipts as active_count' => function ($q) {
-        $q->whereIn('status', ['Menunggu Verifikasi', 'Terverifikasi']);
-    }]);
+    $query = User::withCount([
+        'invoicingReceipts as active_count' => function ($q) {
+            $q->whereIn('status', ['Menunggu Verifikasi', 'Terverifikasi']);
+        }
+    ]);
 
     expect($query->toSql())->toContain('invoicing_receipts')
         ->and($query->toSql())->toContain('active_count')
@@ -344,8 +346,7 @@ test('invoicing receipt model computes subtotal include ppn with 11% formula', f
 });
 
 test('invoicing receipt form configures validation where no_do is required while no_invoice and faktur_pajak are optional', function () {
-    $livewire = new class extends Component implements HasSchemas
-    {
+    $livewire = new class extends Component implements HasSchemas {
         use InteractsWithSchemas;
     };
 
@@ -366,9 +367,9 @@ test('invoicing receipt form configures validation where no_do is required while
     };
 
     $allFields = $flattenComponents($components)
-        ->filter(fn ($c) => method_exists($c, 'getName'))
-        ->groupBy(fn ($c) => $c->getName())
-        ->map(fn ($group) => $group->first());
+        ->filter(fn($c) => method_exists($c, 'getName'))
+        ->groupBy(fn($c) => $c->getName())
+        ->map(fn($group) => $group->first());
 
     expect($allFields)->toHaveKey('no_invoice')
         ->and($allFields)->toHaveKey('no_do')
@@ -398,7 +399,7 @@ test('invoicing receipts table defines merged uploadBerkas action for verificati
 
         return [$a];
     });
-    $actionNames = $actions->map(fn ($a) => method_exists($a, 'getName') ? $a->getName() : null)->filter();
+    $actionNames = $actions->map(fn($a) => method_exists($a, 'getName') ? $a->getName() : null)->filter();
 
     expect($actionNames)->toContain('uploadBerkas')
         ->and($actionNames)->not->toContain('uploadVerifikasi')
@@ -503,8 +504,7 @@ test('invoicing assignment service supports multiple conditional rule user_ids w
 });
 
 test('pic material assignment form configures conditional_rules repeater with criteria_type, material_code, description_keyword', function () {
-    $livewire = new class extends Component implements HasSchemas
-    {
+    $livewire = new class extends Component implements HasSchemas {
         use InteractsWithSchemas;
     };
 
@@ -527,9 +527,9 @@ test('pic material assignment form configures conditional_rules repeater with cr
     };
 
     $allFields = $flattenComponents($components)
-        ->filter(fn ($c) => method_exists($c, 'getName'))
-        ->groupBy(fn ($c) => $c->getName())
-        ->map(fn ($group) => $group->first());
+        ->filter(fn($c) => method_exists($c, 'getName'))
+        ->groupBy(fn($c) => $c->getName())
+        ->map(fn($group) => $group->first());
 
     expect($allFields)->toHaveKey('material_type')
         ->and($allFields)->toHaveKey('assignment_mode')
@@ -540,7 +540,7 @@ test('pic material assignment form configures conditional_rules repeater with cr
 function ensureInvoicingReceiptTableExists(): bool
 {
     $created = false;
-    if (! Illuminate\Support\Facades\Schema::hasTable('invoicing_receipts')) {
+    if (!Illuminate\Support\Facades\Schema::hasTable('invoicing_receipts')) {
         Illuminate\Support\Facades\Schema::create('invoicing_receipts', function ($table) {
             $table->id();
             $table->unsignedBigInteger('grs_rdtv_item_id')->nullable();
@@ -581,7 +581,7 @@ function ensureInvoicingReceiptTableExists(): bool
         $created = true;
     }
 
-    if (! Illuminate\Support\Facades\Schema::hasTable('invoicing_receipt_items')) {
+    if (!Illuminate\Support\Facades\Schema::hasTable('invoicing_receipt_items')) {
         $createItemsMigration = include database_path('migrations/2026_11_18_093000_create_invoicing_receipt_items_table.php');
         $createItemsMigration->up();
     }
@@ -753,8 +753,8 @@ test('invoicing receipts table exposes infoRdtv action and hides invoice/cashier
 
                 return [$a->record($record)];
             })
-            ->filter(fn ($a) => method_exists($a, 'getName'))
-            ->keyBy(fn ($a) => $a->getName());
+            ->filter(fn($a) => method_exists($a, 'getName'))
+            ->keyBy(fn($a) => $a->getName());
     };
 
     $rdtvPending = (new InvoicingReceipt)->forceFill([
@@ -789,7 +789,7 @@ test('CreateGrsRdtv leaves tanggal_info_grs null for RDTV so staff invoice must 
     $createdInvoicingTable = ensureInvoicingReceiptTableExists();
 
     $createdExtraTables = [];
-    if (! Illuminate\Support\Facades\Schema::hasTable('delivery_order_receipts')) {
+    if (!Illuminate\Support\Facades\Schema::hasTable('delivery_order_receipts')) {
         $createdExtraTables[] = 'delivery_order_receipts';
         Illuminate\Support\Facades\Schema::create('delivery_order_receipts', function ($table) {
             $table->id();
@@ -799,7 +799,7 @@ test('CreateGrsRdtv leaves tanggal_info_grs null for RDTV so staff invoice must 
             $table->timestamps();
         });
     }
-    if (! Illuminate\Support\Facades\Schema::hasTable('delivery_order_receipt_details')) {
+    if (!Illuminate\Support\Facades\Schema::hasTable('delivery_order_receipt_details')) {
         $createdExtraTables[] = 'delivery_order_receipt_details';
         Illuminate\Support\Facades\Schema::create('delivery_order_receipt_details', function ($table) {
             $table->id();
@@ -814,7 +814,7 @@ test('CreateGrsRdtv leaves tanggal_info_grs null for RDTV so staff invoice must 
             $table->timestamps();
         });
     }
-    if (! Illuminate\Support\Facades\Schema::hasTable('grs_rdtv_items')) {
+    if (!Illuminate\Support\Facades\Schema::hasTable('grs_rdtv_items')) {
         $createdExtraTables[] = 'grs_rdtv_items';
         Illuminate\Support\Facades\Schema::create('grs_rdtv_items', function ($table) {
             $table->id();
@@ -848,8 +848,7 @@ test('CreateGrsRdtv leaves tanggal_info_grs null for RDTV so staff invoice must 
             'status' => 'Matched',
         ]);
 
-        $page = new class extends CreateGrsRdtv
-        {
+        $page = new class extends CreateGrsRdtv {
             public function createForTest(GrsRdtvItem $item, DeliveryOrderReceipt $do, string $category, string $date): void
             {
                 $this->createInvoicingReceiptFor($item, $do, $category, $date);
