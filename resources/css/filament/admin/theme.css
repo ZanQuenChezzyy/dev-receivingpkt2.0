@@ -499,7 +499,6 @@ html.dark body {
 
 .fi-main > * {
     opacity: 1;
-    animation: pageLoadTransition 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* =========================================================
@@ -1447,14 +1446,47 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
    9. MODALS & SLIDE-OVERS (Apple Floating Sheet & Drawers)
    ========================================================= */
 
-/* Ensure Modals always sit ABOVE the Topbar (z-50) */
+/* Ensure Modals always sit ABOVE the Sidebar and Topbar */
+.fi-modal {
+    position: relative;
+    z-index: 99999 !important;
+}
+
+.fi-modal.fi-modal-open {
+    z-index: 99999 !important;
+}
+
 .fi-modal-close-overlay {
-    @apply !bg-slate-900/40 dark:!bg-black/60 !backdrop-blur-md;
-    z-index: 99 !important;
+    @apply !bg-slate-900/60 dark:!bg-black/75 !backdrop-blur-md;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99998 !important;
 }
 
 .fi-modal-window-ctn {
-    z-index: 100 !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+}
+
+/* Prevent any parent animation or transform from trapping fixed modal in a sub-stacking context */
+body:has(.fi-modal-open) .fi-main > *,
+.fi-layout:has(.fi-modal-open) .fi-main > * {
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Elevate main layout when modal is open so sidebar (z-20/z-30) and topbar (z-50) never sit on top of modal */
+body:has(.fi-modal-open) .fi-main-ctn,
+body:has(.fi-modal-open) .fi-main {
+    position: relative !important;
+    z-index: 99990 !important;
+}
+
+body:has(.fi-modal-open) .fi-sidebar,
+body:has(.fi-modal-open) .fi-topbar-ctn,
+body:has(.fi-modal-open) .fi-topbar {
+    z-index: 10 !important;
 }
 
 /* 9A. Standard Centered Modals (Apple Floating Sheet) */

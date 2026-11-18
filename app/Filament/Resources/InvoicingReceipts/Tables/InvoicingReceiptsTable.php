@@ -413,7 +413,7 @@ class InvoicingReceiptsTable
                                         ->hint('Wajib dari SAP')
                                         ->hintColor('danger')
                                         ->hintIcon('heroicon-m-exclamation-circle')
-                                        ->helperText('Nomor GRS utama (GRS item di bawah dapat diisi berbeda jika multi-GRS).'),
+                                        ->helperText('Nomor dokumen GRS resmi dari SAP (akan otomatis diterapkan ke seluruh rincian barang).'),
 
                                     TextInput::make('no_rdtv')
                                         ->label('No. RDTV (Resmi)')
