@@ -38,6 +38,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
@@ -47,60 +48,30 @@ class InvoicingReceiptsTable
     {
         return $table
             ->columns([
-                ColumnGroup::make('Dokumen GRS / RDTV', [
-                    TextColumn::make('tanggal_terima_grs')
-                        ->label('Tgl Terima GRS')
-                        ->date('d/m/Y')
+                ColumnGroup::make('Dokumen Utama & PIC', [
+                    TextColumn::make('tanggal_terima_koreksi_invoice')
+                        ->label('Tanggal Terima Invoice')
+                        ->formatStateUsing(function ($state, InvoicingReceipt $record): string {
+                            if ($state) {
+                                return Carbon::parse($state)->format('d/m/Y');
+                            }
+                            if ($record->tanggal_terima_grs) {
+                                return Carbon::parse($record->tanggal_terima_grs)->format('d/m/Y');
+                            }
+
+                            return '-';
+                        })
+                        ->description(function ($state, InvoicingReceipt $record): ?string {
+                            if (! $state && $record->tanggal_terima_grs) {
+                                return 'Tgl GRS';
+                            }
+
+                            return null;
+                        })
                         ->icon('heroicon-m-calendar')
                         ->iconColor('primary')
-                        ->sortable(),
+                        ->sortable(query: fn (Builder $query, string $direction) => $query->orderBy(DB::raw('COALESCE(tanggal_terima_koreksi_invoice, tanggal_terima_grs)'), $direction)),
 
-                    TextColumn::make('jenis')
-                        ->label('Jenis')
-                        ->badge()
-                        ->color(fn (string $state): string => match ($state) {
-                            'GRS' => 'success',
-                            'RDTV' => 'warning',
-                            default => 'gray',
-                        })
-                        ->icon(fn (string $state): string => match ($state) {
-                            'GRS' => 'heroicon-m-document-check',
-                            'RDTV' => 'heroicon-m-arrow-path',
-                            default => 'heroicon-m-document',
-                        }),
-
-                    TextColumn::make('kategori_barang')
-                        ->label('Kategori')
-                        ->badge()
-                        ->color('gray')
-                        ->placeholder('-')
-                        ->searchable()
-                        ->toggleable(),
-
-                    TextColumn::make('no_grs')
-                        ->label('No. GRS')
-                        ->placeholder('-')
-                        ->copyable()
-                        ->copyMessage('No. GRS disalin')
-                        ->searchable(),
-
-                    TextColumn::make('no_rdtv')
-                        ->label('No. RDTV')
-                        ->placeholder('-')
-                        ->copyable()
-                        ->copyMessage('No. RDTV disalin')
-                        ->toggleable(isToggledHiddenByDefault: true)
-                        ->searchable(),
-
-                    TextColumn::make('tanggal_info_grs')
-                        ->label('Tgl Info GRS')
-                        ->date('d/m/Y')
-                        ->placeholder('Belum Diinfokan')
-                        ->sortable()
-                        ->toggleable(),
-                ]),
-
-                ColumnGroup::make('Referensi PO & PIC', [
                     TextColumn::make('no_po')
                         ->label('No. PO')
                         ->weight(FontWeight::Bold)
@@ -111,8 +82,28 @@ class InvoicingReceiptsTable
                         ->searchable()
                         ->sortable(),
 
+                    TextColumn::make('no_grs')
+                        ->label('No. GRS/RDTV')
+                        ->state(fn (InvoicingReceipt $record): string => match ($record->jenis) {
+                            'RDTV' => $record->no_rdtv ?: ($record->no_grs ?: '-'),
+                            default => $record->no_grs ?: ($record->no_rdtv ?: '-'),
+                        })
+                        ->description(fn (InvoicingReceipt $record): ?string => $record->jenis)
+                        ->copyable()
+                        ->copyableState(fn (InvoicingReceipt $record): string => ($record->jenis === 'RDTV' ? ($record->no_rdtv ?: $record->no_grs) : ($record->no_grs ?: $record->no_rdtv)) ?: '')
+                        ->copyMessage('Nomor GRS/RDTV disalin')
+                        ->searchable(query: function (Builder $query, string $search): Builder {
+                            return $query->where(function ($q) use ($search) {
+                                $q->where('no_grs', 'like', "%{$search}%")
+                                    ->orWhere('no_rdtv', 'like', "%{$search}%");
+                            });
+                        })
+                        ->sortable(query: function (Builder $query, string $direction): Builder {
+                            return $query->orderBy(DB::raw('COALESCE(no_grs, no_rdtv)'), $direction);
+                        }),
+
                     TextColumn::make('pic.name')
-                        ->label('PIC Staff')
+                        ->label('PIC')
                         ->html()
                         ->formatStateUsing(fn ($state, ?InvoicingReceipt $record) => UserBadgeRenderer::render($record?->pic, 'Tentukan PIC'))
                         ->tooltip(fn ($record) => $record->pic_id ? "PIC: {$record->pic?->name} (Klik untuk ubah)" : 'Klik untuk menentukan PIC dokumen ini')
@@ -155,7 +146,9 @@ class InvoicingReceiptsTable
                                         ->send();
                                 })
                         ),
+                ]),
 
+                ColumnGroup::make('Referensi DO & Vendor', [
                     TextColumn::make('no_do')
                         ->label('No. DO')
                         ->icon('heroicon-m-truck')
@@ -163,6 +156,22 @@ class InvoicingReceiptsTable
                         ->copyMessage('Nomor DO disalin')
                         ->searchable()
                         ->sortable(),
+
+                    TextColumn::make('vendor_name')
+                        ->label('Nama Vendor')
+                        ->weight(FontWeight::Bold)
+                        ->icon('heroicon-m-building-office')
+                        ->searchable()
+                        ->limit(25)
+                        ->tooltip(fn ($record) => $record->vendor_name),
+
+                    TextColumn::make('kategori_barang')
+                        ->label('Kategori')
+                        ->badge()
+                        ->color('gray')
+                        ->placeholder('-')
+                        ->searchable()
+                        ->toggleable(),
 
                     TextColumn::make('material_type')
                         ->label('Tipe Mat.')
@@ -173,25 +182,7 @@ class InvoicingReceiptsTable
                         ->searchable(),
                 ]),
 
-                ColumnGroup::make('Vendor & Kontak', [
-                    TextColumn::make('vendor_name')
-                        ->label('Nama Vendor')
-                        ->weight(FontWeight::Bold)
-                        ->icon('heroicon-m-building-office')
-                        ->searchable()
-                        ->limit(25)
-                        ->tooltip(fn ($record) => $record->vendor_name),
-
-                    TextColumn::make('email_vendor')
-                        ->label('Email Vendor')
-                        ->icon('heroicon-m-envelope')
-                        ->iconColor('info')
-                        ->placeholder('-')
-                        ->copyable()
-                        ->searchable(),
-                ]),
-
-                ColumnGroup::make('Data Penagihan & Mitraku', [
+                ColumnGroup::make('Data Penagihan & Nilai', [
                     TextColumn::make('no_invoice')
                         ->label('No. Invoice')
                         ->placeholder('Belum Ada')
@@ -222,11 +213,6 @@ class InvoicingReceiptsTable
                         ->formatStateUsing(fn ($record) => ($record->qty_penagihan ?? '-').' '.($record->uoi ?? ''))
                         ->sortable(),
 
-                    TextColumn::make('qty_po')
-                        ->label('Qty di PO')
-                        ->formatStateUsing(fn ($record) => ($record->qty_po ?? '-').' '.($record->uoi ?? ''))
-                        ->toggleable(isToggledHiddenByDefault: true),
-
                     TextColumn::make('subtotal_exclude_ppn')
                         ->label('Sub Total (Excl. PPN)')
                         ->money('IDR', locale: 'id')
@@ -244,11 +230,23 @@ class InvoicingReceiptsTable
                         ->sortable(),
                 ]),
 
-                ColumnGroup::make('Timeline & Kasir', [
-                    TextColumn::make('tanggal_terima_koreksi_invoice')
-                        ->label('Tgl Terima/Koreksi')
-                        ->date('d/m/Y')
-                        ->toggleable(isToggledHiddenByDefault: true),
+                ColumnGroup::make('Status & Timeline', [
+                    TextColumn::make('status')
+                        ->label('Status')
+                        ->badge()
+                        ->color(fn (string $state): string => match ($state) {
+                            'Menunggu Verifikasi' => 'warning',
+                            'Terverifikasi' => 'info',
+                            'Terkirim Kasir', 'Selesai' => 'success',
+                            default => 'gray',
+                        })
+                        ->icon(fn (string $state): string => match ($state) {
+                            'Menunggu Verifikasi' => 'heroicon-m-clock',
+                            'Terverifikasi' => 'heroicon-m-check-badge',
+                            'Terkirim Kasir' => 'heroicon-m-paper-airplane',
+                            'Selesai' => 'heroicon-m-check-circle',
+                            default => 'heroicon-m-document',
+                        }),
 
                     TextColumn::make('tanggal_kirim_kasir')
                         ->label('Tgl Kirim Kasir')
@@ -271,23 +269,6 @@ class InvoicingReceiptsTable
                         ->icon('heroicon-m-clock')
                         ->sortable(),
 
-                    TextColumn::make('status')
-                        ->label('Status')
-                        ->badge()
-                        ->color(fn (string $state): string => match ($state) {
-                            'Menunggu Verifikasi' => 'warning',
-                            'Terverifikasi' => 'info',
-                            'Terkirim Kasir', 'Selesai' => 'success',
-                            default => 'gray',
-                        })
-                        ->icon(fn (string $state): string => match ($state) {
-                            'Menunggu Verifikasi' => 'heroicon-m-clock',
-                            'Terverifikasi' => 'heroicon-m-check-badge',
-                            'Terkirim Kasir' => 'heroicon-m-paper-airplane',
-                            'Selesai' => 'heroicon-m-check-circle',
-                            default => 'heroicon-m-document',
-                        }),
-
                     TextColumn::make('dokumen_invoice')
                         ->label('Berkas Inv.')
                         ->formatStateUsing(fn ($state) => $state ? 'Ada Berkas' : 'Belum Ada')
@@ -307,6 +288,51 @@ class InvoicingReceiptsTable
                         ->openUrlInNewTab(),
                 ]),
 
+                // Kolom pelengkap (toggleable)
+                TextColumn::make('tanggal_terima_grs')
+                    ->label('Tgl Terima GRS')
+                    ->date('d/m/Y')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('jenis')
+                    ->label('Jenis')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'GRS' => 'success',
+                        'RDTV' => 'warning',
+                        default => 'gray',
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('tanggal_info_grs')
+                    ->label('Tgl Info GRS')
+                    ->date('d/m/Y')
+                    ->placeholder('Belum Diinfokan')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('no_rdtv')
+                    ->label('No. RDTV Khusus')
+                    ->placeholder('-')
+                    ->copyable()
+                    ->copyMessage('No. RDTV disalin')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable(),
+
+                TextColumn::make('email_vendor')
+                    ->label('Email Vendor')
+                    ->icon('heroicon-m-envelope')
+                    ->iconColor('info')
+                    ->placeholder('-')
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable(),
+
+                TextColumn::make('qty_po')
+                    ->label('Qty di PO')
+                    ->formatStateUsing(fn ($record) => ($record->qty_po ?? '-').' '.($record->uoi ?? ''))
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('keterangan')
                     ->label('Keterangan')
                     ->limit(25)
@@ -314,16 +340,36 @@ class InvoicingReceiptsTable
             ])
             ->filters([
                 DateRangeFilter::make('tanggal_terima_grs')
-                    ->label('Rentang Tgl Terima GRS')
+                    ->label('Rentang Tgl Terima Invoice')
                     ->placeholder('Pilih rentang tanggal')
                     ->modifyQueryUsing(function (Builder $query, ?Carbon $startDate, ?Carbon $endDate): Builder {
                         return $query
-                            ->when($startDate && $endDate, fn ($q) => $q->whereBetween('tanggal_terima_grs', [
-                                $startDate->toDateString(),
-                                $endDate->toDateString(),
-                            ]))
-                            ->when($startDate && ! $endDate, fn ($q) => $q->where('tanggal_terima_grs', '>=', $startDate->toDateString()))
-                            ->when(! $startDate && $endDate, fn ($q) => $q->where('tanggal_terima_grs', '<=', $endDate->toDateString()));
+                            ->when($startDate && $endDate, fn ($q) => $q->where(function ($sub) use ($startDate, $endDate) {
+                                $sub->whereBetween('tanggal_terima_koreksi_invoice', [
+                                    $startDate->toDateString(),
+                                    $endDate->toDateString(),
+                                ])->orWhere(function ($fallback) use ($startDate, $endDate) {
+                                    $fallback->whereNull('tanggal_terima_koreksi_invoice')
+                                        ->whereBetween('tanggal_terima_grs', [
+                                            $startDate->toDateString(),
+                                            $endDate->toDateString(),
+                                        ]);
+                                });
+                            }))
+                            ->when($startDate && ! $endDate, fn ($q) => $q->where(function ($sub) use ($startDate) {
+                                $sub->where('tanggal_terima_koreksi_invoice', '>=', $startDate->toDateString())
+                                    ->orWhere(function ($fallback) use ($startDate) {
+                                        $fallback->whereNull('tanggal_terima_koreksi_invoice')
+                                            ->where('tanggal_terima_grs', '>=', $startDate->toDateString());
+                                    });
+                            }))
+                            ->when(! $startDate && $endDate, fn ($q) => $q->where(function ($sub) use ($endDate) {
+                                $sub->where('tanggal_terima_koreksi_invoice', '<=', $endDate->toDateString())
+                                    ->orWhere(function ($fallback) use ($endDate) {
+                                        $fallback->whereNull('tanggal_terima_koreksi_invoice')
+                                            ->where('tanggal_terima_grs', '<=', $endDate->toDateString());
+                                    });
+                            }));
                     }),
 
                 SelectFilter::make('jenis')

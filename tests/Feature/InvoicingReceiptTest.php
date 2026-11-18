@@ -1313,7 +1313,7 @@ test('inputInvoiceData automatically inherits header GRS and DO to items and def
     }
 });
 
-test('InvoicingReceiptsTable has pic column next to no_po, date range filter, and above content filter layout', function () {
+test('InvoicingReceiptsTable has correct column order: tanggal terima invoice, no_po, no_grs/rdtv, pic, and date range filter', function () {
     $page = app(ListInvoicingReceipts::class);
     $table = new Table($page);
     InvoicingReceiptsTable::configure($table);
@@ -1326,15 +1326,19 @@ test('InvoicingReceiptsTable has pic column next to no_po, date range filter, an
     expect($dateFilter)->not->toBeNull()
         ->and($dateFilter)->toBeInstanceOf(DateRangeFilter::class);
 
-    // 3. Columns check: no_po and pic.name exist and pic is placed directly after no_po
+    // 3. Columns check: exact order: tanggal terima invoice, no_po, no_grs, pic.name
     $columns = collect($table->getColumns());
     $columnNames = $columns->map(fn ($c) => method_exists($c, 'getName') ? $c->getName() : null)->values();
+
+    $tglInvoiceIndex = $columnNames->search('tanggal_terima_koreksi_invoice');
     $noPoIndex = $columnNames->search('no_po');
+    $noGrsIndex = $columnNames->search('no_grs');
     $picIndex = $columnNames->search('pic.name');
 
-    expect($noPoIndex)->not->toBeFalse()
-        ->and($picIndex)->not->toBeFalse()
-        ->and($picIndex)->toBe($noPoIndex + 1);
+    expect($tglInvoiceIndex)->toBe(0)
+        ->and($noPoIndex)->toBe(1)
+        ->and($noGrsIndex)->toBe(2)
+        ->and($picIndex)->toBe(3);
 
     // 4. On my_tasks tab, only 4 filters are visible (pic_id & material_type are hidden)
     $page->activeTab = 'my_tasks';
