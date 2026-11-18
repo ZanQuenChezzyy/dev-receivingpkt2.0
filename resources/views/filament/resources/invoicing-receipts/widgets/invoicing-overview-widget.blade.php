@@ -174,27 +174,28 @@
         <!-- Modal Staff Invoice Workload List -->
         @if ($showStaffModal)
             <div
-                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all"
+                class="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden p-3 sm:p-6 bg-black/60 backdrop-blur-sm flex items-center justify-center transition-all"
                 wire:keydown.escape="closeStaffModal"
+                style="-webkit-overflow-scrolling: touch;"
             >
                 <div
-                    class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150"
+                    class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[85vh] my-auto animate-in fade-in zoom-in-95 duration-150"
                     @click.outside="$wire.closeStaffModal()"
                 >
                     <!-- Modal Header -->
-                    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+                    <div class="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] shrink-0">
                         <div class="flex items-center gap-3">
-                            <div class="p-2 rounded-xl bg-amber-500/10 text-amber-500 dark:bg-amber-500/20">
+                            <div class="p-2 rounded-xl bg-amber-500/10 text-amber-500 dark:bg-amber-500/20 shrink-0">
                                 <x-filament::icon
                                     icon="heroicon-m-user-group"
-                                    class="w-6 h-6"
+                                    class="w-5 h-5 sm:w-6 sm:h-6"
                                 />
                             </div>
-                            <div>
-                                <h3 class="text-base font-black text-slate-900 dark:text-white">
+                            <div class="min-w-0">
+                                <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate">
                                     Daftar Beban Kerja Staff Invoice
                                 </h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
                                     Periode: <span class="font-bold text-slate-800 dark:text-slate-200">{{ $periodLabel }}</span> &bull; Total {{ $stats['total_masuk'] }} Dokumen
                                 </p>
                             </div>
@@ -203,7 +204,7 @@
                         <button
                             type="button"
                             wire:click="closeStaffModal"
-                            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                            class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors shrink-0 ml-2"
                         >
                             <x-filament::icon
                                 icon="heroicon-m-x-mark"
@@ -213,7 +214,7 @@
                     </div>
 
                     <!-- Search Filter inside Modal -->
-                    <div class="px-6 py-3 border-b border-slate-200/60 dark:border-white/5 bg-white dark:bg-slate-900">
+                    <div class="px-4 sm:px-6 py-2.5 sm:py-3 border-b border-slate-200/60 dark:border-white/5 bg-white dark:bg-slate-900 shrink-0">
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                                 <x-filament::icon
@@ -230,13 +231,16 @@
                         </div>
                     </div>
 
-                    <!-- Modal Body: Staff List Table -->
-                    <div class="p-6 overflow-y-auto space-y-3 flex-1">
+                    <!-- Modal Body: Staff List Table (Fully Scrollable on Mobile) -->
+                    <div
+                        class="p-3 sm:p-6 overflow-y-auto overscroll-contain space-y-2.5 sm:space-y-3 flex-1 min-h-0 touch-pan-y"
+                        style="-webkit-overflow-scrolling: touch;"
+                    >
                         @forelse ($workloads as $index => $staff)
-                            <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-all">
-                                <div class="flex items-center gap-3 min-w-0">
+                            <div class="flex items-center justify-between p-3 sm:p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-all">
+                                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
                                     <!-- Rank Badge -->
-                                    <div class="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shrink-0
+                                    <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center font-black text-[11px] sm:text-xs shrink-0
                                         @if ($index === 0 && $staff['total'] > 0)
                                             bg-amber-500 text-white shadow-sm shadow-amber-500/30
                                         @elseif ($index === 1 && $staff['total'] > 0)
@@ -252,29 +256,29 @@
 
                                     <!-- Staff Avatar & Name -->
                                     <div class="min-w-0">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-sm font-bold text-slate-900 dark:text-white truncate">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <span class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                                                 {{ $staff['name'] }}
                                             </span>
                                             @if ($index === 0 && $staff['total'] > 0)
-                                                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-black bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] sm:text-[10px] font-black bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
                                                     Terbanyak
                                                 </span>
                                             @endif
                                         </div>
-                                        <span class="text-[11px] text-slate-400 truncate block">
+                                        <span class="text-[10px] sm:text-[11px] text-slate-400 truncate block">
                                             {{ $staff['email'] ?: 'Staff Invoice' }}
                                         </span>
                                     </div>
                                 </div>
 
                                 <!-- Count & Badges -->
-                                <div class="flex items-center gap-3 shrink-0">
+                                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                                     <div class="text-right">
-                                        <div class="text-base font-black text-slate-900 dark:text-white">
-                                            {{ $staff['total'] }} <span class="text-xs font-medium text-slate-500">Invoice</span>
+                                        <div class="text-sm sm:text-base font-black text-slate-900 dark:text-white">
+                                            {{ $staff['total'] }} <span class="text-[10px] sm:text-xs font-medium text-slate-500">Invoice</span>
                                         </div>
-                                        <div class="flex items-center gap-1.5 text-[10px] text-slate-400 justify-end">
+                                        <div class="flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] text-slate-400 justify-end">
                                             <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ $staff['selesai'] }} Selesai</span>
                                             <span>&bull;</span>
                                             <span class="text-amber-600 dark:text-amber-400 font-semibold">{{ $staff['proses'] }} Proses</span>
@@ -294,12 +298,13 @@
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="px-6 py-3 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] flex items-center justify-between">
-                        <span class="text-xs text-slate-500 dark:text-slate-400">
+                    <div class="px-4 sm:px-6 py-2.5 sm:py-3 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] flex items-center justify-between shrink-0">
+                        <span class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
                             Total <strong class="font-bold text-slate-700 dark:text-slate-300">{{ count($workloads) }} Staff</strong> terdaftar
                         </span>
                         <x-filament::button
                             color="gray"
+                            size="sm"
                             wire:click="closeStaffModal"
                         >
                             Tutup
