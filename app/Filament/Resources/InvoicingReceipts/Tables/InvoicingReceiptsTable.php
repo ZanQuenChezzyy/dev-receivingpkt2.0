@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\InvoicingReceipts\Tables;
 
 use App\Models\InvoicingReceipt;
+use App\Models\PurchaseOrderIssued;
 use App\Models\User;
 use App\Services\InvoicingAssignmentService;
 use App\Services\UserBadgeRenderer;
@@ -16,6 +17,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -389,10 +391,10 @@ class InvoicingReceiptsTable
                         ->icon('heroicon-o-pencil-square')
                         ->color('warning')
                         ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
-                        ->modalWidth('4xl')
+                        ->modalWidth('5xl')
                         ->modalIcon('heroicon-o-document-currency-dollar')
                         ->modalHeading(fn (InvoicingReceipt $record) => "Input Data Invoice & No. GRS - PO: {$record->no_po}")
-                        ->modalDescription('Lengkapi Nomor GRS resmi SAP, No. DO, serta Nomor Invoice dan Faktur Pajak (opsional, dapat diisi menyusul).')
+                        ->modalDescription('Lengkapi Nomor GRS resmi SAP, No. DO, rincian barang yang ditagihkan, serta Nomor Invoice dan Faktur Pajak.')
                         ->modalSubmitActionLabel('Simpan Data Invoice')
                         ->modalCancelActionLabel('Tutup')
                         ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.input-invoice-modal-header', ['record' => $record]))
@@ -402,7 +404,7 @@ class InvoicingReceiptsTable
                                 ->icon('heroicon-o-clipboard-document-check')
                                 ->schema([
                                     TextInput::make('no_grs')
-                                        ->label('No. GRS (Resmi SAP)')
+                                        ->label('No. GRS Utama (Resmi SAP)')
                                         ->placeholder('Contoh: 5000xxxxxx')
                                         ->prefixIcon('heroicon-m-hashtag')
                                         ->default(fn (InvoicingReceipt $record) => $record->no_grs)
@@ -411,7 +413,7 @@ class InvoicingReceiptsTable
                                         ->hint('Wajib dari SAP')
                                         ->hintColor('danger')
                                         ->hintIcon('heroicon-m-exclamation-circle')
-                                        ->helperText('Nomor GRS/105.'),
+                                        ->helperText('Nomor GRS utama (GRS item di bawah dapat diisi berbeda jika multi-GRS).'),
 
                                     TextInput::make('no_rdtv')
                                         ->label('No. RDTV (Resmi)')
@@ -432,7 +434,7 @@ class InvoicingReceiptsTable
                                         ->helperText('Nomor invoice penagihan resmi vendor (opsional, dapat diisi menyusul saat berkas fisik diterima).'),
 
                                     TextInput::make('no_do')
-                                        ->label('Nomor DO (Delivery Order)')
+                                        ->label('Nomor DO Utama (Delivery Order)')
                                         ->placeholder('Nomor Delivery Order')
                                         ->prefixIcon('heroicon-m-truck')
                                         ->default(fn (InvoicingReceipt $record) => $record->no_do)
@@ -449,43 +451,188 @@ class InvoicingReceiptsTable
                                         ->helperText('Nomor seri Faktur Pajak elektronik / e-Faktur (opsional, dapat diisi menyusul).'),
                                 ])->columns(2),
 
-                            Section::make('Rincian Kuantitas & Nilai Penagihan')
-                                ->description('Kuantitas barang dan perhitungan nilai tagihan. Nilai Include PPN terhitung otomatis (+11%).')
+                            Section::make('Rincian Barang yang Ditagihkan (Multi-Item)')
+                                ->description('Daftar barang dalam invoice ini. Jika PO memiliki beberapa item (misal item 10, 20, 30), Anda dapat mengelola kuantitas, no. GRS, dan no. DO per item.')
+                                ->icon('heroicon-o-queue-list')
+                                ->schema([
+                                    Repeater::make('items')
+                                        ->label('Item Barang yang Ditagihkan')
+                                        ->collapsible()
+                                        ->cloneable()
+                                        ->addActionLabel('+ Tambah Item Barang')
+                                        ->itemLabel(fn (array $state): ?string => ($state['nama_barang'] ?? null)
+                                            ? ((isset($state['item_no']) ? '['.$state['item_no'].'] ' : '').$state['nama_barang'].(isset($state['qty_penagihan']) ? ' ('.$state['qty_penagihan'].' '.($state['uoi'] ?? '').')' : ''))
+                                            : 'Item Barang')
+                                        ->default(function (InvoicingReceipt $record): array {
+                                            if ($record->items()->exists()) {
+                                                return $record->items->sortBy('item_no')->map(fn ($it) => [
+                                                    'id' => $it->id,
+                                                    'item_no' => $it->item_no,
+                                                    'material_code' => $it->material_code,
+                                                    'nama_barang' => $it->nama_barang,
+                                                    'no_grs' => $it->no_grs ?? $record->no_grs,
+                                                    'no_do' => $it->no_do ?? $record->no_do,
+                                                    'qty_penagihan' => $it->qty_penagihan !== null ? (float) $it->qty_penagihan : null,
+                                                    'qty_po' => $it->qty_po !== null ? (float) $it->qty_po : null,
+                                                    'uoi' => $it->uoi ?? $record->uoi,
+                                                    'subtotal_exclude_ppn' => $it->subtotal_exclude_ppn !== null ? (float) $it->subtotal_exclude_ppn : null,
+                                                    'subtotal_include_ppn' => $it->subtotal_include_ppn !== null ? (float) $it->subtotal_include_ppn : null,
+                                                ])->values()->toArray();
+                                            }
+
+                                            // Tarik dari Master PO jika ada
+                                            if (filled($record->no_po) && $record->no_po !== '-') {
+                                                $poRecords = PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))
+                                                    ->orderBy('item_no')
+                                                    ->get();
+
+                                                if ($poRecords->isNotEmpty()) {
+                                                    return $poRecords->map(fn ($p) => [
+                                                        'item_no' => $p->item_no,
+                                                        'material_code' => $p->material_code,
+                                                        'nama_barang' => $p->description,
+                                                        'no_grs' => $record->no_grs,
+                                                        'no_do' => $record->no_do,
+                                                        'qty_penagihan' => (float) $p->qty_po,
+                                                        'qty_po' => (float) $p->qty_po,
+                                                        'uoi' => $p->uoi,
+                                                        'subtotal_exclude_ppn' => $p->total_amount_in_lc ? (float) $p->total_amount_in_lc : null,
+                                                        'subtotal_include_ppn' => $p->total_amount_in_lc ? round((float) $p->total_amount_in_lc * 1.11, 2) : null,
+                                                    ])->values()->toArray();
+                                                }
+                                            }
+
+                                            // Tarik dari Delivery Order jika ada
+                                            if ($record->deliveryOrderReceipt?->deliveryOrderReceiptDetails?->isNotEmpty()) {
+                                                return $record->deliveryOrderReceipt->deliveryOrderReceiptDetails->map(fn ($d) => [
+                                                    'item_no' => $d->item_no,
+                                                    'material_code' => $d->material_code,
+                                                    'nama_barang' => $d->description,
+                                                    'no_grs' => $record->no_grs,
+                                                    'no_do' => $record->no_do,
+                                                    'qty_penagihan' => (float) $d->quantity,
+                                                    'qty_po' => (float) ($d->purchaseOrderIssued?->qty_po ?? $d->quantity),
+                                                    'uoi' => $d->uoi,
+                                                    'subtotal_exclude_ppn' => $d->total_amount_snapshot ? (float) $d->total_amount_snapshot : null,
+                                                    'subtotal_include_ppn' => $d->total_amount_snapshot ? round((float) $d->total_amount_snapshot * 1.11, 2) : null,
+                                                ])->values()->toArray();
+                                            }
+
+                                            // Fallback single item
+                                            if (filled($record->nama_barang) || filled($record->qty_penagihan) || filled($record->subtotal_exclude_ppn)) {
+                                                return [
+                                                    [
+                                                        'item_no' => 10,
+                                                        'material_code' => null,
+                                                        'nama_barang' => $record->nama_barang,
+                                                        'no_grs' => $record->no_grs,
+                                                        'no_do' => $record->no_do,
+                                                        'qty_penagihan' => $record->qty_penagihan !== null ? (float) $record->qty_penagihan : null,
+                                                        'qty_po' => $record->qty_po !== null ? (float) $record->qty_po : null,
+                                                        'uoi' => $record->uoi,
+                                                        'subtotal_exclude_ppn' => $record->subtotal_exclude_ppn !== null ? (float) $record->subtotal_exclude_ppn : null,
+                                                        'subtotal_include_ppn' => $record->subtotal_include_ppn !== null ? (float) $record->subtotal_include_ppn : null,
+                                                    ],
+                                                ];
+                                            }
+
+                                            return [];
+                                        })
+                                        ->columnSpanFull()
+                                        ->schema([
+                                            TextInput::make('item_no')
+                                                ->label('Item No.')
+                                                ->placeholder('10, 20...')
+                                                ->numeric()
+                                                ->columnSpan(2),
+
+                                            TextInput::make('nama_barang')
+                                                ->label('Nama / Deskripsi Barang')
+                                                ->placeholder('Nama atau spesifikasi barang')
+                                                ->required()
+                                                ->columnSpan(4),
+
+                                            TextInput::make('no_grs')
+                                                ->label('No. GRS Item')
+                                                ->placeholder('Nomor GRS')
+                                                ->columnSpan(3),
+
+                                            TextInput::make('no_do')
+                                                ->label('No. DO Item')
+                                                ->placeholder('Nomor DO')
+                                                ->columnSpan(3),
+
+                                            TextInput::make('qty_penagihan')
+                                                ->label('Qty Ditagihkan')
+                                                ->numeric()
+                                                ->required()
+                                                ->placeholder('0.00')
+                                                ->columnSpan(3),
+
+                                            TextInput::make('qty_po')
+                                                ->label('Qty PO')
+                                                ->numeric()
+                                                ->placeholder('0.00')
+                                                ->columnSpan(3),
+
+                                            TextInput::make('uoi')
+                                                ->label('Satuan (UOI)')
+                                                ->placeholder('PCS, SET...')
+                                                ->columnSpan(2),
+
+                                            TextInput::make('subtotal_exclude_ppn')
+                                                ->label('Sub Total (DPP)')
+                                                ->numeric()
+                                                ->prefix('Rp')
+                                                ->live(onBlur: true)
+                                                ->afterStateUpdated(function ($state, Set $set): void {
+                                                    if ($state !== null && is_numeric($state)) {
+                                                        $set('subtotal_include_ppn', round((float) $state * 1.11, 2));
+                                                    }
+                                                })
+                                                ->columnSpan(2),
+
+                                            TextInput::make('subtotal_include_ppn')
+                                                ->label('Sub Total (Incl PPN)')
+                                                ->numeric()
+                                                ->prefix('Rp')
+                                                ->columnSpan(2),
+                                        ])
+                                        ->columns(12),
+                                ]),
+
+                            Section::make('Ringkasan Total Invoice')
+                                ->description('Nilai total invoice yang terakumulasi dari rincian barang di atas.')
                                 ->icon('heroicon-o-calculator')
+                                ->collapsed()
                                 ->schema([
                                     TextInput::make('qty_penagihan')
-                                        ->label('Quantity Penagihan')
+                                        ->label('Total Quantity Penagihan')
                                         ->numeric()
                                         ->prefixIcon('heroicon-m-archive-box')
                                         ->default(fn (InvoicingReceipt $record) => $record->qty_penagihan)
                                         ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI')
-                                        ->hint('Ditagihkan Vendor')
-                                        ->helperText('Jumlah kuantitas barang yang ditagihkan oleh vendor.'),
+                                        ->helperText('Otomatis dihitung dari rincian barang.'),
 
                                     TextInput::make('qty_po')
-                                        ->label('Quantity di PO')
+                                        ->label('Total Quantity di PO')
                                         ->numeric()
                                         ->prefixIcon('heroicon-m-shopping-cart')
                                         ->default(fn (InvoicingReceipt $record) => $record->qty_po)
-                                        ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI')
-                                        ->hint('Referensi PO')
-                                        ->helperText('Total kuantitas barang yang tertera pada PO terbit.'),
+                                        ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI'),
 
                                     TextInput::make('uoi')
-                                        ->label('Satuan Barang (UOI)')
+                                        ->label('Satuan Utama (UOI)')
                                         ->prefixIcon('heroicon-m-tag')
                                         ->placeholder('PCS, TON, SET, dll')
-                                        ->default(fn (InvoicingReceipt $record) => $record->uoi)
-                                        ->helperText('Satuan Unit of Issue barang.'),
+                                        ->default(fn (InvoicingReceipt $record) => $record->uoi),
 
                                     TextInput::make('subtotal_exclude_ppn')
-                                        ->label('Sub Total (Exclude PPN)')
+                                        ->label('Total Sub Total (Exclude PPN)')
                                         ->numeric()
                                         ->prefix('Rp')
                                         ->default(fn (InvoicingReceipt $record) => $record->subtotal_exclude_ppn)
                                         ->live(onBlur: true)
-                                        ->hint('DPP Sebelum PPN')
-                                        ->hintColor('primary')
                                         ->afterStateUpdated(function ($state, Set $set) {
                                             if ($state !== null && is_numeric($state)) {
                                                 $subtotal = (float) $state;
@@ -493,18 +640,13 @@ class InvoicingReceiptsTable
                                             } else {
                                                 $set('subtotal_include_ppn', null);
                                             }
-                                        })
-                                        ->helperText('Dasar Pengenaan Pajak (DPP) sebelum dikenakan PPN.'),
+                                        }),
 
                                     TextInput::make('subtotal_include_ppn')
-                                        ->label('Sub Total (Include PPN 11%)')
+                                        ->label('Total Sub Total (Include PPN 11%)')
                                         ->numeric()
                                         ->prefix('Rp')
-                                        ->default(fn (InvoicingReceipt $record) => $record->subtotal_include_ppn)
-                                        ->hint('Otomatis +11% PPN')
-                                        ->hintColor('success')
-                                        ->hintIcon('heroicon-m-sparkles')
-                                        ->helperText('Rumus otomatis: Exclude PPN + (Exclude PPN × 11%).'),
+                                        ->default(fn (InvoicingReceipt $record) => $record->subtotal_include_ppn),
                                 ])->columns(2),
                         ])
                         ->action(function (InvoicingReceipt $record, array $data) {
@@ -512,21 +654,62 @@ class InvoicingReceiptsTable
                                 'no_grs' => $data['no_grs'] ?? $record->no_grs,
                                 'no_rdtv' => $data['no_rdtv'] ?? $record->no_rdtv,
                                 'no_invoice' => $data['no_invoice'] ?? null,
-                                'no_do' => $data['no_do'],
+                                'no_do' => $data['no_do'] ?? $record->no_do,
                                 'faktur_pajak' => $data['faktur_pajak'] ?? null,
-                                'qty_penagihan' => $data['qty_penagihan'] ?? $record->qty_penagihan,
-                                'qty_po' => $data['qty_po'] ?? $record->qty_po,
-                                'uoi' => $data['uoi'] ?? $record->uoi,
-                                'subtotal_exclude_ppn' => $data['subtotal_exclude_ppn'] ?? $record->subtotal_exclude_ppn,
-                                'subtotal_include_ppn' => $data['subtotal_include_ppn'] ?? $record->subtotal_include_ppn,
                             ]);
 
+                            $submittedItems = $data['items'] ?? [];
+                            if (! empty($submittedItems)) {
+                                $record->items()->delete();
+
+                                $poMap = PurchaseOrderIssued::where('purchase_order_no', trim((string) $record->no_po))
+                                    ->get()
+                                    ->keyBy('item_no');
+
+                                foreach ($submittedItems as $seq => $itemData) {
+                                    $itemNo = isset($itemData['item_no']) && is_numeric($itemData['item_no']) ? (int) $itemData['item_no'] : null;
+                                    $matchedPo = $itemNo ? ($poMap[$itemNo] ?? null) : $poMap->first();
+
+                                    $subtotalEx = isset($itemData['subtotal_exclude_ppn']) && is_numeric($itemData['subtotal_exclude_ppn'])
+                                        ? (float) $itemData['subtotal_exclude_ppn']
+                                        : null;
+                                    $subtotalIn = isset($itemData['subtotal_include_ppn']) && is_numeric($itemData['subtotal_include_ppn'])
+                                        ? (float) $itemData['subtotal_include_ppn']
+                                        : ($subtotalEx !== null ? round($subtotalEx * 1.11, 2) : null);
+
+                                    $record->items()->create([
+                                        'purchase_order_issued_id' => $matchedPo?->id ?? $record->purchase_order_issued_id,
+                                        'item_no' => $itemNo ?? ($seq + 1) * 10,
+                                        'material_code' => $itemData['material_code'] ?? $matchedPo?->material_code,
+                                        'nama_barang' => $itemData['nama_barang'] ?? $matchedPo?->description,
+                                        'no_grs' => $itemData['no_grs'] ?? $record->no_grs,
+                                        'no_do' => $itemData['no_do'] ?? $record->no_do,
+                                        'qty_penagihan' => isset($itemData['qty_penagihan']) && is_numeric($itemData['qty_penagihan']) ? (float) $itemData['qty_penagihan'] : null,
+                                        'qty_po' => isset($itemData['qty_po']) && is_numeric($itemData['qty_po']) ? (float) $itemData['qty_po'] : ($matchedPo?->qty_po ? (float) $matchedPo->qty_po : null),
+                                        'uoi' => $itemData['uoi'] ?? $matchedPo?->uoi ?? $record->uoi,
+                                        'subtotal_exclude_ppn' => $subtotalEx,
+                                        'subtotal_include_ppn' => $subtotalIn,
+                                    ]);
+                                }
+
+                                $record->syncSummaryFromItems();
+                                $record->save();
+                            } else {
+                                $record->update([
+                                    'qty_penagihan' => $data['qty_penagihan'] ?? $record->qty_penagihan,
+                                    'qty_po' => $data['qty_po'] ?? $record->qty_po,
+                                    'uoi' => $data['uoi'] ?? $record->uoi,
+                                    'subtotal_exclude_ppn' => $data['subtotal_exclude_ppn'] ?? $record->subtotal_exclude_ppn,
+                                    'subtotal_include_ppn' => $data['subtotal_include_ppn'] ?? $record->subtotal_include_ppn,
+                                ]);
+                            }
+
                             Notification::make()
-                                ->title('Data Invoice Berhasil Disimpan')
+                                ->title('Data Invoice & Rincian Barang Berhasil Disimpan')
                                 ->body(
                                     $record->wasChanged('status') && $record->status === 'Selesai'
                                         ? "Data penagihan untuk PO {$record->no_po} telah diperbarui dan status otomatis menjadi Selesai."
-                                        : "Data penagihan untuk PO {$record->no_po} telah diperbarui."
+                                        : "Data penagihan dan rincian barang untuk PO {$record->no_po} telah diperbarui."
                                 )
                                 ->success()
                                 ->send();

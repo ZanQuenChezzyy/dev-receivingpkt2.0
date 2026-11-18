@@ -99,10 +99,33 @@ class InvoicingReceiptForm
                                     return;
                                 }
 
-                                $po = PurchaseOrderIssued::where('purchase_order_no', trim($state))->first();
+                                $poRecords = PurchaseOrderIssued::where('purchase_order_no', trim($state))->orderBy('item_no')->get();
+                                $po = $poRecords->first();
                                 if ($po) {
-                                    if (! $get('qty_po')) {
-                                        $set('qty_po', (float) $po->qty_po);
+                                    $currentItems = $get('items');
+                                    if (empty($currentItems) && $poRecords->isNotEmpty()) {
+                                        $set('items', $poRecords->map(fn ($p) => [
+                                            'item_no' => $p->item_no,
+                                            'material_code' => $p->material_code,
+                                            'nama_barang' => $p->description,
+                                            'qty_penagihan' => (float) $p->qty_po,
+                                            'qty_po' => (float) $p->qty_po,
+                                            'uoi' => $p->uoi,
+                                            'subtotal_exclude_ppn' => $p->total_amount_in_lc ? (float) $p->total_amount_in_lc : null,
+                                            'subtotal_include_ppn' => $p->total_amount_in_lc ? round((float) $p->total_amount_in_lc * 1.11, 2) : null,
+                                            'no_grs' => $get('no_grs'),
+                                            'no_do' => $get('no_do'),
+                                        ])->toArray());
+                                    }
+
+                                    $totalQtyPo = (float) $poRecords->sum('qty_po');
+                                    $totalAmount = (float) $poRecords->sum('total_amount_in_lc');
+
+                                    if (! $get('qty_po') || (float) $get('qty_po') == 0.0) {
+                                        $set('qty_po', $totalQtyPo > 0 ? $totalQtyPo : (float) $po->qty_po);
+                                    }
+                                    if (! $get('qty_penagihan') || (float) $get('qty_penagihan') == 0.0) {
+                                        $set('qty_penagihan', $totalQtyPo > 0 ? $totalQtyPo : (float) $po->qty_po);
                                     }
                                     if (! $get('uoi') && $po->uoi) {
                                         $set('uoi', $po->uoi);
@@ -110,8 +133,9 @@ class InvoicingReceiptForm
                                     if (! $get('material_type') || $get('material_type') === InvoicingReceipt::DEFAULT_MATERIAL_TYPE) {
                                         $set('material_type', InvoicingReceipt::normalizeMaterialType($po->material_type));
                                     }
-                                    if (! $get('nama_barang') && $po->description) {
-                                        $set('nama_barang', $po->description);
+                                    if (! $get('nama_barang')) {
+                                        $names = $poRecords->pluck('description')->filter()->unique()->implode(', ');
+                                        $set('nama_barang', $names ?: $po->description);
                                     }
                                     if (! $get('deskripsi') && $po->description) {
                                         $set('deskripsi', $po->description);
@@ -119,10 +143,9 @@ class InvoicingReceiptForm
                                     if (! $get('vendor_name') && $po->vendor_name) {
                                         $set('vendor_name', $po->vendor_name);
                                     }
-                                    if (! $get('subtotal_exclude_ppn') && $po->total_amount_in_lc) {
-                                        $subtotal = (float) $po->total_amount_in_lc;
-                                        $set('subtotal_exclude_ppn', $subtotal);
-                                        $set('subtotal_include_ppn', round($subtotal + ($subtotal * 0.11), 2));
+                                    if (! $get('subtotal_exclude_ppn') && $totalAmount > 0) {
+                                        $set('subtotal_exclude_ppn', $totalAmount);
+                                        $set('subtotal_include_ppn', round($totalAmount + ($totalAmount * 0.11), 2));
                                     }
                                     if (! $get('vendor_id') && ($po->vendor_id || $po->vendor_name)) {
                                         $vendor = Vendor::where('vendor_number', $po->vendor_id)
