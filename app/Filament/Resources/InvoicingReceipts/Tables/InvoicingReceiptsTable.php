@@ -638,7 +638,7 @@ class InvoicingReceiptsTable
                                         ->afterStateUpdated(function ($state, Set $set) {
                                             if ($state !== null && is_numeric($state)) {
                                                 $subtotal = (float) $state;
-                                                $set('subtotal_include_ppn', round($subtotal * 1.11, 2));
+                                                $set('subtotal_include_ppn', (int) round($subtotal * 1.11));
                                             } else {
                                                 $set('subtotal_include_ppn', null);
                                             }
@@ -650,15 +650,15 @@ class InvoicingReceiptsTable
                                         ->prefix('Rp')
                                         ->default(function (InvoicingReceipt $record): ?float {
                                             if ($record->subtotal_include_ppn !== null && (float) $record->subtotal_include_ppn > 0) {
-                                                return (float) $record->subtotal_include_ppn;
+                                                return (float) round((float) $record->subtotal_include_ppn);
                                             }
                                             if ($record->subtotal_exclude_ppn !== null && (float) $record->subtotal_exclude_ppn > 0) {
-                                                return round((float) $record->subtotal_exclude_ppn * 1.11, 2);
+                                                return (float) round((float) $record->subtotal_exclude_ppn * 1.11);
                                             }
                                             if (filled($record->no_po) && $record->no_po !== '-') {
                                                 $sumPo = (float) PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))->sum('total_amount_in_lc');
                                                 if ($sumPo > 0) {
-                                                    return round($sumPo * 1.11, 2);
+                                                    return (float) round($sumPo * 1.11);
                                                 }
                                             }
 
@@ -722,8 +722,8 @@ class InvoicingReceiptsTable
                                 if (isset($data['subtotal_exclude_ppn']) && is_numeric($data['subtotal_exclude_ppn'])) {
                                     $record->subtotal_exclude_ppn = (float) $data['subtotal_exclude_ppn'];
                                     $record->subtotal_include_ppn = isset($data['subtotal_include_ppn']) && is_numeric($data['subtotal_include_ppn'])
-                                        ? (float) $data['subtotal_include_ppn']
-                                        : round((float) $data['subtotal_exclude_ppn'] * 1.11, 2);
+                                        ? (float) round((float) $data['subtotal_include_ppn'])
+                                        : (float) round((float) $data['subtotal_exclude_ppn'] * 1.11);
                                 }
                                 $record->save();
                             } else {
@@ -732,7 +732,9 @@ class InvoicingReceiptsTable
                                     'qty_po' => $data['qty_po'] ?? $record->qty_po,
                                     'uoi' => $data['uoi'] ?? $record->uoi,
                                     'subtotal_exclude_ppn' => $data['subtotal_exclude_ppn'] ?? $record->subtotal_exclude_ppn,
-                                    'subtotal_include_ppn' => $data['subtotal_include_ppn'] ?? $record->subtotal_include_ppn,
+                                    'subtotal_include_ppn' => isset($data['subtotal_include_ppn']) && is_numeric($data['subtotal_include_ppn'])
+                                        ? (float) round((float) $data['subtotal_include_ppn'])
+                                        : (isset($data['subtotal_exclude_ppn']) && is_numeric($data['subtotal_exclude_ppn']) ? (float) round((float) $data['subtotal_exclude_ppn'] * 1.11) : $record->subtotal_include_ppn),
                                 ]);
                             }
 

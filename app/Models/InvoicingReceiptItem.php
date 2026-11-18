@@ -55,7 +55,7 @@ class InvoicingReceiptItem extends Model
                 $item->qty_penagihan = $item->qty_po;
             }
             if ($item->subtotal_exclude_ppn !== null && $item->subtotal_include_ppn === null) {
-                $item->subtotal_include_ppn = round((float) $item->subtotal_exclude_ppn * 1.11, 2);
+                $item->subtotal_include_ppn = round((float) $item->subtotal_exclude_ppn * 1.11);
             }
         });
     }

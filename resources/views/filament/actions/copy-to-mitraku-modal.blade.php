@@ -180,7 +180,7 @@
             <div class="min-w-0 pr-2">
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Subtotal (Exclude PPN)</span>
                 <span class="font-bold text-primary-600 dark:text-primary-400 truncate block text-sm">
-                    {{ $record->subtotal_exclude_ppn !== null ? 'Rp ' . number_format($record->subtotal_exclude_ppn, 2, ',', '.') : '-' }}
+                    {{ $record->subtotal_exclude_ppn !== null ? 'Rp ' . (floor((float) $record->subtotal_exclude_ppn) == (float) $record->subtotal_exclude_ppn ? number_format((float) $record->subtotal_exclude_ppn, 0, ',', '.') : number_format((float) $record->subtotal_exclude_ppn, 2, ',', '.')) : '-' }}
                 </span>
             </div>
             <button
@@ -199,7 +199,7 @@
             <div class="min-w-0 pr-2">
                 <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Subtotal (Include PPN)</span>
                 <span class="font-bold text-success-600 dark:text-success-400 truncate block text-sm">
-                    {{ $record->subtotal_include_ppn !== null ? 'Rp ' . number_format($record->subtotal_include_ppn, 2, ',', '.') : '-' }}
+                    {{ $record->subtotal_include_ppn !== null ? 'Rp ' . (floor((float) $record->subtotal_include_ppn) == (float) $record->subtotal_include_ppn ? number_format((float) $record->subtotal_include_ppn, 0, ',', '.') : number_format((float) $record->subtotal_include_ppn, 2, ',', '.')) : '-' }}
                 </span>
             </div>
             <button

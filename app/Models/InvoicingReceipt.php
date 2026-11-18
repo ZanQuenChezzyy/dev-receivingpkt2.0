@@ -196,7 +196,7 @@ class InvoicingReceipt extends Model
             $sumSubtotalEx = (float) $this->items->sum('subtotal_exclude_ppn');
             if ($sumSubtotalEx > 0) {
                 $this->subtotal_exclude_ppn = $sumSubtotalEx;
-                $this->subtotal_include_ppn = round($sumSubtotalEx * 1.11, 2);
+                $this->subtotal_include_ppn = round($sumSubtotalEx * 1.11);
             } else {
                 $sumSubtotalIn = (float) $this->items->sum('subtotal_include_ppn');
                 if ($sumSubtotalIn > 0) {
@@ -251,7 +251,7 @@ class InvoicingReceipt extends Model
 
                 if ($shouldComputeInclude) {
                     $exclude = (float) $record->subtotal_exclude_ppn;
-                    $record->subtotal_include_ppn = round($exclude + ($exclude * 0.11), 2);
+                    $record->subtotal_include_ppn = round($exclude + ($exclude * 0.11));
                 }
             }
 
