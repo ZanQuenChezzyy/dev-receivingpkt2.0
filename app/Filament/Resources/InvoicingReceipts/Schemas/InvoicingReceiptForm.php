@@ -17,6 +17,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Support\RawJs;
 
 class InvoicingReceiptForm
 {
@@ -392,13 +393,16 @@ class InvoicingReceiptForm
 
                         TextInput::make('subtotal_exclude_ppn')
                             ->label('Total Sub Total (Exclude PPN)')
-                            ->numeric()
                             ->prefix('Rp')
+                            ->mask(RawJs::make('$money($input, \',\', \'.\', 0)'))
+                            ->formatStateUsing(fn ($state) => InvoicingReceipt::formatRupiah($state))
+                            ->dehydrateStateUsing(fn ($state) => InvoicingReceipt::parseRupiah($state))
                             ->live(onBlur: true)
                             ->afterStateUpdated(function ($state, Set $set) {
-                                if ($state !== null && is_numeric($state)) {
-                                    $subtotal = (float) $state;
-                                    $set('subtotal_include_ppn', round($subtotal + ($subtotal * 0.11), 2));
+                                $subtotal = InvoicingReceipt::parseRupiah($state);
+                                if ($subtotal !== null && $subtotal > 0) {
+                                    $incPpn = (int) round($subtotal * 1.11);
+                                    $set('subtotal_include_ppn', InvoicingReceipt::formatRupiah($incPpn));
                                 } else {
                                     $set('subtotal_include_ppn', null);
                                 }
@@ -406,9 +410,11 @@ class InvoicingReceiptForm
 
                         TextInput::make('subtotal_include_ppn')
                             ->label('Total Sub Total (Include PPN 11%)')
-                            ->numeric()
                             ->prefix('Rp')
-                            ->helperText('Rumus otomatis: Sub Total (Exclude PPN) + 11% PPN'),
+                            ->mask(RawJs::make('$money($input, \',\', \'.\', 0)'))
+                            ->formatStateUsing(fn ($state) => InvoicingReceipt::formatRupiah($state))
+                            ->dehydrateStateUsing(fn ($state) => InvoicingReceipt::parseRupiah($state))
+                            ->helperText('Rumus otomatis: Sub Total (Exclude PPN) + 11% PPN (Dibulatkan)'),
                     ])->columns(2),
 
                 Section::make('Timeline & Verifikasi Dokumen')

@@ -104,6 +104,39 @@ class InvoicingReceipt extends Model
     }
 
     /**
+     * Parsing input mata uang Rupiah / angka dari masked string menjadi float integer bulat.
+     */
+    public static function parseRupiah(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            return (float) round((float) $value);
+        }
+
+        $withDot = str_replace(',', '.', (string) $value);
+        if (is_numeric($withDot)) {
+            return (float) round((float) $withDot);
+        }
+
+        $digits = preg_replace('/[^\d]/', '', (string) $value);
+
+        return $digits !== '' ? (float) $digits : null;
+    }
+
+    /**
+     * Memformat angka Rupiah menjadi string bertitik tanpa desimal (misal 131950662 -> "131.950.662").
+     */
+    public static function formatRupiah(mixed $value): ?string
+    {
+        $num = self::parseRupiah($value);
+
+        return $num !== null ? number_format($num, 0, ',', '.') : null;
+    }
+
+    /**
      * Menentukan apakah record sudah memiliki data nomor invoice yang valid.
      */
     public function hasInvoiceData(): bool

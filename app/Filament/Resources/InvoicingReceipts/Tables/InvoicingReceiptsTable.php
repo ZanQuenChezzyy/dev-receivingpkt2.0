@@ -27,6 +27,7 @@ use Filament\Schemas\Components\Wizard\Step;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
+use Filament\Support\RawJs;
 use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\RecordActionsPosition;
@@ -620,16 +621,18 @@ class InvoicingReceiptsTable
 
                                     TextInput::make('subtotal_exclude_ppn')
                                         ->label('Total Sub Total (Exclude PPN)')
-                                        ->numeric()
                                         ->prefix('Rp')
-                                        ->default(function (InvoicingReceipt $record): ?float {
+                                        ->mask(RawJs::make('$money($input, \',\', \'.\', 0)'))
+                                        ->formatStateUsing(fn ($state) => InvoicingReceipt::formatRupiah($state))
+                                        ->dehydrateStateUsing(fn ($state) => InvoicingReceipt::parseRupiah($state))
+                                        ->default(function (InvoicingReceipt $record): ?string {
                                             if ($record->subtotal_exclude_ppn !== null && (float) $record->subtotal_exclude_ppn > 0) {
-                                                return (float) $record->subtotal_exclude_ppn;
+                                                return InvoicingReceipt::formatRupiah($record->subtotal_exclude_ppn);
                                             }
                                             if (filled($record->no_po) && $record->no_po !== '-') {
                                                 $sumPo = (float) PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))->sum('total_amount_in_lc');
                                                 if ($sumPo > 0) {
-                                                    return $sumPo;
+                                                    return InvoicingReceipt::formatRupiah($sumPo);
                                                 }
                                             }
 
@@ -637,9 +640,10 @@ class InvoicingReceiptsTable
                                         })
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($state, Set $set) {
-                                            if ($state !== null && is_numeric($state)) {
-                                                $subtotal = (float) $state;
-                                                $set('subtotal_include_ppn', (int) round($subtotal * 1.11));
+                                            $subtotal = InvoicingReceipt::parseRupiah($state);
+                                            if ($subtotal !== null && $subtotal > 0) {
+                                                $incPpn = (int) round($subtotal * 1.11);
+                                                $set('subtotal_include_ppn', InvoicingReceipt::formatRupiah($incPpn));
                                             } else {
                                                 $set('subtotal_include_ppn', null);
                                             }
@@ -647,19 +651,21 @@ class InvoicingReceiptsTable
 
                                     TextInput::make('subtotal_include_ppn')
                                         ->label('Total Sub Total (Include PPN 11%)')
-                                        ->numeric()
                                         ->prefix('Rp')
-                                        ->default(function (InvoicingReceipt $record): ?float {
+                                        ->mask(RawJs::make('$money($input, \',\', \'.\', 0)'))
+                                        ->formatStateUsing(fn ($state) => InvoicingReceipt::formatRupiah($state))
+                                        ->dehydrateStateUsing(fn ($state) => InvoicingReceipt::parseRupiah($state))
+                                        ->default(function (InvoicingReceipt $record): ?string {
                                             if ($record->subtotal_include_ppn !== null && (float) $record->subtotal_include_ppn > 0) {
-                                                return (float) round((float) $record->subtotal_include_ppn);
+                                                return InvoicingReceipt::formatRupiah($record->subtotal_include_ppn);
                                             }
                                             if ($record->subtotal_exclude_ppn !== null && (float) $record->subtotal_exclude_ppn > 0) {
-                                                return (float) round((float) $record->subtotal_exclude_ppn * 1.11);
+                                                return InvoicingReceipt::formatRupiah(round((float) $record->subtotal_exclude_ppn * 1.11));
                                             }
                                             if (filled($record->no_po) && $record->no_po !== '-') {
                                                 $sumPo = (float) PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))->sum('total_amount_in_lc');
                                                 if ($sumPo > 0) {
-                                                    return (float) round($sumPo * 1.11);
+                                                    return InvoicingReceipt::formatRupiah(round($sumPo * 1.11));
                                                 }
                                             }
 
@@ -692,10 +698,8 @@ class InvoicingReceiptsTable
                                     $itemNo = isset($itemData['item_no']) && is_numeric($itemData['item_no']) ? (int) $itemData['item_no'] : null;
                                     $matchedPo = $itemNo ? ($poMap[$itemNo] ?? null) : $poMap->first();
 
-                                    $subtotalEx = isset($itemData['subtotal_exclude_ppn']) && is_numeric($itemData['subtotal_exclude_ppn'])
-                                        ? (float) $itemData['subtotal_exclude_ppn']
-                                        : null;
-                                    $subtotalIn = $subtotalEx !== null ? round($subtotalEx * 1.11, 2) : null;
+                                    $subtotalEx = InvoicingReceipt::parseRupiah($itemData['subtotal_exclude_ppn'] ?? null);
+                                    $subtotalIn = $subtotalEx !== null ? (float) round($subtotalEx * 1.11) : null;
 
                                     $qtyPo = isset($itemData['qty_po']) && is_numeric($itemData['qty_po'])
                                         ? (float) $itemData['qty_po']
@@ -721,22 +725,35 @@ class InvoicingReceiptsTable
                                 }
 
                                 $record->syncSummaryFromItems();
-                                if (isset($data['subtotal_exclude_ppn']) && is_numeric($data['subtotal_exclude_ppn'])) {
-                                    $record->subtotal_exclude_ppn = (float) $data['subtotal_exclude_ppn'];
-                                    $record->subtotal_include_ppn = isset($data['subtotal_include_ppn']) && is_numeric($data['subtotal_include_ppn'])
-                                        ? (float) round((float) $data['subtotal_include_ppn'])
-                                        : (float) round((float) $data['subtotal_exclude_ppn'] * 1.11);
+                                if (array_key_exists('subtotal_exclude_ppn', $data)) {
+                                    $cleanEx = InvoicingReceipt::parseRupiah($data['subtotal_exclude_ppn'] ?? null);
+                                    $record->subtotal_exclude_ppn = $cleanEx;
+
+                                    if (filled($data['subtotal_include_ppn'] ?? null)) {
+                                        $cleanIn = InvoicingReceipt::parseRupiah($data['subtotal_include_ppn']);
+                                        $record->subtotal_include_ppn = $cleanIn !== null ? (float) round($cleanIn) : null;
+                                    } else {
+                                        $record->subtotal_include_ppn = $cleanEx !== null ? (float) round($cleanEx * 1.11) : null;
+                                    }
                                 }
                                 $record->save();
                             } else {
+                                $cleanEx = array_key_exists('subtotal_exclude_ppn', $data)
+                                    ? InvoicingReceipt::parseRupiah($data['subtotal_exclude_ppn'] ?? null)
+                                    : $record->subtotal_exclude_ppn;
+
+                                $cleanIn = array_key_exists('subtotal_include_ppn', $data)
+                                    ? (filled($data['subtotal_include_ppn'] ?? null)
+                                        ? (InvoicingReceipt::parseRupiah($data['subtotal_include_ppn']) !== null ? (float) round(InvoicingReceipt::parseRupiah($data['subtotal_include_ppn'])) : null)
+                                        : ($cleanEx !== null ? (float) round($cleanEx * 1.11) : null))
+                                    : ($cleanEx !== null ? (float) round((float) $cleanEx * 1.11) : $record->subtotal_include_ppn);
+
                                 $record->update([
                                     'qty_penagihan' => $data['qty_penagihan'] ?? $record->qty_penagihan,
                                     'qty_po' => $data['qty_po'] ?? $record->qty_po,
                                     'uoi' => $data['uoi'] ?? $record->uoi,
-                                    'subtotal_exclude_ppn' => $data['subtotal_exclude_ppn'] ?? $record->subtotal_exclude_ppn,
-                                    'subtotal_include_ppn' => isset($data['subtotal_include_ppn']) && is_numeric($data['subtotal_include_ppn'])
-                                        ? (float) round((float) $data['subtotal_include_ppn'])
-                                        : (isset($data['subtotal_exclude_ppn']) && is_numeric($data['subtotal_exclude_ppn']) ? (float) round((float) $data['subtotal_exclude_ppn'] * 1.11) : $record->subtotal_include_ppn),
+                                    'subtotal_exclude_ppn' => $cleanEx,
+                                    'subtotal_include_ppn' => $cleanIn,
                                 ]);
                             }
 
