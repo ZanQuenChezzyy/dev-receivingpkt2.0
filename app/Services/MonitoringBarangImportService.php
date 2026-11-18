@@ -747,7 +747,7 @@ class MonitoringBarangImportService
         rewind($stream);
 
         $rows = [];
-        while (($data = fgetcsv($stream, 0, $delimiter)) !== false) {
+        while (($data = fgetcsv($stream, 0, $delimiter, '"', '\\')) !== false) {
             $rows[] = array_map(fn (?string $val): string => trim((string) $val), $data);
             if ($maxRows !== null && count($rows) >= $maxRows) {
                 break;
@@ -935,6 +935,32 @@ class MonitoringBarangImportService
             ? $parsedLama
             : null;
 
+        $rawNamaBarang = $this->nullIfEmpty($this->cellByKey($row, $map, 'nama_barang'));
+        $rawDeskripsi = $this->nullIfEmpty($this->cellByKey($row, $map, 'deskripsi'));
+        $rawQtyPenagihan = $this->cellByKey($row, $map, 'qty_penagihan');
+        $rawQtyPo = $this->cellByKey($row, $map, 'qty_po');
+        $rawUoi = $this->cellByKey($row, $map, 'uoi');
+        $rawSubtotalExclude = $this->cellByKey($row, $map, 'subtotal_exclude_ppn');
+        $rawSubtotalInclude = $this->cellByKey($row, $map, 'subtotal_include_ppn');
+
+        $itemDetails = $this->parseMultilineItems(
+            $rawNamaBarang,
+            $rawQtyPenagihan,
+            $rawQtyPo,
+            $rawUoi,
+            $rawSubtotalExclude,
+            $rawSubtotalInclude,
+            $rawDeskripsi
+        );
+
+        $parsedNamaBarang = $rawNamaBarang;
+        if (! empty($itemDetails) && count($itemDetails) > 1) {
+            $distinctNames = array_values(array_unique(array_filter(array_column($itemDetails, 'nama_barang'))));
+            if (! empty($distinctNames)) {
+                $parsedNamaBarang = implode(', ', $distinctNames);
+            }
+        }
+
         return [
             'row_number' => $rowNumber,
             'tanggal_terima_grs' => $tanggalTerimaGrs,
@@ -946,18 +972,19 @@ class MonitoringBarangImportService
             'no_po' => $finalNoPo,
             'pic_name' => $picName,
             'vendor_name' => $vendorName,
-            'deskripsi' => $this->nullIfEmpty($this->cellByKey($row, $map, 'deskripsi')),
+            'deskripsi' => $rawDeskripsi,
             'email_vendor' => $this->limitString($this->normalizeEmailList($this->cellByKey($row, $map, 'email_vendor')), 255),
             'tanggal_info_grs' => $tanggalInfoGrs,
             'no_invoice' => $noInvoice,
             'no_do' => $this->limitString($this->nullIfEmpty($this->cellByKey($row, $map, 'no_do')), 255),
             'faktur_pajak' => $this->limitString($this->nullIfEmpty($this->cellByKey($row, $map, 'faktur_pajak')), 255),
-            'nama_barang' => $this->nullIfEmpty($this->cellByKey($row, $map, 'nama_barang')),
-            'qty_penagihan' => $this->clampDecimal($this->parseNumeric($this->cellByKey($row, $map, 'qty_penagihan')), 99_999_999_999.9999),
-            'qty_po' => $this->clampDecimal($this->parseNumeric($this->cellByKey($row, $map, 'qty_po')), 99_999_999_999.9999),
-            'uoi' => $this->normalizeUoi($this->cellByKey($row, $map, 'uoi')),
-            'subtotal_exclude_ppn' => $this->clampDecimal($this->parseNumeric($this->cellByKey($row, $map, 'subtotal_exclude_ppn')), 9_999_999_999_999_999.99),
-            'subtotal_include_ppn' => $this->clampDecimal($this->parseNumeric($this->cellByKey($row, $map, 'subtotal_include_ppn')), 9_999_999_999_999_999.99),
+            'nama_barang' => $parsedNamaBarang,
+            'qty_penagihan' => $this->clampDecimal($this->parseNumeric($rawQtyPenagihan), 99_999_999_999.9999),
+            'qty_po' => $this->clampDecimal($this->parseNumeric($rawQtyPo), 99_999_999_999.9999),
+            'uoi' => $this->normalizeUoi($rawUoi),
+            'subtotal_exclude_ppn' => $this->clampDecimal($this->parseNumeric($rawSubtotalExclude), 9_999_999_999_999_999.99),
+            'subtotal_include_ppn' => $this->clampDecimal($this->parseNumeric($rawSubtotalInclude), 9_999_999_999_999_999.99),
+            'item_details' => $itemDetails,
             'tanggal_terima_koreksi_invoice' => $tanggalTerimaKoreksi,
             'tanggal_kirim_kasir' => $finalTanggalKirimKasir,
             'lama_pekerjaan' => $lamaPekerjaan,
@@ -966,6 +993,126 @@ class MonitoringBarangImportService
             'has_invoice' => $hasInvoice,
             'used_kasir_fallback' => $usedKasirFallback,
         ];
+    }
+
+    /**
+     * Memecah sel multiline (nama barang, qty penagihan, qty po, uoi, subtotal)
+     * menjadi array rincian item berpasangan.
+     *
+     * @return array<int, array{
+     *     nama_barang: ?string,
+     *     qty_penagihan: ?float,
+     *     qty_po: ?float,
+     *     uoi: ?string,
+     *     subtotal_exclude_ppn: ?float,
+     *     subtotal_include_ppn: ?float
+     * }>
+     */
+    protected function parseMultilineItems(
+        ?string $rawNama,
+        ?string $rawQtyPenagihan,
+        ?string $rawQtyPo,
+        ?string $rawUoi,
+        ?string $rawSubtotalExclude,
+        ?string $rawSubtotalInclude,
+        ?string $fallbackDescription = null
+    ): array {
+        $namaLines = ($rawNama !== null && trim($rawNama) !== '')
+            ? (preg_split('/[\r\n]+/', trim($rawNama)) ?: [])
+            : [];
+
+        if (empty($namaLines) && $fallbackDescription !== null && trim($fallbackDescription) !== '') {
+            $namaLines = preg_split('/[\r\n]+/', trim($fallbackDescription)) ?: [];
+        }
+
+        $namaLines = array_values(array_map('trim', $namaLines));
+
+        $qtyPenagihanLines = ($rawQtyPenagihan !== null && trim($rawQtyPenagihan) !== '')
+            ? array_values(array_map('trim', preg_split('/[\r\n]+/', trim($rawQtyPenagihan)) ?: []))
+            : [];
+
+        $qtyPoLines = ($rawQtyPo !== null && trim($rawQtyPo) !== '')
+            ? array_values(array_map('trim', preg_split('/[\r\n]+/', trim($rawQtyPo)) ?: []))
+            : [];
+
+        $uoiLines = ($rawUoi !== null && trim($rawUoi) !== '')
+            ? array_values(array_map('trim', preg_split('/[\r\n]+/', trim($rawUoi)) ?: []))
+            : [];
+
+        $subtotalExLines = ($rawSubtotalExclude !== null && trim($rawSubtotalExclude) !== '')
+            ? array_values(array_map('trim', preg_split('/[\r\n]+/', trim($rawSubtotalExclude)) ?: []))
+            : [];
+
+        $subtotalInLines = ($rawSubtotalInclude !== null && trim($rawSubtotalInclude) !== '')
+            ? array_values(array_map('trim', preg_split('/[\r\n]+/', trim($rawSubtotalInclude)) ?: []))
+            : [];
+
+        $count = max(count($namaLines), count($qtyPenagihanLines), count($qtyPoLines));
+
+        if ($count === 0) {
+            if (! empty($subtotalExLines) || ! empty($subtotalInLines)) {
+                $count = 1;
+            } else {
+                return [];
+            }
+        }
+
+        $items = [];
+        for ($i = 0; $i < $count; $i++) {
+            $itemName = $namaLines[$i] ?? ($count === 1 ? ($namaLines[0] ?? null) : null);
+            if ($itemName !== null) {
+                $itemName = $this->nullIfEmpty($itemName);
+            }
+
+            $qtyPenagihan = isset($qtyPenagihanLines[$i])
+                ? $this->clampDecimal($this->parseSingleNumeric($qtyPenagihanLines[$i]), 99_999_999_999.9999)
+                : null;
+
+            $qtyPo = isset($qtyPoLines[$i])
+                ? $this->clampDecimal($this->parseSingleNumeric($qtyPoLines[$i]), 99_999_999_999.9999)
+                : null;
+
+            // Jika UOI hanya ditulis 1 baris di spreadsheet, terapkan untuk semua item
+            if (count($uoiLines) === 1) {
+                $uoi = $this->normalizeUoi($uoiLines[0]);
+            } else {
+                $uoi = isset($uoiLines[$i]) ? $this->normalizeUoi($uoiLines[$i]) : null;
+            }
+
+            // Jika subtotal memiliki jumlah baris yang sama dengan jumlah item, gunakan nilai masing-masing.
+            // Jika hanya 1 nilai (lump-sum satu invoice), subtotal dicatat di header, bukan diduplikasi per item.
+            if (count($subtotalExLines) === $count && isset($subtotalExLines[$i])) {
+                $subtotalEx = $this->clampDecimal($this->parseSingleNumeric($subtotalExLines[$i]), 9_999_999_999_999_999.99);
+            } elseif ($count === 1 && isset($subtotalExLines[0])) {
+                $subtotalEx = $this->clampDecimal($this->parseSingleNumeric($subtotalExLines[0]), 9_999_999_999_999_999.99);
+            } else {
+                $subtotalEx = null;
+            }
+
+            if (count($subtotalInLines) === $count && isset($subtotalInLines[$i])) {
+                $subtotalIn = $this->clampDecimal($this->parseSingleNumeric($subtotalInLines[$i]), 9_999_999_999_999_999.99);
+            } elseif ($count === 1 && isset($subtotalInLines[0])) {
+                $subtotalIn = $this->clampDecimal($this->parseSingleNumeric($subtotalInLines[0]), 9_999_999_999_999_999.99);
+            } else {
+                $subtotalIn = ($subtotalEx !== null) ? round($subtotalEx * 1.11, 2) : null;
+            }
+
+            // Abaikan item jika seluruh kolomnya kosong
+            if ($itemName === null && $qtyPenagihan === null && $qtyPo === null && $subtotalEx === null) {
+                continue;
+            }
+
+            $items[] = [
+                'nama_barang' => $itemName,
+                'qty_penagihan' => $qtyPenagihan,
+                'qty_po' => $qtyPo,
+                'uoi' => $uoi,
+                'subtotal_exclude_ppn' => $subtotalEx,
+                'subtotal_include_ppn' => $subtotalIn,
+            ];
+        }
+
+        return $items;
     }
 
     /**
@@ -1225,48 +1372,79 @@ class MonitoringBarangImportService
         }
 
         // Sinkronisasi rincian item barang ke tabel invoicing_receipt_items
-        $itemNamaBarang = $item['nama_barang'] ?? $firstDetail?->description ?? $poRecord?->description;
-        if (filled($itemNamaBarang) || filled($item['qty_penagihan']) || filled($item['subtotal_exclude_ppn'])) {
-            $existingItemQuery = $receipt->items();
-            if (filled($itemNamaBarang)) {
-                $existingItemQuery->where('nama_barang', $itemNamaBarang);
+        $itemDetails = $item['item_details'] ?? [];
+        if (empty($itemDetails)) {
+            $fallbackNama = $item['nama_barang'] ?? $firstDetail?->description ?? $poRecord?->description;
+            if (filled($fallbackNama) || filled($item['qty_penagihan']) || filled($item['subtotal_exclude_ppn'])) {
+                $itemDetails = [
+                    [
+                        'nama_barang' => $fallbackNama,
+                        'qty_penagihan' => $item['qty_penagihan'],
+                        'qty_po' => $item['qty_po'] ?? ($poRecord?->qty_po ? (float) $poRecord->qty_po : null),
+                        'uoi' => $item['uoi'] ?? $firstDetail?->uoi ?? $poRecord?->uoi,
+                        'subtotal_exclude_ppn' => $item['subtotal_exclude_ppn'],
+                        'subtotal_include_ppn' => $item['subtotal_include_ppn'],
+                    ],
+                ];
             }
-            if (filled($item['no_grs'])) {
-                $existingItemQuery->where('no_grs', $item['no_grs']);
-            }
-            $existingItem = $existingItemQuery->first();
+        }
 
-            $subtotalIncludeItem = $item['subtotal_include_ppn'];
-            if ($subtotalIncludeItem === null && $item['subtotal_exclude_ppn'] !== null) {
-                $subtotalIncludeItem = round((float) $item['subtotal_exclude_ppn'] * 1.11, 2);
+        if (! empty($itemDetails)) {
+            $existingItems = $receipt->items()->get();
+
+            // Jika sebelumnya hanya ada 1 item yang berisi multiline nama barang,
+            // dan sekarang dipecah menjadi multiple items yang rapi, bersihkan item lama tersebut.
+            if ($existingItems->count() === 1 && count($itemDetails) > 1 && str_contains((string) $existingItems->first()->nama_barang, "\n")) {
+                $receipt->items()->delete();
+                $existingItems = collect();
             }
 
-            if ($existingItem) {
-                $existingItem->update([
-                    'purchase_order_issued_id' => $existingItem->purchase_order_issued_id ?? $poRecord?->id,
-                    'delivery_order_receipt_detail_id' => $existingItem->delivery_order_receipt_detail_id ?? $firstDetail?->id,
-                    'no_grs' => $item['no_grs'] ?? $existingItem->no_grs ?? $receipt->no_grs,
-                    'no_do' => $item['no_do'] ?? $existingItem->no_do ?? $receipt->no_do,
-                    'nama_barang' => $itemNamaBarang,
-                    'qty_penagihan' => $item['qty_penagihan'] ?? $existingItem->qty_penagihan,
-                    'qty_po' => $item['qty_po'] ?? $existingItem->qty_po ?? ($poRecord?->qty_po ? (float) $poRecord->qty_po : null),
-                    'uoi' => $item['uoi'] ?? $existingItem->uoi ?? $firstDetail?->uoi ?? $poRecord?->uoi,
-                    'subtotal_exclude_ppn' => $item['subtotal_exclude_ppn'] ?? $existingItem->subtotal_exclude_ppn,
-                    'subtotal_include_ppn' => $subtotalIncludeItem ?? $existingItem->subtotal_include_ppn,
-                ]);
-            } else {
-                $receipt->items()->create([
-                    'purchase_order_issued_id' => $poRecord?->id,
-                    'delivery_order_receipt_detail_id' => $firstDetail?->id,
-                    'no_grs' => $item['no_grs'] ?? $receipt->no_grs,
-                    'no_do' => $item['no_do'] ?? $receipt->no_do,
-                    'nama_barang' => $itemNamaBarang,
-                    'qty_penagihan' => $item['qty_penagihan'],
-                    'qty_po' => $item['qty_po'] ?? ($poRecord?->qty_po ? (float) $poRecord->qty_po : null),
-                    'uoi' => $item['uoi'] ?? $firstDetail?->uoi ?? $poRecord?->uoi,
-                    'subtotal_exclude_ppn' => $item['subtotal_exclude_ppn'],
-                    'subtotal_include_ppn' => $subtotalIncludeItem,
-                ]);
+            foreach ($itemDetails as $seq => $detail) {
+                $subtotalIncludeItem = $detail['subtotal_include_ppn'];
+                if ($subtotalIncludeItem === null && $detail['subtotal_exclude_ppn'] !== null) {
+                    $subtotalIncludeItem = round((float) $detail['subtotal_exclude_ppn'] * 1.11, 2);
+                }
+
+                $detailNama = $detail['nama_barang'] ?? $firstDetail?->description ?? $poRecord?->description;
+
+                // Cari existing item berdasarkan nama_barang atau urutan indeks
+                $existingItem = null;
+                if (filled($detailNama)) {
+                    $existingItem = $existingItems->first(fn ($it) => $it->nama_barang === $detailNama);
+                }
+                if (! $existingItem && isset($existingItems[$seq])) {
+                    $existingItem = $existingItems[$seq];
+                }
+
+                if ($existingItem) {
+                    $existingItem->update([
+                        'purchase_order_issued_id' => $existingItem->purchase_order_issued_id ?? $poRecord?->id,
+                        'delivery_order_receipt_detail_id' => $existingItem->delivery_order_receipt_detail_id ?? $firstDetail?->id,
+                        'item_no' => $existingItem->item_no ?? ($seq + 1),
+                        'no_grs' => $item['no_grs'] ?? $existingItem->no_grs ?? $receipt->no_grs,
+                        'no_do' => $item['no_do'] ?? $existingItem->no_do ?? $receipt->no_do,
+                        'nama_barang' => $detailNama,
+                        'qty_penagihan' => $detail['qty_penagihan'] ?? $existingItem->qty_penagihan,
+                        'qty_po' => $detail['qty_po'] ?? $existingItem->qty_po ?? ($poRecord?->qty_po ? (float) $poRecord->qty_po : null),
+                        'uoi' => $detail['uoi'] ?? $existingItem->uoi ?? $firstDetail?->uoi ?? $poRecord?->uoi,
+                        'subtotal_exclude_ppn' => $detail['subtotal_exclude_ppn'] ?? $existingItem->subtotal_exclude_ppn,
+                        'subtotal_include_ppn' => $subtotalIncludeItem ?? $existingItem->subtotal_include_ppn,
+                    ]);
+                } else {
+                    $receipt->items()->create([
+                        'purchase_order_issued_id' => $poRecord?->id,
+                        'delivery_order_receipt_detail_id' => $firstDetail?->id,
+                        'item_no' => $seq + 1,
+                        'no_grs' => $item['no_grs'] ?? $receipt->no_grs,
+                        'no_do' => $item['no_do'] ?? $receipt->no_do,
+                        'nama_barang' => $detailNama,
+                        'qty_penagihan' => $detail['qty_penagihan'],
+                        'qty_po' => $detail['qty_po'] ?? ($poRecord?->qty_po ? (float) $poRecord->qty_po : null),
+                        'uoi' => $detail['uoi'] ?? $firstDetail?->uoi ?? $poRecord?->uoi,
+                        'subtotal_exclude_ppn' => $detail['subtotal_exclude_ppn'],
+                        'subtotal_include_ppn' => $subtotalIncludeItem,
+                    ]);
+                }
             }
 
             if ($receipt->items()->count() > 1) {

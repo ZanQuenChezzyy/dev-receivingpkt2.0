@@ -172,9 +172,20 @@ class InvoicingReceipt extends Model
         }
 
         if ($this->items->isNotEmpty()) {
-            $this->qty_penagihan = (float) $this->items->sum('qty_penagihan');
-            $this->subtotal_exclude_ppn = (float) $this->items->sum('subtotal_exclude_ppn');
-            $this->subtotal_include_ppn = (float) $this->items->sum('subtotal_include_ppn');
+            $sumQty = (float) $this->items->sum('qty_penagihan');
+            if ($sumQty > 0 || $this->qty_penagihan === null) {
+                $this->qty_penagihan = $sumQty;
+            }
+
+            $sumSubtotalEx = (float) $this->items->sum('subtotal_exclude_ppn');
+            if ($sumSubtotalEx > 0) {
+                $this->subtotal_exclude_ppn = $sumSubtotalEx;
+            }
+
+            $sumSubtotalIn = (float) $this->items->sum('subtotal_include_ppn');
+            if ($sumSubtotalIn > 0) {
+                $this->subtotal_include_ppn = $sumSubtotalIn;
+            }
 
             $itemNames = $this->items->pluck('nama_barang')->filter(fn ($n) => filled($n))->unique()->values();
             if ($itemNames->isNotEmpty()) {

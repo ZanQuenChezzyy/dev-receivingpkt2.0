@@ -1319,3 +1319,47 @@ CSV;
         ->and(InvoicingReceipt::where('no_grs', '5009200004')->value('delivery_order_receipt_id'))->toBe($doPartial2->id)
         ->and(InvoicingReceipt::where('no_grs', '5009200005')->value('delivery_order_receipt_id'))->toBeNull();
 });
+
+it('splits multiline items in a single invoice into separate invoicing_receipt_items', function () {
+    $csv = <<<'CSV'
+Tanggal Terima GRS,Jenis,No. GRS,No. PO,PIC,Vendor,Tanggal Info GRS,No. Invoice,No. DO,Nama Barang,Quantity Penagihan,Quantity di PO,UOI,Sub Total (Exclude PPN)
+15 Oktober 2026,Sparepart,5007666216,5300063406,ELLA,MITSUBISHI HEAVY INDUSTRIES,16 Oktober 2026,IVM26090020,DO-MHI-01,"SEAL,LABYRINTH:5H-6B
+SEAL,LABYRINTH:MHI
+BEARING THRUST:MHI","1
+1
+2","1
+1
+2",SET,45500
+CSV;
+
+    $summary = app(MonitoringBarangImportService::class)->importFromString($csv);
+
+    expect($summary['created'])->toBe(1);
+
+    $receipt = InvoicingReceipt::where('no_invoice', 'IVM26090020')->first();
+    expect($receipt)->not->toBeNull()
+        ->and((float) $receipt->qty_penagihan)->toBe(4.0)
+        ->and((float) $receipt->subtotal_exclude_ppn)->toBe(45500.0)
+        ->and($receipt->items)->toHaveCount(3);
+
+    $items = $receipt->items->sortBy('item_no')->values();
+    expect($items[0]->nama_barang)->toBe('SEAL,LABYRINTH:5H-6B')
+        ->and((float) $items[0]->qty_penagihan)->toBe(1.0)
+        ->and((float) $items[0]->qty_po)->toBe(1.0)
+        ->and($items[0]->uoi)->toBe('SET')
+        ->and($items[1]->nama_barang)->toBe('SEAL,LABYRINTH:MHI')
+        ->and((float) $items[1]->qty_penagihan)->toBe(1.0)
+        ->and((float) $items[1]->qty_po)->toBe(1.0)
+        ->and($items[1]->uoi)->toBe('SET')
+        ->and($items[2]->nama_barang)->toBe('BEARING THRUST:MHI')
+        ->and((float) $items[2]->qty_penagihan)->toBe(2.0)
+        ->and((float) $items[2]->qty_po)->toBe(2.0)
+        ->and($items[2]->uoi)->toBe('SET');
+
+    // Re-import smart upsert: pastikan tidak membuat duplikasi item
+    $summary2 = app(MonitoringBarangImportService::class)->importFromString($csv);
+    expect($summary2['updated'] + $summary2['unchanged'])->toBe(1);
+
+    $receipt->refresh();
+    expect($receipt->items()->count())->toBe(3);
+});
