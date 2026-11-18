@@ -40,6 +40,26 @@ class InvoicingReceiptItem extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (InvoicingReceiptItem $item) {
+            if ($item->invoicingReceipt) {
+                if (blank($item->no_grs) && filled($item->invoicingReceipt->no_grs)) {
+                    $item->no_grs = $item->invoicingReceipt->no_grs;
+                }
+                if (blank($item->no_do) && filled($item->invoicingReceipt->no_do)) {
+                    $item->no_do = $item->invoicingReceipt->no_do;
+                }
+            }
+            if ($item->qty_penagihan === null && $item->qty_po !== null) {
+                $item->qty_penagihan = $item->qty_po;
+            }
+            if ($item->subtotal_exclude_ppn !== null && $item->subtotal_include_ppn === null) {
+                $item->subtotal_include_ppn = round((float) $item->subtotal_exclude_ppn * 1.11, 2);
+            }
+        });
+    }
+
     public function invoicingReceipt(): BelongsTo
     {
         return $this->belongsTo(InvoicingReceipt::class);

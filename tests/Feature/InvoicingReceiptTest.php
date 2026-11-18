@@ -1230,3 +1230,83 @@ test('inputInvoiceData action supports saving multiple items with distinct GRS a
         }
     }
 });
+
+test('inputInvoiceData automatically inherits header GRS and DO to items and defaults qty_penagihan from qty_po', function () {
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    try {
+        $receipt = InvoicingReceipt::create([
+            'no_po' => '5300099999',
+            'no_do' => 'DO-HEADER-99',
+            'no_grs' => '5007099999',
+            'jenis' => 'GRS',
+            'status' => 'Menunggu Verifikasi',
+        ]);
+
+        $livewire = app(ListInvoicingReceipts::class);
+        $table = new Table($livewire);
+        InvoicingReceiptsTable::configure($table);
+
+        $actions = collect($table->getRecordActions())
+            ->flatMap(function ($a) use ($receipt) {
+                if ($a instanceof ActionGroup) {
+                    $a->record($receipt);
+
+                    return collect($a->getActions())->map->record($receipt);
+                }
+
+                return [$a->record($receipt)];
+            })
+            ->filter(fn ($a) => method_exists($a, 'getName'))
+            ->keyBy(fn ($a) => $a->getName());
+
+        $action = $actions['inputInvoiceData'];
+
+        // Item disubmit tanpa no_grs dan no_do, dan tanpa qty_penagihan eksplisit
+        $action->call([
+            'record' => $receipt,
+            'data' => [
+                'no_grs' => '5007099999',
+                'no_do' => 'DO-HEADER-99',
+                'no_invoice' => 'INV-HEADER-01',
+                'items' => [
+                    [
+                        'item_no' => 10,
+                        'nama_barang' => 'BOLT HEX M12',
+                        'qty_po' => 50,
+                        'uoi' => 'PCS',
+                        'subtotal_exclude_ppn' => 1000000,
+                    ],
+                    [
+                        'item_no' => 20,
+                        'nama_barang' => 'NUT HEX M12',
+                        'qty_po' => 50,
+                        'uoi' => 'PCS',
+                        'subtotal_exclude_ppn' => 500000,
+                    ],
+                ],
+            ],
+        ]);
+
+        $receipt->refresh();
+
+        expect($receipt->no_invoice)->toBe('INV-HEADER-01')
+            ->and($receipt->items)->toHaveCount(2)
+            ->and((float) $receipt->qty_penagihan)->toBe(100.0)
+            ->and((float) $receipt->subtotal_exclude_ppn)->toBe(1500000.0)
+            ->and((float) $receipt->subtotal_include_ppn)->toBe(1665000.0);
+
+        $items = $receipt->items->sortBy('item_no')->values();
+        expect($items[0]->no_grs)->toBe('5007099999')
+            ->and($items[0]->no_do)->toBe('DO-HEADER-99')
+            ->and((float) $items[0]->qty_penagihan)->toBe(50.0)
+            ->and($items[1]->no_grs)->toBe('5007099999')
+            ->and($items[1]->no_do)->toBe('DO-HEADER-99')
+            ->and((float) $items[1]->qty_penagihan)->toBe(50.0);
+    } finally {
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});

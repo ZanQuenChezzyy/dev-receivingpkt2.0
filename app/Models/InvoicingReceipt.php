@@ -163,6 +163,22 @@ class InvoicingReceipt extends Model
     }
 
     /**
+     * Cari nomor Delivery Order dari relasi penerimaan DO berdasarkan nomor PO.
+     */
+    public static function findDeliveryOrderNoForPo(?string $poNo): ?string
+    {
+        if (blank($poNo) || $poNo === '-') {
+            return null;
+        }
+
+        $cleanPo = trim((string) $poNo);
+
+        return DeliveryOrderReceipt::whereHas('deliveryOrderReceiptDetails.purchaseOrderIssued', function ($q) use ($cleanPo) {
+            $q->where('purchase_order_no', $cleanPo);
+        })->latest()->value('delivery_order_no');
+    }
+
+    /**
      * Sinkronisasi ringkasan kuantitas dan nilai dari relasi items ke kolom summary header.
      */
     public function syncSummaryFromItems(): void
@@ -180,11 +196,12 @@ class InvoicingReceipt extends Model
             $sumSubtotalEx = (float) $this->items->sum('subtotal_exclude_ppn');
             if ($sumSubtotalEx > 0) {
                 $this->subtotal_exclude_ppn = $sumSubtotalEx;
-            }
-
-            $sumSubtotalIn = (float) $this->items->sum('subtotal_include_ppn');
-            if ($sumSubtotalIn > 0) {
-                $this->subtotal_include_ppn = $sumSubtotalIn;
+                $this->subtotal_include_ppn = round($sumSubtotalEx * 1.11, 2);
+            } else {
+                $sumSubtotalIn = (float) $this->items->sum('subtotal_include_ppn');
+                if ($sumSubtotalIn > 0) {
+                    $this->subtotal_include_ppn = $sumSubtotalIn;
+                }
             }
 
             $itemNames = $this->items->pluck('nama_barang')->filter(fn ($n) => filled($n))->unique()->values();

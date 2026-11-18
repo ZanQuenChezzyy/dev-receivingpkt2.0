@@ -437,7 +437,7 @@ class InvoicingReceiptsTable
                                         ->label('Nomor DO Utama (Delivery Order)')
                                         ->placeholder('Nomor Delivery Order')
                                         ->prefixIcon('heroicon-m-truck')
-                                        ->default(fn (InvoicingReceipt $record) => $record->no_do)
+                                        ->default(fn (InvoicingReceipt $record) => $record->no_do ?: InvoicingReceipt::findDeliveryOrderNoForPo($record->no_po))
                                         ->required()
                                         ->hint('Wajib')
                                         ->hintColor('danger')
@@ -452,7 +452,7 @@ class InvoicingReceiptsTable
                                 ])->columns(2),
 
                             Section::make('Rincian Barang yang Ditagihkan (Multi-Item)')
-                                ->description('Daftar barang dalam invoice ini. Jika PO memiliki beberapa item (misal item 10, 20, 30), Anda dapat mengelola kuantitas, no. GRS, dan no. DO per item.')
+                                ->description('Daftar barang dalam invoice ini. Jika PO memiliki beberapa item (misal item 10, 20, 30), kuantitas dan harga item otomatis terisi dari PO.')
                                 ->icon('heroicon-o-queue-list')
                                 ->schema([
                                     Repeater::make('items')
@@ -470,13 +470,10 @@ class InvoicingReceiptsTable
                                                     'item_no' => $it->item_no,
                                                     'material_code' => $it->material_code,
                                                     'nama_barang' => $it->nama_barang,
-                                                    'no_grs' => $it->no_grs ?? $record->no_grs,
-                                                    'no_do' => $it->no_do ?? $record->no_do,
-                                                    'qty_penagihan' => $it->qty_penagihan !== null ? (float) $it->qty_penagihan : null,
+                                                    'qty_penagihan' => $it->qty_penagihan !== null ? (float) $it->qty_penagihan : ($it->qty_po !== null ? (float) $it->qty_po : null),
                                                     'qty_po' => $it->qty_po !== null ? (float) $it->qty_po : null,
                                                     'uoi' => $it->uoi ?? $record->uoi,
                                                     'subtotal_exclude_ppn' => $it->subtotal_exclude_ppn !== null ? (float) $it->subtotal_exclude_ppn : null,
-                                                    'subtotal_include_ppn' => $it->subtotal_include_ppn !== null ? (float) $it->subtotal_include_ppn : null,
                                                 ])->values()->toArray();
                                             }
 
@@ -491,13 +488,10 @@ class InvoicingReceiptsTable
                                                         'item_no' => $p->item_no,
                                                         'material_code' => $p->material_code,
                                                         'nama_barang' => $p->description,
-                                                        'no_grs' => $record->no_grs,
-                                                        'no_do' => $record->no_do,
                                                         'qty_penagihan' => (float) $p->qty_po,
                                                         'qty_po' => (float) $p->qty_po,
                                                         'uoi' => $p->uoi,
                                                         'subtotal_exclude_ppn' => $p->total_amount_in_lc ? (float) $p->total_amount_in_lc : null,
-                                                        'subtotal_include_ppn' => $p->total_amount_in_lc ? round((float) $p->total_amount_in_lc * 1.11, 2) : null,
                                                     ])->values()->toArray();
                                                 }
                                             }
@@ -508,13 +502,10 @@ class InvoicingReceiptsTable
                                                     'item_no' => $d->item_no,
                                                     'material_code' => $d->material_code,
                                                     'nama_barang' => $d->description,
-                                                    'no_grs' => $record->no_grs,
-                                                    'no_do' => $record->no_do,
                                                     'qty_penagihan' => (float) $d->quantity,
                                                     'qty_po' => (float) ($d->purchaseOrderIssued?->qty_po ?? $d->quantity),
                                                     'uoi' => $d->uoi,
                                                     'subtotal_exclude_ppn' => $d->total_amount_snapshot ? (float) $d->total_amount_snapshot : null,
-                                                    'subtotal_include_ppn' => $d->total_amount_snapshot ? round((float) $d->total_amount_snapshot * 1.11, 2) : null,
                                                 ])->values()->toArray();
                                             }
 
@@ -525,13 +516,10 @@ class InvoicingReceiptsTable
                                                         'item_no' => 10,
                                                         'material_code' => null,
                                                         'nama_barang' => $record->nama_barang,
-                                                        'no_grs' => $record->no_grs,
-                                                        'no_do' => $record->no_do,
-                                                        'qty_penagihan' => $record->qty_penagihan !== null ? (float) $record->qty_penagihan : null,
+                                                        'qty_penagihan' => $record->qty_penagihan !== null ? (float) $record->qty_penagihan : ($record->qty_po !== null ? (float) $record->qty_po : null),
                                                         'qty_po' => $record->qty_po !== null ? (float) $record->qty_po : null,
                                                         'uoi' => $record->uoi,
                                                         'subtotal_exclude_ppn' => $record->subtotal_exclude_ppn !== null ? (float) $record->subtotal_exclude_ppn : null,
-                                                        'subtotal_include_ppn' => $record->subtotal_include_ppn !== null ? (float) $record->subtotal_include_ppn : null,
                                                     ],
                                                 ];
                                             }
@@ -552,50 +540,47 @@ class InvoicingReceiptsTable
                                                 ->required()
                                                 ->columnSpan(4),
 
-                                            TextInput::make('no_grs')
-                                                ->label('No. GRS Item')
-                                                ->placeholder('Nomor GRS')
-                                                ->columnSpan(3),
-
-                                            TextInput::make('no_do')
-                                                ->label('No. DO Item')
-                                                ->placeholder('Nomor DO')
-                                                ->columnSpan(3),
-
                                             TextInput::make('qty_penagihan')
                                                 ->label('Qty Ditagihkan')
                                                 ->numeric()
                                                 ->required()
                                                 ->placeholder('0.00')
-                                                ->columnSpan(3),
+                                                ->live(onBlur: true)
+                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                    $items = $get('../../items') ?? [];
+                                                    $totalQty = 0;
+                                                    foreach ($items as $item) {
+                                                        $totalQty += (float) ($item['qty_penagihan'] ?? 0);
+                                                    }
+                                                    $set('../../qty_penagihan', $totalQty > 0 ? $totalQty : null);
+                                                })
+                                                ->columnSpan(2),
 
                                             TextInput::make('qty_po')
                                                 ->label('Qty PO')
                                                 ->numeric()
                                                 ->placeholder('0.00')
-                                                ->columnSpan(3),
+                                                ->columnSpan(1),
 
                                             TextInput::make('uoi')
-                                                ->label('Satuan (UOI)')
+                                                ->label('Satuan')
                                                 ->placeholder('PCS, SET...')
-                                                ->columnSpan(2),
+                                                ->columnSpan(1),
 
                                             TextInput::make('subtotal_exclude_ppn')
-                                                ->label('Sub Total (DPP)')
+                                                ->label('Harga Total Item (DPP)')
                                                 ->numeric()
                                                 ->prefix('Rp')
                                                 ->live(onBlur: true)
-                                                ->afterStateUpdated(function ($state, Set $set): void {
-                                                    if ($state !== null && is_numeric($state)) {
-                                                        $set('subtotal_include_ppn', round((float) $state * 1.11, 2));
+                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                    $items = $get('../../items') ?? [];
+                                                    $totalDpp = 0;
+                                                    foreach ($items as $item) {
+                                                        $totalDpp += (float) ($item['subtotal_exclude_ppn'] ?? 0);
                                                     }
+                                                    $set('../../subtotal_exclude_ppn', $totalDpp > 0 ? $totalDpp : null);
+                                                    $set('../../subtotal_include_ppn', $totalDpp > 0 ? round($totalDpp * 1.11, 2) : null);
                                                 })
-                                                ->columnSpan(2),
-
-                                            TextInput::make('subtotal_include_ppn')
-                                                ->label('Sub Total (Incl PPN)')
-                                                ->numeric()
-                                                ->prefix('Rp')
                                                 ->columnSpan(2),
                                         ])
                                         ->columns(12),
@@ -610,7 +595,19 @@ class InvoicingReceiptsTable
                                         ->label('Total Quantity Penagihan')
                                         ->numeric()
                                         ->prefixIcon('heroicon-m-archive-box')
-                                        ->default(fn (InvoicingReceipt $record) => $record->qty_penagihan)
+                                        ->default(function (InvoicingReceipt $record): ?float {
+                                            if ($record->qty_penagihan !== null && (float) $record->qty_penagihan > 0) {
+                                                return (float) $record->qty_penagihan;
+                                            }
+                                            if (filled($record->no_po) && $record->no_po !== '-') {
+                                                $sumPo = (float) PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))->sum('qty_po');
+                                                if ($sumPo > 0) {
+                                                    return $sumPo;
+                                                }
+                                            }
+
+                                            return null;
+                                        })
                                         ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI')
                                         ->helperText('Otomatis dihitung dari rincian barang.'),
 
@@ -618,7 +615,19 @@ class InvoicingReceiptsTable
                                         ->label('Total Quantity di PO')
                                         ->numeric()
                                         ->prefixIcon('heroicon-m-shopping-cart')
-                                        ->default(fn (InvoicingReceipt $record) => $record->qty_po)
+                                        ->default(function (InvoicingReceipt $record): ?float {
+                                            if ($record->qty_po !== null && (float) $record->qty_po > 0) {
+                                                return (float) $record->qty_po;
+                                            }
+                                            if (filled($record->no_po) && $record->no_po !== '-') {
+                                                $sumPo = (float) PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))->sum('qty_po');
+                                                if ($sumPo > 0) {
+                                                    return $sumPo;
+                                                }
+                                            }
+
+                                            return null;
+                                        })
                                         ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI'),
 
                                     TextInput::make('uoi')
@@ -631,12 +640,24 @@ class InvoicingReceiptsTable
                                         ->label('Total Sub Total (Exclude PPN)')
                                         ->numeric()
                                         ->prefix('Rp')
-                                        ->default(fn (InvoicingReceipt $record) => $record->subtotal_exclude_ppn)
+                                        ->default(function (InvoicingReceipt $record): ?float {
+                                            if ($record->subtotal_exclude_ppn !== null && (float) $record->subtotal_exclude_ppn > 0) {
+                                                return (float) $record->subtotal_exclude_ppn;
+                                            }
+                                            if (filled($record->no_po) && $record->no_po !== '-') {
+                                                $sumPo = (float) PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))->sum('total_amount_in_lc');
+                                                if ($sumPo > 0) {
+                                                    return $sumPo;
+                                                }
+                                            }
+
+                                            return null;
+                                        })
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($state, Set $set) {
                                             if ($state !== null && is_numeric($state)) {
                                                 $subtotal = (float) $state;
-                                                $set('subtotal_include_ppn', round($subtotal + ($subtotal * 0.11), 2));
+                                                $set('subtotal_include_ppn', round($subtotal * 1.11, 2));
                                             } else {
                                                 $set('subtotal_include_ppn', null);
                                             }
@@ -646,7 +667,22 @@ class InvoicingReceiptsTable
                                         ->label('Total Sub Total (Include PPN 11%)')
                                         ->numeric()
                                         ->prefix('Rp')
-                                        ->default(fn (InvoicingReceipt $record) => $record->subtotal_include_ppn),
+                                        ->default(function (InvoicingReceipt $record): ?float {
+                                            if ($record->subtotal_include_ppn !== null && (float) $record->subtotal_include_ppn > 0) {
+                                                return (float) $record->subtotal_include_ppn;
+                                            }
+                                            if ($record->subtotal_exclude_ppn !== null && (float) $record->subtotal_exclude_ppn > 0) {
+                                                return round((float) $record->subtotal_exclude_ppn * 1.11, 2);
+                                            }
+                                            if (filled($record->no_po) && $record->no_po !== '-') {
+                                                $sumPo = (float) PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))->sum('total_amount_in_lc');
+                                                if ($sumPo > 0) {
+                                                    return round($sumPo * 1.11, 2);
+                                                }
+                                            }
+
+                                            return null;
+                                        }),
                                 ])->columns(2),
                         ])
                         ->action(function (InvoicingReceipt $record, array $data) {
@@ -666,6 +702,9 @@ class InvoicingReceiptsTable
                                     ->get()
                                     ->keyBy('item_no');
 
+                                $headerNoGrs = $data['no_grs'] ?? $record->no_grs;
+                                $headerNoDo = $data['no_do'] ?? $record->no_do;
+
                                 foreach ($submittedItems as $seq => $itemData) {
                                     $itemNo = isset($itemData['item_no']) && is_numeric($itemData['item_no']) ? (int) $itemData['item_no'] : null;
                                     $matchedPo = $itemNo ? ($poMap[$itemNo] ?? null) : $poMap->first();
@@ -673,19 +712,25 @@ class InvoicingReceiptsTable
                                     $subtotalEx = isset($itemData['subtotal_exclude_ppn']) && is_numeric($itemData['subtotal_exclude_ppn'])
                                         ? (float) $itemData['subtotal_exclude_ppn']
                                         : null;
-                                    $subtotalIn = isset($itemData['subtotal_include_ppn']) && is_numeric($itemData['subtotal_include_ppn'])
-                                        ? (float) $itemData['subtotal_include_ppn']
-                                        : ($subtotalEx !== null ? round($subtotalEx * 1.11, 2) : null);
+                                    $subtotalIn = $subtotalEx !== null ? round($subtotalEx * 1.11, 2) : null;
+
+                                    $qtyPo = isset($itemData['qty_po']) && is_numeric($itemData['qty_po'])
+                                        ? (float) $itemData['qty_po']
+                                        : ($matchedPo?->qty_po ? (float) $matchedPo->qty_po : null);
+
+                                    $qtyPenagihan = isset($itemData['qty_penagihan']) && is_numeric($itemData['qty_penagihan'])
+                                        ? (float) $itemData['qty_penagihan']
+                                        : $qtyPo;
 
                                     $record->items()->create([
                                         'purchase_order_issued_id' => $matchedPo?->id ?? $record->purchase_order_issued_id,
                                         'item_no' => $itemNo ?? ($seq + 1) * 10,
                                         'material_code' => $itemData['material_code'] ?? $matchedPo?->material_code,
                                         'nama_barang' => $itemData['nama_barang'] ?? $matchedPo?->description,
-                                        'no_grs' => $itemData['no_grs'] ?? $record->no_grs,
-                                        'no_do' => $itemData['no_do'] ?? $record->no_do,
-                                        'qty_penagihan' => isset($itemData['qty_penagihan']) && is_numeric($itemData['qty_penagihan']) ? (float) $itemData['qty_penagihan'] : null,
-                                        'qty_po' => isset($itemData['qty_po']) && is_numeric($itemData['qty_po']) ? (float) $itemData['qty_po'] : ($matchedPo?->qty_po ? (float) $matchedPo->qty_po : null),
+                                        'no_grs' => $itemData['no_grs'] ?? $headerNoGrs,
+                                        'no_do' => $itemData['no_do'] ?? $headerNoDo,
+                                        'qty_penagihan' => $qtyPenagihan,
+                                        'qty_po' => $qtyPo,
                                         'uoi' => $itemData['uoi'] ?? $matchedPo?->uoi ?? $record->uoi,
                                         'subtotal_exclude_ppn' => $subtotalEx,
                                         'subtotal_include_ppn' => $subtotalIn,
@@ -693,6 +738,12 @@ class InvoicingReceiptsTable
                                 }
 
                                 $record->syncSummaryFromItems();
+                                if (isset($data['subtotal_exclude_ppn']) && is_numeric($data['subtotal_exclude_ppn'])) {
+                                    $record->subtotal_exclude_ppn = (float) $data['subtotal_exclude_ppn'];
+                                    $record->subtotal_include_ppn = isset($data['subtotal_include_ppn']) && is_numeric($data['subtotal_include_ppn'])
+                                        ? (float) $data['subtotal_include_ppn']
+                                        : round((float) $data['subtotal_exclude_ppn'] * 1.11, 2);
+                                }
                                 $record->save();
                             } else {
                                 $record->update([
@@ -708,8 +759,8 @@ class InvoicingReceiptsTable
                                 ->title('Data Invoice & Rincian Barang Berhasil Disimpan')
                                 ->body(
                                     $record->wasChanged('status') && $record->status === 'Selesai'
-                                        ? "Data penagihan untuk PO {$record->no_po} telah diperbarui dan status otomatis menjadi Selesai."
-                                        : "Data penagihan dan rincian barang untuk PO {$record->no_po} telah diperbarui."
+                                    ? "Data penagihan untuk PO {$record->no_po} telah diperbarui dan status otomatis menjadi Selesai."
+                                    : "Data penagihan dan rincian barang untuk PO {$record->no_po} telah diperbarui."
                                 )
                                 ->success()
                                 ->send();

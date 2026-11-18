@@ -102,6 +102,13 @@ class InvoicingReceiptForm
                                 $poRecords = PurchaseOrderIssued::where('purchase_order_no', trim($state))->orderBy('item_no')->get();
                                 $po = $poRecords->first();
                                 if ($po) {
+                                    if (! $get('no_do')) {
+                                        $foundDo = InvoicingReceipt::findDeliveryOrderNoForPo($state);
+                                        if ($foundDo) {
+                                            $set('no_do', $foundDo);
+                                        }
+                                    }
+
                                     $currentItems = $get('items');
                                     if (empty($currentItems) && $poRecords->isNotEmpty()) {
                                         $set('items', $poRecords->map(fn ($p) => [
@@ -112,9 +119,6 @@ class InvoicingReceiptForm
                                             'qty_po' => (float) $p->qty_po,
                                             'uoi' => $p->uoi,
                                             'subtotal_exclude_ppn' => $p->total_amount_in_lc ? (float) $p->total_amount_in_lc : null,
-                                            'subtotal_include_ppn' => $p->total_amount_in_lc ? round((float) $p->total_amount_in_lc * 1.11, 2) : null,
-                                            'no_grs' => $get('no_grs'),
-                                            'no_do' => $get('no_do'),
                                         ])->toArray());
                                     }
 
@@ -303,69 +307,66 @@ class InvoicingReceiptForm
                             ->label('Rincian Barang yang Ditagihkan')
                             ->relationship('items')
                             ->itemLabel(fn (array $state): ?string => ($state['nama_barang'] ?? null)
-                                ? ($state['nama_barang'].(isset($state['qty_penagihan']) ? ' ('.$state['qty_penagihan'].' '.($state['uoi'] ?? '').')' : ''))
+                                ? ((isset($state['item_no']) ? '['.$state['item_no'].'] ' : '').$state['nama_barang'].(isset($state['qty_penagihan']) ? ' ('.$state['qty_penagihan'].' '.($state['uoi'] ?? '').')' : ''))
                                 : 'Item Barang')
                             ->collapsible()
                             ->cloneable()
                             ->defaultItems(0)
                             ->columnSpanFull()
                             ->schema([
-                                TextInput::make('nama_barang')
-                                    ->label('Nama / Deskripsi Barang')
-                                    ->placeholder('Nama atau spesifikasi barang')
-                                    ->required()
-                                    ->columnSpan(4),
-
                                 TextInput::make('item_no')
                                     ->label('Item No.')
                                     ->placeholder('10, 20...')
                                     ->numeric()
                                     ->columnSpan(2),
 
-                                TextInput::make('no_grs')
-                                    ->label('No. GRS Item')
-                                    ->placeholder('Nomor GRS')
-                                    ->columnSpan(3),
-
-                                TextInput::make('no_do')
-                                    ->label('No. DO Item')
-                                    ->placeholder('Nomor DO')
-                                    ->columnSpan(3),
+                                TextInput::make('nama_barang')
+                                    ->label('Nama / Deskripsi Barang')
+                                    ->placeholder('Nama atau spesifikasi barang')
+                                    ->required()
+                                    ->columnSpan(4),
 
                                 TextInput::make('qty_penagihan')
                                     ->label('Qty Ditagihkan')
                                     ->numeric()
                                     ->required()
                                     ->placeholder('0.00')
-                                    ->columnSpan(3),
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                        $items = $get('../../items') ?? [];
+                                        $totalQty = 0;
+                                        foreach ($items as $item) {
+                                            $totalQty += (float) ($item['qty_penagihan'] ?? 0);
+                                        }
+                                        $set('../../qty_penagihan', $totalQty > 0 ? $totalQty : null);
+                                    })
+                                    ->columnSpan(2),
 
                                 TextInput::make('qty_po')
                                     ->label('Qty PO')
                                     ->numeric()
                                     ->placeholder('0.00')
-                                    ->columnSpan(3),
+                                    ->columnSpan(1),
 
                                 TextInput::make('uoi')
-                                    ->label('Satuan (UOI)')
+                                    ->label('Satuan')
                                     ->placeholder('PCS, SET...')
-                                    ->columnSpan(2),
+                                    ->columnSpan(1),
 
                                 TextInput::make('subtotal_exclude_ppn')
-                                    ->label('Sub Total (DPP)')
+                                    ->label('Harga Total Item (DPP)')
                                     ->numeric()
                                     ->prefix('Rp')
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(function ($state, Set $set): void {
-                                        if ($state !== null && is_numeric($state)) {
-                                            $set('subtotal_include_ppn', round((float) $state * 1.11, 2));
+                                    ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                        $items = $get('../../items') ?? [];
+                                        $totalDpp = 0;
+                                        foreach ($items as $item) {
+                                            $totalDpp += (float) ($item['subtotal_exclude_ppn'] ?? 0);
                                         }
+                                        $set('../../subtotal_exclude_ppn', $totalDpp > 0 ? $totalDpp : null);
+                                        $set('../../subtotal_include_ppn', $totalDpp > 0 ? round($totalDpp * 1.11, 2) : null);
                                     })
-                                    ->columnSpan(2),
-
-                                TextInput::make('subtotal_include_ppn')
-                                    ->label('Sub Total (Incl PPN)')
-                                    ->numeric()
-                                    ->prefix('Rp')
                                     ->columnSpan(2),
                             ])
                             ->columns(12),
