@@ -17,6 +17,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Schemas\Schema;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -24,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
+use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 test('vendor model has all 13 required columns and handles multiple emails', function () {
     $vendor = new Vendor;
@@ -1309,4 +1311,35 @@ test('inputInvoiceData automatically inherits header GRS and DO to items and def
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
         }
     }
+});
+
+test('InvoicingReceiptsTable has pic column next to no_po, date range filter, and above content filter layout', function () {
+    $page = app(ListInvoicingReceipts::class);
+    $table = new Table($page);
+    InvoicingReceiptsTable::configure($table);
+
+    // 1. Filter layout is AboveContent
+    expect($table->getFiltersLayout())->toBe(FiltersLayout::AboveContent);
+
+    // 2. DateRangeFilter exists on tanggal_terima_grs
+    $dateFilter = $table->getFilter('tanggal_terima_grs');
+    expect($dateFilter)->not->toBeNull()
+        ->and($dateFilter)->toBeInstanceOf(DateRangeFilter::class);
+
+    // 3. Columns check: no_po and pic.name exist and pic is placed directly after no_po
+    $columns = collect($table->getColumns());
+    $columnNames = $columns->map(fn ($c) => method_exists($c, 'getName') ? $c->getName() : null)->values();
+    $noPoIndex = $columnNames->search('no_po');
+    $picIndex = $columnNames->search('pic.name');
+
+    expect($noPoIndex)->not->toBeFalse()
+        ->and($picIndex)->not->toBeFalse()
+        ->and($picIndex)->toBe($noPoIndex + 1);
+
+    // 4. On my_tasks tab, only 4 filters are visible (pic_id & material_type are hidden)
+    $page->activeTab = 'my_tasks';
+    expect($table->getFilter('pic_id'))->toBeNull()
+        ->and($table->getFilter('material_type'))->toBeNull()
+        ->and($table->getFilter('pic_id', withHidden: true))->not->toBeNull()
+        ->and(count($table->getFilters()))->toBe(4);
 });

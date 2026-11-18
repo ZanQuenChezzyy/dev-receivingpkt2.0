@@ -30,13 +30,16 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Support\RawJs;
 use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 class InvoicingReceiptsTable
 {
@@ -97,7 +100,7 @@ class InvoicingReceiptsTable
                         ->toggleable(),
                 ]),
 
-                ColumnGroup::make('Referensi PO & DO', [
+                ColumnGroup::make('Referensi PO & PIC', [
                     TextColumn::make('no_po')
                         ->label('No. PO')
                         ->weight(FontWeight::Bold)
@@ -108,42 +111,6 @@ class InvoicingReceiptsTable
                         ->searchable()
                         ->sortable(),
 
-                    TextColumn::make('no_do')
-                        ->label('No. DO')
-                        ->icon('heroicon-m-truck')
-                        ->copyable()
-                        ->copyMessage('Nomor DO disalin')
-                        ->searchable()
-                        ->sortable(),
-
-                    TextColumn::make('material_type')
-                        ->label('Tipe Mat.')
-                        ->badge()
-                        ->default(InvoicingReceipt::DEFAULT_MATERIAL_TYPE)
-                        ->formatStateUsing(fn (?string $state): string => InvoicingReceipt::normalizeMaterialType($state))
-                        ->color(fn (?string $state): string => InvoicingReceipt::normalizeMaterialType($state) === InvoicingReceipt::DEFAULT_MATERIAL_TYPE ? 'gray' : 'info')
-                        ->searchable(),
-                ]),
-
-                ColumnGroup::make('Vendor & Kontak', [
-                    TextColumn::make('vendor_name')
-                        ->label('Nama Vendor')
-                        ->weight(FontWeight::Bold)
-                        ->icon('heroicon-m-building-office')
-                        ->searchable()
-                        ->limit(25)
-                        ->tooltip(fn ($record) => $record->vendor_name),
-
-                    TextColumn::make('email_vendor')
-                        ->label('Email Vendor')
-                        ->icon('heroicon-m-envelope')
-                        ->iconColor('info')
-                        ->placeholder('-')
-                        ->copyable()
-                        ->searchable(),
-                ]),
-
-                ColumnGroup::make('PIC Penugasan', [
                     TextColumn::make('pic.name')
                         ->label('PIC Staff')
                         ->html()
@@ -187,7 +154,40 @@ class InvoicingReceiptsTable
                                         ->success()
                                         ->send();
                                 })
-                        )
+                        ),
+
+                    TextColumn::make('no_do')
+                        ->label('No. DO')
+                        ->icon('heroicon-m-truck')
+                        ->copyable()
+                        ->copyMessage('Nomor DO disalin')
+                        ->searchable()
+                        ->sortable(),
+
+                    TextColumn::make('material_type')
+                        ->label('Tipe Mat.')
+                        ->badge()
+                        ->default(InvoicingReceipt::DEFAULT_MATERIAL_TYPE)
+                        ->formatStateUsing(fn (?string $state): string => InvoicingReceipt::normalizeMaterialType($state))
+                        ->color(fn (?string $state): string => InvoicingReceipt::normalizeMaterialType($state) === InvoicingReceipt::DEFAULT_MATERIAL_TYPE ? 'gray' : 'info')
+                        ->searchable(),
+                ]),
+
+                ColumnGroup::make('Vendor & Kontak', [
+                    TextColumn::make('vendor_name')
+                        ->label('Nama Vendor')
+                        ->weight(FontWeight::Bold)
+                        ->icon('heroicon-m-building-office')
+                        ->searchable()
+                        ->limit(25)
+                        ->tooltip(fn ($record) => $record->vendor_name),
+
+                    TextColumn::make('email_vendor')
+                        ->label('Email Vendor')
+                        ->icon('heroicon-m-envelope')
+                        ->iconColor('info')
+                        ->placeholder('-')
+                        ->copyable()
                         ->searchable(),
                 ]),
 
@@ -313,11 +313,33 @@ class InvoicingReceiptsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                DateRangeFilter::make('tanggal_terima_grs')
+                    ->label('Rentang Tgl Terima GRS')
+                    ->placeholder('Pilih rentang tanggal')
+                    ->modifyQueryUsing(function (Builder $query, ?Carbon $startDate, ?Carbon $endDate): Builder {
+                        return $query
+                            ->when($startDate && $endDate, fn ($q) => $q->whereBetween('tanggal_terima_grs', [
+                                $startDate->toDateString(),
+                                $endDate->toDateString(),
+                            ]))
+                            ->when($startDate && ! $endDate, fn ($q) => $q->where('tanggal_terima_grs', '>=', $startDate->toDateString()))
+                            ->when(! $startDate && $endDate, fn ($q) => $q->where('tanggal_terima_grs', '<=', $endDate->toDateString()));
+                    }),
+
                 SelectFilter::make('jenis')
                     ->label('Filter Kategori')
                     ->options([
                         'GRS' => 'GRS',
                         'RDTV' => 'RDTV',
+                    ]),
+
+                SelectFilter::make('status')
+                    ->label('Status Verifikasi')
+                    ->options([
+                        'Menunggu Verifikasi' => 'Menunggu Verifikasi',
+                        'Terverifikasi' => 'Terverifikasi',
+                        'Terkirim Kasir' => 'Terkirim Kasir',
+                        'Selesai' => 'Selesai',
                     ]),
 
                 SelectFilter::make('kategori_barang')
@@ -330,23 +352,17 @@ class InvoicingReceiptsTable
                         ->pluck('kategori_barang', 'kategori_barang')
                         ->all()),
 
-                SelectFilter::make('status')
-                    ->label('Status Verifikasi')
-                    ->options([
-                        'Menunggu Verifikasi' => 'Menunggu Verifikasi',
-                        'Terverifikasi' => 'Terverifikasi',
-                        'Terkirim Kasir' => 'Terkirim Kasir',
-                        'Selesai' => 'Selesai',
-                    ]),
+                SelectFilter::make('pic_id')
+                    ->label('Filter PIC (Staff Invoice)')
+                    ->relationship('pic', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice')))
+                    ->hidden(fn ($livewire) => ($livewire?->activeTab ?? null) === 'my_tasks'),
 
                 SelectFilter::make('material_type')
                     ->label('Filter Tipe Material')
-                    ->options(InvoicingReceipt::materialTypeOptions()),
-
-                SelectFilter::make('pic_id')
-                    ->label('Filter PIC (Staff Invoice)')
-                    ->relationship('pic', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))),
-            ])
+                    ->options(InvoicingReceipt::materialTypeOptions())
+                    ->hidden(fn ($livewire) => ($livewire?->activeTab ?? null) === 'my_tasks'),
+            ], layout: FiltersLayout::AboveContent)
+            ->filtersFormColumns(['default' => 1, 'sm' => 2, 'lg' => 4])
             ->defaultSort('tanggal_terima_grs', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->orderBy('id', 'desc'))
             ->recordActions([
