@@ -18,4 +18,10 @@ class EditInvoicingReceipt extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    protected function afterSave(): void
+    {
+        $this->record->syncSummaryFromItems();
+        $this->record->saveQuietly();
+    }
 }

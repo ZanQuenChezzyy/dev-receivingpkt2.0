@@ -204,8 +204,13 @@ class InvoicingReceiptsTable
 
                     TextColumn::make('nama_barang')
                         ->label('Nama Barang')
-                        ->limit(20)
+                        ->limit(24)
                         ->tooltip(fn ($record) => $record->nama_barang)
+                        ->description(function (InvoicingReceipt $record): ?string {
+                            $count = $record->relationLoaded('items') ? $record->items->count() : $record->items()->count();
+
+                            return $count > 1 ? "({$count} item barang)" : null;
+                        })
                         ->searchable(),
 
                     TextColumn::make('qty_penagihan')

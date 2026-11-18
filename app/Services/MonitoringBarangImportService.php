@@ -1224,6 +1224,57 @@ class MonitoringBarangImportService
             }
         }
 
+        // Sinkronisasi rincian item barang ke tabel invoicing_receipt_items
+        $itemNamaBarang = $item['nama_barang'] ?? $firstDetail?->description ?? $poRecord?->description;
+        if (filled($itemNamaBarang) || filled($item['qty_penagihan']) || filled($item['subtotal_exclude_ppn'])) {
+            $existingItemQuery = $receipt->items();
+            if (filled($itemNamaBarang)) {
+                $existingItemQuery->where('nama_barang', $itemNamaBarang);
+            }
+            if (filled($item['no_grs'])) {
+                $existingItemQuery->where('no_grs', $item['no_grs']);
+            }
+            $existingItem = $existingItemQuery->first();
+
+            $subtotalIncludeItem = $item['subtotal_include_ppn'];
+            if ($subtotalIncludeItem === null && $item['subtotal_exclude_ppn'] !== null) {
+                $subtotalIncludeItem = round((float) $item['subtotal_exclude_ppn'] * 1.11, 2);
+            }
+
+            if ($existingItem) {
+                $existingItem->update([
+                    'purchase_order_issued_id' => $existingItem->purchase_order_issued_id ?? $poRecord?->id,
+                    'delivery_order_receipt_detail_id' => $existingItem->delivery_order_receipt_detail_id ?? $firstDetail?->id,
+                    'no_grs' => $item['no_grs'] ?? $existingItem->no_grs ?? $receipt->no_grs,
+                    'no_do' => $item['no_do'] ?? $existingItem->no_do ?? $receipt->no_do,
+                    'nama_barang' => $itemNamaBarang,
+                    'qty_penagihan' => $item['qty_penagihan'] ?? $existingItem->qty_penagihan,
+                    'qty_po' => $item['qty_po'] ?? $existingItem->qty_po ?? ($poRecord?->qty_po ? (float) $poRecord->qty_po : null),
+                    'uoi' => $item['uoi'] ?? $existingItem->uoi ?? $firstDetail?->uoi ?? $poRecord?->uoi,
+                    'subtotal_exclude_ppn' => $item['subtotal_exclude_ppn'] ?? $existingItem->subtotal_exclude_ppn,
+                    'subtotal_include_ppn' => $subtotalIncludeItem ?? $existingItem->subtotal_include_ppn,
+                ]);
+            } else {
+                $receipt->items()->create([
+                    'purchase_order_issued_id' => $poRecord?->id,
+                    'delivery_order_receipt_detail_id' => $firstDetail?->id,
+                    'no_grs' => $item['no_grs'] ?? $receipt->no_grs,
+                    'no_do' => $item['no_do'] ?? $receipt->no_do,
+                    'nama_barang' => $itemNamaBarang,
+                    'qty_penagihan' => $item['qty_penagihan'],
+                    'qty_po' => $item['qty_po'] ?? ($poRecord?->qty_po ? (float) $poRecord->qty_po : null),
+                    'uoi' => $item['uoi'] ?? $firstDetail?->uoi ?? $poRecord?->uoi,
+                    'subtotal_exclude_ppn' => $item['subtotal_exclude_ppn'],
+                    'subtotal_include_ppn' => $subtotalIncludeItem,
+                ]);
+            }
+
+            if ($receipt->items()->count() > 1) {
+                $receipt->syncSummaryFromItems();
+                $receipt->saveQuietly();
+            }
+        }
+
         if ($receipt->delivery_order_receipt_id !== null) {
             $claimedDoMap[$receipt->delivery_order_receipt_id] = $this->resolveItemClaimKey($item);
         }
@@ -1299,6 +1350,16 @@ class MonitoringBarangImportService
         array $lookups
     ): ?InvoicingReceipt {
         $poCandidates = $lookups['existing_by_po'][$noPo] ?? collect();
+
+        // 0. Prioritaskan jika No. Invoice sudah ada di PO yang sama (1 invoice menagihkan beberapa barang / beda GRS)
+        if ($noInvoice !== null && $poCandidates->isNotEmpty()) {
+            $sameInvoice = $poCandidates->first(
+                fn (InvoicingReceipt $r): bool => $r->no_invoice !== null && strcasecmp($r->no_invoice, $noInvoice) === 0
+            );
+            if ($sameInvoice) {
+                return $sameInvoice;
+            }
+        }
 
         // 1. Jika memiliki No. GRS: No. GRS selalu unik setiap terbit (Tahap 1 vs Tahap 2 berbeda)
         if ($noGrs !== null) {

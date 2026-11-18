@@ -20,6 +20,7 @@ use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    Schema::dropIfExists('invoicing_receipt_items');
     Schema::dropIfExists('invoicing_receipts');
     Schema::dropIfExists('grs_rdtv_items');
     Schema::dropIfExists('grs_rdtvs');
@@ -130,6 +131,10 @@ beforeEach(function () {
     $addKelengkapanMigration->up();
     $addKategoriMigration = include database_path('migrations/2026_11_17_182934_add_kategori_barang_to_invoicing_receipts_table.php');
     $addKategoriMigration->up();
+    if (! Schema::hasTable('invoicing_receipt_items')) {
+        $createItemsMigration = include database_path('migrations/2026_11_18_093000_create_invoicing_receipt_items_table.php');
+        $createItemsMigration->up();
+    }
 });
 
 function seedMonitoringPicUsers(): array

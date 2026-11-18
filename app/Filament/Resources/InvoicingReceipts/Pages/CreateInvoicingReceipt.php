@@ -8,4 +8,10 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateInvoicingReceipt extends CreateRecord
 {
     protected static string $resource = InvoicingReceiptResource::class;
+
+    protected function afterCreate(): void
+    {
+        $this->record->syncSummaryFromItems();
+        $this->record->saveQuietly();
+    }
 }

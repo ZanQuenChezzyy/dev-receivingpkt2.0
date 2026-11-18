@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 #[Fillable([
@@ -154,6 +155,37 @@ class InvoicingReceipt extends Model
     public function pic(): BelongsTo
     {
         return $this->belongsTo(User::class, 'pic_id');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(InvoicingReceiptItem::class);
+    }
+
+    /**
+     * Sinkronisasi ringkasan kuantitas dan nilai dari relasi items ke kolom summary header.
+     */
+    public function syncSummaryFromItems(): void
+    {
+        if (! $this->relationLoaded('items')) {
+            $this->load('items');
+        }
+
+        if ($this->items->isNotEmpty()) {
+            $this->qty_penagihan = (float) $this->items->sum('qty_penagihan');
+            $this->subtotal_exclude_ppn = (float) $this->items->sum('subtotal_exclude_ppn');
+            $this->subtotal_include_ppn = (float) $this->items->sum('subtotal_include_ppn');
+
+            $itemNames = $this->items->pluck('nama_barang')->filter(fn ($n) => filled($n))->unique()->values();
+            if ($itemNames->isNotEmpty()) {
+                $this->nama_barang = $itemNames->implode(', ');
+            }
+
+            $itemGrs = $this->items->pluck('no_grs')->filter(fn ($g) => filled($g))->unique()->values();
+            if ($itemGrs->isNotEmpty() && blank($this->no_grs)) {
+                $this->no_grs = $itemGrs->implode(', ');
+            }
+        }
     }
 
     protected function deliveryDatePo(): Attribute

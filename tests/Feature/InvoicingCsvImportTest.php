@@ -12,6 +12,7 @@ use Filament\Actions\Imports\Models\Import;
 use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
+    Schema::dropIfExists('invoicing_receipt_items');
     Schema::dropIfExists('invoicing_receipts');
     Schema::dropIfExists('grs_rdtv_items');
     Schema::dropIfExists('grs_rdtvs');
@@ -132,6 +133,11 @@ beforeEach(function () {
         $table->string('status')->default('Menunggu Verifikasi');
         $table->timestamps();
     });
+
+    if (! Schema::hasTable('invoicing_receipt_items')) {
+        $createItemsMigration = include database_path('migrations/2026_11_18_093000_create_invoicing_receipt_items_table.php');
+        $createItemsMigration->up();
+    }
 
     // Mock InvoicingAssignmentService agar tidak memerlukan tabel Spatie Permission di SQLite memory
     $mockAssignment = Mockery::mock(InvoicingAssignmentService::class);

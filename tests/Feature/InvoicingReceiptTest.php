@@ -365,7 +365,10 @@ test('invoicing receipt form configures validation where no_do is required while
         return $flat;
     };
 
-    $allFields = $flattenComponents($components)->filter(fn ($c) => method_exists($c, 'getName'))->keyBy(fn ($c) => $c->getName());
+    $allFields = $flattenComponents($components)
+        ->filter(fn ($c) => method_exists($c, 'getName'))
+        ->groupBy(fn ($c) => $c->getName())
+        ->map(fn ($group) => $group->first());
 
     expect($allFields)->toHaveKey('no_invoice')
         ->and($allFields)->toHaveKey('no_do')
@@ -523,7 +526,10 @@ test('pic material assignment form configures conditional_rules repeater with cr
         return $flat;
     };
 
-    $allFields = $flattenComponents($components)->filter(fn ($c) => method_exists($c, 'getName'))->keyBy(fn ($c) => $c->getName());
+    $allFields = $flattenComponents($components)
+        ->filter(fn ($c) => method_exists($c, 'getName'))
+        ->groupBy(fn ($c) => $c->getName())
+        ->map(fn ($group) => $group->first());
 
     expect($allFields)->toHaveKey('material_type')
         ->and($allFields)->toHaveKey('assignment_mode')
@@ -533,49 +539,54 @@ test('pic material assignment form configures conditional_rules repeater with cr
 
 function ensureInvoicingReceiptTableExists(): bool
 {
-    if (Illuminate\Support\Facades\Schema::hasTable('invoicing_receipts')) {
-        return false;
+    $created = false;
+    if (! Illuminate\Support\Facades\Schema::hasTable('invoicing_receipts')) {
+        Illuminate\Support\Facades\Schema::create('invoicing_receipts', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('grs_rdtv_item_id')->nullable();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
+            $table->unsignedBigInteger('vendor_id')->nullable();
+            $table->unsignedBigInteger('pic_id')->nullable();
+            $table->date('tanggal_terima_grs')->nullable();
+            $table->string('jenis')->default('GRS');
+            $table->string('no_grs')->nullable();
+            $table->string('no_rdtv')->nullable();
+            $table->string('no_po')->nullable();
+            $table->string('no_do')->nullable();
+            $table->string('padi')->nullable();
+            $table->string('material_type')->nullable();
+            $table->string('vendor_name')->nullable();
+            $table->text('deskripsi')->nullable();
+            $table->string('email_vendor')->nullable();
+            $table->date('tanggal_info_grs')->nullable();
+            $table->string('no_invoice')->nullable();
+            $table->string('faktur_pajak')->nullable();
+            $table->text('nama_barang')->nullable();
+            $table->decimal('qty_penagihan', 15, 4)->nullable();
+            $table->decimal('qty_po', 15, 4)->nullable();
+            $table->string('uoi', 20)->nullable();
+            $table->decimal('subtotal_exclude_ppn', 18, 2)->nullable();
+            $table->decimal('subtotal_include_ppn', 18, 2)->nullable();
+            $table->date('tanggal_terima_koreksi_invoice')->nullable();
+            $table->date('tanggal_kirim_kasir')->nullable();
+            $table->integer('lama_pekerjaan')->nullable();
+            $table->text('keterangan')->nullable();
+            $table->string('dokumen_verifikasi_grs')->nullable();
+            $table->string('dokumen_invoice')->nullable();
+            $table->json('dokumen_kelengkapan')->nullable();
+            $table->string('status')->default('Menunggu Verifikasi');
+            $table->timestamps();
+        });
+        $created = true;
     }
 
-    Illuminate\Support\Facades\Schema::create('invoicing_receipts', function ($table) {
-        $table->id();
-        $table->unsignedBigInteger('grs_rdtv_item_id')->nullable();
-        $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
-        $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
-        $table->unsignedBigInteger('vendor_id')->nullable();
-        $table->unsignedBigInteger('pic_id')->nullable();
-        $table->date('tanggal_terima_grs')->nullable();
-        $table->string('jenis')->default('GRS');
-        $table->string('no_grs')->nullable();
-        $table->string('no_rdtv')->nullable();
-        $table->string('no_po')->nullable();
-        $table->string('no_do')->nullable();
-        $table->string('padi')->nullable();
-        $table->string('material_type')->nullable();
-        $table->string('vendor_name')->nullable();
-        $table->text('deskripsi')->nullable();
-        $table->string('email_vendor')->nullable();
-        $table->date('tanggal_info_grs')->nullable();
-        $table->string('no_invoice')->nullable();
-        $table->string('faktur_pajak')->nullable();
-        $table->text('nama_barang')->nullable();
-        $table->decimal('qty_penagihan', 15, 4)->nullable();
-        $table->decimal('qty_po', 15, 4)->nullable();
-        $table->string('uoi', 20)->nullable();
-        $table->decimal('subtotal_exclude_ppn', 18, 2)->nullable();
-        $table->decimal('subtotal_include_ppn', 18, 2)->nullable();
-        $table->date('tanggal_terima_koreksi_invoice')->nullable();
-        $table->date('tanggal_kirim_kasir')->nullable();
-        $table->integer('lama_pekerjaan')->nullable();
-        $table->text('keterangan')->nullable();
-        $table->string('dokumen_verifikasi_grs')->nullable();
-        $table->string('dokumen_invoice')->nullable();
-        $table->json('dokumen_kelengkapan')->nullable();
-        $table->string('status')->default('Menunggu Verifikasi');
-        $table->timestamps();
-    });
+    if (! Illuminate\Support\Facades\Schema::hasTable('invoicing_receipt_items')) {
+        $createItemsMigration = include database_path('migrations/2026_11_18_093000_create_invoicing_receipt_items_table.php');
+        $createItemsMigration->up();
+    }
 
-    return true;
+    return $created;
 }
 
 test('my_tasks tab on ListInvoicingReceipts shows only active tasks and excludes Selesai and Terkirim Kasir', function () {
@@ -651,6 +662,7 @@ test('my_tasks tab on ListInvoicingReceipts shows only active tasks and excludes
     } finally {
         Auth::logout();
         if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
         }
     }
@@ -718,6 +730,7 @@ test('RDTV receipt automatically completes at Info GRS and leaves Tugas Saya whi
     } finally {
         Auth::logout();
         if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
         }
     }
@@ -857,6 +870,7 @@ test('CreateGrsRdtv leaves tanggal_info_grs null for RDTV so staff invoice must 
             Illuminate\Support\Facades\Schema::dropIfExists($tableName);
         }
         if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
         }
     }
@@ -900,6 +914,7 @@ test('InvoicingReceipt defaults empty or null material_type to Non Stock across 
     } finally {
         PicMaterialAssignment::where('material_type', 'Non Stock')->delete();
         if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
         }
     }
@@ -965,7 +980,133 @@ test('Menunggu Verifikasi receipt automatically completes to Selesai once invoic
     } finally {
         Auth::logout();
         if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
         }
     }
+});
+
+test('invoicing receipt supports multi-item billing per invoice and calculates total quantities and subtotals', function () {
+    ensureInvoicingReceiptTableExists();
+
+    $receipt = InvoicingReceipt::create([
+        'no_po' => '5300064489',
+        'no_invoice' => 'INV-2026-MULTI-001',
+        'jenis' => 'GRS',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    // Item 10 & Item 20 dari GRS 5007027893
+    $item1 = $receipt->items()->create([
+        'item_no' => 10,
+        'no_grs' => '5007027893',
+        'nama_barang' => 'BALL VALVE 2 INCH ANSI 150',
+        'qty_penagihan' => 10,
+        'qty_po' => 10,
+        'uoi' => 'PCS',
+        'subtotal_exclude_ppn' => 10000000,
+        'subtotal_include_ppn' => 11100000,
+    ]);
+
+    $item2 = $receipt->items()->create([
+        'item_no' => 20,
+        'no_grs' => '5007027893',
+        'nama_barang' => 'SPIRAL WOUND GASKET 2 INCH',
+        'qty_penagihan' => 5,
+        'qty_po' => 5,
+        'uoi' => 'PCS',
+        'subtotal_exclude_ppn' => 2500000,
+        'subtotal_include_ppn' => 2775000,
+    ]);
+
+    // Item 30 dari GRS berbeda 5007726532 tetapi masuk invoice gabungan yang sama
+    $item3 = $receipt->items()->create([
+        'item_no' => 30,
+        'no_grs' => '5007726532',
+        'nama_barang' => 'STUD BOLT & NUT B7/2H',
+        'qty_penagihan' => 20,
+        'qty_po' => 20,
+        'uoi' => 'SET',
+        'subtotal_exclude_ppn' => 5000000,
+        'subtotal_include_ppn' => 5550000,
+    ]);
+
+    expect($receipt->items()->count())->toBe(3);
+
+    $receipt->syncSummaryFromItems();
+    $receipt->save();
+
+    $fresh = $receipt->fresh();
+    expect($fresh->qty_penagihan)->toEqual(35)
+        ->and($fresh->subtotal_exclude_ppn)->toEqual(17500000)
+        ->and($fresh->subtotal_include_ppn)->toEqual(19425000)
+        ->and($fresh->nama_barang)->toContain('BALL VALVE 2 INCH')
+        ->and($fresh->nama_barang)->toContain('SPIRAL WOUND GASKET')
+        ->and($fresh->nama_barang)->toContain('STUD BOLT & NUT')
+        ->and($fresh->no_grs)->toContain('5007027893')
+        ->and($fresh->no_grs)->toContain('5007726532');
+});
+
+test('handles partial step billing where same PO has multiple separate invoices with distinct items', function () {
+    ensureInvoicingReceiptTableExists();
+
+    // Invoice 1 menagihkan item 10 dan 20
+    $inv1 = InvoicingReceipt::create([
+        'no_po' => '5300064489',
+        'no_invoice' => 'INV-PARTIAL-001',
+        'no_grs' => '5007027893',
+        'jenis' => 'GRS',
+    ]);
+
+    $inv1->items()->createMany([
+        [
+            'item_no' => 10,
+            'no_grs' => '5007027893',
+            'nama_barang' => 'ITEM 10',
+            'qty_penagihan' => 10,
+            'qty_po' => 10,
+            'uoi' => 'PCS',
+            'subtotal_exclude_ppn' => 1000000,
+            'subtotal_include_ppn' => 1110000,
+        ],
+        [
+            'item_no' => 20,
+            'no_grs' => '5007027893',
+            'nama_barang' => 'ITEM 20',
+            'qty_penagihan' => 5,
+            'qty_po' => 5,
+            'uoi' => 'PCS',
+            'subtotal_exclude_ppn' => 500000,
+            'subtotal_include_ppn' => 555000,
+        ],
+    ]);
+    $inv1->syncSummaryFromItems();
+    $inv1->save();
+
+    // Invoice 2 menagihkan item 30 belakangan
+    $inv2 = InvoicingReceipt::create([
+        'no_po' => '5300064489',
+        'no_invoice' => 'INV-PARTIAL-002',
+        'no_grs' => '5007726532',
+        'jenis' => 'GRS',
+    ]);
+
+    $inv2->items()->create([
+        'item_no' => 30,
+        'no_grs' => '5007726532',
+        'nama_barang' => 'ITEM 30',
+        'qty_penagihan' => 20,
+        'qty_po' => 20,
+        'uoi' => 'SET',
+        'subtotal_exclude_ppn' => 3000000,
+        'subtotal_include_ppn' => 3330000,
+    ]);
+    $inv2->syncSummaryFromItems();
+    $inv2->save();
+
+    expect(InvoicingReceipt::where('no_po', '5300064489')->count())->toBe(2)
+        ->and($inv1->fresh()->qty_penagihan)->toEqual(15)
+        ->and($inv1->fresh()->subtotal_exclude_ppn)->toEqual(1500000)
+        ->and($inv2->fresh()->qty_penagihan)->toEqual(20)
+        ->and($inv2->fresh()->subtotal_exclude_ppn)->toEqual(3000000);
 });

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\InvoicingReceipts\Schemas;
 
 use App\Models\InvoicingReceipt;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Section;
@@ -121,8 +122,51 @@ class InvoicingReceiptInfolist
                             ->copyable()
                             ->placeholder('-'),
 
+                        RepeatableEntry::make('items')
+                            ->label('Daftar Rincian Barang Ditagihkan')
+                            ->columnSpanFull()
+                            ->visible(fn ($record) => $record?->items()->exists())
+                            ->schema([
+                                TextEntry::make('nama_barang')
+                                    ->label('Nama Barang')
+                                    ->weight(FontWeight::SemiBold)
+                                    ->columnSpan(4),
+                                TextEntry::make('item_no')
+                                    ->label('Item No.')
+                                    ->placeholder('-')
+                                    ->columnSpan(2),
+                                TextEntry::make('no_grs')
+                                    ->label('No. GRS')
+                                    ->placeholder('-')
+                                    ->columnSpan(3),
+                                TextEntry::make('no_do')
+                                    ->label('No. DO')
+                                    ->placeholder('-')
+                                    ->columnSpan(3),
+                                TextEntry::make('qty_penagihan')
+                                    ->label('Qty Ditagihkan')
+                                    ->formatStateUsing(fn ($record) => ($record->qty_penagihan ?? '-').' '.($record->uoi ?? ''))
+                                    ->columnSpan(3),
+                                TextEntry::make('qty_po')
+                                    ->label('Qty PO')
+                                    ->formatStateUsing(fn ($record) => ($record->qty_po ?? '-').' '.($record->uoi ?? ''))
+                                    ->columnSpan(3),
+                                TextEntry::make('subtotal_exclude_ppn')
+                                    ->label('Sub Total (DPP)')
+                                    ->money('IDR', locale: 'id')
+                                    ->placeholder('-')
+                                    ->columnSpan(3),
+                                TextEntry::make('subtotal_include_ppn')
+                                    ->label('Sub Total (Incl PPN)')
+                                    ->money('IDR', locale: 'id')
+                                    ->color('success')
+                                    ->placeholder('-')
+                                    ->columnSpan(3),
+                            ])
+                            ->columns(12),
+
                         TextEntry::make('nama_barang')
-                            ->label('Nama Barang')
+                            ->label('Ringkasan Nama Barang')
                             ->columnSpanFull()
                             ->placeholder('-'),
 

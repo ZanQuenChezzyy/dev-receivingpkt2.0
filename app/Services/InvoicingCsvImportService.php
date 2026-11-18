@@ -625,6 +625,37 @@ class InvoicingCsvImportService
         $isUpdating = $receipt->exists;
         $receipt->save();
 
+        // Sinkronisasi item barang ke invoicing_receipt_items
+        $itemNamaBarang = $receipt->nama_barang;
+        if (filled($itemNamaBarang) || filled($receipt->qty_penagihan) || filled($receipt->subtotal_exclude_ppn)) {
+            $existingItem = $receipt->items()->where('nama_barang', $itemNamaBarang)->first();
+            if ($existingItem) {
+                $existingItem->update([
+                    'purchase_order_issued_id' => $receipt->purchase_order_issued_id,
+                    'no_grs' => $receipt->no_grs,
+                    'no_do' => $receipt->no_do,
+                    'nama_barang' => $itemNamaBarang,
+                    'qty_penagihan' => $receipt->qty_penagihan,
+                    'qty_po' => $receipt->qty_po,
+                    'uoi' => $receipt->uoi,
+                    'subtotal_exclude_ppn' => $receipt->subtotal_exclude_ppn,
+                    'subtotal_include_ppn' => $receipt->subtotal_include_ppn,
+                ]);
+            } else {
+                $receipt->items()->create([
+                    'purchase_order_issued_id' => $receipt->purchase_order_issued_id,
+                    'no_grs' => $receipt->no_grs,
+                    'no_do' => $receipt->no_do,
+                    'nama_barang' => $itemNamaBarang,
+                    'qty_penagihan' => $receipt->qty_penagihan,
+                    'qty_po' => $receipt->qty_po,
+                    'uoi' => $receipt->uoi,
+                    'subtotal_exclude_ppn' => $receipt->subtotal_exclude_ppn,
+                    'subtotal_include_ppn' => $receipt->subtotal_include_ppn,
+                ]);
+            }
+        }
+
         return [
             'status' => $isUpdating ? 'updated' : 'created',
             'linked_do' => $receipt->delivery_order_receipt_id !== null,

@@ -8,6 +8,7 @@ use App\Models\PurchaseOrderIssued;
 use App\Models\Vendor;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -165,6 +166,21 @@ class InvoicingReceiptForm
                                             $set('subtotal_exclude_ppn', $sumAmount);
                                             $set('subtotal_include_ppn', round($sumAmount + ($sumAmount * 0.11), 2));
                                         }
+
+                                        $currentItems = $get('items');
+                                        if (empty($currentItems)) {
+                                            $set('items', $details->map(fn ($d) => [
+                                                'item_no' => $d->item_no,
+                                                'material_code' => $d->material_code,
+                                                'nama_barang' => $d->description,
+                                                'qty_penagihan' => (float) $d->quantity,
+                                                'qty_po' => (float) ($d->purchaseOrderIssued?->qty_po ?? $d->quantity),
+                                                'uoi' => $d->uoi,
+                                                'subtotal_exclude_ppn' => $d->total_amount_snapshot ? (float) $d->total_amount_snapshot : null,
+                                                'subtotal_include_ppn' => $d->total_amount_snapshot ? round((float) $d->total_amount_snapshot * 1.11, 2) : null,
+                                                'no_do' => $do->delivery_order_no,
+                                            ])->values()->toArray());
+                                        }
                                     }
 
                                     if (! $get('uoi') && $firstDetail?->uoi) {
@@ -260,27 +276,98 @@ class InvoicingReceiptForm
                             ->label('Nomor Faktur Pajak')
                             ->placeholder('Contoh: 010.001-26.12345678 (opsional)'),
 
+                        Repeater::make('items')
+                            ->label('Rincian Barang yang Ditagihkan')
+                            ->relationship('items')
+                            ->itemLabel(fn (array $state): ?string => ($state['nama_barang'] ?? null)
+                                ? ($state['nama_barang'].(isset($state['qty_penagihan']) ? ' ('.$state['qty_penagihan'].' '.($state['uoi'] ?? '').')' : ''))
+                                : 'Item Barang')
+                            ->collapsible()
+                            ->cloneable()
+                            ->defaultItems(0)
+                            ->columnSpanFull()
+                            ->schema([
+                                TextInput::make('nama_barang')
+                                    ->label('Nama / Deskripsi Barang')
+                                    ->placeholder('Nama atau spesifikasi barang')
+                                    ->required()
+                                    ->columnSpan(4),
+
+                                TextInput::make('item_no')
+                                    ->label('Item No.')
+                                    ->placeholder('10, 20...')
+                                    ->numeric()
+                                    ->columnSpan(2),
+
+                                TextInput::make('no_grs')
+                                    ->label('No. GRS Item')
+                                    ->placeholder('Nomor GRS')
+                                    ->columnSpan(3),
+
+                                TextInput::make('no_do')
+                                    ->label('No. DO Item')
+                                    ->placeholder('Nomor DO')
+                                    ->columnSpan(3),
+
+                                TextInput::make('qty_penagihan')
+                                    ->label('Qty Ditagihkan')
+                                    ->numeric()
+                                    ->required()
+                                    ->placeholder('0.00')
+                                    ->columnSpan(3),
+
+                                TextInput::make('qty_po')
+                                    ->label('Qty PO')
+                                    ->numeric()
+                                    ->placeholder('0.00')
+                                    ->columnSpan(3),
+
+                                TextInput::make('uoi')
+                                    ->label('Satuan (UOI)')
+                                    ->placeholder('PCS, SET...')
+                                    ->columnSpan(2),
+
+                                TextInput::make('subtotal_exclude_ppn')
+                                    ->label('Sub Total (DPP)')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($state, Set $set): void {
+                                        if ($state !== null && is_numeric($state)) {
+                                            $set('subtotal_include_ppn', round((float) $state * 1.11, 2));
+                                        }
+                                    })
+                                    ->columnSpan(2),
+
+                                TextInput::make('subtotal_include_ppn')
+                                    ->label('Sub Total (Incl PPN)')
+                                    ->numeric()
+                                    ->prefix('Rp')
+                                    ->columnSpan(2),
+                            ])
+                            ->columns(12),
+
                         TextInput::make('nama_barang')
-                            ->label('Nama Barang')
-                            ->placeholder('Deskripsi material / barang')
+                            ->label('Ringkasan Nama Barang')
+                            ->placeholder('Deskripsi umum material / barang (otomatis dari rincian)')
                             ->columnSpanFull(),
 
                         TextInput::make('qty_penagihan')
-                            ->label('Quantity Penagihan')
+                            ->label('Total Qty Penagihan')
                             ->numeric()
                             ->placeholder('0.00'),
 
                         TextInput::make('qty_po')
-                            ->label('Quantity di PO')
+                            ->label('Total Qty di PO')
                             ->numeric()
                             ->placeholder('0.00'),
 
                         TextInput::make('uoi')
-                            ->label('Satuan (UOI)')
+                            ->label('Satuan Utama (UOI)')
                             ->placeholder('PCS, TON, SET, dll'),
 
                         TextInput::make('subtotal_exclude_ppn')
-                            ->label('Sub Total (Exclude PPN)')
+                            ->label('Total Sub Total (Exclude PPN)')
                             ->numeric()
                             ->prefix('Rp')
                             ->live(onBlur: true)
@@ -294,7 +381,7 @@ class InvoicingReceiptForm
                             }),
 
                         TextInput::make('subtotal_include_ppn')
-                            ->label('Sub Total (Include PPN 11%)')
+                            ->label('Total Sub Total (Include PPN 11%)')
                             ->numeric()
                             ->prefix('Rp')
                             ->helperText('Rumus otomatis: Sub Total (Exclude PPN) + 11% PPN'),
