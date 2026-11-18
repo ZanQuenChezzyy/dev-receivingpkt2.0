@@ -29,12 +29,14 @@ class InvoicingOverviewWidget extends Widget
     public function openStaffModal(): void
     {
         $this->showStaffModal = true;
+        $this->dispatch('open-modal', id: 'staff-workload-modal');
     }
 
     public function closeStaffModal(): void
     {
         $this->showStaffModal = false;
         $this->staffSearch = '';
+        $this->dispatch('close-modal', id: 'staff-workload-modal');
     }
 
     /**
