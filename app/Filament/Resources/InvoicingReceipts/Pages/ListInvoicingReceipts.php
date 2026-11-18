@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\InvoicingReceipts\Pages;
 
 use App\Filament\Resources\InvoicingReceipts\InvoicingReceiptResource;
+use App\Filament\Resources\InvoicingReceipts\Widgets\InvoicingOverviewWidget;
 use App\Http\Controllers\Admin\ChunkedImportUploadController;
 use App\Models\InvoicingReceipt;
 use App\Services\InvoicingCsvImportService;
@@ -162,6 +163,13 @@ class ListInvoicingReceipts extends ListRecords
             CreateAction::make()
                 ->label('Tambah Tagihan Baru')
                 ->icon('heroicon-o-plus'),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            InvoicingOverviewWidget::class,
         ];
     }
 

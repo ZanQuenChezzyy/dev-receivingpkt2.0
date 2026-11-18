@@ -4,6 +4,7 @@ use App\Filament\Resources\GrsRdtvs\Pages\CreateGrsRdtv;
 use App\Filament\Resources\InvoicingReceipts\Pages\ListInvoicingReceipts;
 use App\Filament\Resources\InvoicingReceipts\Schemas\InvoicingReceiptForm;
 use App\Filament\Resources\InvoicingReceipts\Tables\InvoicingReceiptsTable;
+use App\Filament\Resources\InvoicingReceipts\Widgets\InvoicingOverviewWidget;
 use App\Filament\Resources\PicMaterialAssignments\Schemas\PicMaterialAssignmentForm;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\GrsRdtvItem;
@@ -1375,6 +1376,130 @@ test('syncSummaryFromItems formats multi-item deskripsi as numbered list and com
 
         // Run sync command
         $this->artisan('invoicing:sync-descriptions')->assertSuccessful();
+    } finally {
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});
+
+test('InvoicingOverviewWidget calculates monthly stats correctly and identifies top pic', function () {
+    ensurePicAssignmentTablesExist();
+    if (! Illuminate\Support\Facades\Schema::hasColumn('users', 'email')) {
+        Illuminate\Support\Facades\Schema::table('users', function ($table) {
+            $table->string('email')->nullable();
+        });
+    }
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    try {
+        $user1Id = DB::table('users')->insertGetId([
+            'name' => 'Budi Staff',
+            'email' => 'budi@pkt.com',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $user2Id = DB::table('users')->insertGetId([
+            'name' => 'Siti Staff',
+            'email' => 'siti@pkt.com',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $currentMonth = now()->format('Y-m');
+        $prevMonth = now()->subMonth()->format('Y-m');
+
+        // Receipts in current month:
+        // user1 gets 3 receipts (2 selesai, 1 proses)
+        InvoicingReceipt::create([
+            'no_po' => 'PO-CUR-1',
+            'pic_id' => $user1Id,
+            'jenis' => 'GRS',
+            'status' => 'Selesai',
+            'tanggal_terima_grs' => now()->toDateString(),
+            'subtotal_include_ppn' => 1000000,
+        ]);
+        InvoicingReceipt::create([
+            'no_po' => 'PO-CUR-2',
+            'pic_id' => $user1Id,
+            'jenis' => 'GRS',
+            'status' => 'Terkirim Kasir',
+            'tanggal_terima_grs' => now()->toDateString(),
+            'subtotal_include_ppn' => 2000000,
+        ]);
+        InvoicingReceipt::create([
+            'no_po' => 'PO-CUR-3',
+            'pic_id' => $user1Id,
+            'jenis' => 'RDTV',
+            'status' => 'Menunggu Verifikasi',
+            'tanggal_terima_grs' => now()->toDateString(),
+            'subtotal_include_ppn' => 500000,
+        ]);
+
+        // user2 gets 1 receipt (1 proses)
+        InvoicingReceipt::create([
+            'no_po' => 'PO-CUR-4',
+            'pic_id' => $user2Id,
+            'jenis' => 'GRS',
+            'status' => 'Menunggu Verifikasi',
+            'tanggal_terima_grs' => now()->toDateString(),
+            'subtotal_include_ppn' => 1500000,
+        ]);
+
+        // Receipt in previous month:
+        // user2 gets 1 receipt in prev month
+        InvoicingReceipt::create([
+            'no_po' => 'PO-PREV-1',
+            'pic_id' => $user2Id,
+            'jenis' => 'GRS',
+            'status' => 'Selesai',
+            'tanggal_terima_grs' => now()->subMonth()->toDateString(),
+            'subtotal_include_ppn' => 5000000,
+        ]);
+
+        $widget = new InvoicingOverviewWidget;
+        $widget->mount();
+
+        expect($widget->selectedPeriod)->toBe($currentMonth);
+
+        $stats = $widget->getStatsData();
+        expect($stats['top_pic_name'])->toBe('Budi Staff')
+            ->and($stats['top_pic_count'])->toBe(3)
+            ->and($stats['total_masuk'])->toBe(4)
+            ->and($stats['total_grs'])->toBe(3)
+            ->and($stats['total_rdtv'])->toBe(1)
+            ->and($stats['total_selesai'])->toBe(2)
+            ->and($stats['total_proses'])->toBe(2)
+            ->and($stats['completion_rate'])->toBe(50);
+
+        // Check staff workloads ranking
+        $workloads = $widget->getStaffWorkloads();
+        $budiWorkload = collect($workloads)->firstWhere('name', 'Budi Staff');
+        $sitiWorkload = collect($workloads)->firstWhere('name', 'Siti Staff');
+
+        expect($budiWorkload['total'])->toBe(3)
+            ->and($budiWorkload['selesai'])->toBe(2)
+            ->and($sitiWorkload['total'])->toBe(1);
+
+        // Switch to previous month
+        $widget->selectedPeriod = $prevMonth;
+        $prevStats = $widget->getStatsData();
+        expect($prevStats['top_pic_name'])->toBe('Siti Staff')
+            ->and($prevStats['top_pic_count'])->toBe(1)
+            ->and($prevStats['total_masuk'])->toBe(1);
+
+        // Check modal toggling
+        expect($widget->showStaffModal)->toBeFalse();
+        $widget->openStaffModal();
+        expect($widget->showStaffModal)->toBeTrue();
+        $widget->closeStaffModal();
+        expect($widget->showStaffModal)->toBeFalse();
+
+        // Check ListInvoicingReceipts registers the widget
+        $page = app(ListInvoicingReceipts::class);
+        $headerWidgets = (fn () => $this->getHeaderWidgets())->call($page);
+        expect($headerWidgets)->toContain(InvoicingOverviewWidget::class);
     } finally {
         if ($createdInvoicingTable) {
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
