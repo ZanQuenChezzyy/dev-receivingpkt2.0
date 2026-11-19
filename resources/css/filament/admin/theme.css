@@ -1495,17 +1495,20 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
 
 /* =========================================================
    UNIVERSAL MODAL FOCUS & STACKING ISOLATION
-   Whenever ANY modal is active/open in Filament, it MUST be
-   the absolute topmost layer on the entire screen:
-   - Topbar & Sidebar drop behind the modal backdrop
+   Whenever ANY modal is active (opening, open, or closing/leaving),
+   it MUST be the absolute topmost layer on the entire screen:
+   - Topbar & Sidebar stay demoted behind the modal backdrop until leave transition ends
    - The dark blur backdrop covers the entire viewport (100vw x 100vh)
    - Parent containers do NOT establish stacking context traps
-   - The modal window is centered and unobstructed
+   - The modal window is centered and unobstructed throughout its entire lifecycle
    ========================================================= */
 
-/* 1. Demote & completely hide background bars (Topbar & Sidebar) when ANY modal is open */
+/* 1. Demote & completely hide background bars (Topbar & Sidebar) when ANY modal is open OR closing */
 body:has(.fi-modal.fi-modal-open) .fi-topbar-ctn,
 body:has(.fi-modal-open) .fi-topbar-ctn,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-topbar-ctn,
+body:has(.fi-modal-window.fi-transition-leave) .fi-topbar-ctn,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-topbar-ctn,
 body.has-filament-modal-open .fi-topbar-ctn,
 html.has-filament-modal-open .fi-topbar-ctn {
     visibility: hidden !important;
@@ -1518,6 +1521,9 @@ html.has-filament-modal-open .fi-topbar-ctn {
 
 body:has(.fi-modal.fi-modal-open) .fi-topbar,
 body:has(.fi-modal-open) .fi-topbar,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-topbar,
+body:has(.fi-modal-window.fi-transition-leave) .fi-topbar,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-topbar,
 body.has-filament-modal-open .fi-topbar,
 html.has-filament-modal-open .fi-topbar {
     visibility: hidden !important;
@@ -1528,6 +1534,9 @@ html.has-filament-modal-open .fi-topbar {
 
 body:has(.fi-modal.fi-modal-open) .fi-sidebar,
 body:has(.fi-modal-open) .fi-sidebar,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-sidebar,
+body:has(.fi-modal-window.fi-transition-leave) .fi-sidebar,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-sidebar,
 body.has-filament-modal-open .fi-sidebar,
 html.has-filament-modal-open .fi-sidebar {
     visibility: hidden !important;
@@ -1538,15 +1547,21 @@ html.has-filament-modal-open .fi-sidebar {
 
 body:has(.fi-modal.fi-modal-open) .fi-sidebar-close-overlay,
 body:has(.fi-modal-open) .fi-sidebar-close-overlay,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-sidebar-close-overlay,
+body:has(.fi-modal-window.fi-transition-leave) .fi-sidebar-close-overlay,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-sidebar-close-overlay,
 body.has-filament-modal-open .fi-sidebar-close-overlay {
     visibility: hidden !important;
     pointer-events: none !important;
     z-index: -1 !important;
 }
 
-/* 2. Elevate the entire layout & main container tree holding the modal */
+/* 2. Elevate the entire layout & main container tree holding the modal (open & closing) */
 body:has(.fi-modal.fi-modal-open) .fi-layout,
 body:has(.fi-modal-open) .fi-layout,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-layout,
+body:has(.fi-modal-window.fi-transition-leave) .fi-layout,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-layout,
 body.has-filament-modal-open .fi-layout {
     position: relative !important;
     z-index: 99990 !important;
@@ -1554,18 +1569,33 @@ body.has-filament-modal-open .fi-layout {
 
 body:has(.fi-modal.fi-modal-open) .fi-main-ctn,
 body:has(.fi-modal-open) .fi-main-ctn,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-main-ctn,
+body:has(.fi-modal-window.fi-transition-leave) .fi-main-ctn,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-main-ctn,
 body.has-filament-modal-open .fi-main-ctn,
 body:has(.fi-modal.fi-modal-open) .fi-main,
 body:has(.fi-modal-open) .fi-main,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-main,
+body:has(.fi-modal-window.fi-transition-leave) .fi-main,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-main,
 body.has-filament-modal-open .fi-main,
 body:has(.fi-modal.fi-modal-open) .fi-page,
 body:has(.fi-modal-open) .fi-page,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-page,
+body:has(.fi-modal-window.fi-transition-leave) .fi-page,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-page,
 body.has-filament-modal-open .fi-page,
 body:has(.fi-modal.fi-modal-open) .fi-ta-ctn,
 body:has(.fi-modal-open) .fi-ta-ctn,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-ta-ctn,
+body:has(.fi-modal-window.fi-transition-leave) .fi-ta-ctn,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-ta-ctn,
 body.has-filament-modal-open .fi-ta-ctn,
 body:has(.fi-modal.fi-modal-open) .fi-section,
 body:has(.fi-modal-open) .fi-section,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-section,
+body:has(.fi-modal-window.fi-transition-leave) .fi-section,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-section,
 body.has-filament-modal-open .fi-section {
     z-index: 99990 !important;
 }
@@ -1573,24 +1603,45 @@ body.has-filament-modal-open .fi-section {
 /* 3. Strip any transform, perspective, or containment that would clip/trap fixed modals */
 body:has(.fi-modal.fi-modal-open) .fi-layout,
 body:has(.fi-modal-open) .fi-layout,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-layout,
+body:has(.fi-modal-window.fi-transition-leave) .fi-layout,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-layout,
 body.has-filament-modal-open .fi-layout,
 body:has(.fi-modal.fi-modal-open) .fi-main-ctn,
 body:has(.fi-modal-open) .fi-main-ctn,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-main-ctn,
+body:has(.fi-modal-window.fi-transition-leave) .fi-main-ctn,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-main-ctn,
 body.has-filament-modal-open .fi-main-ctn,
 body:has(.fi-modal.fi-modal-open) .fi-main,
 body:has(.fi-modal-open) .fi-main,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-main,
+body:has(.fi-modal-window.fi-transition-leave) .fi-main,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-main,
 body.has-filament-modal-open .fi-main,
 body:has(.fi-modal.fi-modal-open) .fi-main > *,
 body:has(.fi-modal-open) .fi-main > *,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-main > *,
+body:has(.fi-modal-window.fi-transition-leave) .fi-main > *,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-main > *,
 body.has-filament-modal-open .fi-main > *,
 body:has(.fi-modal.fi-modal-open) .fi-page,
 body:has(.fi-modal-open) .fi-page,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-page,
+body:has(.fi-modal-window.fi-transition-leave) .fi-page,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-page,
 body.has-filament-modal-open .fi-page,
 body:has(.fi-modal.fi-modal-open) .fi-ta-ctn,
 body:has(.fi-modal-open) .fi-ta-ctn,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-ta-ctn,
+body:has(.fi-modal-window.fi-transition-leave) .fi-ta-ctn,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-ta-ctn,
 body.has-filament-modal-open .fi-ta-ctn,
 body:has(.fi-modal.fi-modal-open) .fi-section,
 body:has(.fi-modal-open) .fi-section,
+body:has(.fi-modal:has(.fi-transition-leave)) .fi-section,
+body:has(.fi-modal-window.fi-transition-leave) .fi-section,
+body:has(.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak])) .fi-section,
 body.has-filament-modal-open .fi-section {
     animation: none !important;
     transform: none !important;
@@ -1599,8 +1650,11 @@ body.has-filament-modal-open .fi-section {
     filter: none !important;
 }
 
-/* 4. Modal Root */
-.fi-modal.fi-modal-open {
+/* 4. Modal Root: Fixed Viewport on Root Plane (Open & Leaving) */
+.fi-modal.fi-modal-open,
+.fi-modal:has(.fi-transition-leave),
+.fi-modal:has(.fi-modal-window.fi-transition-leave),
+.fi-modal:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
@@ -1610,8 +1664,7 @@ body.has-filament-modal-open .fi-section {
 }
 
 /* 5. Modal Dark Blur Backdrop: Full Screen Viewport Cover */
-.fi-modal.fi-modal-open .fi-modal-close-overlay,
-body.has-filament-modal-open .fi-modal.fi-modal-open .fi-modal-close-overlay {
+.fi-modal .fi-modal-close-overlay {
     @apply !backdrop-blur-md;
     position: fixed !important;
     inset: 0 !important;
@@ -1623,8 +1676,7 @@ body.has-filament-modal-open .fi-modal.fi-modal-open .fi-modal-close-overlay {
 }
 
 /* 6. Modal Window Container: Full Viewport, Centered with Safe Margin */
-.fi-modal.fi-modal-open .fi-modal-window-ctn,
-body.has-filament-modal-open .fi-modal.fi-modal-open .fi-modal-window-ctn {
+.fi-modal .fi-modal-window-ctn {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
