@@ -132,15 +132,15 @@ class InvoicingReceiptInfolist
                             ->copyable()
                             ->placeholder('-'),
 
+                        TextEntry::make('faktur_pajak')
+                            ->label('Nomor Faktur Pajak')
+                            ->copyable()
+                            ->placeholder('-'),
+
                         TextEntry::make('tanggal_invoice')
                             ->label('Tanggal Invoice')
                             ->date('d F Y')
                             ->icon('heroicon-m-calendar')
-                            ->copyable()
-                            ->placeholder('-'),
-
-                        TextEntry::make('faktur_pajak')
-                            ->label('Nomor Faktur Pajak')
                             ->copyable()
                             ->placeholder('-'),
 

@@ -459,12 +459,29 @@ class InvoicingReceiptsTable
                                         ->hintColor('danger')
                                         ->helperText('Nomor RDTV resmi dari slip fisik.'),
 
+                                    TextInput::make('no_do')
+                                        ->label('Nomor DO Utama (Delivery Order)')
+                                        ->placeholder('Nomor Delivery Order')
+                                        ->prefixIcon('heroicon-m-truck')
+                                        ->default(fn (InvoicingReceipt $record) => $record->no_do ?: InvoicingReceipt::findDeliveryOrderNoForPo($record->no_po))
+                                        ->required()
+                                        ->hint('Wajib')
+                                        ->hintColor('danger')
+                                        ->helperText('Nomor surat jalan / Delivery Order yang ditagihkan.'),
+
                                     TextInput::make('no_invoice')
                                         ->label('Nomor Invoice')
                                         ->placeholder('Contoh: INV-2026/001 (Opsional)')
                                         ->prefixIcon('heroicon-m-document-text')
                                         ->default(fn (InvoicingReceipt $record) => $record->no_invoice)
                                         ->helperText('Nomor invoice penagihan resmi vendor (opsional, dapat diisi menyusul saat berkas fisik diterima).'),
+
+                                    TextInput::make('faktur_pajak')
+                                        ->label('Nomor Faktur Pajak')
+                                        ->placeholder('Contoh: 010.001-26.12345678 (Opsional)')
+                                        ->prefixIcon('heroicon-m-receipt-percent')
+                                        ->default(fn (InvoicingReceipt $record) => $record->faktur_pajak)
+                                        ->helperText('Nomor seri Faktur Pajak elektronik / e-Faktur (opsional, dapat diisi menyusul).'),
 
                                     DatePicker::make('tanggal_invoice')
                                         ->label('Tanggal Invoice')
@@ -479,23 +496,6 @@ class InvoicingReceiptsTable
                                             }
                                         })
                                         ->helperText('Tanggal terbit invoice resmi dari vendor.'),
-
-                                    TextInput::make('no_do')
-                                        ->label('Nomor DO Utama (Delivery Order)')
-                                        ->placeholder('Nomor Delivery Order')
-                                        ->prefixIcon('heroicon-m-truck')
-                                        ->default(fn (InvoicingReceipt $record) => $record->no_do ?: InvoicingReceipt::findDeliveryOrderNoForPo($record->no_po))
-                                        ->required()
-                                        ->hint('Wajib')
-                                        ->hintColor('danger')
-                                        ->helperText('Nomor surat jalan / Delivery Order yang ditagihkan.'),
-
-                                    TextInput::make('faktur_pajak')
-                                        ->label('Nomor Faktur Pajak')
-                                        ->placeholder('Contoh: 010.001-26.12345678 (Opsional)')
-                                        ->prefixIcon('heroicon-m-receipt-percent')
-                                        ->default(fn (InvoicingReceipt $record) => $record->faktur_pajak)
-                                        ->helperText('Nomor seri Faktur Pajak elektronik / e-Faktur (opsional, dapat diisi menyusul).'),
 
                                     DatePicker::make('tanggal_faktur_pajak')
                                         ->label('Tanggal Faktur Pajak')
