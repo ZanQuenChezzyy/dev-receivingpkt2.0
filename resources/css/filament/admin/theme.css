@@ -64,6 +64,16 @@ html.dark body {
     overflow: hidden;
 }
 
+@media (max-width: 1023px) {
+    .fi-sidebar-close-overlay {
+        z-index: 1040 !important;
+    }
+
+    .fi-sidebar {
+        z-index: 1050 !important;
+    }
+}
+
 .fi-sidebar-header {
     @apply !bg-transparent border-b !border-black/[0.04] dark:!border-white/[0.05] !px-4;
 }
@@ -426,13 +436,15 @@ html.dark body {
 .fi-topbar-ctn {
     position: sticky !important;
     top: 0 !important;
-    z-index: 50 !important;
+    z-index: 1000 !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 
 .fi-topbar {
-    @apply !bg-white/75 dark:!bg-[#07111e]/80 !backdrop-blur-2xl !backdrop-saturate-150 !border-b !border-black/[0.06] dark:!border-white/[0.08] !shadow-[0_1px_3px_rgba(0,0,0,0.02)];
+    @apply !bg-white/85 dark:!bg-[#07111e]/90 !backdrop-blur-2xl !backdrop-saturate-150 !border-b !border-black/[0.06] dark:!border-white/[0.08] !shadow-[0_1px_3px_rgba(0,0,0,0.02)];
     position: relative !important;
-    z-index: 50 !important;
+    z-index: 1000 !important;
 }
 
 .fi-topbar nav {
@@ -785,32 +797,32 @@ body.stats-already-loaded .stat-row-animated {
 .fi-ta-content:has(.fi-dropdown:focus-within),
 .fi-ta-content:has(.fi-dropdown-panel:not([style*="display: none"])) {
     position: relative !important;
-    z-index: 50 !important;
+    z-index: 30 !important;
     overflow-y: visible !important;
 }
 
 .fi-ta-table:has(.fi-dropdown:focus-within) tbody,
 .fi-ta-table:has(.fi-dropdown-panel:not([style*="display: none"])) tbody {
     position: relative !important;
-    z-index: 50 !important;
+    z-index: 30 !important;
 }
 
 .fi-ta-row:has(.fi-dropdown:focus-within),
 .fi-ta-row:has(.fi-dropdown-panel:not([style*="display: none"])) {
     position: relative !important;
-    z-index: 100 !important;
+    z-index: 50 !important;
 }
 
 .fi-ta-cell:has(.fi-dropdown:focus-within),
 .fi-ta-cell:has(.fi-dropdown-panel:not([style*="display: none"])) {
     position: relative !important;
-    z-index: 100 !important;
+    z-index: 50 !important;
 }
 
 .fi-dropdown:has(.fi-dropdown-panel:not([style*="display: none"])),
 .fi-dropdown:focus-within {
     position: relative !important;
-    z-index: 9999 !important;
+    z-index: 100 !important;
 }
 
 /* Ensure sticky table header never overlays an open dropdown menu */
@@ -1504,19 +1516,6 @@ body:has(.fi-modal-open) .fi-main > *,
 .fi-layout:has(.fi-modal-open) .fi-main > * {
     animation: none !important;
     transform: none !important;
-}
-
-/* Elevate main layout when modal is open so sidebar (z-20/z-30) and topbar (z-50) never sit on top of modal */
-body:has(.fi-modal-open) .fi-main-ctn,
-body:has(.fi-modal-open) .fi-main {
-    position: relative !important;
-    z-index: 99990 !important;
-}
-
-body:has(.fi-modal-open) .fi-sidebar,
-body:has(.fi-modal-open) .fi-topbar-ctn,
-body:has(.fi-modal-open) .fi-topbar {
-    z-index: 10 !important;
 }
 
 /* 9A. Standard Centered Modals (Apple Floating Sheet) */
