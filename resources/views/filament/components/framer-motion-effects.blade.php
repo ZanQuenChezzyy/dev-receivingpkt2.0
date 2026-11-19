@@ -129,9 +129,7 @@
         // 3. Universal Modal Focus & Stacking Watchdog
         // =========================================================
         function updateModalActiveState() {
-            const hasOpenModal = !!document.querySelector(
-                '.fi-modal-open, .fi-modal[aria-modal="true"]:not([style*="display: none"]), .fi-modal-window-ctn:not([style*="display: none"]), [role="dialog"][aria-modal="true"]:not([style*="display: none"])'
-            );
+            const hasOpenModal = !!document.querySelector('.fi-modal.fi-modal-open, .fi-modal-open');
             document.body.classList.toggle('has-filament-modal-open', hasOpenModal);
             document.documentElement.classList.toggle('has-filament-modal-open', hasOpenModal);
         }
@@ -145,7 +143,7 @@
                 childList: true,
                 subtree: true,
                 attributes: true,
-                attributeFilter: ['class', 'style', 'aria-modal', 'role']
+                attributeFilter: ['class']
             });
         }
 

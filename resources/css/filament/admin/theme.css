@@ -432,24 +432,28 @@ html.dark body {
 }
 
 /* =========================================================
-   2. TOPBAR (Apple Floating Glass Navigation Bar)
+   2. TOPBAR (Apple Solid Glass Navigation Bar)
    ========================================================= */
 .fi-topbar-ctn {
     position: sticky !important;
     top: 0 !important;
     z-index: 30 !important;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    width: 100% !important;
 }
 
 .fi-topbar {
-    @apply !bg-white/85 dark:!bg-[#07111e]/90 !backdrop-blur-2xl !backdrop-saturate-150 !border-b !border-black/[0.06] dark:!border-white/[0.08] !shadow-[0_1px_3px_rgba(0,0,0,0.02)];
     position: relative !important;
     z-index: 30 !important;
+    min-height: 4rem !important;
+    background-color: #ffffff !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04) !important;
 }
 
-.fi-topbar nav {
-    @apply !bg-transparent;
+.dark .fi-topbar {
+    background-color: #070e18 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45) !important;
 }
 
 @media (max-width: 639px) {
@@ -791,12 +795,12 @@ body.stats-already-loaded .stat-row-animated {
 }
 
 /* Elevate table row and cell containing an active/open dropdown above sibling rows & headers (only when modal is NOT active) */
-.fi-ta-ctn:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])),
-.fi-ta-ctn:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])),
-.fi-ta-content-ctn:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])),
-.fi-ta-content-ctn:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])),
-.fi-ta-content:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])),
-.fi-ta-content:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])) {
+.fi-ta-ctn:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)),
+.fi-ta-ctn:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)),
+.fi-ta-content-ctn:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)),
+.fi-ta-content-ctn:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)),
+.fi-ta-content:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)),
+.fi-ta-content:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)) {
     position: relative !important;
     z-index: 25 !important;
     overflow-y: visible !important;
@@ -1500,9 +1504,8 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
    ========================================================= */
 
 /* 1. Demote & completely hide background bars (Topbar & Sidebar) when ANY modal is open */
+body:has(.fi-modal.fi-modal-open) .fi-topbar-ctn,
 body:has(.fi-modal-open) .fi-topbar-ctn,
-body:has([aria-modal="true"]) .fi-topbar-ctn,
-body:has(.fi-modal-window-ctn:not([style*="display: none"])) .fi-topbar-ctn,
 body.has-filament-modal-open .fi-topbar-ctn,
 html.has-filament-modal-open .fi-topbar-ctn {
     visibility: hidden !important;
@@ -1513,9 +1516,8 @@ html.has-filament-modal-open .fi-topbar-ctn {
     -webkit-transform: none !important;
 }
 
+body:has(.fi-modal.fi-modal-open) .fi-topbar,
 body:has(.fi-modal-open) .fi-topbar,
-body:has([aria-modal="true"]) .fi-topbar,
-body:has(.fi-modal-window-ctn:not([style*="display: none"])) .fi-topbar,
 body.has-filament-modal-open .fi-topbar,
 html.has-filament-modal-open .fi-topbar {
     visibility: hidden !important;
@@ -1524,9 +1526,8 @@ html.has-filament-modal-open .fi-topbar {
     opacity: 0 !important;
 }
 
+body:has(.fi-modal.fi-modal-open) .fi-sidebar,
 body:has(.fi-modal-open) .fi-sidebar,
-body:has([aria-modal="true"]) .fi-sidebar,
-body:has(.fi-modal-window-ctn:not([style*="display: none"])) .fi-sidebar,
 body.has-filament-modal-open .fi-sidebar,
 html.has-filament-modal-open .fi-sidebar {
     visibility: hidden !important;
@@ -1535,8 +1536,8 @@ html.has-filament-modal-open .fi-sidebar {
     opacity: 0 !important;
 }
 
+body:has(.fi-modal.fi-modal-open) .fi-sidebar-close-overlay,
 body:has(.fi-modal-open) .fi-sidebar-close-overlay,
-body:has([aria-modal="true"]) .fi-sidebar-close-overlay,
 body.has-filament-modal-open .fi-sidebar-close-overlay {
     visibility: hidden !important;
     pointer-events: none !important;
@@ -1544,52 +1545,52 @@ body.has-filament-modal-open .fi-sidebar-close-overlay {
 }
 
 /* 2. Elevate the entire layout & main container tree holding the modal */
+body:has(.fi-modal.fi-modal-open) .fi-layout,
 body:has(.fi-modal-open) .fi-layout,
-body:has([aria-modal="true"]) .fi-layout,
 body.has-filament-modal-open .fi-layout {
     position: relative !important;
     z-index: 99990 !important;
 }
 
+body:has(.fi-modal.fi-modal-open) .fi-main-ctn,
 body:has(.fi-modal-open) .fi-main-ctn,
-body:has([aria-modal="true"]) .fi-main-ctn,
 body.has-filament-modal-open .fi-main-ctn,
+body:has(.fi-modal.fi-modal-open) .fi-main,
 body:has(.fi-modal-open) .fi-main,
-body:has([aria-modal="true"]) .fi-main,
 body.has-filament-modal-open .fi-main,
+body:has(.fi-modal.fi-modal-open) .fi-page,
 body:has(.fi-modal-open) .fi-page,
-body:has([aria-modal="true"]) .fi-page,
 body.has-filament-modal-open .fi-page,
+body:has(.fi-modal.fi-modal-open) .fi-ta-ctn,
 body:has(.fi-modal-open) .fi-ta-ctn,
-body:has([aria-modal="true"]) .fi-ta-ctn,
 body.has-filament-modal-open .fi-ta-ctn,
+body:has(.fi-modal.fi-modal-open) .fi-section,
 body:has(.fi-modal-open) .fi-section,
-body:has([aria-modal="true"]) .fi-section,
 body.has-filament-modal-open .fi-section {
     z-index: 99990 !important;
 }
 
 /* 3. Strip any transform, perspective, or containment that would clip/trap fixed modals */
+body:has(.fi-modal.fi-modal-open) .fi-layout,
 body:has(.fi-modal-open) .fi-layout,
-body:has([aria-modal="true"]) .fi-layout,
 body.has-filament-modal-open .fi-layout,
+body:has(.fi-modal.fi-modal-open) .fi-main-ctn,
 body:has(.fi-modal-open) .fi-main-ctn,
-body:has([aria-modal="true"]) .fi-main-ctn,
 body.has-filament-modal-open .fi-main-ctn,
+body:has(.fi-modal.fi-modal-open) .fi-main,
 body:has(.fi-modal-open) .fi-main,
-body:has([aria-modal="true"]) .fi-main,
 body.has-filament-modal-open .fi-main,
+body:has(.fi-modal.fi-modal-open) .fi-main > *,
 body:has(.fi-modal-open) .fi-main > *,
-body:has([aria-modal="true"]) .fi-main > *,
 body.has-filament-modal-open .fi-main > *,
+body:has(.fi-modal.fi-modal-open) .fi-page,
 body:has(.fi-modal-open) .fi-page,
-body:has([aria-modal="true"]) .fi-page,
 body.has-filament-modal-open .fi-page,
+body:has(.fi-modal.fi-modal-open) .fi-ta-ctn,
 body:has(.fi-modal-open) .fi-ta-ctn,
-body:has([aria-modal="true"]) .fi-ta-ctn,
 body.has-filament-modal-open .fi-ta-ctn,
+body:has(.fi-modal.fi-modal-open) .fi-section,
 body:has(.fi-modal-open) .fi-section,
-body:has([aria-modal="true"]) .fi-section,
 body.has-filament-modal-open .fi-section {
     animation: none !important;
     transform: none !important;
@@ -1599,9 +1600,7 @@ body.has-filament-modal-open .fi-section {
 }
 
 /* 4. Modal Root */
-.fi-modal.fi-modal-open,
-.fi-modal:has([aria-modal="true"]),
-.fi-modal[aria-modal="true"] {
+.fi-modal.fi-modal-open {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
@@ -1611,7 +1610,8 @@ body.has-filament-modal-open .fi-section {
 }
 
 /* 5. Modal Dark Blur Backdrop: Full Screen Viewport Cover */
-.fi-modal-close-overlay {
+.fi-modal.fi-modal-open .fi-modal-close-overlay,
+body.has-filament-modal-open .fi-modal.fi-modal-open .fi-modal-close-overlay {
     @apply !backdrop-blur-md;
     position: fixed !important;
     inset: 0 !important;
@@ -1623,7 +1623,8 @@ body.has-filament-modal-open .fi-section {
 }
 
 /* 6. Modal Window Container: Full Viewport, Centered with Safe Margin */
-.fi-modal-window-ctn {
+.fi-modal.fi-modal-open .fi-modal-window-ctn,
+body.has-filament-modal-open .fi-modal.fi-modal-open .fi-modal-window-ctn {
     position: fixed !important;
     inset: 0 !important;
     width: 100vw !important;
