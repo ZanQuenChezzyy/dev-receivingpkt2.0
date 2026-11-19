@@ -1548,7 +1548,20 @@ body:has(.fi-modal-open) .fi-topbar {
 }
 
 .fi-modal-header {
-    @apply !bg-transparent border-b !border-black/[0.06] dark:!border-white/[0.08] !px-6 !py-5;
+    @apply border-b !border-black/[0.06] dark:!border-white/[0.08] !px-6 !py-5;
+    background-color: #ffffff !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
+}
+
+.dark .fi-modal-header {
+    background-color: #0c1829 !important;
+}
+
+.fi-modal:not(.fi-modal-slide-over) .fi-modal-header {
+    border-top-left-radius: 1.5rem !important;
+    border-top-right-radius: 1.5rem !important;
 }
 
 .fi-modal-heading {
@@ -1560,7 +1573,20 @@ body:has(.fi-modal-open) .fi-topbar {
 }
 
 .fi-modal-footer {
-    @apply !bg-transparent border-t !border-black/[0.06] dark:!border-white/[0.08] !px-6 !py-4;
+    @apply border-t !border-black/[0.06] dark:!border-white/[0.08] !px-6 !py-4;
+    background-color: #ffffff !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 20 !important;
+}
+
+.dark .fi-modal-footer {
+    background-color: #0c1829 !important;
+}
+
+.fi-modal:not(.fi-modal-slide-over) .fi-modal-footer {
+    border-bottom-left-radius: 1.5rem !important;
+    border-bottom-right-radius: 1.5rem !important;
 }
 
 /* =========================================================

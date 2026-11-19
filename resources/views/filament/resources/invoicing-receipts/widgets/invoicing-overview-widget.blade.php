@@ -183,33 +183,34 @@
                 'class' => '!fixed !inset-0 !z-[99998] backdrop-blur-md bg-slate-950/80',
             ])"
             :extra-modal-window-attribute-bag="new \Illuminate\View\ComponentAttributeBag([
+                'x-data' => '{ search: \'\' }',
                 'class' => '!z-[99999] my-auto overscroll-contain',
                 'style' => '-webkit-overflow-scrolling: touch; touch-action: pan-y;',
                 'x-on:touchmove.stop' => '',
             ])"
         >
-            <x-slot name="heading">
-                <div class="flex items-center gap-2.5">
-                    <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-500 dark:bg-amber-500/20">
-                        <x-filament::icon
-                            icon="heroicon-m-user-group"
-                            class="w-5 h-5 text-amber-500"
-                        />
+            <x-slot name="header">
+                <div class="w-full pr-8 space-y-3">
+                    <!-- Title & Icon -->
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-500 dark:bg-amber-500/20 shrink-0">
+                            <x-filament::icon
+                                icon="heroicon-m-user-group"
+                                class="w-5 h-5 text-amber-500"
+                            />
+                        </div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                            Daftar Beban Kerja Staff Invoice
+                        </h2>
                     </div>
-                    <span class="text-base font-bold text-slate-900 dark:text-white">
-                        Daftar Beban Kerja Staff Invoice
-                    </span>
-                </div>
-            </x-slot>
 
-            <x-slot name="description">
-                Periode: <strong class="text-slate-800 dark:text-slate-200">{{ $periodLabel }}</strong> &bull; Total {{ $stats['total_masuk'] }} Dokumen
-            </x-slot>
+                    <!-- Subtitle / Periode -->
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        Periode: <strong class="text-slate-800 dark:text-slate-200">{{ $periodLabel }}</strong> &bull; Total {{ $stats['total_masuk'] }} Dokumen
+                    </p>
 
-            <div x-data="{ search: '' }" class="space-y-3.5" x-on:touchmove.stop="">
-                <!-- Search Input -->
-                <div class="pb-1">
-                    <div class="relative">
+                    <!-- Search Input (Fixed in Header, Cleanly Separated) -->
+                    <div class="relative pt-0.5">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                             <x-filament::icon
                                 icon="heroicon-m-magnifying-glass"
@@ -224,10 +225,11 @@
                         >
                     </div>
                 </div>
+            </x-slot>
 
-                <!-- Staff List with native modal scrolling (no nested overflow locks on mobile) -->
-                <div class="space-y-2.5" x-on:touchmove.stop="">
-                    @forelse ($workloads as $index => $staff)
+            <!-- Staff List with native modal scrolling (no nested overflow locks on mobile) -->
+            <div class="space-y-2.5" x-on:touchmove.stop="">
+                @forelse ($workloads as $index => $staff)
                         <div
                             x-show="!search.trim() || {{ \Illuminate\Support\Js::from(strtolower($staff['name'].' '.$staff['email'])) }}.includes(search.toLowerCase().trim())"
                             class="flex items-center justify-between p-3 sm:p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-all"
@@ -290,7 +292,6 @@
                         </div>
                     @endforelse
                 </div>
-            </div>
 
             <x-slot name="footer">
                 <div class="flex items-center justify-between w-full">
