@@ -777,7 +777,24 @@ body.stats-already-loaded .stat-row-animated {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Elevate table row and cell containing an active/open dropdown above sibling rows */
+/* Elevate table row and cell containing an active/open dropdown above sibling rows & headers */
+.fi-ta-ctn:has(.fi-dropdown:focus-within),
+.fi-ta-ctn:has(.fi-dropdown-panel:not([style*="display: none"])),
+.fi-ta-content-ctn:has(.fi-dropdown:focus-within),
+.fi-ta-content-ctn:has(.fi-dropdown-panel:not([style*="display: none"])),
+.fi-ta-content:has(.fi-dropdown:focus-within),
+.fi-ta-content:has(.fi-dropdown-panel:not([style*="display: none"])) {
+    position: relative !important;
+    z-index: 50 !important;
+    overflow-y: visible !important;
+}
+
+.fi-ta-table:has(.fi-dropdown:focus-within) tbody,
+.fi-ta-table:has(.fi-dropdown-panel:not([style*="display: none"])) tbody {
+    position: relative !important;
+    z-index: 50 !important;
+}
+
 .fi-ta-row:has(.fi-dropdown:focus-within),
 .fi-ta-row:has(.fi-dropdown-panel:not([style*="display: none"])) {
     position: relative !important;
@@ -790,9 +807,22 @@ body.stats-already-loaded .stat-row-animated {
     z-index: 100 !important;
 }
 
-.fi-dropdown:has(.fi-dropdown-panel:not([style*="display: none"])) {
+.fi-dropdown:has(.fi-dropdown-panel:not([style*="display: none"])),
+.fi-dropdown:focus-within {
     position: relative !important;
     z-index: 9999 !important;
+}
+
+/* Ensure sticky table header never overlays an open dropdown menu */
+.fi-ta-table:has(.fi-dropdown:focus-within) thead,
+.fi-ta-table:has(.fi-dropdown-panel:not([style*="display: none"])) thead {
+    z-index: 1 !important;
+}
+
+/* Ensure table header toolbar sits below any active table dropdown */
+.fi-ta-ctn:has(.fi-dropdown:focus-within) .fi-ta-header-toolbar,
+.fi-ta-ctn:has(.fi-dropdown-panel:not([style*="display: none"])) .fi-ta-header-toolbar {
+    z-index: 1 !important;
 }
 
 /* Unselected Row Hover (pure subtle ambient tint, no transform) */
