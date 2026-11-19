@@ -134,6 +134,8 @@ beforeEach(function () {
     if (! Schema::hasTable('invoicing_receipt_items')) {
         $createItemsMigration = include database_path('migrations/2026_11_18_093000_create_invoicing_receipt_items_table.php');
         $createItemsMigration->up();
+        $dropSubtotalsMigration = include database_path('migrations/2026_11_19_223946_drop_subtotals_from_invoicing_receipt_items_table.php');
+        $dropSubtotalsMigration->up();
     }
 });
 

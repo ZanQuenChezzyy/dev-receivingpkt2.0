@@ -128,41 +128,30 @@ class InvoicingReceiptInfolist
                             ->columnSpanFull()
                             ->visible(fn ($record) => $record?->items()->exists())
                             ->schema([
-                                TextEntry::make('nama_barang')
-                                    ->label('Nama Barang')
-                                    ->weight(FontWeight::SemiBold)
-                                    ->columnSpan(4),
                                 TextEntry::make('item_no')
                                     ->label('Item No.')
                                     ->placeholder('-')
-                                    ->columnSpan(2),
+                                    ->columnSpan(1),
+                                TextEntry::make('nama_barang')
+                                    ->label('Nama Barang')
+                                    ->weight(FontWeight::SemiBold)
+                                    ->columnSpan(5),
                                 TextEntry::make('no_grs')
                                     ->label('No. GRS')
                                     ->placeholder('-')
-                                    ->columnSpan(3),
+                                    ->columnSpan(2),
                                 TextEntry::make('no_do')
                                     ->label('No. DO')
                                     ->placeholder('-')
-                                    ->columnSpan(3),
+                                    ->columnSpan(2),
                                 TextEntry::make('qty_penagihan')
                                     ->label('Qty Ditagihkan')
                                     ->formatStateUsing(fn ($record) => ($record->qty_penagihan ?? '-').' '.($record->uoi ?? ''))
-                                    ->columnSpan(3),
+                                    ->columnSpan(1),
                                 TextEntry::make('qty_po')
                                     ->label('Qty PO')
                                     ->formatStateUsing(fn ($record) => ($record->qty_po ?? '-').' '.($record->uoi ?? ''))
-                                    ->columnSpan(3),
-                                TextEntry::make('subtotal_exclude_ppn')
-                                    ->label('Sub Total (DPP)')
-                                    ->money('IDR', locale: 'id')
-                                    ->placeholder('-')
-                                    ->columnSpan(3),
-                                TextEntry::make('subtotal_include_ppn')
-                                    ->label('Sub Total (Incl PPN)')
-                                    ->money('IDR', locale: 'id')
-                                    ->color('success')
-                                    ->placeholder('-')
-                                    ->columnSpan(3),
+                                    ->columnSpan(1),
                             ])
                             ->columns(12),
 
@@ -170,14 +159,6 @@ class InvoicingReceiptInfolist
                             ->label('Ringkasan Nama Barang')
                             ->columnSpanFull()
                             ->placeholder('-'),
-
-                        TextEntry::make('qty_penagihan')
-                            ->label('Quantity Penagihan')
-                            ->formatStateUsing(fn ($record) => ($record->qty_penagihan ?? '-').' '.($record->uoi ?? '')),
-
-                        TextEntry::make('qty_po')
-                            ->label('Quantity di PO')
-                            ->formatStateUsing(fn ($record) => ($record->qty_po ?? '-').' '.($record->uoi ?? '')),
 
                         TextEntry::make('subtotal_exclude_ppn')
                             ->label('Sub Total (Exclude PPN)')

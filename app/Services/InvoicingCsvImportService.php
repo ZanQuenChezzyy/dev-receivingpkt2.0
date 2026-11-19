@@ -638,8 +638,6 @@ class InvoicingCsvImportService
                     'qty_penagihan' => $receipt->qty_penagihan,
                     'qty_po' => $receipt->qty_po,
                     'uoi' => $receipt->uoi,
-                    'subtotal_exclude_ppn' => $receipt->subtotal_exclude_ppn,
-                    'subtotal_include_ppn' => $receipt->subtotal_include_ppn,
                 ]);
             } else {
                 $receipt->items()->create([
@@ -650,8 +648,6 @@ class InvoicingCsvImportService
                     'qty_penagihan' => $receipt->qty_penagihan,
                     'qty_po' => $receipt->qty_po,
                     'uoi' => $receipt->uoi,
-                    'subtotal_exclude_ppn' => $receipt->subtotal_exclude_ppn,
-                    'subtotal_include_ppn' => $receipt->subtotal_include_ppn,
                 ]);
             }
         }

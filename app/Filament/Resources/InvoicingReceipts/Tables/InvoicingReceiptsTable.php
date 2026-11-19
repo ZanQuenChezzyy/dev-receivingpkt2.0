@@ -521,7 +521,6 @@ class InvoicingReceiptsTable
                                                         'qty_penagihan' => $qtyPenagihan,
                                                         'qty_po' => $qtyPo,
                                                         'uoi' => $it->uoi ?? $matchedPo?->uoi ?? $record->uoi,
-                                                        'subtotal_exclude_ppn' => $it->subtotal_exclude_ppn !== null ? (float) $it->subtotal_exclude_ppn : null,
                                                     ];
                                                 })->values()->toArray();
                                             }
@@ -535,7 +534,6 @@ class InvoicingReceiptsTable
                                                     'qty_penagihan' => (float) $p->qty_po,
                                                     'qty_po' => (float) $p->qty_po,
                                                     'uoi' => $p->uoi,
-                                                    'subtotal_exclude_ppn' => $p->total_amount_in_lc ? (float) $p->total_amount_in_lc : null,
                                                 ])->values()->toArray();
                                             }
 
@@ -548,7 +546,6 @@ class InvoicingReceiptsTable
                                                     'qty_penagihan' => (float) $d->quantity,
                                                     'qty_po' => (float) ($d->purchaseOrderIssued?->qty_po ?? $d->quantity),
                                                     'uoi' => $d->uoi,
-                                                    'subtotal_exclude_ppn' => $d->total_amount_snapshot ? (float) $d->total_amount_snapshot : null,
                                                 ])->values()->toArray();
                                             }
 
@@ -562,7 +559,6 @@ class InvoicingReceiptsTable
                                                         'qty_penagihan' => $record->qty_penagihan !== null ? (float) $record->qty_penagihan : ($record->qty_po !== null ? (float) $record->qty_po : null),
                                                         'qty_po' => $record->qty_po !== null ? (float) $record->qty_po : null,
                                                         'uoi' => $record->uoi,
-                                                        'subtotal_exclude_ppn' => $record->subtotal_exclude_ppn !== null ? (float) $record->subtotal_exclude_ppn : null,
                                                     ],
                                                 ];
                                             }
@@ -573,18 +569,20 @@ class InvoicingReceiptsTable
                                         ->columns(['default' => 1, 'sm' => 2, 'md' => 12])
                                         ->schema([
                                             Hidden::make('item_no'),
+                                            Hidden::make('uoi'),
 
                                             TextInput::make('nama_barang')
                                                 ->label('Deskripsi')
                                                 ->placeholder('Nama atau deskripsi spesifikasi barang')
                                                 ->required()
-                                                ->columnSpan(['default' => 1, 'sm' => 2, 'md' => 5]),
+                                                ->columnSpan(['default' => 1, 'sm' => 2, 'md' => 6]),
 
                                             TextInput::make('qty_penagihan')
                                                 ->label('Qty Ditagihkan')
                                                 ->numeric()
                                                 ->required()
                                                 ->placeholder('0.00')
+                                                ->suffix(fn (Get $get, ?InvoicingReceipt $record) => $get('uoi') ?: ($record?->uoi ?? ''))
                                                 ->live(onBlur: true)
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                     $items = $get('../../items') ?? [];
@@ -600,65 +598,16 @@ class InvoicingReceiptsTable
                                                 ->label('Qty PO')
                                                 ->numeric()
                                                 ->placeholder('0.00')
-                                                ->columnSpan(['default' => 1, 'sm' => 1, 'md' => 2]),
-
-                                            TextInput::make('uoi')
-                                                ->label('Satuan')
-                                                ->placeholder('PCS, EA, SET...')
-                                                ->columnSpan(['default' => 1, 'sm' => 2, 'md' => 2]),
+                                                ->suffix(fn (Get $get, ?InvoicingReceipt $record) => $get('uoi') ?: ($record?->uoi ?? ''))
+                                                ->columnSpan(['default' => 1, 'sm' => 1, 'md' => 3]),
                                         ]),
                                 ]),
 
                             Step::make('Ringkasan Total')
-                                ->description('Total kuantitas & nilai invoice')
+                                ->description('Total nilai tagihan (Exclude & Include PPN)')
                                 ->icon('heroicon-o-calculator')
                                 ->columns(2)
                                 ->schema([
-                                    TextInput::make('qty_penagihan')
-                                        ->label('Total Quantity Penagihan')
-                                        ->numeric()
-                                        ->prefixIcon('heroicon-m-archive-box')
-                                        ->default(function (InvoicingReceipt $record): ?float {
-                                            if ($record->qty_penagihan !== null && (float) $record->qty_penagihan > 0) {
-                                                return (float) $record->qty_penagihan;
-                                            }
-                                            if (filled($record->no_po) && $record->no_po !== '-') {
-                                                $sumPo = (float) PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))->sum('qty_po');
-                                                if ($sumPo > 0) {
-                                                    return $sumPo;
-                                                }
-                                            }
-
-                                            return null;
-                                        })
-                                        ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI')
-                                        ->helperText('Otomatis dihitung dari rincian barang.'),
-
-                                    TextInput::make('qty_po')
-                                        ->label('Total Quantity di PO')
-                                        ->numeric()
-                                        ->prefixIcon('heroicon-m-shopping-cart')
-                                        ->default(function (InvoicingReceipt $record): ?float {
-                                            if ($record->qty_po !== null && (float) $record->qty_po > 0) {
-                                                return (float) $record->qty_po;
-                                            }
-                                            if (filled($record->no_po) && $record->no_po !== '-') {
-                                                $sumPo = (float) PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))->sum('qty_po');
-                                                if ($sumPo > 0) {
-                                                    return $sumPo;
-                                                }
-                                            }
-
-                                            return null;
-                                        })
-                                        ->suffix(fn (InvoicingReceipt $record) => $record->uoi ?: 'UOI'),
-
-                                    TextInput::make('uoi')
-                                        ->label('Satuan Utama (UOI)')
-                                        ->prefixIcon('heroicon-m-tag')
-                                        ->placeholder('PCS, TON, SET, dll')
-                                        ->default(fn (InvoicingReceipt $record) => $record->uoi),
-
                                     TextInput::make('subtotal_exclude_ppn')
                                         ->label('Total Sub Total (Exclude PPN)')
                                         ->prefix('Rp')
@@ -753,9 +702,6 @@ class InvoicingReceiptsTable
                                         $matchedPo = $poRecords->first();
                                     }
 
-                                    $subtotalEx = InvoicingReceipt::parseRupiah($itemData['subtotal_exclude_ppn'] ?? null);
-                                    $subtotalIn = $subtotalEx !== null ? (float) round($subtotalEx * 1.11) : null;
-
                                     $qtyPo = isset($itemData['qty_po']) && is_numeric($itemData['qty_po'])
                                         ? (float) $itemData['qty_po']
                                         : ($matchedPo?->qty_po ? (float) $matchedPo->qty_po : null);
@@ -774,8 +720,6 @@ class InvoicingReceiptsTable
                                         'qty_penagihan' => $qtyPenagihan,
                                         'qty_po' => $qtyPo,
                                         'uoi' => $itemData['uoi'] ?? $matchedPo?->uoi ?? $record->uoi,
-                                        'subtotal_exclude_ppn' => $subtotalEx,
-                                        'subtotal_include_ppn' => $subtotalIn,
                                     ]);
                                 }
 

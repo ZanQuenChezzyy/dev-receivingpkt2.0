@@ -22,8 +22,6 @@ class InvoicingReceiptItem extends Model
         'qty_penagihan',
         'qty_po',
         'uoi',
-        'subtotal_exclude_ppn',
-        'subtotal_include_ppn',
     ];
 
     /**
@@ -35,8 +33,6 @@ class InvoicingReceiptItem extends Model
             'item_no' => 'integer',
             'qty_penagihan' => 'float',
             'qty_po' => 'float',
-            'subtotal_exclude_ppn' => 'float',
-            'subtotal_include_ppn' => 'float',
         ];
     }
 
@@ -53,9 +49,6 @@ class InvoicingReceiptItem extends Model
             }
             if ($item->qty_penagihan === null && $item->qty_po !== null) {
                 $item->qty_penagihan = $item->qty_po;
-            }
-            if ($item->subtotal_exclude_ppn !== null && $item->subtotal_include_ppn === null) {
-                $item->subtotal_include_ppn = round((float) $item->subtotal_exclude_ppn * 1.11);
             }
         });
     }

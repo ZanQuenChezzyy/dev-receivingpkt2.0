@@ -1389,8 +1389,6 @@ class MonitoringBarangImportService
                         'qty_penagihan' => $item['qty_penagihan'],
                         'qty_po' => $item['qty_po'] ?? ($poRecord?->qty_po ? (float) $poRecord->qty_po : null),
                         'uoi' => $item['uoi'] ?? $firstDetail?->uoi ?? $poRecord?->uoi,
-                        'subtotal_exclude_ppn' => $item['subtotal_exclude_ppn'],
-                        'subtotal_include_ppn' => $item['subtotal_include_ppn'],
                     ],
                 ];
             }
@@ -1409,11 +1407,6 @@ class MonitoringBarangImportService
             $poList = collect($lookups['all_pos_by_no'][$item['no_po']] ?? []);
 
             foreach ($itemDetails as $seq => $detail) {
-                $subtotalIncludeItem = $detail['subtotal_include_ppn'];
-                if ($subtotalIncludeItem === null && $detail['subtotal_exclude_ppn'] !== null) {
-                    $subtotalIncludeItem = round((float) $detail['subtotal_exclude_ppn'] * 1.11, 2);
-                }
-
                 $detailNama = $detail['nama_barang'] ?? $firstDetail?->description ?? $poRecord?->description;
 
                 // Cocokkan item barang secara akurat ke PO terbit berdasarkan deskripsi
@@ -1446,8 +1439,6 @@ class MonitoringBarangImportService
                         'qty_penagihan' => $detail['qty_penagihan'] ?? $existingItem->qty_penagihan ?? $resolvedQtyPenagihan,
                         'qty_po' => $detail['qty_po'] ?? $existingItem->qty_po ?? $resolvedQtyPo,
                         'uoi' => $detail['uoi'] ?? $existingItem->uoi ?? $matchedItemPo?->uoi ?? $firstDetail?->uoi ?? $poRecord?->uoi,
-                        'subtotal_exclude_ppn' => $detail['subtotal_exclude_ppn'] ?? $existingItem->subtotal_exclude_ppn,
-                        'subtotal_include_ppn' => $subtotalIncludeItem ?? $existingItem->subtotal_include_ppn,
                     ]);
                 } else {
                     $receipt->items()->create([
@@ -1460,8 +1451,6 @@ class MonitoringBarangImportService
                         'qty_penagihan' => $resolvedQtyPenagihan,
                         'qty_po' => $resolvedQtyPo,
                         'uoi' => $detail['uoi'] ?? $matchedItemPo?->uoi ?? $firstDetail?->uoi ?? $poRecord?->uoi,
-                        'subtotal_exclude_ppn' => $detail['subtotal_exclude_ppn'],
-                        'subtotal_include_ppn' => $subtotalIncludeItem,
                     ]);
                 }
             }

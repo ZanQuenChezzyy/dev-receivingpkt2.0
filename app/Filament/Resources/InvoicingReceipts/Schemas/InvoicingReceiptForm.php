@@ -8,6 +8,7 @@ use App\Models\PurchaseOrderIssued;
 use App\Models\Vendor;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -120,7 +121,6 @@ class InvoicingReceiptForm
                                                 'qty_penagihan' => (float) $p->qty_po,
                                                 'qty_po' => (float) $p->qty_po,
                                                 'uoi' => $p->uoi,
-                                                'subtotal_exclude_ppn' => $p->total_amount_in_lc ? (float) $p->total_amount_in_lc : null,
                                             ])->toArray());
                                         } else {
                                             $updatedItems = array_map(function ($it) use ($poRecords) {
@@ -228,8 +228,6 @@ class InvoicingReceiptForm
                                                 'qty_penagihan' => (float) $d->quantity,
                                                 'qty_po' => (float) ($d->purchaseOrderIssued?->qty_po ?? $d->quantity),
                                                 'uoi' => $d->uoi,
-                                                'subtotal_exclude_ppn' => $d->total_amount_snapshot ? (float) $d->total_amount_snapshot : null,
-                                                'subtotal_include_ppn' => $d->total_amount_snapshot ? round((float) $d->total_amount_snapshot * 1.11, 2) : null,
                                                 'no_do' => $do->delivery_order_no,
                                             ])->values()->toArray());
                                         }
@@ -349,13 +347,14 @@ class InvoicingReceiptForm
                                     ->label('Nama / Deskripsi Barang')
                                     ->placeholder('Nama atau spesifikasi barang')
                                     ->required()
-                                    ->columnSpan(4),
+                                    ->columnSpan(6),
 
                                 TextInput::make('qty_penagihan')
                                     ->label('Qty Ditagihkan')
                                     ->numeric()
                                     ->required()
                                     ->placeholder('0.00')
+                                    ->suffix(fn (Get $get, ?InvoicingReceipt $record) => $get('uoi') ?: ($record?->uoi ?? ''))
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                         $items = $get('../../items') ?? [];
@@ -371,28 +370,10 @@ class InvoicingReceiptForm
                                     ->label('Qty PO')
                                     ->numeric()
                                     ->placeholder('0.00')
-                                    ->columnSpan(1),
-
-                                TextInput::make('uoi')
-                                    ->label('Satuan')
-                                    ->placeholder('PCS, SET...')
-                                    ->columnSpan(1),
-
-                                TextInput::make('subtotal_exclude_ppn')
-                                    ->label('Harga Total Item (DPP)')
-                                    ->numeric()
-                                    ->prefix('Rp')
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                        $items = $get('../../items') ?? [];
-                                        $totalDpp = 0;
-                                        foreach ($items as $item) {
-                                            $totalDpp += (float) ($item['subtotal_exclude_ppn'] ?? 0);
-                                        }
-                                        $set('../../subtotal_exclude_ppn', $totalDpp > 0 ? $totalDpp : null);
-                                        $set('../../subtotal_include_ppn', $totalDpp > 0 ? round($totalDpp * 1.11, 2) : null);
-                                    })
+                                    ->suffix(fn (Get $get, ?InvoicingReceipt $record) => $get('uoi') ?: ($record?->uoi ?? ''))
                                     ->columnSpan(2),
+
+                                Hidden::make('uoi'),
                             ])
                             ->columns(12),
 
@@ -400,20 +381,6 @@ class InvoicingReceiptForm
                             ->label('Ringkasan Nama Barang')
                             ->placeholder('Deskripsi umum material / barang (otomatis dari rincian)')
                             ->columnSpanFull(),
-
-                        TextInput::make('qty_penagihan')
-                            ->label('Total Qty Penagihan')
-                            ->numeric()
-                            ->placeholder('0.00'),
-
-                        TextInput::make('qty_po')
-                            ->label('Total Qty di PO')
-                            ->numeric()
-                            ->placeholder('0.00'),
-
-                        TextInput::make('uoi')
-                            ->label('Satuan Utama (UOI)')
-                            ->placeholder('PCS, TON, SET, dll'),
 
                         TextInput::make('subtotal_exclude_ppn')
                             ->label('Total Sub Total (Exclude PPN)')

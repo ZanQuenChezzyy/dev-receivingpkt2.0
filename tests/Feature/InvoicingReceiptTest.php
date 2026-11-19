@@ -607,6 +607,8 @@ function ensureInvoicingReceiptTableExists(): bool
     if (! Illuminate\Support\Facades\Schema::hasTable('invoicing_receipt_items')) {
         $createItemsMigration = include database_path('migrations/2026_11_18_093000_create_invoicing_receipt_items_table.php');
         $createItemsMigration->up();
+        $dropSubtotalsMigration = include database_path('migrations/2026_11_19_223946_drop_subtotals_from_invoicing_receipt_items_table.php');
+        $dropSubtotalsMigration->up();
     }
 
     return $created;
@@ -1017,6 +1019,8 @@ test('invoicing receipt supports multi-item billing per invoice and calculates t
         'no_invoice' => 'INV-2026-MULTI-001',
         'jenis' => 'GRS',
         'status' => 'Menunggu Verifikasi',
+        'subtotal_exclude_ppn' => 17500000,
+        'subtotal_include_ppn' => 19425000,
     ]);
 
     // Item 10 & Item 20 dari GRS 5007027893
@@ -1027,8 +1031,6 @@ test('invoicing receipt supports multi-item billing per invoice and calculates t
         'qty_penagihan' => 10,
         'qty_po' => 10,
         'uoi' => 'PCS',
-        'subtotal_exclude_ppn' => 10000000,
-        'subtotal_include_ppn' => 11100000,
     ]);
 
     $item2 = $receipt->items()->create([
@@ -1038,8 +1040,6 @@ test('invoicing receipt supports multi-item billing per invoice and calculates t
         'qty_penagihan' => 5,
         'qty_po' => 5,
         'uoi' => 'PCS',
-        'subtotal_exclude_ppn' => 2500000,
-        'subtotal_include_ppn' => 2775000,
     ]);
 
     // Item 30 dari GRS berbeda 5007726532 tetapi masuk invoice gabungan yang sama
@@ -1050,8 +1050,6 @@ test('invoicing receipt supports multi-item billing per invoice and calculates t
         'qty_penagihan' => 20,
         'qty_po' => 20,
         'uoi' => 'SET',
-        'subtotal_exclude_ppn' => 5000000,
-        'subtotal_include_ppn' => 5550000,
     ]);
 
     expect($receipt->items()->count())->toBe(3);
@@ -1079,6 +1077,8 @@ test('handles partial step billing where same PO has multiple separate invoices 
         'no_invoice' => 'INV-PARTIAL-001',
         'no_grs' => '5007027893',
         'jenis' => 'GRS',
+        'subtotal_exclude_ppn' => 1500000,
+        'subtotal_include_ppn' => 1665000,
     ]);
 
     $inv1->items()->createMany([
@@ -1089,8 +1089,6 @@ test('handles partial step billing where same PO has multiple separate invoices 
             'qty_penagihan' => 10,
             'qty_po' => 10,
             'uoi' => 'PCS',
-            'subtotal_exclude_ppn' => 1000000,
-            'subtotal_include_ppn' => 1110000,
         ],
         [
             'item_no' => 20,
@@ -1099,8 +1097,6 @@ test('handles partial step billing where same PO has multiple separate invoices 
             'qty_penagihan' => 5,
             'qty_po' => 5,
             'uoi' => 'PCS',
-            'subtotal_exclude_ppn' => 500000,
-            'subtotal_include_ppn' => 555000,
         ],
     ]);
     $inv1->syncSummaryFromItems();
@@ -1112,6 +1108,8 @@ test('handles partial step billing where same PO has multiple separate invoices 
         'no_invoice' => 'INV-PARTIAL-002',
         'no_grs' => '5007726532',
         'jenis' => 'GRS',
+        'subtotal_exclude_ppn' => 3000000,
+        'subtotal_include_ppn' => 3330000,
     ]);
 
     $inv2->items()->create([
@@ -1121,8 +1119,6 @@ test('handles partial step billing where same PO has multiple separate invoices 
         'qty_penagihan' => 20,
         'qty_po' => 20,
         'uoi' => 'SET',
-        'subtotal_exclude_ppn' => 3000000,
-        'subtotal_include_ppn' => 3330000,
     ]);
     $inv2->syncSummaryFromItems();
     $inv2->save();
@@ -1172,6 +1168,8 @@ test('inputInvoiceData action supports saving multiple items with distinct GRS a
                 'no_do' => 'DO-SAMPLE-01',
                 'no_invoice' => 'INV-MULTI-001',
                 'faktur_pajak' => '010.001-26.12345678',
+                'subtotal_exclude_ppn' => '3.500.000',
+                'subtotal_include_ppn' => '3.885.000',
                 'items' => [
                     [
                         'item_no' => 10,
@@ -1181,8 +1179,6 @@ test('inputInvoiceData action supports saving multiple items with distinct GRS a
                         'qty_penagihan' => 5,
                         'qty_po' => 5,
                         'uoi' => 'SET',
-                        'subtotal_exclude_ppn' => 500000,
-                        'subtotal_include_ppn' => 555000,
                     ],
                     [
                         'item_no' => 20,
@@ -1192,8 +1188,6 @@ test('inputInvoiceData action supports saving multiple items with distinct GRS a
                         'qty_penagihan' => 10,
                         'qty_po' => 10,
                         'uoi' => 'SET',
-                        'subtotal_exclude_ppn' => 1000000,
-                        'subtotal_include_ppn' => 1110000,
                     ],
                     [
                         'item_no' => 30,
@@ -1203,8 +1197,6 @@ test('inputInvoiceData action supports saving multiple items with distinct GRS a
                         'qty_penagihan' => 20,
                         'qty_po' => 20,
                         'uoi' => 'SET',
-                        'subtotal_exclude_ppn' => 2000000,
-                        'subtotal_include_ppn' => 2220000,
                     ],
                 ],
             ],
@@ -1272,20 +1264,20 @@ test('inputInvoiceData automatically inherits header GRS and DO to items and def
                 'no_grs' => '5007099999',
                 'no_do' => 'DO-HEADER-99',
                 'no_invoice' => 'INV-HEADER-01',
+                'subtotal_exclude_ppn' => '1.500.000',
+                'subtotal_include_ppn' => '1.665.000',
                 'items' => [
                     [
                         'item_no' => 10,
                         'nama_barang' => 'BOLT HEX M12',
                         'qty_po' => 50,
                         'uoi' => 'PCS',
-                        'subtotal_exclude_ppn' => 1000000,
                     ],
                     [
                         'item_no' => 20,
                         'nama_barang' => 'NUT HEX M12',
                         'qty_po' => 50,
                         'uoi' => 'PCS',
-                        'subtotal_exclude_ppn' => 500000,
                     ],
                 ],
             ],

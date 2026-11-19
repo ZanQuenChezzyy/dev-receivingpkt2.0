@@ -226,15 +226,13 @@ class InvoicingReceipt extends Model
                 $this->qty_penagihan = $sumQty;
             }
 
-            $sumSubtotalEx = (float) $this->items->sum('subtotal_exclude_ppn');
-            if ($sumSubtotalEx > 0) {
-                $this->subtotal_exclude_ppn = $sumSubtotalEx;
-                $this->subtotal_include_ppn = round($sumSubtotalEx * 1.11);
-            } else {
-                $sumSubtotalIn = (float) $this->items->sum('subtotal_include_ppn');
-                if ($sumSubtotalIn > 0) {
-                    $this->subtotal_include_ppn = $sumSubtotalIn;
-                }
+            $sumQtyPo = (float) $this->items->sum('qty_po');
+            if ($sumQtyPo > 0 || $this->qty_po === null) {
+                $this->qty_po = $sumQtyPo;
+            }
+
+            if (blank($this->uoi) && filled($this->items->first()?->uoi)) {
+                $this->uoi = $this->items->first()->uoi;
             }
 
             $itemNames = $this->items->pluck('nama_barang')->filter(fn ($n) => filled($n))->values();
