@@ -376,7 +376,8 @@ class InvoicingReceiptsTable
                     ->options(InvoicingReceipt::materialTypeOptions())
                     ->hidden(fn ($livewire) => ($livewire?->activeTab ?? null) === 'my_tasks'),
             ], layout: FiltersLayout::AboveContent)
-            ->filtersFormColumns(['default' => 1, 'sm' => 2, 'lg' => 4])
+            ->deferFilters(false)
+            ->filtersFormColumns(['default' => 1, 'sm' => 2, 'lg' => 3])
             ->defaultSort('tanggal_terima_grs', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->orderBy('id', 'desc'))
             ->recordActions([
