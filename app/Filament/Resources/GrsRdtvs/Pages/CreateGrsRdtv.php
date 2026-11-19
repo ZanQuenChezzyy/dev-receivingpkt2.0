@@ -7,11 +7,13 @@ use App\Models\DeliveryOrderReceipt;
 use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
 use App\Models\Vendor;
+use App\Services\GrsPdfParserService;
 use App\Services\InvoicingAssignmentService;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class CreateGrsRdtv extends CreateRecord
@@ -392,6 +394,23 @@ class CreateGrsRdtv extends CreateRecord
             ? (float) $sumSnapshot
             : (float) ($po?->total_amount_in_lc ?? 0);
 
+        // Ekstraksi data otomatis dari berkas PDF GRS / RDTV jika tersedia
+        $parsedPdf = null;
+        if ($grsRdtvItem->file_path && strtolower(pathinfo($grsRdtvItem->file_path, PATHINFO_EXTENSION)) === 'pdf') {
+            $fullPath = Storage::disk('public')->path($grsRdtvItem->file_path);
+            if (file_exists($fullPath)) {
+                try {
+                    $parsedPdf = app(GrsPdfParserService::class)->parse($fullPath);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+        }
+
+        if ($subtotalExclude <= 0 && ! empty($parsedPdf['subtotal_exclude_ppn'])) {
+            $subtotalExclude = (float) $parsedPdf['subtotal_exclude_ppn'];
+        }
+
         // Rumus Subtotal Include PPN: = Exclude + (Exclude * 11%)
         $subtotalInclude = $subtotalExclude !== null
             ? round((float) $subtotalExclude + ((float) $subtotalExclude * 0.11), 2)
@@ -399,30 +418,42 @@ class CreateGrsRdtv extends CreateRecord
 
         $isRdtv = $category === 'RDTV';
 
+        $noGrs = $category === 'GRS' ? ($parsedPdf['no_grs'] ?? null) : null;
+        $tanggalTerimaGrs = ($category === 'GRS' && ! empty($parsedPdf['tanggal_release_gr']))
+            ? $parsedPdf['tanggal_release_gr']
+            : ($transactionDate ?? now());
+        $deliveryDate = $parsedPdf['delivery_date'] ?? null;
+        $tanggalPenerimaan = $parsedPdf['tanggal_penerimaan'] ?? null;
+        $tanggalPo = $parsedPdf['tanggal_po'] ?? null;
+
         InvoicingReceipt::create([
             'grs_rdtv_item_id' => $grsRdtvItem->id,
             'delivery_order_receipt_id' => $do->id,
             'purchase_order_issued_id' => $po?->id,
             'vendor_id' => $vendor?->id,
             'pic_id' => $picId,
-            'tanggal_terima_grs' => $transactionDate ?? now(),
+            'tanggal_terima_grs' => $tanggalTerimaGrs,
+            'delivery_date' => $deliveryDate,
+            'tanggal_penerimaan' => $tanggalPenerimaan,
+            'tanggal_po' => $tanggalPo,
             'jenis' => $category,
-            'no_grs' => null, // Wajib diisi nomor GRS resmi (bukan kode dokumen) oleh Staff Invoice
+            'no_grs' => $noGrs, // Otomatis terisi dari No Release GR jika tersedia
             'no_rdtv' => null,
-            'no_po' => $po?->purchase_order_no ?? '-',
-            'no_do' => $do->delivery_order_no,
+            'no_po' => $po?->purchase_order_no ?? ($parsedPdf['no_po'] ?? '-'),
+            'no_do' => $do->delivery_order_no ?: ($parsedPdf['no_do'] ?? null),
             'material_type' => $materialType,
-            'vendor_name' => $po?->vendor_name ?? $vendor?->name,
-            'deskripsi' => $firstDetail?->description ?? $po?->description,
+            'vendor_name' => $po?->vendor_name ?? ($vendor?->name ?? ($parsedPdf['vendor_name'] ?? null)),
+            'deskripsi' => $firstDetail?->description ?? ($po?->description ?? ($parsedPdf['nama_barang'] ?? null)),
             'email_vendor' => is_array($vendor?->email) ? implode(', ', $vendor->email) : $vendor?->email,
-            'tanggal_info_grs' => $isRdtv ? null : ($transactionDate ?? now()),
-            'nama_barang' => $firstDetail?->description ?? $po?->description,
-            'qty_penagihan' => $qtyPenagihan,
-            'qty_po' => $qtyPo,
-            'uoi' => $uoi,
+            'tanggal_info_grs' => $isRdtv ? null : $tanggalTerimaGrs,
+            'nama_barang' => $firstDetail?->description ?? ($po?->description ?? ($parsedPdf['nama_barang'] ?? null)),
+            'qty_penagihan' => $qtyPenagihan > 0 ? $qtyPenagihan : ($parsedPdf['qty_penagihan'] ?? 0),
+            'qty_po' => $qtyPo > 0 ? $qtyPo : ($parsedPdf['qty_penagihan'] ?? 0),
+            'uoi' => $uoi ?: ($parsedPdf['uoi'] ?? 'PCS'),
             'subtotal_exclude_ppn' => $subtotalExclude,
             'subtotal_include_ppn' => $subtotalInclude,
-            'tanggal_terima_koreksi_invoice' => $isRdtv ? null : ($transactionDate ?? now()),
+            'tanggal_terima_koreksi_invoice' => $isRdtv ? null : $tanggalTerimaGrs,
+            'dokumen_verifikasi_grs' => $grsRdtvItem->file_path,
             'keterangan' => "Auto-generate dari {$category}: {$grsRdtvItem->document_code} (DO: {$do->delivery_order_no})",
             'status' => 'Menunggu Verifikasi',
         ]);

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\InvoicingReceipts\Tables;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
 use App\Models\User;
+use App\Services\GrsPdfParserService;
 use App\Services\InvoicingAssignmentService;
 use App\Services\UserBadgeRenderer;
 use Filament\Actions\Action;
@@ -824,6 +825,38 @@ class InvoicingReceiptsTable
                                 $updateData['dokumen_verifikasi_grs'] = $verifikasiFile;
                                 if (! empty($verifikasiFile) && $record->status === 'Menunggu Verifikasi') {
                                     $updateData['status'] = 'Terverifikasi';
+                                }
+
+                                if (! empty($verifikasiFile) && strtolower(pathinfo($verifikasiFile, PATHINFO_EXTENSION)) === 'pdf') {
+                                    $fullPath = Storage::disk('public')->path($verifikasiFile);
+                                    if (file_exists($fullPath)) {
+                                        try {
+                                            $parsed = app(GrsPdfParserService::class)->parse($fullPath);
+                                            if (! empty($parsed['no_grs']) && empty($record->no_grs)) {
+                                                $updateData['no_grs'] = $parsed['no_grs'];
+                                            }
+                                            if (! empty($parsed['tanggal_release_gr'])) {
+                                                $updateData['tanggal_terima_grs'] = $parsed['tanggal_release_gr'];
+                                            }
+                                            if (! empty($parsed['delivery_date'])) {
+                                                $updateData['delivery_date'] = $parsed['delivery_date'];
+                                            }
+                                            if (! empty($parsed['tanggal_penerimaan'])) {
+                                                $updateData['tanggal_penerimaan'] = $parsed['tanggal_penerimaan'];
+                                            }
+                                            if (! empty($parsed['tanggal_po']) && empty($record->tanggal_po)) {
+                                                $updateData['tanggal_po'] = $parsed['tanggal_po'];
+                                            }
+                                            if (! empty($parsed['no_do']) && empty($record->no_do)) {
+                                                $updateData['no_do'] = $parsed['no_do'];
+                                            }
+                                            if (! empty($parsed['vendor_name']) && empty($record->vendor_name)) {
+                                                $updateData['vendor_name'] = $parsed['vendor_name'];
+                                            }
+                                        } catch (\Throwable $e) {
+                                            report($e);
+                                        }
+                                    }
                                 }
                             }
 

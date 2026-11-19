@@ -55,6 +55,20 @@ class InvoicingReceiptInfolist
                             ->label('Tanggal Info GRS ke Vendor')
                             ->date('d F Y')
                             ->placeholder('-'),
+
+                        TextEntry::make('tanggal_penerimaan')
+                            ->label('Tanggal Penerimaan (GRS)')
+                            ->date('d F Y')
+                            ->icon('heroicon-m-calendar')
+                            ->copyable()
+                            ->placeholder('-'),
+
+                        TextEntry::make('delivery_date')
+                            ->label('Delivery Date (GRS)')
+                            ->date('d F Y')
+                            ->icon('heroicon-m-truck')
+                            ->copyable()
+                            ->placeholder('-'),
                     ])->columns(2),
 
                 Section::make('Referensi PO & DO')

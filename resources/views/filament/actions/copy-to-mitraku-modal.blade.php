@@ -18,6 +18,15 @@
 
     $rawDeliveryDate = $record->delivery_date_po ?? $record->purchaseOrderIssued?->delivery_date_po;
     $deliveryDatePoFormatted = $rawDeliveryDate ? \Illuminate\Support\Carbon::parse($rawDeliveryDate)->format('d-m-Y') : '';
+
+    $rawDeliveryDateGrs = $record->delivery_date;
+    $deliveryDateGrsFormatted = $rawDeliveryDateGrs ? \Illuminate\Support\Carbon::parse($rawDeliveryDateGrs)->format('d-m-Y') : '';
+
+    $rawTanggalPenerimaan = $record->tanggal_penerimaan;
+    $tanggalPenerimaanFormatted = $rawTanggalPenerimaan ? \Illuminate\Support\Carbon::parse($rawTanggalPenerimaan)->format('d-m-Y') : '';
+
+    $rawTanggalGrs = $record->tanggal_terima_grs;
+    $tanggalGrsFormatted = $rawTanggalGrs ? \Illuminate\Support\Carbon::parse($rawTanggalGrs)->format('d-m-Y') : '';
 @endphp
 
 <div class="space-y-4" x-data="{
@@ -138,6 +147,57 @@
                 <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'no_grs'" x-cloak />
                 <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'no_grs'" />
                 <span x-text="copiedField === 'no_grs' ? 'Disalin' : 'Salin'"></span>
+            </button>
+        </div>
+
+        <!-- Tanggal GRS / Release GR -->
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
+            <div class="min-w-0 pr-2">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Tanggal GRS / Release GR</span>
+                <span class="font-bold text-gray-900 dark:text-white truncate block text-sm">{{ $tanggalGrsFormatted ?: '-' }}</span>
+            </div>
+            <button
+                type="button"
+                @click="copyText('{{ $tanggalGrsFormatted }}', 'tanggal_grs')"
+                :class="copiedField === 'tanggal_grs' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
+                class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'tanggal_grs'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'tanggal_grs'" />
+                <span x-text="copiedField === 'tanggal_grs' ? 'Disalin' : 'Salin'"></span>
+            </button>
+        </div>
+
+        <!-- Tanggal Penerimaan -->
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
+            <div class="min-w-0 pr-2">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Tanggal Penerimaan (GRS)</span>
+                <span class="font-bold text-gray-900 dark:text-white truncate block text-sm">{{ $tanggalPenerimaanFormatted ?: '-' }}</span>
+            </div>
+            <button
+                type="button"
+                @click="copyText('{{ $tanggalPenerimaanFormatted }}', 'tanggal_penerimaan')"
+                :class="copiedField === 'tanggal_penerimaan' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
+                class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'tanggal_penerimaan'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'tanggal_penerimaan'" />
+                <span x-text="copiedField === 'tanggal_penerimaan' ? 'Disalin' : 'Salin'"></span>
+            </button>
+        </div>
+
+        <!-- Delivery Date GRS -->
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
+            <div class="min-w-0 pr-2">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Delivery Date (GRS)</span>
+                <span class="font-bold text-gray-900 dark:text-white truncate block text-sm">{{ $deliveryDateGrsFormatted ?: '-' }}</span>
+            </div>
+            <button
+                type="button"
+                @click="copyText('{{ $deliveryDateGrsFormatted }}', 'delivery_date_grs')"
+                :class="copiedField === 'delivery_date_grs' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
+                class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'delivery_date_grs'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'delivery_date_grs'" />
+                <span x-text="copiedField === 'delivery_date_grs' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>
 

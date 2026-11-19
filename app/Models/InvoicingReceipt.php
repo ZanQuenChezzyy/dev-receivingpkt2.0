@@ -18,6 +18,9 @@ use Illuminate\Support\Carbon;
     'vendor_id',
     'pic_id',
     'tanggal_terima_grs',
+    'delivery_date',
+    'tanggal_penerimaan',
+    'tanggal_po',
     'jenis',
     'kategori_barang',
     'no_grs',
@@ -153,6 +156,9 @@ class InvoicingReceipt extends Model
     {
         return [
             'tanggal_terima_grs' => 'date',
+            'delivery_date' => 'date',
+            'tanggal_penerimaan' => 'date',
+            'tanggal_po' => 'date',
             'tanggal_info_grs' => 'date',
             'tanggal_terima_koreksi_invoice' => 'date',
             'tanggal_kirim_kasir' => 'date',

@@ -104,6 +104,9 @@ beforeEach(function () {
         $table->unsignedBigInteger('vendor_id')->nullable();
         $table->unsignedBigInteger('pic_id')->nullable();
         $table->date('tanggal_terima_grs')->nullable();
+        $table->date('delivery_date')->nullable();
+        $table->date('tanggal_penerimaan')->nullable();
+        $table->date('tanggal_po')->nullable();
         $table->string('jenis')->default('GRS');
         $table->string('no_grs')->nullable();
         $table->string('no_rdtv')->nullable();

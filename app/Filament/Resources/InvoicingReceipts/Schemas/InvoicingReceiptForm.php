@@ -6,6 +6,7 @@ use App\Models\DeliveryOrderReceipt;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
 use App\Models\Vendor;
+use App\Services\GrsPdfParserService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -19,6 +20,8 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class InvoicingReceiptForm
 {
@@ -85,6 +88,16 @@ class InvoicingReceiptForm
                         TextInput::make('kategori_barang')
                             ->label('Kategori / Jenis Barang')
                             ->placeholder('Contoh: Karung, Sparepart, Chemical/Bahan Baku'),
+
+                        DatePicker::make('tanggal_penerimaan')
+                            ->label('Tanggal Penerimaan (GRS)')
+                            ->native(false)
+                            ->helperText('Tanggal penerimaan barang di gudang (sesuai dokumen GRS).'),
+
+                        DatePicker::make('delivery_date')
+                            ->label('Delivery Date (GRS)')
+                            ->native(false)
+                            ->helperText('Tanggal delivery barang dari vendor (sesuai dokumen GRS).'),
                     ])->columns(2),
 
                 Section::make('Referensi PO & DO')
@@ -444,7 +457,52 @@ class InvoicingReceiptForm
                             ->disk('public')
                             ->directory('verifikasi-grs')
                             ->acceptedFileTypes(['application/pdf', 'image/*'])
-                            ->helperText('Unggah surat verifikasi GRS setelah mendapat persetujuan (ACC) dari VP.'),
+                            ->live()
+                            ->afterStateUpdated(function ($state, Set $set, Get $get): void {
+                                if (! $state) {
+                                    return;
+                                }
+                                $file = is_array($state) ? array_values($state)[0] ?? null : $state;
+                                $path = null;
+                                if ($file instanceof TemporaryUploadedFile) {
+                                    $path = $file->getRealPath();
+                                } elseif (is_string($file)) {
+                                    $storagePath = Storage::disk('public')->path($file);
+                                    if (file_exists($storagePath)) {
+                                        $path = $storagePath;
+                                    }
+                                }
+
+                                if ($path && file_exists($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'pdf') {
+                                    try {
+                                        $parsed = app(GrsPdfParserService::class)->parse($path);
+                                        if (! empty($parsed['no_grs'])) {
+                                            $set('no_grs', $parsed['no_grs']);
+                                        }
+                                        if (! empty($parsed['tanggal_release_gr'])) {
+                                            $set('tanggal_terima_grs', $parsed['tanggal_release_gr']);
+                                        }
+                                        if (! empty($parsed['delivery_date'])) {
+                                            $set('delivery_date', $parsed['delivery_date']);
+                                        }
+                                        if (! empty($parsed['tanggal_penerimaan'])) {
+                                            $set('tanggal_penerimaan', $parsed['tanggal_penerimaan']);
+                                        }
+                                        if (! empty($parsed['no_po']) && (! $get('no_po') || $get('no_po') === '-')) {
+                                            $set('no_po', $parsed['no_po']);
+                                        }
+                                        if (! empty($parsed['no_do']) && ! $get('no_do')) {
+                                            $set('no_do', $parsed['no_do']);
+                                        }
+                                        if (! empty($parsed['vendor_name']) && ! $get('vendor_name')) {
+                                            $set('vendor_name', $parsed['vendor_name']);
+                                        }
+                                    } catch (\Throwable $e) {
+                                        report($e);
+                                    }
+                                }
+                            })
+                            ->helperText('Unggah surat verifikasi GRS. Jika PDF GRS diunggah, data Nomor GRS, Tanggal Release, Delivery Date, dan Tanggal Penerimaan akan otomatis terisi.'),
 
                         FileUpload::make('dokumen_invoice')
                             ->label('Berkas Invoice Vendor')
