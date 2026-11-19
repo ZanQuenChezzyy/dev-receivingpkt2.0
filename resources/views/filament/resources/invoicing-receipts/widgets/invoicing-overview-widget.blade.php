@@ -51,7 +51,6 @@
             <!-- Widget 1: Top PIC Invoice (Clickable untuk buka list beban kerja staff) -->
             <div
                 x-on:click="$dispatch('open-modal', { id: 'staff-workload-modal' })"
-                wire:click="openStaffModal"
                 role="button"
                 tabindex="0"
                 class="group relative overflow-hidden rounded-xl bg-white dark:bg-slate-900/80 border-2 border-amber-500/30 hover:border-amber-500 p-4 shadow-sm hover:shadow-md transition-all cursor-pointer select-none"
@@ -176,10 +175,8 @@
         <x-filament::modal
             id="staff-workload-modal"
             width="2xl"
-            teleport="body"
             sticky-header
             sticky-footer
-            :extra-modal-overlay-attribute-bag="new \Illuminate\View\ComponentAttributeBag(['class' => 'backdrop-blur-md bg-slate-950/75'])"
         >
             <x-slot name="heading">
                 <div class="flex items-center gap-2.5">
@@ -200,24 +197,26 @@
             </x-slot>
 
             <div x-data="{ search: '' }" class="space-y-3.5">
-                <!-- Search Input -->
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <x-filament::icon
-                            icon="heroicon-m-magnifying-glass"
-                            class="w-4 h-4"
-                        />
+                <!-- Search Input (Sticky right below modal header) -->
+                <div class="sticky top-0 z-10 bg-white/95 dark:bg-[#0b1626]/95 backdrop-blur-md pb-2 pt-1 -mt-2">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <x-filament::icon
+                                icon="heroicon-m-magnifying-glass"
+                                class="w-4 h-4"
+                            />
+                        </div>
+                        <input
+                            type="text"
+                            x-model="search"
+                            placeholder="Cari nama staff invoice..."
+                            class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#F47920] focus:border-[#F47920] outline-none transition-all"
+                        >
                     </div>
-                    <input
-                        type="text"
-                        x-model="search"
-                        placeholder="Cari nama staff invoice..."
-                        class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-black/20 rounded-xl border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#F47920] focus:border-[#F47920] outline-none transition-all"
-                    >
                 </div>
 
-                <!-- Staff List with native smooth scrolling -->
-                <div class="space-y-2.5 max-h-[55vh] sm:max-h-[60vh] overflow-y-auto overscroll-contain pr-1" style="-webkit-overflow-scrolling: touch;">
+                <!-- Staff List with native modal scrolling (no nested overflow locks on mobile) -->
+                <div class="space-y-2.5">
                     @forelse ($workloads as $index => $staff)
                         <div
                             x-show="!search.trim() || {{ \Illuminate\Support\Js::from(strtolower($staff['name'].' '.$staff['email'])) }}.includes(search.toLowerCase().trim())"
