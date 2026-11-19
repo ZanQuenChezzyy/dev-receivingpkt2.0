@@ -496,36 +496,47 @@ class InvoicingReceiptsTable
                                             ? ((isset($state['item_no']) ? '['.$state['item_no'].'] ' : '').$state['nama_barang'].(isset($state['qty_penagihan']) ? ' ('.$state['qty_penagihan'].' '.($state['uoi'] ?? '').')' : ''))
                                             : 'Item Barang')
                                         ->default(function (InvoicingReceipt $record): array {
+                                            $poRecords = (filled($record->no_po) && $record->no_po !== '-')
+                                                ? PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))->orderBy('item_no')->get()
+                                                : collect();
+
                                             if ($record->items()->exists()) {
-                                                return $record->items->sortBy('item_no')->map(fn ($it) => [
-                                                    'id' => $it->id,
-                                                    'item_no' => $it->item_no,
-                                                    'material_code' => $it->material_code,
-                                                    'nama_barang' => $it->nama_barang,
-                                                    'qty_penagihan' => $it->qty_penagihan !== null ? (float) $it->qty_penagihan : ($it->qty_po !== null ? (float) $it->qty_po : null),
-                                                    'qty_po' => $it->qty_po !== null ? (float) $it->qty_po : null,
-                                                    'uoi' => $it->uoi ?? $record->uoi,
-                                                    'subtotal_exclude_ppn' => $it->subtotal_exclude_ppn !== null ? (float) $it->subtotal_exclude_ppn : null,
-                                                ])->values()->toArray();
+                                                return $record->items->sortBy('item_no')->values()->map(function ($it, $seq) use ($poRecords, $record) {
+                                                    $matchedPo = PurchaseOrderIssued::matchByDescription($it->nama_barang, $poRecords)
+                                                        ?? ($poRecords[$seq] ?? null);
+
+                                                    $qtyPo = $it->qty_po !== null
+                                                        ? (float) $it->qty_po
+                                                        : ($matchedPo?->qty_po ? (float) $matchedPo->qty_po : null);
+
+                                                    $qtyPenagihan = $it->qty_penagihan !== null
+                                                        ? (float) $it->qty_penagihan
+                                                        : $qtyPo;
+
+                                                    return [
+                                                        'id' => $it->id,
+                                                        'item_no' => $it->item_no ?? $matchedPo?->item_no ?? (($seq + 1) * 10),
+                                                        'material_code' => $it->material_code ?? $matchedPo?->material_code,
+                                                        'nama_barang' => $it->nama_barang,
+                                                        'qty_penagihan' => $qtyPenagihan,
+                                                        'qty_po' => $qtyPo,
+                                                        'uoi' => $it->uoi ?? $matchedPo?->uoi ?? $record->uoi,
+                                                        'subtotal_exclude_ppn' => $it->subtotal_exclude_ppn !== null ? (float) $it->subtotal_exclude_ppn : null,
+                                                    ];
+                                                })->values()->toArray();
                                             }
 
                                             // Tarik dari Master PO jika ada
-                                            if (filled($record->no_po) && $record->no_po !== '-') {
-                                                $poRecords = PurchaseOrderIssued::where('purchase_order_no', trim($record->no_po))
-                                                    ->orderBy('item_no')
-                                                    ->get();
-
-                                                if ($poRecords->isNotEmpty()) {
-                                                    return $poRecords->map(fn ($p) => [
-                                                        'item_no' => $p->item_no,
-                                                        'material_code' => $p->material_code,
-                                                        'nama_barang' => $p->description,
-                                                        'qty_penagihan' => (float) $p->qty_po,
-                                                        'qty_po' => (float) $p->qty_po,
-                                                        'uoi' => $p->uoi,
-                                                        'subtotal_exclude_ppn' => $p->total_amount_in_lc ? (float) $p->total_amount_in_lc : null,
-                                                    ])->values()->toArray();
-                                                }
+                                            if ($poRecords->isNotEmpty()) {
+                                                return $poRecords->map(fn ($p) => [
+                                                    'item_no' => $p->item_no,
+                                                    'material_code' => $p->material_code,
+                                                    'nama_barang' => $p->description,
+                                                    'qty_penagihan' => (float) $p->qty_po,
+                                                    'qty_po' => (float) $p->qty_po,
+                                                    'uoi' => $p->uoi,
+                                                    'subtotal_exclude_ppn' => $p->total_amount_in_lc ? (float) $p->total_amount_in_lc : null,
+                                                ])->values()->toArray();
                                             }
 
                                             // Tarik dari Delivery Order jika ada
@@ -716,16 +727,31 @@ class InvoicingReceiptsTable
                             if (! empty($submittedItems)) {
                                 $record->items()->delete();
 
-                                $poMap = PurchaseOrderIssued::where('purchase_order_no', trim((string) $record->no_po))
-                                    ->get()
-                                    ->keyBy('item_no');
+                                $poRecords = PurchaseOrderIssued::where('purchase_order_no', trim((string) $record->no_po))
+                                    ->orderBy('item_no')
+                                    ->get();
+                                $poMap = $poRecords->keyBy('item_no');
 
                                 $headerNoGrs = $data['no_grs'] ?? $record->no_grs;
                                 $headerNoDo = $data['no_do'] ?? $record->no_do;
 
                                 foreach ($submittedItems as $seq => $itemData) {
                                     $itemNo = isset($itemData['item_no']) && is_numeric($itemData['item_no']) ? (int) $itemData['item_no'] : null;
-                                    $matchedPo = $itemNo ? ($poMap[$itemNo] ?? null) : $poMap->first();
+
+                                    // Match against PO terbit by description first!
+                                    $matchedPo = null;
+                                    if (filled($itemData['nama_barang'] ?? null)) {
+                                        $matchedPo = PurchaseOrderIssued::matchByDescription($itemData['nama_barang'], $poRecords);
+                                    }
+                                    if (! $matchedPo && $itemNo && isset($poMap[$itemNo])) {
+                                        $matchedPo = $poMap[$itemNo];
+                                    }
+                                    if (! $matchedPo && isset($poRecords[$seq])) {
+                                        $matchedPo = $poRecords[$seq];
+                                    }
+                                    if (! $matchedPo) {
+                                        $matchedPo = $poRecords->first();
+                                    }
 
                                     $subtotalEx = InvoicingReceipt::parseRupiah($itemData['subtotal_exclude_ppn'] ?? null);
                                     $subtotalIn = $subtotalEx !== null ? (float) round($subtotalEx * 1.11) : null;
@@ -740,7 +766,7 @@ class InvoicingReceiptsTable
 
                                     $record->items()->create([
                                         'purchase_order_issued_id' => $matchedPo?->id ?? $record->purchase_order_issued_id,
-                                        'item_no' => $itemNo ?? ($seq + 1) * 10,
+                                        'item_no' => $matchedPo?->item_no ?? $itemNo ?? (($seq + 1) * 10),
                                         'material_code' => $itemData['material_code'] ?? $matchedPo?->material_code,
                                         'nama_barang' => $itemData['nama_barang'] ?? $matchedPo?->description,
                                         'no_grs' => $itemData['no_grs'] ?? $headerNoGrs,

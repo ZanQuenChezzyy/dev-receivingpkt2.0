@@ -111,16 +111,34 @@ class InvoicingReceiptForm
                                     }
 
                                     $currentItems = $get('items');
-                                    if (empty($currentItems) && $poRecords->isNotEmpty()) {
-                                        $set('items', $poRecords->map(fn ($p) => [
-                                            'item_no' => $p->item_no,
-                                            'material_code' => $p->material_code,
-                                            'nama_barang' => $p->description,
-                                            'qty_penagihan' => (float) $p->qty_po,
-                                            'qty_po' => (float) $p->qty_po,
-                                            'uoi' => $p->uoi,
-                                            'subtotal_exclude_ppn' => $p->total_amount_in_lc ? (float) $p->total_amount_in_lc : null,
-                                        ])->toArray());
+                                    if ($poRecords->isNotEmpty()) {
+                                        if (empty($currentItems)) {
+                                            $set('items', $poRecords->map(fn ($p) => [
+                                                'item_no' => $p->item_no,
+                                                'material_code' => $p->material_code,
+                                                'nama_barang' => $p->description,
+                                                'qty_penagihan' => (float) $p->qty_po,
+                                                'qty_po' => (float) $p->qty_po,
+                                                'uoi' => $p->uoi,
+                                                'subtotal_exclude_ppn' => $p->total_amount_in_lc ? (float) $p->total_amount_in_lc : null,
+                                            ])->toArray());
+                                        } else {
+                                            $updatedItems = array_map(function ($it) use ($poRecords) {
+                                                $matchedPo = PurchaseOrderIssued::matchByDescription($it['nama_barang'] ?? null, $poRecords);
+                                                if ($matchedPo) {
+                                                    $it['item_no'] ??= $matchedPo->item_no;
+                                                    $it['material_code'] ??= $matchedPo->material_code;
+                                                    $it['qty_po'] = (float) $matchedPo->qty_po;
+                                                    $it['uoi'] ??= $matchedPo->uoi;
+                                                    if (! isset($it['qty_penagihan']) || (float) $it['qty_penagihan'] == 0.0) {
+                                                        $it['qty_penagihan'] = (float) $matchedPo->qty_po;
+                                                    }
+                                                }
+
+                                                return $it;
+                                            }, $currentItems);
+                                            $set('items', $updatedItems);
+                                        }
                                     }
 
                                     $totalQtyPo = (float) $poRecords->sum('qty_po');

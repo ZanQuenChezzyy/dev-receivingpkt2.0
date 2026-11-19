@@ -1507,3 +1507,107 @@ test('InvoicingOverviewWidget calculates monthly stats correctly and identifies 
         }
     }
 });
+
+test('it accurately matches item quantities from purchase orders issued based on description', function () {
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+    $poNumber = '5300099991';
+
+    try {
+        // 1. Create Purchase Order Issued with 3 items with distinct quantities
+        $po1 = PurchaseOrderIssued::create([
+            'purchase_order_no' => $poNumber,
+            'item_no' => 10,
+            'description' => 'BUSHING:FISHER 1IN-EZ VALVE;1E791214012',
+            'qty_po' => 5.0,
+            'uoi' => 'PCS',
+            'total_amount_in_lc' => 5000000,
+        ]);
+
+        $po2 = PurchaseOrderIssued::create([
+            'purchase_order_no' => $poNumber,
+            'item_no' => 20,
+            'description' => 'PACKING SET: FISHER;RPACKX00022',
+            'qty_po' => 2.0,
+            'uoi' => 'SET',
+            'total_amount_in_lc' => 2000000,
+        ]);
+
+        $po3 = PurchaseOrderIssued::create([
+            'purchase_order_no' => $poNumber,
+            'item_no' => 30,
+            'description' => 'RINGVALVE SEAT:FISHER;1V550805092',
+            'qty_po' => 10.0,
+            'uoi' => 'EA',
+            'total_amount_in_lc' => 10000000,
+        ]);
+
+        $poList = PurchaseOrderIssued::where('purchase_order_no', $poNumber)->get();
+
+        // Verify PurchaseOrderIssued::matchByDescription
+        $matched1 = PurchaseOrderIssued::matchByDescription('1. BUSHING:FISHER 1IN-EZ VALVE;1E791214012', $poList);
+        expect($matched1)->not->toBeNull()
+            ->and($matched1->id)->toBe($po1->id)
+            ->and($matched1->qty_po)->toBe(5.0);
+
+        $matched2 = PurchaseOrderIssued::matchByDescription('PACKING SET: FISHER;RPACKX00022', $poList);
+        expect($matched2)->not->toBeNull()
+            ->and($matched2->id)->toBe($po2->id)
+            ->and($matched2->qty_po)->toBe(2.0);
+
+        $matched3 = PurchaseOrderIssued::matchByDescription('RINGVALVE SEAT:FISHER', $poList);
+        expect($matched3)->not->toBeNull()
+            ->and($matched3->id)->toBe($po3->id)
+            ->and($matched3->qty_po)->toBe(10.0);
+
+        // 2. Create InvoicingReceipt with mismatched/duplicate quantities (simulating the bug where all items got 5)
+        $receipt = InvoicingReceipt::create([
+            'no_po' => $poNumber,
+            'jenis' => 'GRS',
+            'status' => 'Menunggu Verifikasi',
+        ]);
+
+        $item1 = $receipt->items()->create([
+            'nama_barang' => 'BUSHING:FISHER 1IN-EZ VALVE;1E791214012',
+            'qty_penagihan' => 5.0,
+            'qty_po' => 5.0,
+        ]);
+
+        $item2 = $receipt->items()->create([
+            'nama_barang' => 'PACKING SET: FISHER;RPACKX00022',
+            'qty_penagihan' => 5.0, // wrongly set to 5 instead of 2
+            'qty_po' => 5.0,
+        ]);
+
+        $item3 = $receipt->items()->create([
+            'nama_barang' => 'RINGVALVE SEAT:FISHER;1V550805092',
+            'qty_penagihan' => 5.0, // wrongly set to 5 instead of 10
+            'qty_po' => 5.0,
+        ]);
+
+        // Run the sync artisan command
+        $this->artisan('invoicing:sync-quantities')
+            ->assertSuccessful();
+
+        // Verify items now have their own matching PO quantities!
+        $item1->refresh();
+        $item2->refresh();
+        $item3->refresh();
+
+        expect($item1->qty_penagihan)->toBe(5.0)
+            ->and($item1->qty_po)->toBe(5.0)
+            ->and($item2->qty_penagihan)->toBe(2.0)
+            ->and($item2->qty_po)->toBe(2.0)
+            ->and($item3->qty_penagihan)->toBe(10.0)
+            ->and($item3->qty_po)->toBe(10.0);
+
+        // Clean up
+        $receipt->items()->delete();
+        $receipt->delete();
+        PurchaseOrderIssued::where('purchase_order_no', $poNumber)->delete();
+    } finally {
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});

@@ -1151,15 +1151,21 @@ class MonitoringBarangImportService
         )));
 
         $posByNo = [];
+        $allPosByNo = [];
         $dosByPo = [];
         $existingByGrs = [];
         $existingByPo = [];
 
         foreach (array_chunk($poNumbers, 500) as $poChunk) {
-            foreach (PurchaseOrderIssued::query()->whereIn('purchase_order_no', $poChunk)->get() as $po) {
+            foreach (PurchaseOrderIssued::query()->whereIn('purchase_order_no', $poChunk)->orderBy('item_no')->get() as $po) {
                 $poKey = trim((string) $po->purchase_order_no);
-                if ($poKey !== '' && ! isset($posByNo[$poKey])) {
-                    $posByNo[$poKey] = $po;
+                if ($poKey !== '') {
+                    $allPosByNo[$poKey] ??= [];
+                    $allPosByNo[$poKey][] = $po;
+
+                    if (! isset($posByNo[$poKey])) {
+                        $posByNo[$poKey] = $po;
+                    }
                 }
             }
 
@@ -1248,6 +1254,7 @@ class MonitoringBarangImportService
         return [
             'users_by_email' => $usersByEmail,
             'pos_by_no' => $posByNo,
+            'all_pos_by_no' => $allPosByNo,
             'vendors_by_name' => $vendorsByName,
             'vendors_by_number' => $vendorsByNumber,
             'dos_by_po' => $dosByPo,
@@ -1399,6 +1406,8 @@ class MonitoringBarangImportService
                 $existingItems = collect();
             }
 
+            $poList = collect($lookups['all_pos_by_no'][$item['no_po']] ?? []);
+
             foreach ($itemDetails as $seq => $detail) {
                 $subtotalIncludeItem = $detail['subtotal_include_ppn'];
                 if ($subtotalIncludeItem === null && $detail['subtotal_exclude_ppn'] !== null) {
@@ -1406,6 +1415,16 @@ class MonitoringBarangImportService
                 }
 
                 $detailNama = $detail['nama_barang'] ?? $firstDetail?->description ?? $poRecord?->description;
+
+                // Cocokkan item barang secara akurat ke PO terbit berdasarkan deskripsi
+                $matchedItemPo = PurchaseOrderIssued::matchByDescription($detailNama, $poList)
+                    ?? ($poList[$seq] ?? $poRecord);
+
+                $resolvedQtyPo = $detail['qty_po']
+                    ?? ($matchedItemPo?->qty_po ? (float) $matchedItemPo->qty_po : null);
+
+                $resolvedQtyPenagihan = $detail['qty_penagihan']
+                    ?? $resolvedQtyPo;
 
                 // Cari existing item berdasarkan nama_barang atau urutan indeks
                 $existingItem = null;
@@ -1418,29 +1437,29 @@ class MonitoringBarangImportService
 
                 if ($existingItem) {
                     $existingItem->update([
-                        'purchase_order_issued_id' => $existingItem->purchase_order_issued_id ?? $poRecord?->id,
+                        'purchase_order_issued_id' => $existingItem->purchase_order_issued_id ?? $matchedItemPo?->id ?? $poRecord?->id,
                         'delivery_order_receipt_detail_id' => $existingItem->delivery_order_receipt_detail_id ?? $firstDetail?->id,
-                        'item_no' => $existingItem->item_no ?? ($seq + 1),
+                        'item_no' => $existingItem->item_no ?? $matchedItemPo?->item_no ?? ($seq + 1),
                         'no_grs' => $item['no_grs'] ?? $existingItem->no_grs ?? $receipt->no_grs,
                         'no_do' => $item['no_do'] ?? $existingItem->no_do ?? $receipt->no_do,
                         'nama_barang' => $detailNama,
-                        'qty_penagihan' => $detail['qty_penagihan'] ?? $existingItem->qty_penagihan,
-                        'qty_po' => $detail['qty_po'] ?? $existingItem->qty_po ?? ($poRecord?->qty_po ? (float) $poRecord->qty_po : null),
-                        'uoi' => $detail['uoi'] ?? $existingItem->uoi ?? $firstDetail?->uoi ?? $poRecord?->uoi,
+                        'qty_penagihan' => $detail['qty_penagihan'] ?? $existingItem->qty_penagihan ?? $resolvedQtyPenagihan,
+                        'qty_po' => $detail['qty_po'] ?? $existingItem->qty_po ?? $resolvedQtyPo,
+                        'uoi' => $detail['uoi'] ?? $existingItem->uoi ?? $matchedItemPo?->uoi ?? $firstDetail?->uoi ?? $poRecord?->uoi,
                         'subtotal_exclude_ppn' => $detail['subtotal_exclude_ppn'] ?? $existingItem->subtotal_exclude_ppn,
                         'subtotal_include_ppn' => $subtotalIncludeItem ?? $existingItem->subtotal_include_ppn,
                     ]);
                 } else {
                     $receipt->items()->create([
-                        'purchase_order_issued_id' => $poRecord?->id,
+                        'purchase_order_issued_id' => $matchedItemPo?->id ?? $poRecord?->id,
                         'delivery_order_receipt_detail_id' => $firstDetail?->id,
-                        'item_no' => $seq + 1,
+                        'item_no' => $matchedItemPo?->item_no ?? ($seq + 1),
                         'no_grs' => $item['no_grs'] ?? $receipt->no_grs,
                         'no_do' => $item['no_do'] ?? $receipt->no_do,
                         'nama_barang' => $detailNama,
-                        'qty_penagihan' => $detail['qty_penagihan'],
-                        'qty_po' => $detail['qty_po'] ?? ($poRecord?->qty_po ? (float) $poRecord->qty_po : null),
-                        'uoi' => $detail['uoi'] ?? $firstDetail?->uoi ?? $poRecord?->uoi,
+                        'qty_penagihan' => $resolvedQtyPenagihan,
+                        'qty_po' => $resolvedQtyPo,
+                        'uoi' => $detail['uoi'] ?? $matchedItemPo?->uoi ?? $firstDetail?->uoi ?? $poRecord?->uoi,
                         'subtotal_exclude_ppn' => $detail['subtotal_exclude_ppn'],
                         'subtotal_include_ppn' => $subtotalIncludeItem,
                     ]);

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 #[Fillable([
     'purchase_order_and_item',
@@ -67,6 +68,91 @@ class PurchaseOrderIssued extends Model
         $cleaned = (string) preg_replace('/\s+/', ' ', $cleaned);
 
         return trim($cleaned);
+    }
+
+    /**
+     * Match a given item name/description against a collection or array of PurchaseOrderIssued records.
+     *
+     * @param  Collection<int, self>|array<int, self>  $poRecords
+     */
+    public static function matchByDescription(?string $itemName, $poRecords): ?self
+    {
+        if (blank($itemName)) {
+            return null;
+        }
+
+        $records = $poRecords instanceof Collection ? $poRecords : collect($poRecords);
+        if ($records->isEmpty()) {
+            return null;
+        }
+
+        // Clean name by stripping leading numbering / tags e.g. "1. ", "1) ", "[10] "
+        $cleaned = trim((string) preg_replace('/^\s*(\d+[\.\)]|\[\d+\])\s*/', '', trim($itemName)));
+        if ($cleaned === '') {
+            return null;
+        }
+
+        // 1. Exact match (case-insensitive)
+        foreach ($records as $po) {
+            if (strcasecmp(trim((string) $po->description), $cleaned) === 0) {
+                return $po;
+            }
+        }
+
+        // 2. Normalized alphanumeric match
+        $normClean = strtolower((string) preg_replace('/[^a-zA-Z0-9]/', '', $cleaned));
+        if ($normClean !== '') {
+            foreach ($records as $po) {
+                $normPo = strtolower((string) preg_replace('/[^a-zA-Z0-9]/', '', (string) $po->description));
+                if ($normClean === $normPo) {
+                    return $po;
+                }
+            }
+        }
+
+        // 3. Token-based overlap match
+        $itemTokens = array_values(array_filter(preg_split('/[^a-zA-Z0-9]+/', strtolower($cleaned)) ?: []));
+        $bestPo = null;
+        $bestScore = 0.0;
+
+        if (! empty($itemTokens)) {
+            foreach ($records as $po) {
+                $poTokens = array_values(array_filter(preg_split('/[^a-zA-Z0-9]+/', strtolower((string) $po->description)) ?: []));
+                if (! empty($poTokens)) {
+                    $intersect = count(array_intersect($itemTokens, $poTokens));
+                    $score = $intersect / max(count($itemTokens), count($poTokens));
+                    if ($score > $bestScore && $score >= 0.5) {
+                        $bestScore = $score;
+                        $bestPo = $po;
+                    }
+                }
+            }
+            if ($bestPo) {
+                return $bestPo;
+            }
+        }
+
+        // 4. Substring match
+        if (strlen($normClean) >= 5) {
+            foreach ($records as $po) {
+                $normPo = strtolower((string) preg_replace('/[^a-zA-Z0-9]/', '', (string) $po->description));
+                if ($normPo !== '' && (str_contains($normClean, $normPo) || str_contains($normPo, $normClean))) {
+                    return $po;
+                }
+            }
+        }
+
+        // 5. Similarity match (>= 70%)
+        $bestSim = 0.0;
+        foreach ($records as $po) {
+            similar_text($cleaned, (string) $po->description, $sim);
+            if ($sim > $bestSim && $sim >= 70.0) {
+                $bestSim = $sim;
+                $bestPo = $po;
+            }
+        }
+
+        return $bestPo;
     }
 
     protected function vendorName(): Attribute

@@ -171,12 +171,22 @@
 
         </div>
 
-        <!-- Modal Staff Invoice Workload List (Filament Native Modal) -->
+        <!-- Modal Staff Invoice Workload List (Filament Native Modal Teleported to Body) -->
         <x-filament::modal
             id="staff-workload-modal"
+            teleport="body"
             width="2xl"
             sticky-header
             sticky-footer
+            class="relative z-[99998]"
+            :extra-modal-overlay-attribute-bag="new \Illuminate\View\ComponentAttributeBag([
+                'class' => '!fixed !inset-0 !z-[99998] backdrop-blur-md bg-slate-950/80',
+            ])"
+            :extra-modal-window-attribute-bag="new \Illuminate\View\ComponentAttributeBag([
+                'class' => '!z-[99999] my-auto overscroll-contain',
+                'style' => '-webkit-overflow-scrolling: touch; touch-action: pan-y;',
+                'x-on:touchmove.stop' => '',
+            ])"
         >
             <x-slot name="heading">
                 <div class="flex items-center gap-2.5">
@@ -196,9 +206,9 @@
                 Periode: <strong class="text-slate-800 dark:text-slate-200">{{ $periodLabel }}</strong> &bull; Total {{ $stats['total_masuk'] }} Dokumen
             </x-slot>
 
-            <div x-data="{ search: '' }" class="space-y-3.5">
-                <!-- Search Input (Sticky right below modal header) -->
-                <div class="sticky top-0 z-10 bg-white/95 dark:bg-[#0b1626]/95 backdrop-blur-md pb-2 pt-1 -mt-2">
+            <div x-data="{ search: '' }" class="space-y-3.5" x-on:touchmove.stop="">
+                <!-- Search Input -->
+                <div class="pb-1">
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                             <x-filament::icon
@@ -216,7 +226,7 @@
                 </div>
 
                 <!-- Staff List with native modal scrolling (no nested overflow locks on mobile) -->
-                <div class="space-y-2.5">
+                <div class="space-y-2.5" x-on:touchmove.stop="">
                     @forelse ($workloads as $index => $staff)
                         <div
                             x-show="!search.trim() || {{ \Illuminate\Support\Js::from(strtolower($staff['name'].' '.$staff['email'])) }}.includes(search.toLowerCase().trim())"
