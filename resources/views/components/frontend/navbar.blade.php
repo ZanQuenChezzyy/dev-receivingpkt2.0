@@ -215,9 +215,9 @@
                         :title="isDark ? '{{ __('Mode Terang') }}' : '{{ __('Mode Gelap') }}'"
                         :aria-label="isDark ? '{{ __('Mode Terang') }}' : '{{ __('Mode Gelap') }}'"
                         :class="pressing ? 'scale-[0.88]' : 'scale-100'"
-                        class="spring-theme-btn relative p-2 sm:p-2.5 rounded-full shrink-0 bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.14] border border-black/[0.04] dark:border-white/10 text-slate-700 dark:text-yellow-400 flex items-center justify-center select-none overflow-hidden focus:outline-none dark:shadow-[0_0_12px_rgba(250,204,21,0.2)]">
-                    <!-- Subtle Dark Mode Radial Glow Ring -->
-                    <span class="absolute inset-0 rounded-full bg-yellow-400/20 dark:bg-yellow-400/25 blur-xs pointer-events-none transition-opacity duration-300"
+                        class="spring-theme-btn relative p-2 sm:p-2.5 rounded-full shrink-0 bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.14] border border-black/[0.04] dark:border-white/10 text-slate-700 dark:text-yellow-400 flex items-center justify-center select-none overflow-hidden focus:outline-none dark:shadow-[0_0_12px_rgba(250,204,21,0.2)] isolate [transform:translateZ(0)]">
+                    <!-- Subtle Dark Mode Radial Glow Ring (Pure circular radial gradient, no square blur artifacts) -->
+                    <span class="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.35)_0%,rgba(250,204,21,0.1)_45%,transparent_70%)] pointer-events-none transition-opacity duration-300"
                           :class="isDark ? 'opacity-100' : 'opacity-0'"></span>
 
                     <!-- Overlapping Spring Morphing Icons -->

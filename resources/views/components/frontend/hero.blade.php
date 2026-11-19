@@ -148,7 +148,7 @@
                         <!-- Dashboard Content -->
                         <div class="p-5 sm:p-8 flex-1 flex flex-col gap-5 sm:gap-6 bg-linear-to-b from-transparent to-black/20">
                             <!-- Top Stats (Data Aktual Sistem with Spring Rolling Counters) -->
-                            <div class="grid grid-cols-3 gap-3 sm:gap-5"
+                            <div class="grid grid-cols-3 gap-2 sm:gap-4 md:gap-5"
                                  x-data="{
                                      count1: 0,
                                      count2: 0,
@@ -177,28 +177,32 @@
                                          window.requestAnimationFrame(step);
                                      }
                                  }">
-                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                                    <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#0A4F86]/40 blur-xl rounded-full"></div>
-                                    <div>
-                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white" x-text="count1.toLocaleString()">{{ number_format($totalItemsCount) }}</div>
-                                        <div class="w-12 sm:w-20 h-1.5 mt-2 rounded-full bg-[#0A4F86]"></div>
+                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between relative overflow-hidden isolate transition-all duration-300 hover:-translate-y-1 hover:shadow-lg [transform:translateZ(0)]">
+                                    <!-- Smooth circular radial glow (zero square blur artifacts) -->
+                                    <div class="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_right,rgba(10,79,134,0.35)_0%,transparent_65%)] pointer-events-none"></div>
+                                    <div class="relative z-10">
+                                        <div class="text-sm xs:text-base sm:text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight leading-none truncate" x-text="count1.toLocaleString()">{{ number_format($totalItemsCount) }}</div>
+                                        <div class="w-8 sm:w-16 md:w-20 h-1 sm:h-1.5 mt-1.5 sm:mt-2 rounded-full bg-[#0A4F86]"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">{{ __('Total Item DO') }}</p>
+                                    <p class="relative z-10 text-[9px] xs:text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-semibold sm:font-medium truncate leading-tight mt-1 sm:mt-0">{{ __('Total Item DO') }}</p>
                                 </div>
-                                <div class="h-24 sm:h-32 rounded-2xl bg-[#F47920]/10 border border-[#F47920]/30 p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden shadow-[inset_0_0_20px_rgba(244,121,32,0.1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                                    <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#F47920]/30 blur-xl rounded-full"></div>
-                                    <div>
-                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white" x-text="count2.toLocaleString()">{{ number_format($grsCount) }}</div>
-                                        <div class="w-12 sm:w-20 h-1.5 mt-2 rounded-full bg-[#F47920]"></div>
+                                <div class="h-24 sm:h-32 rounded-2xl bg-[#F47920]/10 border border-[#F47920]/30 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between relative overflow-hidden isolate shadow-[inset_0_0_20px_rgba(244,121,32,0.1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg [transform:translateZ(0)]">
+                                    <!-- Smooth circular radial glow (zero square blur artifacts) -->
+                                    <div class="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_right,rgba(244,121,32,0.35)_0%,transparent_65%)] pointer-events-none"></div>
+                                    <div class="relative z-10">
+                                        <div class="text-sm xs:text-base sm:text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight leading-none truncate" x-text="count2.toLocaleString()">{{ number_format($grsCount) }}</div>
+                                        <div class="w-8 sm:w-16 md:w-20 h-1 sm:h-1.5 mt-1.5 sm:mt-2 rounded-full bg-[#F47920]"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-[#F47920] font-medium">{{ __('DO Sudah GRS') }}</p>
+                                    <p class="relative z-10 text-[9px] xs:text-[10px] sm:text-xs text-[#F47920] font-semibold sm:font-medium truncate leading-tight mt-1 sm:mt-0">{{ __('DO Sudah GRS') }}</p>
                                 </div>
-                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-                                    <div>
-                                        <div class="text-xl sm:text-3xl font-black text-slate-800 dark:text-white" x-text="count3.toLocaleString()">{{ number_format($pendingQcCount) }}</div>
-                                        <div class="w-10 sm:w-16 h-1.5 mt-2 rounded-full bg-slate-600"></div>
+                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between relative overflow-hidden isolate shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg [transform:translateZ(0)]">
+                                    <!-- Smooth circular radial glow (zero square blur artifacts) -->
+                                    <div class="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_right,rgba(100,116,139,0.25)_0%,transparent_65%)] pointer-events-none"></div>
+                                    <div class="relative z-10">
+                                        <div class="text-sm xs:text-base sm:text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight leading-none truncate" x-text="count3.toLocaleString()">{{ number_format($pendingQcCount) }}</div>
+                                        <div class="w-8 sm:w-14 md:w-16 h-1 sm:h-1.5 mt-1.5 sm:mt-2 rounded-full bg-slate-600"></div>
                                     </div>
-                                    <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">{{ __('Proses / QC') }}</p>
+                                    <p class="relative z-10 text-[9px] xs:text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-semibold sm:font-medium truncate leading-tight mt-1 sm:mt-0">{{ __('Proses / QC') }}</p>
                                 </div>
                             </div>
 
@@ -292,7 +296,7 @@
                     @if($aiSettingActive)
                         <p class="text-sm sm:text-base">{{ __('ALEX — Asisten AI Receiving PT Pupuk Kalimantan Timur saat ini telah aktif! ALEX siap membantu Anda mengecek status PO/DO dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.') }}</p>
 
-                        <div class="mt-4 sm:mt-6 relative group overflow-hidden rounded-2xl">
+                        <div class="mt-4 sm:mt-6 relative group overflow-hidden rounded-2xl isolate [transform:translateZ(0)]">
                             <!-- Animated Glow Background -->
                             <div class="absolute inset-0 bg-gradient-to-r from-[#F47920]/20 via-amber-400/20 to-[#0A4F86]/20 blur-xl group-hover:blur-2xl transition-all duration-500"></div>
                             
