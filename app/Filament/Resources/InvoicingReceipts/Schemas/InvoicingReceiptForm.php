@@ -341,13 +341,13 @@ class InvoicingReceiptForm
                                     ->label('Item No.')
                                     ->placeholder('10, 20...')
                                     ->numeric()
-                                    ->columnSpan(2),
+                                    ->columnSpan(['default' => 12, 'sm' => 2, 'md' => 2]),
 
                                 TextInput::make('nama_barang')
                                     ->label('Nama / Deskripsi Barang')
                                     ->placeholder('Nama atau spesifikasi barang')
                                     ->required()
-                                    ->columnSpan(6),
+                                    ->columnSpan(['default' => 12, 'sm' => 10, 'md' => 4]),
 
                                 TextInput::make('qty_penagihan')
                                     ->label('Qty Ditagihkan')
@@ -364,14 +364,14 @@ class InvoicingReceiptForm
                                         }
                                         $set('../../qty_penagihan', $totalQty > 0 ? $totalQty : null);
                                     })
-                                    ->columnSpan(2),
+                                    ->columnSpan(['default' => 6, 'sm' => 6, 'md' => 3]),
 
                                 TextInput::make('qty_po')
                                     ->label('Qty PO')
                                     ->numeric()
                                     ->placeholder('0.00')
                                     ->suffix(fn (Get $get, ?InvoicingReceipt $record) => $get('uoi') ?: ($record?->uoi ?? ''))
-                                    ->columnSpan(2),
+                                    ->columnSpan(['default' => 6, 'sm' => 6, 'md' => 3]),
 
                                 Hidden::make('uoi'),
                             ])

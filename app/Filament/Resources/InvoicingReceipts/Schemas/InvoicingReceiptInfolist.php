@@ -130,28 +130,41 @@ class InvoicingReceiptInfolist
                             ->schema([
                                 TextEntry::make('item_no')
                                     ->label('Item No.')
+                                    ->badge()
+                                    ->color('gray')
                                     ->placeholder('-')
-                                    ->columnSpan(1),
+                                    ->columnSpan(['default' => 12, 'sm' => 2, 'md' => 2]),
+
                                 TextEntry::make('nama_barang')
-                                    ->label('Nama Barang')
+                                    ->label('Nama / Deskripsi Barang')
                                     ->weight(FontWeight::SemiBold)
-                                    ->columnSpan(5),
+                                    ->columnSpan(['default' => 12, 'sm' => 10, 'md' => 10]),
+
                                 TextEntry::make('no_grs')
                                     ->label('No. GRS')
+                                    ->icon('heroicon-m-document-text')
+                                    ->copyable()
                                     ->placeholder('-')
-                                    ->columnSpan(2),
+                                    ->columnSpan(['default' => 6, 'sm' => 3, 'md' => 3]),
+
                                 TextEntry::make('no_do')
                                     ->label('No. DO')
+                                    ->icon('heroicon-m-truck')
+                                    ->copyable()
                                     ->placeholder('-')
-                                    ->columnSpan(2),
+                                    ->columnSpan(['default' => 6, 'sm' => 3, 'md' => 3]),
+
                                 TextEntry::make('qty_penagihan')
                                     ->label('Qty Ditagihkan')
-                                    ->formatStateUsing(fn ($record) => ($record->qty_penagihan ?? '-').' '.($record->uoi ?? ''))
-                                    ->columnSpan(1),
+                                    ->weight(FontWeight::Bold)
+                                    ->color('success')
+                                    ->formatStateUsing(fn ($record) => ($record->qty_penagihan !== null ? (floor((float) $record->qty_penagihan) == (float) $record->qty_penagihan ? number_format((float) $record->qty_penagihan, 0, ',', '.') : number_format((float) $record->qty_penagihan, 2, ',', '.')) : '-').(filled($record->uoi) ? ' '.$record->uoi : ''))
+                                    ->columnSpan(['default' => 6, 'sm' => 3, 'md' => 3]),
+
                                 TextEntry::make('qty_po')
-                                    ->label('Qty PO')
-                                    ->formatStateUsing(fn ($record) => ($record->qty_po ?? '-').' '.($record->uoi ?? ''))
-                                    ->columnSpan(1),
+                                    ->label('Qty di PO')
+                                    ->formatStateUsing(fn ($record) => ($record->qty_po !== null ? (floor((float) $record->qty_po) == (float) $record->qty_po ? number_format((float) $record->qty_po, 0, ',', '.') : number_format((float) $record->qty_po, 2, ',', '.')) : '-').(filled($record->uoi) ? ' '.$record->uoi : ''))
+                                    ->columnSpan(['default' => 6, 'sm' => 3, 'md' => 3]),
                             ])
                             ->columns(12),
 
