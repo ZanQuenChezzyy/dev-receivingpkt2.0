@@ -1499,13 +1499,16 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
    - The modal window is centered and unobstructed
    ========================================================= */
 
-/* 1. Demote background bars (Topbar & Sidebar) when a modal is open */
+/* 1. Demote & completely hide background bars (Topbar & Sidebar) when ANY modal is open */
 body:has(.fi-modal-open) .fi-topbar-ctn,
 body:has([aria-modal="true"]) .fi-topbar-ctn,
 body:has(.fi-modal-window-ctn:not([style*="display: none"])) .fi-topbar-ctn,
 body.has-filament-modal-open .fi-topbar-ctn,
 html.has-filament-modal-open .fi-topbar-ctn {
-    z-index: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
     transform: none !important;
     -webkit-transform: none !important;
 }
@@ -1515,8 +1518,10 @@ body:has([aria-modal="true"]) .fi-topbar,
 body:has(.fi-modal-window-ctn:not([style*="display: none"])) .fi-topbar,
 body.has-filament-modal-open .fi-topbar,
 html.has-filament-modal-open .fi-topbar {
-    z-index: 0 !important;
-    transform: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
 }
 
 body:has(.fi-modal-open) .fi-sidebar,
@@ -1524,19 +1529,28 @@ body:has([aria-modal="true"]) .fi-sidebar,
 body:has(.fi-modal-window-ctn:not([style*="display: none"])) .fi-sidebar,
 body.has-filament-modal-open .fi-sidebar,
 html.has-filament-modal-open .fi-sidebar {
-    z-index: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    opacity: 0 !important;
 }
 
 body:has(.fi-modal-open) .fi-sidebar-close-overlay,
 body:has([aria-modal="true"]) .fi-sidebar-close-overlay,
 body.has-filament-modal-open .fi-sidebar-close-overlay {
-    z-index: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
 }
 
 /* 2. Elevate the entire layout & main container tree holding the modal */
 body:has(.fi-modal-open) .fi-layout,
 body:has([aria-modal="true"]) .fi-layout,
-body.has-filament-modal-open .fi-layout,
+body.has-filament-modal-open .fi-layout {
+    position: relative !important;
+    z-index: 99990 !important;
+}
+
 body:has(.fi-modal-open) .fi-main-ctn,
 body:has([aria-modal="true"]) .fi-main-ctn,
 body.has-filament-modal-open .fi-main-ctn,
@@ -1608,7 +1622,7 @@ body.has-filament-modal-open .fi-section {
     pointer-events: auto !important;
 }
 
-/* 6. Modal Window Container: Full Viewport, Centered */
+/* 6. Modal Window Container: Full Viewport, Centered with Safe Margin */
 .fi-modal-window-ctn {
     position: fixed !important;
     inset: 0 !important;
@@ -1620,11 +1634,11 @@ body.has-filament-modal-open .fi-section {
     justify-content: center !important;
     overflow-y: auto !important;
     overscroll-behavior: contain !important;
-    padding: 1rem !important;
+    padding: 2.5rem 1rem !important; /* Safe margin ensures header and X button never touch viewport edge */
     pointer-events: auto !important;
 }
 
-/* 7. Modal Window: Highest Layer */
+/* 7. Modal Window: Highest Layer & Safe Max Height */
 .fi-modal .fi-modal-window {
     position: relative !important;
     z-index: 100000 !important;
@@ -1636,7 +1650,7 @@ body.has-filament-modal-open .fi-section {
     @apply !bg-white/95 dark:!bg-[#0b1626]/95 !backdrop-blur-2xl !rounded-3xl;
     margin: auto !important;
     max-width: min(100%, 72rem) !important;
-    max-height: calc(100dvh - 2rem) !important;
+    max-height: calc(100dvh - 5rem) !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     box-shadow: 0 30px 90px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
     transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease !important;
@@ -1668,10 +1682,51 @@ body.has-filament-modal-open .fi-section {
     position: sticky !important;
     top: 0 !important;
     z-index: 20 !important;
+    padding-right: 4.5rem !important; /* Safe right padding so title never overlaps the X button */
 }
 
 .dark .fi-modal-header {
     background-color: #0c1829 !important;
+}
+
+/* Modal Close Button (X Button): Always Prominent, Accessible, Easy to Click */
+.fi-modal-close-btn,
+.fi-modal-header .fi-modal-close-btn {
+    position: absolute !important;
+    top: 1.15rem !important;
+    right: 1.25rem !important;
+    z-index: 100010 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    border-radius: 9999px !important;
+    background-color: rgba(0, 0, 0, 0.06) !important;
+    color: #64748b !important;
+    transition: all 0.2s ease !important;
+}
+
+.fi-modal-close-btn:hover,
+.fi-modal-header .fi-modal-close-btn:hover {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+    transform: scale(1.1) !important;
+}
+
+.dark .fi-modal-close-btn,
+.dark .fi-modal-header .fi-modal-close-btn {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #94a3b8 !important;
+}
+
+.dark .fi-modal-close-btn:hover,
+.dark .fi-modal-header .fi-modal-close-btn:hover {
+    background-color: rgba(239, 68, 68, 0.25) !important;
+    color: #f87171 !important;
+    transform: scale(1.1) !important;
 }
 
 .fi-modal:not(.fi-modal-slide-over) .fi-modal-header {
