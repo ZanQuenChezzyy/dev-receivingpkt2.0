@@ -130,7 +130,7 @@
 
             <!-- Right Column: Dashboard Illustration -->
             <div class="w-full lg:w-7/12 relative mt-4 md:mt-0">
-                <div class="relative w-full max-w-full sm:max-w-2xl mx-auto px-2 sm:px-0">
+                <div class="relative w-full max-w-full sm:max-w-2xl xl:max-w-3xl mx-auto px-2 sm:px-0">
                     
                     <!-- Dark Glass Dashboard Frame -->
                     <div class="relative glass-panel sm:rounded-[2rem] overflow-hidden flex flex-col transform perspective-1000 rotate-y-[-5deg] rotate-x-[2deg] transition-transform hover:rotate-y-0 hover:rotate-x-0 duration-700">
@@ -146,9 +146,9 @@
                         </div>
 
                         <!-- Dashboard Content -->
-                        <div class="p-5 sm:p-8 flex-1 flex flex-col gap-5 sm:gap-6 bg-linear-to-b from-transparent to-black/20">
+                        <div class="p-4 sm:p-7 lg:p-8 flex-1 flex flex-col gap-4 sm:gap-6 bg-linear-to-b from-transparent to-black/20">
                             <!-- Top Stats (Data Aktual Sistem with Spring Rolling Counters) -->
-                            <div class="grid grid-cols-3 gap-2 sm:gap-4 md:gap-5"
+                            <div class="grid grid-cols-3 gap-2 sm:gap-4 md:gap-5 lg:gap-6"
                                  x-data="{
                                      count1: 0,
                                      count2: 0,
@@ -177,32 +177,32 @@
                                          window.requestAnimationFrame(step);
                                      }
                                  }">
-                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between relative overflow-hidden isolate transition-all duration-300 hover:-translate-y-1 hover:shadow-lg [transform:translateZ(0)]">
+                                <div class="h-24 sm:h-32 lg:h-36 xl:h-40 rounded-2xl xl:rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2.5 sm:p-4 lg:p-5 xl:p-6 flex flex-col justify-between relative overflow-hidden isolate transition-all duration-300 hover:-translate-y-1 hover:shadow-lg [transform:translateZ(0)]">
                                     <!-- Smooth circular radial glow (zero square blur artifacts) -->
-                                    <div class="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_right,rgba(10,79,134,0.35)_0%,transparent_65%)] pointer-events-none"></div>
+                                    <div class="absolute inset-0 rounded-2xl xl:rounded-3xl bg-[radial-gradient(circle_at_top_right,rgba(10,79,134,0.35)_0%,transparent_65%)] pointer-events-none"></div>
                                     <div class="relative z-10">
-                                        <div class="text-sm xs:text-base sm:text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight leading-none truncate" x-text="count1.toLocaleString()">{{ number_format($totalItemsCount) }}</div>
-                                        <div class="w-8 sm:w-16 md:w-20 h-1 sm:h-1.5 mt-1.5 sm:mt-2 rounded-full bg-[#0A4F86]"></div>
+                                        <div class="text-base xs:text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-slate-800 dark:text-white tracking-tight leading-none truncate" x-text="count1.toLocaleString()">{{ number_format($totalItemsCount) }}</div>
+                                        <div class="w-8 sm:w-14 lg:w-20 xl:w-24 h-1 sm:h-1.5 lg:h-2 mt-1.5 sm:mt-2 lg:mt-3 rounded-full bg-[#0A4F86]"></div>
                                     </div>
-                                    <p class="relative z-10 text-[9px] xs:text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-semibold sm:font-medium truncate leading-tight mt-1 sm:mt-0">{{ __('Total Item DO') }}</p>
+                                    <p class="relative z-10 text-[10px] sm:text-xs lg:text-sm xl:text-base text-slate-500 dark:text-slate-400 font-semibold sm:font-medium truncate leading-tight mt-1 sm:mt-0">{{ __('Total Item DO') }}</p>
                                 </div>
-                                <div class="h-24 sm:h-32 rounded-2xl bg-[#F47920]/10 border border-[#F47920]/30 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between relative overflow-hidden isolate shadow-[inset_0_0_20px_rgba(244,121,32,0.1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg [transform:translateZ(0)]">
+                                <div class="h-24 sm:h-32 lg:h-36 xl:h-40 rounded-2xl xl:rounded-3xl bg-[#F47920]/10 border border-[#F47920]/30 p-2.5 sm:p-4 lg:p-5 xl:p-6 flex flex-col justify-between relative overflow-hidden isolate shadow-[inset_0_0_20px_rgba(244,121,32,0.1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg [transform:translateZ(0)]">
                                     <!-- Smooth circular radial glow (zero square blur artifacts) -->
-                                    <div class="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_right,rgba(244,121,32,0.35)_0%,transparent_65%)] pointer-events-none"></div>
+                                    <div class="absolute inset-0 rounded-2xl xl:rounded-3xl bg-[radial-gradient(circle_at_top_right,rgba(244,121,32,0.35)_0%,transparent_65%)] pointer-events-none"></div>
                                     <div class="relative z-10">
-                                        <div class="text-sm xs:text-base sm:text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight leading-none truncate" x-text="count2.toLocaleString()">{{ number_format($grsCount) }}</div>
-                                        <div class="w-8 sm:w-16 md:w-20 h-1 sm:h-1.5 mt-1.5 sm:mt-2 rounded-full bg-[#F47920]"></div>
+                                        <div class="text-base xs:text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-[#F47920] tracking-tight leading-none truncate" x-text="count2.toLocaleString()">{{ number_format($grsCount) }}</div>
+                                        <div class="w-8 sm:w-14 lg:w-20 xl:w-24 h-1 sm:h-1.5 lg:h-2 mt-1.5 sm:mt-2 lg:mt-3 rounded-full bg-[#F47920]"></div>
                                     </div>
-                                    <p class="relative z-10 text-[9px] xs:text-[10px] sm:text-xs text-[#F47920] font-semibold sm:font-medium truncate leading-tight mt-1 sm:mt-0">{{ __('DO Sudah GRS') }}</p>
+                                    <p class="relative z-10 text-[10px] sm:text-xs lg:text-sm xl:text-base text-[#F47920] font-semibold sm:font-medium truncate leading-tight mt-1 sm:mt-0">{{ __('DO Sudah GRS') }}</p>
                                 </div>
-                                <div class="h-24 sm:h-32 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between relative overflow-hidden isolate shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg [transform:translateZ(0)]">
+                                <div class="h-24 sm:h-32 lg:h-36 xl:h-40 rounded-2xl xl:rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2.5 sm:p-4 lg:p-5 xl:p-6 flex flex-col justify-between relative overflow-hidden isolate shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg [transform:translateZ(0)]">
                                     <!-- Smooth circular radial glow (zero square blur artifacts) -->
-                                    <div class="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_top_right,rgba(100,116,139,0.25)_0%,transparent_65%)] pointer-events-none"></div>
+                                    <div class="absolute inset-0 rounded-2xl xl:rounded-3xl bg-[radial-gradient(circle_at_top_right,rgba(100,116,139,0.25)_0%,transparent_65%)] pointer-events-none"></div>
                                     <div class="relative z-10">
-                                        <div class="text-sm xs:text-base sm:text-2xl md:text-3xl font-black text-slate-800 dark:text-white tracking-tight leading-none truncate" x-text="count3.toLocaleString()">{{ number_format($pendingQcCount) }}</div>
-                                        <div class="w-8 sm:w-14 md:w-16 h-1 sm:h-1.5 mt-1.5 sm:mt-2 rounded-full bg-slate-600"></div>
+                                        <div class="text-base xs:text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-black text-slate-800 dark:text-white tracking-tight leading-none truncate" x-text="count3.toLocaleString()">{{ number_format($pendingQcCount) }}</div>
+                                        <div class="w-8 sm:w-14 lg:w-16 xl:w-20 h-1 sm:h-1.5 lg:h-2 mt-1.5 sm:mt-2 lg:mt-3 rounded-full bg-slate-600 dark:bg-slate-400"></div>
                                     </div>
-                                    <p class="relative z-10 text-[9px] xs:text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-semibold sm:font-medium truncate leading-tight mt-1 sm:mt-0">{{ __('Proses / QC') }}</p>
+                                    <p class="relative z-10 text-[10px] sm:text-xs lg:text-sm xl:text-base text-slate-500 dark:text-slate-400 font-semibold sm:font-medium truncate leading-tight mt-1 sm:mt-0">{{ __('Proses / QC') }}</p>
                                 </div>
                             </div>
 
@@ -216,7 +216,7 @@
                                 </div>
                                 
                                 <!-- Mock Bars -->
-                                <div class="flex items-end gap-2 sm:gap-4 h-24 sm:h-36 mt-auto relative z-10">
+                                <div class="flex items-end gap-2 sm:gap-4 lg:gap-5 h-24 sm:h-36 lg:h-44 mt-auto relative z-10">
                                     <div class="w-full bg-white/10 rounded-t-md h-[40%]"></div>
                                     <div class="w-full bg-white/20 rounded-t-md h-[70%]"></div>
                                     <div class="w-full bg-[#0A4F86]/80 rounded-t-md h-[50%] border-t border-[#0A4F86]/50"></div>
