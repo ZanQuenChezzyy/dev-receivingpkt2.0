@@ -569,7 +569,9 @@ function ensureInvoicingReceiptTableExists(): bool
             $table->string('email_vendor')->nullable();
             $table->date('tanggal_info_grs')->nullable();
             $table->string('no_invoice')->nullable();
+            $table->date('tanggal_invoice')->nullable();
             $table->string('faktur_pajak')->nullable();
+            $table->date('tanggal_faktur_pajak')->nullable();
             $table->text('nama_barang')->nullable();
             $table->decimal('qty_penagihan', 15, 4)->nullable();
             $table->decimal('qty_po', 15, 4)->nullable();
@@ -612,6 +614,11 @@ function ensureInvoicingReceiptTableExists(): bool
         $createItemsMigration->up();
         $dropSubtotalsMigration = include database_path('migrations/2026_11_19_223946_drop_subtotals_from_invoicing_receipt_items_table.php');
         $dropSubtotalsMigration->up();
+    }
+
+    if (Illuminate\Support\Facades\Schema::hasTable('invoicing_receipts') && ! Illuminate\Support\Facades\Schema::hasColumn('invoicing_receipts', 'tanggal_invoice')) {
+        $addDatesMigration = include database_path('migrations/2026_11_20_001344_add_invoice_dates_to_invoicing_receipts_table.php');
+        $addDatesMigration->up();
     }
 
     return $created;
@@ -1605,4 +1612,42 @@ test('it accurately matches item quantities from purchase orders issued based on
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
         }
     }
+});
+
+test('InvoicingReceipt model has tanggal_invoice and tanggal_faktur_pajak in fillable and cast as date', function () {
+    $model = new InvoicingReceipt;
+
+    expect($model->isFillable('tanggal_invoice'))->toBeTrue()
+        ->and($model->isFillable('tanggal_faktur_pajak'))->toBeTrue()
+        ->and($model->getCasts()['tanggal_invoice'] ?? null)->toBe('date')
+        ->and($model->getCasts()['tanggal_faktur_pajak'] ?? null)->toBe('date');
+});
+
+test('inputInvoice table action wizard has exactly 2 steps combining rincian barang and ringkasan total', function () {
+    $livewire = app(ListInvoicingReceipts::class);
+    $table = new Table($livewire);
+    InvoicingReceiptsTable::configure($table);
+
+    $actions = collect($table->getRecordActions())
+        ->flatMap(function ($a) {
+            if ($a instanceof ActionGroup) {
+                return collect($a->getActions());
+            }
+
+            return [$a];
+        })
+        ->filter(fn ($a) => method_exists($a, 'getName'))
+        ->keyBy(fn ($a) => $a->getName());
+
+    $action = $actions->get('inputInvoiceData');
+    expect($action)->not->toBeNull()
+        ->and($action->isWizard())->toBeTrue();
+
+    $actionSchema = $action->getSchema(Schema::make($livewire));
+    $wizard = $actionSchema->getComponents()[0];
+    $steps = array_values($wizard->getChildSchema()->getComponents());
+
+    expect(count($steps))->toBe(2)
+        ->and($steps[0]->getLabel())->toBe('Dokumen Penagihan')
+        ->and($steps[1]->getLabel())->toBe('Rincian Barang & Ringkasan Total');
 });

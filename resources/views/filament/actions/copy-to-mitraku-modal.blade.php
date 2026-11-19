@@ -27,6 +27,12 @@
 
     $rawTanggalGrs = $record->tanggal_terima_grs;
     $tanggalGrsFormatted = $rawTanggalGrs ? \Illuminate\Support\Carbon::parse($rawTanggalGrs)->format('d-m-Y') : '';
+
+    $rawTanggalInvoice = $record->tanggal_invoice;
+    $tanggalInvoiceFormatted = $rawTanggalInvoice ? \Illuminate\Support\Carbon::parse($rawTanggalInvoice)->format('d-m-Y') : '';
+
+    $rawTanggalFakturPajak = $record->tanggal_faktur_pajak;
+    $tanggalFakturPajakFormatted = $rawTanggalFakturPajak ? \Illuminate\Support\Carbon::parse($rawTanggalFakturPajak)->format('d-m-Y') : '';
 @endphp
 
 <div class="space-y-4" x-data="{
@@ -50,8 +56,13 @@
             '{{ $deliveryDatePoFormatted }}',
             '{{ addslashes($record->no_do ?? '') }}',
             '{{ addslashes($record->no_grs ?? ($record->no_rdtv ?? '')) }}',
+            '{{ $tanggalGrsFormatted }}',
+            '{{ $tanggalPenerimaanFormatted }}',
+            '{{ $deliveryDateGrsFormatted }}',
             '{{ addslashes($record->no_invoice ?? '') }}',
+            '{{ $tanggalInvoiceFormatted }}',
             '{{ addslashes($record->faktur_pajak ?? '') }}',
+            '{{ $tanggalFakturPajakFormatted }}',
             '{{ $subtotalExcludeCopy }}',
             '{{ $subtotalIncludeCopy }}',
             '{{ $record->qty_penagihan ?? '' }}',
@@ -218,6 +229,23 @@
             </button>
         </div>
 
+        <!-- Tanggal Invoice -->
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
+            <div class="min-w-0 pr-2">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Tanggal Invoice</span>
+                <span class="font-bold text-gray-900 dark:text-white truncate block text-sm">{{ $tanggalInvoiceFormatted ?: '-' }}</span>
+            </div>
+            <button
+                type="button"
+                @click="copyText('{{ $tanggalInvoiceFormatted }}', 'tanggal_invoice')"
+                :class="copiedField === 'tanggal_invoice' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
+                class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'tanggal_invoice'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'tanggal_invoice'" />
+                <span x-text="copiedField === 'tanggal_invoice' ? 'Disalin' : 'Salin'"></span>
+            </button>
+        </div>
+
         <!-- Faktur Pajak -->
         <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
             <div class="min-w-0 pr-2">
@@ -232,6 +260,23 @@
                 <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'faktur_pajak'" x-cloak />
                 <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'faktur_pajak'" />
                 <span x-text="copiedField === 'faktur_pajak' ? 'Disalin' : 'Salin'"></span>
+            </button>
+        </div>
+
+        <!-- Tanggal Faktur Pajak -->
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between shadow-xs">
+            <div class="min-w-0 pr-2">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 block">Tanggal Faktur Pajak</span>
+                <span class="font-bold text-gray-900 dark:text-white truncate block text-sm">{{ $tanggalFakturPajakFormatted ?: '-' }}</span>
+            </div>
+            <button
+                type="button"
+                @click="copyText('{{ $tanggalFakturPajakFormatted }}', 'tanggal_faktur_pajak')"
+                :class="copiedField === 'tanggal_faktur_pajak' ? 'bg-success-100 text-success-700 dark:bg-success-900/60 dark:text-success-300' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200'"
+                class="px-2.5 py-1.5 rounded-md text-xs font-medium transition shrink-0 flex items-center gap-1">
+                <x-filament::icon icon="heroicon-m-check" class="w-4 h-4" x-show="copiedField === 'tanggal_faktur_pajak'" x-cloak />
+                <x-filament::icon icon="heroicon-m-clipboard" class="w-4 h-4" x-show="copiedField !== 'tanggal_faktur_pajak'" />
+                <span x-text="copiedField === 'tanggal_faktur_pajak' ? 'Disalin' : 'Salin'"></span>
             </button>
         </div>
 

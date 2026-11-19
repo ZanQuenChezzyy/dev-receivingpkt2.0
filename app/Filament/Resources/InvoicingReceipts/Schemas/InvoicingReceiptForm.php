@@ -335,9 +335,25 @@ class InvoicingReceiptForm
                             })
                             ->helperText('Jika status masih Menunggu Verifikasi, pengisian nomor invoice otomatis menandai status sebagai Selesai.'),
 
+                        DatePicker::make('tanggal_invoice')
+                            ->label('Tanggal Invoice')
+                            ->native(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, Set $set) {
+                                if (filled($state)) {
+                                    $set('tanggal_faktur_pajak', $state);
+                                }
+                            })
+                            ->helperText('Tanggal terbit invoice resmi vendor.'),
+
                         TextInput::make('faktur_pajak')
                             ->label('Nomor Faktur Pajak')
                             ->placeholder('Contoh: 010.001-26.12345678 (opsional)'),
+
+                        DatePicker::make('tanggal_faktur_pajak')
+                            ->label('Tanggal Faktur Pajak')
+                            ->native(false)
+                            ->helperText('Tanggal faktur pajak (otomatis mengikuti tanggal invoice, dapat diubah jika berbeda).'),
 
                         Repeater::make('items')
                             ->label('Rincian Barang yang Ditagihkan')

@@ -466,6 +466,20 @@ class InvoicingReceiptsTable
                                         ->default(fn (InvoicingReceipt $record) => $record->no_invoice)
                                         ->helperText('Nomor invoice penagihan resmi vendor (opsional, dapat diisi menyusul saat berkas fisik diterima).'),
 
+                                    DatePicker::make('tanggal_invoice')
+                                        ->label('Tanggal Invoice')
+                                        ->placeholder('Pilih tanggal invoice')
+                                        ->prefixIcon('heroicon-m-calendar')
+                                        ->native(false)
+                                        ->default(fn (InvoicingReceipt $record) => $record->tanggal_invoice)
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, Set $set) {
+                                            if (filled($state)) {
+                                                $set('tanggal_faktur_pajak', $state);
+                                            }
+                                        })
+                                        ->helperText('Tanggal terbit invoice resmi dari vendor.'),
+
                                     TextInput::make('no_do')
                                         ->label('Nomor DO Utama (Delivery Order)')
                                         ->placeholder('Nomor Delivery Order')
@@ -482,11 +496,20 @@ class InvoicingReceiptsTable
                                         ->prefixIcon('heroicon-m-receipt-percent')
                                         ->default(fn (InvoicingReceipt $record) => $record->faktur_pajak)
                                         ->helperText('Nomor seri Faktur Pajak elektronik / e-Faktur (opsional, dapat diisi menyusul).'),
+
+                                    DatePicker::make('tanggal_faktur_pajak')
+                                        ->label('Tanggal Faktur Pajak')
+                                        ->placeholder('Pilih tanggal faktur pajak')
+                                        ->prefixIcon('heroicon-m-calendar')
+                                        ->native(false)
+                                        ->default(fn (InvoicingReceipt $record) => $record->tanggal_faktur_pajak)
+                                        ->helperText('Otomatis mengikuti tanggal invoice, namun dapat diubah jika berbeda.'),
                                 ]),
 
-                            Step::make('Rincian Barang')
-                                ->description('Daftar item barang yang ditagihkan')
+                            Step::make('Rincian Barang & Ringkasan Total')
+                                ->description('Daftar item barang yang ditagihkan serta ringkasan total nilai tagihan')
                                 ->icon('heroicon-o-queue-list')
+                                ->columns(2)
                                 ->schema([
                                     Repeater::make('items')
                                         ->label('Item Barang yang Ditagihkan')
@@ -602,13 +625,7 @@ class InvoicingReceiptsTable
                                                 ->suffix(fn (Get $get, ?InvoicingReceipt $record) => $get('uoi') ?: ($record?->uoi ?? ''))
                                                 ->columnSpan(['default' => 1, 'sm' => 1, 'md' => 3]),
                                         ]),
-                                ]),
 
-                            Step::make('Ringkasan Total')
-                                ->description('Total nilai tagihan (Exclude & Include PPN)')
-                                ->icon('heroicon-o-calculator')
-                                ->columns(2)
-                                ->schema([
                                     TextInput::make('subtotal_exclude_ppn')
                                         ->label('Total Sub Total (Exclude PPN)')
                                         ->prefix('Rp')
@@ -637,7 +654,8 @@ class InvoicingReceiptsTable
                                             } else {
                                                 $set('subtotal_include_ppn', null);
                                             }
-                                        }),
+                                        })
+                                        ->columnSpan(1),
 
                                     TextInput::make('subtotal_include_ppn')
                                         ->label('Total Sub Total (Include PPN 11%)')
@@ -660,7 +678,8 @@ class InvoicingReceiptsTable
                                             }
 
                                             return null;
-                                        }),
+                                        })
+                                        ->columnSpan(1),
                                 ]),
                         ])
                         ->skippableSteps()
@@ -669,8 +688,10 @@ class InvoicingReceiptsTable
                                 'no_grs' => $data['no_grs'] ?? $record->no_grs,
                                 'no_rdtv' => $data['no_rdtv'] ?? $record->no_rdtv,
                                 'no_invoice' => $data['no_invoice'] ?? null,
+                                'tanggal_invoice' => $data['tanggal_invoice'] ?? null,
                                 'no_do' => $data['no_do'] ?? $record->no_do,
                                 'faktur_pajak' => $data['faktur_pajak'] ?? null,
+                                'tanggal_faktur_pajak' => $data['tanggal_faktur_pajak'] ?? null,
                             ]);
 
                             $submittedItems = $data['items'] ?? [];
@@ -860,10 +881,10 @@ class InvoicingReceiptsTable
                                 }
 
                                 if (! empty($verifikasiFile) && strtolower(pathinfo($verifikasiFile, PATHINFO_EXTENSION)) === 'pdf') {
-                                    $fullPath = \Illuminate\Support\Facades\Storage::disk('public')->path($verifikasiFile);
+                                    $fullPath = Storage::disk('public')->path($verifikasiFile);
                                     if (file_exists($fullPath)) {
                                         try {
-                                            $parsed = app(\App\Services\GrsPdfParserService::class)->parse($fullPath);
+                                            $parsed = app(GrsPdfParserService::class)->parse($fullPath);
                                             if (! empty($parsed['no_grs']) && empty($record->no_grs)) {
                                                 $updateData['no_grs'] = $parsed['no_grs'];
                                             }

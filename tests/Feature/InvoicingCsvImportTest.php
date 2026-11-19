@@ -119,7 +119,9 @@ beforeEach(function () {
         $table->string('email_vendor')->nullable();
         $table->date('tanggal_info_grs')->nullable();
         $table->string('no_invoice')->nullable();
+        $table->date('tanggal_invoice')->nullable();
         $table->string('faktur_pajak')->nullable();
+        $table->date('tanggal_faktur_pajak')->nullable();
         $table->text('nama_barang')->nullable();
         $table->decimal('qty_penagihan', 15, 4)->nullable();
         $table->decimal('qty_po', 15, 4)->nullable();
