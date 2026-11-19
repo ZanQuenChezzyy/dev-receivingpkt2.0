@@ -125,9 +125,38 @@
             values.forEach(v => animateValue(v));
         }
 
+        // =========================================================
+        // 3. Universal Modal Focus & Stacking Watchdog
+        // =========================================================
+        function updateModalActiveState() {
+            const hasOpenModal = !!document.querySelector(
+                '.fi-modal-open, .fi-modal[aria-modal="true"]:not([style*="display: none"]), .fi-modal-window-ctn:not([style*="display: none"]), [role="dialog"][aria-modal="true"]:not([style*="display: none"])'
+            );
+            document.body.classList.toggle('has-filament-modal-open', hasOpenModal);
+            document.documentElement.classList.toggle('has-filament-modal-open', hasOpenModal);
+        }
+
+        const modalObserver = new MutationObserver(() => {
+            updateModalActiveState();
+        });
+
+        if (document.body) {
+            modalObserver.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['class', 'style', 'aria-modal', 'role']
+            });
+        }
+
+        window.addEventListener('open-modal', () => setTimeout(updateModalActiveState, 20));
+        window.addEventListener('close-modal', () => setTimeout(updateModalActiveState, 20));
+        window.addEventListener('close-modal-quietly', () => setTimeout(updateModalActiveState, 20));
+
         function runAll() {
             initStatsSpringPhysics();
             initStatsCounter();
+            updateModalActiveState();
             markPageLoaded();
         }
 

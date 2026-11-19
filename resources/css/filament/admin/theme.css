@@ -62,15 +62,16 @@ html.dark body {
 .fi-sidebar {
     @apply !bg-white/70 dark:!bg-[#07111e]/75 !backdrop-blur-2xl !backdrop-saturate-150 !border-r !border-black/[0.06] dark:!border-white/[0.08] !shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:!shadow-[4px_0_32px_rgba(0,0,0,0.3)];
     overflow: hidden;
+    z-index: 25 !important;
 }
 
 @media (max-width: 1023px) {
     .fi-sidebar-close-overlay {
-        z-index: 1040 !important;
+        z-index: 45 !important;
     }
 
     .fi-sidebar {
-        z-index: 1050 !important;
+        z-index: 50 !important;
     }
 }
 
@@ -436,7 +437,7 @@ html.dark body {
 .fi-topbar-ctn {
     position: sticky !important;
     top: 0 !important;
-    z-index: 1000 !important;
+    z-index: 30 !important;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
 }
@@ -444,7 +445,7 @@ html.dark body {
 .fi-topbar {
     @apply !bg-white/85 dark:!bg-[#07111e]/90 !backdrop-blur-2xl !backdrop-saturate-150 !border-b !border-black/[0.06] dark:!border-white/[0.08] !shadow-[0_1px_3px_rgba(0,0,0,0.02)];
     position: relative !important;
-    z-index: 1000 !important;
+    z-index: 30 !important;
 }
 
 .fi-topbar nav {
@@ -789,34 +790,34 @@ body.stats-already-loaded .stat-row-animated {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Elevate table row and cell containing an active/open dropdown above sibling rows & headers */
-.fi-ta-ctn:has(.fi-dropdown:focus-within),
-.fi-ta-ctn:has(.fi-dropdown-panel:not([style*="display: none"])),
-.fi-ta-content-ctn:has(.fi-dropdown:focus-within),
-.fi-ta-content-ctn:has(.fi-dropdown-panel:not([style*="display: none"])),
-.fi-ta-content:has(.fi-dropdown:focus-within),
-.fi-ta-content:has(.fi-dropdown-panel:not([style*="display: none"])) {
+/* Elevate table row and cell containing an active/open dropdown above sibling rows & headers (only when modal is NOT active) */
+.fi-ta-ctn:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])),
+.fi-ta-ctn:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])),
+.fi-ta-content-ctn:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])),
+.fi-ta-content-ctn:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])),
+.fi-ta-content:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])),
+.fi-ta-content:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)):not(:has([aria-modal="true"])) {
     position: relative !important;
-    z-index: 30 !important;
+    z-index: 25 !important;
     overflow-y: visible !important;
 }
 
-.fi-ta-table:has(.fi-dropdown:focus-within) tbody,
-.fi-ta-table:has(.fi-dropdown-panel:not([style*="display: none"])) tbody {
+.fi-ta-table:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)) tbody,
+.fi-ta-table:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)) tbody {
     position: relative !important;
-    z-index: 30 !important;
+    z-index: 25 !important;
 }
 
-.fi-ta-row:has(.fi-dropdown:focus-within),
-.fi-ta-row:has(.fi-dropdown-panel:not([style*="display: none"])) {
+.fi-ta-row:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)),
+.fi-ta-row:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)) {
     position: relative !important;
-    z-index: 50 !important;
+    z-index: 28 !important;
 }
 
-.fi-ta-cell:has(.fi-dropdown:focus-within),
-.fi-ta-cell:has(.fi-dropdown-panel:not([style*="display: none"])) {
+.fi-ta-cell:has(.fi-dropdown:focus-within):not(:has(.fi-modal-open)),
+.fi-ta-cell:has(.fi-dropdown-panel:not([style*="display: none"])):not(:has(.fi-modal-open)) {
     position: relative !important;
-    z-index: 50 !important;
+    z-index: 28 !important;
 }
 
 .fi-dropdown:has(.fi-dropdown-panel:not([style*="display: none"])),
@@ -1488,47 +1489,162 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
    9. MODALS & SLIDE-OVERS (Apple Floating Sheet & Drawers)
    ========================================================= */
 
-/* Ensure Modals always sit ABOVE the Sidebar and Topbar */
-.fi-modal {
-    position: relative;
-    z-index: 99999 !important;
+/* =========================================================
+   UNIVERSAL MODAL FOCUS & STACKING ISOLATION
+   Whenever ANY modal is active/open in Filament, it MUST be
+   the absolute topmost layer on the entire screen:
+   - Topbar & Sidebar drop behind the modal backdrop
+   - The dark blur backdrop covers the entire viewport (100vw x 100vh)
+   - Parent containers do NOT establish stacking context traps
+   - The modal window is centered and unobstructed
+   ========================================================= */
+
+/* 1. Demote background bars (Topbar & Sidebar) when a modal is open */
+body:has(.fi-modal-open) .fi-topbar-ctn,
+body:has([aria-modal="true"]) .fi-topbar-ctn,
+body:has(.fi-modal-window-ctn:not([style*="display: none"])) .fi-topbar-ctn,
+body.has-filament-modal-open .fi-topbar-ctn,
+html.has-filament-modal-open .fi-topbar-ctn {
+    z-index: 0 !important;
+    transform: none !important;
+    -webkit-transform: none !important;
 }
 
-.fi-modal.fi-modal-open {
-    z-index: 99999 !important;
+body:has(.fi-modal-open) .fi-topbar,
+body:has([aria-modal="true"]) .fi-topbar,
+body:has(.fi-modal-window-ctn:not([style*="display: none"])) .fi-topbar,
+body.has-filament-modal-open .fi-topbar,
+html.has-filament-modal-open .fi-topbar {
+    z-index: 0 !important;
+    transform: none !important;
 }
 
-.fi-modal-close-overlay {
-    @apply !bg-slate-900/60 dark:!bg-black/75 !backdrop-blur-md;
+body:has(.fi-modal-open) .fi-sidebar,
+body:has([aria-modal="true"]) .fi-sidebar,
+body:has(.fi-modal-window-ctn:not([style*="display: none"])) .fi-sidebar,
+body.has-filament-modal-open .fi-sidebar,
+html.has-filament-modal-open .fi-sidebar {
+    z-index: 0 !important;
+}
+
+body:has(.fi-modal-open) .fi-sidebar-close-overlay,
+body:has([aria-modal="true"]) .fi-sidebar-close-overlay,
+body.has-filament-modal-open .fi-sidebar-close-overlay {
+    z-index: 0 !important;
+}
+
+/* 2. Elevate the entire layout & main container tree holding the modal */
+body:has(.fi-modal-open) .fi-layout,
+body:has([aria-modal="true"]) .fi-layout,
+body.has-filament-modal-open .fi-layout,
+body:has(.fi-modal-open) .fi-main-ctn,
+body:has([aria-modal="true"]) .fi-main-ctn,
+body.has-filament-modal-open .fi-main-ctn,
+body:has(.fi-modal-open) .fi-main,
+body:has([aria-modal="true"]) .fi-main,
+body.has-filament-modal-open .fi-main,
+body:has(.fi-modal-open) .fi-page,
+body:has([aria-modal="true"]) .fi-page,
+body.has-filament-modal-open .fi-page,
+body:has(.fi-modal-open) .fi-ta-ctn,
+body:has([aria-modal="true"]) .fi-ta-ctn,
+body.has-filament-modal-open .fi-ta-ctn,
+body:has(.fi-modal-open) .fi-section,
+body:has([aria-modal="true"]) .fi-section,
+body.has-filament-modal-open .fi-section {
+    z-index: 99990 !important;
+}
+
+/* 3. Strip any transform, perspective, or containment that would clip/trap fixed modals */
+body:has(.fi-modal-open) .fi-layout,
+body:has([aria-modal="true"]) .fi-layout,
+body.has-filament-modal-open .fi-layout,
+body:has(.fi-modal-open) .fi-main-ctn,
+body:has([aria-modal="true"]) .fi-main-ctn,
+body.has-filament-modal-open .fi-main-ctn,
+body:has(.fi-modal-open) .fi-main,
+body:has([aria-modal="true"]) .fi-main,
+body.has-filament-modal-open .fi-main,
+body:has(.fi-modal-open) .fi-main > *,
+body:has([aria-modal="true"]) .fi-main > *,
+body.has-filament-modal-open .fi-main > *,
+body:has(.fi-modal-open) .fi-page,
+body:has([aria-modal="true"]) .fi-page,
+body.has-filament-modal-open .fi-page,
+body:has(.fi-modal-open) .fi-ta-ctn,
+body:has([aria-modal="true"]) .fi-ta-ctn,
+body.has-filament-modal-open .fi-ta-ctn,
+body:has(.fi-modal-open) .fi-section,
+body:has([aria-modal="true"]) .fi-section,
+body.has-filament-modal-open .fi-section {
+    animation: none !important;
+    transform: none !important;
+    perspective: none !important;
+    contain: none !important;
+    filter: none !important;
+}
+
+/* 4. Modal Root */
+.fi-modal.fi-modal-open,
+.fi-modal:has([aria-modal="true"]),
+.fi-modal[aria-modal="true"] {
     position: fixed !important;
     inset: 0 !important;
-    z-index: 99998 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    pointer-events: auto !important;
 }
 
+/* 5. Modal Dark Blur Backdrop: Full Screen Viewport Cover */
+.fi-modal-close-overlay {
+    @apply !backdrop-blur-md;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99998 !important;
+    background-color: rgba(3, 10, 20, 0.78) !important;
+    pointer-events: auto !important;
+}
+
+/* 6. Modal Window Container: Full Viewport, Centered */
 .fi-modal-window-ctn {
     position: fixed !important;
     inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
     z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    padding: 1rem !important;
+    pointer-events: auto !important;
 }
 
-/* Prevent any parent animation or transform from trapping fixed modal in a sub-stacking context */
-body:has(.fi-modal-open) .fi-main > *,
-.fi-layout:has(.fi-modal-open) .fi-main > * {
-    animation: none !important;
-    transform: none !important;
+/* 7. Modal Window: Highest Layer */
+.fi-modal .fi-modal-window {
+    position: relative !important;
+    z-index: 100000 !important;
+    pointer-events: auto !important;
 }
 
 /* 9A. Standard Centered Modals (Apple Floating Sheet) */
 .fi-modal:not(.fi-modal-slide-over) .fi-modal-window {
     @apply !bg-white/95 dark:!bg-[#0b1626]/95 !backdrop-blur-2xl !rounded-3xl;
+    margin: auto !important;
+    max-width: min(100%, 72rem) !important;
+    max-height: calc(100dvh - 2rem) !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 30px 90px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
     transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease !important;
 }
 
 .dark .fi-modal:not(.fi-modal-slide-over) .fi-modal-window {
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 30px 90px -15px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
 }
 
 /* 9B. Slide-over Drawers (e.g. Database Notifications Slide-Over) */
