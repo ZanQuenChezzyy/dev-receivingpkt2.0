@@ -38,6 +38,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -426,11 +427,11 @@ class InvoicingReceiptsTable
                         ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
                         ->modalWidth('5xl')
                         ->modalIcon('heroicon-o-document-currency-dollar')
-                        ->modalHeading(fn (InvoicingReceipt $record) => "Input Data Invoice & No. GRS - PO: {$record->no_po}")
+                        ->modalHeading(fn (?InvoicingReceipt $record) => 'Input Data Invoice & No. GRS - PO: '.($record?->no_po ?? '-'))
                         ->modalDescription('Lengkapi Nomor GRS resmi SAP, No. DO, rincian barang yang ditagihkan, serta Nomor Invoice dan Faktur Pajak.')
                         ->modalSubmitActionLabel('Simpan Data Invoice')
                         ->modalCancelActionLabel('Tutup')
-                        ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.input-invoice-modal-header', ['record' => $record]))
+                        ->modalContent(fn (?InvoicingReceipt $record) => $record ? view('filament.actions.input-invoice-modal-header', ['record' => $record]) : null)
                         ->steps([
                             Step::make('Dokumen Penagihan')
                                 ->description('Nomor dokumen resmi SAP & DO')
@@ -441,9 +442,9 @@ class InvoicingReceiptsTable
                                         ->label('No. GRS Utama (Resmi SAP)')
                                         ->placeholder('Contoh: 5000xxxxxx')
                                         ->prefixIcon('heroicon-m-hashtag')
-                                        ->default(fn (InvoicingReceipt $record) => $record->no_grs)
-                                        ->required(fn (InvoicingReceipt $record) => $record->jenis === 'GRS')
-                                        ->visible(fn (InvoicingReceipt $record) => $record->jenis !== 'RDTV')
+                                        ->default(fn (?InvoicingReceipt $record) => $record?->no_grs)
+                                        ->required(fn (?InvoicingReceipt $record) => $record?->jenis === 'GRS')
+                                        ->visible(fn (?InvoicingReceipt $record) => $record?->jenis !== 'RDTV')
                                         ->hint('Wajib dari SAP')
                                         ->hintColor('danger')
                                         ->hintIcon('heroicon-m-exclamation-circle')
@@ -453,9 +454,9 @@ class InvoicingReceiptsTable
                                         ->label('No. RDTV (Resmi)')
                                         ->placeholder('Nomor dokumen RDTV')
                                         ->prefixIcon('heroicon-m-hashtag')
-                                        ->default(fn (InvoicingReceipt $record) => $record->no_rdtv)
-                                        ->required(fn (InvoicingReceipt $record) => $record->jenis === 'RDTV')
-                                        ->visible(fn (InvoicingReceipt $record) => $record->jenis === 'RDTV')
+                                        ->default(fn (?InvoicingReceipt $record) => $record?->no_rdtv)
+                                        ->required(fn (?InvoicingReceipt $record) => $record?->jenis === 'RDTV')
+                                        ->visible(fn (?InvoicingReceipt $record) => $record?->jenis === 'RDTV')
                                         ->hint('Wajib RDTV')
                                         ->hintColor('danger')
                                         ->helperText('Nomor RDTV resmi dari slip fisik.'),
@@ -464,7 +465,7 @@ class InvoicingReceiptsTable
                                         ->label('Nomor DO Utama (Delivery Order)')
                                         ->placeholder('Nomor Delivery Order')
                                         ->prefixIcon('heroicon-m-truck')
-                                        ->default(fn (InvoicingReceipt $record) => $record->no_do ?: InvoicingReceipt::findDeliveryOrderNoForPo($record->no_po))
+                                        ->default(fn (?InvoicingReceipt $record) => $record?->no_do ?: ($record ? InvoicingReceipt::findDeliveryOrderNoForPo($record->no_po) : null))
                                         ->required()
                                         ->hint('Wajib')
                                         ->hintColor('danger')
@@ -474,14 +475,14 @@ class InvoicingReceiptsTable
                                         ->label('Nomor Invoice')
                                         ->placeholder('Contoh: INV-2026/001 (Opsional)')
                                         ->prefixIcon('heroicon-m-document-text')
-                                        ->default(fn (InvoicingReceipt $record) => $record->no_invoice)
+                                        ->default(fn (?InvoicingReceipt $record) => $record?->no_invoice)
                                         ->helperText('Nomor invoice penagihan resmi vendor (opsional, dapat diisi menyusul saat berkas fisik diterima).'),
 
                                     TextInput::make('faktur_pajak')
                                         ->label('Nomor Faktur Pajak')
                                         ->placeholder('Contoh: 010.001-26.12345678 (Opsional)')
                                         ->prefixIcon('heroicon-m-receipt-percent')
-                                        ->default(fn (InvoicingReceipt $record) => $record->faktur_pajak)
+                                        ->default(fn (?InvoicingReceipt $record) => $record?->faktur_pajak)
                                         ->helperText('Nomor seri Faktur Pajak elektronik / e-Faktur (opsional, dapat diisi menyusul).'),
 
                                     DatePicker::make('tanggal_invoice')
@@ -489,7 +490,7 @@ class InvoicingReceiptsTable
                                         ->placeholder('Pilih tanggal invoice')
                                         ->prefixIcon('heroicon-m-calendar')
                                         ->native(false)
-                                        ->default(fn (InvoicingReceipt $record) => $record->tanggal_invoice)
+                                        ->default(fn (?InvoicingReceipt $record) => $record?->tanggal_invoice)
                                         ->live()
                                         ->afterStateUpdated(function ($state, Set $set) {
                                             if (filled($state)) {
@@ -503,7 +504,7 @@ class InvoicingReceiptsTable
                                         ->placeholder('Pilih tanggal faktur pajak')
                                         ->prefixIcon('heroicon-m-calendar')
                                         ->native(false)
-                                        ->default(fn (InvoicingReceipt $record) => $record->tanggal_faktur_pajak)
+                                        ->default(fn (?InvoicingReceipt $record) => $record?->tanggal_faktur_pajak)
                                         ->helperText('Otomatis mengikuti tanggal invoice, namun dapat diubah jika berbeda.'),
                                 ]),
 
@@ -607,7 +608,7 @@ class InvoicingReceiptsTable
                                                 ->numeric()
                                                 ->required()
                                                 ->placeholder('0.00')
-                                                ->suffix(fn (Get $get, ?InvoicingReceipt $record) => $get('uoi') ?: ($record?->uoi ?? ''))
+                                                ->suffix(fn (Get $get, ?Model $record) => $get('uoi') ?: ($record?->uoi ?? ''))
                                                 ->live(onBlur: true)
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                     $items = $get('../../items') ?? [];
@@ -623,7 +624,7 @@ class InvoicingReceiptsTable
                                                 ->label('Qty PO')
                                                 ->numeric()
                                                 ->placeholder('0.00')
-                                                ->suffix(fn (Get $get, ?InvoicingReceipt $record) => $get('uoi') ?: ($record?->uoi ?? ''))
+                                                ->suffix(fn (Get $get, ?Model $record) => $get('uoi') ?: ($record?->uoi ?? ''))
                                                 ->columnSpan(['default' => 1, 'sm' => 1, 'md' => 3]),
                                         ]),
 
@@ -797,9 +798,9 @@ class InvoicingReceiptsTable
                         ->color('primary')
                         ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
                         ->modalWidth('4xl')
-                        ->modalHeading(fn (InvoicingReceipt $record) => "Format Salin Mitraku - PO: {$record->no_po}")
+                        ->modalHeading(fn (?InvoicingReceipt $record) => 'Format Salin Mitraku - PO: '.($record?->no_po ?? '-'))
                         ->modalDescription('Salin data secara instan untuk di-paste ke sistem Mitraku Pupuk Kaltim')
-                        ->modalContent(fn (InvoicingReceipt $record) => view('filament.actions.copy-to-mitraku-modal', ['record' => $record]))
+                        ->modalContent(fn (?InvoicingReceipt $record) => $record ? view('filament.actions.copy-to-mitraku-modal', ['record' => $record]) : null)
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Tutup'),
 
@@ -809,7 +810,7 @@ class InvoicingReceiptsTable
                         ->icon('heroicon-o-arrow-up-tray')
                         ->color('info')
                         ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
-                        ->modalHeading(fn (InvoicingReceipt $record) => "Upload Berkas - PO: {$record->no_po}")
+                        ->modalHeading(fn (?InvoicingReceipt $record) => 'Upload Berkas - PO: '.($record?->no_po ?? '-'))
                         ->modalDescription('Unggah dokumen verifikasi GRS (setelah ACC VP) dan berkas invoice resmi (setelah vendor mengirim ke PKT).')
                         ->schema([
                             FileUpload::make('dokumen_verifikasi_grs')
@@ -817,7 +818,7 @@ class InvoicingReceiptsTable
                                 ->disk('public')
                                 ->directory('verifikasi-grs')
                                 ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                ->default(fn (InvoicingReceipt $record) => $record->dokumen_verifikasi_grs)
+                                ->default(fn (?InvoicingReceipt $record) => $record?->dokumen_verifikasi_grs)
                                 ->helperText('Unggah surat verifikasi GRS setelah mendapat persetujuan (ACC) dari VP.'),
 
                             FileUpload::make('dokumen_invoice')
@@ -825,7 +826,7 @@ class InvoicingReceiptsTable
                                 ->disk('public')
                                 ->directory('berkas-invoice')
                                 ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                ->default(fn (InvoicingReceipt $record) => $record->dokumen_invoice)
+                                ->default(fn (?InvoicingReceipt $record) => $record?->dokumen_invoice)
                                 ->helperText('Unggah berkas invoice resmi setelah vendor mengirimkan berkas tagihan fisik ke PKT.'),
                         ])
                         ->action(function (InvoicingReceipt $record, array $data) {

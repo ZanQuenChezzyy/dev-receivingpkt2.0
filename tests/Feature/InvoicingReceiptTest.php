@@ -1651,3 +1651,91 @@ test('inputInvoice table action wizard has exactly 2 steps combining rincian bar
         ->and($steps[0]->getLabel())->toBe('Dokumen Penagihan')
         ->and($steps[1]->getLabel())->toBe('Rincian Barang & Ringkasan Total');
 });
+
+test('qty_penagihan and qty_po suffix closures accept InvoicingReceiptItem without type error', function () {
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    try {
+        $receipt = InvoicingReceipt::create([
+            'no_po' => '5300066419',
+            'no_grs' => '5007697783',
+            'jenis' => 'GRS',
+            'status' => 'Menunggu Verifikasi',
+            'tanggal_terima_grs' => now()->toDateString(),
+            'uoi' => 'KG',
+        ]);
+
+        $item = $receipt->items()->create([
+            'item_no' => 10,
+            'nama_barang' => 'Chemical ABC',
+            'qty_penagihan' => 100,
+            'qty_po' => 100,
+            'uoi' => 'BOX',
+        ]);
+
+        $schema = new Schema(new class extends Component implements HasSchemas
+        {
+            use InteractsWithSchemas;
+        });
+        $schema->model($receipt);
+        InvoicingReceiptForm::configure($schema);
+
+        $repeater = collect($schema->getComponents())
+            ->flatMap(fn ($c) => method_exists($c, 'getChildComponents') ? $c->getChildComponents() : [$c])
+            ->first(fn ($c) => method_exists($c, 'getName') && $c->getName() === 'items');
+
+        expect($repeater)->not->toBeNull();
+
+        $itemComponents = collect($repeater->getChildComponents())
+            ->keyBy(fn ($c) => $c->getName());
+
+        $qtyPenagihan = $itemComponents->get('qty_penagihan');
+        $qtyPo = $itemComponents->get('qty_po');
+
+        expect($qtyPenagihan)->not->toBeNull()
+            ->and($qtyPo)->not->toBeNull();
+
+        $getSuffixClosure = fn ($component) => Closure::bind(fn () => $this->suffixLabel, $component, $component)();
+
+        $suffixPenagihan = $qtyPenagihan->evaluate($getSuffixClosure($qtyPenagihan), ['record' => $item]);
+        $suffixPo = $qtyPo->evaluate($getSuffixClosure($qtyPo), ['record' => $item]);
+
+        expect($suffixPenagihan)->toBe('BOX')
+            ->and($suffixPo)->toBe('BOX');
+
+        // Test the same repeater suffix closure in InvoicingReceiptsTable
+        $livewire = app(ListInvoicingReceipts::class);
+        $table = new Table($livewire);
+        InvoicingReceiptsTable::configure($table);
+
+        $actions = collect($table->getRecordActions())
+            ->flatMap(fn ($a) => $a instanceof ActionGroup ? $a->getActions() : [$a])
+            ->keyBy(fn ($a) => method_exists($a, 'getName') ? $a->getName() : null);
+
+        $inputAction = $actions->get('inputInvoiceData');
+        expect($inputAction)->not->toBeNull();
+
+        $actionSchema = $inputAction->getSchema(Schema::make($livewire));
+        $tableRepeater = collect($actionSchema->getComponents())
+            ->flatMap(fn ($c) => method_exists($c, 'getChildComponents') ? $c->getChildComponents() : [$c])
+            ->flatMap(fn ($c) => method_exists($c, 'getChildComponents') ? $c->getChildComponents() : [$c])
+            ->first(fn ($c) => method_exists($c, 'getName') && $c->getName() === 'items');
+
+        expect($tableRepeater)->not->toBeNull();
+
+        $tableItemComponents = collect($tableRepeater->getChildComponents())->keyBy(fn ($c) => $c->getName());
+        $tableQtyPenagihan = $tableItemComponents->get('qty_penagihan');
+        $tableQtyPo = $tableItemComponents->get('qty_po');
+
+        $tSuffixPenagihan = $tableQtyPenagihan->evaluate($getSuffixClosure($tableQtyPenagihan), ['record' => $item]);
+        $tSuffixPo = $tableQtyPo->evaluate($getSuffixClosure($tableQtyPo), ['record' => $item]);
+
+        expect($tSuffixPenagihan)->toBe('BOX')
+            ->and($tSuffixPo)->toBe('BOX');
+    } finally {
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});

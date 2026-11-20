@@ -20,6 +20,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\RawJs;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -383,7 +384,7 @@ class InvoicingReceiptForm
                                     ->numeric()
                                     ->required()
                                     ->placeholder('0.00')
-                                    ->suffix(fn (Get $get, ?InvoicingReceipt $record) => $get('uoi') ?: ($record?->uoi ?? ''))
+                                    ->suffix(fn (Get $get, ?Model $record) => $get('uoi') ?: ($record?->uoi ?? ''))
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                         $items = $get('../../items') ?? [];
@@ -399,7 +400,7 @@ class InvoicingReceiptForm
                                     ->label('Qty PO')
                                     ->numeric()
                                     ->placeholder('0.00')
-                                    ->suffix(fn (Get $get, ?InvoicingReceipt $record) => $get('uoi') ?: ($record?->uoi ?? ''))
+                                    ->suffix(fn (Get $get, ?Model $record) => $get('uoi') ?: ($record?->uoi ?? ''))
                                     ->columnSpan(['default' => 6, 'sm' => 6, 'md' => 3]),
 
                                 Hidden::make('uoi'),
