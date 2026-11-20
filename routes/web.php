@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BatchVerifikasiGrsUploadController;
 use App\Http\Controllers\Admin\ChunkedImportUploadController;
 use App\Http\Controllers\Admin\MaterialIssuePrintController;
 use App\Http\Controllers\Admin\QCTransmittalPrintController;
@@ -55,6 +56,10 @@ Route::get('/admin/delivery-order-receipts/{deliveryOrderReceipt:document_code}/
 Route::post('/admin/invoicing-receipts/import-chunks', [ChunkedImportUploadController::class, 'store'])
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.invoicing-receipts.import_chunks');
+
+Route::post('/admin/invoicing-receipts/upload-verifikasi-grs-ocr', [BatchVerifikasiGrsUploadController::class, 'uploadAndVerify'])
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr');
 
 Route::delete('/admin/invoicing-receipts/import-chunks', [ChunkedImportUploadController::class, 'destroy'])
     ->middleware(['web', 'auth'])

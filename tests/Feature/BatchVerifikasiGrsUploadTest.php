@@ -109,7 +109,7 @@ test('GrsPdfParserService can parse verifikasi GRS from digital text and filenam
     expect($safeText)->toBe('');
 });
 
-test('batch upload action exists on ListInvoicingReceipts and verifikasi GRS updates status', function () {
+test('batch upload action exists on ListInvoicingReceipts with OCR modal', function () {
     $user = User::create([
         'name' => 'Admin User',
         'email' => 'admin_test_'.uniqid().'@example.com',
@@ -117,48 +117,54 @@ test('batch upload action exists on ListInvoicingReceipts and verifikasi GRS upd
     ]);
     $user->assignRole('super_admin');
 
-    $receipt1 = InvoicingReceipt::create([
+    Livewire::actingAs($user)
+        ->test(ListInvoicingReceipts::class)
+        ->assertActionExists('batchUploadVerifikasiGrs');
+});
+
+test('BatchVerifikasiGrsUploadController matches GRS, saves file, and updates status to Terverifikasi', function () {
+    $user = User::create([
+        'name' => 'Admin User Controller',
+        'email' => 'admin_ctrl_'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('super_admin');
+
+    $receipt = InvoicingReceipt::create([
         'no_grs' => '5007697783',
         'no_po' => '5300066419',
         'status' => 'Menunggu Verifikasi',
         'dokumen_verifikasi_grs' => null,
     ]);
 
-    $receipt2 = InvoicingReceipt::create([
-        'no_grs' => '5007888999',
-        'no_po' => '5300099999',
-        'status' => 'Menunggu Verifikasi',
-        'dokumen_verifikasi_grs' => null,
-    ]);
+    $file = UploadedFile::fake()->create('Scan_001.pdf', 150, 'application/pdf');
 
-    $file1 = UploadedFile::fake()->create('5007697783.pdf', 100, 'application/pdf');
-    $file2 = UploadedFile::fake()->create('5007888999.pdf', 100, 'application/pdf');
-    $unmatchedFile = UploadedFile::fake()->create('unknown_document.pdf', 50, 'application/pdf');
+    $response = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $file,
+            'no_grs' => '5007697783',
+            'no_po' => '5300066419',
+            'original_name' => 'Scan_001.pdf',
+        ]);
 
-    Livewire::actingAs($user)
-        ->test(ListInvoicingReceipts::class)
-        ->assertActionExists('batchUploadVerifikasiGrs')
-        ->callAction('batchUploadVerifikasiGrs', [
-            'verifikasi_files' => [$file1, $file2, $unmatchedFile],
-        ])
-        ->assertHasNoActionErrors();
+    $response->assertOk()
+        ->assertJson([
+            'success' => true,
+            'matched' => true,
+            'no_grs' => '5007697783',
+            'status' => 'Terverifikasi',
+        ]);
 
-    $receipt1->refresh();
-    $receipt2->refresh();
-
-    expect($receipt1->status)->toBe('Terverifikasi')
-        ->and($receipt1->dokumen_verifikasi_grs)->not->toBeNull();
-    Storage::disk('public')->assertExists($receipt1->dokumen_verifikasi_grs);
-
-    expect($receipt2->status)->toBe('Terverifikasi')
-        ->and($receipt2->dokumen_verifikasi_grs)->not->toBeNull();
-    Storage::disk('public')->assertExists($receipt2->dokumen_verifikasi_grs);
+    $receipt->refresh();
+    expect($receipt->status)->toBe('Terverifikasi')
+        ->and($receipt->dokumen_verifikasi_grs)->not->toBeNull();
+    Storage::disk('public')->assertExists($receipt->dokumen_verifikasi_grs);
 });
 
-test('batch upload action falls back to PO matching when no_grs is null on receipt', function () {
+test('BatchVerifikasiGrsUploadController falls back to PO matching when no_grs is null', function () {
     $user = User::create([
-        'name' => 'Admin User 2',
-        'email' => 'admin_test_2_'.uniqid().'@example.com',
+        'name' => 'Admin User Fallback',
+        'email' => 'admin_fallback_'.uniqid().'@example.com',
         'password' => bcrypt('password'),
     ]);
     $user->assignRole('super_admin');
@@ -170,18 +176,50 @@ test('batch upload action falls back to PO matching when no_grs is null on recei
         'dokumen_verifikasi_grs' => null,
     ]);
 
-    $file = UploadedFile::fake()->create('5007697783_5300066419.pdf', 100, 'application/pdf');
+    $file = UploadedFile::fake()->create('Scan_Arbitrary_Name.pdf', 150, 'application/pdf');
 
-    Livewire::actingAs($user)
-        ->test(ListInvoicingReceipts::class)
-        ->callAction('batchUploadVerifikasiGrs', [
-            'verifikasi_files' => [$file],
-        ])
-        ->assertHasNoActionErrors();
+    $response = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $file,
+            'no_grs' => '5007697783',
+            'no_po' => '5300066419',
+            'original_name' => 'Scan_Arbitrary_Name.pdf',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => true,
+            'matched' => true,
+            'status' => 'Terverifikasi',
+        ]);
 
     $receipt->refresh();
-
     expect($receipt->status)->toBe('Terverifikasi')
         ->and($receipt->no_grs)->toBe('5007697783')
         ->and($receipt->dokumen_verifikasi_grs)->not->toBeNull();
+});
+
+test('BatchVerifikasiGrsUploadController returns unmatched when receipt not found', function () {
+    $user = User::create([
+        'name' => 'Admin User Unmatched',
+        'email' => 'admin_unmatched_'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('super_admin');
+
+    $file = UploadedFile::fake()->create('unknown_scan.pdf', 100, 'application/pdf');
+
+    $response = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $file,
+            'no_grs' => '5009999999',
+            'no_po' => '5309999999',
+            'original_name' => 'unknown_scan.pdf',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => false,
+            'matched' => false,
+        ]);
 });
