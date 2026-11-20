@@ -174,6 +174,7 @@ beforeEach(function (): void {
             $table->date('tanggal_kirim_kasir')->nullable();
             $table->string('status')->nullable();
             $table->text('keterangan')->nullable();
+            $table->string('dokumen_grs')->nullable();
             $table->string('dokumen_verifikasi_grs')->nullable();
             $table->string('dokumen_invoice')->nullable();
             $table->json('dokumen_kelengkapan')->nullable();

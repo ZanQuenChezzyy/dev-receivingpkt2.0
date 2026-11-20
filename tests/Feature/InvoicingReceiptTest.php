@@ -582,6 +582,7 @@ function ensureInvoicingReceiptTableExists(): bool
             $table->date('tanggal_kirim_kasir')->nullable();
             $table->integer('lama_pekerjaan')->nullable();
             $table->text('keterangan')->nullable();
+            $table->string('dokumen_grs')->nullable();
             $table->string('dokumen_verifikasi_grs')->nullable();
             $table->string('dokumen_invoice')->nullable();
             $table->json('dokumen_kelengkapan')->nullable();

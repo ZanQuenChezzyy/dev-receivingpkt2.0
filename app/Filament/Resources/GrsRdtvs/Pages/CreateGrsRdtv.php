@@ -487,6 +487,7 @@ class CreateGrsRdtv extends CreateRecord
             'subtotal_exclude_ppn' => $subtotalExclude,
             'subtotal_include_ppn' => $subtotalInclude,
             'tanggal_terima_koreksi_invoice' => $isRdtv ? null : $tanggalTerimaGrs,
+            'dokumen_grs' => $grsRdtvItem->file_path,
             'dokumen_verifikasi_grs' => null,
             'keterangan' => "Auto-generate dari {$category}: {$grsRdtvItem->document_code} (DO: {$do->delivery_order_no})",
             'status' => 'Menunggu Verifikasi',

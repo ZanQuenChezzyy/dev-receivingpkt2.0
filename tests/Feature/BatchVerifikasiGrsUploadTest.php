@@ -72,6 +72,7 @@ beforeEach(function () {
             $table->date('tanggal_kirim_kasir')->nullable();
             $table->integer('lama_pekerjaan')->nullable();
             $table->text('keterangan')->nullable();
+            $table->string('dokumen_grs')->nullable();
             $table->string('dokumen_verifikasi_grs')->nullable();
             $table->string('dokumen_invoice')->nullable();
             $table->string('dokumen_kelengkapan')->nullable();

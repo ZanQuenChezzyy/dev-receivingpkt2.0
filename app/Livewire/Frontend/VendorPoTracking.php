@@ -1128,8 +1128,9 @@ class VendorPoTracking extends Component
             ? InvoicingReceipt::find($invoicingReceiptId)
             : $this->resolveOrCreateInvoicingReceipt();
 
-        if (! $receipt || empty($receipt->dokumen_verifikasi_grs)) {
-            session()->flash('download_error', __('Surat Verifikasi GRS belum diunggah oleh Tim Invoice.'));
+        $grsPath = $receipt?->dokumen_grs ?: $receipt?->grsRdtvItem?->file_path;
+        if (! $receipt || empty($receipt->dokumen_verifikasi_grs) || ($grsPath && $grsPath === $receipt->dokumen_verifikasi_grs)) {
+            session()->flash('download_error', __('Surat Verifikasi GRS (ACC VP) belum diunggah oleh Tim Invoice.'));
 
             return null;
         }
@@ -1143,6 +1144,32 @@ class VendorPoTracking extends Component
         $safeName = "Surat_Verifikasi_GRS_PO_{$this->activePo}.pdf";
 
         return $this->publicDisk()->download($receipt->dokumen_verifikasi_grs, $safeName);
+    }
+
+    public function downloadDokumenGrs(?int $invoicingReceiptId = null): mixed
+    {
+        $receipt = $invoicingReceiptId
+            ? InvoicingReceipt::find($invoicingReceiptId)
+            : $this->resolveOrCreateInvoicingReceipt();
+
+        $path = $receipt?->dokumen_grs ?: $receipt?->grsRdtvItem?->file_path;
+
+        if (! $receipt || empty($path)) {
+            session()->flash('download_error', __('Dokumen GRS belum diunggah.'));
+
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($path)) {
+            session()->flash('download_error', __('File Dokumen GRS tidak ditemukan di penyimpanan server.'));
+
+            return null;
+        }
+
+        $ext = pathinfo($path, PATHINFO_EXTENSION) ?: 'pdf';
+        $safeName = "Dokumen_GRS_PO_{$this->activePo}.{$ext}";
+
+        return $this->publicDisk()->download($path, $safeName);
     }
 
     public function downloadGrsReceiving(int $grsItemId): mixed
@@ -1231,6 +1258,7 @@ class VendorPoTracking extends Component
             'no_do' => $do?->delivery_order_no ?? '-',
             'material_type' => InvoicingReceipt::normalizeMaterialType($detail?->material_type ?? $firstPo->material_type),
             'jenis' => 'GRS',
+            'dokumen_grs' => $grsItem?->file_path,
             'status' => 'Menunggu Verifikasi',
             'keterangan' => 'Didaftarkan melalui Portal Tracking Vendor (Self-service penagihan)',
             'tanggal_terima_grs' => now(),

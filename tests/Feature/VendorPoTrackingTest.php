@@ -34,6 +34,8 @@ beforeEach(function () {
             $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
             $table->unsignedBigInteger('vendor_id')->nullable();
             $table->string('no_po')->nullable();
+            $table->string('no_grs')->nullable();
+            $table->string('no_rdtv')->nullable();
             $table->string('no_do')->nullable();
             $table->string('material_type')->nullable();
             $table->string('vendor_name')->nullable();
@@ -42,6 +44,7 @@ beforeEach(function () {
             $table->string('status')->nullable();
             $table->text('keterangan')->nullable();
             $table->date('tanggal_terima_grs')->nullable();
+            $table->string('dokumen_grs')->nullable();
             $table->string('dokumen_verifikasi_grs')->nullable();
             $table->string('dokumen_invoice')->nullable();
             $table->json('dokumen_kelengkapan')->nullable();
@@ -454,4 +457,61 @@ test('searching a PO from a different vendor prompts verification again, while s
         ->assertSet('showVerificationModal', false)
         ->assertSet('isVerified', true)
         ->assertSet('activePo', '5300088882');
+});
+
+test('vendor can download dokumen_grs and distinct dokumen_verifikasi_grs', function () {
+    Storage::fake('public');
+
+    Storage::disk('public')->put('berkas-grs/slip_grs_105.pdf', 'fake grs 105 content');
+    Storage::disk('public')->put('verifikasi-grs/memo_acc_vp.pdf', 'fake memo acc vp content');
+
+    $vendor = Vendor::create([
+        'name' => 'PT Sumber Rejeki',
+        'vendor_number' => 'VEND-999',
+        'email' => 'finance@rejeki.com',
+    ]);
+
+    $po = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300099999',
+        'vendor_id' => $vendor->id,
+        'vendor_name' => $vendor->name,
+        'item_no' => 1,
+        'qty_po' => 10,
+        'uoi' => 'EA',
+        'description' => 'Sparepart Pompa',
+    ]);
+
+    $invoice = InvoicingReceipt::create([
+        'no_po' => '5300099999',
+        'purchase_order_issued_id' => $po->id,
+        'vendor_id' => $vendor->id,
+        'vendor_name' => $vendor->name,
+        'no_grs' => '1050012345',
+        'jenis' => 'GRS',
+        'status' => 'Terverifikasi',
+        'dokumen_grs' => 'berkas-grs/slip_grs_105.pdf',
+        'dokumen_verifikasi_grs' => 'verifikasi-grs/memo_acc_vp.pdf',
+    ]);
+
+    $test = Livewire::test(VendorPoTracking::class)
+        ->set('poNumber', '5300099999')
+        ->call('initiateSearch')
+        ->set('verificationEmail', 'finance@rejeki.com')
+        ->call('verifyVendorEmail');
+
+    // Test download Dokumen GRS
+    $test->call('downloadDokumenGrs', $invoice->id);
+    $test->assertFileDownloaded('Dokumen_GRS_PO_5300099999.pdf');
+
+    // Test download Dokumen Verifikasi GRS
+    $test->call('downloadVerifikasiGrs', $invoice->id);
+    $test->assertFileDownloaded('Surat_Verifikasi_GRS_PO_5300099999.pdf');
+
+    // Test when dokumen_verifikasi_grs is identical to dokumen_grs (mistaken legacy data)
+    $invoice->update(['dokumen_verifikasi_grs' => 'berkas-grs/slip_grs_105.pdf']);
+    $component = new VendorPoTracking;
+    $component->activePo = '5300099999';
+    $result = $component->downloadVerifikasiGrs($invoice->id);
+    expect($result)->toBeNull()
+        ->and(session('download_error'))->toBe('Surat Verifikasi GRS (ACC VP) belum diunggah oleh Tim Invoice.');
 });

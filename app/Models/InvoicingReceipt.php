@@ -47,6 +47,7 @@ use Illuminate\Support\Carbon;
     'tanggal_kirim_kasir',
     'lama_pekerjaan',
     'keterangan',
+    'dokumen_grs',
     'dokumen_verifikasi_grs',
     'dokumen_invoice',
     'dokumen_kelengkapan',

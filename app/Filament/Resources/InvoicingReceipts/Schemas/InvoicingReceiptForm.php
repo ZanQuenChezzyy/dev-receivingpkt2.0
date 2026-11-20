@@ -469,6 +469,13 @@ class InvoicingReceiptForm
                             ->default('Menunggu Verifikasi')
                             ->required(),
 
+                        FileUpload::make('dokumen_grs')
+                            ->label('Dokumen GRS (Goods Receipt Slip)')
+                            ->disk('public')
+                            ->directory('berkas-grs')
+                            ->acceptedFileTypes(['application/pdf', 'image/*'])
+                            ->helperText('Unggah berkas slip GRS fisik penerimaan gudang (Goods Receipt Slip).'),
+
                         FileUpload::make('dokumen_verifikasi_grs')
                             ->label('Surat / Dokumen Verifikasi GRS (ACC VP)')
                             ->disk('public')

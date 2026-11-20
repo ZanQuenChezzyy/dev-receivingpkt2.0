@@ -550,7 +550,7 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- CARD 1: BERKAS GRS (RECEIVING) -->
+                        <!-- CARD 1: BERKAS GRS (RECEIVING & INVOICING) -->
                         <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-emerald-500/5 via-white/40 dark:via-white/5 to-transparent border border-emerald-500/20 relative flex flex-col justify-between">
                             <div>
                                 <div class="flex items-start justify-between gap-3 mb-4">
@@ -561,32 +561,70 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">{{ __('Modul Receiving (Gudang)') }}</span>
+                                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">{{ __('Modul Receiving & Invoicing') }}</span>
                                             <h4 class="text-base font-black text-slate-800 dark:text-white">
-                                                {{ __('Berkas GRS (Goods Receipt Slip)') }}
+                                                {{ __('Dokumen GRS (Goods Receipt Slip)') }}
                                             </h4>
                                         </div>
                                     </div>
                                 </div>
 
                                 <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                    {{ __('Slip bukti penerimaan material di gudang Receiving yang telah diposting ke sistem SAP (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip & penagihan vendor.') }}
+                                    {{ __('Slip bukti penerimaan material di gudang Receiving yang telah diposting ke sistem SAP (MIGO 105). Diunggah oleh petugas gudang / tim invoice untuk keperluan arsip & penagihan vendor.') }}
                                 </p>
 
                                 <!-- List of GRS Items -->
                                 @php
                                     $grsItems = $trackingData['grs_items'] ?? collect();
+                                    $invReceipt = $trackingData['invoicing_receipt'] ?? null;
                                     $grsWithFiles = $grsItems->filter(fn ($item) => !empty($item->file_path));
+                                    $hasInvGrs = !empty($invReceipt?->dokumen_grs);
+                                    $invGrsUnique = $hasInvGrs && ! $grsWithFiles->contains('file_path', $invReceipt->dokumen_grs);
+                                    $totalGrsCount = $grsWithFiles->count() + ($invGrsUnique ? 1 : 0);
                                 @endphp
 
-                                @if ($grsItems->isEmpty())
+                                @if ($grsItems->isEmpty() && ! $hasInvGrs)
                                     <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs flex items-center gap-2">
                                         <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         <span>{{ __('Belum ada dokumen GRS yang diterbitkan untuk PO ini.') }}</span>
                                     </div>
                                 @else
                                     <div class="space-y-2.5 mb-4">
+                                        {{-- 1. Berkas GRS dari Invoice bila ada --}}
+                                        @if ($hasInvGrs)
+                                            <div class="p-3 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                                <div class="text-xs">
+                                                    <div class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                                        <span>{{ $invReceipt->no_grs ? 'GRS: ' . $invReceipt->no_grs : __('Dokumen GRS Invoice') }}</span>
+                                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                                            {{ $invReceipt->jenis ?: 'GRS' }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-[11px] text-slate-400 mt-0.5">
+                                                        {{ __('PO:') }} {{ $invReceipt->no_po }} • {{ __('DO:') }} {{ $invReceipt->no_do ?: '-' }}
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex items-center gap-2 shrink-0">
+                                                    <a href="{{ Storage::disk('public')->url($invReceipt->dokumen_grs) }}" target="_blank"
+                                                        class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors flex items-center gap-1.5">
+                                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                        {{ __('Lihat') }}
+                                                    </a>
+                                                    <button type="button" wire:click="downloadDokumenGrs({{ $invReceipt->id }})"
+                                                        class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all flex items-center gap-1.5">
+                                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                                        {{ __('Unduh') }}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        {{-- 2. Berkas GRS dari Gudang (grs_items) --}}
                                         @foreach ($grsItems as $gItem)
+                                            @if ($hasInvGrs && $gItem->file_path === $invReceipt->dokumen_grs)
+                                                @continue
+                                            @endif
                                             <div class="p-3 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                                                 <div class="text-xs">
                                                     <div class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
@@ -625,8 +663,8 @@
                             </div>
 
                             <div class="pt-3 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
-                                <span>{{ __('Sumber: Master Receiving Gudang') }}</span>
-                                <span>{{ $grsWithFiles->count() }} {{ __('Berkas Siap Diunduh') }}</span>
+                                <span>{{ __('Sumber: Gudang Receiving & Modul Invoicing') }}</span>
+                                <span>{{ $totalGrsCount }} {{ __('Berkas Siap Diunduh') }}</span>
                             </div>
                         </div>
 
@@ -641,34 +679,37 @@
                                             </svg>
                                         </div>
                                         <div>
-                                            <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">{{ __('Modul Invoicing (Keuangan)') }}</span>
+                                            <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">{{ __('Modul Invoicing (Verifikasi)') }}</span>
                                             <h4 class="text-base font-black text-slate-800 dark:text-white">
-                                                {{ __('Surat Verifikasi GRS (ACC VP)') }}
+                                                {{ __('Dokumen Verifikasi GRS (ACC VP)') }}
                                             </h4>
                                         </div>
                                     </div>
                                     @php
                                         $invReceipt = $trackingData['invoicing_receipt'] ?? null;
+                                        $grsPath = $invReceipt?->dokumen_grs ?: $invReceipt?->grsRdtvItem?->file_path;
+                                        $hasVerifikasi = !empty($invReceipt?->dokumen_verifikasi_grs)
+                                            && ($grsPath ? $invReceipt->dokumen_verifikasi_grs !== $grsPath : true);
                                     @endphp
                                     <span class="px-2.5 py-1 rounded-full text-[11px] font-bold
-                                        @if (in_array($invReceipt?->status, ['Terverifikasi', 'Terkirim Kasir', 'Selesai'], true))
+                                        @if ($hasVerifikasi)
                                             bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20
                                         @else
                                             bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20
                                         @endif">
-                                        {{ $invReceipt?->status ?? 'Menunggu Verifikasi' }}
+                                        {{ $hasVerifikasi ? __('Terverifikasi') : ($invReceipt?->status ?? __('Menunggu Verifikasi')) }}
                                     </span>
                                 </div>
 
                                 <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                    {{ __('Surat lembar verifikasi resmi penerbitan GRS yang telah ditandatangani dan disetujui (ACC) oleh Vice President Keuangan & Akuntansi PT Pupuk Kalimantan Timur.') }}
+                                    {{ __('Surat Verifikasi Penerimaan Barang resmi yang telah ditandatangani dan disetujui (ACC) oleh Vice President Planning, Receiving & Warehousing PT Pupuk Kalimantan Timur.') }}
                                 </p>
 
-                                @if (!empty($invReceipt?->dokumen_verifikasi_grs))
+                                @if ($hasVerifikasi)
                                     <div class="p-3.5 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/10 mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div class="text-xs">
                                             <div class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                                <span>{{ __('Surat Verifikasi GRS Resmi') }}</span>
+                                                <span>{{ __('Surat Verifikasi Penerimaan Barang') }}</span>
                                                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600">{{ __('ACC VP') }}</span>
                                             </div>
                                             <div class="text-[11px] text-slate-400 mt-0.5">
@@ -692,14 +733,14 @@
                                 @else
                                     <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs mb-4 flex items-center gap-2">
                                         <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                        <span>{{ __('Surat verifikasi belum diunggah oleh Tim Invoice. Berkas akan tersedia setelah proses verifikasi berkas tagihan disetujui VP.') }}</span>
+                                        <span>{{ __('Surat verifikasi belum diunggah oleh Tim Invoice. Berkas akan tersedia setelah proses verifikasi penerimaan barang disetujui VP.') }}</span>
                                     </div>
                                 @endif
                             </div>
 
                             <div class="pt-3 border-t border-slate-200/50 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
-                                <span>{{ __('Persetujuan: VP Finance & Accounting PKT') }}</span>
-                                <span>{{ !empty($invReceipt?->dokumen_verifikasi_grs) ? __('Berkas Tersedia') : __('Dalam Proses') }}</span>
+                                <span>{{ __('Persetujuan: VP Planning, Receiving & Warehousing PKT') }}</span>
+                                <span>{{ $hasVerifikasi ? __('Berkas Tersedia') : __('Dalam Proses') }}</span>
                             </div>
                         </div>
                     </div>
