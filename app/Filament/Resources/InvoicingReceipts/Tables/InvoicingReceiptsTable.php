@@ -256,16 +256,15 @@ class InvoicingReceiptsTable
                         ->icon('heroicon-m-clock')
                         ->sortable(),
 
-                    TextColumn::make('dokumen_grs')
+                    TextColumn::make('grsRdtvItem.file_path')
                         ->label('Dokumen GRS')
-                        ->state(fn (InvoicingReceipt $record) => $record->dokumen_grs ?: $record->grsRdtvItem?->file_path)
                         ->formatStateUsing(fn ($state) => $state ? 'Ada Dokumen GRS' : 'Belum Ada')
                         ->badge()
                         ->color(fn ($state) => $state ? 'info' : 'gray')
                         ->icon(fn ($state) => $state ? 'heroicon-m-document-text' : null)
-                        ->url(fn ($record) => ($record->dokumen_grs ?: $record->grsRdtvItem?->file_path) ? Storage::url($record->dokumen_grs ?: $record->grsRdtvItem?->file_path) : null)
+                        ->url(fn ($record) => $record->grsRdtvItem?->file_path ? Storage::url($record->grsRdtvItem->file_path) : null)
                         ->openUrlInNewTab()
-                        ->tooltip('Berkas Goods Receipt Slip (GRS / RDTV) fisik penerimaan gudang.'),
+                        ->tooltip('Berkas Goods Receipt Slip (GRS / RDTV) fisik penerimaan gudang dari modul GRS/RDTV.'),
 
                     TextColumn::make('dokumen_verifikasi_grs')
                         ->label('Verifikasi (ACC VP)')
@@ -274,8 +273,7 @@ class InvoicingReceiptsTable
                                 return 'Belum Ada';
                             }
                             // Jika terisi file slip GRS gudang, bukan surat verifikasi ACC VP
-                            $grsPath = $record->dokumen_grs ?: $record->grsRdtvItem?->file_path;
-                            if ($grsPath && $grsPath === $state) {
+                            if ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state) {
                                 return 'Belum Ada';
                             }
 
@@ -283,24 +281,21 @@ class InvoicingReceiptsTable
                         })
                         ->badge()
                         ->color(function ($state, InvoicingReceipt $record) {
-                            $grsPath = $record->dokumen_grs ?: $record->grsRdtvItem?->file_path;
-                            if (! $state || ($grsPath && $grsPath === $state)) {
+                            if (! $state || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state)) {
                                 return 'gray';
                             }
 
                             return 'success';
                         })
                         ->icon(function ($state, InvoicingReceipt $record) {
-                            $grsPath = $record->dokumen_grs ?: $record->grsRdtvItem?->file_path;
-                            if (! $state || ($grsPath && $grsPath === $state)) {
+                            if (! $state || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state)) {
                                 return null;
                             }
 
                             return 'heroicon-m-check-badge';
                         })
                         ->url(function (InvoicingReceipt $record) {
-                            $grsPath = $record->dokumen_grs ?: $record->grsRdtvItem?->file_path;
-                            if (! $record->dokumen_verifikasi_grs || ($grsPath && $grsPath === $record->dokumen_verifikasi_grs)) {
+                            if (! $record->dokumen_verifikasi_grs || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $record->dokumen_verifikasi_grs)) {
                                 return null;
                             }
 
@@ -849,29 +844,21 @@ class InvoicingReceiptsTable
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Tutup'),
 
-                    // ACTION UTAMA 3: UPLOAD BERKAS (GRS, VERIFIKASI GRS ACC VP & INVOICE VENDOR)
+                    // ACTION UTAMA 3: UPLOAD BERKAS (VERIFIKASI GRS ACC VP & INVOICE VENDOR)
                     Action::make('uploadBerkas')
                         ->label('Upload Berkas')
                         ->icon('heroicon-o-arrow-up-tray')
                         ->color('info')
                         ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
                         ->modalHeading(fn (?InvoicingReceipt $record) => 'Upload Berkas - PO: '.($record?->no_po ?? '-'))
-                        ->modalDescription('Unggah dokumen GRS gudang, dokumen verifikasi GRS (ACC VP), dan berkas invoice resmi vendor.')
+                        ->modalDescription('Unggah dokumen verifikasi GRS (setelah ACC VP) dan berkas invoice resmi vendor. Dokumen GRS fisik gudang otomatis terhubung dari modul GRS/RDTV.')
                         ->schema([
-                            FileUpload::make('dokumen_grs')
-                                ->label('Dokumen GRS (Goods Receipt Slip)')
-                                ->disk('public')
-                                ->directory('berkas-grs')
-                                ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                ->default(fn (?InvoicingReceipt $record) => $record?->dokumen_grs ?: $record?->grsRdtvItem?->file_path)
-                                ->helperText('Unggah berkas slip GRS fisik penerimaan gudang (Goods Receipt Slip).'),
-
                             FileUpload::make('dokumen_verifikasi_grs')
                                 ->label('Surat / Dokumen Verifikasi GRS (ACC VP)')
                                 ->disk('public')
                                 ->directory('verifikasi-grs')
                                 ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                ->default(fn (?InvoicingReceipt $record) => ($record?->dokumen_verifikasi_grs && $record?->dokumen_verifikasi_grs !== ($record?->dokumen_grs ?: $record?->grsRdtvItem?->file_path)) ? $record->dokumen_verifikasi_grs : null)
+                                ->default(fn (?InvoicingReceipt $record) => ($record?->dokumen_verifikasi_grs && $record?->dokumen_verifikasi_grs !== $record?->grsRdtvItem?->file_path) ? $record->dokumen_verifikasi_grs : null)
                                 ->helperText('Unggah surat verifikasi penerimaan barang resmi yang telah disetujui / ditandatangani VP.'),
 
                             FileUpload::make('dokumen_invoice')
@@ -883,14 +870,13 @@ class InvoicingReceiptsTable
                                 ->helperText('Unggah berkas invoice resmi setelah vendor mengirimkan berkas tagihan fisik ke PKT.'),
                         ])
                         ->action(function (InvoicingReceipt $record, array $data) {
-                            $grsFile = $data['dokumen_grs'] ?? null;
                             $verifikasiFile = $data['dokumen_verifikasi_grs'] ?? null;
                             $invoiceFile = $data['dokumen_invoice'] ?? null;
 
-                            if (empty($grsFile) && empty($verifikasiFile) && empty($invoiceFile) && empty($record->dokumen_grs) && empty($record->dokumen_verifikasi_grs) && empty($record->dokumen_invoice)) {
+                            if (empty($verifikasiFile) && empty($invoiceFile) && empty($record->dokumen_verifikasi_grs) && empty($record->dokumen_invoice)) {
                                 Notification::make()
                                     ->title('Tidak Ada Berkas Dipilih')
-                                    ->body('Silakan pilih setidaknya satu berkas (Dokumen GRS, Verifikasi GRS ACC VP, atau Invoice Vendor).')
+                                    ->body('Silakan pilih setidaknya satu berkas (Verifikasi GRS ACC VP atau Invoice Vendor).')
                                     ->warning()
                                     ->send();
 
@@ -898,10 +884,6 @@ class InvoicingReceiptsTable
                             }
 
                             $updateData = [];
-
-                            if (array_key_exists('dokumen_grs', $data)) {
-                                $updateData['dokumen_grs'] = $grsFile;
-                            }
 
                             if (array_key_exists('dokumen_verifikasi_grs', $data)) {
                                 $updateData['dokumen_verifikasi_grs'] = $verifikasiFile;
@@ -949,7 +931,7 @@ class InvoicingReceiptsTable
 
                             Notification::make()
                                 ->title('Berkas Berhasil Disimpan')
-                                ->body("Dokumen GRS / verifikasi / invoice untuk PO {$record->no_po} telah diperbarui.")
+                                ->body("Dokumen verifikasi / invoice untuk PO {$record->no_po} telah diperbarui.")
                                 ->success()
                                 ->send();
                         }),

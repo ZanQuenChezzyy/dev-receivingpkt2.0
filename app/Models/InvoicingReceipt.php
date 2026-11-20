@@ -47,7 +47,6 @@ use Illuminate\Support\Carbon;
     'tanggal_kirim_kasir',
     'lama_pekerjaan',
     'keterangan',
-    'dokumen_grs',
     'dokumen_verifikasi_grs',
     'dokumen_invoice',
     'dokumen_kelengkapan',
@@ -179,6 +178,14 @@ class InvoicingReceipt extends Model
     public function grsRdtvItem(): BelongsTo
     {
         return $this->belongsTo(GrsRdtvItem::class);
+    }
+
+    /**
+     * Mengambil path berkas Dokumen GRS fisik langsung dari relasi master GRS/RDTV tanpa duplikasi kolom.
+     */
+    public function getDokumenGrsAttribute(): ?string
+    {
+        return $this->grsRdtvItem?->file_path;
     }
 
     public function deliveryOrderReceipt(): BelongsTo

@@ -481,15 +481,21 @@ test('vendor can download dokumen_grs and distinct dokumen_verifikasi_grs', func
         'description' => 'Sparepart Pompa',
     ]);
 
+    $grsItem = GrsRdtvItem::create([
+        'document_code' => '1050012345',
+        'file_path' => 'berkas-grs/slip_grs_105.pdf',
+        'status' => 'Approved',
+    ]);
+
     $invoice = InvoicingReceipt::create([
         'no_po' => '5300099999',
         'purchase_order_issued_id' => $po->id,
+        'grs_rdtv_item_id' => $grsItem->id,
         'vendor_id' => $vendor->id,
         'vendor_name' => $vendor->name,
         'no_grs' => '1050012345',
         'jenis' => 'GRS',
         'status' => 'Terverifikasi',
-        'dokumen_grs' => 'berkas-grs/slip_grs_105.pdf',
         'dokumen_verifikasi_grs' => 'verifikasi-grs/memo_acc_vp.pdf',
     ]);
 

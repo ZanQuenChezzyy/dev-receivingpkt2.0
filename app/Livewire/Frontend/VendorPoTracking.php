@@ -1258,7 +1258,6 @@ class VendorPoTracking extends Component
             'no_do' => $do?->delivery_order_no ?? '-',
             'material_type' => InvoicingReceipt::normalizeMaterialType($detail?->material_type ?? $firstPo->material_type),
             'jenis' => 'GRS',
-            'dokumen_grs' => $grsItem?->file_path,
             'status' => 'Menunggu Verifikasi',
             'keterangan' => 'Didaftarkan melalui Portal Tracking Vendor (Self-service penagihan)',
             'tanggal_terima_grs' => now(),

@@ -250,22 +250,20 @@ class InvoicingReceiptInfolist
                                 default => 'gray',
                             }),
 
-                        TextEntry::make('dokumen_grs')
+                        TextEntry::make('grsRdtvItem.file_path')
                             ->label('Dokumen GRS (Goods Receipt Slip)')
-                            ->state(fn ($record) => $record->dokumen_grs ?: $record->grsRdtvItem?->file_path)
                             ->formatStateUsing(fn ($state) => $state ? 'Buka Dokumen GRS' : 'Belum Ada Berkas')
                             ->badge()
                             ->color(fn ($state) => $state ? 'info' : 'gray')
                             ->icon(fn ($state) => $state ? 'heroicon-m-arrow-top-right-on-square' : null)
-                            ->url(fn ($record) => ($record->dokumen_grs ?: $record->grsRdtvItem?->file_path) ? Storage::url($record->dokumen_grs ?: $record->grsRdtvItem?->file_path) : null)
+                            ->url(fn ($record) => $record->grsRdtvItem?->file_path ? Storage::url($record->grsRdtvItem->file_path) : null)
                             ->openUrlInNewTab()
                             ->placeholder('-'),
 
                         TextEntry::make('dokumen_verifikasi_grs')
                             ->label('Dokumen Verifikasi GRS (ACC VP)')
                             ->formatStateUsing(function ($state, $record) {
-                                $grsPath = $record->dokumen_grs ?: $record->grsRdtvItem?->file_path;
-                                if (! $state || ($grsPath && $grsPath === $state)) {
+                                if (! $state || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state)) {
                                     return 'Belum Ada Berkas';
                                 }
 
@@ -273,24 +271,21 @@ class InvoicingReceiptInfolist
                             })
                             ->badge()
                             ->color(function ($state, $record) {
-                                $grsPath = $record->dokumen_grs ?: $record->grsRdtvItem?->file_path;
-                                if (! $state || ($grsPath && $grsPath === $state)) {
+                                if (! $state || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state)) {
                                     return 'gray';
                                 }
 
                                 return 'success';
                             })
                             ->icon(function ($state, $record) {
-                                $grsPath = $record->dokumen_grs ?: $record->grsRdtvItem?->file_path;
-                                if (! $state || ($grsPath && $grsPath === $state)) {
+                                if (! $state || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state)) {
                                     return null;
                                 }
 
                                 return 'heroicon-m-check-badge';
                             })
                             ->url(function ($record) {
-                                $grsPath = $record->dokumen_grs ?: $record->grsRdtvItem?->file_path;
-                                if (! $record->dokumen_verifikasi_grs || ($grsPath && $grsPath === $record->dokumen_verifikasi_grs)) {
+                                if (! $record->dokumen_verifikasi_grs || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $record->dokumen_verifikasi_grs)) {
                                     return null;
                                 }
 
