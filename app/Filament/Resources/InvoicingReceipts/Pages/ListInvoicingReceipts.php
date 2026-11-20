@@ -181,6 +181,9 @@ class ListInvoicingReceipts extends ListRecords
                         ->helperText('Pilih satu atau hingga 100 berkas PDF Verifikasi GRS. Sistem membaca Nomor GRS (105) dan PO dari isi dokumen maupun nama file (contoh format nama: 5300009876_5007697781.pdf).'),
                 ])
                 ->action(function (array $data): void {
+                    @set_time_limit(300);
+                    @ini_set('max_execution_time', '300');
+
                     $rawFiles = $data['verifikasi_files'] ?? [];
                     $files = is_array($rawFiles) ? $rawFiles : [$rawFiles];
                     $files = array_filter($files);

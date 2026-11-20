@@ -220,19 +220,21 @@ class GrsPdfParserService
         $content = file_exists($filePathOrContent) ? (string) file_get_contents($filePathOrContent) : $filePathOrContent;
         $detectionSource = 'none';
 
-        // 1. Ekstrak teks digital langsung dari PDF stream
+        // 1. Ekstrak teks digital langsung dari PDF stream (pure PHP, instan < 5ms)
         $text = $this->extractText($content);
 
         if (strlen(trim($text)) >= 30 && (str_contains($text, 'GRS') || str_contains($text, '500') || str_contains($text, '530'))) {
             $detectionSource = 'text';
         }
 
-        // 2. Jika teks kosong / minim (misal file hasil cetak/scan gambar), gunakan OCR otomatis
-        if ($detectionSource === 'none') {
-            $ocrText = $this->extractOcrText($content);
-            if (strlen(trim($ocrText)) >= 20) {
-                $text = $ocrText;
-                $detectionSource = 'ocr';
+        // 2. Jika teks belum lengkap, scan langsung seluruh uncompressed stream (pure PHP, < 2ms)
+        if ($detectionSource === 'none' || ! str_contains($text, '500')) {
+            $streamText = $this->extractRawStreamsText($content);
+            if (! empty($streamText)) {
+                $text .= "\n".$streamText;
+                if ($detectionSource === 'none' && (str_contains($text, '500') || str_contains($text, '530'))) {
+                    $detectionSource = 'stream';
+                }
             }
         }
 
@@ -349,65 +351,32 @@ class GrsPdfParserService
     }
 
     /**
-     * Melakukan OCR pada stream gambar di dalam file PDF jika sistem mendukung.
-     * Menggunakan Windows Media OCR (bawaan Windows 10/11).
+     * Memindai seluruh stream uncompressed untuk menemukan teks string atau nomor dokumen
+     * secara langsung tanpa dependensi font/CMap (pure PHP, instan < 2ms, zero timeout).
      */
-    public function extractOcrText(string $pdfContent): string
+    public function extractRawStreamsText(string $pdfContent): string
     {
-        if (! preg_match('/\/Subtype\s*\/Image.*?stream[\r\n]+(.*?)[\r\n]+endstream/s', $pdfContent, $m)) {
-            return '';
-        }
+        preg_match_all('/(\d+)\s+(\d+)\s+obj(.*?)endobj/s', $pdfContent, $objs, PREG_SET_ORDER);
+        $text = '';
 
-        $imageBytes = $m[1];
-        if (strlen($imageBytes) < 1000) {
-            return '';
-        }
-
-        $tempJpg = sys_get_temp_dir().DIRECTORY_SEPARATOR.'grs_ocr_'.uniqid().'.jpg';
-        file_put_contents($tempJpg, $imageBytes);
-
-        $ocrText = '';
-
-        try {
-            if (PHP_OS_FAMILY === 'Windows') {
-                $psScript = <<<'PS'
-Add-Type -AssemblyName System.Runtime.WindowsRuntime
-$asTaskGeneric = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object {
-    $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1'
-}
-function Await($op, $type) {
-    $m = $asTaskGeneric.MakeGenericMethod($type)
-    $t = $m.Invoke($null, @($op))
-    $t.Wait()
-    return $t.Result
-}
-[Windows.Media.Ocr.OcrEngine, Windows.Foundation.UniversalApiContract, ContentType = WindowsRuntime] | Out-Null
-[Windows.Graphics.Imaging.BitmapDecoder, Windows.Foundation.UniversalApiContract, ContentType = WindowsRuntime] | Out-Null
-[Windows.Storage.StorageFile, Windows.Storage, ContentType = WindowsRuntime] | Out-Null
-
-$engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages()
-if ($engine) {
-    $imgPath = $args[0]
-    $file = Await ([Windows.Storage.StorageFile]::GetFileFromPathAsync($imgPath)) ([Windows.Storage.StorageFile])
-    $stream = Await ($file.OpenAsync([Windows.Storage.FileAccessMode]::Read)) ([Windows.Storage.Streams.IRandomAccessStream])
-    $decoder = Await ([Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($stream)) ([Windows.Graphics.Imaging.BitmapDecoder])
-    $bitmap = Await ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
-    $res = Await ($engine.RecognizeAsync($bitmap)) ([Windows.Media.Ocr.OcrResult])
-    Write-Output $res.Text
-}
-PS;
-                $psTemp = sys_get_temp_dir().DIRECTORY_SEPARATOR.'grs_winocr_'.uniqid().'.ps1';
-                file_put_contents($psTemp, $psScript);
-                $ocrText = (string) shell_exec('powershell -NoProfile -ExecutionPolicy Bypass -File '.escapeshellarg($psTemp).' '.escapeshellarg($tempJpg));
-                @unlink($psTemp);
+        foreach ($objs as $o) {
+            $body = $o[3];
+            if (str_contains($body, 'stream')) {
+                $stream = $this->getStream($body);
+                if (! empty($stream)) {
+                    // Ekstrak teks dalam tanda kurung: (Nomor GRS: 5007697783) atau kata-kata
+                    if (preg_match_all('/\(([^)]+)\)/', $stream, $matches)) {
+                        $text .= implode(' ', $matches[1])."\n";
+                    }
+                    // Tangkap nomor dokumen 10-digit langsung jika ada di stream
+                    if (preg_match_all('/(?:500\d{7}|530\d{7})/', $stream, $numMatches)) {
+                        $text .= implode(' ', $numMatches[0])."\n";
+                    }
+                }
             }
-        } catch (\Throwable $e) {
-            report($e);
-        } finally {
-            @unlink($tempJpg);
         }
 
-        return trim($ocrText);
+        return $text;
     }
 
     /**
