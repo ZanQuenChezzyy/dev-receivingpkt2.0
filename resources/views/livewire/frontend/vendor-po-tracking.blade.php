@@ -23,13 +23,13 @@
                 </span>
             </h1>
             <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium max-w-2xl mx-auto">
-                {{ __('Pantau status penerimaan surat jalan, Pengajuan QC, hingga GRS secara real-time khusus bagi Rekanan/Vendor PT Pupuk Kalimantan Timur (wajib verifikasi email resmi vendor).') }}
+                {{ __('Pantau status penerimaan surat jalan, Pengajuan QC, hingga penerbitan GRS khusus bagi Rekanan/Vendor PT Pupuk Kalimantan Timur (wajib verifikasi email resmi vendor).') }}
             </p>
             <div class="mt-4 inline-flex flex-wrap items-center justify-center gap-2 px-4 py-2 rounded-2xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/25 text-xs text-slate-700 dark:text-slate-200">
                 <span class="font-bold text-[#0A4F86] dark:text-sky-400">{{ __('Info User Internal PKT:') }}</span>
                 <span>{{ __('Untuk cek kedatangan barang atau pengambilan material, gunakan') }}</span>
                 <a href="{{ route('frontend.list-material') }}" wire:navigate class="font-extrabold text-[#F47920] underline hover:text-[#BE5A27]">{{ __('Daftar Material') }}</a>
-                <span>{{ __('atau tanya langsung pada ALEX Asisten AI Receiving di pojok kanan bawah.') }}</span>
+                <span>{{ __('atau tanyakan pada asisten ALEX di pojok kanan bawah.') }}</span>
             </div>
         </div>
 

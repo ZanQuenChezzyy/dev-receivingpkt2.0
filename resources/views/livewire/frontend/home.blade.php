@@ -111,7 +111,7 @@
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                                 <div class="p-3 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
                                     <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">{{ __('Status Dokumen') }}</span>
-                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">{{ __('PO & DO Realtime') }}</span>
+                                    <span class="text-xs font-bold text-slate-800 dark:text-white mt-0.5 block">{{ __('Status PO & DO') }}</span>
                                 </div>
                                 <div class="p-3 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-200/60 dark:border-white/5">
                                     <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block">{{ __('Batas Tagihan') }}</span>
@@ -162,7 +162,7 @@
                                 </svg>
                             </div>
                             <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-500/20">
-                                {{ __('QR Code Validated') }}
+                                {{ __('Verifikasi QR') }}
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
@@ -278,7 +278,7 @@
                                 </svg>
                             </div>
                             <span class="px-3 py-1 rounded-full text-xs font-bold bg-[#F47920]/10 text-[#F47920] border border-[#F47920]/20">
-                                {{ __('Paperless MIR') }}
+                                {{ __('Formulir MIR') }}
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
@@ -291,7 +291,7 @@
 
                     <a href="{{ route('frontend.mir.create') }}" wire:navigate
                         class="relative z-10 inline-flex items-center justify-between w-full p-3.5 rounded-xl bg-slate-900/5 dark:bg-white/5 hover:bg-[#F47920] dark:hover:bg-[#F47920] text-slate-800 dark:text-white hover:text-white transition-all duration-300 font-bold text-xs shadow-sm">
-                        <span>{{ __('Buat Permohonan MIR Sekarang') }}</span>
+                        <span>{{ __('Buat Permohonan MIR') }}</span>
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                     </a>
                 </div>
@@ -315,7 +315,7 @@
                             {{ __('Goods Receipt Slip (GRS / RDTV)') }}
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-                            {{ __('Penerbitan GRS untuk barang lolos QC (rasio kelulusan ~95,9%) serta penerbitan RDTV untuk barang QC tolak lengkap dengan mekanisme Surat Klarifikasi Kebenaran Barang.') }}
+                            {{ __('Penerbitan GRS untuk barang yang lolos QC serta penerbitan RDTV untuk barang tolak QC dengan mekanisme klarifikasi barang.') }}
                         </p>
                     </div>
 
@@ -341,7 +341,7 @@
                             </span>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
-                            {{ __('ALEX — Asisten AI Receiving') }}
+                            {{ __('ALEX — Asisten Receiving') }}
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
                             {{ __('Asisten untuk menjawab pertanyaan status nomor PO, surat jalan DO, dan alur kerja penerimaan barang.') }}
@@ -350,7 +350,7 @@
 
                     <button type="button" onclick="startAiTour()"
                         class="relative z-10 inline-flex items-center justify-between w-full p-3.5 rounded-xl bg-slate-900/5 dark:bg-white/5 hover:bg-[#F47920] dark:hover:bg-[#F47920] text-slate-800 dark:text-white hover:text-white transition-all duration-300 font-bold text-xs shadow-sm">
-                        <span>{{ __('Ikuti Panduan ALEX') }}</span>
+                        <span>{{ __('Buka Panduan') }}</span>
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>
                 </div>
@@ -530,7 +530,7 @@
                     <div class="flex items-center gap-4 text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
                         <span class="inline-flex items-center gap-1.5">
                             <span class="w-2.5 h-2.5 rounded bg-[#0A4F86] inline-block"></span>
-                            {{ __('Unit Penerimaan (Focal Hub)') }}
+                            {{ __('Unit Penerimaan') }}
                         </span>
                         <span class="inline-flex items-center gap-1.5">
                             <span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block"></span>
@@ -703,10 +703,10 @@
                                     <text x="270" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.10em" fill="var(--diagram-ink)">{{ __('02 · EXPEDITING') }}</text>
                                     <text x="270" y="31.5" font-size="7" fill="var(--diagram-muted)">{{ __('Pengendalian Logistik') }}</text>
 
-                                    <!-- 03 RECEIVING (Focal Hub) -->
+                                    <!-- 03 RECEIVING -->
                                     <rect x="375" y="6" width="150" height="32" rx="5" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-opacity="0.4" stroke-width="1"/>
                                     <text x="450" y="20" class="mono" font-size="9" font-weight="800" letter-spacing="0.10em" fill="var(--diagram-blue)">{{ __('03 · RECEIVING') }}</text>
-                                    <text x="450" y="32.5" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-tangerine)">{{ __('FOCAL HUB / SAP 103') }}</text>
+                                    <text x="450" y="32.5" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-tangerine)">{{ __('PENERIMAAN / SAP 103') }}</text>
 
                                     <!-- 04 ISTEK 2 -->
                                     <rect x="555" y="8" width="150" height="28" rx="4" fill="var(--diagram-chip)"/>
@@ -869,7 +869,7 @@
                                     <text x="280" y="190" text-anchor="middle" class="mono" font-size="7.5" fill="var(--diagram-muted)">{{ __('Tracking Jadwal PO') }}</text>
                                 </g>
 
-                                <!-- 3. RECEIVING: Menerima & Memeriksa PO (Col 3 - Central Focal Hub) -->
+                                <!-- 3. RECEIVING: Menerima & Memeriksa PO (Col 3) -->
                                 <g class="node-group" id="node-receiving-main">
                                     <rect x="396" y="154" width="134" height="56" rx="6" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-width="1.5"/>
                                     <rect x="402" y="160" width="26" height="11" rx="2" fill="var(--diagram-blue)" fill-opacity="0.25"/>
@@ -1027,9 +1027,9 @@
                                     <line x1="700" y1="633" x2="726" y2="633" stroke="var(--diagram-muted)" stroke-width="1.2" marker-end="url(#arrow)"/>
                                     <text x="736" y="636" font-size="8.5" fill="var(--diagram-muted)">{{ __('Alur Lintas Unit') }}</text>
 
-                                    <!-- 6. Focal Hub Unit -->
+                                    <!-- 6. Unit Penerimaan -->
                                     <rect x="850" y="628" width="14" height="10" rx="2" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-width="1.2"/>
-                                    <text x="870" y="636" font-size="8.5" font-weight="700" fill="var(--diagram-blue)">{{ __('Receiving (Focal Hub)') }}</text>
+                                    <text x="870" y="636" font-size="8.5" font-weight="700" fill="var(--diagram-blue)">{{ __('Unit Penerimaan') }}</text>
                                 </g>
 
                             </svg>
@@ -1145,7 +1145,7 @@
                                 <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                             </div>
                             <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-1">{{ __('Analisa Laboratorium Terstandar') }}</h4>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Parameter kemurnian, kelembapan, dan komposisi senyawa kimia diuji secara presisi.') }}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Pengujian parameter kemurnian, kelembapan, dan komposisi senyawa kimia.') }}</p>
                         </div>
                     </div>
 
@@ -1176,7 +1176,7 @@
                             <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-600 text-white flex items-center justify-center mb-4 shadow-lg shadow-blue-900/30">
                                 <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
-                            <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-1">{{ __('Verifikasi Spesifikasi Presisi') }}</h4>
+                            <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-1">{{ __('Verifikasi Spesifikasi Teknis') }}</h4>
                             <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Pengecekan kesesuaian part number, material metalurgi, dan sertifikat pabrikan.') }}</p>
                         </div>
                     </div>
@@ -1240,8 +1240,8 @@
                             <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-600 text-white flex items-center justify-center mb-4 shadow-lg shadow-amber-900/30">
                                 <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                             </div>
-                            <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-1">{{ __('Proteksi Kualitas Terjamin') }}</h4>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Material yang tidak memenuhi syarat langsung dihentikan sebelum masuk ke rantai produksi pabrik.') }}</p>
+                            <h4 class="text-lg font-bold text-slate-800 dark:text-white mb-1">{{ __('Penanganan Barang Ditolak') }}</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">{{ __('Material yang tidak memenuhi syarat dipisahkan dan diproses retur ke vendor.') }}</p>
                         </div>
                     </div>
 
@@ -1358,7 +1358,7 @@
                     <div class="flex items-center gap-4 text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
                         <span class="inline-flex items-center gap-1.5">
                             <span class="w-2.5 h-2.5 rounded bg-[#0A4F86] inline-block"></span>
-                            {{ __('Receiving (Focal Hub)') }}
+                            {{ __('Unit Penerimaan') }}
                         </span>
                         <span class="inline-flex items-center gap-1.5">
                             <span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block"></span>
@@ -1430,10 +1430,10 @@
                                      COLUMN HEADERS (4 UNIT KERJA - SLIDE 5)
                                      =================================================== -->
                                 <g text-anchor="middle">
-                                    <!-- 01 RECEIVING (Focal Hub) -->
+                                    <!-- 01 RECEIVING -->
                                     <rect x="62" y="6" width="190" height="32" rx="5" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-opacity="0.4" stroke-width="1"/>
                                     <text x="157.5" y="20" class="mono" font-size="9" font-weight="800" letter-spacing="0.10em" fill="var(--diagram-blue)">{{ __('01 · RECEIVING') }}</text>
-                                    <text x="157.5" y="32.5" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-tangerine)">{!! __('FOCAL HUB · RDTV &amp; GRS') !!}</text>
+                                    <text x="157.5" y="32.5" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-tangerine)">{!! __('PENERIMAAN · RDTV &amp; GRS') !!}</text>
 
                                     <!-- 02 EKSPEDITING -->
                                     <rect x="377" y="8" width="190" height="28" rx="4" fill="var(--diagram-chip)"/>
@@ -1646,7 +1646,7 @@
                                     <text x="780" y="636" font-size="8.5" font-weight="600" fill="var(--diagram-blue)">{{ __('Surat Klarifikasi Kebenaran Barang') }}</text>
 
                                     <rect x="990" y="628" width="14" height="10" rx="2" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-width="1.2"/>
-                                    <text x="1010" y="636" font-size="8.5" font-weight="700" fill="var(--diagram-blue)">{{ __('Receiving (Focal Hub)') }}</text>
+                                    <text x="1010" y="636" font-size="8.5" font-weight="700" fill="var(--diagram-blue)">{{ __('Unit Penerimaan') }}</text>
                                 </g>
                             </svg>
                         </div>
@@ -1741,7 +1741,7 @@
 
                                         <rect x="530" y="6" width="200" height="32" rx="5" fill="var(--diagram-blue-tint)" stroke="var(--diagram-blue)" stroke-opacity="0.4" stroke-width="1"/>
                                         <text x="630" y="20" class="mono" font-size="8.5" font-weight="800" letter-spacing="0.08em" fill="var(--diagram-blue)">{{ __('03 · STAF INVOICING') }}</text>
-                                        <text x="630" y="32.5" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-tangerine)">{{ __('FOCAL HUB · SISTEM MITRAKU') }}</text>
+                                        <text x="630" y="32.5" class="mono" font-size="6.5" font-weight="700" fill="var(--diagram-tangerine)">{{ __('PENERIMAAN · SISTEM MITRAKU') }}</text>
 
                                         <rect x="782" y="8" width="200" height="28" rx="4" fill="var(--diagram-chip)"/>
                                         <text x="882" y="21" class="mono" font-size="8.5" font-weight="700" letter-spacing="0.08em" fill="var(--diagram-ink)">{{ __('04 · PENYEDIA BARANG') }}</text>
@@ -2284,7 +2284,7 @@
                         <span class="text-[11px] font-extrabold text-[#F47920] uppercase tracking-widest">{{ __('Tipe ZSP') }}</span>
                         <h3 class="text-lg font-black text-slate-800 dark:text-white mt-1 mb-2">{{ __('Sparepart') }}</h3>
                         <p class="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
-                            {{ __('Suku cadang mesin, instrumen, dan komponen pabrik berpresisi tinggi untuk turn-around & pemeliharaan rutin.') }}
+                            {{ __('Suku cadang mesin, instrumen, dan komponen pabrik untuk turn-around dan pemeliharaan rutin.') }}
                         </p>
                     </div>
                     <div class="relative z-10 mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 text-[11px] font-semibold text-slate-400">
@@ -2437,7 +2437,7 @@
                                         AI
                                     </div>
                                     <div>
-                                        <h4 class="text-sm font-bold text-slate-800 dark:text-white">{{ __('ALEX • Asisten AI Receiving') }}</h4>
+                                        <h4 class="text-sm font-bold text-slate-800 dark:text-white">{{ __('ALEX • Asisten Receiving') }}</h4>
                                         @if ($aiSettingActive ?? false)
                                             <p class="text-[10px] text-emerald-500 font-bold flex items-center gap-1">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {{ __('Online • Siap Menjawab') }}
@@ -2449,7 +2449,6 @@
                                         @endif
                                     </div>
                                 </div>
-                                <span class="text-[11px] font-mono text-slate-400">v2.0</span>
                             </div>
 
                             <!-- Bubble 1 (User) -->
@@ -2467,7 +2466,7 @@
                                 <div class="bg-white/80 dark:bg-white/10 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-slate-100 text-xs sm:text-sm py-3 px-4 rounded-2xl rounded-tl-none max-w-[90%] shadow-sm leading-relaxed">
                                     <p class="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mb-1">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                        {{ __('Material Ditemukan & Selesai GRS!') }}
+                                        {{ __('Material Sudah Terbit GRS') }}
                                     </p>
                                     <p class="text-xs text-slate-600 dark:text-slate-300">
                                         {{ __('Item: PEWARNA UREA; RED 3% ORG (Qty: 50.000). Dokumen GRS telah terbit dan barang berada di Depan Gudang Chemical. Anda dapat langsung mengajukan MIR.') }}
@@ -2505,10 +2504,10 @@
                     <div class="relative z-10">
                         <span class="text-xs font-bold uppercase tracking-wider text-[#F47920]">{{ __('Layanan Mandiri') }}</span>
                         <h3 class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white mt-1 mb-3">
-                            {{ __('Siap Mengambil Material?') }}
+                            {{ __('Pengambilan Material') }}
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                            {{ __('Isi formulir Material Issue Request (MIR) secara digital tanpa perlu membawa berkas fisik ke gudang. Cepat, transparan, dan terlacak.') }}
+                            {{ __('Isi formulir Material Issue Request (MIR) untuk proses serah terima barang di gudang.') }}
                         </p>
                         <a href="{{ route('frontend.mir.create') }}" wire:navigate
                             class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all">

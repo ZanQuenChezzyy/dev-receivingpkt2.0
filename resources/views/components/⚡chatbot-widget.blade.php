@@ -77,7 +77,7 @@ new class extends Component {
         $this->chats[] = [
             'role' => 'assistant',
             'content' => $this->isAiActive
-                ? __('Halo! Saya **ALEX**, Asisten AI Receiving PT Pupuk Kalimantan Timur. Silakan ketik **Nomor PO**, **Nomor Surat Jalan (DO)**, **Stock Number**, atau **Nomor MIR** yang ingin Anda tanyakan.')
+                ? __('Halo! Saya **ALEX**, asisten penerimaan barang (Receiving) PT Pupuk Kalimantan Timur. Silakan ketik **Nomor PO**, **Nomor Surat Jalan (DO)**, **Stock Number**, atau **Nomor MIR** yang ingin Anda tanyakan.')
                 : __('Mohon maaf, **ALEX — Asisten Receiving** PT Pupuk Kalimantan Timur saat ini sedang **Offline / Maintenance** (dalam masa pemeliharaan). Silakan gunakan menu **Daftar Material** atau **Formulir MIR** untuk pengecekan.')
         ];
     }
@@ -88,7 +88,7 @@ new class extends Component {
         if (! $this->isAiActive) {
             $this->chats[] = [
                 'role' => 'assistant',
-                'content' => __('Mohon maaf, **ALEX — Asisten AI Receiving** saat ini sedang **Offline / Maintenance**. Silakan coba kembali saat layanan telah diaktifkan.')
+                'content' => __('Mohon maaf, **ALEX — Asisten Receiving** saat ini sedang **Offline / Maintenance**. Silakan coba kembali saat layanan telah diaktifkan.')
             ];
             $this->message = '';
 
@@ -1028,7 +1028,7 @@ new class extends Component {
                 @touchstart.passive="pressing = true"
                 @touchend.passive="pressing = false"
                 @touchcancel.passive="pressing = false"
-                aria-label="{{ __('Buka ALEX Asisten AI Receiving') }}"
+                aria-label="{{ __('Buka Chat Asisten ALEX') }}"
                 :class="pressing ? 'scale-[0.90]' : 'hover:scale-[1.08]'"
                 class="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full flex items-center justify-center {{ $isAiActive ? 'bg-[#F47920] hover:bg-[#e06b18] shadow-[0_8px_24px_rgba(244,121,32,0.45)]' : 'bg-slate-700 hover:bg-slate-800 shadow-md' }} text-white border border-white/20 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] cursor-pointer select-none">
 
@@ -1104,7 +1104,7 @@ new class extends Component {
                         </span>
                     </div>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium tracking-tight">
-                        {{ __('Asisten AI Receiving • Pupuk Kaltim') }}
+                        {{ __('Asisten Receiving • Pupuk Kaltim') }}
                     </p>
                 </div>
             </div>
@@ -1297,7 +1297,7 @@ new class extends Component {
                  x-init="$watch('$wire.message', () => { setTimeout(() => resize(), 10) })"
             >
 
-                <textarea wire:model="message" x-ref="input" placeholder="{{ $isAiActive ? __('Tanya ALEX seputar nomor PO, DO, atau material...') : __('ALEX Asisten AI sedang Offline...') }}"
+                <textarea wire:model="message" x-ref="input" placeholder="{{ $isAiActive ? __('Tanya ALEX seputar nomor PO, DO, atau material...') : __('Asisten ALEX sedang Offline...') }}"
                     class="w-full pt-1.5 pb-1 pr-2 bg-transparent text-base md:text-sm text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed font-normal resize-none overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 max-h-[120px] leading-relaxed"
                     required autocomplete="off" @disabled($isTyping || !$isAiActive)
                     @input="resize()"

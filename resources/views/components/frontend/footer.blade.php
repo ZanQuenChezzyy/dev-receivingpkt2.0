@@ -68,13 +68,13 @@
                 <div class="pt-1">
                     @if ($footerAiActive)
                         <button type="button" onclick="if (typeof window.startAiTour === 'function' && window.Shepherd) { window.startAiTour(); } else { window.location.href = @js(route('home', ['tour' => 'ai'])); }" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#F47920] hover:underline cursor-pointer">
-                            <span>{{ __('Panduan ALEX Asisten AI Receiving (Online)') }}</span>
+                            <span>{{ __('Panduan Asisten ALEX (Online)') }}</span>
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     @else
                         <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                            <span>{{ __('ALEX Asisten AI Receiving (Offline)') }}</span>
+                            <span>{{ __('Asisten ALEX (Offline)') }}</span>
                         </span>
                     @endif
                 </div>
