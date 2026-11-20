@@ -164,9 +164,9 @@ class ListInvoicingReceipts extends ListRecords
                 ->label('Upload Verifikasi GRS')
                 ->icon(Heroicon::ArrowUpTray)
                 ->color('info')
-                ->modalHeading('Upload & Verifikasi Massal Dokumen GRS (OCR)')
-                ->modalDescription('Unggah berkas PDF Surat Verifikasi Penerimaan Barang secara massal (hingga 100 berkas). Sistem otomatis memindai teks dokumen scan menggunakan OCR langsung di browser Anda tanpa membebani server.')
-                ->modalWidth('5xl')
+                ->modalHeading('Upload Verifikasi GRS')
+                ->modalDescription('Pilih berkas PDF verifikasi GRS (maks. 10 MB per berkas). Sistem otomatis mencocokkan dokumen ke data tagihan.')
+                ->modalWidth('4xl')
                 ->modalContent(view('filament.actions.batch-upload-verifikasi-grs-modal'))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Tutup'),

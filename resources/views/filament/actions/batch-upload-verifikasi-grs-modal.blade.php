@@ -73,6 +73,11 @@
 
         addFiles(files) {
             for (const file of files) {
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('Berkas ' + file.name + ' melebihi batas 10 MB.');
+                    continue;
+                }
+
                 if (this.items.some(i => i.name === file.name && i.size === file.size)) {
                     continue;
                 }
@@ -89,7 +94,7 @@
                     no_po: fnPoMatch ? fnPoMatch[1] : '',
                     no_do: '',
                     source: fnGrsMatch ? 'filename' : 'pending',
-                    message: fnGrsMatch ? 'Nomor GRS terdeteksi dari nama berkas' : 'Menunggu pemindaian',
+                    message: fnGrsMatch ? 'Nomor GRS ditemukan' : 'Menunggu proses',
                 });
             }
         },
@@ -119,12 +124,12 @@
         getStatusLabel(item) {
             switch (item.status) {
                 case 'queued': return 'Antrean';
-                case 'scanning': return 'Memindai OCR...';
-                case 'scanned': return 'OCR Selesai';
+                case 'scanning': return 'Membaca...';
+                case 'scanned': return 'Siap Upload';
                 case 'uploading': return 'Mengunggah...';
-                case 'verified': return 'Terverifikasi ✅';
-                case 'unmatched': return 'Tagihan Belum Cocok ⚠️';
-                case 'error': return 'Error ❌';
+                case 'verified': return 'Terverifikasi';
+                case 'unmatched': return 'Belum Cocok';
+                case 'error': return 'Gagal';
                 default: return item.status;
             }
         },
@@ -177,7 +182,7 @@
         async getTesseractWorker() {
             await this.ensureLibraries();
             if (!this.tesseractWorker && typeof window.Tesseract !== 'undefined') {
-                this.currentStepMessage = 'Memuat engine OCR Tesseract di browser...';
+                this.currentStepMessage = 'Menyiapkan pemrosesan dokumen...';
                 this.tesseractWorker = await window.Tesseract.createWorker('eng', 1, {
                     workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js' + '@' + '5/dist/worker.min.js',
                     corePath: 'https://cdn.jsdelivr.net/npm/tesseract-core' + '@' + '5/tesseract-core.wasm.js',
@@ -188,7 +193,7 @@
 
         async scanFileOcr(item) {
             item.status = 'scanning';
-            this.currentStepMessage = 'Memindai teks dokumen: ' + item.name + '...';
+            this.currentStepMessage = 'Membaca dokumen: ' + item.name + '...';
 
             try {
                 await this.ensureLibraries();
@@ -205,9 +210,9 @@
                     item.source = 'digital_text';
                 }
 
-                // 2. Scan OCR jika tidak ada teks digital atau belum menemukan nomor GRS
+                // 2. Scan jika tidak ada teks digital atau belum menemukan nomor GRS
                 if (!detected.grs) {
-                    this.currentStepMessage = 'Menjalankan OCR pada gambar scan: ' + item.name + '...';
+                    this.currentStepMessage = 'Membaca berkas: ' + item.name + '...';
                     const worker = await this.getTesseractWorker();
 
                     if (worker) {
@@ -242,11 +247,11 @@
                 if (detected.doNum) item.no_do = detected.doNum;
 
                 item.status = 'scanned';
-                item.message = item.no_grs ? 'Terdeteksi GRS: ' + item.no_grs : (item.no_po ? 'Terdeteksi PO: ' + item.no_po : 'Nomor belum terdeteksi otomatis');
+                item.message = item.no_grs ? 'GRS: ' + item.no_grs : (item.no_po ? 'PO: ' + item.no_po : 'Nomor belum ditemukan');
             } catch (err) {
                 console.error('Scan error:', err);
                 item.status = 'scanned';
-                item.message = 'Pemindaian gambar dilewati, mengandalkan nama file';
+                item.message = 'Selesai membaca';
             }
         },
 
@@ -307,7 +312,7 @@
             }
 
             this.overallProgress = 100;
-            this.currentStepMessage = 'Seluruh berkas selesai diproses!';
+            this.currentStepMessage = 'Selesai diproses.';
             this.isProcessing = false;
 
             if (this.tesseractWorker) {
@@ -323,40 +328,10 @@
         }
     }"
 >
-    <!-- Header Banner -->
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500/10 via-sky-500/5 to-emerald-500/10 p-5 border border-indigo-200/50 dark:border-indigo-800/40">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
-                        <svg class="w-3.5 h-3.5 animate-pulse text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        Client-Side OCR Active
-                    </span>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
-                        Zero Server Load &bull; Bebas 503
-                    </span>
-                </div>
-                <h3 class="text-base font-bold text-gray-900 dark:text-white">
-                    Pemindaian Otomatis PDF Gambar (Scan) & Verifikasi Tagihan
-                </h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400">
-                    Pilih puluhan berkas PDF scan sekaligus dengan nama apa pun. Dokumen dipindai langsung di komputer Anda dengan Tesseract.js &amp; PDF.js untuk mengambil <b>Nomor GRS (105)</b> dan <b>Nomor PO</b>.
-                </p>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-                <span class="text-xs font-mono text-gray-500 dark:text-gray-400 bg-white/70 dark:bg-gray-800/70 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700">
-                    v2.1 Smart Matcher
-                </span>
-            </div>
-        </div>
-    </div>
-
     <!-- Dropzone Area -->
     <div
         class="relative rounded-2xl border-2 border-dashed p-6 text-center transition-all duration-200 cursor-pointer"
-        :class="isDragging ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20' : 'border-gray-300 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-600 bg-gray-50/50 dark:bg-gray-900/30'"
+        :class="isDragging ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 bg-gray-50/50 dark:bg-gray-900/30'"
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @drop.prevent="handleDrop($event)"
@@ -372,17 +347,17 @@
         />
 
         <div class="flex flex-col items-center justify-center space-y-2 pointer-events-none">
-            <div class="p-3 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-2xl ring-4 ring-indigo-50 dark:ring-indigo-950/30">
-                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="p-3 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-xl">
+                <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
             </div>
-            <div class="space-y-0.5">
-                <p class="text-sm font-semibold text-gray-900 dark:text-white">
-                    Tarik &amp; letakkan berkas PDF Verifikasi GRS di sini, atau <span class="text-indigo-600 dark:text-indigo-400 underline">klik untuk memilih</span>
+            <div class="space-y-0.5 text-center">
+                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                    Pilih atau seret berkas PDF ke sini
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                    Bisa memilih hingga 100 berkas PDF sekaligus (hasil scan scanner, print e-office, maupun PDF digital).
+                    Upload Verifikasi GRS (Maks. 10 MB per berkas, format PDF)
                 </p>
             </div>
         </div>
@@ -397,15 +372,15 @@
                     <div class="text-lg font-bold text-gray-900 dark:text-white" x-text="items.length"></div>
                 </div>
                 <div class="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40">
-                    <div class="text-xs text-blue-600 dark:text-blue-400">Memindai / Siap</div>
+                    <div class="text-xs text-blue-600 dark:text-blue-400">Diproses</div>
                     <div class="text-lg font-bold text-blue-700 dark:text-blue-300" x-text="scannedCount"></div>
                 </div>
                 <div class="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40">
-                    <div class="text-xs text-emerald-600 dark:text-emerald-400">Terverifikasi ✅</div>
+                    <div class="text-xs text-emerald-600 dark:text-emerald-400">Terverifikasi</div>
                     <div class="text-lg font-bold text-emerald-700 dark:text-emerald-300" x-text="verifiedCount"></div>
                 </div>
                 <div class="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40">
-                    <div class="text-xs text-amber-600 dark:text-amber-400">Belum Cocok ⚠️</div>
+                    <div class="text-xs text-amber-600 dark:text-amber-400">Belum Cocok</div>
                     <div class="text-lg font-bold text-amber-700 dark:text-amber-300" x-text="unmatchedCount"></div>
                 </div>
             </div>
@@ -521,7 +496,7 @@
                     >
                         Bersihkan Semua
                     </button>
-                    <span class="text-xs text-gray-500" x-show="verifiedCount > 0" x-text="verifiedCount + ' tagihan siap diperbarui'"></span>
+                    <span class="text-xs text-gray-500" x-show="verifiedCount > 0" x-text="verifiedCount + ' berkas berhasil diverifikasi'"></span>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -536,33 +511,33 @@
                         <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        <span>Coba Cocokkan Ulang (<span x-text="unmatchedCount"></span>)</span>
+                        <span>Coba Ulang (<span x-text="unmatchedCount"></span>)</span>
                     </button>
 
                     <button
                         type="button"
                         x-show="hasPendingUploads"
                         @click="startProcessAll()"
-                        class="w-full sm:w-auto px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-700 hover:to-sky-700 shadow-md shadow-indigo-500/20 transition flex items-center justify-center gap-2"
+                        class="w-full sm:w-auto px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition flex items-center justify-center gap-2"
                         :disabled="isProcessing"
                     >
                         <svg x-show="isProcessing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span x-text="isProcessing ? 'Memproses Berkas...' : 'Mulai Pindai OCR & Unggah Otomatis'"></span>
+                        <span x-text="isProcessing ? 'Memproses...' : 'Mulai Upload'"></span>
                     </button>
 
                     <button
                         type="button"
                         x-show="!hasPendingUploads && items.length > 0"
                         @click="finishAndReload()"
-                        class="w-full sm:w-auto px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-500/20 transition flex items-center justify-center gap-2"
+                        class="w-full sm:w-auto px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition flex items-center justify-center gap-2"
                     >
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>Selesai & Muat Ulang Tabel</span>
+                        <span>Selesai</span>
                     </button>
                 </div>
             </div>
