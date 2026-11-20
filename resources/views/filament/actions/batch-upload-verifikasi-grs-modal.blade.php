@@ -2,6 +2,36 @@
     $uploadUrl = route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr', absolute: false);
 @endphp
 
+<style>
+    .batch-ocr-dropzone {
+        border-color: #d1d5db;
+        background-color: #f9fafb;
+    }
+    .batch-ocr-dropzone:hover {
+        border-color: #9ca3af;
+        background-color: #f3f4f6;
+    }
+    html.dark .batch-ocr-dropzone,
+    .dark .batch-ocr-dropzone {
+        border-color: rgba(255, 255, 255, 0.12) !important;
+        background-color: rgba(255, 255, 255, 0.03) !important;
+    }
+    html.dark .batch-ocr-dropzone:hover,
+    .dark .batch-ocr-dropzone:hover {
+        border-color: rgba(255, 255, 255, 0.22) !important;
+        background-color: rgba(255, 255, 255, 0.06) !important;
+    }
+    .batch-ocr-dropzone.is-dragging {
+        border-color: #6366f1 !important;
+        background-color: rgba(99, 102, 241, 0.08) !important;
+    }
+    html.dark .batch-ocr-dropzone.is-dragging,
+    .dark .batch-ocr-dropzone.is-dragging {
+        border-color: #818cf8 !important;
+        background-color: rgba(99, 102, 241, 0.15) !important;
+    }
+</style>
+
 <div
     class="space-y-5"
     x-data="{
@@ -330,8 +360,8 @@
 >
     <!-- Dropzone Area -->
     <div
-        class="relative rounded-2xl border-2 border-dashed p-6 text-center transition-all duration-200 cursor-pointer"
-        :class="isDragging ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20' : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600 bg-gray-50/50 dark:bg-gray-900/30'"
+        class="batch-ocr-dropzone relative rounded-2xl border-2 border-dashed p-6 text-center transition-all duration-200 cursor-pointer"
+        :class="isDragging ? 'is-dragging' : ''"
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @drop.prevent="handleDrop($event)"
@@ -347,7 +377,7 @@
         />
 
         <div class="flex flex-col items-center justify-center space-y-2 pointer-events-none">
-            <div class="p-3 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-xl">
+            <div class="p-3 bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300 rounded-xl">
                 <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
@@ -357,7 +387,7 @@
                     Pilih atau seret berkas PDF ke sini
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                    Upload Verifikasi GRS (Maks. 10 MB per berkas, format PDF)
+                    Format PDF hingga 10 MB per berkas
                 </p>
             </div>
         </div>
@@ -367,19 +397,19 @@
     <template x-if="items.length > 0">
         <div class="space-y-4">
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="p-3 rounded-xl bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60">
+                <div class="p-3 rounded-xl bg-gray-100/80 dark:bg-white/5 border border-gray-200 dark:border-white/10">
                     <div class="text-xs text-gray-500 dark:text-gray-400">Total Berkas</div>
                     <div class="text-lg font-bold text-gray-900 dark:text-white" x-text="items.length"></div>
                 </div>
-                <div class="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40">
+                <div class="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50">
                     <div class="text-xs text-blue-600 dark:text-blue-400">Diproses</div>
                     <div class="text-lg font-bold text-blue-700 dark:text-blue-300" x-text="scannedCount"></div>
                 </div>
-                <div class="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40">
+                <div class="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50">
                     <div class="text-xs text-emerald-600 dark:text-emerald-400">Terverifikasi</div>
                     <div class="text-lg font-bold text-emerald-700 dark:text-emerald-300" x-text="verifiedCount"></div>
                 </div>
-                <div class="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40">
+                <div class="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50">
                     <div class="text-xs text-amber-600 dark:text-amber-400">Belum Cocok</div>
                     <div class="text-lg font-bold text-amber-700 dark:text-amber-300" x-text="unmatchedCount"></div>
                 </div>
@@ -400,12 +430,12 @@
             </div>
 
             <!-- Queue Table -->
-            <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-xs">
-                <div class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+            <div class="rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden shadow-xs">
+                <div class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-white/10">
                     <template x-for="(item, idx) in items" :key="idx">
-                        <div class="p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs bg-white dark:bg-gray-900 hover:bg-gray-50/80 dark:hover:bg-gray-800/50 transition">
+                        <div class="p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs bg-white dark:bg-white/[0.02] hover:bg-gray-50/80 dark:hover:bg-white/[0.06] transition">
                             <div class="flex items-center gap-3 min-w-0">
-                                <div class="shrink-0 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500">
+                                <div class="shrink-0 p-2 rounded-lg bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-300">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
@@ -430,7 +460,7 @@
 
                             <!-- Detected Data / Editable Inputs -->
                             <div class="flex flex-wrap items-center gap-2 shrink-0">
-                                <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md border border-gray-200 dark:border-white/10">
                                     <span class="text-[10px] uppercase font-bold text-gray-500">GRS:</span>
                                     <input
                                         type="text"
@@ -441,7 +471,7 @@
                                         :disabled="item.status === 'verified'"
                                     />
                                 </div>
-                                <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md border border-gray-200 dark:border-white/10">
                                     <span class="text-[10px] uppercase font-bold text-gray-500">PO:</span>
                                     <input
                                         type="text"
@@ -486,12 +516,12 @@
             </div>
 
             <!-- Modal Action Buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-gray-200 dark:border-white/10">
                 <div class="flex items-center gap-2">
                     <button
                         type="button"
                         @click="clearAll()"
-                        class="px-3.5 py-2 text-xs font-semibold rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-300 dark:border-gray-700 transition"
+                        class="px-3.5 py-2 text-xs font-semibold rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-300 dark:border-white/15 transition"
                         :disabled="isProcessing"
                     >
                         Bersihkan Semua

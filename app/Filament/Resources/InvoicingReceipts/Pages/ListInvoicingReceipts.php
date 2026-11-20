@@ -165,7 +165,7 @@ class ListInvoicingReceipts extends ListRecords
                 ->icon(Heroicon::ArrowUpTray)
                 ->color('info')
                 ->modalHeading('Upload Verifikasi GRS')
-                ->modalDescription('Pilih berkas PDF verifikasi GRS (maks. 10 MB per berkas). Sistem otomatis mencocokkan dokumen ke data tagihan.')
+                ->modalDescription('Pilih berkas PDF verifikasi GRS (maks. 10 MB per berkas).')
                 ->modalWidth('4xl')
                 ->modalContent(view('filament.actions.batch-upload-verifikasi-grs-modal'))
                 ->modalSubmitAction(false)
