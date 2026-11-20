@@ -19,9 +19,10 @@ use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Illuminate\Support\Str;
 
 class ListInvoicingReceipts extends ListRecords
 {
@@ -203,13 +204,23 @@ class ListInvoicingReceipts extends ListRecords
                     $unmatched = [];
 
                     foreach ($files as $file) {
-                        $originalName = $file instanceof TemporaryUploadedFile
-                            ? $file->getClientOriginalName()
-                            : basename((string) $file);
-
-                        $filePath = $file instanceof TemporaryUploadedFile
-                            ? $file->getRealPath()
-                            : (string) $file;
+                        if ($file instanceof UploadedFile) {
+                            $originalName = $file->getClientOriginalName();
+                            $filePath = $file->getRealPath();
+                        } elseif (is_string($file)) {
+                            $originalName = basename($file);
+                            if (file_exists($file)) {
+                                $filePath = $file;
+                            } elseif (Storage::disk('local')->exists($file)) {
+                                $filePath = Storage::disk('local')->path($file);
+                            } elseif (Storage::disk('public')->exists($file)) {
+                                $filePath = Storage::disk('public')->path($file);
+                            } else {
+                                $filePath = $file;
+                            }
+                        } else {
+                            continue;
+                        }
 
                         try {
                             $parsed = $parser->parseVerifikasiGrs($filePath, $originalName);
@@ -235,9 +246,15 @@ class ListInvoicingReceipts extends ListRecords
 
                             if ($receipt) {
                                 // Simpan file ke storage disk public pada folder verifikasi-grs
-                                $storedPath = $file instanceof TemporaryUploadedFile
-                                    ? $file->store('verifikasi-grs', 'public')
-                                    : (is_string($file) ? $file : null);
+                                if ($file instanceof UploadedFile) {
+                                    $storedPath = $file->store('verifikasi-grs', 'public');
+                                } elseif (is_string($file) && file_exists($filePath)) {
+                                    $storedName = 'verifikasi-grs/'.Str::random(40).'.'.pathinfo($filePath, PATHINFO_EXTENSION);
+                                    Storage::disk('public')->put($storedName, file_get_contents($filePath));
+                                    $storedPath = $storedName;
+                                } else {
+                                    $storedPath = is_string($file) ? $file : null;
+                                }
 
                                 if ($storedPath) {
                                     $receipt->dokumen_verifikasi_grs = $storedPath;
@@ -273,7 +290,7 @@ class ListInvoicingReceipts extends ListRecords
                                 ];
                             } else {
                                 $reason = empty($noGrs) && empty($noPo)
-                                    ? 'Kode GRS (105) maupun PO tidak terdeteksi dari teks maupun nama file'
+                                    ? 'Kode GRS (105) maupun PO tidak terdeteksi dari teks maupun nama file (jika dokumen berupa gambar scan, namai berkas memuat Nomor GRS, contoh: 5007697783.pdf)'
                                     : 'Tidak ditemukan Invoice Barang dengan GRS: '.($noGrs ?: '-').' / PO: '.($noPo ?: '-');
 
                                 $unmatched[] = [

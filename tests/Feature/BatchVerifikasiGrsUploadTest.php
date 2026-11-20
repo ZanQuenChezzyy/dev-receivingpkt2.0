@@ -97,6 +97,16 @@ test('GrsPdfParserService can parse verifikasi GRS from digital text and filenam
     expect($fallbackResult['no_grs'])->toBe('5007697783')
         ->and($fallbackResult['no_po'])->toBe('5300066419')
         ->and($fallbackResult['detection_source'])->toBe('filename');
+
+    $comboResult = $parser->parseVerifikasiGrs('', 'PO5300066419_GRS5007697783.pdf');
+    expect($comboResult['no_grs'])->toBe('5007697783')
+        ->and($comboResult['no_po'])->toBe('5300066419')
+        ->and($comboResult['detection_source'])->toBe('filename');
+
+    // 3. Binary stream safety test
+    $fakeImagePdf = "%PDF-1.7\n4 0 obj\n<</Subtype /Image /Filter /DCTDecode /Length 5000>>\nstream\n".str_repeat("\x00\xFF\x28\x29\x50\x30\x30", 500)."\nendstream\nendobj";
+    $safeText = $parser->extractRawStreamsText($fakeImagePdf);
+    expect($safeText)->toBe('');
 });
 
 test('batch upload action exists on ListInvoicingReceipts and verifikasi GRS updates status', function () {

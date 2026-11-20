@@ -58,6 +58,11 @@ class GrsPdfParserService
         // 3. Dekode seluruh content stream
         $text = '';
         foreach ($objMap as $id => $body) {
+            // Abaikan stream gambar agar tidak menghabiskan memori
+            if (str_contains($body, '/Subtype /Image') || str_contains($body, '/Subtype/Image')) {
+                continue;
+            }
+
             if (str_contains($body, 'stream')) {
                 $cs = $this->getStream($body);
                 if ($cs && (str_contains($cs, 'BT') || str_contains($cs, 'TJ') || str_contains($cs, 'Tj'))) {
@@ -337,12 +342,22 @@ class GrsPdfParserService
         if (! $data['no_grs'] || ! $data['no_po']) {
             $filenameToCheck = $originalFilename ?: (file_exists($filePathOrContent) ? basename($filePathOrContent) : '');
             if (! empty($filenameToCheck)) {
-                if (! $data['no_grs'] && preg_match('/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
-                    $data['no_grs'] = $fnMatch[1];
-                    $data['detection_source'] = 'filename';
+                if (! $data['no_grs']) {
+                    // Prioritaskan jika ada label GRS atau 105 di nama file
+                    if (preg_match('/(?:grs|105)[^0-9]*(500\d{7})/i', $filenameToCheck, $grsSpecific)) {
+                        $data['no_grs'] = $grsSpecific[1];
+                        $data['detection_source'] = 'filename';
+                    } elseif (preg_match('/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
+                        $data['no_grs'] = $fnMatch[1];
+                        $data['detection_source'] = 'filename';
+                    }
                 }
-                if (! $data['no_po'] && preg_match('/(?:^|[^0-9])(530\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnPo)) {
-                    $data['no_po'] = $fnPo[1];
+                if (! $data['no_po']) {
+                    if (preg_match('/(?:po)[^0-9]*(53\d{8})/i', $filenameToCheck, $poSpecific)) {
+                        $data['no_po'] = $poSpecific[1];
+                    } elseif (preg_match('/(?:^|[^0-9])(53\d{8})(?:[^0-9]|$)/', $filenameToCheck, $fnPo)) {
+                        $data['no_po'] = $fnPo[1];
+                    }
                 }
             }
         }
@@ -361,9 +376,24 @@ class GrsPdfParserService
 
         foreach ($objs as $o) {
             $body = $o[3];
+
+            // Abaikan object gambar, font, atau filter biner berat untuk mencegah lonjakan CPU & memori
+            if (str_contains($body, '/Subtype /Image')
+                || str_contains($body, '/Subtype/Image')
+                || str_contains($body, '/Filter /DCTDecode')
+                || str_contains($body, '/Filter/DCTDecode')
+                || str_contains($body, '/Filter /JBIG2Decode')
+                || str_contains($body, '/Filter /JPXDecode')
+                || str_contains($body, '/Type /Font')
+                || str_contains($body, '/Type/Font')
+            ) {
+                continue;
+            }
+
             if (str_contains($body, 'stream')) {
                 $stream = $this->getStream($body);
-                if (! empty($stream)) {
+                // Hanya proses stream teks wajar (< 128KB)
+                if (! empty($stream) && strlen($stream) < 131072) {
                     // Ekstrak teks dalam tanda kurung: (Nomor GRS: 5007697783) atau kata-kata
                     if (preg_match_all('/\(([^)]+)\)/', $stream, $matches)) {
                         $text .= implode(' ', $matches[1])."\n";
