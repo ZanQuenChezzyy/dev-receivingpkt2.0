@@ -109,8 +109,10 @@ class GrsPdfParserService
             'raw_text' => $text,
         ];
 
-        // 1. No Release GR (biasanya 10 digit angka diawali 500xxxxxxx)
+        // 1. No Release GR / GRS (10 digit angka diawali 500xxxxxxx)
         if (preg_match('/No\s*Release\s*GR\s*[:\s]+(\d+)/i', $text, $m)) {
+            $data['no_grs'] = $m[1];
+        } elseif (preg_match('/(?:Nomor\s*GRS(?:\s*\(105\))?|GRS\s*\(105\)|105\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
             $data['no_grs'] = $m[1];
         }
 
@@ -195,6 +197,241 @@ class GrsPdfParserService
         }
 
         return $data;
+    }
+
+    /**
+     * Parsing dan ekstraksi metadata dokumen Verifikasi Penerimaan Barang (GRS / Kode 105).
+     *
+     * @return array{
+     *     no_grs: ?string,
+     *     no_gr_103: ?string,
+     *     no_po: ?string,
+     *     no_do: ?string,
+     *     vendor_name: ?string,
+     *     nomor_surat: ?string,
+     *     tanggal_verifikasi: ?string,
+     *     tanggal_release_gr: ?string,
+     *     detection_source: 'text'|'ocr'|'filename'|'none',
+     *     raw_text: string
+     * }
+     */
+    public function parseVerifikasiGrs(string $filePathOrContent, ?string $originalFilename = null): array
+    {
+        $content = file_exists($filePathOrContent) ? (string) file_get_contents($filePathOrContent) : $filePathOrContent;
+        $detectionSource = 'none';
+
+        // 1. Ekstrak teks digital langsung dari PDF stream
+        $text = $this->extractText($content);
+
+        if (strlen(trim($text)) >= 30 && (str_contains($text, 'GRS') || str_contains($text, '500') || str_contains($text, '530'))) {
+            $detectionSource = 'text';
+        }
+
+        // 2. Jika teks kosong / minim (misal file hasil cetak/scan gambar), gunakan OCR otomatis
+        if ($detectionSource === 'none') {
+            $ocrText = $this->extractOcrText($content);
+            if (strlen(trim($ocrText)) >= 20) {
+                $text = $ocrText;
+                $detectionSource = 'ocr';
+            }
+        }
+
+        $data = [
+            'no_grs' => null,
+            'no_gr_103' => null,
+            'no_po' => null,
+            'no_do' => null,
+            'vendor_name' => null,
+            'nomor_surat' => null,
+            'tanggal_verifikasi' => null,
+            'tanggal_release_gr' => null,
+            'detection_source' => $detectionSource,
+            'raw_text' => $text,
+        ];
+
+        // Format tabel / sekuensial (sering muncul pada OCR atau dokumen dua kolom)
+        if (preg_match('/Nomor\s*PO.*?Nomor\s*GR.*?Nomor\s*GRS.*?(53\d{8})\s+(500\d{7})\s+(500\d{7})/si', $text, $seq)) {
+            $data['no_po'] = $seq[1];
+            $data['no_gr_103'] = $seq[2];
+            $data['no_grs'] = $seq[3];
+        }
+
+        // 1. Nomor GRS (105) - Key-Value
+        if (! $data['no_grs']) {
+            if (preg_match('/(?:Nomor\s*GRS(?:\s*\(105\))?|GRS\s*\(105\)|105\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
+                $data['no_grs'] = $m[1];
+            } elseif (preg_match('/No\s*Release\s*GR\s*[:\s]+(500\d{7})/i', $text, $m)) {
+                $data['no_grs'] = $m[1];
+            }
+        }
+
+        // 2. Nomor GR (103) - Key-Value
+        if (! $data['no_gr_103']) {
+            if (preg_match('/(?:Nomor\s*GR(?:\s*\(103\))?|GR\s*\(103\)|103\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
+                $data['no_gr_103'] = $m[1];
+            }
+        }
+
+        // 3. Nomor PO (530xxxxxxx)
+        if (! $data['no_po']) {
+            if (preg_match('/(?:Nomor\s*PO|No\s*PO)\s*[:\s]+(53\d{8})/i', $text, $m)) {
+                $data['no_po'] = $m[1];
+            } elseif (preg_match('/No\s*PO.*?Tanggal\s*PO.*?(53\d{8})\s+(\d{1,2}\.\d{1,2}\.\d{4})/s', $text, $m)) {
+                $data['no_po'] = $m[1];
+            } elseif (preg_match('/(?:^|[^0-9])(530\d{7})(?:[^0-9]|$)/', $text, $m)) {
+                $data['no_po'] = $m[1];
+            }
+        }
+
+        // 4. Nomor DO/SJ
+        if (! $data['no_do']) {
+            if (preg_match('/Nomor\s*DO(?:\/SJ)?\s*[:\s]+([A-Za-z0-9\/-]+)/i', $text, $m)) {
+                $cleanedDo = trim($m[1]);
+                if (strtolower($cleanedDo) !== 'status' && $cleanedDo !== $data['no_po']) {
+                    $data['no_do'] = $cleanedDo;
+                }
+            }
+            if (! $data['no_do'] && preg_match('/(?:Rp[0-9A-Za-z.,]+\s+){2}([A-Za-z0-9\/-]+)\s+Dapat\s*kami/i', $text, $m)) {
+                $data['no_do'] = trim($m[1]);
+            } elseif (! $data['no_do'] && preg_match('/No\.?\s*Surat\s*Jalan\s*[:\s]+([A-Za-z0-9\/-]+)/i', $text, $m)) {
+                if ($m[1] !== $data['no_po']) {
+                    $data['no_do'] = trim($m[1]);
+                }
+            }
+        }
+
+        // 5. Nama Vendor / Penyedia Barang
+        if (preg_match('/(?:Nama\s*Penyedia\s*Barang|Nama\s*Vendor)\s*[:\s]+([^\r\n:]+)/i', $text, $m)) {
+            $cleanedVendor = trim($m[1]);
+            if (preg_match('/(?:PT|CV)\.?\s+[A-Za-z0-9\s.,]+?(?=\s+Nilai|\s+Rp|\s+Nomor|\s+Status|\r|\n|$)/i', $cleanedVendor, $vm)) {
+                $data['vendor_name'] = trim($vm[0]);
+            } else {
+                $data['vendor_name'] = $cleanedVendor;
+            }
+        }
+        if (! $data['vendor_name'] && preg_match('/(?:PT|CV)\.?\s+[A-Z\s]+(?:CIPTA|INDONESIA|JAYA|MAKMUR|PERSADA|UTAMA|KARYA|ABADI|LESTARI|MANDIRI)/i', $text, $m)) {
+            $data['vendor_name'] = trim($m[0]);
+        }
+
+        // 6. Nomor Surat Verifikasi (e.g. GRS- 55983/D/PL/D52100/IT/2026)
+        if (preg_match('/Nomor:\s*(GRS-\s*[A-Za-z0-9\/_-]+)/i', $text, $m)) {
+            $data['nomor_surat'] = trim($m[1]);
+        }
+
+        // 7. Tanggal Verifikasi / Surat (e.g. "Tanggal: 28 Oktober 2026" atau "Tanggal : 28.10.2026")
+        if (preg_match('/Tanggal\s*[:\s]+(\d{1,2}\s+[A-Za-z]+\s+\d{4})/i', $text, $m)) {
+            $data['tanggal_verifikasi'] = $this->parseIndonesianDate($m[1]);
+            $data['tanggal_release_gr'] = $data['tanggal_verifikasi'];
+        } elseif (preg_match('/Tanggal\s*[:\s]+(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})/i', $text, $m)) {
+            $val = str_replace(['/', '-'], '.', $m[1]);
+            $parts = explode('.', $val);
+            if (count($parts) === 3) {
+                $data['tanggal_verifikasi'] = sprintf('%04d-%02d-%02d', (int) $parts[2], (int) $parts[1], (int) $parts[0]);
+                $data['tanggal_release_gr'] = $data['tanggal_verifikasi'];
+            }
+        }
+
+        // 8. Fallback: Ekstraksi Nomor GRS (500xxxxxxx) dan PO (530xxxxxxx) dari Nama File jika belum ditemukan
+        if (! $data['no_grs']) {
+            $filenameToCheck = $originalFilename ?: (file_exists($filePathOrContent) ? basename($filePathOrContent) : '');
+            if (! empty($filenameToCheck)) {
+                if (preg_match('/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
+                    $data['no_grs'] = $fnMatch[1];
+                    $data['detection_source'] = 'filename';
+                }
+                if (! $data['no_po'] && preg_match('/(?:^|[^0-9])(530\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnPo)) {
+                    $data['no_po'] = $fnPo[1];
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Melakukan OCR pada stream gambar di dalam file PDF jika sistem mendukung.
+     * Menggunakan Windows Media OCR (bawaan Windows 10/11).
+     */
+    public function extractOcrText(string $pdfContent): string
+    {
+        if (! preg_match('/\/Subtype\s*\/Image.*?stream[\r\n]+(.*?)[\r\n]+endstream/s', $pdfContent, $m)) {
+            return '';
+        }
+
+        $imageBytes = $m[1];
+        if (strlen($imageBytes) < 1000) {
+            return '';
+        }
+
+        $tempJpg = sys_get_temp_dir().DIRECTORY_SEPARATOR.'grs_ocr_'.uniqid().'.jpg';
+        file_put_contents($tempJpg, $imageBytes);
+
+        $ocrText = '';
+
+        try {
+            if (PHP_OS_FAMILY === 'Windows') {
+                $psScript = <<<'PS'
+Add-Type -AssemblyName System.Runtime.WindowsRuntime
+$asTaskGeneric = [System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object {
+    $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1'
+}
+function Await($op, $type) {
+    $m = $asTaskGeneric.MakeGenericMethod($type)
+    $t = $m.Invoke($null, @($op))
+    $t.Wait()
+    return $t.Result
+}
+[Windows.Media.Ocr.OcrEngine, Windows.Foundation.UniversalApiContract, ContentType = WindowsRuntime] | Out-Null
+[Windows.Graphics.Imaging.BitmapDecoder, Windows.Foundation.UniversalApiContract, ContentType = WindowsRuntime] | Out-Null
+[Windows.Storage.StorageFile, Windows.Storage, ContentType = WindowsRuntime] | Out-Null
+
+$engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages()
+if ($engine) {
+    $imgPath = $args[0]
+    $file = Await ([Windows.Storage.StorageFile]::GetFileFromPathAsync($imgPath)) ([Windows.Storage.StorageFile])
+    $stream = Await ($file.OpenAsync([Windows.Storage.FileAccessMode]::Read)) ([Windows.Storage.Streams.IRandomAccessStream])
+    $decoder = Await ([Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($stream)) ([Windows.Graphics.Imaging.BitmapDecoder])
+    $bitmap = Await ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
+    $res = Await ($engine.RecognizeAsync($bitmap)) ([Windows.Media.Ocr.OcrResult])
+    Write-Output $res.Text
+}
+PS;
+                $psTemp = sys_get_temp_dir().DIRECTORY_SEPARATOR.'grs_winocr_'.uniqid().'.ps1';
+                file_put_contents($psTemp, $psScript);
+                $ocrText = (string) shell_exec('powershell -NoProfile -ExecutionPolicy Bypass -File '.escapeshellarg($psTemp).' '.escapeshellarg($tempJpg));
+                @unlink($psTemp);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        } finally {
+            @unlink($tempJpg);
+        }
+
+        return trim($ocrText);
+    }
+
+    /**
+     * Mengubah tanggal bahasa Indonesia ("28 Oktober 2026") menjadi format Y-m-d.
+     */
+    private function parseIndonesianDate(string $rawDate): ?string
+    {
+        $months = [
+            'januari' => '01', 'februari' => '02', 'maret' => '03', 'april' => '04',
+            'mei' => '05', 'juni' => '06', 'juli' => '07', 'agustus' => '08',
+            'september' => '09', 'oktober' => '10', 'november' => '11', 'desember' => '12',
+            'jan' => '01', 'feb' => '02', 'mar' => '03', 'apr' => '04',
+            'may' => '05', 'jun' => '06', 'jul' => '07', 'aug' => '08',
+            'sep' => '09', 'oct' => '10', 'nov' => '11', 'dec' => '12',
+        ];
+
+        if (preg_match('/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/', $rawDate, $m)) {
+            $month = strtolower($m[2]);
+            if (isset($months[$month])) {
+                return sprintf('%04d-%02d-%02d', (int) $m[3], (int) $months[$month], (int) $m[1]);
+            }
+        }
+
+        return null;
     }
 
     private function getStream(string $objStr): string

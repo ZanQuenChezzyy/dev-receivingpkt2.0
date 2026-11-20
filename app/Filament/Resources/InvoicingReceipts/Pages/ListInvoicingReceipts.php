@@ -6,10 +6,12 @@ use App\Filament\Resources\InvoicingReceipts\InvoicingReceiptResource;
 use App\Filament\Resources\InvoicingReceipts\Widgets\InvoicingOverviewWidget;
 use App\Http\Controllers\Admin\ChunkedImportUploadController;
 use App\Models\InvoicingReceipt;
+use App\Services\GrsPdfParserService;
 use App\Services\InvoicingCsvImportService;
 use App\Services\MonitoringBarangImportService;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
@@ -19,6 +21,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ListInvoicingReceipts extends ListRecords
 {
@@ -157,6 +160,175 @@ class ListInvoicingReceipts extends ListRecords
                         if (is_file($filePath)) {
                             @unlink($filePath);
                         }
+                    }
+                }),
+
+            Action::make('batchUploadVerifikasiGrs')
+                ->label('Upload Verifikasi GRS')
+                ->icon(Heroicon::ArrowUpTray)
+                ->color('info')
+                ->modalHeading('Upload Massal Dokumen Verifikasi GRS (105)')
+                ->modalDescription('Unggah berkas PDF Surat Verifikasi Penerimaan Barang (ACC VP) secara massal (hingga 100 berkas sekaligus). Sistem akan membaca Nomor GRS (105) atau Nomor PO, mencocokkan ke tagihan invoice barang, menyimpan berkas, dan mengubah status menjadi "Terverifikasi".')
+                ->modalSubmitActionLabel('Unggah & Verifikasi Otomatis')
+                ->form([
+                    FileUpload::make('verifikasi_files')
+                        ->label('Pilih Berkas PDF Verifikasi GRS (Bisa Drag & Drop Puluhan File Sekaligus)')
+                        ->multiple()
+                        ->maxFiles(100)
+                        ->acceptedFileTypes(['application/pdf'])
+                        ->storeFiles(false)
+                        ->required()
+                        ->helperText('Pilih satu atau hingga 100 berkas PDF Surat Verifikasi Penerimaan Barang dari Digital Office. Nomor GRS (105) akan diekstrak dan dicocokkan otomatis.'),
+                ])
+                ->action(function (array $data): void {
+                    $rawFiles = $data['verifikasi_files'] ?? [];
+                    $files = is_array($rawFiles) ? $rawFiles : [$rawFiles];
+                    $files = array_filter($files);
+
+                    if (empty($files)) {
+                        Notification::make()
+                            ->title('Tidak Ada Berkas Dipilih')
+                            ->body('Silakan pilih setidaknya satu berkas PDF verifikasi GRS.')
+                            ->warning()
+                            ->send();
+
+                        return;
+                    }
+
+                    $parser = app(GrsPdfParserService::class);
+                    $matched = [];
+                    $unmatched = [];
+
+                    foreach ($files as $file) {
+                        $originalName = $file instanceof TemporaryUploadedFile
+                            ? $file->getClientOriginalName()
+                            : basename((string) $file);
+
+                        $filePath = $file instanceof TemporaryUploadedFile
+                            ? $file->getRealPath()
+                            : (string) $file;
+
+                        try {
+                            $parsed = $parser->parseVerifikasiGrs($filePath, $originalName);
+                            $noGrs = $parsed['no_grs'] ?? null;
+                            $noPo = $parsed['no_po'] ?? null;
+                            $noDo = $parsed['no_do'] ?? null;
+
+                            $receipt = null;
+
+                            // 1. Pencocokan utama: Nomor GRS (105)
+                            if (! empty($noGrs)) {
+                                $receipt = InvoicingReceipt::where('no_grs', $noGrs)->first();
+                            }
+
+                            // 2. Fallback pencocokan: Nomor PO + DO atau PO saja
+                            if (! $receipt && ! empty($noPo)) {
+                                $query = InvoicingReceipt::where('no_po', $noPo);
+                                if (! empty($noDo)) {
+                                    $query->where('no_do', $noDo);
+                                }
+                                $receipt = (clone $query)->where('status', 'Menunggu Verifikasi')->first() ?? $query->first();
+                            }
+
+                            if ($receipt) {
+                                // Simpan file ke storage disk public pada folder verifikasi-grs
+                                $storedPath = $file instanceof TemporaryUploadedFile
+                                    ? $file->store('verifikasi-grs', 'public')
+                                    : (is_string($file) ? $file : null);
+
+                                if ($storedPath) {
+                                    $receipt->dokumen_verifikasi_grs = $storedPath;
+                                }
+
+                                // Ubah status menjadi Terverifikasi jika sebelumnya Menunggu Verifikasi
+                                if ($receipt->status === 'Menunggu Verifikasi') {
+                                    $receipt->status = 'Terverifikasi';
+                                }
+
+                                // Lengkapi data yang masih kosong jika berhasil diekstrak
+                                if (empty($receipt->no_grs) && ! empty($noGrs)) {
+                                    $receipt->no_grs = $noGrs;
+                                }
+                                if (empty($receipt->no_do) && ! empty($noDo)) {
+                                    $receipt->no_do = $noDo;
+                                }
+                                if (empty($receipt->vendor_name) && ! empty($parsed['vendor_name'])) {
+                                    $receipt->vendor_name = $parsed['vendor_name'];
+                                }
+                                if (empty($receipt->tanggal_terima_grs) && ! empty($parsed['tanggal_release_gr'])) {
+                                    $receipt->tanggal_terima_grs = $parsed['tanggal_release_gr'];
+                                }
+
+                                $receipt->save();
+
+                                $matched[] = [
+                                    'file' => $originalName,
+                                    'no_grs' => $receipt->no_grs ?: $noGrs,
+                                    'no_po' => $receipt->no_po,
+                                    'status' => $receipt->status,
+                                    'source' => $parsed['detection_source'],
+                                ];
+                            } else {
+                                $reason = empty($noGrs) && empty($noPo)
+                                    ? 'Kode GRS (105) maupun PO tidak terdeteksi dari teks maupun nama file'
+                                    : 'Tidak ditemukan Invoice Barang dengan GRS: '.($noGrs ?: '-').' / PO: '.($noPo ?: '-');
+
+                                $unmatched[] = [
+                                    'file' => $originalName,
+                                    'no_grs' => $noGrs,
+                                    'no_po' => $noPo,
+                                    'reason' => $reason,
+                                ];
+                            }
+                        } catch (\Throwable $e) {
+                            report($e);
+                            $unmatched[] = [
+                                'file' => $originalName,
+                                'no_grs' => null,
+                                'no_po' => null,
+                                'reason' => 'Error: '.$e->getMessage(),
+                            ];
+                        }
+                    }
+
+                    $totalFiles = count($files);
+                    $totalMatched = count($matched);
+                    $totalUnmatched = count($unmatched);
+
+                    if ($totalMatched > 0 && $totalUnmatched === 0) {
+                        Notification::make()
+                            ->title("Semua Berkas Terverifikasi ({$totalMatched} Dokumen)")
+                            ->body("Seluruh <b>{$totalMatched}</b> berkas verifikasi GRS berhasil dicocokkan dan status tagihan diubah menjadi <b>Terverifikasi</b>.")
+                            ->success()
+                            ->send();
+                    } elseif ($totalMatched > 0 && $totalUnmatched > 0) {
+                        $sampleUnmatched = collect($unmatched)
+                            ->take(5)
+                            ->map(fn ($u) => "• <b>{$u['file']}</b>: {$u['reason']}")
+                            ->implode('<br>');
+                        $rem = $totalUnmatched - 5;
+                        if ($rem > 0) {
+                            $sampleUnmatched .= "<br>...dan {$rem} berkas lainnya.";
+                        }
+
+                        Notification::make()
+                            ->title("Verifikasi Batch Selesai ({$totalMatched} Berhasil, {$totalUnmatched} Tidak Cocok)")
+                            ->body("<b>{$totalMatched} dari {$totalFiles}</b> dokumen berhasil diverifikasi.<br><br><b>Dokumen belum cocok:</b><br>{$sampleUnmatched}")
+                            ->warning()
+                            ->persistent()
+                            ->send();
+                    } else {
+                        $sampleUnmatched = collect($unmatched)
+                            ->take(5)
+                            ->map(fn ($u) => "• <b>{$u['file']}</b>: {$u['reason']}")
+                            ->implode('<br>');
+
+                        Notification::make()
+                            ->title("Tidak Ada Berkas yang Cocok ({$totalUnmatched} Dokumen Gagal)")
+                            ->body("Pencocokan gagal untuk berkas berikut:<br>{$sampleUnmatched}")
+                            ->danger()
+                            ->persistent()
+                            ->send();
                     }
                 }),
 
