@@ -359,5 +359,30 @@ class InvoicingReceipt extends Model
                 $record->lama_pekerjaan = (int) $start->diffInDays(now(), absolute: true);
             }
         });
+
+        static::deleting(function (InvoicingReceipt $record) {
+            if ($record->grs_rdtv_item_id) {
+                $item = GrsRdtvItem::find($record->grs_rdtv_item_id);
+                if ($item) {
+                    $record->grs_rdtv_item_id = null;
+                    $item->delete();
+                }
+            } elseif ($record->delivery_order_receipt_id) {
+                $do = $record->deliveryOrderReceipt;
+                if ($do && in_array($do->status, ['GRS', 'RDTV'])) {
+                    $hasGrs = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->exists();
+                    $hasRdtv = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'RDTV'))->exists();
+                    if (! $hasGrs && ! $hasRdtv) {
+                        $latestQc = $do->qcHistories()->latest()->first();
+                        $do->status = $latestQc && $latestQc->status === 'Kembali' ? 'Kembali dari ISTEK' : 'Diterima';
+                        if (in_array($do->delay_reason, ['RDTV', 'GRS'])) {
+                            $do->delay_reason = null;
+                            $do->delay_notes = null;
+                        }
+                        $do->save();
+                    }
+                }
+            }
+        });
     }
 }

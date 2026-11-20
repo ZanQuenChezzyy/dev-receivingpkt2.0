@@ -4,10 +4,16 @@ namespace App\Filament\Resources\GrsRdtvs\Pages;
 
 use App\Filament\Resources\GrsRdtvs\GrsRdtvResource;
 use App\Models\DeliveryOrderReceipt;
+use App\Models\GrsRdtvItem;
+use App\Models\InvoicingReceipt;
+use App\Models\Vendor;
+use App\Services\GrsPdfParserService;
+use App\Services\InvoicingAssignmentService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EditGrsRdtv extends EditRecord
@@ -17,6 +23,17 @@ class EditGrsRdtv extends EditRecord
     protected array $uploadedFiles = [];
 
     protected array $uploadedItems = [];
+
+    protected ?InvoicingAssignmentService $assignmentService = null;
+
+    protected function getAssignmentService(): InvoicingAssignmentService
+    {
+        if (! $this->assignmentService) {
+            $this->assignmentService = app(InvoicingAssignmentService::class);
+        }
+
+        return $this->assignmentService;
+    }
 
     protected function getHeaderActions(): array
     {
@@ -32,6 +49,9 @@ class EditGrsRdtv extends EditRecord
         $invalidDocuments = [];
         $alreadyProcessed = [];
         $duplicateDocuments = [];
+        $unposted103Documents = [];
+        $readyDocuments = [];
+        $notFoundDocuments = [];
         $seen = [];
 
         if (isset($data['files'])) {
@@ -50,14 +70,73 @@ class EditGrsRdtv extends EditRecord
 
                     $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                     if ($do) {
-                        if ($do->status === 'GRS') {
-                            $alreadyProcessed[] = $documentCode;
+                        $hasError = false;
+
+                        // Bersihkan item GRS yang fisiknya sudah terhapus di storage jika ada
+                        $existingGrsItems = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->get();
+                        foreach ($existingGrsItems as $existingItem) {
+                            if (! empty($existingItem->file_path) && ! Storage::disk('public')->exists($existingItem->file_path)) {
+                                $existingItem->delete();
+                            }
                         }
 
-                        $latestQc = $do->qcHistories()->latest()->first();
-                        if (! $latestQc || $latestQc->status !== 'Kembali') {
-                            $invalidDocuments[] = $documentCode;
+                        $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count();
+
+                        // Jika status DO masih GRS padahal tidak ada dokumen GRS aktif, kembalikan status normal
+                        if ($grsCount === 0 && $do->status === 'GRS') {
+                            $latestQc = $do->qcHistories()->latest()->first();
+                            $do->status = ($latestQc && $latestQc->status === 'Kembali') ? 'Kembali dari ISTEK' : 'Diterima';
+                            $do->save();
                         }
+
+                        if ($do->receipt_mode === 'Termin') {
+                            $totalTermins = $do->termins()->count();
+                            $postedTermins = $do->termins()->whereNotNull('post_103')->count();
+
+                            if ($grsCount >= $totalTermins) {
+                                $alreadyProcessed[] = $documentCode;
+                                $hasError = true;
+                            } else {
+                                if ($postedTermins <= $grsCount) {
+                                    $unposted103Documents[] = $documentCode;
+                                    $hasError = true;
+                                } else {
+                                    $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
+                                    if (! $isZrmZsmOrZpm) {
+                                        $qcKembaliCount = $do->qcHistories()->where('status', 'Kembali')->count();
+                                        if ($qcKembaliCount <= $grsCount) {
+                                            $invalidDocuments[] = $documentCode;
+                                            $hasError = true;
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            if ($grsCount >= 1) {
+                                $alreadyProcessed[] = $documentCode;
+                                $hasError = true;
+                            }
+
+                            if (is_null($do->post_103)) {
+                                $unposted103Documents[] = $documentCode;
+                                $hasError = true;
+                            } else {
+                                $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
+                                if (! $isZrmZsmOrZpm) {
+                                    $latestQc = $do->qcHistories()->latest()->first();
+                                    if (! $latestQc || $latestQc->status !== 'Kembali') {
+                                        $invalidDocuments[] = $documentCode;
+                                        $hasError = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (! $hasError) {
+                            $readyDocuments[] = $documentCode;
+                        }
+                    } else {
+                        $notFoundDocuments[] = $documentCode;
                     }
                     $uniqueFiles[] = $file;
                 }
@@ -83,14 +162,73 @@ class EditGrsRdtv extends EditRecord
 
                     $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                     if ($do) {
-                        if ($do->status === 'GRS') {
-                            $alreadyProcessed[] = $documentCode;
+                        $hasError = false;
+
+                        // Bersihkan item GRS yang fisiknya sudah terhapus di storage jika ada
+                        $existingGrsItems = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->get();
+                        foreach ($existingGrsItems as $existingItem) {
+                            if (! empty($existingItem->file_path) && ! Storage::disk('public')->exists($existingItem->file_path)) {
+                                $existingItem->delete();
+                            }
                         }
 
-                        $latestQc = $do->qcHistories()->latest()->first();
-                        if (! $latestQc || $latestQc->status !== 'Kembali') {
-                            $invalidDocuments[] = $documentCode;
+                        $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count();
+
+                        // Jika status DO masih GRS padahal tidak ada dokumen GRS aktif, kembalikan status normal
+                        if ($grsCount === 0 && $do->status === 'GRS') {
+                            $latestQc = $do->qcHistories()->latest()->first();
+                            $do->status = ($latestQc && $latestQc->status === 'Kembali') ? 'Kembali dari ISTEK' : 'Diterima';
+                            $do->save();
                         }
+
+                        if ($do->receipt_mode === 'Termin') {
+                            $totalTermins = $do->termins()->count();
+                            $postedTermins = $do->termins()->whereNotNull('post_103')->count();
+
+                            if ($grsCount >= $totalTermins) {
+                                $alreadyProcessed[] = $documentCode;
+                                $hasError = true;
+                            } else {
+                                if ($postedTermins <= $grsCount) {
+                                    $unposted103Documents[] = $documentCode;
+                                    $hasError = true;
+                                } else {
+                                    $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
+                                    if (! $isZrmZsmOrZpm) {
+                                        $qcKembaliCount = $do->qcHistories()->where('status', 'Kembali')->count();
+                                        if ($qcKembaliCount <= $grsCount) {
+                                            $invalidDocuments[] = $documentCode;
+                                            $hasError = true;
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            if ($grsCount >= 1) {
+                                $alreadyProcessed[] = $documentCode;
+                                $hasError = true;
+                            }
+
+                            if (is_null($do->post_103)) {
+                                $unposted103Documents[] = $documentCode;
+                                $hasError = true;
+                            } else {
+                                $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
+                                if (! $isZrmZsmOrZpm) {
+                                    $latestQc = $do->qcHistories()->latest()->first();
+                                    if (! $latestQc || $latestQc->status !== 'Kembali') {
+                                        $invalidDocuments[] = $documentCode;
+                                        $hasError = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (! $hasError) {
+                            $readyDocuments[] = $documentCode;
+                        }
+                    } else {
+                        $notFoundDocuments[] = $documentCode;
                     }
                     $uniqueItems[] = $item;
                 }
@@ -100,20 +238,39 @@ class EditGrsRdtv extends EditRecord
         }
 
         $errors = [];
+        if (! empty($unposted103Documents)) {
+            $unposted103Unique = array_unique($unposted103Documents);
+            $errors[] = '<b>Belum Post 103 ('.count($unposted103Unique).'):</b><br>&bull; '.implode('<br>&bull; ', $unposted103Unique);
+        }
         if (! empty($invalidDocuments)) {
-            $errors[] = 'Belum kembali dari QC: '.implode(', ', array_unique($invalidDocuments));
+            $invalidUnique = array_unique($invalidDocuments);
+            $errors[] = '<b>Belum kembali dari QC ('.count($invalidUnique).'):</b><br>&bull; '.implode('<br>&bull; ', $invalidUnique);
         }
         if (! empty($alreadyProcessed)) {
-            $errors[] = 'Sudah sukses diupload sebagai GRS sebelumnya: '.implode(', ', array_unique($alreadyProcessed));
+            $alreadyProcessedUnique = array_unique($alreadyProcessed);
+            $errors[] = '<b>Sudah sukses diupload sebagai GRS sebelumnya ('.count($alreadyProcessedUnique).'):</b><br>&bull; '.implode('<br>&bull; ', $alreadyProcessedUnique);
         }
         if (! empty($duplicateDocuments)) {
-            $errors[] = 'Terdeteksi duplikat file yang sama: '.implode(', ', array_unique($duplicateDocuments));
+            $duplicateUnique = array_unique($duplicateDocuments);
+            $errors[] = '<b>Terdeteksi duplikat file yang sama ('.count($duplicateUnique).'):</b><br>&bull; '.implode('<br>&bull; ', $duplicateUnique);
         }
 
         if (! empty($errors)) {
+            $infoMessages = [];
+            if (! empty($readyDocuments)) {
+                $readyUnique = array_unique($readyDocuments);
+                $infoMessages[] = '<b>Siap Diproses / Belum Terupload di GRS dan RDTV ('.count($readyUnique).'):</b><br>&bull; '.implode('<br>&bull; ', $readyUnique);
+            }
+            if (! empty($notFoundDocuments)) {
+                $notFoundUnique = array_unique($notFoundDocuments);
+                $infoMessages[] = '<b>Tidak Ditemukan di Sistem ('.count($notFoundUnique).'):</b><br>&bull; '.implode('<br>&bull; ', $notFoundUnique);
+            }
+
+            $allMessages = array_merge($errors, $infoMessages);
+
             Notification::make()
                 ->title('Gagal Disimpan')
-                ->body(implode('<br>', $errors))
+                ->body(implode('<br><br>', $allMessages))
                 ->danger()
                 ->send();
 
@@ -128,8 +285,8 @@ class EditGrsRdtv extends EditRecord
         $grsRdtv = $this->record;
         $category = $grsRdtv->category;
 
-        $matchedCount = 0;
-        $notFoundCount = 0;
+        $matchedDocs = [];
+        $notFoundDocs = [];
 
         if ($category === 'GRS' && ! empty($this->uploadedFiles)) {
             foreach ($this->uploadedFiles as $file) {
@@ -142,18 +299,20 @@ class EditGrsRdtv extends EditRecord
 
                     if ($do) {
                         $do->update(['status' => $category]);
-                        $matchedCount++;
+                        $matchedDocs[] = $documentCode;
                     } else {
-                        $notFoundCount++;
+                        $notFoundDocs[] = $documentCode;
                     }
 
-                    $grsRdtv->grsRdtvItems()->create([
+                    $grsRdtvItem = $grsRdtv->grsRdtvItems()->create([
                         'delivery_order_receipt_id' => $do ? $do->id : null,
                         'document_code' => $documentCode,
                         'file_path' => $path,
                         'status' => $do ? 'Matched' : 'Not Found',
                         'reason' => null,
                     ]);
+
+                    $this->createInvoicingReceiptFor($grsRdtvItem, $do, $category, $grsRdtv->transaction_date);
                 }
             }
         }
@@ -176,28 +335,148 @@ class EditGrsRdtv extends EditRecord
                             'delay_reason' => 'RDTV',
                             'delay_notes' => $reason,
                         ]);
-                        $matchedCount++;
+                        $matchedDocs[] = $documentCode;
                     } else {
-                        $notFoundCount++;
+                        $notFoundDocs[] = $documentCode;
                     }
 
-                    $grsRdtv->grsRdtvItems()->create([
+                    $grsRdtvItem = $grsRdtv->grsRdtvItems()->create([
                         'delivery_order_receipt_id' => $do ? $do->id : null,
                         'document_code' => $documentCode,
                         'file_path' => $path,
                         'status' => $do ? 'Matched' : 'Not Found',
                         'reason' => $reason,
                     ]);
+
+                    $this->createInvoicingReceiptFor($grsRdtvItem, $do, $category, $grsRdtv->transaction_date);
                 }
             }
         }
 
-        if ($matchedCount > 0 || $notFoundCount > 0) {
-            Notification::make()
-                ->title('Proses Lanjutan Selesai')
-                ->body("Berhasil memproses tambahan dokumen {$category}. Matched: {$matchedCount}, Not Found: {$notFoundCount}")
-                ->success()
-                ->send();
+        $body = "Dokumen {$category} lanjutan selesai diproses.<br>";
+
+        if (! empty($matchedDocs)) {
+            $body .= '<br><b>Berhasil (Matched - '.count($matchedDocs).'):</b><br>&bull; '.implode('<br>&bull; ', $matchedDocs);
         }
+
+        if (! empty($notFoundDocs)) {
+            $body .= '<br><br><b>Tidak Ditemukan (Not Found - '.count($notFoundDocs).'):</b><br>&bull; '.implode('<br>&bull; ', $notFoundDocs);
+        }
+
+        Notification::make()
+            ->title('Proses Selesai')
+            ->body($body)
+            ->success()
+            ->send();
+    }
+
+    protected function createInvoicingReceiptFor(GrsRdtvItem $grsRdtvItem, ?DeliveryOrderReceipt $do, string $category, $transactionDate): void
+    {
+        if (! $do) {
+            return;
+        }
+
+        $do->loadMissing(['deliveryOrderReceiptDetails.purchaseOrderIssued']);
+        $details = $do->deliveryOrderReceiptDetails;
+        $firstDetail = $details->first();
+        $po = $firstDetail?->purchaseOrderIssued;
+
+        $rawMaterialType = $firstDetail?->material_type ?? $po?->material_type;
+        $materialType = InvoicingReceipt::normalizeMaterialType($rawMaterialType);
+
+        // Ambil kode material dan deskripsi dari detail DO atau PO
+        $materialCodes = $details->isNotEmpty()
+            ? $details->pluck('material_code')->filter()->values()->all()
+            : array_filter([$po?->material_code]);
+
+        $descriptions = $details->isNotEmpty()
+            ? $details->pluck('description')->filter()->values()->all()
+            : array_filter([$po?->description]);
+
+        // Tentukan PIC: jika tipe material none atau kosong, bagi rata ke Staff Invoice
+        $picId = $this->getAssignmentService()->determinePicId($materialType, $materialCodes, $descriptions);
+
+        // Lookup data vendor di master Vendor
+        $vendor = null;
+        if ($po?->vendor_id || $po?->vendor_name) {
+            $vendor = Vendor::where('vendor_number', $po->vendor_id)
+                ->orWhere('name', $po->vendor_name)
+                ->first();
+        }
+        $qtyPenagihan = $details->isNotEmpty() ? (float) $details->sum('quantity') : (float) ($po?->qty_po ?? 0);
+        $qtyPo = $details->map(fn ($d) => $d->purchaseOrderIssued)->filter()->unique('id')->sum('qty_po');
+        if (! $qtyPo && $po) {
+            $qtyPo = (float) $po->qty_po;
+        }
+        $uoi = $firstDetail?->uoi ?? $po?->uoi ?? 'PCS';
+
+        $sumSnapshot = $details->sum('total_amount_snapshot');
+        $subtotalExclude = ($details->isNotEmpty() && $sumSnapshot > 0)
+            ? (float) $sumSnapshot
+            : (float) ($po?->total_amount_in_lc ?? 0);
+
+        // Ekstraksi data otomatis dari berkas PDF GRS / RDTV jika tersedia
+        $parsedPdf = null;
+        if ($grsRdtvItem->file_path && strtolower(pathinfo($grsRdtvItem->file_path, PATHINFO_EXTENSION)) === 'pdf') {
+            $fullPath = Storage::disk('public')->path($grsRdtvItem->file_path);
+            if (file_exists($fullPath)) {
+                try {
+                    $parsedPdf = app(GrsPdfParserService::class)->parse($fullPath);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+        }
+
+        if ($subtotalExclude <= 0 && ! empty($parsedPdf['subtotal_exclude_ppn'])) {
+            $subtotalExclude = (float) $parsedPdf['subtotal_exclude_ppn'];
+        }
+
+        // Rumus Subtotal Include PPN: = Exclude + (Exclude * 11%)
+        $subtotalInclude = $subtotalExclude !== null
+            ? round((float) $subtotalExclude + ((float) $subtotalExclude * 0.11), 2)
+            : null;
+
+        $isRdtv = $category === 'RDTV';
+
+        $noGrs = $category === 'GRS' ? ($parsedPdf['no_grs'] ?? null) : null;
+        $tanggalTerimaGrs = ($category === 'GRS' && ! empty($parsedPdf['tanggal_release_gr']))
+            ? $parsedPdf['tanggal_release_gr']
+            : ($transactionDate ?? now());
+        $deliveryDate = $parsedPdf['delivery_date'] ?? null;
+        $tanggalPenerimaan = $parsedPdf['tanggal_penerimaan'] ?? null;
+        $tanggalPo = $parsedPdf['tanggal_po'] ?? null;
+
+        InvoicingReceipt::create([
+            'grs_rdtv_item_id' => $grsRdtvItem->id,
+            'delivery_order_receipt_id' => $do->id,
+            'purchase_order_issued_id' => $po?->id,
+            'vendor_id' => $vendor?->id,
+            'pic_id' => $picId,
+            'tanggal_terima_grs' => $tanggalTerimaGrs,
+            'delivery_date' => $deliveryDate,
+            'tanggal_penerimaan' => $tanggalPenerimaan,
+            'tanggal_po' => $tanggalPo,
+            'jenis' => $category,
+            'no_grs' => $noGrs,
+            'no_rdtv' => null,
+            'no_po' => $po?->purchase_order_no ?? ($parsedPdf['no_po'] ?? '-'),
+            'no_do' => $do->delivery_order_no ?: ($parsedPdf['no_do'] ?? null),
+            'material_type' => $materialType,
+            'vendor_name' => $po?->vendor_name ?? ($vendor?->name ?? ($parsedPdf['vendor_name'] ?? null)),
+            'deskripsi' => $firstDetail?->description ?? ($po?->description ?? ($parsedPdf['nama_barang'] ?? null)),
+            'email_vendor' => is_array($vendor?->email) ? implode(', ', $vendor->email) : $vendor?->email,
+            'tanggal_info_grs' => $isRdtv ? null : $tanggalTerimaGrs,
+            'nama_barang' => $firstDetail?->description ?? ($po?->description ?? ($parsedPdf['nama_barang'] ?? null)),
+            'qty_penagihan' => $qtyPenagihan > 0 ? $qtyPenagihan : ($parsedPdf['qty_penagihan'] ?? 0),
+            'qty_po' => $qtyPo > 0 ? $qtyPo : ($parsedPdf['qty_penagihan'] ?? 0),
+            'uoi' => $uoi ?: ($parsedPdf['uoi'] ?? 'PCS'),
+            'subtotal_exclude_ppn' => $subtotalExclude,
+            'subtotal_include_ppn' => $subtotalInclude,
+            'tanggal_terima_koreksi_invoice' => $isRdtv ? null : $tanggalTerimaGrs,
+            'dokumen_verifikasi_grs' => $grsRdtvItem->file_path,
+            'keterangan' => "Auto-generate dari {$category}: {$grsRdtvItem->document_code} (DO: {$do->delivery_order_no})",
+            'status' => 'Menunggu Verifikasi',
+        ]);
     }
 }

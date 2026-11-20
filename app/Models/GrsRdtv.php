@@ -25,4 +25,13 @@ class GrsRdtv extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (GrsRdtv $grsRdtv) {
+            foreach ($grsRdtv->grsRdtvItems as $item) {
+                $item->delete();
+            }
+        });
+    }
 }

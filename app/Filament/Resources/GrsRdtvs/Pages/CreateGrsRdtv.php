@@ -74,10 +74,27 @@ class CreateGrsRdtv extends CreateRecord
                     $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                     if ($do) {
                         $hasError = false;
+
+                        // Bersihkan item GRS yang fisiknya sudah terhapus di storage jika ada
+                        $existingGrsItems = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->get();
+                        foreach ($existingGrsItems as $existingItem) {
+                            if (! empty($existingItem->file_path) && ! Storage::disk('public')->exists($existingItem->file_path)) {
+                                $existingItem->delete();
+                            }
+                        }
+
+                        $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count();
+
+                        // Jika status DO masih GRS padahal tidak ada dokumen GRS aktif, kembalikan status normal
+                        if ($grsCount === 0 && $do->status === 'GRS') {
+                            $latestQc = $do->qcHistories()->latest()->first();
+                            $do->status = ($latestQc && $latestQc->status === 'Kembali') ? 'Kembali dari ISTEK' : 'Diterima';
+                            $do->save();
+                        }
+
                         if ($do->receipt_mode === 'Termin') {
                             $totalTermins = $do->termins()->count();
                             $postedTermins = $do->termins()->whereNotNull('post_103')->count();
-                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count();
 
                             if ($grsCount >= $totalTermins) {
                                 $alreadyProcessed[] = $documentCode;
@@ -152,10 +169,27 @@ class CreateGrsRdtv extends CreateRecord
                     $do = DeliveryOrderReceipt::where('document_code', $documentCode)->first();
                     if ($do) {
                         $hasError = false;
+
+                        // Bersihkan item GRS yang fisiknya sudah terhapus di storage jika ada
+                        $existingGrsItems = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->get();
+                        foreach ($existingGrsItems as $existingItem) {
+                            if (! empty($existingItem->file_path) && ! Storage::disk('public')->exists($existingItem->file_path)) {
+                                $existingItem->delete();
+                            }
+                        }
+
+                        $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count();
+
+                        // Jika status DO masih GRS padahal tidak ada dokumen GRS aktif, kembalikan status normal
+                        if ($grsCount === 0 && $do->status === 'GRS') {
+                            $latestQc = $do->qcHistories()->latest()->first();
+                            $do->status = ($latestQc && $latestQc->status === 'Kembali') ? 'Kembali dari ISTEK' : 'Diterima';
+                            $do->save();
+                        }
+
                         if ($do->receipt_mode === 'Termin') {
                             $totalTermins = $do->termins()->count();
                             $postedTermins = $do->termins()->whereNotNull('post_103')->count();
-                            $grsCount = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->count();
 
                             if ($grsCount >= $totalTermins) {
                                 $alreadyProcessed[] = $documentCode;

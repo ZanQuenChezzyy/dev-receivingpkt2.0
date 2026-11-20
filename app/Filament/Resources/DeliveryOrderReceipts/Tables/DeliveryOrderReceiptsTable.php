@@ -707,6 +707,35 @@ class DeliveryOrderReceiptsTable
                                 ->success()
                                 ->send();
                         }),
+                    Action::make('undo_grs_action')
+                        ->label('Tarik / Hapus Berkas GRS / RDTV')
+                        ->icon(Heroicon::ArrowUturnLeft)
+                        ->color('danger')
+                        ->outlined()
+                        ->requiresConfirmation()
+                        ->modalHeading('Tarik / Hapus Berkas GRS / RDTV')
+                        ->modalDescription('Apakah Anda yakin ingin membatalkan/menghapus berkas GRS/RDTV pada DO ini? Berkas PDF dan catatan tagihan terkait akan dihapus agar dokumen dapat diunggah ulang.')
+                        ->modalSubmitActionLabel('Ya, Hapus & Tarik Kembali')
+                        ->visible(fn ($record): bool => in_array($record->status, ['GRS', 'RDTV']) || $record->grsRdtvItems()->exists())
+                        ->action(function ($record) {
+                            foreach ($record->grsRdtvItems as $item) {
+                                $item->delete();
+                            }
+
+                            if (in_array($record->status, ['GRS', 'RDTV'])) {
+                                $latestQc = $record->qcHistories()->latest()->first();
+                                $record->status = ($latestQc && $latestQc->status === 'Kembali') ? 'Kembali dari ISTEK' : 'Diterima';
+                                $record->delay_reason = null;
+                                $record->delay_notes = null;
+                                $record->save();
+                            }
+
+                            Notification::make()
+                                ->title('Berkas GRS/RDTV Berhasil Dihapus')
+                                ->body('Status dokumen telah dikembalikan normal sehingga berkas GRS/RDTV dapat diunggah ulang.')
+                                ->success()
+                                ->send();
+                        }),
                     Action::make('barang_telah_tiba_action')
                         ->label('Barang Telah Tiba')
                         ->icon(Heroicon::CheckBadge)
