@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasTable('invoicing_receipts')) {
-            // Bersihkan data legacy di mana dokumen_verifikasi_grs terisi path berkas slip GRS gudang (bukan surat verifikasi ACC VP)
+            // Bersihkan data legacy di mana dokumen_verifikasi_grs terisi path berkas slip GRS gudang (bukan surat verifikasi resmi)
             DB::table('invoicing_receipts')
                 ->whereNotNull('dokumen_verifikasi_grs')
                 ->where(function ($q) {

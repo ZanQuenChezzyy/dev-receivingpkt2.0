@@ -463,7 +463,7 @@ test('vendor can download dokumen_grs and distinct dokumen_verifikasi_grs', func
     Storage::fake('public');
 
     Storage::disk('public')->put('berkas-grs/slip_grs_105.pdf', 'fake grs 105 content');
-    Storage::disk('public')->put('verifikasi-grs/memo_acc_vp.pdf', 'fake memo acc vp content');
+    Storage::disk('public')->put('verifikasi-grs/memo_verifikasi.pdf', 'fake memo verifikasi content');
 
     $vendor = Vendor::create([
         'name' => 'PT Sumber Rejeki',
@@ -496,7 +496,7 @@ test('vendor can download dokumen_grs and distinct dokumen_verifikasi_grs', func
         'no_grs' => '1050012345',
         'jenis' => 'GRS',
         'status' => 'Terverifikasi',
-        'dokumen_verifikasi_grs' => 'verifikasi-grs/memo_acc_vp.pdf',
+        'dokumen_verifikasi_grs' => 'verifikasi-grs/memo_verifikasi.pdf',
     ]);
 
     $test = Livewire::test(VendorPoTracking::class)
@@ -519,5 +519,5 @@ test('vendor can download dokumen_grs and distinct dokumen_verifikasi_grs', func
     $component->activePo = '5300099999';
     $result = $component->downloadVerifikasiGrs($invoice->id);
     expect($result)->toBeNull()
-        ->and(session('download_error'))->toBe('Surat Verifikasi GRS (ACC VP) belum diunggah oleh Tim Invoice.');
+        ->and(session('download_error'))->toBe('Surat Verifikasi GRS belum diunggah oleh Tim Invoice.');
 });

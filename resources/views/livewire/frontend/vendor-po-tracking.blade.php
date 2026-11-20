@@ -634,7 +634,7 @@
                             </div>
                         </div>
 
-                        <!-- CARD 2: SURAT VERIFIKASI GRS (INVOICE - ACC VP) -->
+                        <!-- CARD 2: SURAT VERIFIKASI GRS (INVOICE) -->
                         <div class="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-indigo-500/5 via-white/40 dark:via-white/5 to-transparent border border-indigo-500/20 relative flex flex-col justify-between">
                             <div>
                                 <div class="flex items-start justify-between gap-3 mb-4">
@@ -647,7 +647,7 @@
                                         <div>
                                             <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">{{ __('Modul Invoicing (Verifikasi)') }}</span>
                                             <h4 class="text-base font-black text-slate-800 dark:text-white">
-                                                {{ __('Dokumen Verifikasi GRS (ACC VP)') }}
+                                                {{ __('Dokumen Verifikasi GRS') }}
                                             </h4>
                                         </div>
                                     </div>
@@ -668,7 +668,7 @@
                                 </div>
 
                                 <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                    {{ __('Surat Verifikasi Penerimaan Barang resmi yang telah ditandatangani dan disetujui (ACC) oleh Vice President Planning, Receiving & Warehousing PT Pupuk Kalimantan Timur.') }}
+                                    {{ __('Surat Verifikasi Penerimaan Barang resmi yang telah disahkan oleh Vice President Planning, Receiving & Warehousing PT Pupuk Kalimantan Timur.') }}
                                 </p>
 
                                 @if ($hasVerifikasi)
@@ -676,7 +676,7 @@
                                         <div class="text-xs">
                                             <div class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
                                                 <span>{{ __('Surat Verifikasi Penerimaan Barang') }}</span>
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600">{{ __('ACC VP') }}</span>
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600">{{ __('Terverifikasi') }}</span>
                                             </div>
                                             <div class="text-[11px] text-slate-400 mt-0.5">
                                                 PO: {{ $invReceipt->no_po }} • Status: {{ $invReceipt->status }}
@@ -699,7 +699,7 @@
                                 @else
                                     <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs mb-4 flex items-center gap-2">
                                         <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                        <span>{{ __('Surat verifikasi belum diunggah oleh Tim Invoice. Berkas akan tersedia setelah proses verifikasi penerimaan barang disetujui VP.') }}</span>
+                                        <span>{{ __('Surat verifikasi belum diunggah oleh Tim Invoice. Berkas akan tersedia setelah proses verifikasi penerimaan barang disahkan.') }}</span>
                                     </div>
                                 @endif
                             </div>

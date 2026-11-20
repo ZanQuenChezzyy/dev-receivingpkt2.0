@@ -261,13 +261,13 @@ class InvoicingReceiptInfolist
                             ->placeholder('-'),
 
                         TextEntry::make('dokumen_verifikasi_grs')
-                            ->label('Dokumen Verifikasi GRS (ACC VP)')
+                            ->label('Dokumen Verifikasi GRS')
                             ->formatStateUsing(function ($state, $record) {
                                 if (! $state || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state)) {
                                     return 'Belum Ada Berkas';
                                 }
 
-                                return 'Buka Verifikasi (ACC VP)';
+                                return 'Buka Dokumen Verifikasi';
                             })
                             ->badge()
                             ->color(function ($state, $record) {

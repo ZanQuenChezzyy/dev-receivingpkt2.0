@@ -165,7 +165,7 @@ class ListInvoicingReceipts extends ListRecords
                 ->icon(Heroicon::ArrowUpTray)
                 ->color('info')
                 ->modalHeading('Upload & Verifikasi Massal Dokumen GRS (OCR)')
-                ->modalDescription('Unggah berkas PDF Surat Verifikasi Penerimaan Barang (ACC VP) secara massal (hingga 100 berkas). Sistem otomatis memindai teks dokumen scan menggunakan OCR langsung di browser Anda tanpa membebani server.')
+                ->modalDescription('Unggah berkas PDF Surat Verifikasi Penerimaan Barang secara massal (hingga 100 berkas). Sistem otomatis memindai teks dokumen scan menggunakan OCR langsung di browser Anda tanpa membebani server.')
                 ->modalWidth('5xl')
                 ->modalContent(view('filament.actions.batch-upload-verifikasi-grs-modal'))
                 ->modalSubmitAction(false)

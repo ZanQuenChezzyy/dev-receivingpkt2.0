@@ -470,7 +470,7 @@ class InvoicingReceiptForm
                             ->required(),
 
                         FileUpload::make('dokumen_verifikasi_grs')
-                            ->label('Surat / Dokumen Verifikasi GRS (ACC VP)')
+                            ->label('Surat / Dokumen Verifikasi GRS')
                             ->disk('public')
                             ->directory('verifikasi-grs')
                             ->acceptedFileTypes(['application/pdf', 'image/*'])

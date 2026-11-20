@@ -267,17 +267,17 @@ class InvoicingReceiptsTable
                         ->tooltip('Berkas Goods Receipt Slip (GRS / RDTV) fisik penerimaan gudang dari modul GRS/RDTV.'),
 
                     TextColumn::make('dokumen_verifikasi_grs')
-                        ->label('Verifikasi (ACC VP)')
+                        ->label('Verifikasi GRS')
                         ->formatStateUsing(function ($state, InvoicingReceipt $record) {
                             if (! $state) {
                                 return 'Belum Ada';
                             }
-                            // Jika terisi file slip GRS gudang, bukan surat verifikasi ACC VP
+                            // Jika terisi file slip GRS gudang, bukan surat verifikasi resmi
                             if ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state) {
                                 return 'Belum Ada';
                             }
 
-                            return 'Ada (ACC VP)';
+                            return 'Terverifikasi';
                         })
                         ->badge()
                         ->color(function ($state, InvoicingReceipt $record) {
@@ -844,22 +844,22 @@ class InvoicingReceiptsTable
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Tutup'),
 
-                    // ACTION UTAMA 3: UPLOAD BERKAS (VERIFIKASI GRS ACC VP & INVOICE VENDOR)
+                    // ACTION UTAMA 3: UPLOAD BERKAS (VERIFIKASI GRS & INVOICE VENDOR)
                     Action::make('uploadBerkas')
                         ->label('Upload Berkas')
                         ->icon('heroicon-o-arrow-up-tray')
                         ->color('info')
                         ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
                         ->modalHeading(fn (?InvoicingReceipt $record) => 'Upload Berkas - PO: '.($record?->no_po ?? '-'))
-                        ->modalDescription('Unggah dokumen verifikasi GRS (setelah ACC VP) dan berkas invoice resmi vendor. Dokumen GRS fisik gudang otomatis terhubung dari modul GRS/RDTV.')
+                        ->modalDescription('Unggah dokumen verifikasi GRS dan berkas invoice resmi vendor. Dokumen GRS fisik gudang otomatis terhubung dari modul GRS/RDTV.')
                         ->schema([
                             FileUpload::make('dokumen_verifikasi_grs')
-                                ->label('Surat / Dokumen Verifikasi GRS (ACC VP)')
+                                ->label('Surat / Dokumen Verifikasi GRS')
                                 ->disk('public')
                                 ->directory('verifikasi-grs')
                                 ->acceptedFileTypes(['application/pdf', 'image/*'])
                                 ->default(fn (?InvoicingReceipt $record) => ($record?->dokumen_verifikasi_grs && $record?->dokumen_verifikasi_grs !== $record?->grsRdtvItem?->file_path) ? $record->dokumen_verifikasi_grs : null)
-                                ->helperText('Unggah surat verifikasi penerimaan barang resmi yang telah disetujui / ditandatangani VP.'),
+                                ->helperText('Unggah surat verifikasi penerimaan barang resmi yang telah disahkan / ditandatangani.'),
 
                             FileUpload::make('dokumen_invoice')
                                 ->label('Berkas Invoice Vendor')
@@ -876,7 +876,7 @@ class InvoicingReceiptsTable
                             if (empty($verifikasiFile) && empty($invoiceFile) && empty($record->dokumen_verifikasi_grs) && empty($record->dokumen_invoice)) {
                                 Notification::make()
                                     ->title('Tidak Ada Berkas Dipilih')
-                                    ->body('Silakan pilih setidaknya satu berkas (Verifikasi GRS ACC VP atau Invoice Vendor).')
+                                    ->body('Silakan pilih setidaknya satu berkas (Verifikasi GRS atau Invoice Vendor).')
                                     ->warning()
                                     ->send();
 

@@ -1130,7 +1130,7 @@ class VendorPoTracking extends Component
 
         $grsPath = $receipt?->dokumen_grs ?: $receipt?->grsRdtvItem?->file_path;
         if (! $receipt || empty($receipt->dokumen_verifikasi_grs) || ($grsPath && $grsPath === $receipt->dokumen_verifikasi_grs)) {
-            session()->flash('download_error', __('Surat Verifikasi GRS (ACC VP) belum diunggah oleh Tim Invoice.'));
+            session()->flash('download_error', __('Surat Verifikasi GRS belum diunggah oleh Tim Invoice.'));
 
             return null;
         }
