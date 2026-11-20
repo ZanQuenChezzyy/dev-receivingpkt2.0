@@ -4,11 +4,295 @@
 
 <div
     class="space-y-5"
-    x-data="batchVerifikasiGrsOcr({
+    x-data="{
         uploadUrl: '{{ $uploadUrl }}',
-        csrfToken: '{{ csrf_token() }}'
-    })"
-    x-init="init()"
+        csrfToken: '{{ csrf_token() }}',
+        isDragging: false,
+        isProcessing: false,
+        overallProgress: 0,
+        currentStepMessage: 'Siap',
+        items: [],
+        tesseractWorker: null,
+
+        get scannedCount() {
+            return this.items.filter(i => ['scanned', 'uploading', 'verified'].includes(i.status)).length;
+        },
+        get verifiedCount() {
+            return this.items.filter(i => i.status === 'verified').length;
+        },
+        get unmatchedCount() {
+            return this.items.filter(i => i.status === 'unmatched').length;
+        },
+        get hasPendingUploads() {
+            return this.items.some(i => ['queued', 'scanning', 'scanned'].includes(i.status));
+        },
+
+        init() {
+            this.ensureLibraries().catch(err => {
+                console.warn('Preload OCR libs warning:', err);
+            });
+        },
+
+        loadScript(src) {
+            const scripts = Array.from(document.getElementsByTagName('script'));
+            if (scripts.some(s => s.src === src)) {
+                return Promise.resolve();
+            }
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = src;
+                s.onload = () => resolve();
+                s.onerror = (err) => reject(err);
+                document.head.appendChild(s);
+            });
+        },
+
+        async ensureLibraries() {
+            if (typeof window.pdfjsLib === 'undefined') {
+                await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+            }
+            if (window.pdfjsLib && !window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }
+            if (typeof window.Tesseract === 'undefined') {
+                await this.loadScript('https://cdn.jsdelivr.net/npm/tesseract.js' + '@' + '5/dist/tesseract.min.js');
+            }
+        },
+
+        handleDrop(e) {
+            this.isDragging = false;
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+            this.addFiles(files);
+        },
+
+        handleFileSelect(e) {
+            const files = Array.from(e.target.files).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+            this.addFiles(files);
+            e.target.value = '';
+        },
+
+        addFiles(files) {
+            for (const file of files) {
+                if (this.items.some(i => i.name === file.name && i.size === file.size)) {
+                    continue;
+                }
+
+                const fnGrsMatch = file.name.match(/(?:grs|105)[^0-9]*(500\d{7})/i) || file.name.match(/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/);
+                const fnPoMatch = file.name.match(/(?:po)[^0-9]*(53\d{8})/i) || file.name.match(/(?:^|[^0-9])(53\d{8})(?:[^0-9]|$)/);
+
+                this.items.push({
+                    file: file,
+                    name: file.name,
+                    size: file.size,
+                    status: 'queued',
+                    no_grs: fnGrsMatch ? fnGrsMatch[1] : '',
+                    no_po: fnPoMatch ? fnPoMatch[1] : '',
+                    no_do: '',
+                    source: fnGrsMatch ? 'filename' : 'pending',
+                    message: fnGrsMatch ? 'Nomor terdeteksi dari nama berkas' : 'Menunggu pemindaian',
+                });
+            }
+        },
+
+        removeItem(index) {
+            this.items.splice(index, 1);
+        },
+
+        clearAll() {
+            if (this.isProcessing) return;
+            this.items = [];
+            this.overallProgress = 0;
+            this.currentStepMessage = 'Siap';
+        },
+
+        getStatusLabel(item) {
+            switch (item.status) {
+                case 'queued': return 'Antrean';
+                case 'scanning': return 'Memindai OCR...';
+                case 'scanned': return 'OCR Selesai';
+                case 'uploading': return 'Mengunggah...';
+                case 'verified': return 'Terverifikasi ✅';
+                case 'unmatched': return 'Tagihan Belum Cocok ⚠️';
+                case 'error': return 'Error ❌';
+                default: return item.status;
+            }
+        },
+
+        formatBytes(bytes) {
+            if (!bytes) return '0 B';
+            const kb = bytes / 1024;
+            if (kb < 1024) return kb.toFixed(1) + ' KB';
+            return (kb / 1024).toFixed(2) + ' MB';
+        },
+
+        async getTesseractWorker() {
+            await this.ensureLibraries();
+            if (!this.tesseractWorker && typeof window.Tesseract !== 'undefined') {
+                this.currentStepMessage = 'Memuat engine OCR Tesseract di browser...';
+                this.tesseractWorker = await window.Tesseract.createWorker('eng', 1, {
+                    workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js' + '@' + '5/dist/worker.min.js',
+                    corePath: 'https://cdn.jsdelivr.net/npm/tesseract-core' + '@' + '5/tesseract-core.wasm.js',
+                });
+            }
+            return this.tesseractWorker;
+        },
+
+        async scanFileOcr(item) {
+            item.status = 'scanning';
+            this.currentStepMessage = 'Memindai teks dokumen: ' + item.name + '...';
+
+            try {
+                await this.ensureLibraries();
+                const arrayBuffer = await item.file.arrayBuffer();
+                const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const page = await pdf.getPage(1);
+
+                // 1. Cek layer teks digital bawaan
+                const textContent = await page.getTextContent();
+                const digitalText = textContent.items.map(t => t.str).join(' ');
+
+                let grs = null;
+                let po = null;
+                let doNum = null;
+
+                if (digitalText && digitalText.length > 30) {
+                    const dGrs = digitalText.match(/(?:GRS(?:\s*\(105\))?|105)[\s\S]{1,30}?(500\d{7})/i)
+                              || digitalText.match(/No\s*Release\s*GR\s*[:\s]+(500\d{7})/i)
+                              || digitalText.match(/\b(500\d{7})\b/);
+                    const dPo = digitalText.match(/(?:PO)[\s\S]{1,30}?(53\d{8})/i)
+                             || digitalText.match(/\b(53\d{8})\b/);
+                    const dDo = digitalText.match(/Nomor\s*DO(?:\/S[J\]])?\s*[:©1]?\s*([A-Za-z0-9\/-]+)/i);
+
+                    if (dGrs) grs = dGrs[1];
+                    if (dPo) po = dPo[1];
+                    if (dDo) doNum = dDo[1];
+                    if (grs || po) {
+                        item.source = 'digital_text';
+                    }
+                }
+
+                // 2. Scan OCR jika tidak ada teks digital atau belum menemukan nomor GRS
+                if (!grs) {
+                    this.currentStepMessage = 'Menjalankan OCR pada gambar scan: ' + item.name + '...';
+                    const worker = await this.getTesseractWorker();
+
+                    if (worker) {
+                        const scale = 1.5;
+                        const viewport = page.getViewport({ scale });
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height * 0.65; // Crop 65% area atas
+
+                        await page.render({
+                            canvasContext: ctx,
+                            viewport: viewport
+                        }).promise;
+
+                        const ocrRes = await worker.recognize(canvas);
+                        const ocrText = ocrRes?.data?.text || '';
+
+                        const oGrs = ocrText.match(/(?:GRS(?:\s*\(105\))?|105)[\s\S]{1,35}?(500\d{7})/i)
+                                 || ocrText.match(/No\s*Release\s*GR\s*[:\s1©]+(500\d{7})/i)
+                                 || ocrText.match(/\b(500\d{7})\b/);
+                        const oPo = ocrText.match(/(?:PO)[\s\S]{1,30}?(53\d{8})/i)
+                                || ocrText.match(/\b(53\d{8})\b/);
+                        const oDo = ocrText.match(/Nomor\s*DO(?:\/S[J\]])?\s*[:©1]?\s*([A-Za-z0-9\/-]+)/i);
+
+                        if (oGrs) grs = oGrs[1];
+                        if (oPo) po = oPo[1];
+                        if (oDo) doNum = oDo[1];
+                        if (grs || po) {
+                            item.source = 'ocr_image';
+                        }
+                    }
+                }
+
+                if (grs) item.no_grs = grs;
+                if (po) item.no_po = po;
+                if (doNum) item.no_do = doNum;
+
+                item.status = 'scanned';
+                item.message = item.no_grs ? 'Terdeteksi GRS: ' + item.no_grs : 'GRS belum terdeteksi otomatis';
+            } catch (err) {
+                console.error('Scan error:', err);
+                item.status = 'scanned';
+                item.message = 'Pemindaian gambar dilewati, mengandalkan nama file';
+            }
+        },
+
+        async uploadItem(item) {
+            item.status = 'uploading';
+            this.currentStepMessage = 'Mengunggah & memverifikasi: ' + item.name + '...';
+
+            const formData = new FormData();
+            formData.append('file', item.file);
+            formData.append('no_grs', item.no_grs || '');
+            formData.append('no_po', item.no_po || '');
+            formData.append('no_do', item.no_do || '');
+            formData.append('original_name', item.name);
+
+            try {
+                const res = await fetch(this.uploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': this.csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success && data.matched) {
+                    item.status = 'verified';
+                    item.message = data.message || 'Berhasil diverifikasi';
+                    if (data.no_grs) item.no_grs = data.no_grs;
+                    if (data.no_po) item.no_po = data.no_po;
+                } else {
+                    item.status = 'unmatched';
+                    item.message = data.message || 'Tagihan invoice tidak ditemukan';
+                }
+            } catch (err) {
+                console.error('Upload error:', err);
+                item.status = 'error';
+                item.message = 'Gagal menghubungi server';
+            }
+        },
+
+        async startProcessAll() {
+            if (this.isProcessing) return;
+            this.isProcessing = true;
+
+            const total = this.items.length;
+            for (let i = 0; i < total; i++) {
+                const item = this.items[i];
+                this.overallProgress = Math.round((i / total) * 100);
+
+                if (item.status === 'queued') {
+                    await this.scanFileOcr(item);
+                }
+
+                if (['queued', 'scanned'].includes(item.status)) {
+                    await this.uploadItem(item);
+                }
+            }
+
+            this.overallProgress = 100;
+            this.currentStepMessage = 'Seluruh berkas selesai diproses!';
+            this.isProcessing = false;
+
+            if (this.tesseractWorker) {
+                try {
+                    await this.tesseractWorker.terminate();
+                } catch (e) {}
+                this.tesseractWorker = null;
+            }
+        },
+
+        finishAndReload() {
+            window.location.reload();
+        }
+    }"
 >
     <!-- Header Banner -->
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500/10 via-sky-500/5 to-emerald-500/10 p-5 border border-indigo-200/50 dark:border-indigo-800/40">
@@ -29,7 +313,7 @@
                     Pemindaian Otomatis PDF Gambar (Scan) & Verifikasi Tagihan
                 </h3>
                 <p class="text-xs text-gray-600 dark:text-gray-400">
-                    Pilih puluhan file PDF scan sekaligus dengan nama apa pun. Dokumen dipindai langsung di komputer Anda dengan Tesseract.js & PDF.js untuk mengambil <b>Nomor GRS (105)</b> dan <b>Nomor PO</b>.
+                    Pilih puluhan berkas PDF scan sekaligus dengan nama apa pun. Dokumen dipindai langsung di komputer Anda dengan Tesseract.js &amp; PDF.js untuk mengambil <b>Nomor GRS (105)</b> dan <b>Nomor PO</b>.
                 </p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
@@ -66,7 +350,7 @@
             </div>
             <div class="space-y-0.5">
                 <p class="text-sm font-semibold text-gray-900 dark:text-white">
-                    Tarik & letakkan berkas PDF Verifikasi GRS di sini, atau <span class="text-indigo-600 dark:text-indigo-400 underline">klik untuk memilih</span>
+                    Tarik &amp; letakkan berkas PDF Verifikasi GRS di sini, atau <span class="text-indigo-600 dark:text-indigo-400 underline">klik untuk memilih</span>
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
                     Bisa memilih hingga 100 berkas PDF sekaligus (hasil scan scanner, print e-office, maupun PDF digital).
@@ -106,7 +390,7 @@
                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
                     <div
                         class="bg-gradient-to-r from-indigo-500 to-emerald-500 h-2.5 rounded-full transition-all duration-300"
-                        :style="`width: ${overallProgress}%`"
+                        :style="'width: ' + overallProgress + '%'"
                     ></div>
                 </div>
             </div>
@@ -194,7 +478,7 @@
                     >
                         Bersihkan Semua
                     </button>
-                    <span class="text-xs text-gray-500" x-show="verifiedCount > 0" x-text="`${verifiedCount} tagihan siap diperbarui`"></span>
+                    <span class="text-xs text-gray-500" x-show="verifiedCount > 0" x-text="verifiedCount + ' tagihan siap diperbarui'"></span>
                 </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -228,272 +512,3 @@
         </div>
     </template>
 </div>
-
-<!-- Load PDF.js and Tesseract.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
-<script>
-function batchVerifikasiGrsOcr(config) {
-    return {
-        uploadUrl: config.uploadUrl || '',
-        csrfToken: config.csrfToken || '',
-        isDragging: false,
-        isProcessing: false,
-        overallProgress: 0,
-        currentStepMessage: 'Siap',
-        items: [],
-        tesseractWorker: null,
-
-        get scannedCount() {
-            return this.items.filter(i => ['scanned', 'uploading', 'verified'].includes(i.status)).length;
-        },
-        get verifiedCount() {
-            return this.items.filter(i => i.status === 'verified').length;
-        },
-        get unmatchedCount() {
-            return this.items.filter(i => i.status === 'unmatched').length;
-        },
-        get hasPendingUploads() {
-            return this.items.some(i => ['queued', 'scanning', 'scanned'].includes(i.status));
-        },
-
-        init() {
-            if (typeof pdfjsLib !== 'undefined') {
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-            }
-        },
-
-        handleDrop(e) {
-            this.isDragging = false;
-            const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
-            this.addFiles(files);
-        },
-
-        handleFileSelect(e) {
-            const files = Array.from(e.target.files).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
-            this.addFiles(files);
-            e.target.value = '';
-        },
-
-        addFiles(files) {
-            for (const file of files) {
-                // Jangan duplikasi file yang sama di list
-                if (this.items.some(i => i.name === file.name && i.size === file.size)) {
-                    continue;
-                }
-
-                // Coba fallback nama file dulu jika sudah memuat pola nomor
-                const fnGrsMatch = file.name.match(/(?:grs|105)[^0-9]*(500\d{7})/i) || file.name.match(/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/);
-                const fnPoMatch = file.name.match(/(?:po)[^0-9]*(53\d{8})/i) || file.name.match(/(?:^|[^0-9])(53\d{8})(?:[^0-9]|$)/);
-
-                this.items.push({
-                    file: file,
-                    name: file.name,
-                    size: file.size,
-                    status: 'queued', // queued, scanning, scanned, uploading, verified, unmatched, error
-                    no_grs: fnGrsMatch ? fnGrsMatch[1] : '',
-                    no_po: fnPoMatch ? fnPoMatch[1] : '',
-                    no_do: '',
-                    source: fnGrsMatch ? 'filename' : 'pending',
-                    message: fnGrsMatch ? 'Nomor terdeteksi dari nama berkas' : 'Menunggu pemindaian',
-                });
-            }
-        },
-
-        removeItem(index) {
-            this.items.splice(index, 1);
-        },
-
-        clearAll() {
-            if (this.isProcessing) return;
-            this.items = [];
-            this.overallProgress = 0;
-            this.currentStepMessage = 'Siap';
-        },
-
-        getStatusLabel(item) {
-            switch (item.status) {
-                case 'queued': return 'Antrean';
-                case 'scanning': return 'Memindai OCR...';
-                case 'scanned': return 'OCR Selesai';
-                case 'uploading': return 'Mengunggah...';
-                case 'verified': return 'Terverifikasi ✅';
-                case 'unmatched': return 'Tagihan Belum Cocok ⚠️';
-                case 'error': return 'Error ❌';
-                default: return item.status;
-            }
-        },
-
-        formatBytes(bytes) {
-            if (!bytes) return '0 B';
-            const kb = bytes / 1024;
-            if (kb < 1024) return kb.toFixed(1) + ' KB';
-            return (kb / 1024).toFixed(2) + ' MB';
-        },
-
-        async getTesseractWorker() {
-            if (!this.tesseractWorker && typeof Tesseract !== 'undefined') {
-                this.currentStepMessage = 'Memuat engine OCR Tesseract di browser...';
-                this.tesseractWorker = await Tesseract.createWorker('eng', 1, {
-                    workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
-                    corePath: 'https://cdn.jsdelivr.net/npm/tesseract-core@5/tesseract-core.wasm.js',
-                });
-            }
-            return this.tesseractWorker;
-        },
-
-        async scanFileOcr(item) {
-            item.status = 'scanning';
-            this.currentStepMessage = `Memindai teks dokumen: ${item.name}...`;
-
-            try {
-                const arrayBuffer = await item.file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                const page = await pdf.getPage(1);
-
-                // 1. Cek dulu apakah PDF memiliki layer teks digital bawaan (instan < 10ms)
-                const textContent = await page.getTextContent();
-                const digitalText = textContent.items.map(t => t.str).join(' ');
-
-                let grs = null;
-                let po = null;
-                let doNum = null;
-
-                if (digitalText && digitalText.length > 30) {
-                    const dGrs = digitalText.match(/(?:GRS(?:\s*\(105\))?|105)[\s\S]{1,30}?(500\d{7})/i)
-                              || digitalText.match(/No\s*Release\s*GR\s*[:\s]+(500\d{7})/i)
-                              || digitalText.match(/\b(500\d{7})\b/);
-                    const dPo = digitalText.match(/(?:PO)[\s\S]{1,30}?(53\d{8})/i)
-                             || digitalText.match(/\b(53\d{8})\b/);
-                    const dDo = digitalText.match(/Nomor\s*DO(?:\/S[J\]])?\s*[:©1]?\s*([A-Za-z0-9\/-]+)/i);
-
-                    if (dGrs) grs = dGrs[1];
-                    if (dPo) po = dPo[1];
-                    if (dDo) doNum = dDo[1];
-                    if (grs || po) {
-                        item.source = 'digital_text';
-                    }
-                }
-
-                // 2. Jika bukan digital PDF (hasil scan murni), render canvas dan jalankan Tesseract OCR
-                if (!grs) {
-                    this.currentStepMessage = `Menjalankan OCR pada gambar scan: ${item.name}...`;
-                    const worker = await this.getTesseractWorker();
-
-                    // Render hanya 65% area atas dokumen (tempat nomor GRS, PO, GR berada) untuk kecepatan optimal
-                    const scale = 1.5;
-                    const viewport = page.getViewport({ scale });
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = viewport.width;
-                    canvas.height = viewport.height * 0.65; // Crop 65% atas
-
-                    await page.render({
-                        canvasContext: ctx,
-                        viewport: viewport
-                    }).promise;
-
-                    const ocrRes = await worker.recognize(canvas);
-                    const ocrText = ocrRes?.data?.text || '';
-
-                    const oGrs = ocrText.match(/(?:GRS(?:\s*\(105\))?|105)[\s\S]{1,35}?(500\d{7})/i)
-                             || ocrText.match(/No\s*Release\s*GR\s*[:\s1©]+(500\d{7})/i);
-                    const oPo = ocrText.match(/(?:PO)[\s\S]{1,30}?(53\d{8})/i);
-                    const oDo = ocrText.match(/Nomor\s*DO(?:\/S[J\]])?\s*[:©1]?\s*([A-Za-z0-9\/-]+)/i);
-
-                    if (oGrs) grs = oGrs[1];
-                    if (oPo) po = oPo[1];
-                    if (oDo) doNum = oDo[1];
-                    if (grs || po) {
-                        item.source = 'ocr_image';
-                    }
-                }
-
-                if (grs) item.no_grs = grs;
-                if (po) item.no_po = po;
-                if (doNum) item.no_do = doNum;
-
-                item.status = 'scanned';
-                item.message = item.no_grs ? `Terdeteksi GRS: ${item.no_grs}` : 'GRS belum terdeteksi otomatis';
-            } catch (err) {
-                console.error('Scan error:', err);
-                item.status = 'scanned';
-                item.message = 'Pemindaian gambar dilewati, mengandalkan nama file';
-            }
-        },
-
-        async uploadItem(item) {
-            item.status = 'uploading';
-            this.currentStepMessage = `Mengunggah & memverifikasi: ${item.name}...`;
-
-            const formData = new FormData();
-            formData.append('file', item.file);
-            formData.append('no_grs', item.no_grs || '');
-            formData.append('no_po', item.no_po || '');
-            formData.append('no_do', item.no_do || '');
-            formData.append('original_name', item.name);
-
-            try {
-                const res = await fetch(this.uploadUrl, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': this.csrfToken,
-                        'Accept': 'application/json',
-                    },
-                    body: formData,
-                });
-
-                const data = await res.json();
-                if (res.ok && data.success && data.matched) {
-                    item.status = 'verified';
-                    item.message = data.message || 'Berhasil diverifikasi';
-                    if (data.no_grs) item.no_grs = data.no_grs;
-                    if (data.no_po) item.no_po = data.no_po;
-                } else {
-                    item.status = 'unmatched';
-                    item.message = data.message || 'Tagihan invoice tidak ditemukan';
-                }
-            } catch (err) {
-                console.error('Upload error:', err);
-                item.status = 'error';
-                item.message = 'Gagal menghubungi server';
-            }
-        },
-
-        async startProcessAll() {
-            if (this.isProcessing) return;
-            this.isProcessing = true;
-
-            const total = this.items.length;
-            for (let i = 0; i < total; i++) {
-                const item = this.items[i];
-                this.overallProgress = Math.round((i / total) * 100);
-
-                // 1. Scan OCR jika belum discan
-                if (item.status === 'queued') {
-                    await this.scanFileOcr(item);
-                }
-
-                // 2. Upload langsung setelah discan
-                if (['queued', 'scanned'].includes(item.status)) {
-                    await this.uploadItem(item);
-                }
-            }
-
-            this.overallProgress = 100;
-            this.currentStepMessage = 'Seluruh berkas selesai diproses!';
-            this.isProcessing = false;
-
-            if (this.tesseractWorker) {
-                await this.tesseractWorker.terminate();
-                this.tesseractWorker = null;
-            }
-        },
-
-        finishAndReload() {
-            window.location.reload();
-        }
-    };
-}
-</script>
