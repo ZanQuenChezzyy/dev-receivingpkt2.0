@@ -278,23 +278,23 @@
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">{{ __('ALEX • Asisten AI Receiving Aktif') }}</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm">{{ __('ALEX Asisten AI Receiving sudah dapat digunakan') }}</p>
+                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">{{ __('Asisten ALEX Aktif') }}</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm">{{ __('Layanan asisten ALEX sudah dapat digunakan') }}</p>
                         </div>
                     @else
                         <div class="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         </div>
                         <div>
-                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">{{ __('ALEX • Asisten AI Receiving Maintenance') }}</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm">{{ __('Sedang dalam masa pemeliharaan & pelatihan model') }}</p>
+                            <h3 class="text-xl font-bold text-slate-800 dark:text-white">{{ __('Asisten ALEX Sedang Maintenance') }}</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm">{{ __('Sedang dalam masa pemeliharaan sistem') }}</p>
                         </div>
                     @endif
                 </div>
 
                 <div class="text-slate-600 dark:text-slate-300 mb-6 sm:mb-8 leading-relaxed">
                     @if($aiSettingActive)
-                        <p class="text-sm sm:text-base">{{ __('ALEX — Asisten AI Receiving PT Pupuk Kalimantan Timur saat ini telah aktif! ALEX siap membantu Anda mengecek status PO/DO dan memandu proses pengambilan barang di gudang dengan cepat dan mudah.') }}</p>
+                        <p class="text-sm sm:text-base">{{ __('Layanan ALEX Asisten Receiving PT Pupuk Kalimantan Timur aktif untuk membantu pengecekan status PO/DO dan informasi pengambilan barang di gudang.') }}</p>
 
                         <div class="mt-4 sm:mt-6 relative group overflow-hidden rounded-2xl isolate [transform:translateZ(0)]">
                             <!-- Animated Glow Background -->
@@ -304,9 +304,9 @@
                                 <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-[#F47920]/20 to-orange-500/5 border border-[#F47920]/30 rounded-2xl flex items-center justify-center mb-3 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-inner">
                                     <svg class="w-6 h-6 sm:w-7 sm:h-7 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                 </div>
-                                <h4 class="text-base sm:text-lg font-black text-slate-800 dark:text-white mb-1.5 tracking-tight">{{ __('Baru Pertama Kali Menggunakan Sistem?') }}</h4>
+                                <h4 class="text-base sm:text-lg font-bold text-slate-800 dark:text-white mb-1.5 tracking-tight">{{ __('Panduan Penggunaan Sistem') }}</h4>
                                 <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mb-4 max-w-sm leading-relaxed font-medium">
-                                    {{ __('Ikuti panduan interaktif 4 langkah cepat untuk mengetahui cara melacak PO, surat jalan DO, dan status material bersama ALEX Asisten AI Receiving.') }}
+                                    {{ __('Ikuti panduan 4 langkah untuk mengetahui cara melacak status PO, surat jalan DO, dan informasi material.') }}
                                 </p>
                                 
                                 <div class="grid grid-cols-2 gap-2 w-full max-w-xs mb-4 text-[11px] font-bold text-slate-600 dark:text-slate-300">
@@ -331,7 +331,7 @@
                             </div>
                         </div>
                     @else
-                        <p class="text-sm sm:text-base">{{ __('ALEX — Asisten AI Receiving PT Pupuk Kalimantan Timur saat ini sedang dalam masa pemeliharaan dan pelatihan model (Training). Layanan asisten AI untuk pengecekan status otomatis sementara tidak dapat digunakan, namun Anda tetap dapat mengecek kedatangan barang melalui menu Daftar Material (PD & Non-Stock) atau mengajukan Pengambilan Barang (MIR) secara manual.') }}</p>
+                        <p class="text-sm sm:text-base">{{ __('Layanan asisten ALEX saat ini sedang dalam pemeliharaan. Anda tetap dapat memeriksa status kedatangan barang melalui menu Daftar Material (PD & Non-Stock) atau mengajukan Pengambilan Barang (MIR).') }}</p>
                     @endif
                 </div>
 
@@ -564,33 +564,33 @@
                 {
                     id: 'step-1',
                     num: 1,
-                    icon: '🤖',
-                    title: @js(__('Buka ALEX — Asisten AI Receiving')),
-                    text: @js(__('Klik tombol oranye ini di pojok kanan bawah untuk membuka jendela ALEX Asisten AI Receiving.')),
+                    icon: '💬',
+                    title: @js(__('Buka Layanan Asisten ALEX')),
+                    text: @js(__('Klik tombol di pojok kanan bawah untuk membuka jendela percakapan asisten ALEX.')),
                     attachTo: { element: '#tour-chatbot-button', on: 'left' }
                 },
                 {
                     id: 'step-2',
                     num: 2,
                     icon: '💡',
-                    title: @js(__('Rekomendasi Pertanyaan Cepat')),
-                    text: @js(__('Pilih salah satu saran pertanyaan ini untuk memeriksa status PO, stok barang, atau panduan secara instan tanpa perlu mengetik.')),
+                    title: @js(__('Pilihan Pertanyaan')),
+                    text: @js(__('Pilih salah satu saran pertanyaan untuk memeriksa status PO, stok barang, atau panduan pengambilan.')),
                     attachTo: { element: '#tour-chatbot-suggestions', on: 'top' }
                 },
                 {
                     id: 'step-3',
                     num: 3,
-                    icon: '💬',
-                    title: @js(__('Ketik Pertanyaan Bebas')),
-                    text: @js(__('Atau ketikkan nomor Purchase Order (PO), nomor Surat Jalan (DO), Stock Number, atau MIR di sini lalu tekan Enter.')),
+                    icon: '🔍',
+                    title: @js(__('Pencarian Manual')),
+                    text: @js(__('Ketikkan nomor Purchase Order (PO), nomor Surat Jalan (DO), Stock Number, atau nomor MIR di sini lalu tekan Enter.')),
                     attachTo: { element: '#tour-chatbot-input', on: 'top' }
                 },
                 {
                     id: 'step-4',
                     num: 4,
-                    icon: '⚡',
-                    title: @js(__('Jawaban Cerdas & Real-Time')),
-                    text: @js(__('ALEX akan mencari data langsung di sistem Receiving dan menyajikan status lengkap dokumen Anda secara otomatis di sini.')),
+                    icon: '📄',
+                    title: @js(__('Pengecekan Status Dokumen')),
+                    text: @js(__('ALEX akan memeriksa data di sistem Receiving dan menampilkan status dokumen Anda di sini.')),
                     attachTo: { element: '#tour-chatbot-window', on: 'left' }
                 }
             ];

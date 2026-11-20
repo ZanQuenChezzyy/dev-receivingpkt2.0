@@ -78,7 +78,7 @@ new class extends Component {
             'role' => 'assistant',
             'content' => $this->isAiActive
                 ? __('Halo! Saya **ALEX**, Asisten AI Receiving PT Pupuk Kalimantan Timur. Silakan ketik **Nomor PO**, **Nomor Surat Jalan (DO)**, **Stock Number**, atau **Nomor MIR** yang ingin Anda tanyakan.')
-                : __('Mohon maaf, **ALEX — Asisten AI Receiving** PT Pupuk Kalimantan Timur saat ini sedang **Offline / Maintenance** (dalam masa pemeliharaan & training). Silakan gunakan menu **Daftar Material** atau **Formulir MIR** untuk pengecekan manual.')
+                : __('Mohon maaf, **ALEX — Asisten Receiving** PT Pupuk Kalimantan Timur saat ini sedang **Offline / Maintenance** (dalam masa pemeliharaan). Silakan gunakan menu **Daftar Material** atau **Formulir MIR** untuk pengecekan.')
         ];
     }
 
@@ -1161,7 +1161,7 @@ new class extends Component {
                         <span>{{ __('Mode Pemeliharaan (ALEX Offline)') }}</span>
                     </div>
                     <p class="leading-relaxed text-[11.5px] text-amber-800 dark:text-amber-200/90">
-                        {{ __('ALEX — Asisten AI Receiving sedang dinonaktifkan sementara oleh Administrator. Bagi User PKT, silakan cek kedatangan barang atau ajukan pengambilan melalui tombol di bawah ini:') }}
+                        {{ __('Layanan asisten ALEX sedang dalam pemeliharaan. Anda dapat memeriksa kedatangan barang atau mengajukan pengambilan melalui tombol di bawah ini:') }}
                     </p>
                     <div class="grid grid-cols-2 gap-2 pt-1">
                         <a href="{{ route('frontend.list-material') }}" wire:navigate class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-[#F47920] hover:bg-[#e06b18] text-white font-semibold text-[11px] shadow-sm transition-colors text-center">

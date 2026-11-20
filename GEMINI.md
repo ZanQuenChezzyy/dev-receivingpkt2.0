@@ -129,4 +129,12 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - Run tests: `php artisan test --compact` or filter: `php artisan test --compact --filter=testName`.
 - Do NOT delete tests without approval.
 
+=== language & ui copywriting rules ===
+
+# UI Tone & Language Guidelines
+
+- Always use clean, natural, standard, and professional Indonesian (bahasa baku, sederhana, dan tidak melebih-lebihkan).
+- Strictly avoid AI or tech marketing buzzwords and hyperbole (e.g. "super cepat", "zero server load", "jawaban cerdas", "smart matcher", "24/7", "ajaib", "revolusioner", "ekosistem digital").
+- Keep UI copy simple, straightforward, and utilitarian like standard corporate web applications.
+
 </laravel-boost-guidelines>

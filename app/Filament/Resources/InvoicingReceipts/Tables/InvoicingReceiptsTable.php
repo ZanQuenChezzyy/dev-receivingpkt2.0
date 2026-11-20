@@ -839,7 +839,7 @@ class InvoicingReceiptsTable
                         ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
                         ->modalWidth('4xl')
                         ->modalHeading(fn (?InvoicingReceipt $record) => 'Format Salin Mitraku - PO: '.($record?->no_po ?? '-'))
-                        ->modalDescription('Salin data secara instan untuk di-paste ke sistem Mitraku Pupuk Kaltim')
+                        ->modalDescription('Salin data untuk dimasukkan ke sistem Mitraku Pupuk Kaltim')
                         ->modalContent(fn (?InvoicingReceipt $record) => $record ? view('filament.actions.copy-to-mitraku-modal', ['record' => $record]) : null)
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Tutup'),

@@ -15,11 +15,11 @@
                     {{ __('Bagian Receiving • Dept. PP&P') }}
                 </div>
                 <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tight mb-5">
-                    {{ __('3 Pilar Utama & Ekosistem') }} <br class="hidden sm:inline">
+                    {{ __('Alur Kerja Utama') }} <br class="hidden sm:inline">
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] via-orange-400 to-[#BE5A27]">{{ __('Receiving Pupuk Kalimantan Timur') }}</span>
                 </h2>
                 <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 font-medium">
-                    {{ __('Mengintegrasikan tiga fungsi utama Bagian Receiving (Dept. PP&P): Penerimaan Barang, Invoicing Barang, serta Penerimaan & Invoicing Jasa (Service Acceptance) dalam satu ekosistem digital.') }}
+                    {{ __('Tiga fungsi utama Bagian Receiving (Dept. PP&P): Penerimaan Barang, Invoicing Barang, serta Penerimaan & Invoicing Jasa (Service Acceptance).') }}
                 </p>
             </div>
 
@@ -96,7 +96,7 @@
                                     </span>
                                 </div>
                                 <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                    {{ __('Live PO Tracking 24/7') }}
+                                    {{ __('Pelacakan PO') }}
                                 </span>
                             </div>
 
@@ -344,7 +344,7 @@
                             {{ __('ALEX — Asisten AI Receiving') }}
                         </h3>
                         <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                            {{ __('Asisten AI Receiving 24/7 untuk menjawab status nomor PO, surat jalan DO, dan memandu alur kerja pengambilan barang secara otomatis.') }}
+                            {{ __('Asisten untuk menjawab pertanyaan status nomor PO, surat jalan DO, dan alur kerja penerimaan barang.') }}
                         </p>
                     </div>
 
@@ -2397,14 +2397,14 @@
                         @endif
 
                         <h2 class="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 dark:text-white tracking-tight mb-6">
-                            {{ __('Temui') }} <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#BE5A27]">{{ __('ALEX') }}</span>, {{ __('Asisten AI Receiving Anda') }}
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#F47920] to-[#BE5A27]">{{ __('ALEX') }}</span> — {{ __('Asisten Layanan Receiving') }}
                         </h2>
 
                         <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-8">
                             @if ($aiSettingActive ?? false)
-                                {{ __('Tidak perlu login untuk mengecek apakah material Anda sudah sampai di gudang. Cukup tanyakan nomor PO atau DO Anda pada ALEX di pojok kanan bawah layar.') }}
+                                {{ __('Cek status kedatangan material Anda dengan menanyakan nomor PO atau DO pada asisten ALEX di pojok kanan bawah layar.') }}
                             @else
-                                {{ __('ALEX — Asisten AI Receiving saat ini sedang dalam masa pemeliharaan dan pelatihan model (Maintenance). Selama masa pemeliharaan, Anda tetap dapat mengecek kedatangan barang melalui menu Daftar Material (PD & Non-Stock) atau mengajukan MIR secara manual.') }}
+                                {{ __('Layanan asisten ALEX saat ini sedang dalam pemeliharaan. Anda tetap dapat mengecek kedatangan barang melalui menu Daftar Material atau mengajukan MIR secara manual.') }}
                             @endif
                         </p>
 
