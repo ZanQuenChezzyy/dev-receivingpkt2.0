@@ -54,16 +54,52 @@ class BatchVerifikasiGrsUploadController extends Controller
 
         // 1. Pencocokan utama: Nomor GRS (105) (500xxxxxxx)
         if (! empty($noGrs)) {
-            $receipt = InvoicingReceipt::where('no_grs', $noGrs)->first();
+            $cleanGrs = preg_replace('/\D/', '', $noGrs);
+
+            $grsQuery = InvoicingReceipt::where(function ($q) use ($noGrs, $cleanGrs) {
+                $q->where('no_grs', $noGrs)
+                    ->orWhere('no_grs', 'like', "%{$noGrs}%")
+                    ->orWhere('no_rdtv', $noGrs)
+                    ->orWhere('no_rdtv', 'like', "%{$noGrs}%");
+
+                if (! empty($cleanGrs)) {
+                    $q->orWhere('no_grs', 'like', "%{$cleanGrs}%")
+                        ->orWhere('no_rdtv', 'like', "%{$cleanGrs}%");
+                }
+
+                $q->orWhereHas('items', function ($itemQuery) use ($noGrs, $cleanGrs) {
+                    $itemQuery->where('no_grs', $noGrs)
+                        ->orWhere('no_grs', 'like', "%{$noGrs}%");
+                    if (! empty($cleanGrs)) {
+                        $itemQuery->orWhere('no_grs', 'like', "%{$cleanGrs}%");
+                    }
+                });
+            });
+
+            $receipt = (clone $grsQuery)->where('status', 'Menunggu Verifikasi')->first()
+                ?? $grsQuery->first();
         }
 
         // 2. Fallback pencocokan: Nomor PO + DO atau PO saja
         if (! $receipt && ! empty($noPo)) {
-            $query = InvoicingReceipt::where('no_po', $noPo);
+            $cleanPo = preg_replace('/\D/', '', $noPo);
+
+            $poQuery = InvoicingReceipt::where(function ($q) use ($noPo, $cleanPo) {
+                $q->where('no_po', $noPo);
+                if (! empty($cleanPo)) {
+                    $q->orWhere('no_po', $cleanPo)
+                        ->orWhere('no_po', 'like', "%{$cleanPo}%");
+                }
+            });
+
             if (! empty($noDo)) {
-                $query->where('no_do', $noDo);
+                $poQuery->where('no_do', 'like', "%{$noDo}%");
             }
-            $receipt = (clone $query)->where('status', 'Menunggu Verifikasi')->first() ?? $query->first();
+
+            // Prioritaskan tagihan yang masih Menunggu Verifikasi dan belum memiliki berkas verifikasi
+            $receipt = (clone $poQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
+                ?? (clone $poQuery)->where('status', 'Menunggu Verifikasi')->first()
+                ?? $poQuery->first();
         }
 
         if ($receipt) {

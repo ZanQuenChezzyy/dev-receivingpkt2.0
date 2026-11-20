@@ -79,6 +79,17 @@ beforeEach(function () {
             $table->timestamps();
         });
     }
+
+    if (! DbSchema::hasTable('invoicing_receipt_items')) {
+        DbSchema::create('invoicing_receipt_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('invoicing_receipt_id')->constrained('invoicing_receipts')->cascadeOnDelete();
+            $table->string('no_grs')->nullable();
+            $table->string('no_do')->nullable();
+            $table->string('nama_barang')->nullable();
+            $table->timestamps();
+        });
+    }
 });
 
 test('GrsPdfParserService can parse verifikasi GRS from digital text and filename fallback', function () {
@@ -222,4 +233,40 @@ test('BatchVerifikasiGrsUploadController returns unmatched when receipt not foun
             'success' => false,
             'matched' => false,
         ]);
+});
+
+test('BatchVerifikasiGrsUploadController matches receipt with comma separated GRS or in items', function () {
+    $user = User::create([
+        'name' => 'Admin User Multi GRS',
+        'email' => 'admin_multi_grs_'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('super_admin');
+
+    $receipt = InvoicingReceipt::create([
+        'no_grs' => '5007697780, 5007697781',
+        'no_po' => '5300099999',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $file = UploadedFile::fake()->create('Scan_5007697781.pdf', 150, 'application/pdf');
+
+    $response = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $file,
+            'no_grs' => '5007697781',
+            'no_po' => '5300099999',
+            'original_name' => 'Scan_5007697781.pdf',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => true,
+            'matched' => true,
+            'status' => 'Terverifikasi',
+        ]);
+
+    $receipt->refresh();
+    expect($receipt->status)->toBe('Terverifikasi')
+        ->and($receipt->dokumen_verifikasi_grs)->not->toBeNull();
 });

@@ -78,7 +78,7 @@
                 }
 
                 const fnGrsMatch = file.name.match(/(?:grs|105)[^0-9]*(500\d{7})/i) || file.name.match(/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/);
-                const fnPoMatch = file.name.match(/(?:po)[^0-9]*(53\d{8})/i) || file.name.match(/(?:^|[^0-9])(53\d{8})(?:[^0-9]|$)/);
+                const fnPoMatch = file.name.match(/(?:po)[^0-9]*([345]\d{9})/i) || file.name.match(/(?:^|[^0-9])([345]\d{9})(?:[^0-9]|$)/);
 
                 this.items.push({
                     file: file,
@@ -89,7 +89,7 @@
                     no_po: fnPoMatch ? fnPoMatch[1] : '',
                     no_do: '',
                     source: fnGrsMatch ? 'filename' : 'pending',
-                    message: fnGrsMatch ? 'Nomor terdeteksi dari nama berkas' : 'Menunggu pemindaian',
+                    message: fnGrsMatch ? 'Nomor GRS terdeteksi dari nama berkas' : 'Menunggu pemindaian',
                 });
             }
         },
@@ -103,6 +103,17 @@
             this.items = [];
             this.overallProgress = 0;
             this.currentStepMessage = 'Siap';
+        },
+
+        retryUnmatched() {
+            if (this.isProcessing) return;
+            this.items.forEach(item => {
+                if (item.status === 'unmatched') {
+                    item.status = 'scanned';
+                    item.message = 'Mengantre untuk pencocokan ulang...';
+                }
+            });
+            this.startProcessAll();
         },
 
         getStatusLabel(item) {
@@ -123,6 +134,44 @@
             const kb = bytes / 1024;
             if (kb < 1024) return kb.toFixed(1) + ' KB';
             return (kb / 1024).toFixed(2) + ' MB';
+        },
+
+        cleanOcrText(raw) {
+            if (!raw) return '';
+            return raw
+                .replace(/\r?\n/g, ' ')
+                .replace(/([0-9])O([0-9])/gi, '$10$2')
+                .replace(/\bS(00\d{7})\b/gi, '5$1')
+                .replace(/\b([5S])([0O])([0O])(\d{7})\b/gi, '500$4')
+                .replace(/\b(500)\s+(\d{3,4})\s+(\d{3,4})\b/g, '$1$2$3')
+                .replace(/\b([45]\d{2,3})\s+(\d{3})\s+(\d{3,4})\b/g, '$1$2$3');
+        },
+
+        extractIdentifiers(rawText) {
+            const text = this.cleanOcrText(rawText);
+            let grs = null;
+            let po = null;
+            let doNum = null;
+
+            if (text && text.length > 20) {
+                const mGrs = text.match(/(?:GRS(?:\s*\(105\))?|105|Release\s*GR)[\s\S]{1,40}?(500\d{7})/i)
+                          || text.match(/No\s*Release\s*GR\s*[:\s1©]+(500\d{7})/i)
+                          || text.match(/\b(500\d{7})\b/);
+
+                const mPo = text.match(/(?:PO|Purchase\s*Order|P\.O\.?)[\s\S]{1,35}?([345]\d{9})/i)
+                         || text.match(/\b(53\d{8})\b/)
+                         || text.match(/\b(5\d{9})\b/)
+                         || text.match(/\b(4\d{9})\b/);
+
+                const mDo = text.match(/Nomor\s*DO(?:\/S[J\]])?\s*[:©1]?\s*([A-Za-z0-9\/-]+)/i)
+                         || text.match(/DO\s*[:\s1]+([A-Za-z0-9\/-]{4,30})/i);
+
+                if (mGrs) grs = mGrs[1];
+                if (mPo && mPo[1] !== grs) po = mPo[1];
+                if (mDo) doNum = mDo[1];
+            }
+
+            return { grs, po, doNum };
         },
 
         async getTesseractWorker() {
@@ -150,29 +199,14 @@
                 // 1. Cek layer teks digital bawaan
                 const textContent = await page.getTextContent();
                 const digitalText = textContent.items.map(t => t.str).join(' ');
+                let detected = this.extractIdentifiers(digitalText);
 
-                let grs = null;
-                let po = null;
-                let doNum = null;
-
-                if (digitalText && digitalText.length > 30) {
-                    const dGrs = digitalText.match(/(?:GRS(?:\s*\(105\))?|105)[\s\S]{1,30}?(500\d{7})/i)
-                              || digitalText.match(/No\s*Release\s*GR\s*[:\s]+(500\d{7})/i)
-                              || digitalText.match(/\b(500\d{7})\b/);
-                    const dPo = digitalText.match(/(?:PO)[\s\S]{1,30}?(53\d{8})/i)
-                             || digitalText.match(/\b(53\d{8})\b/);
-                    const dDo = digitalText.match(/Nomor\s*DO(?:\/S[J\]])?\s*[:©1]?\s*([A-Za-z0-9\/-]+)/i);
-
-                    if (dGrs) grs = dGrs[1];
-                    if (dPo) po = dPo[1];
-                    if (dDo) doNum = dDo[1];
-                    if (grs || po) {
-                        item.source = 'digital_text';
-                    }
+                if (detected.grs || detected.po) {
+                    item.source = 'digital_text';
                 }
 
                 // 2. Scan OCR jika tidak ada teks digital atau belum menemukan nomor GRS
-                if (!grs) {
+                if (!detected.grs) {
                     this.currentStepMessage = 'Menjalankan OCR pada gambar scan: ' + item.name + '...';
                     const worker = await this.getTesseractWorker();
 
@@ -182,7 +216,7 @@
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
                         canvas.width = viewport.width;
-                        canvas.height = viewport.height * 0.65; // Crop 65% area atas
+                        canvas.height = viewport.height; // Render full height
 
                         await page.render({
                             canvasContext: ctx,
@@ -191,29 +225,24 @@
 
                         const ocrRes = await worker.recognize(canvas);
                         const ocrText = ocrRes?.data?.text || '';
+                        const ocrDetected = this.extractIdentifiers(ocrText);
 
-                        const oGrs = ocrText.match(/(?:GRS(?:\s*\(105\))?|105)[\s\S]{1,35}?(500\d{7})/i)
-                                 || ocrText.match(/No\s*Release\s*GR\s*[:\s1©]+(500\d{7})/i)
-                                 || ocrText.match(/\b(500\d{7})\b/);
-                        const oPo = ocrText.match(/(?:PO)[\s\S]{1,30}?(53\d{8})/i)
-                                || ocrText.match(/\b(53\d{8})\b/);
-                        const oDo = ocrText.match(/Nomor\s*DO(?:\/S[J\]])?\s*[:©1]?\s*([A-Za-z0-9\/-]+)/i);
+                        if (ocrDetected.grs) detected.grs = ocrDetected.grs;
+                        if (ocrDetected.po) detected.po = ocrDetected.po;
+                        if (ocrDetected.doNum) detected.doNum = ocrDetected.doNum;
 
-                        if (oGrs) grs = oGrs[1];
-                        if (oPo) po = oPo[1];
-                        if (oDo) doNum = oDo[1];
-                        if (grs || po) {
+                        if (detected.grs || detected.po) {
                             item.source = 'ocr_image';
                         }
                     }
                 }
 
-                if (grs) item.no_grs = grs;
-                if (po) item.no_po = po;
-                if (doNum) item.no_do = doNum;
+                if (detected.grs) item.no_grs = detected.grs;
+                if (detected.po) item.no_po = detected.po;
+                if (detected.doNum) item.no_do = detected.doNum;
 
                 item.status = 'scanned';
-                item.message = item.no_grs ? 'Terdeteksi GRS: ' + item.no_grs : 'GRS belum terdeteksi otomatis';
+                item.message = item.no_grs ? 'Terdeteksi GRS: ' + item.no_grs : (item.no_po ? 'Terdeteksi PO: ' + item.no_po : 'Nomor belum terdeteksi otomatis');
             } catch (err) {
                 console.error('Scan error:', err);
                 item.status = 'scanned';
@@ -250,7 +279,7 @@
                     if (data.no_po) item.no_po = data.no_po;
                 } else {
                     item.status = 'unmatched';
-                    item.message = data.message || 'Tagihan invoice tidak ditemukan';
+                    item.message = data.message || 'Tagihan invoice tidak ditemukan di sistem';
                 }
             } catch (err) {
                 console.error('Upload error:', err);
@@ -318,7 +347,7 @@
             </div>
             <div class="flex items-center gap-2 shrink-0">
                 <span class="text-xs font-mono text-gray-500 dark:text-gray-400 bg-white/70 dark:bg-gray-800/70 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-700">
-                    v2.0 OCR Engine
+                    v2.1 Smart Matcher
                 </span>
             </div>
         </div>
@@ -408,17 +437,30 @@
                                 </div>
                                 <div class="min-w-0">
                                     <p class="font-semibold text-gray-900 dark:text-white truncate" x-text="item.name"></p>
-                                    <p class="text-[11px] text-gray-500 dark:text-gray-400" x-text="formatBytes(item.size)"></p>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-[11px] text-gray-400" x-text="formatBytes(item.size)"></span>
+                                        <span
+                                            class="text-[11px] truncate"
+                                            :class="{
+                                                'text-emerald-600 dark:text-emerald-400 font-medium': item.status === 'verified',
+                                                'text-amber-600 dark:text-amber-400 font-semibold': item.status === 'unmatched',
+                                                'text-rose-600 dark:text-rose-400 font-semibold': item.status === 'error',
+                                                'text-gray-500 dark:text-gray-400': !['verified', 'unmatched', 'error'].includes(item.status)
+                                            }"
+                                            x-text="item.message"
+                                        ></span>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Detected Data / Editable Inputs -->
-                            <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2 shrink-0">
                                 <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-md border border-gray-200 dark:border-gray-700">
                                     <span class="text-[10px] uppercase font-bold text-gray-500">GRS:</span>
                                     <input
                                         type="text"
                                         x-model="item.no_grs"
+                                        @input="if (item.status === 'unmatched') { item.status = 'scanned'; item.message = 'Nomor GRS disesuaikan manual'; }"
                                         placeholder="500xxxxxxx"
                                         class="w-24 text-xs font-mono font-bold bg-transparent border-none p-0 focus:ring-0 text-indigo-600 dark:text-indigo-400 placeholder-gray-400"
                                         :disabled="item.status === 'verified'"
@@ -429,6 +471,7 @@
                                     <input
                                         type="text"
                                         x-model="item.no_po"
+                                        @input="if (item.status === 'unmatched') { item.status = 'scanned'; item.message = 'Nomor PO disesuaikan manual'; }"
                                         placeholder="530xxxxxxx"
                                         class="w-24 text-xs font-mono bg-transparent border-none p-0 focus:ring-0 text-gray-800 dark:text-gray-200 placeholder-gray-400"
                                         :disabled="item.status === 'verified'"
@@ -481,7 +524,21 @@
                     <span class="text-xs text-gray-500" x-show="verifiedCount > 0" x-text="verifiedCount + ' tagihan siap diperbarui'"></span>
                 </div>
 
-                <div class="flex items-center gap-2 w-full sm:w-auto">
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <!-- Tombol Coba Ulang yang Belum Cocok -->
+                    <button
+                        type="button"
+                        x-show="unmatchedCount > 0 && !hasPendingUploads"
+                        @click="retryUnmatched()"
+                        class="px-4 py-2 text-xs font-bold rounded-xl text-amber-800 dark:text-amber-200 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/80 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-700 transition flex items-center justify-center gap-1.5"
+                        :disabled="isProcessing"
+                    >
+                        <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Coba Cocokkan Ulang (<span x-text="unmatchedCount"></span>)</span>
+                    </button>
+
                     <button
                         type="button"
                         x-show="hasPendingUploads"
