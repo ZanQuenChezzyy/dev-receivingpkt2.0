@@ -178,7 +178,7 @@ class ListInvoicingReceipts extends ListRecords
                         ->acceptedFileTypes(['application/pdf'])
                         ->storeFiles(false)
                         ->required()
-                        ->helperText('Pilih satu atau hingga 100 berkas PDF Surat Verifikasi Penerimaan Barang dari Digital Office. Nomor GRS (105) akan diekstrak dan dicocokkan otomatis.'),
+                        ->helperText('Pilih satu atau hingga 100 berkas PDF Verifikasi GRS. Sistem membaca Nomor GRS (105) dan PO dari isi dokumen maupun nama file (contoh format nama: 5300009876_5007697781.pdf).'),
                 ])
                 ->action(function (array $data): void {
                     $rawFiles = $data['verifikasi_files'] ?? [];

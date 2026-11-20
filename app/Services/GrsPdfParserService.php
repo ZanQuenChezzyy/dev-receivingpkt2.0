@@ -332,10 +332,10 @@ class GrsPdfParserService
         }
 
         // 8. Fallback: Ekstraksi Nomor GRS (500xxxxxxx) dan PO (530xxxxxxx) dari Nama File jika belum ditemukan
-        if (! $data['no_grs']) {
+        if (! $data['no_grs'] || ! $data['no_po']) {
             $filenameToCheck = $originalFilename ?: (file_exists($filePathOrContent) ? basename($filePathOrContent) : '');
             if (! empty($filenameToCheck)) {
-                if (preg_match('/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
+                if (! $data['no_grs'] && preg_match('/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
                     $data['no_grs'] = $fnMatch[1];
                     $data['detection_source'] = 'filename';
                 }
