@@ -256,23 +256,66 @@ class InvoicingReceiptsTable
                         ->icon('heroicon-m-clock')
                         ->sortable(),
 
+                    TextColumn::make('grsRdtvItem.file_path')
+                        ->label('Slip GRS/RDTV')
+                        ->formatStateUsing(fn ($state) => $state ? 'Ada Slip' : 'Belum Ada')
+                        ->badge()
+                        ->color(fn ($state) => $state ? 'info' : 'gray')
+                        ->icon(fn ($state) => $state ? 'heroicon-m-document-text' : null)
+                        ->url(fn ($record) => $record->grsRdtvItem?->file_path ? Storage::url($record->grsRdtvItem->file_path) : null)
+                        ->openUrlInNewTab()
+                        ->tooltip('Berkas Goods Receipt Slip (GRS / RDTV) fisik penerimaan gudang.'),
+
+                    TextColumn::make('dokumen_verifikasi_grs')
+                        ->label('Verifikasi (ACC VP)')
+                        ->formatStateUsing(function ($state, InvoicingReceipt $record) {
+                            if (! $state) {
+                                return 'Belum Ada';
+                            }
+                            // Jika terisi file slip GRS gudang, bukan surat verifikasi ACC VP
+                            if ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state) {
+                                return 'Belum Ada';
+                            }
+
+                            return 'Ada (ACC VP)';
+                        })
+                        ->badge()
+                        ->color(function ($state, InvoicingReceipt $record) {
+                            if (! $state || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state)) {
+                                return 'gray';
+                            }
+
+                            return 'success';
+                        })
+                        ->icon(function ($state, InvoicingReceipt $record) {
+                            if (! $state || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state)) {
+                                return null;
+                            }
+
+                            return 'heroicon-m-check-badge';
+                        })
+                        ->url(function (InvoicingReceipt $record) {
+                            if (! $record->dokumen_verifikasi_grs) {
+                                return null;
+                            }
+                            if ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $record->dokumen_verifikasi_grs) {
+                                return null;
+                            }
+
+                            return Storage::url($record->dokumen_verifikasi_grs);
+                        })
+                        ->openUrlInNewTab()
+                        ->tooltip('Surat Verifikasi Penerimaan Barang resmi yang telah disetujui / ditandatangani VP.'),
+
                     TextColumn::make('dokumen_invoice')
                         ->label('Berkas Inv.')
                         ->formatStateUsing(fn ($state) => $state ? 'Ada Berkas' : 'Belum Ada')
                         ->badge()
-                        ->color(fn ($state) => $state ? 'info' : 'gray')
+                        ->color(fn ($state) => $state ? 'primary' : 'gray')
                         ->icon(fn ($state) => $state ? 'heroicon-m-arrow-top-right-on-square' : null)
                         ->url(fn ($record) => $record->dokumen_invoice ? Storage::url($record->dokumen_invoice) : null)
-                        ->openUrlInNewTab(),
-
-                    TextColumn::make('dokumen_verifikasi_grs')
-                        ->label('Dok. Verifikasi')
-                        ->formatStateUsing(fn ($state) => $state ? 'Ada Berkas' : 'Belum Ada')
-                        ->badge()
-                        ->color(fn ($state) => $state !== 'Belum Ada' ? 'success' : 'gray')
-                        ->icon(fn ($state) => $state !== 'Belum Ada' ? 'heroicon-m-arrow-top-right-on-square' : null)
-                        ->url(fn ($record) => $record->dokumen_verifikasi_grs ? Storage::url($record->dokumen_verifikasi_grs) : null)
-                        ->openUrlInNewTab(),
+                        ->openUrlInNewTab()
+                        ->tooltip('Berkas invoice fisik/resmi dari vendor.'),
                 ]),
 
                 // Kolom pelengkap (toggleable)
