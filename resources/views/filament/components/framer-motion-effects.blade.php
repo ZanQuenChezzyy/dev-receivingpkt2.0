@@ -4,6 +4,9 @@
         // 1. Apple 3D Parallax Tilt with Mouse Spotlight on Stats Cards
         // =========================================================
         function initStatsSpringPhysics() {
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            if (window.matchMedia && !window.matchMedia('(pointer: fine)').matches) return;
+
             const cards = document.querySelectorAll('.fi-wi-stats-overview-stat');
             cards.forEach(card => {
                 if (card.dataset.springInit) return;

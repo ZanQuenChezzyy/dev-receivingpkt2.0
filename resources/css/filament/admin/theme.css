@@ -533,9 +533,9 @@ html.dark body {
 .fi-sc-tabs.fi-contained,
 .fi-tabs.fi-contained,
 .fi-empty-state {
-    @apply !bg-white/80 dark:!bg-[#0b1626]/80 !rounded-2xl !relative focus-within:!z-10 transition-all duration-300;
-    border: 1px solid rgba(0, 0, 0, 0.06) !important;
-    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04), 0 12px 28px -6px rgba(0, 0, 0, 0.05) !important;
+    @apply !bg-white/92 dark:!bg-[#0c1829]/90 !rounded-2xl !relative focus-within:!z-10 transition-all duration-300;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04), 0 12px 28px -6px rgba(0, 0, 0, 0.06) !important;
 }
 
 /* Safari iOS containment fix: Keep backdrop-blur in ::before */
@@ -2001,12 +2001,12 @@ footer.fi-footer {
 }
 
 .fi-ta-placeholder {
-    @apply !text-slate-500 dark:!text-slate-400;
+    @apply !text-slate-600 dark:!text-slate-300;
 }
 
 .fi-ta-text-description,
 .fi-ta-text-description * {
-    @apply !text-slate-500 dark:!text-slate-400;
+    @apply !text-slate-600 dark:!text-slate-300;
 }
 
 .fi-empty-state-heading {
@@ -2014,7 +2014,27 @@ footer.fi-footer {
 }
 
 .fi-empty-state-description {
-    @apply !text-slate-500 dark:!text-slate-400;
+    @apply !text-slate-600 dark:!text-slate-300;
+}
+
+/* Form Labels, Descriptions & Hints Contrast (WCAG 2.1 AA) */
+.fi-fo-field-wrp-label label,
+.fi-fo-field-wrp-label span {
+    @apply !text-slate-800 dark:!text-slate-100 !font-semibold;
+}
+
+.fi-fo-field-wrp-helper-text,
+.fi-fo-field-wrp-hint {
+    @apply !text-slate-600 dark:!text-slate-300;
+}
+
+/* Table Header Cell Labels & Breadcrumbs Crisp Contrast */
+.fi-ta-header-cell-label {
+    @apply !text-slate-700 dark:!text-slate-200 !font-semibold;
+}
+
+.fi-breadcrumbs-item-label {
+    @apply !text-slate-600 dark:!text-slate-300 hover:!text-slate-900 dark:hover:!text-white transition-colors;
 }
 
 .fi-input::placeholder,
@@ -2022,7 +2042,7 @@ footer.fi-footer {
 .fi-select-input::placeholder,
 .fi-select-input-placeholder,
 .fi-fo-date-time-picker-display-text-input::placeholder {
-    @apply !text-slate-400 dark:!text-slate-500 !opacity-100;
+    @apply !text-slate-500 dark:!text-slate-400 !opacity-100;
 }
 
 .fi-disabled {
@@ -2037,7 +2057,30 @@ footer.fi-footer {
 .fi-textarea:disabled::placeholder,
 .fi-select-input:disabled::placeholder,
 .fi-fo-date-time-picker-display-text-input:disabled::placeholder {
-    @apply !text-slate-400 dark:!text-slate-500;
+    @apply !text-slate-500 dark:!text-slate-400;
+}
+
+/* WCAG 2.3.3 Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .fi-wi-stats-overview-stat:hover {
+        transform: none !important;
+    }
+
+    .stat-row-animated,
+    .fi-ta-row,
+    .segmented-spring-pill {
+        animation: none !important;
+        transition: none !important;
+    }
 }
 
 /* Responsive tabs: always smooth single-row horizontal scroll with arrow navigation */

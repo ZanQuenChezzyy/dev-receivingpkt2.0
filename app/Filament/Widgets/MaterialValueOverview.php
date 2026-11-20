@@ -124,7 +124,7 @@ class MaterialValueOverview extends BaseWidget
             $descriptionHtml = '<div class="w-full block text-xs mt-3 space-y-1.5">';
 
             // Baris: Kedatangan Murni (Warna Biru Netral)
-            $descriptionHtml .= '<div class="stat-row-animated stat-row-delay-1 flex items-center justify-between gap-2 py-0.5 border-b border-gray-100/80 dark:border-gray-800/80 text-blue-600 dark:text-blue-400 font-medium">';
+            $descriptionHtml .= '<div class="stat-row-animated stat-row-delay-1 flex items-center justify-between gap-2 py-0.5 border-b border-slate-200/80 dark:border-slate-800/80 text-blue-600 dark:text-blue-400 font-semibold">';
             $descriptionHtml .= '  <span class="flex items-center gap-1.5 shrink-0 text-xs">';
             $descriptionHtml .= '    <svg class="w-3.5 h-3.5 shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>';
             $descriptionHtml .= '    <span>Kedatangan</span>';
@@ -133,7 +133,7 @@ class MaterialValueOverview extends BaseWidget
             $descriptionHtml .= '</div>';
 
             // Baris: Datang & Selesai GRS (Warna Hijau)
-            $descriptionHtml .= '<div class="stat-row-animated stat-row-delay-2 flex items-center justify-between gap-2 py-0.5 border-b border-gray-100/80 dark:border-gray-800/80 text-success-600 dark:text-success-400 font-medium">';
+            $descriptionHtml .= '<div class="stat-row-animated stat-row-delay-2 flex items-center justify-between gap-2 py-0.5 border-b border-slate-200/80 dark:border-slate-800/80 text-success-600 dark:text-success-400 font-semibold">';
             $descriptionHtml .= '  <span class="flex items-center gap-1.5 shrink-0 text-xs">';
             $descriptionHtml .= '    <svg class="w-3.5 h-3.5 shrink-0 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
             $descriptionHtml .= '    <span>GRS</span>';
@@ -142,7 +142,7 @@ class MaterialValueOverview extends BaseWidget
             $descriptionHtml .= '</div>';
 
             // Baris: RDTV (Warna Kuning/Warning)
-            $descriptionHtml .= '<div class="stat-row-animated stat-row-delay-3 flex items-center justify-between gap-2 py-0.5 border-b border-gray-100/80 dark:border-gray-800/80 text-warning-600 dark:text-warning-400 font-medium">';
+            $descriptionHtml .= '<div class="stat-row-animated stat-row-delay-3 flex items-center justify-between gap-2 py-0.5 border-b border-slate-200/80 dark:border-slate-800/80 text-warning-600 dark:text-warning-400 font-semibold">';
             $descriptionHtml .= '  <span class="flex items-center gap-1.5 shrink-0 text-xs">';
             $descriptionHtml .= '    <svg class="w-3.5 h-3.5 shrink-0 text-warning-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
             $descriptionHtml .= '    <span>RDTV</span>';
@@ -151,7 +151,7 @@ class MaterialValueOverview extends BaseWidget
             $descriptionHtml .= '</div>';
 
             // Baris: Belum GRS (Warna Merah)
-            $descriptionHtml .= '<div class="stat-row-animated stat-row-delay-4 flex items-center justify-between gap-2 py-0.5 text-danger-600 dark:text-danger-400 font-medium">';
+            $descriptionHtml .= '<div class="stat-row-animated stat-row-delay-4 flex items-center justify-between gap-2 py-0.5 text-danger-600 dark:text-danger-400 font-semibold">';
             $descriptionHtml .= '  <span class="flex items-center gap-1.5 shrink-0 text-xs">';
             $descriptionHtml .= '    <svg class="w-3.5 h-3.5 shrink-0 text-danger-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
             $descriptionHtml .= '    <span>Belum GRS</span>';
@@ -160,18 +160,18 @@ class MaterialValueOverview extends BaseWidget
             $descriptionHtml .= '</div>';
 
             if ($abcIndicators->isNotEmpty()) {
-                $descriptionHtml .= '<div class="stat-row-animated stat-row-delay-5 pt-2 mt-2 border-t border-gray-200/70 dark:border-gray-700/70">';
-                $descriptionHtml .= '  <div class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-1">Breakdown ABC Kedatangan</div>';
+                $descriptionHtml .= '<div class="stat-row-animated stat-row-delay-5 pt-2 mt-2 border-t border-slate-200/80 dark:border-slate-700/80">';
+                $descriptionHtml .= '  <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Breakdown ABC Kedatangan</div>';
                 $descriptionHtml .= '  <div class="space-y-1">';
                 $abcIndex = 6;
                 foreach ($abcIndicators as $abc) {
                     $delayClass = 'stat-row-delay-'.min($abcIndex, 10);
-                    $descriptionHtml .= '    <div class="stat-row-animated '.$delayClass.' flex items-center justify-between gap-2 py-0.5 w-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">';
-                    $descriptionHtml .= '      <span class="flex items-center gap-1.5 shrink-0 text-[11px] font-medium leading-none">';
-                    $descriptionHtml .= '        <span class="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 shrink-0"></span>';
+                    $descriptionHtml .= '    <div class="stat-row-animated '.$delayClass.' flex items-center justify-between gap-2 py-0.5 w-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">';
+                    $descriptionHtml .= '      <span class="flex items-center gap-1.5 shrink-0 text-xs font-medium leading-none">';
+                    $descriptionHtml .= '        <span class="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 shrink-0"></span>';
                     $descriptionHtml .= '        <span>Tipe '.$abc->abc_indicator.'</span>';
                     $descriptionHtml .= '      </span>';
-                    $descriptionHtml .= '      <span class="font-mono text-[11px] font-medium tabular-nums text-right shrink-0 tracking-tight whitespace-nowrap text-gray-700 dark:text-gray-300">Rp '.number_format($abc->total, 0, ',', '.').'</span>';
+                    $descriptionHtml .= '      <span class="font-mono text-xs font-semibold tabular-nums text-right shrink-0 tracking-tight whitespace-nowrap text-slate-800 dark:text-slate-200">Rp '.number_format($abc->total, 0, ',', '.').'</span>';
                     $descriptionHtml .= '    </div>';
                     $abcIndex++;
                 }

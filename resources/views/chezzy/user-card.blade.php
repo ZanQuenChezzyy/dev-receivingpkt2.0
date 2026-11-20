@@ -56,12 +56,12 @@
                 </span>
 
                 {{-- Line 2: NPK --}}
-                <span class="text-[11px] font-medium text-slate-400 dark:text-slate-400 font-mono tracking-wide truncate mt-0.5">
+                <span class="text-xs font-medium text-slate-500 dark:text-slate-400 font-mono tracking-wide truncate mt-0.5">
                     {{ $user->npk ?: '-' }}
                 </span>
 
                 {{-- Line 3: Role --}}
-                <span class="text-[11px] font-semibold text-[#0A4F86] dark:text-sky-400 truncate mt-0.5 tracking-tight">
+                <span class="text-xs font-semibold text-[#0A4F86] dark:text-sky-400 truncate mt-0.5 tracking-tight">
                     {{ $roleName }}
                 </span>
             </div>
