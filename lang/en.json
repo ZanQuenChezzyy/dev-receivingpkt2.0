@@ -1438,5 +1438,21 @@
     "Pengajuan Penagihan Tidak Tersedia untuk Dokumen RDTV": "Billing Submission Not Available for RDTV Documents",
     "Surat jalan ini memiliki status penolakan / retur material (RDTV). Sesuai prosedur keuangan dan pengadaan PT Pupuk Kaltim, penagihan invoice hanya dapat diproses untuk material yang telah terbit lembar GRS resmi (diterima gudang).": "This delivery order has a rejection / material return status (RDTV). According to PT Pupuk Kaltim finance and procurement procedures, invoice billing can only be processed for materials with an officially issued GRS slip (accepted by warehouse).",
     "Silakan hubungi Tim Pengadaan PKT untuk tindak lanjut penggantian barang.": "Please contact the PKT Procurement Team to follow up on goods replacement.",
-    "Pengajuan penagihan ditangguhkan karena dokumen ini berstatus RDTV (Retur / Penolakan). Silakan hubungi Tim Pengadaan PKT.": "Billing submission is suspended because this document has RDTV status (Return / Rejection). Please contact PKT Procurement Team."
+    "Pengajuan penagihan ditangguhkan karena dokumen ini berstatus RDTV (Retur / Penolakan). Silakan hubungi Tim Pengadaan PKT.": "Billing submission is suspended because this document has RDTV status (Return / Rejection). Please contact PKT Procurement Team.",
+    "Unggah Softfile Sertifikat / Dokumen Pemenuhan (COO / COA / MSDS)": "Upload Softfile Certificate / Compliance Document (COO / COA / MSDS)",
+    "Jika penolakan RDTV disebabkan kekurangan dokumen teknis (seperti belum melampirkan COO manufacture, COA, atau sertifikat uji mutu), Anda dapat mengunggah berkas sertifikat di bawah ini agar tim QC dapat memverifikasi dan mengajukan ulang tanpa retur fisik barang.": "If the RDTV rejection is due to missing technical documents (such as missing manufacturer COO, COA, or quality test certificate), you can upload the certificate file below so QC team can verify and re-process without physical return of goods.",
+    "Pilih Surat Jalan (DO) yang Ditolak:": "Select Rejected Delivery Order (DO):",
+    "Berkas Sertifikat Susulan (PDF / JPG / PNG, maks. 20 MB):": "Supplementary Certificate File (PDF / JPG / PNG, max 20 MB):",
+    "Catatan Vendor (Opsional):": "Vendor Notes (Optional):",
+    "Tuliskan catatan tambahan mengenai berkas sertifikat yang dilampirkan...": "Write additional notes regarding the attached certificate file...",
+    "Kirim Dokumen Pemenuhan": "Submit Compliance Document",
+    "Mengunggah...": "Uploading...",
+    "Riwayat Dokumen Pemenuhan yang Diajukan:": "Submitted Compliance Document History:",
+    "Catatan Tim QC / Receiving:": "QC / Receiving Team Notes:",
+    "Dokumen pemenuhan ini telah disetujui. Petugas Gudang Receiving sedang memproses penerbitan GRS resmi.": "This compliance document has been approved. Receiving Warehouse staff is processing the official GRS issuance.",
+    "Dokumen Pemenuhan Diajukan:": "Submitted Compliance Documents:",
+    "Menunggu Review": "Pending Review",
+    "Disetujui": "Approved",
+    "Ditolak": "Rejected",
+    "Catatan QC:": "QC Notes:"
 }

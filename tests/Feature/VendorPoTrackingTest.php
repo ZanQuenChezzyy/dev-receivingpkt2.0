@@ -7,6 +7,7 @@ use App\Models\GrsRdtv;
 use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
+use App\Models\RdtvCompliance;
 use App\Models\Vendor;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
@@ -154,6 +155,25 @@ beforeEach(function () {
         Schema::create('warehouse_transmittal_items', function ($table) {
             $table->id();
             $table->unsignedBigInteger('delivery_order_receipt_detail_id')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('rdtv_compliances')) {
+        Schema::create('rdtv_compliances', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
+            $table->unsignedBigInteger('vendor_id')->nullable();
+            $table->string('document_type')->default('COO / Sertifikat');
+            $table->string('file_path')->nullable();
+            $table->string('original_filename')->nullable();
+            $table->unsignedBigInteger('file_size')->nullable();
+            $table->text('vendor_notes')->nullable();
+            $table->string('status')->default('Menunggu Review');
+            $table->unsignedBigInteger('reviewed_by')->nullable();
+            $table->timestamp('reviewed_at')->nullable();
+            $table->text('review_notes')->nullable();
             $table->timestamps();
         });
     }
@@ -681,4 +701,88 @@ test('vendor po tracking handles rdtv document with warning notice, stepper stat
         ->call('uploadBerkasPenagihan');
 
     $test->assertSee('Pengajuan penagihan ditangguhkan karena dokumen ini berstatus RDTV');
+});
+
+test('vendor can upload supplementary compliance certificate for rdtv delivery and download it', function () {
+    Storage::fake('public');
+
+    $vendor = Vendor::create([
+        'name' => 'PT Flow Technology Indonesia',
+        'vendor_number' => '100456',
+        'email' => 'vendor@flowtech.com',
+    ]);
+
+    $po = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300065382',
+        'vendor_id' => '100456',
+        'vendor_name' => 'PT Flow Technology Indonesia',
+        'item_no' => '00010',
+        'qty_po' => 1,
+        'uoi' => 'EA',
+        'total_amount_in_lc' => 75000000,
+    ]);
+
+    $do = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'FTGI-1026-0115',
+        'document_code' => 'FTGI-1026-0115',
+        'received_date' => '2026-11-02',
+        'status' => 'RDTV',
+        'delay_reason' => 'RDTV',
+        'delay_notes' => 'TIDAK MELAMPIRKAN COO FROM MANUFACTURE',
+        'receipt_mode' => 'Standard',
+    ]);
+
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $do->id,
+        'purchase_order_issued_id' => $po->id,
+        'quantity' => 1,
+        'material_type' => 'ZRM',
+        'description' => 'IMPELLER,PUMP',
+    ]);
+
+    $grs = GrsRdtv::create([
+        'transaction_date' => '2026-11-21',
+        'category' => 'RDTV',
+    ]);
+
+    $grsItem = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grs->id,
+        'delivery_order_receipt_id' => $do->id,
+        'document_code' => 'FTGI-1026-0115',
+        'file_path' => 'grs-rdtv-docs/FTGI-1026-0115.pdf',
+        'reason' => 'TIDAK MELAMPIRKAN COO FROM MANUFACTURE',
+        'status' => 'Matched',
+    ]);
+
+    $test = Livewire::test(VendorPoTracking::class)
+        ->set('poNumber', '5300065382')
+        ->call('initiateSearch')
+        ->set('verificationEmail', 'vendor@flowtech.com')
+        ->call('verifyVendorEmail');
+
+    // Pastikan form unggah sertifikat pemenuhan muncul
+    $test->assertSee('Unggah Softfile Sertifikat / Dokumen Pemenuhan (COO / COA / MSDS)');
+
+    // Unggah softfile sertifikat COO
+    $fakeCoo = UploadedFile::fake()->create('COO_Rheinmetall_5300065382.pdf', 300, 'application/pdf');
+
+    $test->set('selectedRdtvDoId', $do->id)
+        ->set('rdtvComplianceFile', $fakeCoo)
+        ->set('rdtvComplianceNotes', 'Berikut kami lampirkan softfile COO dari pabrikan Rheinmetall Denel Munition sesuai catatan QC.')
+        ->call('submitRdtvCompliance')
+        ->assertHasNoErrors();
+
+    // Verifikasi data compliance tersimpan di database
+    $compliance = RdtvCompliance::where('delivery_order_receipt_id', $do->id)->first();
+    expect($compliance)->not->toBeNull()
+        ->and($compliance->original_filename)->toBe('COO_Rheinmetall_5300065382.pdf')
+        ->and($compliance->status)->toBe('Menunggu Review')
+        ->and($compliance->vendor_notes)->toContain('Rheinmetall Denel Munition');
+
+    // Verifikasi tercatat di log penundaan DO
+    expect($do->delayLogs()->where('delay_reason', 'Dokumen Susulan Diunggah')->exists())->toBeTrue();
+
+    // Test download compliance file
+    $test->call('downloadRdtvCompliance', $compliance->id);
+    $test->assertFileDownloaded('COO_Rheinmetall_5300065382.pdf');
 });

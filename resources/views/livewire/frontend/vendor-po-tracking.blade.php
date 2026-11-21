@@ -559,6 +559,144 @@
                                     <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     <span>{{ __('Silakan unduh dokumen slip RDTV di bagian bawah untuk arsip dan segera hubungi Tim Pengadaan / Receiving PKT untuk koordinasi penggantian atau pengiriman ulang material.') }}</span>
                                 </div>
+
+                                <!-- Form Pengajuan Ulang / Unggah Softfile Sertifikat Pemenuhan -->
+                                <div class="mt-4 pt-4 border-t border-rose-500/20">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="p-1.5 rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </div>
+                                        <h5 class="font-bold text-sm text-slate-800 dark:text-white">
+                                            {{ __('Unggah Softfile Sertifikat / Dokumen Pemenuhan (COO / COA / MSDS)') }}
+                                        </h5>
+                                    </div>
+                                    <p class="text-xs text-slate-600 dark:text-slate-300 mb-3">
+                                        {{ __('Jika penolakan RDTV disebabkan kekurangan dokumen teknis (seperti belum melampirkan COO manufacture, COA, atau sertifikat uji mutu), Anda dapat mengunggah berkas sertifikat di bawah ini agar tim QC dapat memverifikasi dan mengajukan ulang tanpa retur fisik barang.') }}
+                                    </p>
+
+                                    @if (session()->has('rdtv_success'))
+                                        <div class="p-3 mb-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center justify-between">
+                                            <span>{{ session('rdtv_success') }}</span>
+                                            <button type="button" @click="$el.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800">&times;</button>
+                                        </div>
+                                    @endif
+
+                                    @if (session()->has('rdtv_error'))
+                                        <div class="p-3 mb-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-800 dark:text-rose-300 text-xs font-semibold flex items-center justify-between">
+                                            <span>{{ session('rdtv_error') }}</span>
+                                            <button type="button" @click="$el.parentElement.remove()" class="text-rose-600 hover:text-rose-800">&times;</button>
+                                        </div>
+                                    @endif
+
+                                    <form wire:submit.prevent="submitRdtvCompliance" class="space-y-3">
+                                        @php
+                                            $rdtvDos = isset($trackingData['unique_dos'])
+                                                ? $trackingData['unique_dos']->filter(fn ($d) => $d->status === 'RDTV' || $d->grsRdtvItems->where('grsRdtv.category', 'RDTV')->isNotEmpty())
+                                                : collect();
+                                        @endphp
+
+                                        @if ($rdtvDos->count() > 1)
+                                            <div>
+                                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                                    {{ __('Pilih Surat Jalan (DO) yang Ditolak:') }}
+                                                </label>
+                                                <select wire:model="selectedRdtvDoId" class="w-full text-xs rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white px-3 py-2">
+                                                    @foreach ($rdtvDos as $rDo)
+                                                        <option value="{{ $rDo->id }}">{{ $rDo->delivery_order_no }} ({{ $rDo->document_code }})</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('selectedRdtvDoId') <span class="text-rose-600 text-[11px] font-semibold">{{ $message }}</span> @enderror
+                                            </div>
+                                        @endif
+
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                                {{ __('Berkas Sertifikat Susulan (PDF / JPG / PNG, maks. 20 MB):') }}
+                                            </label>
+                                            <input type="file" wire:model="rdtvComplianceFile" accept=".pdf,.jpg,.jpeg,.png"
+                                                class="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#F47920] file:text-white hover:file:bg-[#e06b18] cursor-pointer rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5" />
+                                            @error('rdtvComplianceFile') <span class="text-rose-600 text-[11px] font-semibold block mt-1">{{ $message }}</span> @enderror
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                                {{ __('Catatan Vendor (Opsional):') }}
+                                            </label>
+                                            <textarea wire:model="rdtvComplianceNotes" rows="2" placeholder="{{ __('Tuliskan catatan tambahan mengenai berkas sertifikat yang dilampirkan...') }}"
+                                                class="w-full text-xs rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white px-3 py-2"></textarea>
+                                            @error('rdtvComplianceNotes') <span class="text-rose-600 text-[11px] font-semibold">{{ $message }}</span> @enderror
+                                        </div>
+
+                                        <div class="flex items-center justify-end gap-2 pt-1">
+                                            <button type="submit" wire:loading.attr="disabled"
+                                                class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-2 cursor-pointer transition shadow-sm hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50">
+                                                <svg wire:loading wire:target="submitRdtvCompliance" class="animate-spin -ml-1 mr-1 h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                <span wire:loading.remove wire:target="submitRdtvCompliance">
+                                                    {{ __('Kirim Dokumen Pemenuhan') }}
+                                                </span>
+                                                <span wire:loading wire:target="submitRdtvCompliance">
+                                                    {{ __('Mengunggah...') }}
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    <!-- Daftar Riwayat Dokumen Pemenuhan yang Pernah Diunggah -->
+                                    @if (!empty($trackingData['rdtv_compliances']) && $trackingData['rdtv_compliances']->isNotEmpty())
+                                        <div class="mt-4 pt-3 border-t border-rose-500/15 space-y-2">
+                                            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                                                {{ __('Riwayat Dokumen Pemenuhan yang Diajukan:') }}
+                                            </span>
+                                            <div class="space-y-2">
+                                                @foreach ($trackingData['rdtv_compliances'] as $comp)
+                                                    <div class="p-3 rounded-xl bg-white/80 dark:bg-slate-900/80 border {{ $comp->status === 'Disetujui' ? 'border-emerald-500/30' : ($comp->status === 'Ditolak' ? 'border-rose-500/30' : 'border-amber-500/30') }} text-xs space-y-1.5">
+                                                        <div class="flex items-center justify-between gap-2">
+                                                            <div class="flex items-center gap-2 min-w-0">
+                                                                <span class="font-mono font-bold text-slate-800 dark:text-white truncate">
+                                                                    {{ $comp->original_filename }}
+                                                                </span>
+                                                                <span class="text-[10px] text-slate-500">
+                                                                    ({{ $comp->deliveryOrderReceipt?->delivery_order_no ?? '-' }})
+                                                                </span>
+                                                            </div>
+                                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0
+                                                                {{ $comp->status === 'Disetujui' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : ($comp->status === 'Ditolak' ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300') }}">
+                                                                {{ __($comp->status) }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                                                            <span>Diunggah: {{ $comp->created_at->format('d M Y H:i') }}</span>
+                                                            <button type="button" wire:click="downloadRdtvCompliance({{ $comp->id }})"
+                                                                class="text-[#F47920] hover:underline font-semibold flex items-center gap-1 cursor-pointer">
+                                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                                                {{ __('Unduh Berkas') }}
+                                                            </button>
+                                                        </div>
+                                                        @if ($comp->vendor_notes)
+                                                            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
+                                                                "{{ $comp->vendor_notes }}"
+                                                            </p>
+                                                        @endif
+                                                        @if ($comp->status === 'Ditolak' && !empty($comp->review_notes))
+                                                            <div class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-[11px]">
+                                                                <strong>{{ __('Catatan Tim QC / Receiving:') }}</strong> {{ $comp->review_notes }}
+                                                            </div>
+                                                        @elseif ($comp->status === 'Disetujui')
+                                                            <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px]">
+                                                                {{ __('Dokumen pemenuhan ini telah disetujui. Petugas Gudang Receiving sedang memproses penerbitan GRS resmi.') }}
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1333,6 +1471,32 @@
                                                         @if ($do->delay_notes)
                                                             <span class="block text-slate-500 dark:text-slate-400 mt-0.5">{{ $do->delay_notes }}</span>
                                                         @endif
+                                                    </div>
+                                                @endif
+
+                                                <!-- Compliance submissions for this DO -->
+                                                @php
+                                                    $doCompliances = $do->rdtvCompliances ?? collect();
+                                                @endphp
+                                                @if ($doCompliances->isNotEmpty())
+                                                    <div class="mt-2.5 pt-2.5 border-t border-slate-200/60 dark:border-white/10 space-y-1.5 text-xs">
+                                                        <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 block">{{ __('Dokumen Pemenuhan Diajukan:') }}</span>
+                                                        @foreach ($doCompliances as $comp)
+                                                            <div class="p-2.5 rounded-xl border {{ $comp->status === 'Disetujui' ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-800 dark:text-emerald-300' : ($comp->status === 'Ditolak' ? 'bg-rose-500/10 border-rose-500/25 text-rose-800 dark:text-rose-300' : 'bg-amber-500/10 border-amber-500/25 text-amber-800 dark:text-amber-300') }} flex items-center justify-between gap-2">
+                                                                <div class="min-w-0">
+                                                                    <span class="font-semibold truncate block">{{ $comp->original_filename }}</span>
+                                                                    <span class="text-[10px] opacity-80">{{ $comp->created_at->format('d M Y H:i') }} &bull; {{ __($comp->status) }}</span>
+                                                                </div>
+                                                                <button type="button" wire:click="downloadRdtvCompliance({{ $comp->id }})" class="p-1 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 shrink-0" title="{{ __('Unduh Berkas') }}">
+                                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                                                </button>
+                                                            </div>
+                                                            @if ($comp->status === 'Ditolak' && !empty($comp->review_notes))
+                                                                <div class="p-2 rounded-lg bg-rose-500/15 border border-rose-500/20 text-[11px] text-rose-700 dark:text-rose-300">
+                                                                    <strong>{{ __('Catatan QC:') }}</strong> {{ $comp->review_notes }}
+                                                                </div>
+                                                            @endif
+                                                        @endforeach
                                                     </div>
                                                 @endif
                                             </div>

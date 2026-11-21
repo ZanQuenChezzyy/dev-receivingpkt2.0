@@ -7,6 +7,7 @@ use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
+use App\Models\RdtvCompliance;
 use App\Models\Vendor;
 use App\Models\WarehouseTransmittalItem;
 use Carbon\Carbon;
@@ -193,6 +194,17 @@ class VendorPoTracking extends Component
      * @var mixed
      */
     public $berkasPenagihanFile = null;
+
+    /**
+     * Uploaded file for RDTV compliance (COO, COA, certificate)
+     *
+     * @var mixed
+     */
+    public $rdtvComplianceFile = null;
+
+    public string $rdtvComplianceNotes = '';
+
+    public ?int $selectedRdtvDoId = null;
 
     /**
      * Temporary uploaded files for checklist (backward compatibility)
@@ -938,6 +950,16 @@ class VendorPoTracking extends Component
         $hasAnyRdtv = ! empty($rdtvReasons) || $uniqueDos->contains(fn (DeliveryOrderReceipt $do): bool => $do->status === 'RDTV');
         $hasAnyGrs = $uniqueDos->contains(fn (DeliveryOrderReceipt $do): bool => $do->grsRdtvItems->where('grsRdtv.category', 'GRS')->isNotEmpty() || $do->status === 'GRS');
 
+        $rdtvCompliances = RdtvCompliance::whereIn('delivery_order_receipt_id', $uniqueDos->pluck('id'))
+            ->with(['deliveryOrderReceipt', 'reviewedBy'])
+            ->latest()
+            ->get();
+
+        if (empty($this->selectedRdtvDoId) && $hasAnyRdtv) {
+            $rdtvDo = $activeDoIsRdtv ? $activeDo : $uniqueDos->first(fn (DeliveryOrderReceipt $do): bool => $do->status === 'RDTV' || $do->grsRdtvItems->where('grsRdtv.category', 'RDTV')->isNotEmpty());
+            $this->selectedRdtvDoId = $rdtvDo?->id;
+        }
+
         // Format Material Items & Fulfillment
         $materialItems = [];
         foreach ($poItems as $item) {
@@ -1018,6 +1040,7 @@ class VendorPoTracking extends Component
             'is_rdtv_only' => $hasAnyRdtv && ! $hasAnyGrs,
             'active_do_is_rdtv' => $activeDoIsRdtv,
             'rdtv_reasons' => $rdtvReasons,
+            'rdtv_compliances' => $rdtvCompliances,
             'unique_dos' => $uniqueDos,
             'details' => $details,
             'material_items' => $materialItems,
@@ -1231,6 +1254,81 @@ class VendorPoTracking extends Component
         $filename = basename($item->file_path);
 
         return $this->publicDisk()->download($item->file_path, $filename);
+    }
+
+    public function submitRdtvCompliance(): void
+    {
+        $this->validate([
+            'rdtvComplianceFile' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:20480'],
+            'selectedRdtvDoId' => ['required', 'integer', 'exists:delivery_order_receipts,id'],
+            'rdtvComplianceNotes' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'rdtvComplianceFile.required' => __('Harap pilih berkas sertifikat / dokumen pemenuhan terlebih dahulu.'),
+            'rdtvComplianceFile.file' => __('Berkas tidak valid.'),
+            'rdtvComplianceFile.mimes' => __('Format berkas wajib berupa PDF, JPG, JPEG, atau PNG.'),
+            'rdtvComplianceFile.max' => __('Ukuran berkas maksimal 20 MB.'),
+            'selectedRdtvDoId.required' => __('Pilih surat jalan (DO) yang akan diajukan dokumen susulan.'),
+        ]);
+
+        $do = DeliveryOrderReceipt::find($this->selectedRdtvDoId);
+        if (! $do) {
+            session()->flash('rdtv_error', __('Surat jalan tidak ditemukan.'));
+
+            return;
+        }
+
+        $file = $this->rdtvComplianceFile;
+        $ext = $file->getClientOriginalExtension();
+        $origName = $file->getClientOriginalName();
+        $size = $file->getSize();
+
+        $safeFilename = "rdtv_compliance_{$do->delivery_order_no}_".time().'_'.Str::random(6).".{$ext}";
+        $storedPath = $file->storeAs("rdtv-compliances/{$this->activePo}", $safeFilename, 'public');
+
+        $detail = $do->deliveryOrderReceiptDetails->first();
+
+        RdtvCompliance::create([
+            'delivery_order_receipt_id' => $do->id,
+            'purchase_order_issued_id' => $detail?->purchase_order_issued_id,
+            'vendor_id' => $this->verifiedVendorId,
+            'document_type' => 'COO / Sertifikat',
+            'file_path' => $storedPath,
+            'original_filename' => $origName,
+            'file_size' => $size,
+            'vendor_notes' => ! empty($this->rdtvComplianceNotes) ? trim($this->rdtvComplianceNotes) : null,
+            'status' => 'Menunggu Review',
+        ]);
+
+        // Catat pada log penundaan DO
+        $do->delayLogs()->create([
+            'delay_reason' => 'Dokumen Susulan Diunggah',
+            'delay_notes' => 'Vendor mengunggah dokumen pemenuhan: '.$origName.(! empty($this->rdtvComplianceNotes) ? ' (Catatan: '.$this->rdtvComplianceNotes.')' : ''),
+        ]);
+
+        $this->rdtvComplianceFile = null;
+        $this->rdtvComplianceNotes = '';
+        $this->loadTrackingData();
+
+        session()->flash('rdtv_success', __('Dokumen pemenuhan ":name" berhasil diunggah dan sedang menunggu verifikasi Tim Receiving / QC.', ['name' => $origName]));
+    }
+
+    public function downloadRdtvCompliance(int $complianceId): mixed
+    {
+        $compliance = RdtvCompliance::find($complianceId);
+
+        if (! $compliance || empty($compliance->file_path)) {
+            session()->flash('download_error', __('Berkas dokumen pemenuhan tidak ditemukan.'));
+
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($compliance->file_path)) {
+            session()->flash('download_error', __('File dokumen pemenuhan tidak ditemukan di penyimpanan server.'));
+
+            return null;
+        }
+
+        return $this->publicDisk()->download($compliance->file_path, $compliance->original_filename);
     }
 
     /**

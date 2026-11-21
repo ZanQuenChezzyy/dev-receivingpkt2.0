@@ -248,6 +248,25 @@ beforeEach(function (): void {
             $table->timestamps();
         });
     }
+
+    if (! Schema::hasTable('rdtv_compliances')) {
+        Schema::create('rdtv_compliances', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
+            $table->unsignedBigInteger('vendor_id')->nullable();
+            $table->string('document_type')->default('COO / Sertifikat');
+            $table->string('file_path')->nullable();
+            $table->string('original_filename')->nullable();
+            $table->unsignedBigInteger('file_size')->nullable();
+            $table->text('vendor_notes')->nullable();
+            $table->string('status')->default('Menunggu Review');
+            $table->unsignedBigInteger('reviewed_by')->nullable();
+            $table->timestamp('reviewed_at')->nullable();
+            $table->text('review_notes')->nullable();
+            $table->timestamps();
+        });
+    }
 });
 
 /**

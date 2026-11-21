@@ -140,6 +140,11 @@ class DeliveryOrderReceipt extends Model
         return $this->hasMany(WarehouseDeliveryBatchItem::class);
     }
 
+    public function rdtvCompliances(): HasMany
+    {
+        return $this->hasMany(RdtvCompliance::class);
+    }
+
     protected static function booted()
     {
         static::updating(function ($record) {

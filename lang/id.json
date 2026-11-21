@@ -1091,5 +1091,21 @@
     "Pengajuan Penagihan Tidak Tersedia untuk Dokumen RDTV": "Pengajuan Penagihan Tidak Tersedia untuk Dokumen RDTV",
     "Surat jalan ini memiliki status penolakan / retur material (RDTV). Sesuai prosedur keuangan dan pengadaan PT Pupuk Kaltim, penagihan invoice hanya dapat diproses untuk material yang telah terbit lembar GRS resmi (diterima gudang).": "Surat jalan ini memiliki status penolakan / retur material (RDTV). Sesuai prosedur keuangan dan pengadaan PT Pupuk Kaltim, penagihan invoice hanya dapat diproses untuk material yang telah terbit lembar GRS resmi (diterima gudang).",
     "Silakan hubungi Tim Pengadaan PKT untuk tindak lanjut penggantian barang.": "Silakan hubungi Tim Pengadaan PKT untuk tindak lanjut penggantian barang.",
-    "Pengajuan penagihan ditangguhkan karena dokumen ini berstatus RDTV (Retur / Penolakan). Silakan hubungi Tim Pengadaan PKT.": "Pengajuan penagihan ditangguhkan karena dokumen ini berstatus RDTV (Retur / Penolakan). Silakan hubungi Tim Pengadaan PKT."
+    "Pengajuan penagihan ditangguhkan karena dokumen ini berstatus RDTV (Retur / Penolakan). Silakan hubungi Tim Pengadaan PKT.": "Pengajuan penagihan ditangguhkan karena dokumen ini berstatus RDTV (Retur / Penolakan). Silakan hubungi Tim Pengadaan PKT.",
+    "Unggah Softfile Sertifikat / Dokumen Pemenuhan (COO / COA / MSDS)": "Unggah Softfile Sertifikat / Dokumen Pemenuhan (COO / COA / MSDS)",
+    "Jika penolakan RDTV disebabkan kekurangan dokumen teknis (seperti belum melampirkan COO manufacture, COA, atau sertifikat uji mutu), Anda dapat mengunggah berkas sertifikat di bawah ini agar tim QC dapat memverifikasi dan mengajukan ulang tanpa retur fisik barang.": "Jika penolakan RDTV disebabkan kekurangan dokumen teknis (seperti belum melampirkan COO manufacture, COA, atau sertifikat uji mutu), Anda dapat mengunggah berkas sertifikat di bawah ini agar tim QC dapat memverifikasi dan mengajukan ulang tanpa retur fisik barang.",
+    "Pilih Surat Jalan (DO) yang Ditolak:": "Pilih Surat Jalan (DO) yang Ditolak:",
+    "Berkas Sertifikat Susulan (PDF / JPG / PNG, maks. 20 MB):": "Berkas Sertifikat Susulan (PDF / JPG / PNG, maks. 20 MB):",
+    "Catatan Vendor (Opsional):": "Catatan Vendor (Opsional):",
+    "Tuliskan catatan tambahan mengenai berkas sertifikat yang dilampirkan...": "Tuliskan catatan tambahan mengenai berkas sertifikat yang dilampirkan...",
+    "Kirim Dokumen Pemenuhan": "Kirim Dokumen Pemenuhan",
+    "Mengunggah...": "Mengunggah...",
+    "Riwayat Dokumen Pemenuhan yang Diajukan:": "Riwayat Dokumen Pemenuhan yang Diajukan:",
+    "Catatan Tim QC / Receiving:": "Catatan Tim QC / Receiving:",
+    "Dokumen pemenuhan ini telah disetujui. Petugas Gudang Receiving sedang memproses penerbitan GRS resmi.": "Dokumen pemenuhan ini telah disetujui. Petugas Gudang Receiving sedang memproses penerbitan GRS resmi.",
+    "Dokumen Pemenuhan Diajukan:": "Dokumen Pemenuhan Diajukan:",
+    "Menunggu Review": "Menunggu Review",
+    "Disetujui": "Disetujui",
+    "Ditolak": "Ditolak",
+    "Catatan QC:": "Catatan QC:"
 }
