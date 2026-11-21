@@ -882,7 +882,7 @@
                         <div>
                             <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">{{ __('Unduh Berkas Resmi') }}</span>
                             <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">
-                                {{ __('Dokumen Resmi dari Receiving & Tim Invoice') }}
+                                {{ __('Dokumen Resmi dari Receiving & Tim Penerimaan Invoice') }}
                             </h3>
                         </div>
                         <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -1047,7 +1047,7 @@
                                 @else
                                     <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs mb-4 flex items-center gap-2">
                                         <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                        <span>{{ __('Surat verifikasi belum diunggah oleh Tim Invoice. Berkas akan tersedia setelah proses verifikasi penerimaan barang disahkan.') }}</span>
+                                        <span>{{ __('Surat verifikasi belum diunggah oleh Tim Penerimaan Invoice. Berkas akan tersedia setelah proses verifikasi penerimaan barang disahkan.') }}</span>
                                     </div>
                                 @endif
                             </div>
@@ -1073,7 +1073,7 @@
                                 {{ __('Upload Dokumen Persyaratan Penagihan') }}
                             </h3>
                             <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                                {!! __('Seluruh dokumen persyaratan penagihan invoice wajib digabungkan menjadi <strong>1 file dokumen (PDF/ZIP)</strong> lalu diunggah di bawah ini. Dokumen akan langsung tersinkronisasi dan dapat diverifikasi oleh Tim Invoice PT Pupuk Kalimantan Timur.') !!}
+                                {!! __('Seluruh dokumen persyaratan penagihan invoice wajib digabungkan menjadi <strong>1 file dokumen (PDF/ZIP)</strong> lalu diunggah di bawah ini. Dokumen akan langsung tersinkronisasi dan dapat diverifikasi oleh Tim Penerimaan Invoice PT Pupuk Kalimantan Timur.') !!}
                             </p>
                         </div>
 
@@ -1168,7 +1168,7 @@
                                         {{ __('Pengajuan Penagihan Tidak Tersedia untuk Dokumen RDTV') }}
                                     </h4>
                                     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                        {{ __('Surat jalan ini memiliki status penolakan / retur material (RDTV). Sesuai prosedur keuangan dan pengadaan PT Pupuk Kaltim, penagihan invoice hanya dapat diproses untuk material yang telah terbit lembar GRS resmi (diterima gudang).') }}
+                                        {{ __('Surat jalan ini memiliki status penolakan / retur material (RDTV). Sesuai ketentuan penerimaan barang dan penagihan invoice PT Pupuk Kaltim, penagihan invoice hanya dapat diproses untuk material yang telah terbit lembar GRS resmi (diterima gudang).') }}
                                     </p>
                                     <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-300 text-xs font-semibold">
                                         <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -1337,7 +1337,7 @@
                                     </svg>
                                     <div class="leading-relaxed">
                                         <strong>{{ __('Ketentuan Urutan Dokumen:') }}</strong>
-                                        {!! __('Dokumen No. 01–05 bersifat <strong>Wajib</strong> bagi seluruh pengadaan. Dokumen No. 06–16 bersifat kondisional/pelengkap sesuai spesifikasi komoditas barang Anda. Susun dokumen secara berurutan di dalam file PDF Anda untuk mempercepat proses verifikasi oleh Tim Invoice PKT.') !!}
+                                        {!! __('Dokumen No. 01–05 bersifat <strong>Wajib</strong> bagi seluruh pengadaan. Dokumen No. 06–16 bersifat kondisional/pelengkap sesuai spesifikasi komoditas barang Anda. Susun dokumen secara berurutan di dalam file PDF Anda untuk mempercepat proses verifikasi oleh Tim Penerimaan Invoice PKT.') !!}
                                     </div>
                                 </div>
                             </div>

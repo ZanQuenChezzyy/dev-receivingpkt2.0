@@ -614,7 +614,7 @@ test('vendor can download dokumen_grs and distinct dokumen_verifikasi_grs', func
     $component->activePo = '5300099999';
     $result = $component->downloadVerifikasiGrs($invoice->id);
     expect($result)->toBeNull()
-        ->and(session('download_error'))->toBe('Surat Verifikasi GRS belum diunggah oleh Tim Invoice.');
+        ->and(session('download_error'))->toBe('Surat Verifikasi GRS belum diunggah oleh Tim Penerimaan Invoice.');
 });
 
 test('vendor po tracking handles rdtv document with warning notice, stepper status, and billing suspension', function () {

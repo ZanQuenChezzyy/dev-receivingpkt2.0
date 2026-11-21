@@ -859,7 +859,7 @@ class VendorPoTracking extends Component
                         'title' => __('Penerimaan Berkas Penagihan (Invoicing)'),
                         'badge' => __('Invoicing Entry'),
                         'badge_color' => 'cyan',
-                        'desc' => __('Berkas penagihan untuk DO :do diterima oleh Bagian Keuangan/Invoice.', ['do' => $inv->no_do]).$invoiceNoSuffix,
+                        'desc' => __('Berkas penagihan untuk DO :do diterima oleh Bagian Penerimaan Invoice.', ['do' => $inv->no_do]).$invoiceNoSuffix,
                         'icon' => 'currency-dollar',
                     ];
                 }
@@ -1193,7 +1193,7 @@ class VendorPoTracking extends Component
 
         $grsPath = $receipt?->dokumen_grs ?: $receipt?->grsRdtvItem?->file_path;
         if (! $receipt || empty($receipt->dokumen_verifikasi_grs) || ($grsPath && $grsPath === $receipt->dokumen_verifikasi_grs)) {
-            session()->flash('download_error', __('Surat Verifikasi GRS belum diunggah oleh Tim Invoice.'));
+            session()->flash('download_error', __('Surat Verifikasi GRS belum diunggah oleh Tim Penerimaan Invoice.'));
 
             return null;
         }
