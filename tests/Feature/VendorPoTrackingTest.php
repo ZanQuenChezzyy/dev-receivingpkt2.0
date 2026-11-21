@@ -1,6 +1,9 @@
 <?php
 
 use App\Livewire\Frontend\VendorPoTracking;
+use App\Models\DeliveryOrderReceipt;
+use App\Models\DeliveryOrderReceiptDetail;
+use App\Models\GrsRdtv;
 use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
@@ -55,9 +58,36 @@ beforeEach(function () {
     if (! Schema::hasTable('grs_rdtv_items')) {
         Schema::create('grs_rdtv_items', function ($table) {
             $table->id();
+            $table->unsignedBigInteger('grs_rdtv_id')->nullable();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
             $table->string('document_code')->nullable();
             $table->string('file_path')->nullable();
+            $table->text('reason')->nullable();
             $table->string('status')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('grs_rdtvs')) {
+        Schema::create('grs_rdtvs', function ($table) {
+            $table->id();
+            $table->date('transaction_date')->nullable();
+            $table->string('category')->default('GRS');
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('delivery_order_receipts')) {
+        Schema::create('delivery_order_receipts', function ($table) {
+            $table->id();
+            $table->string('delivery_order_no')->nullable();
+            $table->string('document_code')->nullable();
+            $table->date('received_date')->nullable();
+            $table->string('status')->nullable();
+            $table->dateTime('post_103')->nullable();
+            $table->string('delay_reason')->nullable();
+            $table->text('delay_notes')->nullable();
+            $table->string('receipt_mode')->default('Standard');
             $table->timestamps();
         });
     }
@@ -78,7 +108,52 @@ beforeEach(function () {
             $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
             $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
             $table->decimal('quantity', 12, 3)->default(0);
+            $table->string('material_type')->nullable();
             $table->string('description')->nullable();
+            $table->decimal('total_amount_snapshot', 18, 2)->default(0);
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('qc_histories')) {
+        Schema::create('qc_histories', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->string('status')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('delivery_order_receipt_delay_logs')) {
+        Schema::create('delivery_order_receipt_delay_logs', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->string('delay_reason')->nullable();
+            $table->text('delay_notes')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('delivery_order_receipt_termins')) {
+        Schema::create('delivery_order_receipt_termins', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('material_issue_details')) {
+        Schema::create('material_issue_details', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_detail_id')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('warehouse_transmittal_items')) {
+        Schema::create('warehouse_transmittal_items', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_detail_id')->nullable();
             $table->timestamps();
         });
     }
@@ -520,4 +595,90 @@ test('vendor can download dokumen_grs and distinct dokumen_verifikasi_grs', func
     $result = $component->downloadVerifikasiGrs($invoice->id);
     expect($result)->toBeNull()
         ->and(session('download_error'))->toBe('Surat Verifikasi GRS belum diunggah oleh Tim Invoice.');
+});
+
+test('vendor po tracking handles rdtv document with warning notice, stepper status, and billing suspension', function () {
+    $vendor = Vendor::create([
+        'name' => 'PT Flow Technology Indonesia',
+        'email' => 'vendor@flowtech.com',
+    ]);
+
+    $po = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300065382',
+        'vendor_id' => $vendor->id,
+        'vendor_name' => $vendor->name,
+        'item_no' => '10',
+        'description' => 'IMPELLER,PUMP',
+        'qty_po' => 1,
+        'uoi' => 'EA',
+    ]);
+
+    $do = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'FTGI-1026-0115',
+        'document_code' => 'FTGI-1026-0115',
+        'received_date' => '2026-11-02',
+        'status' => 'RDTV',
+        'post_103' => '2026-11-02 10:00:00',
+        'delay_reason' => 'RDTV',
+        'delay_notes' => 'TIDAK MELAMPIRKAN COO FROM MANUFACTURE',
+    ]);
+
+    $detail = DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $do->id,
+        'purchase_order_issued_id' => $po->id,
+        'quantity' => 1,
+        'material_type' => 'ZRM',
+        'description' => 'IMPELLER,PUMP',
+    ]);
+
+    $grs = GrsRdtv::create([
+        'transaction_date' => '2026-11-21',
+        'category' => 'RDTV',
+    ]);
+
+    $grsItem = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grs->id,
+        'delivery_order_receipt_id' => $do->id,
+        'document_code' => 'FTGI-1026-0115',
+        'file_path' => 'grs-rdtv-docs/FTGI-1026-0115.pdf',
+        'reason' => 'TIDAK MELAMPIRKAN COO FROM MANUFACTURE',
+        'status' => 'Matched',
+    ]);
+    Storage::disk('public')->put('grs-rdtv-docs/FTGI-1026-0115.pdf', 'SAMPLE RDTV CONTENT');
+
+    $receipt = InvoicingReceipt::create([
+        'no_po' => '5300065382',
+        'delivery_order_receipt_id' => $do->id,
+        'purchase_order_issued_id' => $po->id,
+        'grs_rdtv_item_id' => $grsItem->id,
+        'vendor_id' => $vendor->id,
+        'vendor_name' => $vendor->name,
+        'jenis' => 'RDTV',
+        'no_rdtv' => '5007756200',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $test = Livewire::test(VendorPoTracking::class)
+        ->set('poNumber', '5300065382')
+        ->call('initiateSearch')
+        ->set('verificationEmail', 'vendor@flowtech.com')
+        ->call('verifyVendorEmail');
+
+    // Pastikan banner peringatan RDTV muncul dengan alasan penolakan
+    $test->assertSee('Pemberitahuan Retur Material (RDTV - Return Delivery to Vendor)')
+        ->assertSee('TIDAK MELAMPIRKAN COO FROM MANUFACTURE')
+        ->assertSee('RDTV Terbit (Retur Material)')
+        ->assertSee('Penagihan Ditangguhkan (RDTV)')
+        ->assertSee('Pengajuan Penagihan Tidak Tersedia untuk Dokumen RDTV');
+
+    // Vendor tetap bisa mengunduh dokumen RDTV resmi
+    $test->call('downloadGrsReceiving', $grsItem->id);
+    $test->assertFileDownloaded('FTGI-1026-0115.pdf');
+
+    // Unggah berkas penagihan invoice harus ditolak karena status RDTV
+    $fakeUpload = UploadedFile::fake()->create('invoice.pdf', 100, 'application/pdf');
+    $test->set('berkasPenagihanFile', $fakeUpload)
+        ->call('uploadBerkasPenagihan');
+
+    $test->assertSee('Pengajuan penagihan ditangguhkan karena dokumen ini berstatus RDTV');
 });

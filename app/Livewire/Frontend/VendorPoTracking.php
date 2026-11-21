@@ -880,6 +880,7 @@ class VendorPoTracking extends Component
         // Tentukan Current Pipeline Stage
         $currentStageIndex = 1;
         $currentStageLabel = __('PO Diterbitkan');
+        $isRdtvStage = false;
 
         if ($uniqueDos->isNotEmpty()) {
             $currentStageIndex = 2;
@@ -904,11 +905,38 @@ class VendorPoTracking extends Component
             }
 
             $hasGrs = $uniqueDos->contains(fn (DeliveryOrderReceipt $do): bool => $do->grsRdtvItems->where('grsRdtv.category', 'GRS')->isNotEmpty() || $do->status === 'GRS');
+            $hasRdtv = $uniqueDos->contains(fn (DeliveryOrderReceipt $do): bool => $do->grsRdtvItems->where('grsRdtv.category', 'RDTV')->isNotEmpty() || $do->status === 'RDTV');
+
             if ($hasGrs) {
                 $currentStageIndex = 5;
                 $currentStageLabel = __('GRS Terbit (105)');
+            } elseif ($hasRdtv) {
+                $currentStageIndex = 5;
+                $currentStageLabel = __('RDTV Terbit (Retur Material)');
+                $isRdtvStage = true;
             }
         }
+
+        // Kumpulkan alasan-alasan penolakan RDTV jika ada
+        $rdtvReasons = [];
+        foreach ($uniqueDos as $do) {
+            $rdtvItems = $do->grsRdtvItems->filter(fn (GrsRdtvItem $item): bool => $item->grsRdtv?->category === 'RDTV');
+            if ($rdtvItems->isNotEmpty() || $do->status === 'RDTV') {
+                $reasons = $rdtvItems->pluck('reason')->filter()->unique()->values()->all();
+                if (empty($reasons) && ! empty($do->delay_notes)) {
+                    $reasons[] = $do->delay_notes;
+                }
+                $rdtvReasons[] = [
+                    'do_no' => $do->delivery_order_no ?: $do->document_code,
+                    'reason' => ! empty($reasons) ? implode('; ', $reasons) : __('Alasan tidak disebutkan'),
+                ];
+            }
+        }
+
+        $activeDo = $uniqueDos->firstWhere('id', (int) $this->activeDoTab) ?? $uniqueDos->first();
+        $activeDoIsRdtv = $activeDo && ($activeDo->status === 'RDTV' || $activeDo->grsRdtvItems->where('grsRdtv.category', 'RDTV')->isNotEmpty());
+        $hasAnyRdtv = ! empty($rdtvReasons) || $uniqueDos->contains(fn (DeliveryOrderReceipt $do): bool => $do->status === 'RDTV');
+        $hasAnyGrs = $uniqueDos->contains(fn (DeliveryOrderReceipt $do): bool => $do->grsRdtvItems->where('grsRdtv.category', 'GRS')->isNotEmpty() || $do->status === 'GRS');
 
         // Format Material Items & Fulfillment
         $materialItems = [];
@@ -983,7 +1011,13 @@ class VendorPoTracking extends Component
             'pipeline' => [
                 'current_stage_index' => $currentStageIndex,
                 'current_stage_label' => $currentStageLabel,
+                'is_rdtv' => $isRdtvStage,
+                'has_rdtv' => $hasAnyRdtv,
             ],
+            'has_rdtv' => $hasAnyRdtv,
+            'is_rdtv_only' => $hasAnyRdtv && ! $hasAnyGrs,
+            'active_do_is_rdtv' => $activeDoIsRdtv,
+            'rdtv_reasons' => $rdtvReasons,
             'unique_dos' => $uniqueDos,
             'details' => $details,
             'material_items' => $materialItems,
@@ -1029,6 +1063,12 @@ class VendorPoTracking extends Component
         $invoicingReceipt = $this->resolveOrCreateInvoicingReceipt();
         if (! $invoicingReceipt) {
             session()->flash('upload_error', __('Gagal menemukan atau membuat berkas penagihan untuk PO ini.'));
+
+            return;
+        }
+
+        if ($invoicingReceipt->jenis === 'RDTV' && empty($invoicingReceipt->no_grs)) {
+            session()->flash('upload_error', __('Pengajuan penagihan ditangguhkan karena dokumen ini berstatus RDTV (Retur / Penolakan). Silakan hubungi Tim Pengadaan PKT.'));
 
             return;
         }

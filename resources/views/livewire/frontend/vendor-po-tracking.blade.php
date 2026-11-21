@@ -424,7 +424,10 @@
                                 {{ __('Posisi Perjalanan Dokumen Saat Ini') }}
                             </h3>
                         </div>
-                        <span class="px-3.5 py-1.5 rounded-full text-xs font-black bg-[#F47920]/15 text-[#F47920] border border-[#F47920]/30">
+                        @php
+                            $isRdtv = $trackingData['pipeline']['is_rdtv'] ?? false;
+                        @endphp
+                        <span class="px-3.5 py-1.5 rounded-full text-xs font-black {{ $isRdtv ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30' : 'bg-[#F47920]/15 text-[#F47920] border border-[#F47920]/30' }}">
                             {{ $trackingData['pipeline']['current_stage_label'] ?? __('Menunggu') }}
                         </span>
                     </div>
@@ -437,7 +440,7 @@
                             ['num' => 2, 'label' => __('DO & Fisik Tiba'), 'sub' => __('Pintu Receiving')],
                             ['num' => 3, 'label' => __('Post 103 SAP'), 'sub' => __('Validasi Sistem')],
                             ['num' => 4, 'label' => __('Inspeksi QC'), 'sub' => __('Uji Mutu ISTEK')],
-                            ['num' => 5, 'label' => __('Slip GRS (105)'), 'sub' => __('Arsip Penagihan')],
+                            ['num' => 5, 'label' => $isRdtv ? __('Slip RDTV (Retur)') : __('Slip GRS (105)'), 'sub' => $isRdtv ? __('Ditolak / Retur') : __('Arsip Penagihan')],
                         ];
                         $progressPercent = min(100, max(10, (($stageIdx - 1) / 4) * 100));
                     @endphp
@@ -445,7 +448,7 @@
                     <!-- Animated Progress Bar Connector (Desktop & Tablet) -->
                     <div class="hidden sm:block relative mb-4 mx-3">
                         <div class="h-1.5 w-full bg-slate-200/80 dark:bg-white/10 rounded-full overflow-hidden">
-                            <div class="h-full bg-gradient-to-r from-emerald-500 via-[#F47920] to-orange-500 rounded-full transition-all duration-700 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
+                            <div class="h-full {{ $isRdtv ? 'bg-gradient-to-r from-emerald-500 via-[#F47920] to-rose-500' : 'bg-gradient-to-r from-emerald-500 via-[#F47920] to-orange-500' }} rounded-full transition-all duration-700 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
                                  style="width: {{ $progressPercent }}%;">
                             </div>
                         </div>
@@ -457,10 +460,15 @@
                                 $isDone = $stageIdx > $step['num'];
                                 $isCurrent = $stageIdx === $step['num'];
                                 $isPending = $stageIdx < $step['num'];
+                                $isStepRdtv = $isRdtv && $step['num'] === 5;
                             @endphp
                             <div class="p-3.5 rounded-2xl transition-all duration-300 relative overflow-hidden hover:-translate-y-0.5
                                 @if ($isCurrent)
-                                    bg-gradient-to-br from-[#F47920]/15 to-transparent border-2 border-[#F47920] shadow-[0_0_20px_rgba(244,121,32,0.22)] scale-[1.01]
+                                    @if ($isStepRdtv)
+                                        bg-gradient-to-br from-rose-500/15 to-transparent border-2 border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.22)] scale-[1.01]
+                                    @else
+                                        bg-gradient-to-br from-[#F47920]/15 to-transparent border-2 border-[#F47920] shadow-[0_0_20px_rgba(244,121,32,0.22)] scale-[1.01]
+                                    @endif
                                 @elseif ($isDone)
                                     bg-emerald-500/10 border border-emerald-500/25
                                 @else
@@ -472,7 +480,11 @@
                                         @if ($isDone)
                                             bg-emerald-500 text-white
                                         @elseif ($isCurrent)
-                                            bg-[#F47920] text-white shadow-md shadow-orange-500/40
+                                            @if ($isStepRdtv)
+                                                bg-rose-500 text-white shadow-md shadow-rose-500/40
+                                            @else
+                                                bg-[#F47920] text-white shadow-md shadow-orange-500/40
+                                            @endif
                                         @else
                                             bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400
                                         @endif">
@@ -480,14 +492,18 @@
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                             </svg>
+                                        @elseif ($isStepRdtv)
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
                                         @else
                                             {{ $step['num'] }}
                                         @endif
                                     </div>
                                     @if ($isCurrent)
                                         <span class="flex h-2 w-2 relative">
-                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F47920] opacity-75"></span>
-                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-[#F47920]"></span>
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $isStepRdtv ? 'bg-rose-500' : 'bg-[#F47920]' }} opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-2 w-2 {{ $isStepRdtv ? 'bg-rose-500' : 'bg-[#F47920]' }}"></span>
                                         </span>
                                     @endif
                                 </div>
@@ -502,6 +518,51 @@
                         @endforeach
                     </div>
                 </div>
+
+                <!-- BANNER PERINGATAN RDTV JIKA ADA DOKUMEN RETUR -->
+                @if ($trackingData['has_rdtv'] ?? false)
+                    <div class="p-5 sm:p-6 rounded-3xl bg-rose-500/10 border-2 border-rose-500/30 text-rose-800 dark:text-rose-200 shadow-lg animate-fade-in relative overflow-hidden">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 text-xs sm:text-sm">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1.5">
+                                    <h4 class="font-black text-base sm:text-lg text-rose-700 dark:text-rose-300">
+                                        {{ __('Pemberitahuan Retur Material (RDTV - Return Delivery to Vendor)') }}
+                                    </h4>
+                                    <span class="px-3 py-1 rounded-full text-xs font-black bg-rose-500 text-white w-fit">
+                                        {{ __('Ditolak / Retur SAP') }}
+                                    </span>
+                                </div>
+                                <p class="leading-relaxed mb-3 text-slate-700 dark:text-slate-300">
+                                    {{ __('Terdapat surat jalan atau item material pada PO ini yang telah diputuskan ditolak / diretur oleh tim Quality Control (QC) dan Gudang Receiving Pupuk Kaltim. Dokumen slip penolakan resmi (RDTV) telah diterbitkan.') }}
+                                </p>
+
+                                @if (!empty($trackingData['rdtv_reasons']))
+                                    <div class="p-3.5 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-rose-500/20 text-xs mb-3 space-y-1.5">
+                                        <span class="font-bold text-rose-700 dark:text-rose-300 block">{{ __('Rincian Surat Jalan & Alasan Penolakan:') }}</span>
+                                        <div class="space-y-1">
+                                            @foreach ($trackingData['rdtv_reasons'] as $rItem)
+                                                <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 text-slate-800 dark:text-slate-200">
+                                                    <span class="font-mono font-bold text-rose-600 dark:text-rose-400 shrink-0">[{{ $rItem['do_no'] }}]</span>
+                                                    <span class="font-medium">{{ $rItem['reason'] }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="p-3 rounded-xl bg-rose-500/5 border border-rose-500/15 text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span>{{ __('Silakan unduh dokumen slip RDTV di bagian bawah untuk arsip dan segera hubungi Tim Pengadaan / Receiving PKT untuk koordinasi penggantian atau pengiriman ulang material.') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 <!-- ALERTS FOR UPLOAD / DOWNLOAD STATUS -->
                 @if (session()->has('upload_success'))
@@ -563,14 +624,14 @@
                                         <div>
                                             <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">{{ __('Modul Receiving (Gudang)') }}</span>
                                             <h4 class="text-base font-black text-slate-800 dark:text-white">
-                                                {{ __('Dokumen GRS (Goods Receipt Slip)') }}
+                                                {{ __('Dokumen GRS / RDTV (Slip SAP)') }}
                                             </h4>
                                         </div>
                                     </div>
                                 </div>
 
                                 <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                    {{ __('Slip bukti penerimaan material di gudang Receiving yang telah diposting ke sistem SAP (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip & penagihan vendor.') }}
+                                    {{ __('Slip bukti penerimaan (GRS) atau retur material (RDTV) di gudang Receiving yang telah diposting ke sistem SAP (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip vendor.') }}
                                 </p>
 
                                 <!-- List of GRS Items dari tabel GRS/RDTV -->
@@ -586,17 +647,21 @@
                                 @if ($grsWithFiles->isEmpty())
                                     <div class="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs flex items-center gap-2">
                                         <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                        <span>{{ __('Belum ada dokumen GRS yang diunggah untuk PO ini.') }}</span>
+                                        <span>{{ __('Belum ada dokumen GRS/RDTV yang diunggah untuk PO ini.') }}</span>
                                     </div>
                                 @else
                                     <div class="space-y-2.5 mb-4">
                                         @foreach ($grsItems as $gItem)
+                                            @php
+                                                $itemCat = $gItem->grsRdtv?->category ?? 'GRS';
+                                                $isItemRdtv = $itemCat === 'RDTV';
+                                            @endphp
                                             <div class="p-3 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                                                 <div class="text-xs">
                                                     <div class="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                                        <span>{{ $gItem->document_code ?? 'GRS Document' }}</span>
-                                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                                                            {{ $gItem->grsRdtv?->category ?? 'GRS' }}
+                                                        <span>{{ $gItem->document_code ?? ($isItemRdtv ? 'RDTV Document' : 'GRS Document') }}</span>
+                                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $isItemRdtv ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' }}">
+                                                            {{ $itemCat }}
                                                         </span>
                                                     </div>
                                                     <div class="text-[11px] text-slate-400 mt-0.5">
@@ -612,7 +677,7 @@
                                                             {{ __('Lihat') }}
                                                         </a>
                                                         <button type="button" wire:click="downloadGrsReceiving({{ $gItem->id }})"
-                                                            class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all flex items-center gap-1.5">
+                                                            class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white {{ $isItemRdtv ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700' }} shadow-sm transition-all flex items-center gap-1.5">
                                                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                                             {{ __('Unduh') }}
                                                         </button>
@@ -730,8 +795,16 @@
                         </div>
 
                         <!-- Status Badge -->
+                        @php
+                            $isRdtvSuspended = !empty($trackingData['active_do_is_rdtv']) || (!empty($trackingData['is_rdtv_only']) && empty($trackingData['has_dossier']));
+                        @endphp
                         <div class="shrink-0">
-                            @if (!empty($trackingData['has_dossier']))
+                            @if ($isRdtvSuspended)
+                                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    {{ __('Penagihan Ditangguhkan (RDTV)') }}
+                                </span>
+                            @elseif (!empty($trackingData['has_dossier']))
                                 <span class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                                     {{ __('Berkas Lengkap Terunggah') }}
@@ -796,6 +869,27 @@
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                             {{ __('Hapus / Ganti') }}
                                         </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @elseif ($isRdtvSuspended)
+                            <!-- RDTV SUSPENDED NOTICE -->
+                            <div class="p-8 sm:p-10 rounded-3xl bg-rose-500/5 border-2 border-dashed border-rose-500/30 text-center relative">
+                                <div class="max-w-md mx-auto">
+                                    <div class="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-4 border border-rose-500/20 shadow-sm">
+                                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                        </svg>
+                                    </div>
+                                    <h4 class="text-base font-black text-rose-700 dark:text-rose-300 mb-2">
+                                        {{ __('Pengajuan Penagihan Tidak Tersedia untuk Dokumen RDTV') }}
+                                    </h4>
+                                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                                        {{ __('Surat jalan ini memiliki status penolakan / retur material (RDTV). Sesuai prosedur keuangan dan pengadaan PT Pupuk Kaltim, penagihan invoice hanya dapat diproses untuk material yang telah terbit lembar GRS resmi (diterima gudang).') }}
+                                    </p>
+                                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-300 text-xs font-semibold">
+                                        <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <span>{{ __('Silakan hubungi Tim Pengadaan PKT untuk tindak lanjut penggantian barang.') }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1161,7 +1255,9 @@
                                                     </h4>
                                                 </div>
                                                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold
-                                                    @if ($do->status === 'GRS' || $do->status === 'Diterima')
+                                                    @if ($do->status === 'RDTV')
+                                                        bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20
+                                                    @elseif ($do->status === 'GRS' || $do->status === 'Diterima')
                                                         bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20
                                                     @elseif ($do->status === 'Pending')
                                                         bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20
@@ -1210,10 +1306,18 @@
                                                     <div class="pt-2 border-t border-slate-200/50 dark:border-white/5 space-y-1.5">
                                                         <span class="text-slate-400 dark:text-slate-500 block text-[11px] font-semibold">{{ __('Slip Resmi Diterbitkan:') }}</span>
                                                         @foreach ($do->grsRdtvItems as $gItem)
-                                                            <div class="flex items-center justify-between bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                                                            @php
+                                                                $itemCat = $gItem->grsRdtv?->category ?? 'GRS';
+                                                                $isRdtvItem = $itemCat === 'RDTV';
+                                                            @endphp
+                                                            <div class="flex items-center justify-between {{ $isRdtvItem ? 'bg-rose-500/10 dark:bg-rose-500/15 border border-rose-500/20 text-rose-700 dark:text-rose-300' : 'bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300' }} px-3 py-1.5 rounded-xl text-xs font-bold">
                                                                 <span class="flex items-center gap-1.5">
-                                                                    <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                                                    {{ $gItem->grsRdtv?->category ?? 'GRS' }}
+                                                                    @if ($isRdtvItem)
+                                                                        <svg class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                                    @else
+                                                                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                                    @endif
+                                                                    {{ $itemCat }}
                                                                 </span>
                                                                 <span class="font-mono text-[11px]">{{ $gItem->grsRdtv?->transaction_date ? \Carbon\Carbon::parse($gItem->grsRdtv->transaction_date)->locale(app()->getLocale())->translatedFormat('d M Y') : '-' }}</span>
                                                             </div>
@@ -1223,8 +1327,8 @@
 
                                                 <!-- Delay Reason if any -->
                                                 @if ($do->delay_reason)
-                                                    <div class="mt-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px]">
-                                                        <span class="font-bold block">{{ __('Catatan Penundaan:') }}</span>
+                                                    <div class="mt-2 p-2.5 rounded-xl {{ $do->delay_reason === 'RDTV' ? 'bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300' : 'bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300' }} text-[11px]">
+                                                        <span class="font-bold block">{{ $do->delay_reason === 'RDTV' ? __('Catatan Retur RDTV:') : __('Catatan Penundaan:') }}</span>
                                                         <span>{{ $do->delay_reason }}</span>
                                                         @if ($do->delay_notes)
                                                             <span class="block text-slate-500 dark:text-slate-400 mt-0.5">{{ $do->delay_notes }}</span>
