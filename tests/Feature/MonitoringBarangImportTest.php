@@ -13,6 +13,7 @@ use App\Services\MonitoringBarangImportService;
 use Filament\Tables\Table;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -1422,7 +1423,20 @@ Pekerjaan",Keterangan
 ,17 November 2026,Karung,5007746209,,5000009408,RIZKI,RIZKI,,SAMISURYAINDAH PLASTIK ,-,samisuryaip@yahoo.com,18 November 2026,,SAMISURYAINDAH PLASTIK ,5000009408,,,,-,,,,, Rp -   ,,,,
 CSV;
 
+    $siblingUpdateBindings = [];
+    DB::listen(function ($query) use (&$siblingUpdateBindings): void {
+        if (str_contains(strtolower($query->sql), 'update') && str_contains(strtolower($query->sql), 'where "no_po" = ?')) {
+            $siblingUpdateBindings[] = $query->bindings;
+        }
+    });
+
     $summary = app(MonitoringBarangImportService::class)->importFromString($csv);
+
+    // Pastikan binding no_po pada query update PIC sibling selalu bertipe string (tidak ter-cast ke integer oleh PHP)
+    expect($siblingUpdateBindings)->not->toBeEmpty();
+    foreach ($siblingUpdateBindings as $bindings) {
+        expect($bindings[2])->toBeString();
+    }
 
     // 1. Record 5007731014 diperbarui PIC-nya ke NAFISA tanpa duplikasi & tetap mempertahankan No. Invoice + status Selesai
     $existingInvoiced->refresh();

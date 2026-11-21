@@ -316,30 +316,36 @@ class MonitoringBarangImportService
                         }
 
                         $poNo = (string) ($item['no_po'] ?? '-');
-                        if ($result['receipt_id'] !== null && filled($poNo) && $poNo !== '-') {
-                            $touchedReceiptIdsByPo[$poNo][] = $result['receipt_id'];
-                        }
+                        if (filled($poNo) && $poNo !== '-') {
+                            $poKey = 'po:'.$poNo;
+                            if ($result['receipt_id'] !== null) {
+                                $touchedReceiptIdsByPo[$poKey][] = $result['receipt_id'];
+                            }
 
-                        if ($result['resolved_pic_id'] !== null && filled($poNo) && $poNo !== '-') {
-                            $poPicSyncCandidates[$poNo][$result['resolved_pic_id']] = true;
+                            if ($result['resolved_pic_id'] !== null) {
+                                $poPicSyncCandidates[$poKey]['po'] = $poNo;
+                                $poPicSyncCandidates[$poKey]['pics'][$result['resolved_pic_id']] = true;
+                            }
                         }
                     }
 
                     // Sinkronkan PIC untuk seluruh record eksisting lain pada PO yang sama agar mengikuti data impor terbaru
-                    foreach ($poPicSyncCandidates as $poNo => $picIdsMap) {
+                    foreach ($poPicSyncCandidates as $poKey => $candidate) {
+                        $picIdsMap = $candidate['pics'];
                         if (count($picIdsMap) !== 1) {
                             continue;
                         }
 
+                        $poNoString = (string) $candidate['po'];
                         $latestPicId = (int) array_key_first($picIdsMap);
                         $siblingQuery = InvoicingReceipt::query()
-                            ->where('no_po', $poNo)
+                            ->where('no_po', $poNoString)
                             ->where(function ($q) use ($latestPicId): void {
                                 $q->whereNull('pic_id')
                                     ->orWhere('pic_id', '!=', $latestPicId);
                             });
 
-                        $touchedForPo = $touchedReceiptIdsByPo[$poNo] ?? [];
+                        $touchedForPo = $touchedReceiptIdsByPo[$poKey] ?? [];
                         if (! empty($touchedForPo)) {
                             $siblingQuery->whereNotIn('id', $touchedForPo);
                         }
