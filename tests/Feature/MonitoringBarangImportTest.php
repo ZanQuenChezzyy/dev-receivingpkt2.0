@@ -1450,3 +1450,119 @@ CSV;
         ->and($existingSiblingPo->pic_id)->toBe($users['rizki@receiving.com']->id)
         ->and($summary['unmatched_pics'])->toBeEmpty();
 });
+
+it('streams large CSV imports across multiple PO-grouped chunks while preserving DO linking, PIC sync, and row ordering', function () {
+    $users = seedMonitoringPicUsers();
+
+    $vendor = Vendor::create([
+        'name' => 'PT CHUNK TEST INDONESIA',
+        'vendor_number' => 'V-CHUNK-01',
+        'email' => ['chunk1@vendor.test', 'chunk2@vendor.test'],
+    ]);
+
+    $sharedPo = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300099001',
+        'item_no' => 10,
+        'description' => 'MATERIAL CHUNK SHARED',
+        'qty_po' => 10,
+        'uoi' => 'EA',
+        'vendor_id' => $vendor->vendor_number,
+        'vendor_name' => $vendor->name,
+        'material_type' => 'ZSP',
+    ]);
+
+    $do1 = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'DO-CHUNK-001',
+        'received_date' => '2026-10-20',
+        'physical_received_date' => '2026-10-20',
+        'status' => 'GRS',
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $do1->id,
+        'purchase_order_issued_id' => $sharedPo->id,
+        'item_no' => 10,
+        'quantity' => 5,
+        'description' => 'MATERIAL CHUNK SHARED',
+        'uoi' => 'EA',
+        'material_type' => 'ZSP',
+    ]);
+
+    $do2 = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'DO-CHUNK-002',
+        'received_date' => '2026-10-22',
+        'physical_received_date' => '2026-10-22',
+        'status' => 'GRS',
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $do2->id,
+        'purchase_order_issued_id' => $sharedPo->id,
+        'item_no' => 10,
+        'quantity' => 5,
+        'description' => 'MATERIAL CHUNK SHARED',
+        'uoi' => 'EA',
+        'material_type' => 'ZSP',
+    ]);
+
+    // Sibling eksisting dengan PIC lama ALEX yang harus disinkronkan ke RIZKI saat PO 5300099001 diimpor
+    $existingSibling = InvoicingReceipt::create([
+        'no_po' => '5300099001',
+        'no_grs' => '5009900000',
+        'jenis' => 'GRS',
+        'pic_id' => $users['alex@receiving.com']->id,
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $lines = [
+        ' ,Tanggal Terima GRS,Jenis,No. GRS,No. RDTV,No. PO,PIC,Vendor,Deskripsi,Email,Tanggal Info GRS,,Vendor,PO,No. Invoice,No. DO,Faktur Pajak,Nama Barang,Quantity Penagihan,Quantity di PO,UOI,Sub Total (Exclude PPN),Sub Total (Include PPN),Tanggal terima & koreksi Invoice,Tanggal Kirim Kasir,Lama Pekerjaan,Keterangan',
+    ];
+
+    // Baris 1: PO 5300099001 dengan DO-CHUNK-001 (tanpa Faktur Pajak -> masuk incomplete_invoiced_rows urutan awal)
+    $lines[] = '1,2026-10-21,Sparepart,5009900001,,5300099001,RIZKI,PT CHUNK TEST INDONESIA,MATERIAL CHUNK SHARED,,2026-10-22,,PT CHUNK TEST INDONESIA,5300099001,INV-CHUNK-1,DO-CHUNK-001,,MATERIAL CHUNK SHARED,5,10,EA,1000000,1110000,2026-10-23,2026-10-24,1,';
+
+    // 220 PO unik di tengah untuk memaksa pemrosesan melintasi 3+ chunk (ukuran chunk 100)
+    for ($i = 1; $i <= 220; $i++) {
+        $poNo = (string) (5300080000 + $i);
+        $grsNo = (string) (5008000000 + $i);
+        $inv = $i === 150 ? 'INV-MID-150' : '';
+        $lines[] = ($i + 1).",2026-10-21,Sparepart,{$grsNo},,{$poNo},EVA,PT VENDOR {$i},ITEM {$i},vendor{$i}@test.com,2026-10-22,,PT VENDOR {$i},{$poNo},{$inv},,,ITEM {$i},1,1,EA,100000,111000,,,,";
+    }
+
+    // Baris terakhir (baris 223): kembali ke PO 5300099001 dengan No. DO salah ketik agar fallback PO memilih DO-CHUNK-002 (bukan merebut DO-CHUNK-001)
+    $lines[] = '222,2026-10-23,Sparepart,5009900002,,5300099001,RIZKI,PT CHUNK TEST INDONESIA,MATERIAL CHUNK SHARED,,2026-10-24,,PT CHUNK TEST INDONESIA,5300099001,INV-CHUNK-2,TYPO-DO-999,,MATERIAL CHUNK SHARED,5,10,EA,1000000,1110000,2026-10-25,2026-10-26,1,';
+
+    $tmpPath = storage_path('framework/testing/chunked_monitoring_barang_'.Str::random(8).'.csv');
+    if (! is_dir(dirname($tmpPath))) {
+        mkdir(dirname($tmpPath), 0777, true);
+    }
+    file_put_contents($tmpPath, "\xEF\xBB\xBF".implode("\n", $lines));
+
+    try {
+        $service = app(MonitoringBarangImportService::class);
+        expect($service->canHandleFile($tmpPath))->toBeTrue();
+
+        $summary = $service->importFromFile($tmpPath);
+    } finally {
+        @unlink($tmpPath);
+    }
+
+    expect($summary['total_rows'])->toBe(222)
+        ->and($summary['created'])->toBe(222)
+        ->and($summary['updated'])->toBe(1) // sibling eksisting 5009900000
+        ->and($summary['linked_do'])->toBe(2)
+        ->and($summary['unmatched_pics'])->toBeEmpty();
+
+    // Kedua baris PO 5300099001 tertaut ke DO masing-masing & mengambil email vendor dari preload ringan
+    $firstShared = InvoicingReceipt::where('no_grs', '5009900001')->firstOrFail();
+    $secondShared = InvoicingReceipt::where('no_grs', '5009900002')->firstOrFail();
+    $existingSibling->refresh();
+
+    expect($firstShared->delivery_order_receipt_id)->toBe($do1->id)
+        ->and($secondShared->delivery_order_receipt_id)->toBe($do2->id)
+        ->and($firstShared->vendor_id)->toBe($vendor->id)
+        ->and($firstShared->email_vendor)->toBe('chunk1@vendor.test, chunk2@vendor.test')
+        ->and($existingSibling->pic_id)->toBe($users['rizki@receiving.com']->id);
+
+    // Pastikan incomplete_invoiced_rows tetap terurut menaik sesuai nomor baris asli CSV
+    $incompleteRowNumbers = array_column($summary['incomplete_invoiced_rows'], 'row_number');
+    expect($incompleteRowNumbers)->toBe([2, 152, 223]);
+});

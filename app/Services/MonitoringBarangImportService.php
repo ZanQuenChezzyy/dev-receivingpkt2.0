@@ -5,8 +5,6 @@ namespace App\Services;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
-use App\Models\User;
-use App\Models\Vendor;
 use DOMDocument;
 use DOMElement;
 use Illuminate\Support\Carbon;
@@ -72,12 +70,10 @@ class MonitoringBarangImportService
             return false;
         }
 
-        $content = file_get_contents($filePath);
-        if ($content === false || trim($content) === '') {
+        $rows = $this->extractRowsFromCsvFile($filePath, maxRows: 30);
+        if (empty($rows)) {
             return false;
         }
-
-        $rows = $this->extractRowsFromCsv($content, maxRows: 30);
 
         return $this->detectHeader($rows) !== null;
     }
@@ -99,7 +95,7 @@ class MonitoringBarangImportService
      */
     public function importFromFile(string $filePath): array
     {
-        @set_time_limit(300);
+        @set_time_limit(600);
         @ini_set('memory_limit', '512M');
 
         if (! is_file($filePath) || ! is_readable($filePath)) {
@@ -108,16 +104,26 @@ class MonitoringBarangImportService
 
         if ($this->isXlsxFile($filePath)) {
             $parsed = $this->extractRowsAndHeaderFromXlsx($filePath);
+            $extracted = $this->extractParsedItems($parsed['rows'], $parsed['header_row_index'], $parsed['map']);
+            unset($parsed);
 
-            return $this->processParsedRows($parsed['rows'], $parsed['header_row_index'], $parsed['map']);
+            return $this->processParsedItems($extracted['items'], $extracted['skipped']);
         }
 
-        $content = file_get_contents($filePath);
-        if ($content === false || trim($content) === '') {
+        $rows = $this->extractRowsFromCsvFile($filePath);
+        if (empty($rows)) {
             throw new RuntimeException('File CSV kosong atau tidak dapat dibaca.');
         }
 
-        return $this->importFromString($content);
+        $headerInfo = $this->detectHeader($rows);
+        if ($headerInfo === null) {
+            throw new RuntimeException('Header kolom Monitoring Barang tidak ditemukan. Pastikan kolom No. PO, Tanggal Terima GRS / No. GRS, dan No. Invoice tersedia.');
+        }
+
+        $extracted = $this->extractParsedItems($rows, $headerInfo['header_row_index'], $headerInfo['map']);
+        unset($rows, $headerInfo);
+
+        return $this->processParsedItems($extracted['items'], $extracted['skipped']);
     }
 
     protected function isXlsxFile(string $filePath): bool
@@ -150,6 +156,8 @@ class MonitoringBarangImportService
     public function importFromString(string $csvContent): array
     {
         $rows = $this->extractRowsFromCsv($csvContent);
+        unset($csvContent);
+
         if (empty($rows)) {
             throw new RuntimeException('Data CSV kosong atau tidak valid.');
         }
@@ -159,7 +167,10 @@ class MonitoringBarangImportService
             throw new RuntimeException('Header kolom Monitoring Barang tidak ditemukan. Pastikan kolom No. PO, Tanggal Terima GRS / No. GRS, dan No. Invoice tersedia.');
         }
 
-        return $this->processParsedRows($rows, $headerInfo['header_row_index'], $headerInfo['map']);
+        $extracted = $this->extractParsedItems($rows, $headerInfo['header_row_index'], $headerInfo['map']);
+        unset($rows, $headerInfo);
+
+        return $this->processParsedItems($extracted['items'], $extracted['skipped']);
     }
 
     /**
@@ -181,10 +192,25 @@ class MonitoringBarangImportService
      */
     protected function processParsedRows(array $rows, int $headerRowIndex, array $map): array
     {
+        $extracted = $this->extractParsedItems($rows, $headerRowIndex, $map);
+        unset($rows);
+
+        return $this->processParsedItems($extracted['items'], $extracted['skipped']);
+    }
+
+    /**
+     * Mengubah seluruh baris mentah menjadi array item terstruktur.
+     *
+     * @param  array<int, array<int, string>>  $rows
+     * @param  array<string, mixed>  $map
+     * @return array{items: array<int, array<string, mixed>>, skipped: int}
+     */
+    protected function extractParsedItems(array $rows, int $headerRowIndex, array $map): array
+    {
         $parsedItems = [];
         $skippedCount = 0;
 
-        for ($i = $headerRowIndex + 1; $i < count($rows); $i++) {
+        for ($i = $headerRowIndex + 1, $total = count($rows); $i < $total; $i++) {
             $parsed = $this->parseDataRow($rows[$i], $map, $i + 1);
             if ($parsed === null) {
                 $skippedCount++;
@@ -195,8 +221,39 @@ class MonitoringBarangImportService
             $parsedItems[] = $parsed;
         }
 
-        $lookups = $this->preloadLookups($parsedItems);
-        $reservedDoOwners = $this->resolveStrictBatchDoClaims($parsedItems, $lookups);
+        return [
+            'items' => $parsedItems,
+            'skipped' => $skippedCount,
+        ];
+    }
+
+    /**
+     * Memproses item terstruktur per chunk berbasis PO agar penggunaan RAM tetap rendah pada file berukuran besar.
+     *
+     * @param  array<int, array<string, mixed>>  $parsedItems
+     * @return array{
+     *     created: int,
+     *     updated: int,
+     *     unchanged: int,
+     *     skipped: int,
+     *     linked_do: int,
+     *     fallback_kasir_count: int,
+     *     total_rows: int,
+     *     incomplete_invoiced_rows: array<int, array{row_number: int, no_po: string, no_invoice: string, no_grs: ?string, missing_fields: array<int, string>}>,
+     *     unmatched_pics: array<int, string>
+     * }
+     */
+    protected function processParsedItems(array $parsedItems, int $skippedCount): array
+    {
+        $totalRows = count($parsedItems);
+        $chunks = $this->chunkParsedItemsByPo($parsedItems, 100);
+        unset($parsedItems);
+
+        $connection = DB::connection();
+        $wasLoggingQueries = $connection->logging();
+        if ($wasLoggingQueries) {
+            $connection->disableQueryLog();
+        }
 
         $createdCount = 0;
         $updatedCount = 0;
@@ -207,80 +264,101 @@ class MonitoringBarangImportService
         $unmatchedPics = [];
         $claimedDoMap = [];
 
-        DB::transaction(function () use (
-            $parsedItems,
-            &$lookups,
-            $reservedDoOwners,
-            &$createdCount,
-            &$updatedCount,
-            &$unchangedCount,
-            &$linkedDoCount,
-            &$fallbackKasirCount,
-            &$incompleteInvoicedRows,
-            &$unmatchedPics,
-            &$claimedDoMap
-        ): void {
-            $poPicSyncCandidates = [];
-            $touchedReceiptIds = [];
+        try {
+            $usersByEmail = $this->preloadUsersByEmail();
+            [$vendorsByName, $vendorsByNumber] = $this->preloadVendorLookups();
 
-            foreach ($parsedItems as $item) {
-                $result = $this->upsertItem($item, $lookups, $claimedDoMap, $reservedDoOwners);
+            foreach ($chunks as $chunkIndex => $chunkItems) {
+                $lookups = $this->preloadChunkLookups($chunkItems, $usersByEmail, $vendorsByName, $vendorsByNumber);
+                $reservedDoOwners = $this->resolveStrictBatchDoClaims($chunkItems, $lookups);
 
-                if ($result['status'] === 'created') {
-                    $createdCount++;
-                } elseif ($result['status'] === 'updated') {
-                    $updatedCount++;
-                } else {
-                    $unchangedCount++;
-                }
+                DB::transaction(function () use (
+                    $chunkItems,
+                    &$lookups,
+                    $reservedDoOwners,
+                    &$createdCount,
+                    &$updatedCount,
+                    &$unchangedCount,
+                    &$linkedDoCount,
+                    &$fallbackKasirCount,
+                    &$incompleteInvoicedRows,
+                    &$unmatchedPics,
+                    &$claimedDoMap
+                ): void {
+                    $poPicSyncCandidates = [];
+                    $touchedReceiptIdsByPo = [];
 
-                if ($result['linked_do']) {
-                    $linkedDoCount++;
-                }
+                    foreach ($chunkItems as $item) {
+                        $result = $this->upsertItem($item, $lookups, $claimedDoMap, $reservedDoOwners);
 
-                if ($item['used_kasir_fallback']) {
-                    $fallbackKasirCount++;
-                }
+                        if ($result['status'] === 'created') {
+                            $createdCount++;
+                        } elseif ($result['status'] === 'updated') {
+                            $updatedCount++;
+                        } else {
+                            $unchangedCount++;
+                        }
 
-                if ($result['unmatched_pic'] !== null) {
-                    $unmatchedPics[] = $result['unmatched_pic'];
-                }
+                        if ($result['linked_do']) {
+                            $linkedDoCount++;
+                        }
 
-                if ($result['incomplete_info'] !== null) {
-                    $incompleteInvoicedRows[] = $result['incomplete_info'];
-                }
+                        if ($item['used_kasir_fallback']) {
+                            $fallbackKasirCount++;
+                        }
 
-                if ($result['receipt_id'] !== null) {
-                    $touchedReceiptIds[] = $result['receipt_id'];
-                }
+                        if ($result['unmatched_pic'] !== null) {
+                            $unmatchedPics[] = $result['unmatched_pic'];
+                        }
 
-                if ($result['resolved_pic_id'] !== null && filled($item['no_po']) && $item['no_po'] !== '-') {
-                    $poPicSyncCandidates[$item['no_po']][$result['resolved_pic_id']] = true;
-                }
+                        if ($result['incomplete_info'] !== null) {
+                            $incompleteInvoicedRows[] = $result['incomplete_info'];
+                        }
+
+                        $poNo = (string) ($item['no_po'] ?? '-');
+                        if ($result['receipt_id'] !== null && filled($poNo) && $poNo !== '-') {
+                            $touchedReceiptIdsByPo[$poNo][] = $result['receipt_id'];
+                        }
+
+                        if ($result['resolved_pic_id'] !== null && filled($poNo) && $poNo !== '-') {
+                            $poPicSyncCandidates[$poNo][$result['resolved_pic_id']] = true;
+                        }
+                    }
+
+                    // Sinkronkan PIC untuk seluruh record eksisting lain pada PO yang sama agar mengikuti data impor terbaru
+                    foreach ($poPicSyncCandidates as $poNo => $picIdsMap) {
+                        if (count($picIdsMap) !== 1) {
+                            continue;
+                        }
+
+                        $latestPicId = (int) array_key_first($picIdsMap);
+                        $siblingQuery = InvoicingReceipt::query()
+                            ->where('no_po', $poNo)
+                            ->where(function ($q) use ($latestPicId): void {
+                                $q->whereNull('pic_id')
+                                    ->orWhere('pic_id', '!=', $latestPicId);
+                            });
+
+                        $touchedForPo = $touchedReceiptIdsByPo[$poNo] ?? [];
+                        if (! empty($touchedForPo)) {
+                            $siblingQuery->whereNotIn('id', $touchedForPo);
+                        }
+
+                        $siblingUpdated = $siblingQuery->update(['pic_id' => $latestPicId]);
+                        $updatedCount += $siblingUpdated;
+                    }
+                });
+
+                unset($lookups, $reservedDoOwners, $chunks[$chunkIndex]);
+                gc_collect_cycles();
             }
-
-            // Sinkronkan PIC untuk seluruh record eksisting lain pada PO yang sama agar mengikuti data impor terbaru
-            foreach ($poPicSyncCandidates as $poNo => $picIdsMap) {
-                if (count($picIdsMap) !== 1) {
-                    continue;
-                }
-
-                $latestPicId = (int) array_key_first($picIdsMap);
-                $siblingQuery = InvoicingReceipt::query()
-                    ->where('no_po', $poNo)
-                    ->where(function ($q) use ($latestPicId): void {
-                        $q->whereNull('pic_id')
-                            ->orWhere('pic_id', '!=', $latestPicId);
-                    });
-
-                if (! empty($touchedReceiptIds)) {
-                    $siblingQuery->whereNotIn('id', $touchedReceiptIds);
-                }
-
-                $siblingUpdated = $siblingQuery->update(['pic_id' => $latestPicId]);
-                $updatedCount += $siblingUpdated;
+        } finally {
+            if ($wasLoggingQueries) {
+                $connection->enableQueryLog();
             }
-        });
+        }
+
+        usort($incompleteInvoicedRows, fn (array $a, array $b): int => $a['row_number'] <=> $b['row_number']);
 
         return [
             'created' => $createdCount,
@@ -289,10 +367,54 @@ class MonitoringBarangImportService
             'skipped' => $skippedCount,
             'linked_do' => $linkedDoCount,
             'fallback_kasir_count' => $fallbackKasirCount,
-            'total_rows' => count($parsedItems),
+            'total_rows' => $totalRows,
             'incomplete_invoiced_rows' => $incompleteInvoicedRows,
             'unmatched_pics' => array_values(array_unique($unmatchedPics)),
         ];
+    }
+
+    /**
+     * Mengelompokkan item ke dalam chunk berbasis PO agar seluruh baris milik PO yang sama tetap diproses bersama.
+     *
+     * @param  array<int, array<string, mixed>>  $parsedItems
+     * @return array<int, array<int, array<string, mixed>>>
+     */
+    protected function chunkParsedItemsByPo(array $parsedItems, int $targetChunkSize = 100): array
+    {
+        $groups = [];
+
+        foreach ($parsedItems as $item) {
+            $noPo = (string) ($item['no_po'] ?? '-');
+            if ($noPo !== '' && $noPo !== '-') {
+                $groupKey = 'po:'.$noPo;
+            } elseif (filled($item['no_do'] ?? null)) {
+                $groupKey = 'do:'.strtolower(trim((string) $item['no_do']));
+            } else {
+                $groupKey = 'row:'.($item['row_number'] ?? count($groups));
+            }
+
+            $groups[$groupKey][] = $item;
+        }
+
+        $chunks = [];
+        $currentChunk = [];
+
+        foreach ($groups as $groupItems) {
+            if (! empty($currentChunk) && (count($currentChunk) + count($groupItems)) > $targetChunkSize) {
+                $chunks[] = $currentChunk;
+                $currentChunk = [];
+            }
+
+            foreach ($groupItems as $groupItem) {
+                $currentChunk[] = $groupItem;
+            }
+        }
+
+        if (! empty($currentChunk)) {
+            $chunks[] = $currentChunk;
+        }
+
+        return $chunks;
     }
 
     /**
@@ -580,6 +702,7 @@ class MonitoringBarangImportService
 
         $rows = [];
         $dom = new DOMDocument;
+        $expandedCount = 0;
 
         try {
             while ($reader->read()) {
@@ -590,6 +713,11 @@ class MonitoringBarangImportService
                 $rowNode = $reader->expand($dom);
                 if (! $rowNode instanceof DOMElement) {
                     continue;
+                }
+
+                $expandedCount++;
+                if ($expandedCount % 250 === 0) {
+                    $dom = new DOMDocument;
                 }
 
                 $cells = [];
@@ -758,6 +886,52 @@ class MonitoringBarangImportService
         }
 
         return $score;
+    }
+
+    /**
+     * Ekstrak baris CSV langsung dari file secara streaming agar hemat memori untuk file besar.
+     *
+     * @return array<int, array<int, string>>
+     */
+    protected function extractRowsFromCsvFile(string $filePath, ?int $maxRows = null): array
+    {
+        $stream = fopen($filePath, 'rb');
+        if ($stream === false) {
+            return [];
+        }
+
+        try {
+            $firstLine = fgets($stream);
+            if ($firstLine === false) {
+                return [];
+            }
+
+            $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine) ?? $firstLine;
+            $delimiter = substr_count($firstLine, ';') > substr_count($firstLine, ',') ? ';' : ',';
+
+            rewind($stream);
+
+            $rows = [];
+            $isFirstRow = true;
+
+            while (($data = fgetcsv($stream, 0, $delimiter, '"', '\\')) !== false) {
+                if ($isFirstRow) {
+                    if (isset($data[0])) {
+                        $data[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $data[0]) ?? (string) $data[0];
+                    }
+                    $isFirstRow = false;
+                }
+
+                $rows[] = array_map(fn (?string $val): string => trim((string) $val), $data);
+                if ($maxRows !== null && count($rows) >= $maxRows) {
+                    break;
+                }
+            }
+
+            return $rows;
+        } finally {
+            fclose($stream);
+        }
     }
 
     /**
@@ -1149,14 +1323,93 @@ class MonitoringBarangImportService
     }
 
     /**
-     * Preload master User, PurchaseOrderIssued, Vendor, dan DeliveryOrderReceipt sekali untuk mencegah N+1 query.
+     * Preload daftar email user -> ID sekali per sesi impor dengan footprint memori minimal.
+     *
+     * @return array<string, int>
+     */
+    protected function preloadUsersByEmail(): array
+    {
+        $usersByEmail = [];
+
+        foreach (DB::table('users')->select(['id', 'email'])->get() as $user) {
+            $email = strtolower(trim((string) $user->email));
+            if ($email !== '') {
+                $usersByEmail[$email] = (int) $user->id;
+            }
+        }
+
+        return $usersByEmail;
+    }
+
+    /**
+     * Preload daftar vendor dalam bentuk objek ringan (tanpa hidrasi model Eloquent penuh).
+     *
+     * @return array{
+     *     0: array<string, object{id: int, name: ?string, email_string: ?string}>,
+     *     1: array<string, object{id: int, name: ?string, email_string: ?string}>
+     * }
+     */
+    protected function preloadVendorLookups(): array
+    {
+        $vendorsByName = [];
+        $vendorsByNumber = [];
+
+        foreach (DB::table('vendors')->select(['id', 'name', 'vendor_number', 'email'])->cursor() as $row) {
+            $vendorEntry = (object) [
+                'id' => (int) $row->id,
+                'name' => $row->name !== null ? (string) $row->name : null,
+                'email_string' => $this->parseVendorEmailString($row->email),
+            ];
+
+            $clean = strtolower((string) PurchaseOrderIssued::cleanVendorName($vendorEntry->name));
+            if ($clean !== '' && ! isset($vendorsByName[$clean])) {
+                $vendorsByName[$clean] = $vendorEntry;
+            }
+
+            $vendorNo = trim((string) ($row->vendor_number ?? ''));
+            if ($vendorNo !== '' && ! isset($vendorsByNumber[$vendorNo])) {
+                $vendorsByNumber[$vendorNo] = $vendorEntry;
+            }
+        }
+
+        return [$vendorsByName, $vendorsByNumber];
+    }
+
+    protected function parseVendorEmailString(mixed $rawEmail): ?string
+    {
+        if (blank($rawEmail)) {
+            return null;
+        }
+
+        if (is_array($rawEmail)) {
+            $emails = array_values(array_filter(array_map('trim', $rawEmail)));
+
+            return ! empty($emails) ? implode(', ', $emails) : null;
+        }
+
+        $decoded = json_decode((string) $rawEmail, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $emails = array_values(array_filter(array_map('trim', $decoded)));
+
+            return ! empty($emails) ? implode(', ', $emails) : null;
+        }
+
+        $parts = preg_split('/[,;]+/', (string) $rawEmail);
+        $emails = array_values(array_filter(array_map('trim', (array) $parts)));
+
+        return ! empty($emails) ? implode(', ', $emails) : null;
+    }
+
+    /**
+     * Preload master User, PurchaseOrderIssued, Vendor, dan DeliveryOrderReceipt untuk satu kumpulan baris.
      *
      * @param  array<int, array<string, mixed>>  $parsedItems
      * @return array{
      *     users_by_email: array<string, int>,
      *     pos_by_no: array<string, PurchaseOrderIssued>,
-     *     vendors_by_name: array<string, Vendor>,
-     *     vendors_by_number: array<string, Vendor>,
+     *     all_pos_by_no: array<string, array<int, PurchaseOrderIssued>>,
+     *     vendors_by_name: array<string, object>,
+     *     vendors_by_number: array<string, object>,
      *     dos_by_po: array<string, Collection<int, DeliveryOrderReceipt>>,
      *     dos_by_do: array<string, Collection<int, DeliveryOrderReceipt>>,
      *     existing_by_grs: array<string, Collection<int, InvoicingReceipt>>,
@@ -1165,21 +1418,44 @@ class MonitoringBarangImportService
      */
     protected function preloadLookups(array $parsedItems): array
     {
-        $usersByEmail = [];
-        foreach (User::query()->get(['id', 'email']) as $user) {
-            $email = strtolower(trim((string) $user->email));
-            if ($email !== '') {
-                $usersByEmail[$email] = $user->id;
-            }
-        }
+        $usersByEmail = $this->preloadUsersByEmail();
+        [$vendorsByName, $vendorsByNumber] = $this->preloadVendorLookups();
 
+        return $this->preloadChunkLookups($parsedItems, $usersByEmail, $vendorsByName, $vendorsByNumber);
+    }
+
+    /**
+     * Preload lookup terkompresi khusus untuk satu chunk item (dengan seleksi kolom minimal & deduplikasi model).
+     *
+     * @param  array<int, array<string, mixed>>  $chunkItems
+     * @param  array<string, int>  $usersByEmail
+     * @param  array<string, object>  $vendorsByName
+     * @param  array<string, object>  $vendorsByNumber
+     * @return array{
+     *     users_by_email: array<string, int>,
+     *     pos_by_no: array<string, PurchaseOrderIssued>,
+     *     all_pos_by_no: array<string, array<int, PurchaseOrderIssued>>,
+     *     vendors_by_name: array<string, object>,
+     *     vendors_by_number: array<string, object>,
+     *     dos_by_po: array<string, Collection<int, DeliveryOrderReceipt>>,
+     *     dos_by_do: array<string, Collection<int, DeliveryOrderReceipt>>,
+     *     existing_by_grs: array<string, Collection<int, InvoicingReceipt>>,
+     *     existing_by_po: array<string, Collection<int, InvoicingReceipt>>
+     * }
+     */
+    protected function preloadChunkLookups(
+        array $chunkItems,
+        array $usersByEmail,
+        array $vendorsByName,
+        array $vendorsByNumber
+    ): array {
         $poNumbers = array_values(array_unique(array_filter(
-            array_column($parsedItems, 'no_po'),
+            array_column($chunkItems, 'no_po'),
             fn (string $po): bool => $po !== '' && $po !== '-'
         )));
 
         $grsNumbers = array_values(array_unique(array_filter(
-            array_column($parsedItems, 'no_grs'),
+            array_column($chunkItems, 'no_grs'),
             fn (mixed $grs): bool => is_string($grs) && $grs !== ''
         )));
 
@@ -1188,9 +1464,36 @@ class MonitoringBarangImportService
         $dosByPo = [];
         $existingByGrs = [];
         $existingByPo = [];
+        $loadedReceiptIds = [];
 
-        foreach (array_chunk($poNumbers, 500) as $poChunk) {
-            foreach (PurchaseOrderIssued::query()->whereIn('purchase_order_no', $poChunk)->orderBy('item_no')->get() as $po) {
+        $doRelationSelects = [
+            'deliveryOrderReceiptDetails:id,delivery_order_receipt_id,purchase_order_issued_id,material_type,description,uoi,quantity',
+            'deliveryOrderReceiptDetails.purchaseOrderIssued:id,purchase_order_no',
+            'grsRdtvItems:id,delivery_order_receipt_id',
+            'invoicingReceipts:id,delivery_order_receipt_id,no_grs,no_invoice',
+        ];
+
+        foreach (array_chunk($poNumbers, 250) as $poChunk) {
+            $poIds = [];
+
+            $poRecords = PurchaseOrderIssued::query()
+                ->select([
+                    'id',
+                    'purchase_order_no',
+                    'item_no',
+                    'material_type',
+                    'description',
+                    'qty_po',
+                    'uoi',
+                    'vendor_id',
+                    'vendor_name',
+                ])
+                ->whereIn('purchase_order_no', $poChunk)
+                ->orderBy('item_no')
+                ->get();
+
+            foreach ($poRecords as $po) {
+                $poIds[] = $po->id;
                 $poKey = trim((string) $po->purchase_order_no);
                 if ($poKey !== '') {
                     $allPosByNo[$poKey] ??= [];
@@ -1202,33 +1505,62 @@ class MonitoringBarangImportService
                 }
             }
 
-            $doCandidates = DeliveryOrderReceipt::query()
-                ->with(['deliveryOrderReceiptDetails.purchaseOrderIssued', 'grsRdtvItems', 'invoicingReceipts'])
-                ->whereHas('deliveryOrderReceiptDetails.purchaseOrderIssued', function ($query) use ($poChunk): void {
-                    $query->whereIn('purchase_order_no', $poChunk);
-                })
-                ->get();
+            if (! empty($poIds)) {
+                $doIds = [];
+                foreach (array_chunk($poIds, 500) as $poIdChunk) {
+                    $matchedIds = DB::table('delivery_order_receipt_details')
+                        ->whereIn('purchase_order_issued_id', $poIdChunk)
+                        ->whereNotNull('delivery_order_receipt_id')
+                        ->distinct()
+                        ->pluck('delivery_order_receipt_id')
+                        ->all();
 
-            foreach ($doCandidates as $do) {
-                $linkedPos = $do->deliveryOrderReceiptDetails
-                    ->map(fn ($detail): ?string => $detail->purchaseOrderIssued?->purchase_order_no)
-                    ->filter()
-                    ->unique();
+                    foreach ($matchedIds as $doId) {
+                        $doIds[(int) $doId] = true;
+                    }
+                }
 
-                foreach ($linkedPos as $linkedPo) {
-                    $dosByPo[$linkedPo] ??= collect();
-                    $dosByPo[$linkedPo]->push($do);
+                foreach (array_chunk(array_keys($doIds), 250) as $doIdChunk) {
+                    $doCandidates = DeliveryOrderReceipt::query()
+                        ->select(['id', 'delivery_order_no', 'status', 'received_date', 'physical_received_date'])
+                        ->with($doRelationSelects)
+                        ->whereIn('id', $doIdChunk)
+                        ->get();
+
+                    foreach ($doCandidates as $do) {
+                        $linkedPos = $do->deliveryOrderReceiptDetails
+                            ->map(fn ($detail): ?string => $detail->purchaseOrderIssued?->purchase_order_no)
+                            ->filter()
+                            ->unique();
+
+                        foreach ($linkedPos as $linkedPo) {
+                            $dosByPo[$linkedPo] ??= collect();
+                            $dosByPo[$linkedPo]->push($do);
+                        }
+                    }
                 }
             }
 
             foreach (InvoicingReceipt::query()->whereIn('no_po', $poChunk)->get() as $existing) {
+                $loadedReceiptIds[$existing->id] = true;
                 $existingByPo[$existing->no_po] ??= collect();
                 $existingByPo[$existing->no_po]->push($existing);
+
+                if (filled($existing->no_grs)) {
+                    $existingByGrs[$existing->no_grs] ??= collect();
+                    $existingByGrs[$existing->no_grs]->push($existing);
+                }
             }
         }
 
-        foreach (array_chunk($grsNumbers, 500) as $grsChunk) {
-            foreach (InvoicingReceipt::query()->whereIn('no_grs', $grsChunk)->get() as $existing) {
+        $loadedReceiptIdList = array_keys($loadedReceiptIds);
+        foreach (array_chunk($grsNumbers, 250) as $grsChunk) {
+            $grsQuery = InvoicingReceipt::query()->whereIn('no_grs', $grsChunk);
+            if (! empty($loadedReceiptIdList)) {
+                $grsQuery->whereNotIn('id', $loadedReceiptIdList);
+            }
+
+            foreach ($grsQuery->get() as $existing) {
                 if (filled($existing->no_grs)) {
                     $existingByGrs[$existing->no_grs] ??= collect();
                     $existingByGrs[$existing->no_grs]->push($existing);
@@ -1239,7 +1571,7 @@ class MonitoringBarangImportService
         $dosByDo = [];
         $doTokensNeedingDirectLookup = [];
 
-        foreach ($parsedItems as $item) {
+        foreach ($chunkItems as $item) {
             $itemPo = (string) ($item['no_po'] ?? '-');
             $itemDo = $item['no_do'] ?? null;
 
@@ -1255,9 +1587,10 @@ class MonitoringBarangImportService
         }
 
         $doTokensNeedingDirectLookup = array_values(array_unique(array_filter($doTokensNeedingDirectLookup)));
-        foreach (array_chunk($doTokensNeedingDirectLookup, 500) as $doChunk) {
+        foreach (array_chunk($doTokensNeedingDirectLookup, 250) as $doChunk) {
             $directDos = DeliveryOrderReceipt::query()
-                ->with(['deliveryOrderReceiptDetails.purchaseOrderIssued', 'grsRdtvItems', 'invoicingReceipts'])
+                ->select(['id', 'delivery_order_no', 'status', 'received_date', 'physical_received_date'])
+                ->with($doRelationSelects)
                 ->whereIn('delivery_order_no', $doChunk)
                 ->get();
 
@@ -1267,20 +1600,6 @@ class MonitoringBarangImportService
                     $dosByDo[$doKey] ??= collect();
                     $dosByDo[$doKey]->push($do);
                 }
-            }
-        }
-
-        $vendorsByName = [];
-        $vendorsByNumber = [];
-        foreach (Vendor::query()->get(['id', 'name', 'vendor_number', 'email']) as $vendor) {
-            $clean = strtolower((string) PurchaseOrderIssued::cleanVendorName($vendor->name));
-            if ($clean !== '' && ! isset($vendorsByName[$clean])) {
-                $vendorsByName[$clean] = $vendor;
-            }
-
-            $vendorNo = trim((string) $vendor->vendor_number);
-            if ($vendorNo !== '' && ! isset($vendorsByNumber[$vendorNo])) {
-                $vendorsByNumber[$vendorNo] = $vendor;
             }
         }
 
@@ -1304,8 +1623,8 @@ class MonitoringBarangImportService
      * @param  array{
      *     users_by_email: array<string, int>,
      *     pos_by_no: array<string, PurchaseOrderIssued>,
-     *     vendors_by_name: array<string, Vendor>,
-     *     vendors_by_number: array<string, Vendor>,
+     *     vendors_by_name: array<string, object>,
+     *     vendors_by_number: array<string, object>,
      *     dos_by_po: array<string, Collection<int, DeliveryOrderReceipt>>,
      *     dos_by_do: array<string, Collection<int, DeliveryOrderReceipt>>,
      *     existing_by_grs: array<string, Collection<int, InvoicingReceipt>>,
@@ -2157,10 +2476,10 @@ class MonitoringBarangImportService
     }
 
     /**
-     * @param  array<string, Vendor>  $vendorsByName
-     * @param  array<string, Vendor>  $vendorsByNumber
+     * @param  array<string, object>  $vendorsByName
+     * @param  array<string, object>  $vendorsByNumber
      */
-    protected function resolveVendor(?string $vendorName, ?PurchaseOrderIssued $poRecord, array $vendorsByName, array $vendorsByNumber): ?Vendor
+    protected function resolveVendor(?string $vendorName, ?PurchaseOrderIssued $poRecord, array $vendorsByName, array $vendorsByNumber): ?object
     {
         if ($poRecord?->vendor_id && isset($vendorsByNumber[trim((string) $poRecord->vendor_id)])) {
             return $vendorsByNumber[trim((string) $poRecord->vendor_id)];
