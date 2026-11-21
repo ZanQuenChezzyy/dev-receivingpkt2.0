@@ -1457,5 +1457,13 @@
     "Catatan QC:": "QC Notes:",
     "Unggah Softfile Sertifikat / Dokumen :doc": "Upload Softfile Certificate / Document :doc",
     "Berkas :doc (PDF / JPG / PNG, maks. 20 MB):": ":doc File (PDF / JPG / PNG, max 20 MB):",
-    "Berdasarkan catatan penolakan RDTV terkait :doc, Anda dapat mengunggah berkas tersebut di bawah ini agar tim QC dapat memverifikasi dan melanjutkan proses penerbitan GRS tanpa retur fisik barang.": "Based on the RDTV rejection notes regarding :doc, you can upload the file below so QC team can verify and proceed with GRS issuance without physical return of goods."
+    "Berdasarkan catatan penolakan RDTV terkait :doc, Anda dapat mengunggah berkas tersebut di bawah ini agar tim QC dapat memverifikasi dan melanjutkan proses penerbitan GRS tanpa retur fisik barang.": "Based on the RDTV rejection notes regarding :doc, you can upload the file below so QC team can verify and proceed with GRS issuance without physical return of goods.",
+    "10 Digit Nomor PO": "10-Digit PO Number",
+    "Pembaruan Status Penerimaan (103/105)": "Receiving Status Updates (103/105)",
+    "Posting Penerimaan (103)": "Receiving Posting (103)",
+    "Ditolak / Retur Material": "Rejected / Material Return",
+    "Dokumen GRS / RDTV (Slip Penerimaan)": "GRS / RDTV Document (Receiving Slip)",
+    "Slip bukti penerimaan (GRS) atau retur material (RDTV) di gudang Receiving yang telah diposting ke sistem penerimaan (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip vendor.": "Proof of receipt (GRS) or material return (RDTV) slips in the Receiving warehouse posted to the receiving system (MIGO 105). Uploaded by Receiving staff for vendor archive purposes.",
+    "Pencatatan MIGO 103 (Pengajuan QC) di sistem gudang berhasil.": "Warehouse MIGO 103 (QC Submission) recording completed successfully.",
+    "Dokumen :category (105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer.": ":category document (105) officially issued and linked to the invoicing system by :officer."
 }

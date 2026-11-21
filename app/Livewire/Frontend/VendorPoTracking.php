@@ -673,7 +673,7 @@ class VendorPoTracking extends Component
                     'title' => __('Post 103 (Pengajuan QC)'),
                     'badge' => __('Post 103 (Pengajuan QC)'),
                     'badge_color' => 'indigo',
-                    'desc' => __('Pencatatan MIGO 103 (Pengajuan QC) di sistem SAP berhasil.').$qr103Suffix,
+                    'desc' => __('Pencatatan MIGO 103 (Pengajuan QC) di sistem gudang berhasil.').$qr103Suffix,
                     'icon' => 'qr-code',
                 ];
             }
@@ -751,7 +751,7 @@ class VendorPoTracking extends Component
                         'title' => __('Dokumen :category Terbit', ['category' => $cat]),
                         'badge' => __('Dokumen :category Terbit', ['category' => $cat]),
                         'badge_color' => $cat === 'GRS' ? 'emerald' : 'rose',
-                        'desc' => __('Dokumen :category (SAP 105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer.', [
+                        'desc' => __('Dokumen :category (105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer.', [
                             'category' => $cat,
                             'officer' => $petugas,
                         ]).$reasonSuffix,

@@ -136,7 +136,7 @@
                     <svg class="w-3.5 h-3.5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span>{{ __('Support SAP 103/105 (Update Bertahap)') }}</span>
+                    <span>{{ __('Pembaruan Status Penerimaan (103/105)') }}</span>
                 </div>
             </div>
         </div>
@@ -209,7 +209,7 @@
                                 <span class="w-2 h-2 rounded-full bg-[#F47920] animate-pulse"></span>
                                 {{ __('Nomor Purchase Order (PO)') }}
                             </label>
-                            <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">{{ __('10 Digit SAP PO') }}</span>
+                            <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">{{ __('10 Digit Nomor PO') }}</span>
                         </div>
                         <div class="relative flex items-center rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 focus-within:border-[#F47920] dark:focus-within:border-[#F47920] focus-within:ring-4 focus-within:ring-[#F47920]/20 transition-all shadow-sm">
                             <div class="pl-3.5 pr-2 text-[#F47920] flex items-center pointer-events-none shrink-0">
@@ -438,7 +438,7 @@
                         $steps = [
                             ['num' => 1, 'label' => __('PO Terbit'), 'sub' => __('Diterbitkan PKT')],
                             ['num' => 2, 'label' => __('DO & Fisik Tiba'), 'sub' => __('Pintu Receiving')],
-                            ['num' => 3, 'label' => __('Post 103 SAP'), 'sub' => __('Validasi Sistem')],
+                            ['num' => 3, 'label' => __('Posting Penerimaan (103)'), 'sub' => __('Validasi Sistem')],
                             ['num' => 4, 'label' => __('Inspeksi QC'), 'sub' => __('Uji Mutu ISTEK')],
                             ['num' => 5, 'label' => $isRdtv ? __('Slip RDTV (Retur)') : __('Slip GRS (105)'), 'sub' => $isRdtv ? __('Ditolak / Retur') : __('Arsip Penagihan')],
                         ];
@@ -534,7 +534,7 @@
                                         {{ __('Pemberitahuan Retur Material (RDTV - Return Delivery to Vendor)') }}
                                     </h4>
                                     <span class="px-3 py-1 rounded-full text-xs font-black bg-rose-500 text-white w-fit">
-                                        {{ __('Ditolak / Retur SAP') }}
+                                        {{ __('Ditolak / Retur Material') }}
                                     </span>
                                 </div>
                                 <p class="leading-relaxed mb-3 text-slate-700 dark:text-slate-300">
@@ -773,14 +773,14 @@
                                         <div>
                                             <span class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">{{ __('Modul Receiving (Gudang)') }}</span>
                                             <h4 class="text-base font-black text-slate-800 dark:text-white">
-                                                {{ __('Dokumen GRS / RDTV (Slip SAP)') }}
+                                                {{ __('Dokumen GRS / RDTV (Slip Penerimaan)') }}
                                             </h4>
                                         </div>
                                     </div>
                                 </div>
 
                                 <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                    {{ __('Slip bukti penerimaan (GRS) atau retur material (RDTV) di gudang Receiving yang telah diposting ke sistem SAP (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip vendor.') }}
+                                    {{ __('Slip bukti penerimaan (GRS) atau retur material (RDTV) di gudang Receiving yang telah diposting ke sistem penerimaan (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip vendor.') }}
                                 </p>
 
                                 <!-- List of GRS Items dari tabel GRS/RDTV -->
