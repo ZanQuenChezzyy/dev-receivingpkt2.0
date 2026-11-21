@@ -440,12 +440,29 @@ class EditGrsRdtv extends EditRecord
         $isRdtv = $category === 'RDTV';
 
         $noGrs = $category === 'GRS' ? ($parsedPdf['no_grs'] ?? null) : null;
-        $tanggalTerimaGrs = ($category === 'GRS' && ! empty($parsedPdf['tanggal_release_gr']))
-            ? $parsedPdf['tanggal_release_gr']
-            : ($transactionDate ?? now());
+        $noRdtv = $category === 'RDTV' ? ($parsedPdf['no_rdtv'] ?? null) : null;
+
+        $tanggalTerimaGrs = null;
+        if ($category === 'GRS') {
+            $tanggalTerimaGrs = ($parsedPdf && ! empty($parsedPdf['tanggal_release_gr']))
+                ? $parsedPdf['tanggal_release_gr']
+                : ($transactionDate ?? now());
+        } else {
+            $tanggalTerimaGrs = ($parsedPdf && ! empty($parsedPdf['tanggal_penolakan']))
+                ? $parsedPdf['tanggal_penolakan']
+                : ($transactionDate ?? now());
+        }
+
         $deliveryDate = $parsedPdf['delivery_date'] ?? null;
         $tanggalPenerimaan = $parsedPdf['tanggal_penerimaan'] ?? null;
         $tanggalPo = $parsedPdf['tanggal_po'] ?? null;
+
+        if ($isRdtv && empty($grsRdtvItem->reason) && ! empty($parsedPdf['alasan_penolakan'])) {
+            $grsRdtvItem->update(['reason' => $parsedPdf['alasan_penolakan']]);
+            if ($do && empty($do->delay_notes)) {
+                $do->update(['delay_notes' => $parsedPdf['alasan_penolakan']]);
+            }
+        }
 
         InvoicingReceipt::create([
             'grs_rdtv_item_id' => $grsRdtvItem->id,
@@ -459,7 +476,7 @@ class EditGrsRdtv extends EditRecord
             'tanggal_po' => $tanggalPo,
             'jenis' => $category,
             'no_grs' => $noGrs,
-            'no_rdtv' => null,
+            'no_rdtv' => $noRdtv,
             'no_po' => $po?->purchase_order_no ?? ($parsedPdf['no_po'] ?? '-'),
             'no_do' => $do->delivery_order_no ?: ($parsedPdf['no_do'] ?? null),
             'material_type' => $materialType,
@@ -474,8 +491,10 @@ class EditGrsRdtv extends EditRecord
             'subtotal_exclude_ppn' => $subtotalExclude,
             'subtotal_include_ppn' => $subtotalInclude,
             'tanggal_terima_koreksi_invoice' => $isRdtv ? null : $tanggalTerimaGrs,
-            'dokumen_verifikasi_grs' => null,
-            'keterangan' => "Auto-generate dari {$category}: {$grsRdtvItem->document_code} (DO: {$do->delivery_order_no})",
+            'dokumen_verifikasi_grs' => $grsRdtvItem->file_path,
+            'keterangan' => $isRdtv && ! empty($grsRdtvItem->reason)
+                ? "Auto-generate dari RDTV: {$grsRdtvItem->document_code} (Alasan: {$grsRdtvItem->reason})"
+                : "Auto-generate dari {$category}: {$grsRdtvItem->document_code} (DO: {$do->delivery_order_no})",
             'status' => 'Menunggu Verifikasi',
         ]);
     }

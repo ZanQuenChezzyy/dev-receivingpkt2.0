@@ -119,6 +119,17 @@ beforeEach(function () {
         });
     }
 
+    if (! DbSchema::hasTable('delivery_order_receipt_delay_logs')) {
+        DbSchema::create('delivery_order_receipt_delay_logs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('delivery_order_receipt_id');
+            $table->string('delay_reason')->nullable();
+            $table->text('delay_notes')->nullable();
+            $table->foreignId('created_by')->nullable();
+            $table->timestamps();
+        });
+    }
+
     if (! DbSchema::hasTable('qc_histories')) {
         DbSchema::create('qc_histories', function (Blueprint $table) {
             $table->id();
@@ -452,4 +463,48 @@ test('if physical GRS file is missing from disk, validation auto-cleans ghost it
     expect($do->fresh()->status)->toBe('GRS')
         ->and(GrsRdtvItem::find($ghostItem->id))->toBeNull()
         ->and($do->grsRdtvItems()->count())->toBe(1);
+});
+
+test('uploading rdtv document populates no_rdtv and parsed fields on invoicing_receipts', function () {
+    $user = User::create(['name' => 'Staff RDTV', 'email' => 'rdtv@example.com', 'password' => 'secret']);
+    $this->actingAs($user);
+
+    $do = DeliveryOrderReceipt::create([
+        'document_code' => 'FTGI-1026-0115',
+        'delivery_order_no' => 'FTGI-1026-0115',
+        'status' => 'Kembali dari ISTEK',
+        'post_103' => now(),
+        'received_by' => $user->id,
+        'created_by' => $user->id,
+    ]);
+
+    QcHistory::create([
+        'delivery_order_receipt_id' => $do->id,
+        'status' => 'Kembali',
+    ]);
+
+    $fixtureContent = file_get_contents(base_path('tests/Fixtures/contoh_RDTV.pdf'));
+    $file = TemporaryUploadedFile::fake()->createWithContent('FTGI-1026-0115.pdf', $fixtureContent);
+
+    Livewire::test(CreateGrsRdtv::class)
+        ->fillForm([
+            'transaction_date' => now()->toDateString(),
+            'category' => 'RDTV',
+            'items' => [
+                [
+                    'file' => [$file],
+                    'reason' => 'TIDAK MELAMPIRKAN COO FROM MANUFACTURE',
+                ],
+            ],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $receipt = InvoicingReceipt::where('delivery_order_receipt_id', $do->id)->first();
+    expect($receipt)->not->toBeNull()
+        ->and($receipt->jenis)->toBe('RDTV')
+        ->and($receipt->no_rdtv)->toBe('5007756200')
+        ->and($receipt->no_grs)->toBeNull()
+        ->and($receipt->tanggal_terima_grs?->format('Y-m-d'))->toBe('2026-11-21')
+        ->and($receipt->dokumen_verifikasi_grs)->not->toBeNull();
 });

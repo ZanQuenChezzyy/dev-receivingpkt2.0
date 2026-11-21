@@ -496,7 +496,12 @@ class InvoicingReceiptForm
                                         if (! empty($parsed['no_grs'])) {
                                             $set('no_grs', $parsed['no_grs']);
                                         }
-                                        if (! empty($parsed['tanggal_release_gr'])) {
+                                        if (! empty($parsed['no_rdtv'])) {
+                                            $set('no_rdtv', $parsed['no_rdtv']);
+                                        }
+                                        if ($get('jenis') === 'RDTV' && ! empty($parsed['tanggal_penolakan'])) {
+                                            $set('tanggal_terima_grs', $parsed['tanggal_penolakan']);
+                                        } elseif (! empty($parsed['tanggal_release_gr'])) {
                                             $set('tanggal_terima_grs', $parsed['tanggal_release_gr']);
                                         }
                                         if (! empty($parsed['delivery_date'])) {

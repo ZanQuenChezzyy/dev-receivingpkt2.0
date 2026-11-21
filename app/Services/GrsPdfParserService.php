@@ -79,7 +79,9 @@ class GrsPdfParserService
      *
      * @return array{
      *     no_grs: ?string,
+     *     no_rdtv: ?string,
      *     tanggal_release_gr: ?string,
+     *     tanggal_penolakan: ?string,
      *     delivery_date: ?string,
      *     tanggal_penerimaan: ?string,
      *     no_po: ?string,
@@ -90,6 +92,7 @@ class GrsPdfParserService
      *     uoi: ?string,
      *     qty_penagihan: ?float,
      *     subtotal_exclude_ppn: ?float,
+     *     alasan_penolakan: ?string,
      *     raw_text: string
      * }
      */
@@ -98,9 +101,16 @@ class GrsPdfParserService
         $content = file_exists($filePathOrContent) ? (string) file_get_contents($filePathOrContent) : $filePathOrContent;
         $text = $this->extractText($content);
 
+        // Jika teks hasil ekstraksi kosong dan input bukan berkas PDF (%PDF), gunakan input langsung sebagai raw text
+        if (empty(trim($text)) && ! str_starts_with(ltrim($content), '%PDF')) {
+            $text = $content;
+        }
+
         $data = [
             'no_grs' => null,
+            'no_rdtv' => null,
             'tanggal_release_gr' => null,
+            'tanggal_penolakan' => null,
             'delivery_date' => null,
             'tanggal_penerimaan' => null,
             'no_po' => null,
@@ -111,6 +121,7 @@ class GrsPdfParserService
             'uoi' => null,
             'qty_penagihan' => null,
             'subtotal_exclude_ppn' => null,
+            'alasan_penolakan' => null,
             'raw_text' => $text,
         ];
 
@@ -119,6 +130,13 @@ class GrsPdfParserService
             $data['no_grs'] = $m[1];
         } elseif (preg_match('/(?:Nomor\s*GRS(?:\s*\(105\))?|GRS\s*\(105\)|105\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
             $data['no_grs'] = $m[1];
+        }
+
+        // 1b. No Document Return / RDTV (e.g. "No Document Return : 5007756200" atau "RETURN DELIVERY TO VENDOR ...")
+        if (preg_match('/(?:No\.?\s*Document\s*Return|Nomor\s*Document\s*Return|Document\s*Return|No\.?\s*RDTV|Nomor\s*RDTV)\s*[:\s]+([A-Za-z0-9]+)/i', $text, $m)) {
+            $data['no_rdtv'] = $m[1];
+        } elseif (preg_match('/RETURN\s*DELIVERY\s*TO\s*VENDOR.*?(?:No\.?\s*Document\s*Return|Document\s*Return|Return\s*No\.?)?[\s\S]*?[:\s]*(500\d{7}|\d{10})/si', $text, $m)) {
+            $data['no_rdtv'] = $m[1];
         }
 
         // 2. Delivery Date (e.g. "Currency 23.11.2026 Delivery Date" atau "Delivery Date : 23.11.2026")
@@ -130,8 +148,13 @@ class GrsPdfParserService
             $data['delivery_date'] = $m[1];
         }
 
+        // 2b. Tanggal Penolakan (khusus dokumen RDTV / Return Delivery to Vendor)
+        if (preg_match('/Tanggal\s*Penolakan\s*[:\s]+(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})/i', $text, $m)) {
+            $data['tanggal_penolakan'] = $m[1];
+        }
+
         // 3. Layout Kolom SAP (Label berurutan diikuti deretan titik dua lalu nilai)
-        // No PO -> Tanggal PO -> Tanggal Penerimaan -> Tanggal Release GR -> No. Surat Jalan
+        // Pola A: GRS (No PO -> Tanggal PO -> Tanggal Penerimaan -> Tanggal Release GR -> No. Surat Jalan)
         if (preg_match('/No\s*PO.*?Tanggal\s*PO.*?Tanggal\s*Penerimaan.*?Tanggal\s*Release\s*GR.*?No\.?\s*Surat\s*Jalan.*?(5\d{9})\s+(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{1,2}\.\d{1,2}\.\d{4})\s+([A-Za-z0-9\/-]+)/s', $text, $colMatch)) {
             $data['no_po'] = $colMatch[1];
             $data['tanggal_po'] = $colMatch[2];
@@ -139,14 +162,26 @@ class GrsPdfParserService
             $data['tanggal_release_gr'] = $colMatch[4];
             $data['no_do'] = $colMatch[5];
         }
+        // Pola B: RDTV (No PO -> Tanggal PO -> Tanggal Penerimaan -> Tanggal Penolakan -> No Surat Jalan)
+        elseif (preg_match('/No\s*PO.*?Tanggal\s*PO.*?Tanggal\s*Penerimaan.*?Tanggal\s*Penolakan.*?No\.?\s*Surat\s*Jalan.*?(5\d{9})\s+(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{1,2}\.\d{1,2}\.\d{4})\s+(\d{1,2}\.\d{1,2}\.\d{4})\s+([A-Za-z0-9\/-]+)/s', $text, $rdtvColMatch)) {
+            $data['no_po'] = $rdtvColMatch[1];
+            $data['tanggal_po'] = $rdtvColMatch[2];
+            $data['tanggal_penerimaan'] = $rdtvColMatch[3];
+            $data['tanggal_penolakan'] = $rdtvColMatch[4];
+            $data['no_do'] = $rdtvColMatch[5];
+        }
 
-        // Fallbacks jika layout berbentuk key-value biasa
+        // Fallbacks jika layout berbentuk key-value biasa (umum pada RDTV dan GRS)
         if (! $data['tanggal_penerimaan'] && preg_match('/Tanggal\s*Penerimaan\s*[:\s]+(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})/i', $text, $m)) {
             $data['tanggal_penerimaan'] = $m[1];
         }
 
         if (! $data['tanggal_release_gr'] && preg_match('/Tanggal\s*Release\s*GR\s*[:\s]+(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})/i', $text, $m)) {
             $data['tanggal_release_gr'] = $m[1];
+        }
+
+        if (! $data['tanggal_penolakan'] && preg_match('/Tanggal\s*Penolakan\s*[:\s]+(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})/i', $text, $m)) {
+            $data['tanggal_penolakan'] = $m[1];
         }
 
         if (! $data['no_po'] && preg_match('/No\s*PO\s*[:\s]+(\d+)/i', $text, $m)) {
@@ -165,16 +200,28 @@ class GrsPdfParserService
 
         // 4. Nama Vendor
         if (preg_match('/(?:PT\.?|CV\.?|[A-Z\s]+,\s*(?:PT|CV)\.?)\s*\n\s*:\s*\n\s*:\s*\n\s*Nama\s*Vendor/i', $text, $vm)) {
-            preg_match('/([A-Z0-9\s.,]+(?:PT|CV|LTD|TBK)[A-Z0-9\s.,]*)/i', $vm[0], $vname);
+            preg_match('/([A-Z\s.,]+(?:PT|CV|LTD|TBK)[A-Z\s.,]*)/i', $vm[0], $vname);
             if (! empty($vname[1])) {
                 $data['vendor_name'] = trim($vname[1]);
             }
+        } elseif (preg_match('/Nama\s*Vendor\s*\n\s*Alamat\s*Vendor\s*\n\s*:\s*\n\s*:\s*\n\s*([^\r\n:]+)/i', $text, $vm)) {
+            $data['vendor_name'] = trim($vm[1]);
         } elseif (preg_match('/Nama\s*Vendor\s*[:\s]+([^\r\n]+)/i', $text, $vm)) {
             $data['vendor_name'] = trim($vm[1]);
         }
 
-        // 5. Item description & UoM (e.g. 1 VIDEO CONFERENCE DEP DANBA D601 SET 1 1 1)
-        if (preg_match('/(?:Keterangan\s+)?1\s+([A-Z0-9\s\/\-_\.,]+?)\s+[A-Z0-9]{4}\s+([A-Z]{2,4})\s+(\d+)/si', $text, $im)) {
+        // 5. Item description & UoM
+        // Pola A: Format RDTV (e.g. 1 6043966 IMPELLER,PUMP:RHEINHT;RCE-80/320;POS.230 EA D601 1 1 1 10000464480 ...)
+        if (preg_match('/(?:^|\n)\s*1\s+(\d{6,10})\s+([A-Z0-9\s\/\-_\.,:;]+?)\s+([A-Z]{2,4})\s+([A-Z0-9]{4})\s+(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)/mi', $text, $rm)) {
+            $cleanedDesc = trim(preg_replace('/\s+/', ' ', $rm[2]));
+            if (! empty($cleanedDesc)) {
+                $data['nama_barang'] = $cleanedDesc;
+                $data['uoi'] = trim($rm[3]);
+                $data['qty_penagihan'] = (float) str_replace(',', '.', $rm[7]); // Qty Reject
+            }
+        }
+        // Pola B: Format GRS (e.g. 1 VIDEO CONFERENCE DEP DANBA D601 SET 1 1 1)
+        elseif (preg_match('/(?:Keterangan\s+)?1\s+([A-Z0-9\s\/\-_\.,]+?)\s+[A-Z0-9]{4}\s+([A-Z]{2,4})\s+(\d+)/si', $text, $im)) {
             $cleanedDesc = trim(preg_replace('/\s+/', ' ', $im[1]));
             if (! empty($cleanedDesc)) {
                 $data['nama_barang'] = $cleanedDesc;
@@ -183,15 +230,22 @@ class GrsPdfParserService
             }
         }
 
-        // 6. Total Amount
+        // 6. Alasan Penolakan / Reason for Movement & Keterangan (khusus RDTV)
+        if (preg_match('/(?:Out\s*of\s*Scope|Return\s*to\s*Vendor)\s+([A-Za-z0-9\s\/\-_\.,:;]+?)\s*$/is', trim($text), $km)) {
+            $data['alasan_penolakan'] = trim(preg_replace('/\s+/', ' ', $km[1]));
+        } elseif (preg_match('/(?:Reason\s*for\s*Movement|Alasan\s*Penolakan)[\s\S]*?\b(?:Out of Scope|Return to Vendor|[A-Za-z\s]+)\s+([A-Za-z0-9\s\/\-_\.,:;]+)$/mi', $text, $km)) {
+            $data['alasan_penolakan'] = trim(preg_replace('/\s+/', ' ', $km[1]));
+        }
+
+        // 7. Total Amount
         if (preg_match('/Total\s*:\s*([0-9.,]+)/i', $text, $tm)) {
             $clean = str_replace('.', '', $tm[1]);
             $clean = str_replace(',', '.', $clean);
             $data['subtotal_exclude_ppn'] = (float) $clean;
         }
 
-        // 7. Normalisasi Format Tanggal ke Y-m-d (MySQL date)
-        foreach (['tanggal_release_gr', 'delivery_date', 'tanggal_penerimaan', 'tanggal_po'] as $field) {
+        // 8. Normalisasi Format Tanggal ke Y-m-d (MySQL date)
+        foreach (['tanggal_release_gr', 'tanggal_penolakan', 'delivery_date', 'tanggal_penerimaan', 'tanggal_po'] as $field) {
             if (! empty($data[$field])) {
                 $val = str_replace(['/', '-'], '.', $data[$field]);
                 $parts = explode('.', $val);
