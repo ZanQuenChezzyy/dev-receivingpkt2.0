@@ -354,17 +354,7 @@
                 <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-white/80 dark:border-white/10 shadow-2xl relative overflow-hidden">
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200/70 dark:border-white/10">
                         <div>
-                            <div class="flex flex-wrap items-center gap-2.5 mb-2">
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    {{ __('Identitas Vendor Terverifikasi') }}
-                                </span>
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200/60 dark:bg-white/10 text-slate-700 dark:text-slate-300">
-                                    {{ __('Status PO:') }} {{ __($trackingData['po']['po_status'] ?? 'Active') }}
-                                </span>
-                            </div>
+
                             <h2 class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white tracking-tight">
                                 {{ __('Purchase Order') }} #{{ $trackingData['po']['number'] ?? '-' }}
                             </h2>
@@ -561,11 +551,11 @@
                                 </div>
 
                                 <!-- Form Pengajuan Ulang / Unggah Softfile Sertifikat Pemenuhan -->
-                                <div class="mt-5 p-4 sm:p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-rose-500/25 shadow-sm shadow-rose-500/5 backdrop-blur-sm">
+                                <div class="mt-5 p-4 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 shadow-sm shadow-rose-500/5 dark:shadow-none">
                                     <!-- Card Header -->
                                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F47920]/20 via-rose-500/15 to-[#F47920]/10 text-[#F47920] flex items-center justify-center shrink-0 border border-[#F47920]/30 shadow-xs">
+                                        <div class="flex items-start sm:items-center gap-3">
+                                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F47920]/15 via-rose-500/10 to-[#F47920]/10 dark:from-[#F47920]/25 dark:via-rose-500/20 dark:to-[#F47920]/15 text-[#F47920] flex items-center justify-center shrink-0 border border-[#F47920]/30 dark:border-[#F47920]/40 shadow-xs">
                                                 <svg class="w-5 h-5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
@@ -579,7 +569,7 @@
                                                 </span>
                                             </div>
                                         </div>
-                                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 self-start sm:self-center shrink-0">
+                                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700/40 self-start sm:self-center shrink-0">
                                             {{ __('Susulan Dokumen') }}
                                         </span>
                                     </div>
@@ -589,15 +579,15 @@
                                     @endphp
 
                                     @if ($detectedDoc)
-                                        <div class="p-3.5 mb-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/25 text-xs text-slate-700 dark:text-slate-300 flex items-start gap-2.5">
-                                            <div class="p-1 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
+                                        <div class="p-3.5 mb-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 dark:bg-amber-950/30 dark:border-amber-800/40 dark:text-amber-200 text-xs flex items-start gap-2.5">
+                                            <div class="p-1 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 shrink-0 mt-0.5">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                                 </svg>
                                             </div>
                                             <div class="leading-relaxed">
                                                 <span>{{ __('Berdasarkan catatan penolakan RDTV, Anda dapat mengunggah softfile') }}</span>
-                                                <span class="font-bold text-slate-900 dark:text-white px-1.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 font-mono">{{ $detectedDoc }}</span>
+                                                <span class="font-bold text-slate-900 dark:text-white px-1.5 py-0.5 rounded-md bg-amber-200/70 border border-amber-300/80 dark:bg-amber-900/60 dark:border-amber-700/60 font-mono">{{ $detectedDoc }}</span>
                                                 <span>{{ __('agar tim QC dapat memverifikasi dan melanjutkan penerbitan GRS tanpa retur fisik barang.') }}</span>
                                             </div>
                                         </div>
@@ -643,13 +633,13 @@
                                                     {{ __('Pilih Surat Jalan (DO) yang Ditolak:') }}
                                                 </label>
                                                 <div class="relative">
-                                                    <select wire:model.live="selectedRdtvDoId" class="w-full text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-800 dark:text-white px-3.5 py-2.5 focus:border-[#F47920] focus:ring-2 focus:ring-[#F47920]/20 transition shadow-xs">
+                                                    <select wire:model.live="selectedRdtvDoId" class="w-full text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 px-3.5 py-2.5 focus:bg-white dark:focus:bg-slate-800 focus:border-[#F47920] focus:ring-2 focus:ring-[#F47920]/20 transition shadow-xs">
                                                         @foreach ($rdtvDos as $rDo)
                                                             <option value="{{ $rDo->id }}">{{ $rDo->delivery_order_no }} ({{ $rDo->document_code }})</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
-                                                @error('selectedRdtvDoId') <span class="text-rose-600 text-[11px] font-semibold block mt-1">{{ $message }}</span> @enderror
+                                                @error('selectedRdtvDoId') <span class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold block mt-1">{{ $message }}</span> @enderror
                                             </div>
                                         @endif
 
@@ -673,27 +663,28 @@
                                                     @dragover.prevent="isDragging = true"
                                                     @dragleave.prevent="isDragging = false"
                                                     @drop.prevent="isDragging = false"
-                                                    :class="isDragging ? 'border-[#F47920] bg-orange-500/10 ring-4 ring-[#F47920]/15 scale-[1.005]' : 'border-slate-300/80 dark:border-slate-700/80 bg-slate-50/60 dark:bg-slate-800/40 hover:border-[#F47920]/70 hover:bg-white/80 dark:hover:bg-slate-800/80'"
-                                                    class="relative border-2 border-dashed rounded-2xl p-6 text-center transition-all duration-200 group cursor-pointer">
+                                                    :class="isDragging ? 'border-[#F47920] bg-orange-100/60 dark:bg-orange-950/40 ring-4 ring-[#F47920]/20 scale-[1.005]' : 'border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 hover:border-[#F47920] hover:bg-orange-50/50 dark:hover:bg-slate-800/80 dark:hover:border-[#F47920]'"
+                                                    class="relative border-2 border-dashed rounded-2xl p-5 sm:p-7 text-center transition-all duration-200 group cursor-pointer">
                                                     
                                                     <input type="file" wire:model="rdtvComplianceFile" id="rdtvFileInput" accept=".pdf,.jpg,.jpeg,.png"
                                                         class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
 
                                                     <!-- Loading indicator while transferring file -->
-                                                    <div wire:loading wire:target="rdtvComplianceFile" class="py-2 space-y-2.5">
-                                                        <div class="w-10 h-10 mx-auto rounded-xl bg-[#F47920]/20 text-[#F47920] flex items-center justify-center">
-                                                            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                    <div wire:loading wire:target="rdtvComplianceFile" class="py-3 space-y-3">
+                                                        <div class="w-12 h-12 mx-auto rounded-2xl bg-[#F47920]/20 text-[#F47920] flex items-center justify-center animate-bounce">
+                                                            <svg class="w-6 h-6 animate-spin text-[#F47920]" fill="none" viewBox="0 0 24 24">
                                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                                             </svg>
                                                         </div>
-                                                        <p class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ __('Mengunggah berkas...') }}</p>
+                                                        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">{{ __('Mengunggah berkas...') }}</p>
+                                                        <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('Mohon tunggu hingga berkas selesai diproses.') }}</p>
                                                     </div>
 
                                                     <!-- Default Dropzone Content -->
-                                                    <div wire:loading.remove wire:target="rdtvComplianceFile" class="space-y-2.5 pointer-events-none">
-                                                        <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-[#F47920]/15 via-rose-500/10 to-amber-500/15 text-[#F47920] flex items-center justify-center border border-[#F47920]/25 shadow-xs group-hover:scale-110 group-hover:rotate-2 transition-transform duration-300">
-                                                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <div wire:loading.remove wire:target="rdtvComplianceFile" class="space-y-3 pointer-events-none">
+                                                        <div class="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl bg-white dark:bg-slate-800 text-[#F47920] flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-xs group-hover:scale-110 group-hover:rotate-2 group-hover:border-[#F47920]/40 transition-all duration-300">
+                                                            <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                             </svg>
                                                         </div>
@@ -706,7 +697,7 @@
                                                             </p>
                                                         </div>
                                                         <div class="pt-0.5">
-                                                             <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] shadow-xs group-hover:shadow-md transition">
+                                                            <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-[#e06b18] hover:to-[#a74c1d] shadow-sm group-hover:shadow-md transition">
                                                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                                                                 {{ __('Pilih Berkas') }}
                                                             </span>
@@ -715,32 +706,32 @@
                                                 </div>
                                             @else
                                                 <!-- File Selected Preview Card -->
-                                                <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/25 border-2 border-emerald-500/30 flex items-center justify-between gap-3 shadow-xs">
+                                                <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-300 dark:border-emerald-600/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                                                     <div class="flex items-center gap-3 min-w-0">
-                                                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-300/80 dark:border-emerald-700/50">
+                                                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
                                                             </svg>
                                                         </div>
-                                                        <div class="min-w-0">
-                                                            <div class="flex items-center gap-2">
-                                                                <span class="font-mono font-bold text-xs sm:text-sm text-slate-800 dark:text-white truncate">
+                                                        <div class="min-w-0 flex-1">
+                                                            <div class="flex flex-wrap items-center gap-2">
+                                                                <span class="font-mono font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-xs md:max-w-md block">
                                                                     {{ $rdtvComplianceFile->getClientOriginalName() }}
                                                                 </span>
-                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 shrink-0">
+                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-300 dark:border-emerald-700 shrink-0">
                                                                     {{ __('Siap Diunggah') }}
                                                                 </span>
                                                             </div>
-                                                            <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                            <div class="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                                                                 <span>{{ strtoupper($rdtvComplianceFile->getClientOriginalExtension()) }}</span>
                                                                 <span>&bull;</span>
                                                                 <span>{{ number_format($rdtvComplianceFile->getSize() / 1024, 1) }} KB</span>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <button type="button" wire:click="$set('rdtvComplianceFile', null)" class="px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 transition shrink-0 flex items-center gap-1 cursor-pointer">
+                                                    <button type="button" wire:click="$set('rdtvComplianceFile', null)" class="self-end sm:self-center px-3.5 py-1.5 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 transition shrink-0 flex items-center gap-1.5 cursor-pointer shadow-2xs">
                                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                        {{ __('Ganti') }}
+                                                        {{ __('Ganti Berkas') }}
                                                     </button>
                                                 </div>
                                             @endif
@@ -753,26 +744,26 @@
                                         <div>
                                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
                                                 <span class="flex items-center gap-1.5">
-                                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
                                                     {{ __('Catatan Tambahan Vendor:') }}
                                                 </span>
-                                                <span class="text-[10px] font-normal text-slate-400">{{ __('Opsional') }}</span>
+                                                <span class="text-[10px] font-normal text-slate-400 dark:text-slate-500">{{ __('Opsional') }}</span>
                                             </label>
                                             <textarea wire:model="rdtvComplianceNotes" rows="2" placeholder="{{ __('Tuliskan rincian dokumen atau keterangan tambahan untuk tim QC...') }}"
-                                                class="w-full text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/60 text-slate-800 dark:text-white px-3.5 py-2.5 focus:border-[#F47920] focus:ring-2 focus:ring-[#F47920]/20 transition shadow-xs resize-none"></textarea>
-                                            @error('rdtvComplianceNotes') <span class="text-rose-600 text-[11px] font-semibold block mt-1">{{ $message }}</span> @enderror
+                                                class="w-full text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3.5 py-2.5 focus:bg-white dark:focus:bg-slate-800 focus:border-[#F47920] focus:ring-2 focus:ring-[#F47920]/20 transition shadow-xs resize-none"></textarea>
+                                            @error('rdtvComplianceNotes') <span class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold block mt-1">{{ $message }}</span> @enderror
                                         </div>
 
-                                        <div class="flex items-center justify-end gap-2 pt-1">
+                                        <div class="flex items-center justify-end pt-1">
                                             <button type="submit" wire:loading.attr="disabled"
-                                                class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-[#F47920] hover:shadow-lg hover:shadow-rose-500/25 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50">
-                                                <svg wire:loading wire:target="submitRdtvCompliance" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                                class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-[#F47920] hover:from-rose-500 hover:to-[#e06b18] text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 shadow-md shadow-rose-500/25 active:scale-[0.98] disabled:opacity-50">
+                                                <svg wire:loading wire:target="submitRdtvCompliance" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                                 </svg>
-                                                <svg wire:loading.remove wire:target="submitRdtvCompliance" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <svg wire:loading.remove wire:target="submitRdtvCompliance" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                                 </svg>
                                                 <span wire:loading.remove wire:target="submitRdtvCompliance">
@@ -787,7 +778,7 @@
 
                                     <!-- Daftar Riwayat Dokumen Pemenuhan yang Pernah Diunggah -->
                                     @if (!empty($trackingData['rdtv_compliances']) && $trackingData['rdtv_compliances']->isNotEmpty())
-                                        <div class="mt-5 pt-4 border-t border-rose-500/15 space-y-2.5">
+                                        <div class="mt-5 pt-4 border-t border-rose-500/15 dark:border-rose-500/20 space-y-3">
                                             <div class="flex items-center justify-between">
                                                 <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                                                     <svg class="w-3.5 h-3.5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -795,42 +786,44 @@
                                                     </svg>
                                                     {{ __('Riwayat Dokumen Pemenuhan yang Diajukan:') }}
                                                 </span>
-                                                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                                     {{ $trackingData['rdtv_compliances']->count() }} {{ __('Berkas') }}
                                                 </span>
                                             </div>
-                                            <div class="space-y-2">
+                                            <div class="space-y-2.5">
                                                 @foreach ($trackingData['rdtv_compliances'] as $comp)
-                                                    <div class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border {{ $comp->status === 'Disetujui' ? 'border-emerald-500/30 ring-1 ring-emerald-500/10' : ($comp->status === 'Ditolak' ? 'border-rose-500/30 ring-1 ring-rose-500/10' : 'border-amber-500/30 ring-1 ring-amber-500/10') }} text-xs space-y-2 shadow-xs">
-                                                        <div class="flex items-center justify-between gap-2">
-                                                            <div class="flex items-center gap-2 min-w-0">
-                                                                <div class="w-6 h-6 rounded-lg {{ $comp->status === 'Disetujui' ? 'bg-emerald-500/15 text-emerald-600' : ($comp->status === 'Ditolak' ? 'bg-rose-500/15 text-rose-600' : 'bg-amber-500/15 text-amber-600') }} flex items-center justify-center shrink-0">
-                                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <div class="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border {{ $comp->status === 'Disetujui' ? 'border-emerald-500/30 ring-1 ring-emerald-500/10' : ($comp->status === 'Ditolak' ? 'border-rose-500/30 ring-1 ring-rose-500/10' : 'border-amber-500/30 ring-1 ring-amber-500/10') }} text-xs space-y-2.5 shadow-xs">
+                                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                            <div class="flex items-center gap-2.5 min-w-0">
+                                                                <div class="w-7 h-7 rounded-lg {{ $comp->status === 'Disetujui' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : ($comp->status === 'Ditolak' ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400') }} flex items-center justify-center shrink-0">
+                                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                                     </svg>
                                                                 </div>
-                                                                <span class="font-mono font-bold text-slate-800 dark:text-white truncate">
-                                                                    {{ $comp->original_filename }}
-                                                                </span>
-                                                                <span class="text-[10px] text-slate-500 shrink-0">
-                                                                    ({{ $comp->deliveryOrderReceipt?->delivery_order_no ?? '-' }})
-                                                                </span>
+                                                                <div class="min-w-0">
+                                                                    <span class="font-mono font-bold text-slate-800 dark:text-white truncate max-w-[200px] sm:max-w-xs md:max-w-md block">
+                                                                        {{ $comp->original_filename }}
+                                                                    </span>
+                                                                    <span class="text-[10px] text-slate-500 dark:text-slate-400">
+                                                                        {{ __('No. Surat Jalan:') }} {{ $comp->deliveryOrderReceipt?->delivery_order_no ?? '-' }}
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0
-                                                                {{ $comp->status === 'Disetujui' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : ($comp->status === 'Ditolak' ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300') }}">
+                                                            <span class="self-start sm:self-auto px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0
+                                                                {{ $comp->status === 'Disetujui' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' : ($comp->status === 'Ditolak' ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30') }}">
                                                                 {{ __($comp->status) }}
                                                             </span>
                                                         </div>
-                                                        <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                                                            <span>Diunggah: {{ $comp->created_at->format('d M Y H:i') }}</span>
+                                                        <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                                                            <span>{{ __('Diunggah:') }} {{ $comp->created_at->format('d M Y H:i') }}</span>
                                                             <button type="button" wire:click="downloadRdtvCompliance({{ $comp->id }})"
-                                                                class="text-[#F47920] hover:underline font-semibold flex items-center gap-1 cursor-pointer">
+                                                                class="text-[#F47920] hover:text-[#d36415] hover:underline font-semibold flex items-center gap-1 cursor-pointer">
                                                                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                                                 {{ __('Unduh Berkas') }}
                                                             </button>
                                                         </div>
                                                         @if ($comp->vendor_notes)
-                                                            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
+                                                            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50">
                                                                 "{{ $comp->vendor_notes }}"
                                                             </p>
                                                         @endif
@@ -839,7 +832,7 @@
                                                                 <strong>{{ __('Catatan Tim QC / Receiving:') }}</strong> {{ $comp->review_notes }}
                                                             </div>
                                                         @elseif ($comp->status === 'Disetujui')
-                                                            <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px]">
+                                                            <div class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px]">
                                                                 {{ __('Dokumen pemenuhan ini telah disetujui. Petugas Gudang Receiving sedang memproses penerbitan GRS resmi.') }}
                                                             </div>
                                                         @endif
@@ -1212,10 +1205,10 @@
                                             </div>
                                         </div>
 
-                                        <div class="flex items-center justify-center gap-3">
+                                        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                                             <button type="button" wire:click="uploadBerkasPenagihan"
                                                 wire:loading.attr="disabled"
-                                                class="px-6 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:shadow-[0_8px_20px_rgba(244,121,32,0.4)] active:scale-95 transition-all flex items-center gap-2">
+                                                class="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:shadow-[0_8px_20px_rgba(244,121,32,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md">
                                                 <span wire:loading.remove wire:target="uploadBerkasPenagihan">{{ __('Unggah Berkas Sekarang') }}</span>
                                                 <span wire:loading wire:target="uploadBerkasPenagihan" class="flex items-center gap-2">
                                                     <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -1226,7 +1219,7 @@
                                                 </span>
                                             </button>
                                             <button type="button" wire:click="$set('berkasPenagihanFile', null)"
-                                                class="px-4 py-3 rounded-xl font-bold text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                                                class="w-full sm:w-auto px-5 py-3 rounded-xl font-bold text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition cursor-pointer">
                                                 {{ __('Batal') }}
                                             </button>
                                         </div>
@@ -1238,7 +1231,7 @@
                                             {!! __('Format: <strong>PDF (Sangat Disarankan)</strong>, ZIP, RAR, JPG, PNG (Maksimal 25 MB).') !!}
                                         </p>
 
-                                        <label class="cursor-pointer inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:shadow-[0_8px_20px_rgba(244,121,32,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-md">
+                                        <label class="cursor-pointer inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:shadow-[0_8px_20px_rgba(244,121,32,0.4)] hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-md w-full sm:w-auto">
                                             <input type="file" wire:model="berkasPenagihanFile" class="hidden" accept=".pdf,.zip,.rar,.jpg,.jpeg,.png">
                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
