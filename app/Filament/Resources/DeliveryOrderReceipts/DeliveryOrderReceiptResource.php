@@ -19,6 +19,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Schema as DbSchema;
 use UnitEnum;
 
 class DeliveryOrderReceiptResource extends Resource
@@ -34,6 +36,40 @@ class DeliveryOrderReceiptResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
 
     protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::ClipboardDocumentCheck;
+
+    public static function getNavigationBadge(): ?string
+    {
+        $pendingCount = static::getPendingSoftcopyCount();
+
+        return $pendingCount > 0 ? (string) $pendingCount : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        $pendingCount = static::getPendingSoftcopyCount();
+
+        if ($pendingCount <= 0) {
+            return null;
+        }
+
+        return "{$pendingCount} DO memiliki softcopy sertifikat dari vendor yang perlu segera diajukan ulang";
+    }
+
+    public static function getPendingSoftcopyCount(): int
+    {
+        if (! DbSchema::hasTable('rdtv_compliances')) {
+            return 0;
+        }
+
+        return DeliveryOrderReceipt::query()
+            ->whereHas('rdtvCompliances', fn (Builder $query) => $query->where('status', 'Menunggu Review'))
+            ->count();
+    }
 
     public static function getNavigationLabel(): string
     {

@@ -1,5 +1,7 @@
 <?php
 
+use App\Filament\Resources\DeliveryOrderReceipts\DeliveryOrderReceiptResource;
+use App\Filament\Resources\DeliveryOrderReceipts\Tables\DeliveryOrderReceiptsTable;
 use App\Livewire\Frontend\VendorPoTracking;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\DeliveryOrderReceiptDetail;
@@ -8,6 +10,7 @@ use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
 use App\Models\RdtvCompliance;
+use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
@@ -824,4 +827,127 @@ test('rdtv upload title dynamically reflects specific missing certificate from r
     $component->trackingData = ['unique_dos' => collect([$doFallback])];
     $component->selectedRdtvDoId = $doFallback->id;
     expect($component->getRdtvUploadTitle())->toBe('Unggah Softfile / Dokumen Pemenuhan');
+});
+
+test('penerimaan DO highlights and notifies receiving staff when vendor uploads a softcopy certificate for resubmission', function () {
+    Storage::fake('public');
+
+    if (! Schema::hasTable('users')) {
+        Schema::create('users', function ($table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('password')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('notifications')) {
+        Schema::create('notifications', function ($table) {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->text('data');
+            $table->timestamp('read_at')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (Schema::hasTable('delivery_order_receipt_delay_logs') && ! Schema::hasColumn('delivery_order_receipt_delay_logs', 'created_by')) {
+        Schema::table('delivery_order_receipt_delay_logs', function ($table) {
+            $table->unsignedBigInteger('created_by')->nullable();
+        });
+    }
+
+    $receivingStaff = User::create([
+        'name' => 'Petugas Receiving',
+        'email' => 'receiving.staff@pkt.test',
+        'password' => bcrypt('password'),
+        'is_active' => true,
+    ]);
+
+    $vendor = Vendor::create([
+        'name' => 'PT Flow Technology Indonesia',
+        'email' => 'vendor.notice@flowtech.com',
+    ]);
+
+    $po = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300065999',
+        'item_no' => '10',
+        'description' => 'Valve Control Actuator',
+        'vendor_name' => 'PT Flow Technology Indonesia',
+        'qty_po' => 2,
+        'uoi' => 'EA',
+    ]);
+
+    $do = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'SJ-NOTICE-999',
+        'document_code' => 'FTGI-1026-9999',
+        'status' => 'RDTV',
+        'delay_reason' => 'RDTV',
+        'delay_notes' => 'TIDAK MELAMPIRKAN COO FROM MANUFACTURE',
+    ]);
+
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $do->id,
+        'purchase_order_issued_id' => $po->id,
+        'description' => 'Valve Control Actuator',
+        'quantity' => 2,
+    ]);
+
+    $grsBatch = GrsRdtv::create([
+        'category' => 'RDTV',
+        'transaction_date' => now()->toDateString(),
+    ]);
+
+    GrsRdtvItem::create([
+        'grs_rdtv_id' => $grsBatch->id,
+        'delivery_order_receipt_id' => $do->id,
+        'document_code' => 'FTGI-1026-9999',
+        'file_path' => 'grs-rdtv-docs/FTGI-1026-9999.pdf',
+        'reason' => 'TIDAK MELAMPIRKAN COO FROM MANUFACTURE',
+        'status' => 'Matched',
+    ]);
+
+    // Sebelum vendor unggah softcopy -> badge navigation Penerimaan DO harus null (0 pending)
+    expect(DeliveryOrderReceiptResource::getPendingSoftcopyCount())->toBe(0)
+        ->and(DeliveryOrderReceiptResource::getNavigationBadge())->toBeNull();
+
+    // Vendor unggah softcopy sertifikat COO dari halaman Lacak PO Vendor
+    $fakeCoo = UploadedFile::fake()->create('COO_Notice_5300065999.pdf', 200, 'application/pdf');
+
+    Livewire::test(VendorPoTracking::class)
+        ->set('poNumber', '5300065999')
+        ->call('initiateSearch')
+        ->set('verificationEmail', 'vendor.notice@flowtech.com')
+        ->call('verifyVendorEmail')
+        ->set('selectedRdtvDoId', $do->id)
+        ->set('rdtvComplianceFile', $fakeCoo)
+        ->set('rdtvComplianceNotes', 'Softcopy COO terlampir untuk diajukan ulang.')
+        ->call('submitRdtvCompliance')
+        ->assertHasNoErrors();
+
+    // Setelah vendor unggah -> Penerimaan DO langsung menampilkan badge 1 + tooltip peringatan
+    expect(DeliveryOrderReceiptResource::getPendingSoftcopyCount())->toBe(1)
+        ->and(DeliveryOrderReceiptResource::getNavigationBadge())->toBe('1')
+        ->and(DeliveryOrderReceiptResource::getNavigationBadgeColor())->toBe('warning')
+        ->and(DeliveryOrderReceiptResource::getNavigationBadgeTooltip())->toContain('softcopy sertifikat');
+
+    // Petugas Receiving menerima notifikasi lonceng database
+    $notification = $receivingStaff->notifications()->first();
+    expect($notification)->not->toBeNull()
+        ->and($notification->data['title'] ?? '')->toContain('5300065999')
+        ->and($notification->data['body'] ?? '')->toContain('SJ-NOTICE-999')
+        ->and($notification->data['body'] ?? '')->toContain('ajukan ulang');
+
+    // Setelah petugas menyetujui dan menindaklanjuti untuk diajukan ulang
+    DeliveryOrderReceiptsTable::handleRdtvComplianceReview($do, [
+        'review_status' => 'Disetujui',
+        'review_notes' => 'COO sesuai, siap diajukan ulang ke GRS.',
+    ]);
+
+    expect(DeliveryOrderReceiptResource::getPendingSoftcopyCount())->toBe(0)
+        ->and(DeliveryOrderReceiptResource::getNavigationBadge())->toBeNull()
+        ->and($do->fresh()->status)->toBe('Diterima');
 });

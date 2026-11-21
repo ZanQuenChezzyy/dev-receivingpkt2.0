@@ -19,7 +19,9 @@ use Filament\Support\Enums\TextSize;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema as DbSchema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 
 class DeliveryOrderReceiptInfolist
 {
@@ -28,6 +30,84 @@ class DeliveryOrderReceiptInfolist
         return $schema
             ->components([
                 Group::make([
+                    Section::make(function ($record): string {
+                        $latest = $record?->rdtvCompliances()->latest()->first();
+                        if ($latest?->status === 'Menunggu Review') {
+                            return 'Pemberitahuan: Vendor Mengunggah Softcopy Sertifikat (Harus Segera Diajukan Ulang)';
+                        }
+
+                        if ($latest?->status === 'Disetujui') {
+                            return 'Softcopy Sertifikat Susulan — Disetujui (Siap Diajukan Ulang / GRS)';
+                        }
+
+                        return 'Softcopy Sertifikat Susulan RDTV';
+                    })
+                        ->icon('heroicon-o-document-arrow-up')
+                        ->iconColor(function ($record): string {
+                            $latest = $record?->rdtvCompliances()->latest()->first();
+
+                            return match ($latest?->status) {
+                                'Menunggu Review' => 'warning',
+                                'Disetujui' => 'success',
+                                'Ditolak' => 'danger',
+                                default => 'gray',
+                            };
+                        })
+                        ->visible(fn ($record): bool => $record !== null && DbSchema::hasTable('rdtv_compliances') && $record->rdtvCompliances()->exists())
+                        ->schema([
+                            TextEntry::make('rdtv_softcopy_notice')
+                                ->hiddenLabel()
+                                ->html()
+                                ->getStateUsing(function ($record): HtmlString {
+                                    $latest = $record->rdtvCompliances()->latest()->first();
+                                    if (! $latest) {
+                                        return new HtmlString('');
+                                    }
+
+                                    $poNo = e($record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? '-');
+                                    $docType = e($latest->document_type ?: 'Sertifikat / Dokumen Pemenuhan');
+                                    $filename = e($latest->original_filename);
+                                    $uploadedAt = $latest->created_at?->format('d M Y H:i') ?? '-';
+                                    $vendorNotes = e($latest->vendor_notes ?: '-');
+                                    $reviewNotes = e($latest->review_notes ?: '');
+                                    $fileUrl = asset('storage/'.$latest->file_path);
+
+                                    $statusBanner = match ($latest->status) {
+                                        'Menunggu Review' => "<div class='font-bold text-amber-800 dark:text-amber-300 mb-2'>PO {$poNo} memiliki softcopy sertifikat susulan yang baru diunggah vendor melalui portal Lacak PO. Mohon segera periksa dan ajukan ulang ke tim QC/GRS.</div>",
+                                        'Disetujui' => "<div class='font-bold text-emerald-700 dark:text-emerald-300 mb-2'>Softcopy sertifikat untuk PO {$poNo} telah disetujui dan siap diproses ulang untuk penerbitan GRS.</div>",
+                                        default => "<div class='font-bold text-rose-700 dark:text-rose-300 mb-2'>Softcopy sertifikat sebelumnya ditolak. Menunggu unggahan revisi dari vendor.</div>",
+                                    };
+
+                                    $boxClasses = match ($latest->status) {
+                                        'Menunggu Review' => 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-600/50',
+                                        'Disetujui' => 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-600/50',
+                                        default => 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-600/50',
+                                    };
+
+                                    $reviewHtml = $reviewNotes !== ''
+                                        ? "<div class='mt-1.5 text-slate-700 dark:text-slate-300'><span class='font-semibold'>Catatan Review Petugas:</span> {$reviewNotes}</div>"
+                                        : '';
+
+                                    return new HtmlString("
+                                        <div class='p-4 rounded-xl border {$boxClasses} text-xs space-y-1.5'>
+                                            {$statusBanner}
+                                            <div class='grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-slate-700 dark:text-slate-300'>
+                                                <div><span class='font-semibold text-slate-500 dark:text-slate-400'>Jenis Dokumen:</span> <span class='font-bold text-slate-900 dark:text-white'>{$docType}</span></div>
+                                                <div><span class='font-semibold text-slate-500 dark:text-slate-400'>Waktu Unggah:</span> {$uploadedAt}</div>
+                                            </div>
+                                            <div><span class='font-semibold text-slate-500 dark:text-slate-400'>Nama File:</span> <span class='font-mono font-bold text-primary-600 dark:text-primary-400 break-all'>{$filename}</span></div>
+                                            <div><span class='font-semibold text-slate-500 dark:text-slate-400'>Catatan Vendor:</span> <span class='italic'>{$vendorNotes}</span></div>
+                                            {$reviewHtml}
+                                            <div class='pt-2'>
+                                                <a href='{$fileUrl}' target='_blank' rel='noopener noreferrer' class='inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary-600 text-white font-bold text-xs hover:bg-primary-700 transition'>
+                                                    Buka / Unduh Softcopy Sertifikat
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ");
+                                }),
+                        ]),
+
                     Section::make('Informasi Surat Jalan & PO')
                         ->icon('heroicon-o-document-text')
                         ->schema([

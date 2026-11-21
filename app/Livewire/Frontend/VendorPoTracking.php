@@ -2,17 +2,22 @@
 
 namespace App\Livewire\Frontend;
 
+use App\Filament\Resources\DeliveryOrderReceipts\DeliveryOrderReceiptResource;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
 use App\Models\RdtvCompliance;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Models\WarehouseTransmittalItem;
 use Carbon\Carbon;
+use Filament\Actions\Action as NotificationAction;
+use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -1289,7 +1294,7 @@ class VendorPoTracking extends Component
         $detectedDoc = $this->getDetectedRdtvDocumentName();
         $docType = ! empty($detectedDoc) ? $detectedDoc : 'COO / Sertifikat';
 
-        RdtvCompliance::create([
+        $compliance = RdtvCompliance::create([
             'delivery_order_receipt_id' => $do->id,
             'purchase_order_issued_id' => $detail?->purchase_order_issued_id,
             'vendor_id' => $this->verifiedVendorId,
@@ -1307,11 +1312,88 @@ class VendorPoTracking extends Component
             'delay_notes' => 'Vendor mengunggah dokumen pemenuhan: '.$origName.(! empty($this->rdtvComplianceNotes) ? ' (Catatan: '.$this->rdtvComplianceNotes.')' : ''),
         ]);
 
+        // Kirim notifikasi lonceng Filament ke petugas Receiving agar segera memproses pengajuan ulang
+        $this->notifyReceivingTeamOfRdtvCompliance($do, $compliance, $docType, $origName);
+
         $this->rdtvComplianceFile = null;
         $this->rdtvComplianceNotes = '';
         $this->loadTrackingData();
 
         session()->flash('rdtv_success', __('Dokumen pemenuhan ":name" berhasil diunggah dan sedang menunggu verifikasi Tim Receiving / QC.', ['name' => $origName]));
+    }
+
+    protected function notifyReceivingTeamOfRdtvCompliance(
+        DeliveryOrderReceipt $do,
+        RdtvCompliance $compliance,
+        string $docType,
+        string $origName
+    ): void {
+        if (! Schema::hasTable('notifications') || ! Schema::hasTable('users')) {
+            return;
+        }
+
+        try {
+            $recipients = collect();
+
+            // Prioritaskan penerima DO & pembuat DO
+            $directIds = array_values(array_filter([$do->received_by, $do->created_by]));
+            if (! empty($directIds)) {
+                $directUsers = User::whereIn('id', $directIds)
+                    ->when(Schema::hasColumn('users', 'is_active'), fn ($q) => $q->where('is_active', true))
+                    ->get();
+                $recipients = $recipients->merge($directUsers);
+            }
+
+            // Tambahkan petugas Receiving / Admin yang aktif
+            if (Schema::hasTable('roles') && Schema::hasTable('model_has_roles')) {
+                $receivingRoles = [
+                    'Developer',
+                    'Administrator',
+                    'AVP Receiving',
+                    'Admin Receiving',
+                    'Admin Sparepart',
+                    'Admin Chemical',
+                    'Admin Bahan Baku',
+                    'Staff Receiving',
+                ];
+
+                $roleUsers = User::query()
+                    ->when(Schema::hasColumn('users', 'is_active'), fn ($q) => $q->where('is_active', true))
+                    ->whereHas('roles', fn ($q) => $q->whereIn('name', $receivingRoles))
+                    ->get();
+
+                $recipients = $recipients->merge($roleUsers);
+            }
+
+            if ($recipients->isEmpty()) {
+                $recipients = User::query()
+                    ->when(Schema::hasColumn('users', 'is_active'), fn ($q) => $q->where('is_active', true))
+                    ->get();
+            }
+
+            $recipients = $recipients->unique('id')->values();
+            if ($recipients->isEmpty()) {
+                return;
+            }
+
+            $poNo = $this->activePo ?: ($do->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? '-');
+            $viewUrl = DeliveryOrderReceiptResource::getUrl('view', ['record' => $do->id]);
+
+            FilamentNotification::make()
+                ->title("Softcopy Sertifikat Masuk — PO {$poNo}")
+                ->body("Vendor mengunggah softcopy {$docType} ({$origName}) untuk DO {$do->delivery_order_no}. Harap segera periksa di Penerimaan DO dan ajukan ulang.")
+                ->icon('heroicon-o-document-arrow-up')
+                ->warning()
+                ->actions([
+                    NotificationAction::make('lihat_do')
+                        ->label('Cek di Penerimaan DO')
+                        ->button()
+                        ->url($viewUrl),
+                ])
+                ->sendToDatabase($recipients);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public function downloadRdtvCompliance(int $complianceId): mixed

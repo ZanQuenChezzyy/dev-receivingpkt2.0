@@ -48,6 +48,11 @@ class ListDeliveryOrderReceipts extends ListRecords
         return [
             'Semua' => Tab::make('Semua')
                 ->icon('heroicon-o-list-bullet'),
+            'Softcopy Sertifikat' => Tab::make('Softcopy Sertifikat (Ajukan Ulang)')
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('rdtvCompliances', fn (Builder $q) => $q->where('status', 'Menunggu Review')))
+                ->icon('heroicon-o-document-arrow-up')
+                ->badgeColor('warning')
+                ->badge(DeliveryOrderReceiptResource::getPendingSoftcopyCount()),
             'Belum 103' => Tab::make('Belum 103')
                 ->modifyQueryUsing(fn (Builder $query) => $query->whereNull('post_103'))
                 ->icon('heroicon-o-document-minus')

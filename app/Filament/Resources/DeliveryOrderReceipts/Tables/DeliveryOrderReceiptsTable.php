@@ -18,17 +18,20 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\HtmlString;
 
 class DeliveryOrderReceiptsTable
@@ -36,6 +39,24 @@ class DeliveryOrderReceiptsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function (Builder $query): Builder {
+                if (Schema::hasTable('rdtv_compliances')) {
+                    $query->with(['rdtvCompliances' => fn ($q) => $q->latest()]);
+                }
+
+                return $query;
+            })
+            ->recordClasses(function (DeliveryOrderReceipt $record): ?string {
+                if (! $record->relationLoaded('rdtvCompliances')) {
+                    return null;
+                }
+
+                $hasPendingSoftcopy = $record->rdtvCompliances->contains(fn ($c) => $c->status === 'Menunggu Review');
+
+                return $hasPendingSoftcopy
+                    ? 'bg-amber-50/70 dark:bg-amber-950/25 border-l-4 border-l-amber-500'
+                    : null;
+            })
             ->defaultSort('created_at', 'desc')
             ->persistColumnsInSession()
             ->deferColumnManager(false)
@@ -56,6 +77,17 @@ class DeliveryOrderReceiptsTable
                             $js .= "new FilamentNotification().title('Nomor DO disalin!').success().send();";
 
                             $doInfo = "<span onclick=\"{$js}\" class='text-gray-500 font-medium cursor-pointer hover:text-primary-600 hover:underline transition' title='Klik untuk menyalin DO'>DO: {$doNumber}</span>";
+
+                            if ($record->relationLoaded('rdtvCompliances')) {
+                                $pendingCompliance = $record->rdtvCompliances->firstWhere('status', 'Menunggu Review');
+                                if ($pendingCompliance) {
+                                    $docLabel = e($pendingCompliance->document_type ?: 'Sertifikat');
+                                    $doInfo .= "<div class='mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-300 dark:border-amber-500/40 text-[11px] font-bold leading-tight'>"
+                                        ."<span class='inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0'></span>"
+                                        ."<span>Softcopy {$docLabel} Masuk &bull; Ajukan Ulang</span>"
+                                        .'</div>';
+                                }
+                            }
 
                             return new HtmlString($doInfo);
                         })
@@ -535,9 +567,31 @@ class DeliveryOrderReceiptsTable
             ])
             ->columnManagerColumns(4)
             ->filters([
-                //
+                Filter::make('has_pending_softcopy')
+                    ->label('Ada Softcopy Sertifikat (Perlu Ajukan Ulang)')
+                    ->query(fn (Builder $query): Builder => $query->whereHas('rdtvCompliances', fn (Builder $q) => $q->where('status', 'Menunggu Review'))),
             ])
             ->recordActions([
+                Action::make('cek_softcopy_ajukan_ulang')
+                    ->label('Cek Softcopy')
+                    ->tooltip('Vendor telah mengunggah softcopy sertifikat susulan — klik untuk memeriksa dan ajukan ulang')
+                    ->icon('heroicon-m-document-arrow-up')
+                    ->color('warning')
+                    ->button()
+                    ->size(Size::Small)
+                    ->visible(function (DeliveryOrderReceipt $record): bool {
+                        if ($record->relationLoaded('rdtvCompliances')) {
+                            return $record->rdtvCompliances->contains(fn ($c) => $c->status === 'Menunggu Review');
+                        }
+
+                        return Schema::hasTable('rdtv_compliances')
+                            && $record->rdtvCompliances()->where('status', 'Menunggu Review')->exists();
+                    })
+                    ->modalHeading(fn (DeliveryOrderReceipt $record): string => "Softcopy Sertifikat Susulan — DO: {$record->delivery_order_no}")
+                    ->modalDescription('Vendor telah mengunggah softcopy sertifikat pemenuhan melalui portal Lacak PO. Periksa berkas di bawah untuk diajukan ulang ke proses GRS.')
+                    ->modalSubmitActionLabel('Simpan & Tindak Lanjuti')
+                    ->schema(fn (DeliveryOrderReceipt $record): array => static::buildRdtvComplianceModalSchema($record))
+                    ->action(fn (DeliveryOrderReceipt $record, array $data) => static::handleRdtvComplianceReview($record, $data)),
                 ActionGroup::make([
                     Action::make('post_103_action')
                         ->label('Sudah Posting 103')
@@ -738,105 +792,18 @@ class DeliveryOrderReceiptsTable
                                 ->send();
                         }),
                     Action::make('review_rdtv_compliance_action')
-                        ->label('Review Dokumen Susulan RDTV')
+                        ->label('Review Softcopy Sertifikat RDTV')
                         ->icon('heroicon-o-document-check')
                         ->color('warning')
                         ->outlined()
-                        ->visible(fn ($record): bool => $record->rdtvCompliances()->exists())
-                        ->modalHeading(fn ($record) => "Review Dokumen Susulan RDTV - DO: {$record->delivery_order_no}")
-                        ->modalDescription('Periksa berkas sertifikat / dokumen pemenuhan (COO / COA) yang diunggah oleh vendor.')
+                        ->visible(fn (DeliveryOrderReceipt $record): bool => $record->relationLoaded('rdtvCompliances')
+                            ? $record->rdtvCompliances->isNotEmpty()
+                            : (Schema::hasTable('rdtv_compliances') && $record->rdtvCompliances()->exists()))
+                        ->modalHeading(fn (DeliveryOrderReceipt $record): string => "Softcopy Sertifikat Susulan — DO: {$record->delivery_order_no}")
+                        ->modalDescription('Periksa berkas softcopy sertifikat / dokumen pemenuhan yang diunggah oleh vendor melalui portal Lacak PO.')
                         ->modalSubmitActionLabel('Simpan Hasil Review')
-                        ->schema(function ($record) {
-                            $latestCompliance = $record->rdtvCompliances()->latest()->first();
-                            if (! $latestCompliance) {
-                                return [];
-                            }
-
-                            $fileUrl = asset('storage/'.$latestCompliance->file_path);
-
-                            return [
-                                Placeholder::make('detail_dokumen')
-                                    ->label('Rincian Dokumen Susulan')
-                                    ->content(new HtmlString("
-                                        <div class='p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs space-y-1.5'>
-                                            <div><span class='text-slate-500 font-semibold'>Jenis Dokumen:</span> <span class='font-bold text-slate-800 dark:text-white'>{$latestCompliance->document_type}</span></div>
-                                            <div><span class='text-slate-500 font-semibold'>Nama File:</span> <span class='font-mono font-bold text-primary-600 dark:text-primary-400'>{$latestCompliance->original_filename}</span></div>
-                                            <div><span class='text-slate-500 font-semibold'>Tanggal Pengajuan:</span> <span class='text-slate-700 dark:text-slate-300'>{$latestCompliance->created_at->format('d M Y H:i')}</span></div>
-                                            <div><span class='text-slate-500 font-semibold'>Catatan Vendor:</span> <span class='italic text-slate-700 dark:text-slate-300'>".e($latestCompliance->vendor_notes ?: '-')."</span></div>
-                                            <div class='pt-2'>
-                                                <a href='{$fileUrl}' target='_blank' rel='noopener noreferrer' class='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 text-white font-bold text-xs hover:bg-primary-700 transition'>
-                                                    Buka / Unduh Berkas Sertifikat
-                                                </a>
-                                            </div>
-                                        </div>
-                                    ")),
-
-                                Select::make('review_status')
-                                    ->label('Keputusan Verifikasi')
-                                    ->options([
-                                        'Disetujui' => 'Setujui Dokumen (Kembalikan ke Status Siap GRS)',
-                                        'Ditolak' => 'Tolak / Minta Revisi Lagi ke Vendor',
-                                    ])
-                                    ->default($latestCompliance->status === 'Menunggu Review' ? 'Disetujui' : $latestCompliance->status)
-                                    ->required()
-                                    ->native(false),
-
-                                Textarea::make('review_notes')
-                                    ->label('Catatan Review / Instruksi Tindak Lanjut')
-                                    ->placeholder('Wajib diisi jika ditolak agar vendor memahami perbaikan yang harus dilakukan...')
-                                    ->default($latestCompliance->review_notes)
-                                    ->required(fn (Get $get) => $get('review_status') === 'Ditolak')
-                                    ->rows(3),
-                            ];
-                        })
-                        ->action(function ($record, array $data) {
-                            $latestCompliance = $record->rdtvCompliances()->latest()->first();
-                            if (! $latestCompliance) {
-                                return;
-                            }
-
-                            $newStatus = $data['review_status'];
-                            $notes = $data['review_notes'] ?? null;
-
-                            $latestCompliance->update([
-                                'status' => $newStatus,
-                                'reviewed_by' => Auth::id(),
-                                'reviewed_at' => now(),
-                                'review_notes' => $notes,
-                            ]);
-
-                            if ($newStatus === 'Disetujui') {
-                                $latestQc = $record->qcHistories()->latest()->first();
-                                $record->status = ($latestQc && $latestQc->status === 'Kembali') ? 'Kembali dari ISTEK' : 'Diterima';
-                                $record->delay_reason = null;
-                                $record->delay_notes = null;
-                                $record->save();
-
-                                $record->delayLogs()->create([
-                                    'delay_reason' => 'Dokumen Pemenuhan Disetujui',
-                                    'delay_notes' => 'Sertifikat susulan '.$latestCompliance->original_filename.' disetujui oleh '.(Auth::user()?->name ?? 'Petugas').'. DO siap diproses untuk penerbitan GRS.',
-                                    'created_by' => Auth::id(),
-                                ]);
-
-                                Notification::make()
-                                    ->title('Dokumen Pemenuhan Disetujui')
-                                    ->body("Berkas {$latestCompliance->original_filename} telah disetujui. DO siap untuk penerbitan GRS.")
-                                    ->success()
-                                    ->send();
-                            } else {
-                                $record->delayLogs()->create([
-                                    'delay_reason' => 'Dokumen Pemenuhan Ditolak',
-                                    'delay_notes' => 'Sertifikat susulan '.$latestCompliance->original_filename.' ditolak oleh '.(Auth::user()?->name ?? 'Petugas').'. Alasan: '.($notes ?: 'Tidak memenuhi syarat.'),
-                                    'created_by' => Auth::id(),
-                                ]);
-
-                                Notification::make()
-                                    ->title('Dokumen Pemenuhan Ditolak')
-                                    ->body('Catatan penolakan telah disimpan. Vendor dapat melihatnya di portal pelacakan PO.')
-                                    ->warning()
-                                    ->send();
-                            }
-                        }),
+                        ->schema(fn (DeliveryOrderReceipt $record): array => static::buildRdtvComplianceModalSchema($record))
+                        ->action(fn (DeliveryOrderReceipt $record, array $data) => static::handleRdtvComplianceReview($record, $data)),
                     Action::make('barang_telah_tiba_action')
                         ->label('Barang Telah Tiba')
                         ->icon(Heroicon::CheckBadge)
@@ -1002,5 +969,119 @@ class DeliveryOrderReceiptsTable
             ->emptyStateHeading('Belum ada Dokumen Penerimaan')
             ->emptyStateDescription('Buat dokumen penerimaan barang baru dari PO yang tersedia.')
             ->emptyStateIcon('heroicon-o-document-text');
+    }
+
+    /**
+     * @return array<int, Component>
+     */
+    public static function buildRdtvComplianceModalSchema(DeliveryOrderReceipt $record): array
+    {
+        $latestCompliance = $record->rdtvCompliances()->latest()->first();
+        if (! $latestCompliance) {
+            return [];
+        }
+
+        $fileUrl = asset('storage/'.$latestCompliance->file_path);
+        $poNo = $record->deliveryOrderReceiptDetails->first()?->purchaseOrderIssued?->purchase_order_no ?? '-';
+        $docType = e($latestCompliance->document_type ?: 'Sertifikat / Dokumen Pemenuhan');
+        $filename = e($latestCompliance->original_filename);
+        $uploadedAt = $latestCompliance->created_at?->format('d M Y H:i') ?? '-';
+        $vendorNotes = e($latestCompliance->vendor_notes ?: '-');
+        $statusLabel = e($latestCompliance->status);
+
+        return [
+            Placeholder::make('detail_dokumen')
+                ->label('Rincian Softcopy Sertifikat dari Vendor')
+                ->content(new HtmlString("
+                    <div class='p-4 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700/50 text-xs space-y-2'>
+                        <div class='font-bold text-amber-900 dark:text-amber-300'>
+                            Vendor telah mengunggah softcopy sertifikat susulan untuk PO {$poNo}. Segera periksa dan ajukan ulang ke tim QC/GRS.
+                        </div>
+                        <div class='grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 text-slate-700 dark:text-slate-300'>
+                            <div><span class='text-slate-500 dark:text-slate-400 font-semibold'>Nomor PO:</span> <span class='font-mono font-bold text-slate-900 dark:text-white'>{$poNo}</span></div>
+                            <div><span class='text-slate-500 dark:text-slate-400 font-semibold'>Status Saat Ini:</span> <span class='font-bold text-amber-700 dark:text-amber-300'>{$statusLabel}</span></div>
+                            <div><span class='text-slate-500 dark:text-slate-400 font-semibold'>Jenis Dokumen:</span> <span class='font-bold text-slate-900 dark:text-white'>{$docType}</span></div>
+                            <div><span class='text-slate-500 dark:text-slate-400 font-semibold'>Tanggal Unggah:</span> <span>{$uploadedAt}</span></div>
+                        </div>
+                        <div><span class='text-slate-500 dark:text-slate-400 font-semibold'>Nama File:</span> <span class='font-mono font-bold text-primary-600 dark:text-primary-400 break-all'>{$filename}</span></div>
+                        <div><span class='text-slate-500 dark:text-slate-400 font-semibold'>Catatan Vendor:</span> <span class='italic text-slate-700 dark:text-slate-300'>{$vendorNotes}</span></div>
+                        <div class='pt-2'>
+                            <a href='{$fileUrl}' target='_blank' rel='noopener noreferrer' class='inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary-600 text-white font-bold text-xs hover:bg-primary-700 transition'>
+                                Buka / Unduh Softcopy Sertifikat
+                            </a>
+                        </div>
+                    </div>
+                ")),
+
+            Select::make('review_status')
+                ->label('Keputusan Tindak Lanjut')
+                ->options([
+                    'Disetujui' => 'Setujui & Ajukan Ulang (Kembalikan ke Status Siap GRS)',
+                    'Ditolak' => 'Tolak / Minta Revisi Lagi ke Vendor',
+                ])
+                ->default($latestCompliance->status === 'Menunggu Review' ? 'Disetujui' : $latestCompliance->status)
+                ->required()
+                ->native(false),
+
+            Textarea::make('review_notes')
+                ->label('Catatan Review / Instruksi Tindak Lanjut')
+                ->placeholder('Wajib diisi jika ditolak agar vendor memahami perbaikan yang harus dilakukan...')
+                ->default($latestCompliance->review_notes)
+                ->required(fn (Get $get) => $get('review_status') === 'Ditolak')
+                ->rows(3),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public static function handleRdtvComplianceReview(DeliveryOrderReceipt $record, array $data): void
+    {
+        $latestCompliance = $record->rdtvCompliances()->latest()->first();
+        if (! $latestCompliance) {
+            return;
+        }
+
+        $newStatus = $data['review_status'];
+        $notes = $data['review_notes'] ?? null;
+
+        $latestCompliance->update([
+            'status' => $newStatus,
+            'reviewed_by' => Auth::id(),
+            'reviewed_at' => now(),
+            'review_notes' => $notes,
+        ]);
+
+        if ($newStatus === 'Disetujui') {
+            $latestQc = $record->qcHistories()->latest()->first();
+            $record->status = ($latestQc && $latestQc->status === 'Kembali') ? 'Kembali dari ISTEK' : 'Diterima';
+            $record->delay_reason = null;
+            $record->delay_notes = null;
+            $record->save();
+
+            $record->delayLogs()->create([
+                'delay_reason' => 'Dokumen Pemenuhan Disetujui',
+                'delay_notes' => 'Sertifikat susulan '.$latestCompliance->original_filename.' disetujui oleh '.(Auth::user()?->name ?? 'Petugas').'. DO siap diajukan ulang untuk penerbitan GRS.',
+                'created_by' => Auth::id(),
+            ]);
+
+            Notification::make()
+                ->title('Softcopy Disetujui & Siap Diajukan Ulang')
+                ->body("Berkas {$latestCompliance->original_filename} telah disetujui. DO siap diajukan ulang untuk penerbitan GRS.")
+                ->success()
+                ->send();
+        } else {
+            $record->delayLogs()->create([
+                'delay_reason' => 'Dokumen Pemenuhan Ditolak',
+                'delay_notes' => 'Sertifikat susulan '.$latestCompliance->original_filename.' ditolak oleh '.(Auth::user()?->name ?? 'Petugas').'. Alasan: '.($notes ?: 'Tidak memenuhi syarat.'),
+                'created_by' => Auth::id(),
+            ]);
+
+            Notification::make()
+                ->title('Dokumen Pemenuhan Ditolak')
+                ->body('Catatan penolakan telah disimpan. Vendor dapat melihatnya di portal pelacakan PO.')
+                ->warning()
+                ->send();
+        }
     }
 }
