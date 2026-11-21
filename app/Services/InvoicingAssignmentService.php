@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Models\InvoicingReceipt;
 use App\Models\PicMaterialAssignment;
+use App\Models\PurchaseOrderIssued;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class InvoicingAssignmentService
 {
@@ -12,6 +15,15 @@ class InvoicingAssignmentService
      * @var array<int, int>|null [user_id => current_workload]
      */
     protected ?array $staffWorkloads = null;
+
+    /**
+     * Cache PIC per Nomor PO dalam sesi pemrosesan yang sama (in-memory)
+     * agar beberapa dokumen GRS/RDTV dengan PO yang sama dalam satu batch
+     * tetap jatuh ke PIC yang sama.
+     *
+     * @var array<string, int> [no_po => pic_id]
+     */
+    protected array $poPicMap = [];
 
     /**
      * Inisialisasi daftar beban kerja awal untuk semua user dengan role 'Staff Invoice'.
@@ -104,20 +116,181 @@ class InvoicingAssignmentService
     }
 
     /**
+     * Normalisasi nomor PO (mengabaikan nilai kosong atau placeholder '-').
+     */
+    public function normalizePoNumber(?string $noPo): ?string
+    {
+        $clean = trim((string) $noPo);
+        if ($clean === '' || $clean === '-' || in_array(strtolower($clean), ['null', 'none', 'tanpa po'], true)) {
+            return null;
+        }
+
+        return $clean;
+    }
+
+    /**
+     * Cek apakah user PIC masih aktif/valid untuk tetap menerima dokumen PO yang sama.
+     */
+    protected function isPicUserEligible(int $userId): bool
+    {
+        if ($userId <= 0) {
+            return false;
+        }
+
+        if ($this->staffWorkloads !== null && array_key_exists($userId, $this->staffWorkloads)) {
+            return true;
+        }
+
+        if (! Schema::hasTable('users')) {
+            return true;
+        }
+
+        $userRow = DB::table('users')->where('id', $userId)->first();
+        if ($userRow) {
+            if (property_exists($userRow, 'is_active') && $userRow->is_active !== null) {
+                return (bool) $userRow->is_active;
+            }
+
+            return true;
+        }
+
+        // Jika tabel users kosong (misal pada unit test sintetis), izinkan ID tersebut
+        return DB::table('users')->count() === 0;
+    }
+
+    /**
+     * Cari PIC yang sudah pernah ditugaskan pada Nomor PO yang sama sebelumnya.
+     * Memastikan seluruh tahapan pengiriman / material dalam 1 PO ditangani oleh PIC Invoice yang sama.
+     */
+    public function resolveExistingPicForPo(
+        ?string $noPo = null,
+        ?int $purchaseOrderIssuedId = null,
+        ?int $excludeReceiptId = null
+    ): ?int {
+        $cleanNoPo = $this->normalizePoNumber($noPo);
+
+        if ($cleanNoPo === null && $purchaseOrderIssuedId !== null && Schema::hasTable('purchase_order_issueds')) {
+            $poNoFromDb = PurchaseOrderIssued::where('id', $purchaseOrderIssuedId)->value('purchase_order_no');
+            $cleanNoPo = $this->normalizePoNumber(is_string($poNoFromDb) ? $poNoFromDb : null);
+        }
+
+        if ($cleanNoPo === null && $purchaseOrderIssuedId === null) {
+            return null;
+        }
+
+        if ($cleanNoPo !== null && isset($this->poPicMap[$cleanNoPo])) {
+            return $this->poPicMap[$cleanNoPo];
+        }
+
+        if (! Schema::hasTable('invoicing_receipts')) {
+            return null;
+        }
+
+        $hasPoIssuedTable = Schema::hasTable('purchase_order_issueds');
+
+        $query = InvoicingReceipt::query()
+            ->whereNotNull('pic_id');
+
+        if ($excludeReceiptId !== null) {
+            $query->where('id', '!=', $excludeReceiptId);
+        }
+
+        $query->where(function ($q) use ($cleanNoPo, $purchaseOrderIssuedId, $hasPoIssuedTable) {
+            if ($cleanNoPo !== null) {
+                $q->where('no_po', $cleanNoPo);
+
+                if ($hasPoIssuedTable) {
+                    $q->orWhereIn(
+                        'purchase_order_issued_id',
+                        PurchaseOrderIssued::query()
+                            ->where('purchase_order_no', $cleanNoPo)
+                            ->select('id')
+                    );
+                }
+            }
+
+            if ($purchaseOrderIssuedId !== null) {
+                if ($cleanNoPo !== null) {
+                    $q->orWhere('purchase_order_issued_id', $purchaseOrderIssuedId);
+                } else {
+                    $q->where('purchase_order_issued_id', $purchaseOrderIssuedId);
+                }
+            }
+        });
+
+        $candidatePicIds = $query
+            ->orderByDesc('id')
+            ->pluck('pic_id')
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->values();
+
+        foreach ($candidatePicIds as $candidatePicId) {
+            if ($this->isPicUserEligible($candidatePicId)) {
+                if ($cleanNoPo !== null) {
+                    $this->poPicMap[$cleanNoPo] = $candidatePicId;
+                }
+
+                return $candidatePicId;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Tentukan PIC untuk dokumen Invoicing:
-     * - Jika material_type kosong, null, atau 'none' -> Dinormalkan sebagai 'Non Stock'.
-     * - Jika material_type terdaftar di PicMaterialAssignment (termasuk 'Non Stock'):
-     *     - Jika mode 'user':
-     *         - Pertama, cek apakah ada conditional_rules (aturan pengecualian kode material / keyword deskripsi).
-     *           Jika cocok, tugaskan ke user_ids aturan tersebut (dibagi rata jika > 1).
-     *         - Jika tidak ada aturan tambahan yang cocok, fallback ke PIC utama (users).
-     *     - Jika mode 'free_pool' -> dibagikan secara merata ke seluruh pengguna ber-role Staff Invoice.
-     * - Jika rule tidak ditemukan -> Bagi rata ke Staff Invoice.
+     * - Prioritas 0 (Konsistensi PO): Jika Nomor PO sudah pernah memiliki PIC pada dokumen Invoicing sebelumnya,
+     *   maka dokumen baru pada PO yang sama wajib tetap ditugaskan ke PIC tersebut.
+     * - Jika PO belum memiliki PIC sebelumnya:
+     *     - Jika material_type kosong, null, atau 'none' -> Dinormalkan sebagai 'Non Stock'.
+     *     - Jika material_type terdaftar di PicMaterialAssignment (termasuk 'Non Stock'):
+     *         - Jika mode 'user':
+     *             - Pertama, cek apakah ada conditional_rules (aturan pengecualian kode material / keyword deskripsi).
+     *               Jika cocok, tugaskan ke user_ids aturan tersebut (dibagi rata jika > 1).
+     *             - Jika tidak ada aturan tambahan yang cocok, fallback ke PIC utama (users).
+     *         - Jika mode 'free_pool' -> dibagikan secara merata ke seluruh pengguna ber-role Staff Invoice.
+     *     - Jika rule tidak ditemukan -> Bagi rata ke Staff Invoice.
      *
      * @param  string|array<string>|null  $materialCode
      * @param  string|array<string>|null  $description
      */
-    public function determinePicId(?string $materialType, string|array|null $materialCode = null, string|array|null $description = null): ?int
+    public function determinePicId(
+        ?string $materialType,
+        string|array|null $materialCode = null,
+        string|array|null $description = null,
+        ?string $noPo = null,
+        ?int $purchaseOrderIssuedId = null,
+    ): ?int {
+        $cleanNoPo = $this->normalizePoNumber($noPo);
+
+        // 0. Konsistensi PIC per PO: jika PO ini sudah ada PIC-nya sebelumnya, tetap gunakan PIC tersebut
+        $existingPicId = $this->resolveExistingPicForPo($cleanNoPo, $purchaseOrderIssuedId);
+        if ($existingPicId !== null) {
+            if ($this->staffWorkloads !== null && isset($this->staffWorkloads[$existingPicId])) {
+                $this->staffWorkloads[$existingPicId]++;
+            }
+
+            return $existingPicId;
+        }
+
+        $assignedPicId = $this->resolvePicByRules($materialType, $materialCode, $description);
+
+        if ($assignedPicId !== null && $cleanNoPo !== null) {
+            $this->poPicMap[$cleanNoPo] = $assignedPicId;
+        }
+
+        return $assignedPicId;
+    }
+
+    /**
+     * Evaluasi aturan penugasan PIC berdasarkan tipe material, kode material, deskripsi, atau round-robin.
+     *
+     * @param  string|array<string>|null  $materialCode
+     * @param  string|array<string>|null  $description
+     */
+    protected function resolvePicByRules(?string $materialType, string|array|null $materialCode = null, string|array|null $description = null): ?int
     {
         $cleanType = InvoicingReceipt::normalizeMaterialType($materialType);
 
@@ -205,7 +378,8 @@ class InvoicingAssignmentService
     }
 
     /**
-     * Membagikan kumpulan dokumen InvoicingReceipt secara merata ke seluruh Staff Invoice.
+     * Membagikan kumpulan dokumen InvoicingReceipt secara merata ke seluruh Staff Invoice,
+     * dengan tetap mempertahankan PIC yang sama untuk dokumen dengan Nomor PO yang sama.
      *
      * @param  iterable<InvoicingReceipt>  $records
      * @return int Jumlah dokumen yang berhasil dibagikan
@@ -214,9 +388,27 @@ class InvoicingAssignmentService
     {
         $count = 0;
         foreach ($records as $record) {
-            $nextPicId = $this->getNextStaffInvoiceId();
+            $cleanNoPo = $this->normalizePoNumber($record->no_po ?? null);
+            $existingPicId = $this->resolveExistingPicForPo(
+                $cleanNoPo,
+                $record->purchase_order_issued_id ?? null,
+                $record->id ?? null
+            );
+
+            if ($existingPicId !== null) {
+                if ($this->staffWorkloads !== null && isset($this->staffWorkloads[$existingPicId])) {
+                    $this->staffWorkloads[$existingPicId]++;
+                }
+                $nextPicId = $existingPicId;
+            } else {
+                $nextPicId = $this->getNextStaffInvoiceId();
+            }
+
             if ($nextPicId) {
                 $record->update(['pic_id' => $nextPicId]);
+                if ($cleanNoPo !== null) {
+                    $this->poPicMap[$cleanNoPo] = $nextPicId;
+                }
                 $count++;
             }
         }

@@ -786,7 +786,7 @@ class InvoicingCsvImportService
         // Tentukan PIC jika belum ada
         $picId = $receipt->pic_id;
         if (! $picId) {
-            $picId = $this->resolvePicId($createdByName, $cleanMaterialType, $doDetails, $poRecord, $deskripsi);
+            $picId = $this->resolvePicId($createdByName, $cleanMaterialType, $doDetails, $poRecord, $deskripsi, $noPo);
         }
 
         // Nomor DO: gunakan yang tercatat dari CSV atau dari DO yang ter-link
@@ -1054,7 +1054,8 @@ class InvoicingCsvImportService
         ?string $materialType,
         Collection $doDetails,
         ?PurchaseOrderIssued $poRecord,
-        ?string $description
+        ?string $description,
+        ?string $noPo = null
     ): ?int {
         if ($createdByName) {
             $staffUser = User::where('is_active', true)
@@ -1075,7 +1076,13 @@ class InvoicingCsvImportService
             ? $doDetails->pluck('description')->filter()->values()->all()
             : array_filter([$poRecord?->description, $description]);
 
-        return $this->assignmentService->determinePicId($materialType, $materialCodes, $descriptions);
+        return $this->assignmentService->determinePicId(
+            $materialType,
+            $materialCodes,
+            $descriptions,
+            $noPo ?? $poRecord?->purchase_order_no,
+            $poRecord?->id
+        );
     }
 
     protected function normalizeDoNumber(string $doNo): string

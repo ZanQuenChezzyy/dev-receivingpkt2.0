@@ -1740,3 +1740,236 @@ test('qty_penagihan and qty_po suffix closures accept InvoicingReceiptItem witho
         }
     }
 });
+
+test('invoicing assignment service keeps the same PIC when a PO already has an assigned PIC from a previous GRS or RDTV upload', function () {
+    ensurePicAssignmentTablesExist();
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    try {
+        DB::table('invoicing_receipts')->delete();
+
+        // Simulasi: Hari pertama PO 5300066534 (3 dari 4 material) sudah masuk dan ditugaskan ke Andereyan Muhammat (User ID 101)
+        InvoicingReceipt::create([
+            'no_po' => '5300066534',
+            'no_do' => 'DO-TAHAP-1',
+            'no_grs' => '5000111001',
+            'jenis' => 'GRS',
+            'material_type' => 'ZSP',
+            'pic_id' => 101, // Andereyan Muhammat
+            'status' => 'Menunggu Verifikasi',
+        ]);
+
+        // Hari berikutnya: Beban kerja Andereyan (101) = 5, sedangkan Staff lain (102, 103) = 0
+        $service = new InvoicingAssignmentService;
+        $service->setStaffWorkloads([
+            101 => 5, // Andereyan Muhammat
+            102 => 0, // Staff Invoice B
+            103 => 0, // Staff Invoice C
+        ]);
+
+        // Saat GRS tahap terakhir untuk PO 5300066534 diunggah, PIC harus tetap Andereyan Muhammat (101), bukan ke 102/103
+        $assignedForSamePo = $service->determinePicId('ZSP', 'MAT-004', 'Material Keempat', '5300066534');
+        expect($assignedForSamePo)->toBe(101);
+
+        // Sedangkan untuk PO baru (5300099999) yang belum punya PIC, sistem tetap membagi ke beban kerja terendah (102)
+        $assignedForNewPo = $service->determinePicId('ZSP', 'MAT-001', 'Material Baru', '5300099999');
+        expect($assignedForNewPo)->toBe(102);
+
+        // Jika PO 5300099999 mengunggah GRS susulan di sesi yang sama, tetap ke 102
+        $secondUploadForNewPo = $service->determinePicId('ZSP', 'MAT-002', 'Material Kedua', '5300099999');
+        expect($secondUploadForNewPo)->toBe(102);
+    } finally {
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});
+
+test('CreateGrsRdtv assigns subsequent GRS uploads of the same PO to the existing PIC instead of a different staff member', function () {
+    ensurePicAssignmentTablesExist();
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    $createdExtraTables = [];
+    if (! Illuminate\Support\Facades\Schema::hasTable('vendors')) {
+        $createdExtraTables[] = 'vendors';
+        Illuminate\Support\Facades\Schema::create('vendors', function ($table) {
+            $table->id();
+            $table->string('vendor_number')->nullable();
+            $table->string('name')->nullable();
+            $table->string('email')->nullable();
+            $table->timestamps();
+        });
+    }
+    if (! Illuminate\Support\Facades\Schema::hasTable('purchase_order_issueds')) {
+        $createdExtraTables[] = 'purchase_order_issueds';
+        Illuminate\Support\Facades\Schema::create('purchase_order_issueds', function ($table) {
+            $table->id();
+            $table->string('purchase_order_no')->nullable();
+            $table->string('vendor_id')->nullable();
+            $table->string('vendor_name')->nullable();
+            $table->string('material_code')->nullable();
+            $table->string('description')->nullable();
+            $table->string('material_type')->nullable();
+            $table->decimal('qty_po', 15, 2)->nullable();
+            $table->string('uoi')->nullable();
+            $table->decimal('total_amount_in_lc', 18, 2)->nullable();
+            $table->timestamps();
+        });
+    }
+    if (! Illuminate\Support\Facades\Schema::hasTable('delivery_order_receipts')) {
+        $createdExtraTables[] = 'delivery_order_receipts';
+        Illuminate\Support\Facades\Schema::create('delivery_order_receipts', function ($table) {
+            $table->id();
+            $table->string('delivery_order_no')->nullable();
+            $table->string('document_code')->nullable();
+            $table->string('status')->nullable();
+            $table->string('delay_reason')->nullable();
+            $table->text('delay_notes')->nullable();
+            $table->timestamps();
+        });
+    }
+    if (! Illuminate\Support\Facades\Schema::hasTable('delivery_order_receipt_details')) {
+        $createdExtraTables[] = 'delivery_order_receipt_details';
+        Illuminate\Support\Facades\Schema::create('delivery_order_receipt_details', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_id');
+            $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
+            $table->string('material_code')->nullable();
+            $table->string('description')->nullable();
+            $table->string('material_type')->nullable();
+            $table->decimal('quantity', 15, 2)->nullable();
+            $table->string('uoi')->nullable();
+            $table->decimal('total_amount_snapshot', 18, 2)->nullable();
+            $table->timestamps();
+        });
+    }
+    if (! Illuminate\Support\Facades\Schema::hasTable('grs_rdtv_items')) {
+        $createdExtraTables[] = 'grs_rdtv_items';
+        Illuminate\Support\Facades\Schema::create('grs_rdtv_items', function ($table) {
+            $table->id();
+            $table->unsignedBigInteger('grs_rdtv_id')->nullable();
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->string('document_code')->nullable();
+            $table->string('file_path')->nullable();
+            $table->string('status')->nullable();
+            $table->text('reason')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    try {
+        DB::table('invoicing_receipts')->delete();
+
+        $service = new InvoicingAssignmentService;
+        $service->setStaffWorkloads([
+            101 => 0, // Andereyan Muhammat
+            102 => 0, // Staff Lain
+        ]);
+        app()->instance(InvoicingAssignmentService::class, $service);
+
+        $poItem1 = PurchaseOrderIssued::create([
+            'purchase_order_no' => '5300066534',
+            'material_code' => 'MAT-10',
+            'description' => 'Material Tahap 1-3',
+            'qty_po' => 3,
+            'uoi' => 'EA',
+        ]);
+        $poItem4 = PurchaseOrderIssued::create([
+            'purchase_order_no' => '5300066534',
+            'material_code' => 'MAT-40',
+            'description' => 'Material Tahap 4 Terakhir',
+            'qty_po' => 1,
+            'uoi' => 'EA',
+        ]);
+
+        // DO 1 (3 material pertama)
+        $do1 = DeliveryOrderReceipt::create([
+            'delivery_order_no' => 'SJ-66534-1',
+            'document_code' => 'DOC-66534-1',
+            'status' => 'GRS',
+        ]);
+        DB::table('delivery_order_receipt_details')->insert([
+            'delivery_order_receipt_id' => $do1->id,
+            'purchase_order_issued_id' => $poItem1->id,
+            'material_code' => 'MAT-10',
+            'description' => 'Material Tahap 1-3',
+            'material_type' => 'ZSP',
+            'quantity' => 3,
+            'uoi' => 'EA',
+        ]);
+        $grsItem1 = GrsRdtvItem::create([
+            'grs_rdtv_id' => 1,
+            'delivery_order_receipt_id' => $do1->id,
+            'document_code' => 'DOC-66534-1',
+            'file_path' => 'grs-rdtv-docs/DOC-66534-1.jpg',
+            'status' => 'Matched',
+        ]);
+
+        // DO 2 (material ke-4 di hari berikutnya, terhubung ke baris item PO ke-4 dengan nomor PO yang sama 5300066534)
+        $do2 = DeliveryOrderReceipt::create([
+            'delivery_order_no' => 'SJ-66534-2',
+            'document_code' => 'DOC-66534-2',
+            'status' => 'GRS',
+        ]);
+        DB::table('delivery_order_receipt_details')->insert([
+            'delivery_order_receipt_id' => $do2->id,
+            'purchase_order_issued_id' => $poItem4->id,
+            'material_code' => 'MAT-40',
+            'description' => 'Material Tahap 4 Terakhir',
+            'material_type' => 'ZSP',
+            'quantity' => 1,
+            'uoi' => 'EA',
+        ]);
+        $grsItem2 = GrsRdtvItem::create([
+            'grs_rdtv_id' => 2,
+            'delivery_order_receipt_id' => $do2->id,
+            'document_code' => 'DOC-66534-2',
+            'file_path' => 'grs-rdtv-docs/DOC-66534-2.jpg',
+            'status' => 'Matched',
+        ]);
+
+        $page = new class extends CreateGrsRdtv
+        {
+            public function createForTest(GrsRdtvItem $item, DeliveryOrderReceipt $do, string $category, string $date): void
+            {
+                $this->createInvoicingReceiptFor($item, $do, $category, $date);
+            }
+        };
+
+        // Upload GRS 1 (Hari 1) -> jatuh ke PIC 101 (Andereyan Muhammat)
+        $page->createForTest($grsItem1, $do1, 'GRS', '2026-11-20');
+
+        // Simulasi hari berikutnya dengan instance service baru (seperti request HTTP baru)
+        $nextDayService = new InvoicingAssignmentService;
+        $nextDayService->setStaffWorkloads([
+            101 => 10, // Andereyan sudah punya beban 10
+            102 => 0,  // Staff lain bebannya 0
+        ]);
+        app()->instance(InvoicingAssignmentService::class, $nextDayService);
+
+        $nextDayPage = new class extends CreateGrsRdtv
+        {
+            public function createForTest(GrsRdtvItem $item, DeliveryOrderReceipt $do, string $category, string $date): void
+            {
+                $this->createInvoicingReceiptFor($item, $do, $category, $date);
+            }
+        };
+
+        // Upload GRS 2 (Hari 2) untuk PO 5300066534 -> harus tetap ke PIC 101 (Andereyan Muhammat)
+        $nextDayPage->createForTest($grsItem2, $do2, 'GRS', '2026-11-21');
+
+        $receipts = InvoicingReceipt::where('no_po', '5300066534')->orderBy('id')->get();
+        expect($receipts)->toHaveCount(2)
+            ->and($receipts[0]->pic_id)->toBe(101)
+            ->and($receipts[1]->pic_id)->toBe(101);
+    } finally {
+        foreach (array_reverse($createdExtraTables) as $tableName) {
+            Illuminate\Support\Facades\Schema::dropIfExists($tableName);
+        }
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});

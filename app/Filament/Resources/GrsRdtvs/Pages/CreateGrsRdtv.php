@@ -393,6 +393,21 @@ class CreateGrsRdtv extends CreateRecord
         $firstDetail = $details->first();
         $po = $firstDetail?->purchaseOrderIssued;
 
+        // Ekstraksi data otomatis dari berkas PDF GRS / RDTV jika tersedia
+        $parsedPdf = null;
+        if ($grsRdtvItem->file_path && strtolower(pathinfo($grsRdtvItem->file_path, PATHINFO_EXTENSION)) === 'pdf') {
+            $fullPath = Storage::disk('public')->path($grsRdtvItem->file_path);
+            if (file_exists($fullPath)) {
+                try {
+                    $parsedPdf = app(GrsPdfParserService::class)->parse($fullPath);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+        }
+
+        $resolvedNoPo = $po?->purchase_order_no ?? ($parsedPdf['no_po'] ?? null);
+
         $rawMaterialType = $firstDetail?->material_type ?? $po?->material_type;
         $materialType = InvoicingReceipt::normalizeMaterialType($rawMaterialType);
 
@@ -403,11 +418,17 @@ class CreateGrsRdtv extends CreateRecord
 
         $descriptions = $details->isNotEmpty()
             ? $details->pluck('description')->filter()->values()->all()
-            : array_filter([$po?->description]);
+            : array_filter([$po?->description, $parsedPdf['nama_barang'] ?? null]);
 
-        // Tentukan PIC: jika tipe material none atau kosong, bagi rata ke Staff Invoice
-        // Jika ada aturan pengecualian (kode material / kata kunci deskripsi), sistem akan mengalihkan ke PIC yang sesuai
-        $picId = $this->getAssignmentService()->determinePicId($materialType, $materialCodes, $descriptions);
+        // Tentukan PIC: jika PO sudah punya PIC sebelumnya, tetap gunakan PIC tersebut.
+        // Jika belum, ikuti aturan tipe material / pengecualian / bagi rata ke Staff Invoice.
+        $picId = $this->getAssignmentService()->determinePicId(
+            $materialType,
+            $materialCodes,
+            $descriptions,
+            $resolvedNoPo,
+            $po?->id
+        );
 
         // Lookup data vendor di master Vendor
         $vendor = null;
@@ -427,19 +448,6 @@ class CreateGrsRdtv extends CreateRecord
         $subtotalExclude = ($details->isNotEmpty() && $sumSnapshot > 0)
             ? (float) $sumSnapshot
             : (float) ($po?->total_amount_in_lc ?? 0);
-
-        // Ekstraksi data otomatis dari berkas PDF GRS / RDTV jika tersedia
-        $parsedPdf = null;
-        if ($grsRdtvItem->file_path && strtolower(pathinfo($grsRdtvItem->file_path, PATHINFO_EXTENSION)) === 'pdf') {
-            $fullPath = Storage::disk('public')->path($grsRdtvItem->file_path);
-            if (file_exists($fullPath)) {
-                try {
-                    $parsedPdf = app(GrsPdfParserService::class)->parse($fullPath);
-                } catch (\Throwable $e) {
-                    report($e);
-                }
-            }
-        }
 
         if ($subtotalExclude <= 0 && ! empty($parsedPdf['subtotal_exclude_ppn'])) {
             $subtotalExclude = (float) $parsedPdf['subtotal_exclude_ppn'];
