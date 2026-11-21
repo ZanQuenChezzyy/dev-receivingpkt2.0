@@ -43,6 +43,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 class InvoicingReceiptsTable
@@ -50,17 +51,22 @@ class InvoicingReceiptsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordClasses(fn (InvoicingReceipt $record): ?string => $record->jenis === 'RDTV'
+                ? 'border-l-4 border-l-rose-500/70 bg-rose-50/30 dark:bg-rose-950/15'
+                : null)
             ->columns([
                 ColumnGroup::make('Dokumen Utama & PIC', [
                     TextColumn::make('tanggal_terima_grs')
-                        ->label('Tanggal Terima GRS')
+                        ->label('Tgl Terima GRS/RDTV')
                         ->date('d/m/Y')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tgl RDTV Belum Ada' : 'Tgl GRS Belum Ada')
                         ->icon('heroicon-m-calendar')
-                        ->iconColor('primary')
+                        ->iconColor(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'danger' : 'primary')
                         ->sortable(),
 
                     TextColumn::make('no_po')
                         ->label('No. PO')
+                        ->placeholder('No. PO Belum Ada')
                         ->weight(FontWeight::Bold)
                         ->color('primary')
                         ->icon('heroicon-m-document-duplicate')
@@ -71,13 +77,19 @@ class InvoicingReceiptsTable
 
                     TextColumn::make('no_grs')
                         ->label('No. GRS/RDTV')
-                        ->state(fn (InvoicingReceipt $record): string => match ($record->jenis) {
-                            'RDTV' => $record->no_rdtv ?: ($record->no_grs ?: '-'),
-                            default => $record->no_grs ?: ($record->no_rdtv ?: '-'),
+                        ->state(fn (InvoicingReceipt $record): ?string => match ($record->jenis) {
+                            'RDTV' => filled($record->no_rdtv) ? $record->no_rdtv : (filled($record->no_grs) ? $record->no_grs : null),
+                            default => filled($record->no_grs) ? $record->no_grs : null,
                         })
-                        ->description(fn (InvoicingReceipt $record): ?string => $record->jenis)
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'No. RDTV Belum Ada' : 'No. GRS Belum Ada')
+                        ->color(fn (InvoicingReceipt $record): ?string => $record->jenis === 'RDTV' ? 'danger' : null)
+                        ->description(fn (InvoicingReceipt $record): HtmlString => new HtmlString(
+                            $record->jenis === 'RDTV'
+                                ? "<span class='text-[11px] font-bold text-rose-600 dark:text-rose-400'>RDTV (Retur Material)</span>"
+                                : "<span class='text-[11px] font-semibold text-emerald-600 dark:text-emerald-400'>GRS</span>"
+                        ))
                         ->copyable()
-                        ->copyableState(fn (InvoicingReceipt $record): string => ($record->jenis === 'RDTV' ? ($record->no_rdtv ?: $record->no_grs) : ($record->no_grs ?: $record->no_rdtv)) ?: '')
+                        ->copyableState(fn (InvoicingReceipt $record): string => ($record->jenis === 'RDTV' ? ($record->no_rdtv ?: $record->no_grs) : $record->no_grs) ?: '')
                         ->copyMessage('Nomor GRS/RDTV disalin')
                         ->searchable(query: function (Builder $query, string $search): Builder {
                             return $query->where(function ($q) use ($search) {
@@ -136,6 +148,7 @@ class InvoicingReceiptsTable
 
                     TextColumn::make('vendor_name')
                         ->label('Nama Vendor')
+                        ->placeholder('Vendor Belum Ada')
                         ->weight(FontWeight::Bold)
                         ->icon('heroicon-m-building-office')
                         ->searchable()
@@ -146,6 +159,7 @@ class InvoicingReceiptsTable
                 ColumnGroup::make('Referensi DO', [
                     TextColumn::make('no_do')
                         ->label('No. DO')
+                        ->placeholder('No. DO Belum Ada')
                         ->icon('heroicon-m-truck')
                         ->copyable()
                         ->copyMessage('Nomor DO disalin')
@@ -156,7 +170,7 @@ class InvoicingReceiptsTable
                         ->label('Kategori')
                         ->badge()
                         ->color('gray')
-                        ->placeholder('-')
+                        ->placeholder('Belum Dikategorikan')
                         ->searchable()
                         ->toggleable(),
 
@@ -172,20 +186,21 @@ class InvoicingReceiptsTable
                 ColumnGroup::make('Data Penagihan & Nilai', [
                     TextColumn::make('no_invoice')
                         ->label('No. Invoice')
-                        ->placeholder('Belum Ada')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tidak Perlu (RDTV)' : 'Invoice Belum Ada')
                         ->copyable()
                         ->copyMessage('No. Invoice disalin')
                         ->searchable(),
 
                     TextColumn::make('faktur_pajak')
                         ->label('Faktur Pajak')
-                        ->placeholder('Belum Ada')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tidak Perlu (RDTV)' : 'Faktur Pajak Belum Ada')
                         ->copyable()
                         ->copyMessage('Faktur Pajak disalin')
                         ->searchable(),
 
                     TextColumn::make('nama_barang')
                         ->label('Nama Barang')
+                        ->placeholder('Nama Barang Belum Ada')
                         ->limit(24)
                         ->tooltip(fn ($record) => $record->nama_barang)
                         ->description(function (InvoicingReceipt $record): ?string {
@@ -197,11 +212,13 @@ class InvoicingReceiptsTable
 
                     TextColumn::make('qty_penagihan')
                         ->label('Qty Tagihan')
-                        ->formatStateUsing(fn ($record) => ($record->qty_penagihan ?? '-').' '.($record->uoi ?? ''))
+                        ->placeholder('Qty Belum Ada')
+                        ->formatStateUsing(fn ($state, InvoicingReceipt $record): string => rtrim(rtrim(number_format((float) $state, 3, ',', '.'), '0'), ',').($record->uoi ? ' '.$record->uoi : ''))
                         ->sortable(),
 
                     TextColumn::make('subtotal_exclude_ppn')
                         ->label('Sub Total (Excl. PPN)')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tidak Ditagihkan (RDTV)' : 'Nilai Belum Ada')
                         ->money('IDR', locale: 'id')
                         ->copyable()
                         ->copyableState(fn ($state) => $state !== null ? (floor((float) $state) == (float) $state ? number_format((float) $state, 0, '', '') : rtrim(rtrim(number_format((float) $state, 2, '.', ''), '0'), '.')) : null)
@@ -209,6 +226,7 @@ class InvoicingReceiptsTable
 
                     TextColumn::make('subtotal_include_ppn')
                         ->label('Sub Total (Incl. PPN)')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tidak Ditagihkan (RDTV)' : 'Nilai Belum Ada')
                         ->money('IDR', locale: 'id')
                         ->weight(FontWeight::Bold)
                         ->color('success')
@@ -220,20 +238,26 @@ class InvoicingReceiptsTable
                 ColumnGroup::make('Status & Timeline', [
                     TextColumn::make('status')
                         ->label('Status')
+                        ->placeholder('Belum Ada Status')
                         ->badge()
-                        ->color(fn (string $state): string => match ($state) {
-                            'Menunggu Verifikasi' => 'warning',
-                            'Terverifikasi' => 'info',
-                            'Terkirim Kasir', 'Selesai' => 'success',
+                        ->color(fn (string $state, InvoicingReceipt $record): string => match (true) {
+                            $record->jenis === 'RDTV' && $state === 'Menunggu Verifikasi' => 'danger',
+                            $state === 'Menunggu Verifikasi' => 'warning',
+                            $state === 'Terverifikasi' => 'info',
+                            in_array($state, ['Terkirim Kasir', 'Selesai'], true) => 'success',
                             default => 'gray',
                         })
-                        ->icon(fn (string $state): string => match ($state) {
-                            'Menunggu Verifikasi' => 'heroicon-m-clock',
-                            'Terverifikasi' => 'heroicon-m-check-badge',
-                            'Terkirim Kasir' => 'heroicon-m-paper-airplane',
-                            'Selesai' => 'heroicon-m-check-circle',
+                        ->icon(fn (string $state, InvoicingReceipt $record): string => match (true) {
+                            $record->jenis === 'RDTV' && $state === 'Menunggu Verifikasi' => 'heroicon-m-exclamation-triangle',
+                            $state === 'Menunggu Verifikasi' => 'heroicon-m-clock',
+                            $state === 'Terverifikasi' => 'heroicon-m-check-badge',
+                            $state === 'Terkirim Kasir' => 'heroicon-m-paper-airplane',
+                            $state === 'Selesai' => 'heroicon-m-check-circle',
                             default => 'heroicon-m-document',
-                        }),
+                        })
+                        ->description(fn (InvoicingReceipt $record): ?string => $record->jenis === 'RDTV'
+                            ? ($record->status === 'Selesai' ? 'RDTV Diinfokan' : 'Perlu Info RDTV')
+                            : null),
 
                     TextColumn::make('tanggal_kirim_kasir')
                         ->label('Tgl Kirim Kasir')
@@ -250,6 +274,7 @@ class InvoicingReceiptsTable
 
                     TextColumn::make('lama_pekerjaan')
                         ->label('Lama Pekerjaan')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tidak Dihitung (RDTV)' : 'Belum Dihitung')
                         ->badge()
                         ->suffix(' Hari')
                         ->color(fn ($state) => $state > 3 ? 'danger' : 'info')
@@ -257,60 +282,66 @@ class InvoicingReceiptsTable
                         ->sortable(),
 
                     TextColumn::make('grsRdtvItem.file_path')
-                        ->label('Dokumen GRS')
-                        ->formatStateUsing(fn ($state) => $state ? 'Ada Dokumen GRS' : 'Belum Ada')
-                        ->badge()
-                        ->color(fn ($state) => $state ? 'info' : 'gray')
-                        ->icon(fn ($state) => $state ? 'heroicon-m-document-text' : null)
-                        ->url(fn ($record) => $record->grsRdtvItem?->file_path ? Storage::url($record->grsRdtvItem->file_path) : null)
+                        ->label('Dokumen GRS/RDTV')
+                        ->state(fn (InvoicingReceipt $record): ?string => $record->grsRdtvItem?->file_path ?: ($record->dokumen_grs ?: null))
+                        ->formatStateUsing(fn (): string => 'Lihat Dokumen')
+                        ->placeholder(fn (InvoicingReceipt $record): string => match ($record->jenis) {
+                            'RDTV' => 'RDTV Belum Diupload',
+                            'GRS' => 'GRS Belum Diupload',
+                            default => 'GRS/RDTV Belum Diupload',
+                        })
+                        ->color(fn ($state, InvoicingReceipt $record): string => $state ? ($record->jenis === 'RDTV' ? 'danger' : 'primary') : 'gray')
+                        ->weight(fn ($state): ?FontWeight => $state ? FontWeight::SemiBold : null)
+                        ->icon(fn ($state): ?string => $state ? 'heroicon-m-arrow-top-right-on-square' : null)
+                        ->extraAttributes(fn ($state): array => $state ? ['class' => 'underline decoration-dotted underline-offset-4 hover:decoration-solid cursor-pointer'] : [])
+                        ->url(function (InvoicingReceipt $record): ?string {
+                            $filePath = $record->grsRdtvItem?->file_path ?: $record->dokumen_grs;
+
+                            return $filePath ? Storage::disk('public')->url($filePath) : null;
+                        })
                         ->openUrlInNewTab()
-                        ->tooltip('Berkas Goods Receipt Slip (GRS / RDTV) fisik penerimaan gudang dari modul GRS/RDTV.'),
+                        ->tooltip(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV'
+                            ? 'Klik untuk membuka berkas Return Delivery to Vendor (RDTV) dari modul GRS/RDTV.'
+                            : 'Klik untuk membuka berkas Goods Receipt Slip (GRS) dari modul GRS/RDTV.'),
 
                     TextColumn::make('dokumen_verifikasi_grs')
                         ->label('Verifikasi GRS')
-                        ->formatStateUsing(function ($state, InvoicingReceipt $record) {
-                            if (! $state) {
-                                return 'Belum Ada';
+                        ->state(function (InvoicingReceipt $record): ?string {
+                            if (! $record->dokumen_verifikasi_grs) {
+                                return null;
                             }
                             // Jika terisi file slip GRS gudang, bukan surat verifikasi resmi
-                            if ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state) {
-                                return 'Belum Ada';
-                            }
-
-                            return 'Terverifikasi';
-                        })
-                        ->badge()
-                        ->color(function ($state, InvoicingReceipt $record) {
-                            if (! $state || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state)) {
-                                return 'gray';
-                            }
-
-                            return 'success';
-                        })
-                        ->icon(function ($state, InvoicingReceipt $record) {
-                            if (! $state || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $state)) {
+                            if ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $record->dokumen_verifikasi_grs) {
                                 return null;
                             }
 
-                            return 'heroicon-m-check-badge';
+                            return $record->dokumen_verifikasi_grs;
                         })
-                        ->url(function (InvoicingReceipt $record) {
+                        ->formatStateUsing(fn (): string => 'Lihat Verifikasi')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tidak Perlu (RDTV)' : 'Verifikasi Belum Diupload')
+                        ->color(fn ($state): string => $state ? 'success' : 'gray')
+                        ->weight(fn ($state): ?FontWeight => $state ? FontWeight::SemiBold : null)
+                        ->icon(fn ($state): ?string => $state ? 'heroicon-m-check-badge' : null)
+                        ->extraAttributes(fn ($state): array => $state ? ['class' => 'underline decoration-dotted underline-offset-4 hover:decoration-solid cursor-pointer'] : [])
+                        ->url(function (InvoicingReceipt $record): ?string {
                             if (! $record->dokumen_verifikasi_grs || ($record->grsRdtvItem && $record->grsRdtvItem->file_path === $record->dokumen_verifikasi_grs)) {
                                 return null;
                             }
 
-                            return Storage::url($record->dokumen_verifikasi_grs);
+                            return Storage::disk('public')->url($record->dokumen_verifikasi_grs);
                         })
                         ->openUrlInNewTab()
                         ->tooltip('Surat Verifikasi Penerimaan Barang resmi yang telah disetujui / ditandatangani VP.'),
 
                     TextColumn::make('dokumen_invoice')
                         ->label('Berkas Inv.')
-                        ->formatStateUsing(fn ($state) => $state ? 'Ada Berkas' : 'Belum Ada')
-                        ->badge()
-                        ->color(fn ($state) => $state ? 'primary' : 'gray')
-                        ->icon(fn ($state) => $state ? 'heroicon-m-arrow-top-right-on-square' : null)
-                        ->url(fn ($record) => $record->dokumen_invoice ? Storage::url($record->dokumen_invoice) : null)
+                        ->formatStateUsing(fn (): string => 'Lihat Berkas')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tidak Perlu (RDTV)' : 'Invoice Belum Diupload')
+                        ->color(fn ($state): string => $state ? 'primary' : 'gray')
+                        ->weight(fn ($state): ?FontWeight => $state ? FontWeight::SemiBold : null)
+                        ->icon(fn ($state): ?string => $state ? 'heroicon-m-arrow-top-right-on-square' : null)
+                        ->extraAttributes(fn ($state): array => $state ? ['class' => 'underline decoration-dotted underline-offset-4 hover:decoration-solid cursor-pointer'] : [])
+                        ->url(fn (InvoicingReceipt $record): ?string => $record->dokumen_invoice ? Storage::disk('public')->url($record->dokumen_invoice) : null)
                         ->openUrlInNewTab()
                         ->tooltip('Berkas invoice fisik/resmi dari vendor.'),
                 ]),
@@ -319,30 +350,31 @@ class InvoicingReceiptsTable
                 TextColumn::make('tanggal_terima_koreksi_invoice')
                     ->label('Tanggal Terima Invoice')
                     ->date('d/m/Y')
-                    ->placeholder('-')
+                    ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tidak Perlu (RDTV)' : 'Belum Diterima')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('jenis')
                     ->label('Jenis')
+                    ->placeholder('Belum Ditentukan')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'GRS' => 'success',
-                        'RDTV' => 'warning',
+                        'RDTV' => 'danger',
                         default => 'gray',
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('tanggal_info_grs')
-                    ->label('Tgl Info GRS')
+                    ->label('Tgl Info GRS/RDTV')
                     ->date('d/m/Y')
-                    ->placeholder('Belum Diinfokan')
+                    ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'RDTV Belum Diinfokan' : 'GRS Belum Diinfokan')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('no_rdtv')
                     ->label('No. RDTV Khusus')
-                    ->placeholder('-')
+                    ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'No. RDTV Belum Ada' : 'Bukan RDTV')
                     ->copyable()
                     ->copyMessage('No. RDTV disalin')
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -352,18 +384,20 @@ class InvoicingReceiptsTable
                     ->label('Email Vendor')
                     ->icon('heroicon-m-envelope')
                     ->iconColor('info')
-                    ->placeholder('-')
+                    ->placeholder('Email Belum Ada')
                     ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
 
                 TextColumn::make('qty_po')
                     ->label('Qty di PO')
-                    ->formatStateUsing(fn ($record) => ($record->qty_po ?? '-').' '.($record->uoi ?? ''))
+                    ->placeholder('Qty PO Belum Ada')
+                    ->formatStateUsing(fn ($state, InvoicingReceipt $record): string => rtrim(rtrim(number_format((float) $state, 3, ',', '.'), '0'), ',').($record->uoi ? ' '.$record->uoi : ''))
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('keterangan')
                     ->label('Keterangan')
+                    ->placeholder('Tidak Ada Keterangan')
                     ->limit(25)
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -1036,27 +1070,64 @@ class InvoicingReceiptsTable
                                 ->send();
                         }),
 
-                    // Kirim ke Kasir
+                    // Kirim ke Kasir & Cetak Transmittal
                     Action::make('sendToCashier')
-                        ->label('Kirim ke Kasir')
+                        ->label('Kirim ke Kasir & Cetak Transmittal')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('info')
-                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV' && ! in_array($record?->status, ['Terkirim Kasir', 'Selesai'], true))
-                        ->requiresConfirmation()
-                        ->modalHeading('Kirim Berkas ke Kasir')
-                        ->modalDescription('Sistem akan mengisi Tanggal Kirim Kasir hari ini dan menghitung lama pekerjaan.')
-                        ->action(function (InvoicingReceipt $record) {
+                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV' && blank($record?->tanggal_kirim_kasir))
+                        ->modalHeading(fn (InvoicingReceipt $record): string => "Kirim Berkas ke Kasir — PO: {$record->no_po}")
+                        ->modalDescription('Sistem akan mencatat Tanggal Kirim Kasir, memperbarui status ke Terkirim Kasir, dan langsung membuka PDF Transmittal Pengiriman Invoice ke Dept. Akuntansi.')
+                        ->modalSubmitActionLabel('Kirim & Cetak Transmittal')
+                        ->schema([
+                            DatePicker::make('tanggal_kirim_kasir')
+                                ->label('Tanggal Kirim ke Kasir')
+                                ->native(false)
+                                ->required()
+                                ->default(now()->toDateString()),
+                        ])
+                        ->action(function (InvoicingReceipt $record, array $data, $livewire): void {
+                            $sentDate = $data['tanggal_kirim_kasir'] ?? now()->toDateString();
+
                             $record->update([
-                                'tanggal_kirim_kasir' => now()->toDateString(),
-                                'status' => 'Terkirim Kasir',
+                                'tanggal_kirim_kasir' => $sentDate,
+                                'status' => $record->status === 'Selesai' ? 'Selesai' : 'Terkirim Kasir',
                             ]);
+
+                            $printUrl = route('filament.admin.resources.invoicing-receipts.print_cashier_transmittal', [
+                                'ids' => (string) $record->id,
+                                'sent_date' => $sentDate,
+                            ]);
+
+                            if ($livewire && method_exists($livewire, 'js')) {
+                                $livewire->js('window.open('.json_encode($printUrl).', "_blank");');
+                            }
 
                             Notification::make()
                                 ->title('Terkirim ke Kasir')
-                                ->body("Dokumen PO {$record->no_po} telah diserahkan ke bagian Kasir.")
+                                ->body("Dokumen PO {$record->no_po} telah diserahkan ke Dept. Akuntansi / Kasir.")
+                                ->actions([
+                                    Action::make('openCashierTransmittalPdf')
+                                        ->label('Cetak Transmittal PDF')
+                                        ->button()
+                                        ->url($printUrl)
+                                        ->openUrlInNewTab(),
+                                ])
                                 ->success()
                                 ->send();
                         }),
+
+                    // Cetak Ulang Transmittal Kasir (untuk GRS yang sudah dikirim / selesai)
+                    Action::make('printCashierTransmittal')
+                        ->label('Cetak Transmittal Kasir')
+                        ->icon('heroicon-o-printer')
+                        ->color('gray')
+                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV' && (filled($record?->tanggal_kirim_kasir) || in_array($record?->status, ['Terkirim Kasir', 'Selesai'], true)))
+                        ->url(fn (InvoicingReceipt $record): string => route('filament.admin.resources.invoicing-receipts.print_cashier_transmittal', [
+                            'ids' => (string) $record->id,
+                            'sent_date' => $record->tanggal_kirim_kasir?->toDateString(),
+                        ]))
+                        ->openUrlInNewTab(),
 
                     ViewAction::make(),
                     EditAction::make(),
@@ -1075,6 +1146,112 @@ class InvoicingReceiptsTable
             ], position: RecordActionsPosition::BeforeCells)
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('sendToCashierBulk')
+                        ->label('Kirim ke Kasir & Cetak Transmittal')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('info')
+                        ->modalHeading('Kirim Berkas Invoice ke Kasir & Cetak Transmittal')
+                        ->modalDescription('Seluruh dokumen GRS terpilih akan dicatat tanggal kirim kasirnya (dokumen RDTV otomatis dilewati) dan dicetak dalam 1 Transmittal Pengiriman Invoice ke Dept. Akuntansi.')
+                        ->modalSubmitActionLabel('Kirim & Cetak Transmittal')
+                        ->schema([
+                            DatePicker::make('tanggal_kirim_kasir')
+                                ->label('Tanggal Kirim ke Kasir')
+                                ->native(false)
+                                ->required()
+                                ->default(now()->toDateString()),
+                        ])
+                        ->action(function (Collection $records, array $data, $livewire): void {
+                            $sentDate = $data['tanggal_kirim_kasir'] ?? now()->toDateString();
+
+                            $grsRecords = $records->filter(fn (InvoicingReceipt $record): bool => $record->jenis !== 'RDTV')->values();
+                            $skippedRdtvCount = $records->count() - $grsRecords->count();
+
+                            if ($grsRecords->isEmpty()) {
+                                Notification::make()
+                                    ->title('Tidak Ada Invoice GRS yang Valid')
+                                    ->body('Dokumen RDTV (retur material) tidak dapat dikirim ke Kasir. Pilih dokumen berjenis GRS.')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $grsRecords->each(function (InvoicingReceipt $record) use ($sentDate): void {
+                                $record->update([
+                                    'tanggal_kirim_kasir' => $sentDate,
+                                    'status' => $record->status === 'Selesai' ? 'Selesai' : 'Terkirim Kasir',
+                                ]);
+                            });
+
+                            $printUrl = route('filament.admin.resources.invoicing-receipts.print_cashier_transmittal', [
+                                'ids' => $grsRecords->pluck('id')->join(','),
+                                'sent_date' => $sentDate,
+                            ]);
+
+                            if ($livewire && method_exists($livewire, 'js')) {
+                                $livewire->js('window.open('.json_encode($printUrl).', "_blank");');
+                            }
+
+                            $body = "Sebanyak {$grsRecords->count()} invoice berhasil dikirim ke Dept. Akuntansi / Kasir.";
+                            if ($skippedRdtvCount > 0) {
+                                $body .= " ({$skippedRdtvCount} dokumen RDTV dilewati otomatis).";
+                            }
+
+                            Notification::make()
+                                ->title('Terkirim ke Kasir & Transmittal Siap')
+                                ->body($body)
+                                ->actions([
+                                    Action::make('openBulkCashierTransmittalPdf')
+                                        ->label('Cetak Transmittal PDF')
+                                        ->button()
+                                        ->url($printUrl)
+                                        ->openUrlInNewTab(),
+                                ])
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    BulkAction::make('printCashierTransmittalBulk')
+                        ->label('Cetak Transmittal Kasir (PDF)')
+                        ->icon('heroicon-o-printer')
+                        ->color('gray')
+                        ->action(function (Collection $records, $livewire): void {
+                            $grsRecords = $records->filter(fn (InvoicingReceipt $record): bool => $record->jenis !== 'RDTV')->values();
+
+                            if ($grsRecords->isEmpty()) {
+                                Notification::make()
+                                    ->title('Tidak Ada Invoice GRS Dipilih')
+                                    ->body('Dokumen RDTV tidak dicetak pada Transmittal Kasir. Pilih minimal satu dokumen GRS.')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $printUrl = route('filament.admin.resources.invoicing-receipts.print_cashier_transmittal', [
+                                'ids' => $grsRecords->pluck('id')->join(','),
+                            ]);
+
+                            if ($livewire && method_exists($livewire, 'js')) {
+                                $livewire->js('window.open('.json_encode($printUrl).', "_blank");');
+                            }
+
+                            Notification::make()
+                                ->title('Transmittal Kasir Siap Dicetak')
+                                ->body("Transmittal untuk {$grsRecords->count()} dokumen invoice telah disiapkan.")
+                                ->actions([
+                                    Action::make('openReprintCashierTransmittalPdf')
+                                        ->label('Buka Transmittal PDF')
+                                        ->button()
+                                        ->url($printUrl)
+                                        ->openUrlInNewTab(),
+                                ])
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
                     BulkAction::make('assignPicBulk')
                         ->label('Tugaskan PIC ke Terpilih')
                         ->icon('heroicon-o-user-plus')

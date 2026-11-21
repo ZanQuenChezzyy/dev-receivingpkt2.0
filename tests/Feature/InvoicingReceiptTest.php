@@ -6,6 +6,7 @@ use App\Filament\Resources\InvoicingReceipts\Schemas\InvoicingReceiptForm;
 use App\Filament\Resources\InvoicingReceipts\Tables\InvoicingReceiptsTable;
 use App\Filament\Resources\InvoicingReceipts\Widgets\InvoicingOverviewWidget;
 use App\Filament\Resources\PicMaterialAssignments\Schemas\PicMaterialAssignmentForm;
+use App\Http\Controllers\Admin\CashierTransmittalPrintController;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
@@ -23,6 +24,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -1966,6 +1968,174 @@ test('CreateGrsRdtv assigns subsequent GRS uploads of the same PO to the existin
     } finally {
         foreach (array_reverse($createdExtraTables) as $tableName) {
             Illuminate\Support\Facades\Schema::dropIfExists($tableName);
+        }
+        if ($createdInvoicingTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
+            Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
+        }
+    }
+});
+
+test('invoicing receipts table shows clickable Lihat Dokumen without badge on Dokumen GRS/RDTV, placeholders for null columns, and separates GRS vs RDTV clearly', function () {
+    $livewire = app(ListInvoicingReceipts::class);
+    $table = new Table($livewire);
+    InvoicingReceiptsTable::configure($table);
+
+    $columns = collect($table->getColumns())->keyBy(fn ($col) => $col->getName());
+
+    // 1. Kolom Dokumen GRS/RDTV tanpa badge, clickable Lihat Dokumen saat ada file, dan placeholder saat null
+    $docCol = $columns->get('grsRdtvItem.file_path');
+    expect($docCol)->not->toBeNull()
+        ->and($docCol->getLabel())->toBe('Dokumen GRS/RDTV')
+        ->and($docCol->isBadge())->toBeFalse();
+
+    $grsWithoutFile = (new InvoicingReceipt)->forceFill([
+        'id' => 501,
+        'jenis' => 'GRS',
+        'no_po' => '5300010001',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $grsWithoutFile->setRelation('grsRdtvItem', null);
+
+    $rdtvWithoutFile = (new InvoicingReceipt)->forceFill([
+        'id' => 502,
+        'jenis' => 'RDTV',
+        'no_po' => '5300010002',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $rdtvWithoutFile->setRelation('grsRdtvItem', null);
+
+    $grsWithFile = (new InvoicingReceipt)->forceFill([
+        'id' => 503,
+        'jenis' => 'GRS',
+        'no_po' => '5300010003',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $grsWithFile->setRelation('grsRdtvItem', (new GrsRdtvItem)->forceFill([
+        'file_path' => 'grs-rdtv-docs/GRS_5300010003.pdf',
+    ]));
+
+    expect($docCol->record($grsWithoutFile)->getPlaceholder())->toBe('GRS Belum Diupload')
+        ->and($docCol->record($rdtvWithoutFile)->getPlaceholder())->toBe('RDTV Belum Diupload')
+        ->and($docCol->record($grsWithFile)->formatState('grs-rdtv-docs/GRS_5300010003.pdf'))->toBe('Lihat Dokumen')
+        ->and($docCol->record($grsWithFile)->getUrl())->toContain('GRS_5300010003.pdf');
+
+    // 2. Placeholder tersedia pada seluruh kolom nullable dan membedakan GRS vs RDTV
+    expect($columns->get('tanggal_terima_grs')->record($grsWithoutFile)->getPlaceholder())->toBe('Tgl GRS Belum Ada')
+        ->and($columns->get('tanggal_terima_grs')->record($rdtvWithoutFile)->getPlaceholder())->toBe('Tgl RDTV Belum Ada')
+        ->and($columns->get('no_grs')->record($grsWithoutFile)->getPlaceholder())->toBe('No. GRS Belum Ada')
+        ->and($columns->get('no_grs')->record($rdtvWithoutFile)->getPlaceholder())->toBe('No. RDTV Belum Ada')
+        ->and($columns->get('no_invoice')->record($grsWithoutFile)->getPlaceholder())->toBe('Invoice Belum Ada')
+        ->and($columns->get('no_invoice')->record($rdtvWithoutFile)->getPlaceholder())->toBe('Tidak Perlu (RDTV)')
+        ->and($columns->get('faktur_pajak')->record($grsWithoutFile)->getPlaceholder())->toBe('Faktur Pajak Belum Ada')
+        ->and($columns->get('faktur_pajak')->record($rdtvWithoutFile)->getPlaceholder())->toBe('Tidak Perlu (RDTV)')
+        ->and($columns->get('subtotal_exclude_ppn')->record($grsWithoutFile)->getPlaceholder())->toBe('Nilai Belum Ada')
+        ->and($columns->get('subtotal_exclude_ppn')->record($rdtvWithoutFile)->getPlaceholder())->toBe('Tidak Ditagihkan (RDTV)')
+        ->and($columns->get('dokumen_verifikasi_grs')->record($grsWithoutFile)->getPlaceholder())->toBe('Verifikasi Belum Diupload')
+        ->and($columns->get('dokumen_verifikasi_grs')->record($rdtvWithoutFile)->getPlaceholder())->toBe('Tidak Perlu (RDTV)')
+        ->and($columns->get('dokumen_invoice')->record($grsWithoutFile)->getPlaceholder())->toBe('Invoice Belum Diupload')
+        ->and($columns->get('dokumen_invoice')->record($rdtvWithoutFile)->getPlaceholder())->toBe('Tidak Perlu (RDTV)')
+        ->and($columns->get('lama_pekerjaan')->record($grsWithoutFile)->getPlaceholder())->toBe('Belum Dihitung')
+        ->and($columns->get('lama_pekerjaan')->record($rdtvWithoutFile)->getPlaceholder())->toBe('Tidak Dihitung (RDTV)');
+
+    // 3. Bulk Actions Kirim ke Kasir & Cetak Transmittal tersedia
+    $toolbarActions = collect($table->getToolbarActions())
+        ->flatMap(fn ($a) => method_exists($a, 'getActions') ? $a->getActions() : [$a])
+        ->keyBy(fn ($a) => method_exists($a, 'getName') ? $a->getName() : null);
+
+    expect($toolbarActions)->toHaveKey('sendToCashierBulk')
+        ->and($toolbarActions)->toHaveKey('printCashierTransmittalBulk');
+});
+
+test('cashier transmittal print controller renders PDF with required columns, destination, watermark, and excludes RDTV', function () {
+    ensurePicAssignmentTablesExist();
+    $createdInvoicingTable = ensureInvoicingReceiptTableExists();
+
+    $createdVendorsTable = false;
+    if (! Illuminate\Support\Facades\Schema::hasTable('vendors')) {
+        $createdVendorsTable = true;
+        Illuminate\Support\Facades\Schema::create('vendors', function ($table) {
+            $table->id();
+            $table->string('vendor_number')->nullable();
+            $table->string('name')->nullable();
+            $table->string('email')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    try {
+        DB::table('invoicing_receipts')->delete();
+
+        $grs1 = InvoicingReceipt::create([
+            'jenis' => 'GRS',
+            'no_po' => '5300077001',
+            'vendor_name' => 'PT Mitra Mandiri Sejahtera',
+            'no_invoice' => 'INV-PKT-2026-001',
+            'faktur_pajak' => '010.001-26.11223344',
+            'subtotal_exclude_ppn' => 15000000,
+            'status' => 'Terkirim Kasir',
+        ]);
+
+        $grs2 = InvoicingReceipt::create([
+            'jenis' => 'GRS',
+            'no_po' => '5300077002',
+            'vendor_name' => 'PT Baja Karya Nusantara',
+            'no_invoice' => 'INV-PKT-2026-002',
+            'faktur_pajak' => '010.001-26.55667788',
+            'subtotal_exclude_ppn' => 25500000,
+            'status' => 'Terkirim Kasir',
+        ]);
+
+        // RDTV yang tidak boleh ikut tercetak di Transmittal Kasir
+        $rdtv = InvoicingReceipt::create([
+            'jenis' => 'RDTV',
+            'no_po' => '5300077999',
+            'vendor_name' => 'PT Retur Material',
+            'no_rdtv' => '4900099999',
+            'status' => 'Menunggu Verifikasi',
+        ]);
+
+        // 1. Verifikasi isi HTML template PDF Transmittal Pengiriman Invoice ke Kasir
+        $html = view('pdf.cashier_transmittal', [
+            'receipts' => collect([$grs1, $grs2]),
+            'printedAt' => now(),
+            'sentDate' => now(),
+            'senderName' => 'Andereyan Muhammat',
+            'totalSubtotalExclude' => 40500000,
+            'watermarkText' => 'Dicetak menggunakan Mokondo V2.0 - dev.receivingpkt.com',
+        ])->render();
+
+        expect($html)
+            ->toContain('TRANSMITTAL PENGIRIMAN INVOICE KE KASIR')
+            ->toContain('DEPARTMENT AKUNTANSI')
+            ->toContain('TANGGAL &amp; WAKTU CETAK')
+            ->toContain('NO. PO')
+            ->toContain('NAMA VENDOR')
+            ->toContain('NO. INVOICE')
+            ->toContain('NO. FAKTUR PAJAK')
+            ->toContain('SUBTOTAL (EXCLUDE PPN)')
+            ->toContain('5300077001')
+            ->toContain('PT Mitra Mandiri Sejahtera')
+            ->toContain('INV-PKT-2026-001')
+            ->toContain('010.001-26.11223344')
+            ->toContain('Rp 15.000.000')
+            ->toContain('Rp 40.500.000')
+            ->toContain('Dicetak menggunakan Mokondo V2.0 - dev.receivingpkt.com');
+
+        // 2. Verifikasi controller menghasilkan respons PDF valid (HTTP 200, application/pdf)
+        $controller = new CashierTransmittalPrintController;
+        $request = Request::create('/admin/invoicing-receipts/print-cashier-transmittal', 'GET', [
+            'ids' => "{$grs1->id},{$grs2->id},{$rdtv->id}",
+            'sent_date' => '2026-11-21',
+        ]);
+
+        $response = $controller->print($request);
+        expect($response->getStatusCode())->toBe(200)
+            ->and($response->headers->get('Content-Type'))->toBe('application/pdf')
+            ->and(substr($response->getContent(), 0, 4))->toBe('%PDF');
+    } finally {
+        if ($createdVendorsTable) {
+            Illuminate\Support\Facades\Schema::dropIfExists('vendors');
         }
         if ($createdInvoicingTable) {
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipt_items');
