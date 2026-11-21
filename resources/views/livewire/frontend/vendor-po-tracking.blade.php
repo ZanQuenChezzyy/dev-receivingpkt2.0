@@ -511,337 +511,346 @@
 
                 <!-- BANNER PERINGATAN RDTV JIKA ADA DOKUMEN RETUR -->
                 @if ($trackingData['has_rdtv'] ?? false)
-                    <div class="p-5 sm:p-6 rounded-3xl bg-rose-500/10 border-2 border-rose-500/30 text-rose-800 dark:text-rose-200 shadow-lg animate-fade-in relative overflow-hidden">
-                        <div class="flex items-start gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30">
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                            </div>
-                            <div class="flex-1 text-xs sm:text-sm">
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1.5">
-                                    <h4 class="font-black text-base sm:text-lg text-rose-700 dark:text-rose-300">
-                                        {{ __('Pemberitahuan Retur Material (RDTV - Return Delivery to Vendor)') }}
-                                    </h4>
-                                    <span class="px-3 py-1 rounded-full text-xs font-black bg-rose-500 text-white w-fit">
+                    <div class="p-4 sm:p-6 lg:p-8 rounded-3xl bg-rose-50/90 dark:bg-[#190d14]/95 border border-rose-200 dark:border-rose-500/30 text-rose-900 dark:text-rose-200 shadow-lg animate-fade-in relative overflow-hidden space-y-4 sm:space-y-5">
+                        <!-- Top Header Row: Icon + Title + Status Pill -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="flex items-start sm:items-center gap-3.5">
+                                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-rose-500/15 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/25">
+                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-600 text-white inline-block mb-1.5 sm:hidden">
                                         {{ __('Ditolak / Retur Material') }}
                                     </span>
+                                    <h4 class="font-black text-base sm:text-lg text-rose-800 dark:text-rose-200 leading-snug">
+                                        {{ __('Pemberitahuan Retur Material (RDTV - Return Delivery to Vendor)') }}
+                                    </h4>
                                 </div>
-                                <p class="leading-relaxed mb-3 text-slate-700 dark:text-slate-300">
-                                    {{ __('Terdapat surat jalan atau item material pada PO ini yang telah diputuskan ditolak / diretur oleh tim Quality Control (QC) dan Gudang Receiving Pupuk Kaltim. Dokumen slip penolakan resmi (RDTV) telah diterbitkan.') }}
-                                </p>
+                            </div>
+                            <span class="hidden sm:inline-flex px-3.5 py-1 rounded-full text-xs font-black bg-rose-600 text-white shrink-0">
+                                {{ __('Ditolak / Retur Material') }}
+                            </span>
+                        </div>
 
-                                @if (!empty($trackingData['rdtv_reasons']))
-                                    <div class="p-3.5 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-rose-500/20 text-xs mb-3 space-y-1.5">
-                                        <span class="font-bold text-rose-700 dark:text-rose-300 block">{{ __('Rincian Surat Jalan & Alasan Penolakan:') }}</span>
-                                        <div class="space-y-1">
-                                            @foreach ($trackingData['rdtv_reasons'] as $rItem)
-                                                <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 text-slate-800 dark:text-slate-200">
-                                                    <span class="font-mono font-bold text-rose-600 dark:text-rose-400 shrink-0">[{{ $rItem['do_no'] }}]</span>
-                                                    <span class="font-medium">{{ $rItem['reason'] }}</span>
+                        <!-- Full-Width Body Content (No Left Indent on Mobile or Desktop) -->
+                        <div class="text-xs sm:text-sm space-y-3.5">
+                            <p class="leading-relaxed text-slate-700 dark:text-slate-300">
+                                {{ __('Terdapat surat jalan atau item material pada PO ini yang telah diputuskan ditolak / diretur oleh tim Quality Control (QC) dan Gudang Receiving Pupuk Kaltim. Dokumen slip penolakan resmi (RDTV) telah diterbitkan.') }}
+                            </p>
+
+                            @if (!empty($trackingData['rdtv_reasons']))
+                                <div class="p-3.5 sm:p-4 rounded-2xl bg-white/90 dark:bg-[#0b1626]/90 border border-rose-200/80 dark:border-rose-500/20 text-xs space-y-2 shadow-2xs">
+                                    <span class="font-bold text-rose-700 dark:text-rose-300 block">{{ __('Rincian Surat Jalan & Alasan Penolakan:') }}</span>
+                                    <div class="space-y-1.5">
+                                        @foreach ($trackingData['rdtv_reasons'] as $rItem)
+                                            <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 text-slate-800 dark:text-slate-200">
+                                                <span class="font-mono font-bold text-rose-600 dark:text-rose-400 shrink-0">[{{ $rItem['do_no'] }}]</span>
+                                                <span class="font-medium leading-relaxed">{{ $rItem['reason'] }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="p-3 sm:p-3.5 rounded-xl bg-rose-500/10 dark:bg-rose-500/10 border border-rose-500/20 text-xs text-slate-700 dark:text-slate-300 flex items-start sm:items-center gap-2.5">
+                                <svg class="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5 sm:mt-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span class="leading-relaxed">{{ __('Silakan unduh dokumen slip RDTV di bagian bawah untuk arsip dan segera hubungi Tim Pengadaan / Receiving PKT untuk koordinasi penggantian atau pengiriman ulang material.') }}</span>
+                            </div>
+
+                            <!-- Form Pengajuan Ulang / Unggah Softfile Sertifikat Pemenuhan -->
+                            <div class="mt-4 p-4 sm:p-6 rounded-2xl bg-white dark:bg-[#0b1626] border border-slate-200/90 dark:border-white/10 shadow-md dark:shadow-xl">
+                                <!-- Card Header -->
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-slate-100 dark:border-white/10">
+                                    <div class="flex items-start sm:items-center gap-3">
+                                        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#F47920]/10 dark:bg-[#F47920]/15 text-[#F47920] flex items-center justify-center shrink-0 border border-[#F47920]/25">
+                                            <svg class="w-5 h-5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#F47920]/10 text-[#F47920] border border-[#F47920]/25 inline-block mb-1 sm:hidden">
+                                                {{ __('Susulan Dokumen') }}
+                                            </span>
+                                            <h5 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight leading-snug">
+                                                {{ $this->getRdtvUploadTitle() }}
+                                            </h5>
+                                            <span class="text-xs text-slate-500 dark:text-slate-400 block mt-0.5 leading-normal">
+                                                {{ __('Pemenuhan persyaratan administrasi mutu QC tanpa perlu retur fisik.') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span class="hidden sm:inline-flex px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#F47920]/10 text-[#F47920] border border-[#F47920]/25 shrink-0">
+                                        {{ __('Susulan Dokumen') }}
+                                    </span>
+                                </div>
+
+                                @php
+                                    $detectedDoc = $this->getDetectedRdtvDocumentName();
+                                @endphp
+
+                                @if ($detectedDoc)
+                                    <div class="p-3.5 mb-4 rounded-xl bg-amber-50/90 dark:bg-amber-500/10 border border-amber-200/90 dark:border-amber-500/25 text-slate-700 dark:text-slate-200 text-xs flex items-start gap-2.5">
+                                        <svg class="w-4 h-4 text-[#F47920] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <div class="leading-relaxed">
+                                            <span>{{ __('Berdasarkan catatan penolakan RDTV, Anda dapat mengunggah softfile') }}</span>
+                                            <strong class="font-bold text-slate-900 dark:text-amber-300 underline decoration-[#F47920] decoration-2 underline-offset-2">{{ $detectedDoc }}</strong>
+                                            <span>{{ __('agar tim QC dapat memverifikasi dan melanjutkan penerbitan GRS tanpa retur fisik barang.') }}</span>
+                                        </div>
+                                    </div>
+                                @else
+                                    <p class="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
+                                        {{ __('Jika penolakan RDTV disebabkan kekurangan dokumen teknis (seperti belum melampirkan COO manufacture, COA, atau sertifikat uji mutu), Anda dapat mengunggah berkas sertifikat di bawah ini agar tim QC dapat memverifikasi dan mengajukan ulang tanpa retur fisik barang.') }}
+                                    </p>
+                                @endif
+
+                                @if (session()->has('rdtv_success'))
+                                    <div class="p-3.5 mb-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center justify-between shadow-xs">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            <span>{{ session('rdtv_success') }}</span>
+                                        </div>
+                                        <button type="button" @click="$el.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800 text-base">&times;</button>
+                                    </div>
+                                @endif
+
+                                @if (session()->has('rdtv_error'))
+                                    <div class="p-3.5 mb-4 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-800 dark:text-rose-300 text-xs font-semibold flex items-center justify-between shadow-xs">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            <span>{{ session('rdtv_error') }}</span>
+                                        </div>
+                                        <button type="button" @click="$el.parentElement.remove()" class="text-rose-600 hover:text-rose-800 text-base">&times;</button>
+                                    </div>
+                                @endif
+
+                                <form wire:submit.prevent="submitRdtvCompliance" class="space-y-4">
+                                    @php
+                                        $rdtvDos = isset($trackingData['unique_dos'])
+                                            ? $trackingData['unique_dos']->filter(fn ($d) => $d->status === 'RDTV' || $d->grsRdtvItems->where('grsRdtv.category', 'RDTV')->isNotEmpty())
+                                            : collect();
+                                    @endphp
+
+                                    @if ($rdtvDos->count() > 1)
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-[#F47920] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                </svg>
+                                                {{ __('Pilih Surat Jalan (DO) yang Ditolak:') }}
+                                            </label>
+                                            <div class="relative">
+                                                <select wire:model.live="selectedRdtvDoId" class="w-full min-h-[44px] text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700/90 bg-slate-50/90 dark:bg-[#07111e] text-slate-900 dark:text-white px-3.5 py-2.5 focus:bg-white dark:focus:bg-[#0d1b2e] focus:border-[#F47920] focus:ring-2 focus:ring-[#F47920]/20 transition shadow-2xs">
+                                                    @foreach ($rdtvDos as $rDo)
+                                                        <option value="{{ $rDo->id }}">{{ $rDo->delivery_order_no }} ({{ $rDo->document_code }})</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            @error('selectedRdtvDoId') <span class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold block mt-1">{{ $message }}</span> @enderror
+                                        </div>
+                                    @endif
+
+                                    <!-- Interactive Drag & Drop Upload Zone -->
+                                    <div x-data="{ isDragging: false }" class="space-y-2">
+                                        <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-[#F47920] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                            <span>
+                                                @if ($detectedDoc)
+                                                    {{ __('Berkas :doc (PDF / JPG / PNG, maks. 20 MB):', ['doc' => $detectedDoc]) }}
+                                                @else
+                                                    {{ __('Berkas Sertifikat Susulan (PDF / JPG / PNG, maks. 20 MB):') }}
+                                                @endif
+                                            </span>
+                                        </label>
+
+                                        @if (!$rdtvComplianceFile)
+                                            <div 
+                                                @dragover.prevent="isDragging = true"
+                                                @dragleave.prevent="isDragging = false"
+                                                @drop.prevent="isDragging = false"
+                                                :class="isDragging ? 'border-[#F47920] bg-orange-50/90 dark:bg-[#13233a] ring-4 ring-[#F47920]/20 scale-[1.005]' : ''"
+                                                class="relative border-2 border-dashed border-slate-300 dark:border-slate-700/90 rounded-2xl p-5 sm:p-7 text-center bg-slate-50/80 dark:bg-[#07111e] hover:border-[#F47920] dark:hover:border-[#F47920] hover:bg-orange-50/40 dark:hover:bg-[#0d1b2e] transition-all duration-200 group cursor-pointer">
+                                                
+                                                <input type="file" wire:model="rdtvComplianceFile" id="rdtvFileInput" accept=".pdf,.jpg,.jpeg,.png"
+                                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+
+                                                <!-- Loading indicator while transferring file -->
+                                                <div wire:loading wire:target="rdtvComplianceFile" class="py-3 space-y-3">
+                                                    <div class="w-12 h-12 mx-auto rounded-2xl bg-[#F47920]/15 text-[#F47920] flex items-center justify-center">
+                                                        <svg class="w-6 h-6 animate-spin text-[#F47920]" fill="none" viewBox="0 0 24 24">
+                                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                                        </svg>
+                                                    </div>
+                                                    <p class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">{{ __('Mengunggah berkas...') }}</p>
+                                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('Mohon tunggu hingga berkas selesai diproses.') }}</p>
+                                                </div>
+
+                                                <!-- Default Dropzone Content -->
+                                                <div wire:loading.remove wire:target="rdtvComplianceFile" class="space-y-3 pointer-events-none">
+                                                    <div class="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl bg-white dark:bg-[#112238] text-[#F47920] flex items-center justify-center border border-slate-200 dark:border-white/10 shadow-sm group-hover:scale-105 group-hover:border-[#F47920]/40 transition-all duration-200">
+                                                        <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                        </svg>
+                                                    </div>
+                                                    <div class="space-y-1">
+                                                        <h6 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                                                            {{ __('Pilih atau Tarik Berkas ke Sini') }}
+                                                        </h6>
+                                                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                                                            {{ __('Format yang didukung: PDF, JPG, JPEG, PNG (Maksimal 20 MB)') }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="pt-1">
+                                                        <span class="inline-flex items-center justify-center gap-2 min-h-[40px] px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#F47920] group-hover:bg-[#e06b18] shadow-sm shadow-[#F47920]/25 transition">
+                                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                                            {{ __('Pilih Berkas') }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <!-- File Selected Preview Card -->
+                                            <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                                                <div class="flex items-center gap-3 min-w-0">
+                                                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/25">
+                                                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                                                        </svg>
+                                                    </div>
+                                                    <div class="min-w-0 flex-1">
+                                                        <div class="flex flex-wrap items-center gap-2">
+                                                            <span class="font-mono font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate max-w-[220px] sm:max-w-xs md:max-w-md block">
+                                                                {{ $rdtvComplianceFile->getClientOriginalName() }}
+                                                            </span>
+                                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">
+                                                                {{ __('Siap Diunggah') }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                                            <span>{{ strtoupper($rdtvComplianceFile->getClientOriginalExtension()) }}</span>
+                                                            <span>&bull;</span>
+                                                            <span>{{ number_format($rdtvComplianceFile->getSize() / 1024, 1) }} KB</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button type="button" wire:click="$set('rdtvComplianceFile', null)" class="w-full sm:w-auto min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-300 bg-white dark:bg-[#112238] hover:bg-rose-50 dark:hover:bg-rose-950/60 border border-rose-200 dark:border-rose-500/30 transition shrink-0 flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs">
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    {{ __('Ganti Berkas') }}
+                                                </button>
+                                            </div>
+                                        @endif
+
+                                        @error('rdtvComplianceFile')
+                                            <span class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold block mt-1">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 flex items-center justify-between">
+                                            <span class="flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                                {{ __('Catatan Tambahan Vendor:') }}
+                                            </span>
+                                            <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">{{ __('Opsional') }}</span>
+                                        </label>
+                                        <textarea wire:model="rdtvComplianceNotes" rows="2" placeholder="{{ __('Tuliskan keterangan dokumen untuk tim QC (opsional)...') }}"
+                                            class="w-full min-h-[72px] text-xs rounded-xl border border-slate-300 dark:border-slate-700/90 bg-slate-50/90 dark:bg-[#07111e] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3.5 py-2.5 focus:bg-white dark:focus:bg-[#0d1b2e] focus:border-[#F47920] focus:ring-2 focus:ring-[#F47920]/20 transition shadow-2xs resize-none"></textarea>
+                                        @error('rdtvComplianceNotes') <span class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold block mt-1">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div class="flex items-center justify-end pt-1">
+                                        <button type="submit" wire:loading.attr="disabled"
+                                            class="min-h-[46px] w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-[#F47920] to-[#d95f16] hover:from-[#e06b18] hover:to-[#c25210] text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 shadow-md shadow-[#F47920]/25 active:scale-[0.98] disabled:opacity-50">
+                                            <svg wire:loading wire:target="submitRdtvCompliance" class="animate-spin h-4 w-4 text-white shrink-0" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                            </svg>
+                                            <svg wire:loading.remove wire:target="submitRdtvCompliance" class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span wire:loading.remove wire:target="submitRdtvCompliance">
+                                                {{ __('Kirim Dokumen Pemenuhan') }}
+                                            </span>
+                                            <span wire:loading wire:target="submitRdtvCompliance">
+                                                {{ __('Mengirim Berkas...') }}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <!-- Daftar Riwayat Dokumen Pemenuhan yang Pernah Diunggah -->
+                                @if (!empty($trackingData['rdtv_compliances']) && $trackingData['rdtv_compliances']->isNotEmpty())
+                                    <div class="mt-5 pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                {{ __('Riwayat Dokumen Pemenuhan yang Diajukan:') }}
+                                            </span>
+                                            <span class="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-[#07111e] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                                                {{ $trackingData['rdtv_compliances']->count() }} {{ __('Berkas') }}
+                                            </span>
+                                        </div>
+                                        <div class="space-y-2.5">
+                                            @foreach ($trackingData['rdtv_compliances'] as $comp)
+                                                <div class="p-3.5 sm:p-4 rounded-xl bg-slate-50/80 dark:bg-[#07111e] border {{ $comp->status === 'Disetujui' ? 'border-emerald-500/30 ring-1 ring-emerald-500/10' : ($comp->status === 'Ditolak' ? 'border-rose-500/30 ring-1 ring-rose-500/10' : 'border-amber-500/30 ring-1 ring-amber-500/10') }} text-xs space-y-2.5 shadow-2xs">
+                                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                        <div class="flex items-center gap-2.5 min-w-0">
+                                                            <div class="w-7 h-7 rounded-lg {{ $comp->status === 'Disetujui' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : ($comp->status === 'Ditolak' ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400') }} flex items-center justify-center shrink-0">
+                                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                </svg>
+                                                            </div>
+                                                            <div class="min-w-0">
+                                                                <span class="font-mono font-bold text-slate-900 dark:text-white truncate max-w-[210px] sm:max-w-xs md:max-w-md block">
+                                                                    {{ $comp->original_filename }}
+                                                                </span>
+                                                                <span class="text-[10px] text-slate-500 dark:text-slate-400">
+                                                                    {{ __('No. Surat Jalan:') }} {{ $comp->deliveryOrderReceipt?->delivery_order_no ?? '-' }}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <span class="self-start sm:self-auto px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0
+                                                            {{ $comp->status === 'Disetujui' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' : ($comp->status === 'Ditolak' ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30') }}">
+                                                            {{ __($comp->status) }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-200/70 dark:border-white/10">
+                                                        <span>{{ __('Diunggah:') }} {{ $comp->created_at->format('d M Y H:i') }}</span>
+                                                        <button type="button" wire:click="downloadRdtvCompliance({{ $comp->id }})"
+                                                            class="text-[#F47920] hover:text-[#d36415] hover:underline font-semibold flex items-center gap-1 cursor-pointer">
+                                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                                            {{ __('Unduh Berkas') }}
+                                                        </button>
+                                                    </div>
+                                                    @if ($comp->vendor_notes)
+                                                        <p class="text-[11px] text-slate-600 dark:text-slate-300 italic bg-white dark:bg-[#0b1626] p-2.5 rounded-lg border border-slate-200/60 dark:border-white/10">
+                                                            "{{ $comp->vendor_notes }}"
+                                                        </p>
+                                                    @endif
+                                                    @if ($comp->status === 'Ditolak' && !empty($comp->review_notes))
+                                                        <div class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-[11px]">
+                                                            <strong>{{ __('Catatan Tim QC / Receiving:') }}</strong> {{ $comp->review_notes }}
+                                                        </div>
+                                                    @elseif ($comp->status === 'Disetujui')
+                                                        <div class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px]">
+                                                            {{ __('Dokumen pemenuhan ini telah disetujui. Petugas Gudang Receiving sedang memproses penerbitan GRS resmi.') }}
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             @endforeach
                                         </div>
                                     </div>
                                 @endif
-
-                                <div class="p-3 rounded-xl bg-rose-500/5 border border-rose-500/15 text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <span>{{ __('Silakan unduh dokumen slip RDTV di bagian bawah untuk arsip dan segera hubungi Tim Pengadaan / Receiving PKT untuk koordinasi penggantian atau pengiriman ulang material.') }}</span>
-                                </div>
-
-                                <!-- Form Pengajuan Ulang / Unggah Softfile Sertifikat Pemenuhan -->
-                                <div class="mt-5 p-4 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-900/40 shadow-sm shadow-rose-500/5 dark:shadow-none">
-                                    <!-- Card Header -->
-                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                                        <div class="flex items-start sm:items-center gap-3">
-                                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F47920]/15 via-rose-500/10 to-[#F47920]/10 dark:from-[#F47920]/25 dark:via-rose-500/20 dark:to-[#F47920]/15 text-[#F47920] flex items-center justify-center shrink-0 border border-[#F47920]/30 dark:border-[#F47920]/40 shadow-xs">
-                                                <svg class="w-5 h-5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <h5 class="font-extrabold text-sm sm:text-base text-slate-800 dark:text-white tracking-tight">
-                                                    {{ $this->getRdtvUploadTitle() }}
-                                                </h5>
-                                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                                                    {{ __('Pemenuhan persyaratan administrasi mutu QC tanpa perlu retur fisik.') }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700/40 self-start sm:self-center shrink-0">
-                                            {{ __('Susulan Dokumen') }}
-                                        </span>
-                                    </div>
-
-                                    @php
-                                        $detectedDoc = $this->getDetectedRdtvDocumentName();
-                                    @endphp
-
-                                    @if ($detectedDoc)
-                                        <div class="p-3.5 mb-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 dark:bg-amber-950/30 dark:border-amber-800/40 dark:text-amber-200 text-xs flex items-start gap-2.5">
-                                            <div class="p-1 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 shrink-0 mt-0.5">
-                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                </svg>
-                                            </div>
-                                            <div class="leading-relaxed">
-                                                <span>{{ __('Berdasarkan catatan penolakan RDTV, Anda dapat mengunggah softfile') }}</span>
-                                                <span class="font-bold text-slate-900 dark:text-white px-1.5 py-0.5 rounded-md bg-amber-200/70 border border-amber-300/80 dark:bg-amber-900/60 dark:border-amber-700/60 font-mono">{{ $detectedDoc }}</span>
-                                                <span>{{ __('agar tim QC dapat memverifikasi dan melanjutkan penerbitan GRS tanpa retur fisik barang.') }}</span>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <p class="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">
-                                            {{ __('Jika penolakan RDTV disebabkan kekurangan dokumen teknis (seperti belum melampirkan COO manufacture, COA, atau sertifikat uji mutu), Anda dapat mengunggah berkas sertifikat di bawah ini agar tim QC dapat memverifikasi dan mengajukan ulang tanpa retur fisik barang.') }}
-                                        </p>
-                                    @endif
-
-                                    @if (session()->has('rdtv_success'))
-                                        <div class="p-3.5 mb-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center justify-between shadow-xs">
-                                            <div class="flex items-center gap-2">
-                                                <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                                                <span>{{ session('rdtv_success') }}</span>
-                                            </div>
-                                            <button type="button" @click="$el.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800 text-base">&times;</button>
-                                        </div>
-                                    @endif
-
-                                    @if (session()->has('rdtv_error'))
-                                        <div class="p-3.5 mb-4 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-800 dark:text-rose-300 text-xs font-semibold flex items-center justify-between shadow-xs">
-                                            <div class="flex items-center gap-2">
-                                                <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                <span>{{ session('rdtv_error') }}</span>
-                                            </div>
-                                            <button type="button" @click="$el.parentElement.remove()" class="text-rose-600 hover:text-rose-800 text-base">&times;</button>
-                                        </div>
-                                    @endif
-
-                                    <form wire:submit.prevent="submitRdtvCompliance" class="space-y-4">
-                                        @php
-                                            $rdtvDos = isset($trackingData['unique_dos'])
-                                                ? $trackingData['unique_dos']->filter(fn ($d) => $d->status === 'RDTV' || $d->grsRdtvItems->where('grsRdtv.category', 'RDTV')->isNotEmpty())
-                                                : collect();
-                                        @endphp
-
-                                        @if ($rdtvDos->count() > 1)
-                                            <div>
-                                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
-                                                    <svg class="w-3.5 h-3.5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                                    </svg>
-                                                    {{ __('Pilih Surat Jalan (DO) yang Ditolak:') }}
-                                                </label>
-                                                <div class="relative">
-                                                    <select wire:model.live="selectedRdtvDoId" class="w-full text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 px-3.5 py-2.5 focus:bg-white dark:focus:bg-slate-800 focus:border-[#F47920] focus:ring-2 focus:ring-[#F47920]/20 transition shadow-xs">
-                                                        @foreach ($rdtvDos as $rDo)
-                                                            <option value="{{ $rDo->id }}">{{ $rDo->delivery_order_no }} ({{ $rDo->document_code }})</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                @error('selectedRdtvDoId') <span class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold block mt-1">{{ $message }}</span> @enderror
-                                            </div>
-                                        @endif
-
-                                        <!-- Interactive Drag & Drop Upload Zone -->
-                                        <div x-data="{ isDragging: false }" class="space-y-1.5">
-                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between mb-1">
-                                                <span class="flex items-center gap-1.5">
-                                                    <svg class="w-3.5 h-3.5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                                    </svg>
-                                                    @if ($detectedDoc)
-                                                        {{ __('Berkas :doc (PDF / JPG / PNG, maks. 20 MB):', ['doc' => $detectedDoc]) }}
-                                                    @else
-                                                        {{ __('Berkas Sertifikat Susulan (PDF / JPG / PNG, maks. 20 MB):') }}
-                                                    @endif
-                                                </span>
-                                            </label>
-
-                                            @if (!$rdtvComplianceFile)
-                                                <div 
-                                                    @dragover.prevent="isDragging = true"
-                                                    @dragleave.prevent="isDragging = false"
-                                                    @drop.prevent="isDragging = false"
-                                                    :class="isDragging ? 'border-[#F47920] bg-orange-100/60 dark:bg-orange-950/40 ring-4 ring-[#F47920]/20 scale-[1.005]' : 'border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 hover:border-[#F47920] hover:bg-orange-50/50 dark:hover:bg-slate-800/80 dark:hover:border-[#F47920]'"
-                                                    class="relative border-2 border-dashed rounded-2xl p-5 sm:p-7 text-center transition-all duration-200 group cursor-pointer">
-                                                    
-                                                    <input type="file" wire:model="rdtvComplianceFile" id="rdtvFileInput" accept=".pdf,.jpg,.jpeg,.png"
-                                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-
-                                                    <!-- Loading indicator while transferring file -->
-                                                    <div wire:loading wire:target="rdtvComplianceFile" class="py-3 space-y-3">
-                                                        <div class="w-12 h-12 mx-auto rounded-2xl bg-[#F47920]/20 text-[#F47920] flex items-center justify-center animate-bounce">
-                                                            <svg class="w-6 h-6 animate-spin text-[#F47920]" fill="none" viewBox="0 0 24 24">
-                                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <p class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">{{ __('Mengunggah berkas...') }}</p>
-                                                        <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ __('Mohon tunggu hingga berkas selesai diproses.') }}</p>
-                                                    </div>
-
-                                                    <!-- Default Dropzone Content -->
-                                                    <div wire:loading.remove wire:target="rdtvComplianceFile" class="space-y-3 pointer-events-none">
-                                                        <div class="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl bg-white dark:bg-slate-800 text-[#F47920] flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-xs group-hover:scale-110 group-hover:rotate-2 group-hover:border-[#F47920]/40 transition-all duration-300">
-                                                            <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                            </svg>
-                                                        </div>
-                                                        <div>
-                                                            <h6 class="text-xs sm:text-sm font-bold text-slate-800 dark:text-white">
-                                                                {{ __('Pilih atau Tarik Berkas ke Sini') }}
-                                                            </h6>
-                                                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                                                {{ __('Format yang didukung: PDF, JPG, JPEG, PNG (Maksimal 20 MB)') }}
-                                                            </p>
-                                                        </div>
-                                                        <div class="pt-0.5">
-                                                            <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] hover:from-[#e06b18] hover:to-[#a74c1d] shadow-sm group-hover:shadow-md transition">
-                                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                                                                {{ __('Pilih Berkas') }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @else
-                                                <!-- File Selected Preview Card -->
-                                                <div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-300 dark:border-emerald-600/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                                                    <div class="flex items-center gap-3 min-w-0">
-                                                        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-300/80 dark:border-emerald-700/50">
-                                                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
-                                                            </svg>
-                                                        </div>
-                                                        <div class="min-w-0 flex-1">
-                                                            <div class="flex flex-wrap items-center gap-2">
-                                                                <span class="font-mono font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-xs md:max-w-md block">
-                                                                    {{ $rdtvComplianceFile->getClientOriginalName() }}
-                                                                </span>
-                                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-300 dark:border-emerald-700 shrink-0">
-                                                                    {{ __('Siap Diunggah') }}
-                                                                </span>
-                                                            </div>
-                                                            <div class="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                                                                <span>{{ strtoupper($rdtvComplianceFile->getClientOriginalExtension()) }}</span>
-                                                                <span>&bull;</span>
-                                                                <span>{{ number_format($rdtvComplianceFile->getSize() / 1024, 1) }} KB</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <button type="button" wire:click="$set('rdtvComplianceFile', null)" class="self-end sm:self-center px-3.5 py-1.5 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/60 border border-rose-200 dark:border-rose-800/60 transition shrink-0 flex items-center gap-1.5 cursor-pointer shadow-2xs">
-                                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                        {{ __('Ganti Berkas') }}
-                                                    </button>
-                                                </div>
-                                            @endif
-
-                                            @error('rdtvComplianceFile')
-                                                <span class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold block mt-1">{{ $message }}</span>
-                                            @enderror
-                                        </div>
-
-                                        <div>
-                                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
-                                                <span class="flex items-center gap-1.5">
-                                                    <svg class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
-                                                    {{ __('Catatan Tambahan Vendor:') }}
-                                                </span>
-                                                <span class="text-[10px] font-normal text-slate-400 dark:text-slate-500">{{ __('Opsional') }}</span>
-                                            </label>
-                                            <textarea wire:model="rdtvComplianceNotes" rows="2" placeholder="{{ __('Tuliskan rincian dokumen atau keterangan tambahan untuk tim QC...') }}"
-                                                class="w-full text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3.5 py-2.5 focus:bg-white dark:focus:bg-slate-800 focus:border-[#F47920] focus:ring-2 focus:ring-[#F47920]/20 transition shadow-xs resize-none"></textarea>
-                                            @error('rdtvComplianceNotes') <span class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold block mt-1">{{ $message }}</span> @enderror
-                                        </div>
-
-                                        <div class="flex items-center justify-end pt-1">
-                                            <button type="submit" wire:loading.attr="disabled"
-                                                class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-[#F47920] hover:from-rose-500 hover:to-[#e06b18] text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 shadow-md shadow-rose-500/25 active:scale-[0.98] disabled:opacity-50">
-                                                <svg wire:loading wire:target="submitRdtvCompliance" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                                                </svg>
-                                                <svg wire:loading.remove wire:target="submitRdtvCompliance" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                                <span wire:loading.remove wire:target="submitRdtvCompliance">
-                                                    {{ __('Kirim Dokumen Pemenuhan') }}
-                                                </span>
-                                                <span wire:loading wire:target="submitRdtvCompliance">
-                                                    {{ __('Mengirim Berkas...') }}
-                                                </span>
-                                            </button>
-                                        </div>
-                                    </form>
-
-                                    <!-- Daftar Riwayat Dokumen Pemenuhan yang Pernah Diunggah -->
-                                    @if (!empty($trackingData['rdtv_compliances']) && $trackingData['rdtv_compliances']->isNotEmpty())
-                                        <div class="mt-5 pt-4 border-t border-rose-500/15 dark:border-rose-500/20 space-y-3">
-                                            <div class="flex items-center justify-between">
-                                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                                                    <svg class="w-3.5 h-3.5 text-[#F47920]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    {{ __('Riwayat Dokumen Pemenuhan yang Diajukan:') }}
-                                                </span>
-                                                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                                                    {{ $trackingData['rdtv_compliances']->count() }} {{ __('Berkas') }}
-                                                </span>
-                                            </div>
-                                            <div class="space-y-2.5">
-                                                @foreach ($trackingData['rdtv_compliances'] as $comp)
-                                                    <div class="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border {{ $comp->status === 'Disetujui' ? 'border-emerald-500/30 ring-1 ring-emerald-500/10' : ($comp->status === 'Ditolak' ? 'border-rose-500/30 ring-1 ring-rose-500/10' : 'border-amber-500/30 ring-1 ring-amber-500/10') }} text-xs space-y-2.5 shadow-xs">
-                                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                                            <div class="flex items-center gap-2.5 min-w-0">
-                                                                <div class="w-7 h-7 rounded-lg {{ $comp->status === 'Disetujui' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : ($comp->status === 'Ditolak' ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400') }} flex items-center justify-center shrink-0">
-                                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                    </svg>
-                                                                </div>
-                                                                <div class="min-w-0">
-                                                                    <span class="font-mono font-bold text-slate-800 dark:text-white truncate max-w-[200px] sm:max-w-xs md:max-w-md block">
-                                                                        {{ $comp->original_filename }}
-                                                                    </span>
-                                                                    <span class="text-[10px] text-slate-500 dark:text-slate-400">
-                                                                        {{ __('No. Surat Jalan:') }} {{ $comp->deliveryOrderReceipt?->delivery_order_no ?? '-' }}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <span class="self-start sm:self-auto px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0
-                                                                {{ $comp->status === 'Disetujui' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' : ($comp->status === 'Ditolak' ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30') }}">
-                                                                {{ __($comp->status) }}
-                                                            </span>
-                                                        </div>
-                                                        <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800/80">
-                                                            <span>{{ __('Diunggah:') }} {{ $comp->created_at->format('d M Y H:i') }}</span>
-                                                            <button type="button" wire:click="downloadRdtvCompliance({{ $comp->id }})"
-                                                                class="text-[#F47920] hover:text-[#d36415] hover:underline font-semibold flex items-center gap-1 cursor-pointer">
-                                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                                                {{ __('Unduh Berkas') }}
-                                                            </button>
-                                                        </div>
-                                                        @if ($comp->vendor_notes)
-                                                            <p class="text-[11px] text-slate-600 dark:text-slate-300 italic bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50">
-                                                                "{{ $comp->vendor_notes }}"
-                                                            </p>
-                                                        @endif
-                                                        @if ($comp->status === 'Ditolak' && !empty($comp->review_notes))
-                                                            <div class="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-[11px]">
-                                                                <strong>{{ __('Catatan Tim QC / Receiving:') }}</strong> {{ $comp->review_notes }}
-                                                            </div>
-                                                        @elseif ($comp->status === 'Disetujui')
-                                                            <div class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px]">
-                                                                {{ __('Dokumen pemenuhan ini telah disetujui. Petugas Gudang Receiving sedang memproses penerbitan GRS resmi.') }}
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -1178,10 +1187,10 @@
                             </div>
                         @else
                             <!-- UPLOAD DROPZONE -->
-                            <div class="p-8 sm:p-10 rounded-3xl bg-slate-100/50 dark:bg-white/5 border-2 border-dashed border-[#F47920]/40 hover:border-[#F47920] transition-colors text-center relative">
+                            <div class="p-6 sm:p-10 rounded-3xl bg-slate-50/90 dark:bg-[#07111e] border-2 border-dashed border-slate-300 dark:border-slate-700/90 hover:border-[#F47920] dark:hover:border-[#F47920] hover:bg-orange-50/30 dark:hover:bg-[#0d1b2e] transition-all text-center relative">
                                 <div class="max-w-md mx-auto">
-                                    <div class="w-16 h-16 rounded-3xl bg-[#F47920]/10 text-[#F47920] flex items-center justify-center mx-auto mb-4 border border-[#F47920]/20 shadow-sm">
-                                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white dark:bg-[#112238] text-[#F47920] flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-white/10 shadow-sm">
+                                        <svg class="w-7 h-7 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                         </svg>
                                     </div>
