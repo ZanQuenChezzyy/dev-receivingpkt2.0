@@ -569,11 +569,18 @@
                                             </svg>
                                         </div>
                                         <h5 class="font-bold text-sm text-slate-800 dark:text-white">
-                                            {{ __('Unggah Softfile Sertifikat / Dokumen Pemenuhan (COO / COA / MSDS)') }}
+                                            {{ $this->getRdtvUploadTitle() }}
                                         </h5>
                                     </div>
+                                    @php
+                                        $detectedDoc = $this->getDetectedRdtvDocumentName();
+                                    @endphp
                                     <p class="text-xs text-slate-600 dark:text-slate-300 mb-3">
-                                        {{ __('Jika penolakan RDTV disebabkan kekurangan dokumen teknis (seperti belum melampirkan COO manufacture, COA, atau sertifikat uji mutu), Anda dapat mengunggah berkas sertifikat di bawah ini agar tim QC dapat memverifikasi dan mengajukan ulang tanpa retur fisik barang.') }}
+                                        @if ($detectedDoc)
+                                            {{ __('Berdasarkan catatan penolakan RDTV terkait :doc, Anda dapat mengunggah berkas tersebut di bawah ini agar tim QC dapat memverifikasi dan melanjutkan proses penerbitan GRS tanpa retur fisik barang.', ['doc' => $detectedDoc]) }}
+                                        @else
+                                            {{ __('Jika penolakan RDTV disebabkan kekurangan dokumen teknis (seperti belum melampirkan COO manufacture, COA, atau sertifikat uji mutu), Anda dapat mengunggah berkas sertifikat di bawah ini agar tim QC dapat memverifikasi dan mengajukan ulang tanpa retur fisik barang.') }}
+                                        @endif
                                     </p>
 
                                     @if (session()->has('rdtv_success'))
@@ -602,7 +609,7 @@
                                                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                                                     {{ __('Pilih Surat Jalan (DO) yang Ditolak:') }}
                                                 </label>
-                                                <select wire:model="selectedRdtvDoId" class="w-full text-xs rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white px-3 py-2">
+                                                <select wire:model.live="selectedRdtvDoId" class="w-full text-xs rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-white px-3 py-2">
                                                     @foreach ($rdtvDos as $rDo)
                                                         <option value="{{ $rDo->id }}">{{ $rDo->delivery_order_no }} ({{ $rDo->document_code }})</option>
                                                     @endforeach
@@ -613,7 +620,11 @@
 
                                         <div>
                                             <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                                {{ __('Berkas Sertifikat Susulan (PDF / JPG / PNG, maks. 20 MB):') }}
+                                                @if ($detectedDoc)
+                                                    {{ __('Berkas :doc (PDF / JPG / PNG, maks. 20 MB):', ['doc' => $detectedDoc]) }}
+                                                @else
+                                                    {{ __('Berkas Sertifikat Susulan (PDF / JPG / PNG, maks. 20 MB):') }}
+                                                @endif
                                             </label>
                                             <input type="file" wire:model="rdtvComplianceFile" accept=".pdf,.jpg,.jpeg,.png"
                                                 class="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#F47920] file:text-white hover:file:bg-[#e06b18] cursor-pointer rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5" />

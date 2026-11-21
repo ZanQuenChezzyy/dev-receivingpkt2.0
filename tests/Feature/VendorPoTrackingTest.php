@@ -760,8 +760,8 @@ test('vendor can upload supplementary compliance certificate for rdtv delivery a
         ->set('verificationEmail', 'vendor@flowtech.com')
         ->call('verifyVendorEmail');
 
-    // Pastikan form unggah sertifikat pemenuhan muncul
-    $test->assertSee('Unggah Softfile Sertifikat / Dokumen Pemenuhan (COO / COA / MSDS)');
+    // Pastikan form unggah sertifikat pemenuhan muncul dengan judul dinamis sesuai alasan penolakan
+    $test->assertSee('Unggah Softfile Sertifikat / Dokumen COO FROM MANUFACTURE');
 
     // Unggah softfile sertifikat COO
     $fakeCoo = UploadedFile::fake()->create('COO_Rheinmetall_5300065382.pdf', 300, 'application/pdf');
@@ -785,4 +785,33 @@ test('vendor can upload supplementary compliance certificate for rdtv delivery a
     // Test download compliance file
     $test->call('downloadRdtvCompliance', $compliance->id);
     $test->assertFileDownloaded('COO_Rheinmetall_5300065382.pdf');
+});
+
+test('rdtv upload title dynamically reflects specific missing certificate from rejection reason', function () {
+    $component = new VendorPoTracking;
+
+    $reasons = [
+        'Tidak melampirkan certificate COO from manufacture' => 'Unggah Softfile Sertifikat / Dokumen COO from manufacture',
+        'TIDAK MELAMPIRKAN COO FROM MANUFACTURE' => 'Unggah Softfile Sertifikat / Dokumen COO FROM MANUFACTURE',
+        'TIDAK MELAMPIRKAN COA' => 'Unggah Softfile Sertifikat / Dokumen COA',
+        'Belum melampirkan MSDS' => 'Unggah Softfile Sertifikat / Dokumen MSDS',
+        'Tanpa dokumen Mill Test Certificate' => 'Unggah Softfile Sertifikat / Dokumen Mill Test Certificate',
+        'Tidak ada Sertifikat Kalibrasi' => 'Unggah Softfile Sertifikat / Dokumen Kalibrasi',
+        'Tidak melampirkan Certificate of Origin' => 'Unggah Softfile Sertifikat / Dokumen Certificate of Origin',
+    ];
+
+    foreach ($reasons as $reason => $expectedTitle) {
+        $do = DeliveryOrderReceipt::create([
+            'delivery_order_no' => 'DO-'.uniqid(),
+            'status' => 'RDTV',
+            'delay_notes' => $reason,
+        ]);
+
+        $component->trackingData = [
+            'unique_dos' => collect([$do]),
+        ];
+        $component->selectedRdtvDoId = $do->id;
+
+        expect($component->getRdtvUploadTitle())->toBe($expectedTitle);
+    }
 });

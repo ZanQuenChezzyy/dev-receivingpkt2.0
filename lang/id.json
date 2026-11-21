@@ -1107,5 +1107,8 @@
     "Menunggu Review": "Menunggu Review",
     "Disetujui": "Disetujui",
     "Ditolak": "Ditolak",
-    "Catatan QC:": "Catatan QC:"
+    "Catatan QC:": "Catatan QC:",
+    "Unggah Softfile Sertifikat / Dokumen :doc": "Unggah Softfile Sertifikat / Dokumen :doc",
+    "Berkas :doc (PDF / JPG / PNG, maks. 20 MB):": "Berkas :doc (PDF / JPG / PNG, maks. 20 MB):",
+    "Berdasarkan catatan penolakan RDTV terkait :doc, Anda dapat mengunggah berkas tersebut di bawah ini agar tim QC dapat memverifikasi dan melanjutkan proses penerbitan GRS tanpa retur fisik barang.": "Berdasarkan catatan penolakan RDTV terkait :doc, Anda dapat mengunggah berkas tersebut di bawah ini agar tim QC dapat memverifikasi dan melanjutkan proses penerbitan GRS tanpa retur fisik barang."
 }

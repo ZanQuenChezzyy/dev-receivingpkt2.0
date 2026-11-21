@@ -1286,12 +1286,14 @@ class VendorPoTracking extends Component
         $storedPath = $file->storeAs("rdtv-compliances/{$this->activePo}", $safeFilename, 'public');
 
         $detail = $do->deliveryOrderReceiptDetails->first();
+        $detectedDoc = $this->getDetectedRdtvDocumentName();
+        $docType = ! empty($detectedDoc) ? $detectedDoc : 'COO / Sertifikat';
 
         RdtvCompliance::create([
             'delivery_order_receipt_id' => $do->id,
             'purchase_order_issued_id' => $detail?->purchase_order_issued_id,
             'vendor_id' => $this->verifiedVendorId,
-            'document_type' => 'COO / Sertifikat',
+            'document_type' => $docType,
             'file_path' => $storedPath,
             'original_filename' => $origName,
             'file_size' => $size,
@@ -1329,6 +1331,69 @@ class VendorPoTracking extends Component
         }
 
         return $this->publicDisk()->download($compliance->file_path, $compliance->original_filename);
+    }
+
+    /**
+     * Get the detected document name from rejection reason.
+     */
+    public function getDetectedRdtvDocumentName(): ?string
+    {
+        $reason = $this->getSelectedRdtvReason();
+
+        if (empty($reason)) {
+            return null;
+        }
+
+        $trimmed = trim($reason);
+
+        // Strip prefixes like "Tidak melampirkan", "Belum melampirkan", "Tanpa", "Tidak ada"
+        if (preg_match('/^(?:tidak\s+melampirkan|belum\s+melampirkan|tidak\s+ada|belum\s+ada|tanpa|kurang|missing|without)\s+(?:certificate(?!\s+of)\s+|sertifikat(?!\s+of)\s+|dokumen\s+|berkas\s+|surat\s+|lembar\s+|file\s+)?(.+)$/i', $trimmed, $matches)) {
+            $doc = trim($matches[1]);
+            if (! empty($doc)) {
+                return $doc;
+            }
+        }
+
+        return $trimmed;
+    }
+
+    /**
+     * Resolve dynamic upload title based on rejection reason.
+     */
+    public function getRdtvUploadTitle(): string
+    {
+        $doc = $this->getDetectedRdtvDocumentName();
+
+        if (! empty($doc)) {
+            return __('Unggah Softfile Sertifikat / Dokumen :doc', ['doc' => $doc]);
+        }
+
+        return __('Unggah Softfile Sertifikat / Dokumen Pemenuhan (COO / COA / MSDS)');
+    }
+
+    /**
+     * Get the rejection reason for the currently selected or active RDTV DO.
+     */
+    public function getSelectedRdtvReason(): ?string
+    {
+        $uniqueDos = $this->trackingData['unique_dos'] ?? collect();
+
+        $targetDo = null;
+        if (! empty($this->selectedRdtvDoId)) {
+            $targetDo = $uniqueDos->firstWhere('id', (int) $this->selectedRdtvDoId);
+        }
+
+        if (! $targetDo) {
+            $targetDo = $uniqueDos->first(fn (DeliveryOrderReceipt $do): bool => $do->status === 'RDTV' || $do->grsRdtvItems->where('grsRdtv.category', 'RDTV')->isNotEmpty());
+        }
+
+        if (! $targetDo) {
+            return null;
+        }
+
+        $rdtvItem = $targetDo->grsRdtvItems->firstWhere('grsRdtv.category', 'RDTV');
+
+        return $rdtvItem?->reason ?: $targetDo->delay_notes;
     }
 
     /**
