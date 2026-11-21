@@ -1118,5 +1118,21 @@
     "Dokumen GRS / RDTV (Slip Penerimaan)": "Dokumen GRS / RDTV (Slip Penerimaan)",
     "Slip bukti penerimaan (GRS) atau retur material (RDTV) di gudang Receiving yang telah diposting ke sistem penerimaan (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip vendor.": "Slip bukti penerimaan (GRS) atau retur material (RDTV) di gudang Receiving yang telah diposting ke sistem penerimaan (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip vendor.",
     "Pencatatan MIGO 103 (Pengajuan QC) di sistem gudang berhasil.": "Pencatatan MIGO 103 (Pengajuan QC) di sistem gudang berhasil.",
-    "Dokumen :category (105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer.": "Dokumen :category (105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer."
+    "Dokumen :category (105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer.": "Dokumen :category (105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer.",
+    "Unggah Softfile / Dokumen Pemenuhan": "Unggah Softfile / Dokumen Pemenuhan",
+    "Pemenuhan persyaratan administrasi mutu QC tanpa perlu retur fisik.": "Pemenuhan persyaratan administrasi mutu QC tanpa perlu retur fisik.",
+    "Susulan Dokumen": "Susulan Dokumen",
+    "Berdasarkan catatan penolakan RDTV, Anda dapat mengunggah softfile": "Berdasarkan catatan penolakan RDTV, Anda dapat mengunggah softfile",
+    "agar tim QC dapat memverifikasi dan melanjutkan penerbitan GRS tanpa retur fisik barang.": "agar tim QC dapat memverifikasi dan melanjutkan penerbitan GRS tanpa retur fisik barang.",
+    "Pilih atau Tarik Berkas ke Sini": "Pilih atau Tarik Berkas ke Sini",
+    "Format yang didukung: PDF, JPG, JPEG, PNG (Maksimal 20 MB)": "Format yang didukung: PDF, JPG, JPEG, PNG (Maksimal 20 MB)",
+    "Pilih Berkas": "Pilih Berkas",
+    "Siap Diunggah": "Siap Diunggah",
+    "Ganti": "Ganti",
+    "Mengirim Berkas...": "Mengirim Berkas...",
+    "Mengunggah berkas...": "Mengunggah berkas...",
+    "Catatan Tambahan Vendor:": "Catatan Tambahan Vendor:",
+    "Tuliskan rincian dokumen atau keterangan tambahan untuk tim QC...": "Tuliskan rincian dokumen atau keterangan tambahan untuk tim QC...",
+    "Berkas": "Berkas",
+    "Diunggah:": "Diunggah:"
 }

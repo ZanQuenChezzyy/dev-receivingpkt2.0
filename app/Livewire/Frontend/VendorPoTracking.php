@@ -1334,6 +1334,28 @@ class VendorPoTracking extends Component
     }
 
     /**
+     * Format document name with Title Case while preserving uppercase for technical acronyms.
+     */
+    public function formatRdtvDocumentName(string $name): string
+    {
+        $acronyms = [
+            'COO', 'COA', 'MSDS', 'SDS', 'MTC', 'TDS', 'COC', 'LPKB',
+            'PO', 'DO', 'BA', 'BAPP', 'BATE', 'SIK', 'ISO', 'QC', 'QA',
+            'QR', 'SNI', 'ASTM', 'ASME', 'API', 'DIN', 'JIS', 'BS', 'EN', 'CE',
+        ];
+
+        return preg_replace_callback('/\b[a-zA-Z0-9]+\b/', function ($matches) use ($acronyms) {
+            $word = $matches[0];
+            $upper = strtoupper($word);
+            if (in_array($upper, $acronyms, true)) {
+                return $upper;
+            }
+
+            return ucfirst(strtolower($word));
+        }, trim($name));
+    }
+
+    /**
      * Get the detected document name from rejection reason.
      */
     public function getDetectedRdtvDocumentName(): ?string
@@ -1348,13 +1370,18 @@ class VendorPoTracking extends Component
 
         // Strip prefixes like "Tidak melampirkan", "Belum melampirkan", "Tanpa", "Tidak ada"
         if (preg_match('/^(?:tidak\s+melampirkan|belum\s+melampirkan|tidak\s+ada|belum\s+ada|tanpa|kurang|missing|without)\s+(?:certificate(?!\s+of)\s+|sertifikat(?!\s+of)\s+|dokumen\s+|berkas\s+|surat\s+|lembar\s+|file\s+)?(.+)$/i', $trimmed, $matches)) {
-            $doc = trim($matches[1]);
+            $doc = rtrim(trim($matches[1]), '.,; ');
             if (! empty($doc)) {
-                return $doc;
+                return $this->formatRdtvDocumentName($doc);
             }
         }
 
-        return $trimmed;
+        // If the reason mentions known document types
+        if (preg_match('/\b(coo|coa|msds|sds|mtc|tds|coc|lpkb|sertifikat|certificate)\b/i', $trimmed)) {
+            return $this->formatRdtvDocumentName($trimmed);
+        }
+
+        return null;
     }
 
     /**
@@ -1368,7 +1395,7 @@ class VendorPoTracking extends Component
             return __('Unggah Softfile Sertifikat / Dokumen :doc', ['doc' => $doc]);
         }
 
-        return __('Unggah Softfile Sertifikat / Dokumen Pemenuhan (COO / COA / MSDS)');
+        return __('Unggah Softfile / Dokumen Pemenuhan');
     }
 
     /**

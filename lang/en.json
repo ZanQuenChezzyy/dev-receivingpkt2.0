@@ -1465,5 +1465,21 @@
     "Dokumen GRS / RDTV (Slip Penerimaan)": "GRS / RDTV Document (Receiving Slip)",
     "Slip bukti penerimaan (GRS) atau retur material (RDTV) di gudang Receiving yang telah diposting ke sistem penerimaan (MIGO 105). Diunggah oleh petugas Receiving untuk keperluan arsip vendor.": "Proof of receipt (GRS) or material return (RDTV) slips in the Receiving warehouse posted to the receiving system (MIGO 105). Uploaded by Receiving staff for vendor archive purposes.",
     "Pencatatan MIGO 103 (Pengajuan QC) di sistem gudang berhasil.": "Warehouse MIGO 103 (QC Submission) recording completed successfully.",
-    "Dokumen :category (105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer.": ":category document (105) officially issued and linked to the invoicing system by :officer."
+    "Dokumen :category (105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer.": ":category document (105) officially issued and linked to the invoicing system by :officer.",
+    "Unggah Softfile / Dokumen Pemenuhan": "Upload Softfile / Compliance Document",
+    "Pemenuhan persyaratan administrasi mutu QC tanpa perlu retur fisik.": "Fulfillment of QC quality administrative requirements without physical return.",
+    "Susulan Dokumen": "Document Follow-up",
+    "Berdasarkan catatan penolakan RDTV, Anda dapat mengunggah softfile": "Based on the RDTV rejection notes, you can upload the softfile",
+    "agar tim QC dapat memverifikasi dan melanjutkan penerbitan GRS tanpa retur fisik barang.": "so the QC team can verify and proceed with GRS issuance without physical return of goods.",
+    "Pilih atau Tarik Berkas ke Sini": "Select or Drag & Drop File Here",
+    "Format yang didukung: PDF, JPG, JPEG, PNG (Maksimal 20 MB)": "Supported formats: PDF, JPG, JPEG, PNG (Max 20 MB)",
+    "Pilih Berkas": "Choose File",
+    "Siap Diunggah": "Ready to Upload",
+    "Ganti": "Change",
+    "Mengirim Berkas...": "Submitting File...",
+    "Mengunggah berkas...": "Uploading file...",
+    "Catatan Tambahan Vendor:": "Additional Vendor Notes:",
+    "Tuliskan rincian dokumen atau keterangan tambahan untuk tim QC...": "Write document details or additional notes for the QC team...",
+    "Berkas": "File(s)",
+    "Diunggah:": "Uploaded:"
 }

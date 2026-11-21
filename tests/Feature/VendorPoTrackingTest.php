@@ -761,7 +761,7 @@ test('vendor can upload supplementary compliance certificate for rdtv delivery a
         ->call('verifyVendorEmail');
 
     // Pastikan form unggah sertifikat pemenuhan muncul dengan judul dinamis sesuai alasan penolakan
-    $test->assertSee('Unggah Softfile Sertifikat / Dokumen COO FROM MANUFACTURE');
+    $test->assertSee('Unggah Softfile Sertifikat / Dokumen COO From Manufacture');
 
     // Unggah softfile sertifikat COO
     $fakeCoo = UploadedFile::fake()->create('COO_Rheinmetall_5300065382.pdf', 300, 'application/pdf');
@@ -791,13 +791,13 @@ test('rdtv upload title dynamically reflects specific missing certificate from r
     $component = new VendorPoTracking;
 
     $reasons = [
-        'Tidak melampirkan certificate COO from manufacture' => 'Unggah Softfile Sertifikat / Dokumen COO from manufacture',
-        'TIDAK MELAMPIRKAN COO FROM MANUFACTURE' => 'Unggah Softfile Sertifikat / Dokumen COO FROM MANUFACTURE',
+        'Tidak melampirkan certificate COO from manufacture' => 'Unggah Softfile Sertifikat / Dokumen COO From Manufacture',
+        'TIDAK MELAMPIRKAN COO FROM MANUFACTURE' => 'Unggah Softfile Sertifikat / Dokumen COO From Manufacture',
         'TIDAK MELAMPIRKAN COA' => 'Unggah Softfile Sertifikat / Dokumen COA',
         'Belum melampirkan MSDS' => 'Unggah Softfile Sertifikat / Dokumen MSDS',
         'Tanpa dokumen Mill Test Certificate' => 'Unggah Softfile Sertifikat / Dokumen Mill Test Certificate',
         'Tidak ada Sertifikat Kalibrasi' => 'Unggah Softfile Sertifikat / Dokumen Kalibrasi',
-        'Tidak melampirkan Certificate of Origin' => 'Unggah Softfile Sertifikat / Dokumen Certificate of Origin',
+        'Tidak melampirkan Certificate of Origin' => 'Unggah Softfile Sertifikat / Dokumen Certificate Of Origin',
     ];
 
     foreach ($reasons as $reason => $expectedTitle) {
@@ -814,4 +814,14 @@ test('rdtv upload title dynamically reflects specific missing certificate from r
 
         expect($component->getRdtvUploadTitle())->toBe($expectedTitle);
     }
+
+    // Default fallback ketika alasan umum atau kosong
+    $doFallback = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'DO-'.uniqid(),
+        'status' => 'RDTV',
+        'delay_notes' => 'Kerusakan fisik kemasan barang',
+    ]);
+    $component->trackingData = ['unique_dos' => collect([$doFallback])];
+    $component->selectedRdtvDoId = $doFallback->id;
+    expect($component->getRdtvUploadTitle())->toBe('Unggah Softfile / Dokumen Pemenuhan');
 });
