@@ -1365,3 +1365,88 @@ CSV;
     $receipt->refresh();
     expect($receipt->items()->count())->toBe(3);
 });
+
+it('updates existing invoicing records and aligns PIC from latest Monitoring Barang CSV import without duplicating', function () {
+    $users = seedMonitoringPicUsers();
+
+    // 1. Record eksisting dengan No. GRS sama & sudah ber-invoice (status Selesai), namun PIC lama masih WAHYU
+    $existingInvoiced = InvoicingReceipt::create([
+        'no_po' => '5000008275',
+        'no_grs' => '5007731014',
+        'no_invoice' => 'INV-EXISTING-01',
+        'jenis' => 'GRS',
+        'pic_id' => $users['wahyu@receiving.com']->id,
+        'status' => 'Selesai',
+    ]);
+
+    // 2. Record auto-generate dari upload GRS sebelumnya yang belum punya no_grs & PIC lama masih ALEX
+    $existingAutoNoGrs = InvoicingReceipt::create([
+        'no_po' => '5300065223',
+        'no_grs' => null,
+        'no_do' => 'DO-AUTO-65223',
+        'jenis' => 'GRS',
+        'pic_id' => $users['alex@receiving.com']->id,
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    // 3. Record eksisting tanpa No. GRS / DO / Invoice dengan PIC lama WAHYU
+    $existingBlankGrs = InvoicingReceipt::create([
+        'no_po' => '5300066995',
+        'no_grs' => null,
+        'jenis' => 'GRS',
+        'pic_id' => $users['wahyu@receiving.com']->id,
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    // 4. Record tahap sebelumnya pada PO 5000009408 dengan No. GRS berbeda & PIC lama EVA
+    $existingSiblingPo = InvoicingReceipt::create([
+        'no_po' => '5000009408',
+        'no_grs' => '5007700001',
+        'jenis' => 'GRS',
+        'pic_id' => $users['eva@receiving.com']->id,
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $csv = <<<'CSV'
+,Tanggal Terima GRS,Jenis,No. GRS,No. RDTV,No. PO,,PIC,PADI,Vendor,Deskripsi,Email,Tanggal Info GRS,,Vendor,PO,No. Invoice, No. DO ,Faktur Pajak,Nama Barang,"Quantity 
+Penagihan","Quantity 
+di PO",UOI," Sub Total
+(Exclude PPN)"," Sub Total
+(Include PPN)","Tanggal 
+terima & koreksi Invoice",Tanggal Kirim Kasir,"Lama 
+Pekerjaan",Keterangan
+,Sudah Invoice,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,17 November 2026,Sparepart,5007731014,,5000008275,ICAN,NAFISA,,TRAFOINDO PRIMA PERKASA ,Trafo,iqbal.harish@trafoindonesia.com,7 November 2026,,TRAFOINDO PRIMA PERKASA ,5000008275,,,,Trafo,,,,, Rp -   ,,,,
+,17 November 2026,Sparepart,5007731015,,5300065223,#N/A,EVA,,REFRATECH MANDALA PERKASA ,HEXAGONAL TILES,Soni@refratechmandalaperkasa.com,18 November 2026,,REFRATECH MANDALA PERKASA ,5300065223,,,,HEXAGONAL TILES,,,,, Rp -   ,,,,
+,21 November 2026,Sparepart,,,5300066995,#N/A,CAMEL,,IGUS INDONESIA ,IGUS ECHAIN,info@igus.co.id,,,IGUS INDONESIA ,5300066995,,,,IGUS ECHAIN,,,,, Rp -   ,,,,
+,17 November 2026,Karung,5007746209,,5000009408,RIZKI,RIZKI,,SAMISURYAINDAH PLASTIK ,-,samisuryaip@yahoo.com,18 November 2026,,SAMISURYAINDAH PLASTIK ,5000009408,,,,-,,,,, Rp -   ,,,,
+CSV;
+
+    $summary = app(MonitoringBarangImportService::class)->importFromString($csv);
+
+    // 1. Record 5007731014 diperbarui PIC-nya ke NAFISA tanpa duplikasi & tetap mempertahankan No. Invoice + status Selesai
+    $existingInvoiced->refresh();
+    expect(InvoicingReceipt::where('no_po', '5000008275')->count())->toBe(1)
+        ->and($existingInvoiced->pic_id)->toBe($users['nafisa@receiving.com']->id)
+        ->and($existingInvoiced->no_invoice)->toBe('INV-EXISTING-01')
+        ->and($existingInvoiced->status)->toBe('Selesai');
+
+    // 2. Record auto-generate 5300065223 terisi No. GRS 5007731015 & PIC berubah ke EVA tanpa duplikasi
+    $existingAutoNoGrs->refresh();
+    expect(InvoicingReceipt::where('no_po', '5300065223')->count())->toBe(1)
+        ->and($existingAutoNoGrs->no_grs)->toBe('5007731015')
+        ->and($existingAutoNoGrs->pic_id)->toBe($users['eva@receiving.com']->id);
+
+    // 3. Record 5300066995 tanpa No. GRS diperbarui PIC-nya ke CAMEL tanpa duplikasi
+    $existingBlankGrs->refresh();
+    expect(InvoicingReceipt::where('no_po', '5300066995')->count())->toBe(1)
+        ->and($existingBlankGrs->pic_id)->toBe($users['camel@receiving.com']->id);
+
+    // 4. PO 5000009408 punya 2 GRS (5007700001 eksisting + 5007746209 baru), keduanya kini seragam PIC = RIZKI
+    $existingSiblingPo->refresh();
+    $newGrsRow = InvoicingReceipt::where('no_grs', '5007746209')->first();
+    expect($newGrsRow)->not->toBeNull()
+        ->and($newGrsRow->pic_id)->toBe($users['rizki@receiving.com']->id)
+        ->and($existingSiblingPo->pic_id)->toBe($users['rizki@receiving.com']->id)
+        ->and($summary['unmatched_pics'])->toBeEmpty();
+});

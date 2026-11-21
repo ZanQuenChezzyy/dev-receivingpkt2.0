@@ -220,6 +220,9 @@ class MonitoringBarangImportService
             &$unmatchedPics,
             &$claimedDoMap
         ): void {
+            $poPicSyncCandidates = [];
+            $touchedReceiptIds = [];
+
             foreach ($parsedItems as $item) {
                 $result = $this->upsertItem($item, $lookups, $claimedDoMap, $reservedDoOwners);
 
@@ -246,6 +249,36 @@ class MonitoringBarangImportService
                 if ($result['incomplete_info'] !== null) {
                     $incompleteInvoicedRows[] = $result['incomplete_info'];
                 }
+
+                if ($result['receipt_id'] !== null) {
+                    $touchedReceiptIds[] = $result['receipt_id'];
+                }
+
+                if ($result['resolved_pic_id'] !== null && filled($item['no_po']) && $item['no_po'] !== '-') {
+                    $poPicSyncCandidates[$item['no_po']][$result['resolved_pic_id']] = true;
+                }
+            }
+
+            // Sinkronkan PIC untuk seluruh record eksisting lain pada PO yang sama agar mengikuti data impor terbaru
+            foreach ($poPicSyncCandidates as $poNo => $picIdsMap) {
+                if (count($picIdsMap) !== 1) {
+                    continue;
+                }
+
+                $latestPicId = (int) array_key_first($picIdsMap);
+                $siblingQuery = InvoicingReceipt::query()
+                    ->where('no_po', $poNo)
+                    ->where(function ($q) use ($latestPicId): void {
+                        $q->whereNull('pic_id')
+                            ->orWhere('pic_id', '!=', $latestPicId);
+                    });
+
+                if (! empty($touchedReceiptIds)) {
+                    $siblingQuery->whereNotIn('id', $touchedReceiptIds);
+                }
+
+                $siblingUpdated = $siblingQuery->update(['pic_id' => $latestPicId]);
+                $updatedCount += $siblingUpdated;
             }
         });
 
@@ -1326,6 +1359,15 @@ class MonitoringBarangImportService
         $subtotalInclude = $item['subtotal_include_ppn'] ?? $receipt->subtotal_include_ppn;
         $receipt->preserveExplicitIncludePpn = $subtotalInclude !== null;
 
+        $resolvedStatus = $item['status'];
+        if (
+            $isExisting
+            && $resolvedStatus === 'Menunggu Verifikasi'
+            && in_array($receipt->status, ['Terverifikasi', 'Terkirim Kasir', 'Selesai'], true)
+        ) {
+            $resolvedStatus = $receipt->status;
+        }
+
         $receipt->fill([
             'grs_rdtv_item_id' => $receipt->grs_rdtv_item_id ?? $grsRdtvItem?->id,
             'delivery_order_receipt_id' => $matchedDo?->id ?? $receipt->delivery_order_receipt_id,
@@ -1357,7 +1399,7 @@ class MonitoringBarangImportService
             'tanggal_kirim_kasir' => $item['tanggal_kirim_kasir'] ?? $receipt->tanggal_kirim_kasir,
             'lama_pekerjaan' => $item['lama_pekerjaan'] ?? $receipt->lama_pekerjaan,
             'keterangan' => $item['keterangan'] ?? $receipt->keterangan,
-            'status' => $item['status'],
+            'status' => $resolvedStatus,
         ]);
 
         if ($isExisting && ! $receipt->isDirty()) {
@@ -1366,15 +1408,15 @@ class MonitoringBarangImportService
             $receipt->save();
             $saveStatus = $isExisting ? 'updated' : 'created';
 
-            if (! $isExisting) {
-                if (filled($receipt->no_grs)) {
-                    $lookups['existing_by_grs'][$receipt->no_grs] ??= collect();
+            if (filled($receipt->no_grs)) {
+                $lookups['existing_by_grs'][$receipt->no_grs] ??= collect();
+                if (! $lookups['existing_by_grs'][$receipt->no_grs]->contains('id', $receipt->id)) {
                     $lookups['existing_by_grs'][$receipt->no_grs]->push($receipt);
                 }
-                if (filled($receipt->no_po) && $receipt->no_po !== '-') {
-                    $lookups['existing_by_po'][$receipt->no_po] ??= collect();
-                    $lookups['existing_by_po'][$receipt->no_po]->push($receipt);
-                }
+            }
+            if (! $isExisting && filled($receipt->no_po) && $receipt->no_po !== '-') {
+                $lookups['existing_by_po'][$receipt->no_po] ??= collect();
+                $lookups['existing_by_po'][$receipt->no_po]->push($receipt);
             }
         }
 
@@ -1484,6 +1526,8 @@ class MonitoringBarangImportService
             'linked_do' => $receipt->delivery_order_receipt_id !== null,
             'unmatched_pic' => $unmatchedPic,
             'incomplete_info' => $incompleteInfo,
+            'receipt_id' => $receipt->id,
+            'resolved_pic_id' => $picId,
         ];
     }
 
@@ -1568,14 +1612,37 @@ class MonitoringBarangImportService
                     return null;
                 }
 
-                return $candidates->first(fn (InvoicingReceipt $r): bool => blank($r->no_invoice));
+                $unbilled = $candidates->first(fn (InvoicingReceipt $r): bool => blank($r->no_invoice));
+                if ($unbilled) {
+                    return $unbilled;
+                }
+
+                // Jika No. GRS sudah ada dan sudah terisi No. Invoice di sistem sementara CSV belum mengisi No. Invoice,
+                // tetap perbarui record eksisting (terutama PIC) agar tidak membuat duplikat
+                $samePoCandidate = $candidates->first(fn (InvoicingReceipt $r): bool => $r->no_po === $noPo);
+
+                return $samePoCandidate ?? $candidates->first();
             }
 
             // Fallback ke record auto-generate dari GRS/DO yang belum memiliki no_grs & no_invoice
-            if ($noDo !== null && $poCandidates->isNotEmpty()) {
-                return $poCandidates->first(
-                    fn (InvoicingReceipt $r): bool => $r->no_do === $noDo && blank($r->no_grs) && blank($r->no_invoice)
+            if ($poCandidates->isNotEmpty()) {
+                if ($noDo !== null) {
+                    $matchedByDo = $poCandidates->first(
+                        fn (InvoicingReceipt $r): bool => $r->no_do === $noDo && blank($r->no_grs) && blank($r->no_invoice)
+                    );
+                    if ($matchedByDo) {
+                        return $matchedByDo;
+                    }
+                }
+
+                // Jika CSV tidak mencantumkan No. DO, cocokkan ke record auto-generate pada PO yang sama
+                // yang belum memiliki No. GRS dan belum ditagihkan agar data & PIC terbarui tanpa duplikasi
+                $unmatchedAutoGrs = $poCandidates->first(
+                    fn (InvoicingReceipt $r): bool => $r->jenis === $jenis && blank($r->no_grs) && blank($r->no_invoice)
                 );
+                if ($unmatchedAutoGrs) {
+                    return $unmatchedAutoGrs;
+                }
             }
 
             return null;
@@ -1605,7 +1672,8 @@ class MonitoringBarangImportService
                 return $sameInvoice ?? $candidates->first(fn (InvoicingReceipt $r): bool => blank($r->no_invoice));
             }
 
-            return $candidates->first(fn (InvoicingReceipt $r): bool => blank($r->no_invoice));
+            return $candidates->first(fn (InvoicingReceipt $r): bool => blank($r->no_invoice))
+                ?? $candidates->first();
         }
 
         // 3. Fallback jika keduanya kosong
@@ -1621,6 +1689,27 @@ class MonitoringBarangImportService
 
                 return $matchesBase && ($namaBarang === null || $r->nama_barang === $namaBarang);
             });
+        }
+
+        // Jika No. GRS, No. RDTV, No. Invoice, dan No. DO sama-sama kosong (contoh: PO baru tanpa nomor GRS),
+        // cocokkan ke record PO yang sama yang belum memiliki nomor GRS/RDTV/Invoice agar tidak duplikat saat re-import
+        if ($poCandidates->isNotEmpty()) {
+            $sameName = $namaBarang !== null
+                ? $poCandidates->first(
+                    fn (InvoicingReceipt $r): bool => $r->jenis === $jenis
+                        && blank($r->no_grs)
+                        && blank($r->no_rdtv)
+                        && blank($r->no_invoice)
+                        && $r->nama_barang === $namaBarang
+                )
+                : null;
+
+            return $sameName ?? $poCandidates->first(
+                fn (InvoicingReceipt $r): bool => $r->jenis === $jenis
+                    && blank($r->no_grs)
+                    && blank($r->no_rdtv)
+                    && blank($r->no_invoice)
+            );
         }
 
         return null;
