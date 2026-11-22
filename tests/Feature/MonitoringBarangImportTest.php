@@ -1585,3 +1585,103 @@ it('streams large CSV imports across multiple PO-grouped chunks while preserving
     $incompleteRowNumbers = array_column($summary['incomplete_invoiced_rows'], 'row_number');
     expect($incompleteRowNumbers)->toBe([2, 152, 223]);
 });
+
+it('defaults Invoice Barang date filter to current month and syncs all tab badges with active table filters', function () {
+    $users = seedMonitoringPicUsers();
+    $actingUser = $users['alex@receiving.com'];
+
+    $thisMonthDate = now()->startOfMonth()->addDays(2)->toDateString();
+    $lastMonthDate = now()->subMonthNoOverflow()->startOfMonth()->addDays(2)->toDateString();
+
+    // 3 record bulan ini (1 Menunggu Verifikasi milik Alex, 1 Terverifikasi bebas PIC, 1 Selesai milik Alex)
+    $thisMonthWaiting = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300091001',
+        'tanggal_terima_grs' => $thisMonthDate,
+        'pic_id' => $actingUser->id,
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $thisMonthFreePool = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300091002',
+        'tanggal_terima_grs' => $thisMonthDate,
+        'pic_id' => null,
+        'status' => 'Terverifikasi',
+    ]);
+    $thisMonthSelesai = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300091003',
+        'tanggal_terima_grs' => $thisMonthDate,
+        'pic_id' => $actingUser->id,
+        'status' => 'Selesai',
+    ]);
+
+    // 2 record bulan lalu (tidak boleh ikut terhitung saat default bulan ini aktif)
+    $lastMonthWaiting = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300091901',
+        'tanggal_terima_grs' => $lastMonthDate,
+        'pic_id' => $actingUser->id,
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $lastMonthCashier = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300091902',
+        'tanggal_terima_grs' => $lastMonthDate,
+        'pic_id' => null,
+        'status' => 'Terkirim Kasir',
+    ]);
+
+    $expectedDefaultRange = now()->startOfMonth()->format('d/m/Y').' - '.now()->endOfMonth()->format('d/m/Y');
+
+    $component = Livewire::actingAs($actingUser)
+        ->test(ListInvoicingReceipts::class)
+        ->assertTableFilterExists('tanggal_terima_grs')
+        ->assertCanSeeTableRecords([$thisMonthWaiting, $thisMonthFreePool, $thisMonthSelesai])
+        ->assertCanNotSeeTableRecords([$lastMonthWaiting, $lastMonthCashier]);
+
+    /** @var ListInvoicingReceipts $instance */
+    $instance = $component->instance();
+
+    expect($instance->tableFilters['tanggal_terima_grs']['tanggal_terima_grs'] ?? null)->toBe($expectedDefaultRange);
+
+    // Badge setiap tab hanya menghitung data bulan ini (3 total, 1 tugas saya, 1 bebas PIC, 1 menunggu, 1 terverifikasi, 0 kasir, 1 selesai)
+    $tabsThisMonth = $instance->getCachedTabs();
+    expect($tabsThisMonth['all']->getBadge())->toBe('3')
+        ->and($tabsThisMonth['my_tasks']->getBadge())->toBe('1')
+        ->and($tabsThisMonth['free_pool']->getBadge())->toBe('1')
+        ->and($tabsThisMonth['waiting_verification']->getBadge())->toBe('1')
+        ->and($tabsThisMonth['verified']->getBadge())->toBe('1')
+        ->and($tabsThisMonth['sent_cashier']->getBadge())->toBe('0')
+        ->and($tabsThisMonth['selesai']->getBadge())->toBe('1');
+
+    // Jika filter tanggal dihapus (kosong), seluruh 5 record terlihat dan seluruh badge tab langsung berubah mengikuti filter
+    $component
+        ->set('tableFilters.tanggal_terima_grs.tanggal_terima_grs', null)
+        ->assertCanSeeTableRecords([$thisMonthWaiting, $thisMonthFreePool, $thisMonthSelesai, $lastMonthWaiting, $lastMonthCashier]);
+
+    $tabsAllDates = $component->instance()->getCachedTabs();
+    expect($tabsAllDates['all']->getBadge())->toBe('5')
+        ->and($tabsAllDates['my_tasks']->getBadge())->toBe('2')
+        ->and($tabsAllDates['free_pool']->getBadge())->toBe('2')
+        ->and($tabsAllDates['waiting_verification']->getBadge())->toBe('2')
+        ->and($tabsAllDates['verified']->getBadge())->toBe('1')
+        ->and($tabsAllDates['sent_cashier']->getBadge())->toBe('1')
+        ->and($tabsAllDates['selesai']->getBadge())->toBe('1');
+
+    // Jika filter tanggal diubah ke bulan lalu, hanya 2 record bulan lalu yang terlihat dan terhitung di badge tab
+    $lastMonthRange = now()->subMonthNoOverflow()->startOfMonth()->format('d/m/Y').' - '.now()->subMonthNoOverflow()->endOfMonth()->format('d/m/Y');
+    $component
+        ->set('tableFilters.tanggal_terima_grs.tanggal_terima_grs', $lastMonthRange)
+        ->assertCanSeeTableRecords([$lastMonthWaiting, $lastMonthCashier])
+        ->assertCanNotSeeTableRecords([$thisMonthWaiting, $thisMonthFreePool, $thisMonthSelesai]);
+
+    $tabsLastMonth = $component->instance()->getCachedTabs();
+    expect($tabsLastMonth['all']->getBadge())->toBe('2')
+        ->and($tabsLastMonth['my_tasks']->getBadge())->toBe('1')
+        ->and($tabsLastMonth['free_pool']->getBadge())->toBe('1')
+        ->and($tabsLastMonth['waiting_verification']->getBadge())->toBe('1')
+        ->and($tabsLastMonth['verified']->getBadge())->toBe('0')
+        ->and($tabsLastMonth['sent_cashier']->getBadge())->toBe('1')
+        ->and($tabsLastMonth['selesai']->getBadge())->toBe('0');
+});

@@ -420,6 +420,7 @@ class InvoicingReceiptsTable
                 DateRangeFilter::make('tanggal_terima_grs')
                     ->label('Rentang Tgl Terima GRS')
                     ->placeholder('Pilih rentang tanggal')
+                    ->defaultThisMonth()
                     ->modifyQueryUsing(function (Builder $query, ?Carbon $startDate, ?Carbon $endDate): Builder {
                         return $query
                             ->when($startDate && $endDate, fn ($q) => $q->whereBetween('tanggal_terima_grs', [

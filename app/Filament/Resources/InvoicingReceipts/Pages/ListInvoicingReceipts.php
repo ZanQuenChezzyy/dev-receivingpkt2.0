@@ -25,6 +25,27 @@ class ListInvoicingReceipts extends ListRecords
 {
     protected static string $resource = InvoicingReceiptResource::class;
 
+    /**
+     * @var array{
+     *     all: int,
+     *     my_tasks: int,
+     *     free_pool: int,
+     *     waiting_verification: int,
+     *     verified: int,
+     *     sent_cashier: int,
+     *     selesai: int
+     * }|null
+     */
+    protected ?array $cachedFilteredTabCounts = null;
+
+    protected ?string $cachedFilteredTabCountsKey = null;
+
+    public function rendering(): void
+    {
+        $this->cachedFilteredTabCounts = null;
+        $this->cachedFilteredTabCountsKey = null;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -193,47 +214,115 @@ class ListInvoicingReceipts extends ListRecords
 
     public function getTabs(): array
     {
+        $this->cachedFilteredTabCounts = null;
+        $this->cachedFilteredTabCountsKey = null;
+
         return [
             'all' => Tab::make('Semua Dokumen')
                 ->icon('heroicon-m-document-text')
-                ->badge(InvoicingReceipt::count()),
+                ->badge(fn (): int => $this->getFilteredTabCounts()['all']),
 
             'my_tasks' => Tab::make('Tugas Saya')
                 ->icon('heroicon-m-user')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $this->applyMyTasksFilter($query))
-                ->badge($this->applyMyTasksFilter(InvoicingReceipt::query())->count())
+                ->badge(fn (): int => $this->getFilteredTabCounts()['my_tasks'])
                 ->badgeColor('primary'),
 
             'free_pool' => Tab::make('Bebas (Belum Ada PIC)')
                 ->icon('heroicon-m-user-group')
                 ->modifyQueryUsing(fn (Builder $query) => $query->whereNull('pic_id'))
-                ->badge(InvoicingReceipt::whereNull('pic_id')->count())
+                ->badge(fn (): int => $this->getFilteredTabCounts()['free_pool'])
                 ->badgeColor('warning'),
 
             'waiting_verification' => Tab::make('Menunggu Verifikasi')
                 ->icon('heroicon-m-clock')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'Menunggu Verifikasi'))
-                ->badge(InvoicingReceipt::where('status', 'Menunggu Verifikasi')->count())
+                ->badge(fn (): int => $this->getFilteredTabCounts()['waiting_verification'])
                 ->badgeColor('danger'),
 
             'verified' => Tab::make('Terverifikasi')
                 ->icon('heroicon-m-check-badge')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'Terverifikasi'))
-                ->badge(InvoicingReceipt::where('status', 'Terverifikasi')->count())
+                ->badge(fn (): int => $this->getFilteredTabCounts()['verified'])
                 ->badgeColor('info'),
 
             'sent_cashier' => Tab::make('Terkirim Kasir')
                 ->icon('heroicon-m-paper-airplane')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'Terkirim Kasir'))
-                ->badge(InvoicingReceipt::where('status', 'Terkirim Kasir')->count())
+                ->badge(fn (): int => $this->getFilteredTabCounts()['sent_cashier'])
                 ->badgeColor('success'),
 
             'selesai' => Tab::make('Selesai')
                 ->icon('heroicon-m-check-circle')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'Selesai'))
-                ->badge(InvoicingReceipt::where('status', 'Selesai')->count())
+                ->badge(fn (): int => $this->getFilteredTabCounts()['selesai'])
                 ->badgeColor('success'),
         ];
+    }
+
+    /**
+     * Menghitung badge seluruh tab mengikuti filter tabel yang sedang aktif (termasuk default bulan ini)
+     * dalam satu query agregat agar cepat dan selalu sinkron dengan isi tabel.
+     *
+     * @return array{
+     *     all: int,
+     *     my_tasks: int,
+     *     free_pool: int,
+     *     waiting_verification: int,
+     *     verified: int,
+     *     sent_cashier: int,
+     *     selesai: int
+     * }
+     */
+    protected function getFilteredTabCounts(): array
+    {
+        $userId = Auth::id();
+        $cacheKey = md5(json_encode([
+            'user_id' => $userId,
+            'active_tab' => $this->activeTab,
+            'filters' => $this->tableFilters,
+        ]) ?: '');
+
+        if ($this->cachedFilteredTabCounts !== null && $this->cachedFilteredTabCountsKey === $cacheKey) {
+            return $this->cachedFilteredTabCounts;
+        }
+
+        $query = InvoicingReceipt::query();
+        if (is_array($this->tableFilters)) {
+            $query = $this->applyFiltersToTableQuery($query);
+        }
+
+        $baseQuery = $query->toBase();
+        $baseQuery->selectRaw('COUNT(*) as all_count');
+        $baseQuery->selectRaw('SUM(CASE WHEN pic_id IS NULL THEN 1 ELSE 0 END) as free_pool_count');
+        $baseQuery->selectRaw("SUM(CASE WHEN status = 'Menunggu Verifikasi' THEN 1 ELSE 0 END) as waiting_verification_count");
+        $baseQuery->selectRaw("SUM(CASE WHEN status = 'Terverifikasi' THEN 1 ELSE 0 END) as verified_count");
+        $baseQuery->selectRaw("SUM(CASE WHEN status = 'Terkirim Kasir' THEN 1 ELSE 0 END) as sent_cashier_count");
+        $baseQuery->selectRaw("SUM(CASE WHEN status = 'Selesai' THEN 1 ELSE 0 END) as selesai_count");
+
+        if ($userId !== null) {
+            $baseQuery->selectRaw(
+                "SUM(CASE WHEN pic_id = ? AND status IN ('Menunggu Verifikasi', 'Terverifikasi') THEN 1 ELSE 0 END) as my_tasks_count",
+                [$userId]
+            );
+        } else {
+            $baseQuery->selectRaw('0 as my_tasks_count');
+        }
+
+        $row = $baseQuery->first();
+
+        $this->cachedFilteredTabCountsKey = $cacheKey;
+        $this->cachedFilteredTabCounts = [
+            'all' => (int) ($row->all_count ?? 0),
+            'my_tasks' => (int) ($row->my_tasks_count ?? 0),
+            'free_pool' => (int) ($row->free_pool_count ?? 0),
+            'waiting_verification' => (int) ($row->waiting_verification_count ?? 0),
+            'verified' => (int) ($row->verified_count ?? 0),
+            'sent_cashier' => (int) ($row->sent_cashier_count ?? 0),
+            'selesai' => (int) ($row->selesai_count ?? 0),
+        ];
+
+        return $this->cachedFilteredTabCounts;
     }
 
     /**
