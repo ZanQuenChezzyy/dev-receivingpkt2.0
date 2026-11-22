@@ -30,24 +30,28 @@ html, body {
     letter-spacing: -0.011em;
 }
 
-/* Apple Neutral Canvas Background with Soft Ambient Glow */
+/* Luminous Liquid Glass Canvas Background (PKT Ambient Light Mesh) */
 body {
-    background-color: #F5F5F7;
-    background-image: 
-        radial-gradient(circle at 15% 15%, rgba(244, 121, 32, 0.07) 0%, transparent 40%),
-        radial-gradient(circle at 85% 85%, rgba(10, 79, 134, 0.05) 0%, transparent 45%);
+    background-color: #eef3f9;
+    background-image:
+        radial-gradient(ellipse 52% 46% at 10% 8%, rgba(244, 121, 32, 0.14) 0%, transparent 62%),
+        radial-gradient(ellipse 56% 50% at 90% 12%, rgba(0, 84, 166, 0.14) 0%, transparent 64%),
+        radial-gradient(ellipse 50% 45% at 50% 94%, rgba(56, 189, 248, 0.11) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 38% at 12% 86%, rgba(251, 146, 60, 0.08) 0%, transparent 60%);
     background-attachment: fixed;
 }
 
 html.dark body {
-    background-color: #070E18;
-    background-image: 
-        radial-gradient(circle at 15% 15%, rgba(244, 121, 32, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 85% 85%, rgba(10, 79, 134, 0.12) 0%, transparent 50%);
+    background-color: #050b14;
+    background-image:
+        radial-gradient(ellipse 50% 46% at 10% 10%, rgba(244, 121, 32, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 58% 52% at 88% 14%, rgba(0, 84, 166, 0.24) 0%, transparent 64%),
+        radial-gradient(ellipse 52% 46% at 52% 94%, rgba(14, 165, 233, 0.12) 0%, transparent 64%),
+        radial-gradient(ellipse 42% 40% at 14% 88%, rgba(30, 58, 138, 0.18) 0%, transparent 62%);
     background-attachment: fixed;
 }
 
-/* Layout Transparency to let the Apple Canvas shine */
+/* Layout Transparency to let the Liquid Glass Canvas shine */
 .fi-layout,
 .fi-simple-layout,
 .fi-auth-content-section,
@@ -57,12 +61,27 @@ html.dark body {
 }
 
 /* =========================================================
-   1. SIDEBAR (Apple Liquid Glass Dock)
+   1. SIDEBAR (Liquid Glass Dock)
    ========================================================= */
 .fi-sidebar {
-    @apply !bg-white/70 dark:!bg-[#07111e]/75 !backdrop-blur-2xl !backdrop-saturate-150 !border-r !border-black/[0.06] dark:!border-white/[0.08] !shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:!shadow-[4px_0_32px_rgba(0,0,0,0.3)];
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(248, 251, 255, 0.56) 100%) !important;
+    backdrop-filter: blur(26px) saturate(185%) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(185%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.78) !important;
+    box-shadow:
+        inset -1px 0 0 rgba(10, 79, 134, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        6px 0 28px -8px rgba(10, 79, 134, 0.08) !important;
     overflow: hidden;
     z-index: 25 !important;
+}
+
+.dark .fi-sidebar {
+    background: linear-gradient(180deg, rgba(11, 22, 39, 0.72) 0%, rgba(7, 15, 28, 0.62) 100%) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.11) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        6px 0 36px -6px rgba(0, 0, 0, 0.52) !important;
 }
 
 @media (max-width: 1023px) {
@@ -432,7 +451,7 @@ html.dark body {
 }
 
 /* =========================================================
-   2. TOPBAR (Apple Solid Glass Navigation Bar)
+   2. TOPBAR (Liquid Glass Navigation Bar)
    ========================================================= */
 .fi-topbar-ctn {
     position: sticky !important;
@@ -445,15 +464,22 @@ html.dark body {
     position: relative !important;
     z-index: 30 !important;
     min-height: 4rem !important;
-    background-color: #ffffff !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04) !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.58) 100%) !important;
+    backdrop-filter: blur(24px) saturate(185%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(185%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.78) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        0 1px 0 rgba(10, 79, 134, 0.06),
+        0 8px 26px -10px rgba(10, 79, 134, 0.12) !important;
 }
 
 .dark .fi-topbar {
-    background-color: #070e18 !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45) !important;
+    background: linear-gradient(180deg, rgba(11, 22, 39, 0.72) 0%, rgba(8, 17, 30, 0.60) 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.11) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.09),
+        0 10px 30px -8px rgba(0, 0, 0, 0.55) !important;
 }
 
 @media (max-width: 639px) {
@@ -519,7 +545,7 @@ html.dark body {
 }
 
 /* =========================================================
-   3. CONTENT LAYER: Apple Standard Material Panels
+   3. CONTENT LAYER: Liquid Glass Material Panels
       (Cards, Widgets, Sections, Tables, Stats)
    ========================================================= */
 .fi-wi-stats-overview-stat,
@@ -533,9 +559,19 @@ html.dark body {
 .fi-sc-tabs.fi-contained,
 .fi-tabs.fi-contained,
 .fi-empty-state {
-    @apply !bg-white/92 dark:!bg-[#0c1829]/90 !rounded-2xl !relative focus-within:!z-10 transition-all duration-300;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04), 0 12px 28px -6px rgba(0, 0, 0, 0.06) !important;
+    @apply !rounded-2xl !relative focus-within:!z-10 transition-all duration-300;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.74) 0%, rgba(255, 255, 255, 0.58) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.82) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.94),
+        inset 0 -1px 0 rgba(10, 79, 134, 0.04),
+        0 10px 32px -10px rgba(10, 79, 134, 0.11),
+        0 2px 8px -2px rgba(15, 23, 42, 0.05) !important;
+}
+
+/* Slightly denser frosted backing for dense data tables so text stays razor sharp */
+.fi-ta-ctn {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.66) 100%) !important;
 }
 
 /* Safari iOS containment fix: Keep backdrop-blur in ::before */
@@ -554,7 +590,8 @@ html.dark body {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    @apply backdrop-blur-xl;
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
     z-index: -1;
     pointer-events: none;
 }
@@ -570,8 +607,16 @@ html.dark body {
 .dark .fi-sc-tabs.fi-contained,
 .dark .fi-tabs.fi-contained,
 .dark .fi-empty-state {
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.3), 0 12px 32px -6px rgba(0, 0, 0, 0.45) !important;
+    background: linear-gradient(145deg, rgba(16, 30, 52, 0.66) 0%, rgba(10, 20, 36, 0.54) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-top-color: rgba(255, 255, 255, 0.20) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 14px 36px -10px rgba(0, 0, 0, 0.55) !important;
+}
+
+.dark .fi-ta-ctn {
+    background: linear-gradient(145deg, rgba(15, 28, 48, 0.72) 0%, rgba(10, 20, 36, 0.62) 100%) !important;
 }
 
 /* Pastikan widget wrapper parent, grid container, dan section stats selalu transparan tanpa gap background */
@@ -713,10 +758,32 @@ body.stats-already-loaded .stat-row-animated {
 }
 
 /* =========================================================
-   4. TABLES (Apple Clean macOS Data Grids)
+   4. TABLES (Liquid Glass Data Grids)
    ========================================================= */
 .fi-ta-header, .fi-ta-content {
     @apply !bg-transparent;
+}
+
+.fi-ta-table thead,
+.fi-ta-header-cell {
+    background-color: rgba(241, 245, 249, 0.56) !important;
+}
+
+.dark .fi-ta-table thead,
+.dark .fi-ta-header-cell {
+    background-color: rgba(15, 28, 48, 0.52) !important;
+}
+
+.fi-ta-header-toolbar,
+.fi-ta-filters-above-content-ctn {
+    background-color: rgba(255, 255, 255, 0.34) !important;
+    border-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+.dark .fi-ta-header-toolbar,
+.dark .fi-ta-filters-above-content-ctn {
+    background-color: rgba(15, 28, 48, 0.32) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Eliminate unnecessary inner vertical scrollbars while keeping smooth horizontal scroll */
@@ -1294,31 +1361,50 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
 }
 
 /* =========================================================
-   7. INPUTS & FORM FIELDS (Apple Clean Frosted Inputs)
+   7. INPUTS & FORM FIELDS (Liquid Glass Frosted Inputs)
    ========================================================= */
 .fi-input-wrp, 
 .fi-select-wrp,
 .fi-textarea-wrp,
 .fi-fo-date-time-picker-display-text-input-wrp {
-    @apply !bg-slate-100/80 dark:!bg-slate-900/80 !rounded-xl !transition-all !duration-200 !relative focus-within:!z-10 hover:!z-10;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    @apply !rounded-xl !transition-all !duration-200 !relative focus-within:!z-10 hover:!z-10;
+    background-color: rgba(255, 255, 255, 0.62) !important;
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.85) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 1px 3px rgba(10, 79, 134, 0.06),
+        0 0 0 1px rgba(15, 23, 42, 0.06) !important;
 }
 
 .dark .fi-input-wrp, 
 .dark .fi-select-wrp,
 .dark .fi-textarea-wrp,
 .dark .fi-fo-date-time-picker-display-text-input-wrp {
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background-color: rgba(11, 22, 39, 0.56) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 2px 6px rgba(0, 0, 0, 0.25) !important;
 }
 
 .fi-input-wrp:focus-within,
 .fi-select-wrp:focus-within,
 .fi-textarea-wrp:focus-within,
 .fi-fo-date-time-picker-display-text-input-wrp:focus-within {
-    @apply !bg-white dark:!bg-[#07111e];
+    background-color: rgba(255, 255, 255, 0.94) !important;
     border-color: #F47920 !important;
-    box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.15) !important;
+    box-shadow: 0 0 0 3.5px rgba(244, 121, 32, 0.16), 0 4px 14px -4px rgba(244, 121, 32, 0.22) !important;
+}
+
+.dark .fi-input-wrp:focus-within,
+.dark .fi-select-wrp:focus-within,
+.dark .fi-textarea-wrp:focus-within,
+.dark .fi-fo-date-time-picker-display-text-input-wrp:focus-within {
+    background-color: rgba(9, 19, 34, 0.92) !important;
+    border-color: #F47920 !important;
+    box-shadow: 0 0 0 3.5px rgba(244, 121, 32, 0.22), 0 4px 16px -4px rgba(244, 121, 32, 0.28) !important;
 }
 
 .fi-input, 
@@ -1342,17 +1428,21 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
 }
 
 /* =========================================================
-   8. DROPDOWNS, POPOVERS & GLOBAL SEARCH
+   8. DROPDOWNS, POPOVERS & GLOBAL SEARCH (Liquid Glass Floating Menus)
    ========================================================= */
 .fi-dropdown-panel,
 .fi-popover,
 .fi-global-search-results-ctn {
     @apply !rounded-2xl;
     z-index: 99999 !important;
-    background-color: #ffffff !important;
-    background: #ffffff !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.16), 0 4px 16px -2px rgba(0, 0, 0, 0.08) !important;
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.86) 0%, rgba(248, 251, 255, 0.78) 100%) !important;
+    backdrop-filter: blur(26px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(190%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.88) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 18px 44px -8px rgba(10, 79, 134, 0.18),
+        0 4px 16px -4px rgba(15, 23, 42, 0.08) !important;
     max-height: min(24rem, calc(100vh - 120px)) !important;
     overflow-y: auto !important;
     overscroll-behavior: contain !important;
@@ -1385,10 +1475,12 @@ html.dark .fi-tabs-arrow-btn:hover:not(:disabled),
 .dark .fi-dropdown-panel,
 .dark .fi-popover,
 .dark .fi-global-search-results-ctn {
-    background-color: #0c1829 !important;
-    background: #0c1829 !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: 0 20px 50px -4px rgba(0, 0, 0, 0.85), 0 8px 24px -2px rgba(0, 0, 0, 0.6) !important;
+    background: linear-gradient(155deg, rgba(14, 27, 47, 0.84) 0%, rgba(9, 19, 34, 0.78) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 22px 52px -8px rgba(0, 0, 0, 0.85),
+        0 8px 24px -2px rgba(0, 0, 0, 0.6) !important;
 }
 
 .fi-dropdown-list {
@@ -1701,40 +1793,54 @@ body.has-filament-modal-open .fi-section {
     overflow: hidden !important;
 }
 
-/* 9A. Standard Centered Modals (Apple Floating Sheet) */
+/* 9A. Standard Centered Modals (Liquid Glass Floating Sheet) */
 .fi-modal:not(.fi-modal-slide-over) .fi-modal-window {
-    @apply !bg-white/95 dark:!bg-[#0b1626]/95 !backdrop-blur-2xl !rounded-3xl;
+    @apply !rounded-3xl;
     margin: auto !important;
     max-width: min(100%, 72rem) !important;
     max-height: calc(100dvh - 4.5rem) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 30px 90px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.86) 0%, rgba(248, 251, 255, 0.78) 100%) !important;
+    backdrop-filter: blur(30px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(190%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.85) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 30px 90px -15px rgba(10, 25, 47, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.18) !important;
     transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease !important;
 }
 
 .dark .fi-modal:not(.fi-modal-slide-over) .fi-modal-window {
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    box-shadow: 0 30px 90px -15px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
+    background: linear-gradient(155deg, rgba(15, 28, 48, 0.86) 0%, rgba(9, 19, 34, 0.78) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 30px 90px -15px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(255, 255, 255, 0.12) !important;
 }
 
-/* 9B. Slide-over Drawers (e.g. Database Notifications Slide-Over) */
+/* 9B. Slide-over Drawers (Liquid Glass Sheet) */
 .fi-modal.fi-modal-slide-over .fi-modal-window {
-    @apply !bg-white/95 dark:!bg-[#0b1626]/95 !backdrop-blur-2xl h-dvh;
+    @apply h-dvh;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(248, 251, 255, 0.76) 100%) !important;
+    backdrop-filter: blur(30px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(190%) !important;
     border-radius: 1.5rem 0 0 1.5rem !important;
     border: none !important;
-    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: -16px 0 48px rgba(0, 0, 0, 0.2) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.82) !important;
+    box-shadow: -16px 0 48px rgba(10, 25, 47, 0.22) !important;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease !important;
 }
 
 .dark .fi-modal.fi-modal-slide-over .fi-modal-window {
-    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: -20px 0 64px rgba(0, 0, 0, 0.6) !important;
+    background: linear-gradient(180deg, rgba(14, 27, 47, 0.84) 0%, rgba(8, 17, 30, 0.78) 100%) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: -20px 0 64px rgba(0, 0, 0, 0.65) !important;
 }
 
 .fi-modal-header {
     @apply border-b !border-black/[0.06] dark:!border-white/[0.08] !px-6 !py-5;
-    background-color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.52) !important;
     flex-shrink: 0 !important;
     position: relative !important;
     z-index: 20 !important;
@@ -1742,7 +1848,7 @@ body.has-filament-modal-open .fi-section {
 }
 
 .dark .fi-modal-header {
-    background-color: #0c1829 !important;
+    background-color: rgba(15, 28, 48, 0.52) !important;
 }
 
 /* Modal Content: Scrollable Body Area with Smooth Scrollbars */
@@ -2406,18 +2512,28 @@ button {
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12), 0 0 12px rgba(244, 121, 32, 0.35);
 }
 
-/* 6. Admin Login Card — PKT Brand Top Accent & Elevation */
+/* 6. Admin Login Card — Liquid Glass & PKT Brand Top Accent */
 .fi-simple-main {
     position: relative;
     overflow: hidden;
     border-radius: 1.5rem !important;
-    border: 1px solid rgba(10, 79, 134, 0.12) !important;
-    box-shadow: 0 20px 48px -14px rgba(10, 79, 134, 0.16), 0 6px 18px -6px rgba(15, 23, 42, 0.08) !important;
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.78) 0%, rgba(248, 251, 255, 0.64) 100%) !important;
+    backdrop-filter: blur(28px) saturate(185%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(185%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.85) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.94),
+        0 22px 52px -14px rgba(10, 79, 134, 0.18),
+        0 6px 18px -6px rgba(15, 23, 42, 0.08) !important;
 }
 
 .dark .fi-simple-main {
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 24px 56px -14px rgba(0, 0, 0, 0.68), 0 0 0 1px rgba(244, 121, 32, 0.12) !important;
+    background: linear-gradient(155deg, rgba(15, 28, 48, 0.76) 0%, rgba(9, 19, 34, 0.66) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 26px 60px -14px rgba(0, 0, 0, 0.72),
+        0 0 0 1px rgba(244, 121, 32, 0.12) !important;
 }
 
 .fi-simple-main::after {
@@ -2430,6 +2546,37 @@ button {
     background: linear-gradient(90deg, #0054A6 0%, #F47920 100%);
     pointer-events: none;
     z-index: 20;
+}
+
+/* Liquid Glass Tab Rail & Subtle Frosted Footer */
+.fi-tabs:not(.fi-contained) {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.52) 100%) !important;
+    backdrop-filter: blur(18px) saturate(175%);
+    -webkit-backdrop-filter: blur(18px) saturate(175%);
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 6px 20px -8px rgba(10, 79, 134, 0.1) !important;
+}
+
+.dark .fi-tabs:not(.fi-contained) {
+    background: linear-gradient(145deg, rgba(16, 30, 52, 0.62) 0%, rgba(10, 20, 36, 0.5) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 8px 24px -8px rgba(0, 0, 0, 0.45) !important;
+}
+
+.fi-footer {
+    background-color: rgba(255, 255, 255, 0.48) !important;
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    border-top-color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.dark .fi-footer {
+    background-color: rgba(9, 19, 34, 0.48) !important;
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* 7. Smooth Three-Dot Bounce Loader (Custom Modals & Actions) */
