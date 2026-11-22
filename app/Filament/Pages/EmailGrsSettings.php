@@ -153,13 +153,13 @@ class EmailGrsSettings extends Page implements HasForms
                     $grsPreview = $renderer->renderPreview(
                         'GRS',
                         (string) ($state['grs_subject'] ?? EmailTemplateRenderer::defaultGrsSubject()),
-                        (string) ($state['grs_body'] ?? EmailTemplateRenderer::defaultGrsBody()),
+                        $renderer->normalizeRichContentToHtml($state['grs_body'] ?? null, EmailTemplateRenderer::defaultGrsBody()),
                     );
 
                     $rdtvPreview = $renderer->renderPreview(
                         'RDTV',
                         (string) ($state['rdtv_subject'] ?? EmailTemplateRenderer::defaultRdtvSubject()),
-                        (string) ($state['rdtv_body'] ?? EmailTemplateRenderer::defaultRdtvBody()),
+                        $renderer->normalizeRichContentToHtml($state['rdtv_body'] ?? null, EmailTemplateRenderer::defaultRdtvBody()),
                     );
 
                     return view('filament.pages.partials.email-template-preview', [
@@ -208,8 +208,8 @@ class EmailGrsSettings extends Page implements HasForms
                         ? (string) ($state['rdtv_subject'] ?? EmailTemplateRenderer::defaultRdtvSubject())
                         : (string) ($state['grs_subject'] ?? EmailTemplateRenderer::defaultGrsSubject());
                     $bodyTpl = $jenis === 'RDTV'
-                        ? (string) ($state['rdtv_body'] ?? EmailTemplateRenderer::defaultRdtvBody())
-                        : (string) ($state['grs_body'] ?? EmailTemplateRenderer::defaultGrsBody());
+                        ? $renderer->normalizeRichContentToHtml($state['rdtv_body'] ?? null, EmailTemplateRenderer::defaultRdtvBody())
+                        : $renderer->normalizeRichContentToHtml($state['grs_body'] ?? null, EmailTemplateRenderer::defaultGrsBody());
 
                     $preview = $renderer->renderPreview($jenis, $subjectTpl, $bodyTpl);
 

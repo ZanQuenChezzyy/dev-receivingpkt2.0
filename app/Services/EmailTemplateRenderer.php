@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\InvoicingReceipt;
 use App\Models\Setting;
+use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Support\Carbon;
 
 class EmailTemplateRenderer
@@ -124,6 +125,26 @@ HTML;
     }
 
     /**
+     * Mengonversi nilai RichEditor Filament v5 (baik HTML string maupun array TipTap/ProseMirror) menjadi HTML string aman.
+     */
+    public function normalizeRichContentToHtml(mixed $value, string $fallback = ''): string
+    {
+        if (is_array($value)) {
+            $html = trim((string) RichContentRenderer::make($value)->toHtml());
+
+            return $html !== '' ? $html : $fallback;
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+
+            return $trimmed !== '' ? $trimmed : $fallback;
+        }
+
+        return $fallback;
+    }
+
+    /**
      * Menyimpan pengaturan template dari form Filament ke tabel settings.
      *
      * @param  array<string, mixed>  $data
@@ -133,9 +154,9 @@ HTML;
         $pairs = [
             self::KEY_AUTO_SEND_ENABLED => ! empty($data['auto_send_enabled']) ? '1' : '0',
             self::KEY_GRS_SUBJECT => trim((string) ($data['grs_subject'] ?? '')) ?: self::defaultGrsSubject(),
-            self::KEY_GRS_BODY => trim((string) ($data['grs_body'] ?? '')) ?: self::defaultGrsBody(),
+            self::KEY_GRS_BODY => $this->normalizeRichContentToHtml($data['grs_body'] ?? null, self::defaultGrsBody()),
             self::KEY_RDTV_SUBJECT => trim((string) ($data['rdtv_subject'] ?? '')) ?: self::defaultRdtvSubject(),
-            self::KEY_RDTV_BODY => trim((string) ($data['rdtv_body'] ?? '')) ?: self::defaultRdtvBody(),
+            self::KEY_RDTV_BODY => $this->normalizeRichContentToHtml($data['rdtv_body'] ?? null, self::defaultRdtvBody()),
         ];
 
         foreach ($pairs as $key => $value) {

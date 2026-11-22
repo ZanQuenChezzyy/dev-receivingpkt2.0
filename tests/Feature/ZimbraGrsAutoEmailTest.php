@@ -400,3 +400,26 @@ it('mengisolasi error Zimbra sehingga upload Verifikasi GRS tetap tersimpan dan 
     expect($log->status)->toBe('failed')
         ->and($log->error_message)->toContain('account.AUTH_FAILED');
 });
+
+it('mengonversi state array TipTap RichEditor Filament v5 menjadi HTML tanpa error Array to string conversion', function (): void {
+    $renderer = app(EmailTemplateRenderer::class);
+
+    $tiptapDoc = [
+        'type' => 'doc',
+        'content' => [
+            [
+                'type' => 'paragraph',
+                'content' => [
+                    ['type' => 'text', 'text' => 'Halo {vendor_name}, PO {no_po} sudah diverifikasi.'],
+                ],
+            ],
+        ],
+    ];
+
+    $html = $renderer->normalizeRichContentToHtml($tiptapDoc);
+    expect($html)->toContain('Halo {vendor_name}, PO {no_po} sudah diverifikasi.');
+
+    $preview = $renderer->renderPreview('GRS', 'GRS {no_grs}', $html);
+    expect($preview['wrapped_html'])->toContain('PT Contoh Mitra Industri')
+        ->and($preview['wrapped_html'])->toContain('5300058418');
+});

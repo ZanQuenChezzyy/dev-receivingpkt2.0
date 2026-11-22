@@ -1145,11 +1145,14 @@ class InvoicingReceiptsTable
                             ];
                         })
                         ->action(function (InvoicingReceipt $record, array $data): void {
+                            $renderer = app(EmailTemplateRenderer::class);
+                            $bodyHtml = $renderer->normalizeRichContentToHtml($data['body_html'] ?? null);
+
                             $result = app(InvoicingGrsEmailDispatcher::class)->sendManual(
                                 receipt: $record->fresh(['grsRdtvItem', 'vendor', 'pic']),
                                 recipients: Vendor::parseEmails($data['recipients'] ?? ''),
                                 subject: (string) ($data['subject'] ?? ''),
-                                bodyHtml: (string) ($data['body_html'] ?? ''),
+                                bodyHtml: $bodyHtml,
                                 userId: Auth::id(),
                             );
 
