@@ -319,6 +319,16 @@ class InvoicingReceiptInfolist
                             ->view('filament.infolists.components.dokumen-kelengkapan')
                             ->columnSpanFull(),
                     ]),
+
+                Section::make('Riwayat Pengiriman Email Vendor (Zimbra)')
+                    ->icon('heroicon-o-envelope')
+                    ->description('Log pengiriman email pemberitahuan GRS/RDTV beserta 2 lampiran PDF ke vendor melalui Zimbra Receiving Jasa.')
+                    ->schema([
+                        ViewEntry::make('email_logs_history')
+                            ->hiddenLabel()
+                            ->view('filament.infolists.components.email-logs')
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 }

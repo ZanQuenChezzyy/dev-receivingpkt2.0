@@ -42,4 +42,15 @@ return [
         'url' => env('OLLAMA_URL', 'http://127.0.0.1:11434'),
         'model' => env('OLLAMA_MODEL', 'llama3.1'),
     ],
+
+    'zimbra' => [
+        'enabled' => filter_var(env('ZIMBRA_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        'base_url' => rtrim((string) env('ZIMBRA_BASE_URL', 'https://mailpkt.pupukkaltim.com'), '/'),
+        'username' => env('ZIMBRA_USERNAME'),
+        'password' => env('ZIMBRA_PASSWORD'),
+        'from_name' => env('ZIMBRA_FROM_NAME', 'Receiving Jasa - PT Pupuk Kalimantan Timur'),
+        'timeout' => (int) env('ZIMBRA_TIMEOUT', 20),
+        'verify_ssl' => filter_var(env('ZIMBRA_VERIFY_SSL', true), FILTER_VALIDATE_BOOLEAN),
+        'test_override_to' => env('ZIMBRA_TEST_OVERRIDE_TO'),
+    ],
 ];

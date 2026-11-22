@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\InvoicingReceipt;
 use App\Services\GrsPdfParserService;
+use App\Services\InvoicingGrsEmailDispatcher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -199,6 +200,20 @@ class BatchVerifikasiGrsUploadController extends Controller
 
             $receipt->save();
 
+            $emailResult = app(InvoicingGrsEmailDispatcher::class)->dispatchIfEligible(
+                receipt: $receipt->fresh(['grsRdtvItem', 'vendor', 'pic']),
+                triggerSource: 'batch_ocr',
+                userId: $request->user()?->id,
+            );
+
+            $baseMessage = "Dokumen Verifikasi {$resolvedJenis} untuk PO {$receipt->no_po} berhasil diverifikasi.";
+            $emailSuffix = match ($emailResult['status']) {
+                'sent' => ' '.$emailResult['message'],
+                'skipped' => ' Email ditahan: '.$emailResult['message'],
+                'failed' => ' Email gagal dikirim: '.$emailResult['message'],
+                default => '',
+            };
+
             return response()->json([
                 'success' => true,
                 'matched' => true,
@@ -211,7 +226,9 @@ class BatchVerifikasiGrsUploadController extends Controller
                 'vendor_name' => $receipt->vendor_name ?: '-',
                 'status' => $receipt->status,
                 'stored_path' => $storedPath,
-                'message' => "Dokumen Verifikasi {$resolvedJenis} untuk PO {$receipt->no_po} berhasil dicocokkan dan status diubah menjadi Terverifikasi.",
+                'email_status' => $emailResult['status'],
+                'email_message' => $emailResult['message'],
+                'message' => $baseMessage.$emailSuffix,
             ]);
         }
 

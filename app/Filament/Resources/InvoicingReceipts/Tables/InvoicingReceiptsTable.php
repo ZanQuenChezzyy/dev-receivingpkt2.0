@@ -8,8 +8,10 @@ use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\EmailTemplateRenderer;
 use App\Services\GrsPdfParserService;
 use App\Services\InvoicingAssignmentService;
+use App\Services\InvoicingGrsEmailDispatcher;
 use App\Services\UserBadgeRenderer;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -22,7 +24,9 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -55,6 +59,7 @@ class InvoicingReceiptsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('latestEmailLog'))
             ->recordClasses(fn (InvoicingReceipt $record): ?string => $record->jenis === 'RDTV'
                 ? 'border-l-4 border-l-rose-500/70 bg-rose-50/30 dark:bg-rose-950/15'
                 : null)
@@ -362,6 +367,46 @@ class InvoicingReceiptsTable
                         ->url(fn (InvoicingReceipt $record): ?string => $record->dokumen_invoice ? Storage::disk('public')->url($record->dokumen_invoice) : null)
                         ->openUrlInNewTab()
                         ->tooltip('Berkas invoice fisik/resmi dari vendor.'),
+
+                    TextColumn::make('latestEmailLog.status')
+                        ->label('Email Vendor')
+                        ->badge()
+                        ->state(fn (InvoicingReceipt $record): string => $record->latestEmailLog?->status ?? 'none')
+                        ->formatStateUsing(fn (string $state): string => match ($state) {
+                            'sent' => 'Terkirim',
+                            'failed' => 'Gagal',
+                            'skipped' => 'Ditahan',
+                            default => 'Belum Dikirim',
+                        })
+                        ->color(fn (string $state): string => match ($state) {
+                            'sent' => 'success',
+                            'failed' => 'danger',
+                            'skipped' => 'warning',
+                            default => 'gray',
+                        })
+                        ->icon(fn (string $state): string => match ($state) {
+                            'sent' => 'heroicon-m-check-circle',
+                            'failed' => 'heroicon-m-x-circle',
+                            'skipped' => 'heroicon-m-exclamation-triangle',
+                            default => 'heroicon-m-envelope',
+                        })
+                        ->tooltip(function (InvoicingReceipt $record): string {
+                            $log = $record->latestEmailLog;
+                            if (! $log) {
+                                return 'Belum pernah dikirim email via Zimbra.';
+                            }
+
+                            $time = ($log->sent_at ?? $log->created_at)?->format('d/m/Y H:i') ?? '-';
+                            $recipients = is_array($log->recipients) && $log->recipients !== []
+                                ? implode(', ', $log->recipients)
+                                : '-';
+
+                            if ($log->status === 'sent') {
+                                return "Terkirim pada {$time} ke {$recipients} (2 lampiran PDF).";
+                            }
+
+                            return "Status {$log->status} pada {$time}: ".($log->error_message ?: '-');
+                        }),
                 ]),
 
                 // Kolom pelengkap (toggleable)
@@ -901,28 +946,32 @@ class InvoicingReceiptsTable
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Tutup'),
 
-                    // ACTION UTAMA 3: UPLOAD BERKAS (VERIFIKASI GRS & INVOICE VENDOR)
+                    // ACTION UTAMA 3: UPLOAD BERKAS (VERIFIKASI GRS/RDTV & INVOICE VENDOR)
                     Action::make('uploadBerkas')
                         ->label('Upload Berkas')
                         ->icon('heroicon-o-arrow-up-tray')
                         ->color('info')
-                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
                         ->modalHeading(fn (?InvoicingReceipt $record) => 'Upload Berkas - PO: '.($record?->no_po ?? '-'))
-                        ->modalDescription('Unggah dokumen verifikasi GRS dan berkas invoice resmi vendor. Dokumen GRS fisik gudang otomatis terhubung dari modul GRS/RDTV.')
+                        ->modalDescription(fn (?InvoicingReceipt $record) => $record?->jenis === 'RDTV'
+                            ? 'Unggah dokumen verifikasi RDTV resmi. Jika lengkap 2 lampiran (RDTV + Verifikasi RDTV), email pemberitahuan otomatis dikirim ke vendor.'
+                            : 'Unggah dokumen verifikasi GRS dan berkas invoice resmi vendor. Jika lengkap 2 lampiran (GRS + Verifikasi GRS), email pemberitahuan otomatis dikirim ke vendor.')
                         ->schema([
                             FileUpload::make('dokumen_verifikasi_grs')
-                                ->label('Surat / Dokumen Verifikasi GRS')
+                                ->label(fn (?InvoicingReceipt $record) => $record?->jenis === 'RDTV' ? 'Surat / Dokumen Verifikasi RDTV' : 'Surat / Dokumen Verifikasi GRS')
                                 ->disk('public')
-                                ->directory('verifikasi-grs')
+                                ->directory(fn (?InvoicingReceipt $record) => $record?->jenis === 'RDTV' ? 'verifikasi-rdtv' : 'verifikasi-grs')
                                 ->acceptedFileTypes(['application/pdf', 'image/*'])
                                 ->default(fn (?InvoicingReceipt $record) => ($record?->dokumen_verifikasi_grs && $record?->dokumen_verifikasi_grs !== $record?->grsRdtvItem?->file_path) ? $record->dokumen_verifikasi_grs : null)
-                                ->helperText('Unggah surat verifikasi penerimaan barang resmi yang telah disahkan / ditandatangani.'),
+                                ->helperText(fn (?InvoicingReceipt $record) => $record?->jenis === 'RDTV'
+                                    ? 'Unggah surat verifikasi penolakan barang (RDTV 124) yang telah disahkan / ditandatangani.'
+                                    : 'Unggah surat verifikasi penerimaan barang (GRS 105) yang telah disahkan / ditandatangani.'),
 
                             FileUpload::make('dokumen_invoice')
                                 ->label('Berkas Invoice Vendor')
                                 ->disk('public')
                                 ->directory('berkas-invoice')
                                 ->acceptedFileTypes(['application/pdf', 'image/*'])
+                                ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV')
                                 ->default(fn (?InvoicingReceipt $record) => $record?->dokumen_invoice)
                                 ->helperText('Unggah berkas invoice resmi setelah vendor mengirimkan berkas tagihan fisik ke PKT.'),
                         ])
@@ -933,13 +982,14 @@ class InvoicingReceiptsTable
                             if (empty($verifikasiFile) && empty($invoiceFile) && empty($record->dokumen_verifikasi_grs) && empty($record->dokumen_invoice)) {
                                 Notification::make()
                                     ->title('Tidak Ada Berkas Dipilih')
-                                    ->body('Silakan pilih setidaknya satu berkas (Verifikasi GRS atau Invoice Vendor).')
+                                    ->body('Silakan pilih setidaknya satu berkas untuk diunggah.')
                                     ->warning()
                                     ->send();
 
                                 return;
                             }
 
+                            $previousVerifikasi = trim((string) ($record->dokumen_verifikasi_grs ?? ''));
                             $updateData = [];
 
                             if (array_key_exists('dokumen_verifikasi_grs', $data)) {
@@ -953,7 +1003,11 @@ class InvoicingReceiptsTable
                                     if (file_exists($fullPath)) {
                                         try {
                                             $parsed = app(GrsPdfParserService::class)->parseVerifikasiGrs($fullPath, basename($verifikasiFile));
-                                            if (! empty($parsed['no_grs']) && empty($record->no_grs)) {
+                                            if ($record->jenis === 'RDTV') {
+                                                if (! empty($parsed['no_rdtv']) && empty($record->no_rdtv)) {
+                                                    $updateData['no_rdtv'] = $parsed['no_rdtv'];
+                                                }
+                                            } elseif (! empty($parsed['no_grs']) && empty($record->no_grs)) {
                                                 $updateData['no_grs'] = $parsed['no_grs'];
                                             }
                                             if (! empty($parsed['tanggal_release_gr'])) {
@@ -986,11 +1040,138 @@ class InvoicingReceiptsTable
                                 $record->update($updateData);
                             }
 
-                            Notification::make()
+                            $verifikasiChanged = ! empty($verifikasiFile)
+                                && trim((string) $verifikasiFile) !== $previousVerifikasi
+                                && trim((string) $verifikasiFile) !== trim((string) ($record->grsRdtvItem?->file_path ?? ''));
+
+                            $emailMessage = null;
+                            $emailStatus = null;
+
+                            if ($verifikasiChanged) {
+                                $emailResult = app(InvoicingGrsEmailDispatcher::class)->dispatchIfEligible(
+                                    receipt: $record->fresh(['grsRdtvItem', 'vendor', 'pic']),
+                                    triggerSource: 'row_upload',
+                                    userId: Auth::id(),
+                                );
+                                $emailStatus = $emailResult['status'];
+                                $emailMessage = $emailResult['message'];
+                            }
+
+                            $body = "Dokumen untuk PO {$record->no_po} telah diperbarui.";
+                            if ($emailMessage && $emailStatus !== 'disabled') {
+                                $body .= ' '.$emailMessage;
+                            }
+
+                            $notif = Notification::make()
                                 ->title('Berkas Berhasil Disimpan')
-                                ->body("Dokumen verifikasi / invoice untuk PO {$record->no_po} telah diperbarui.")
-                                ->success()
-                                ->send();
+                                ->body($body);
+
+                            if ($emailStatus === 'failed') {
+                                $notif->warning();
+                            } elseif ($emailStatus === 'skipped') {
+                                $notif->warning();
+                            } else {
+                                $notif->success();
+                            }
+
+                            $notif->send();
+                        }),
+
+                    // ACTION KIRIM / KIRIM ULANG EMAIL VENDOR VIA ZIMBRA
+                    Action::make('kirimEmailVendor')
+                        ->label(fn (?InvoicingReceipt $record): string => $record?->latestEmailLog?->status === 'sent'
+                            ? 'Kirim Ulang Email'
+                            : 'Kirim Email Vendor')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color(fn (?InvoicingReceipt $record): string => $record?->latestEmailLog?->status === 'sent'
+                            ? 'gray'
+                            : 'primary')
+                        ->modalHeading(fn (?InvoicingReceipt $record): string => 'Kirim Email Vendor - PO: '.($record?->no_po ?? '-'))
+                        ->modalDescription('Email dikirim via Zimbra (Receiving Jasa) dengan wajib 2 lampiran lengkap (GRS/RDTV dan Verifikasi GRS/RDTV). Anda dapat menyesuaikan isi surat sebelum mengirim.')
+                        ->modalWidth('3xl')
+                        ->modalSubmitActionLabel('Kirim Email Sekarang')
+                        ->schema(function (?InvoicingReceipt $record): array {
+                            if (! $record) {
+                                return [];
+                            }
+
+                            $dispatcher = app(InvoicingGrsEmailDispatcher::class);
+                            $renderer = app(EmailTemplateRenderer::class);
+                            $check = $dispatcher->resolveRequiredAttachments($record);
+                            $rendered = $renderer->renderForReceipt($record);
+                            $vendorEmails = $dispatcher->resolveVendorEmails($record);
+
+                            $attachmentInfo = $check['ok']
+                                ? new HtmlString(
+                                    '<div class="rounded-xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2.5 text-xs text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-200">'
+                                    .'<strong>2 Lampiran PDF Siap Dikirim:</strong> '
+                                    .collect($check['attachments'])
+                                        ->map(fn (array $att): string => '<span class="ml-1 inline-flex rounded bg-white/80 px-2 py-0.5 font-mono text-[11px] dark:bg-white/10">'.e($att['filename']).'</span>')
+                                        ->implode('')
+                                    .'</div>'
+                                )
+                                : new HtmlString(
+                                    '<div class="rounded-xl border border-rose-200 bg-rose-50/80 px-3.5 py-2.5 text-xs text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-200">'
+                                    .'<strong>Tidak Dapat Dikirim:</strong> '.e((string) $check['reason'])
+                                    .'</div>'
+                                );
+
+                            return [
+                                Placeholder::make('attachment_status')
+                                    ->hiddenLabel()
+                                    ->content($attachmentInfo),
+
+                                TextInput::make('recipients')
+                                    ->label('Alamat Email Tujuan Vendor')
+                                    ->required()
+                                    ->default(implode(', ', $vendorEmails))
+                                    ->helperText('Pisahkan dengan koma atau spasi jika lebih dari satu alamat email. (Jika mode uji coba aktif di .env, email akan dialihkan ke alamat uji coba.)'),
+
+                                TextInput::make('subject')
+                                    ->label('Subjek Email')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->default($rendered['subject']),
+
+                                RichEditor::make('body_html')
+                                    ->label('Isi Surat Email')
+                                    ->required()
+                                    ->default($rendered['body_html'])
+                                    ->toolbarButtons([
+                                        ['bold', 'italic', 'underline', 'strike', 'link'],
+                                        ['bulletList', 'orderedList'],
+                                        ['undo', 'redo'],
+                                    ]),
+                            ];
+                        })
+                        ->action(function (InvoicingReceipt $record, array $data): void {
+                            $result = app(InvoicingGrsEmailDispatcher::class)->sendManual(
+                                receipt: $record->fresh(['grsRdtvItem', 'vendor', 'pic']),
+                                recipients: Vendor::parseEmails($data['recipients'] ?? ''),
+                                subject: (string) ($data['subject'] ?? ''),
+                                bodyHtml: (string) ($data['body_html'] ?? ''),
+                                userId: Auth::id(),
+                            );
+
+                            if ($result['status'] === 'sent') {
+                                Notification::make()
+                                    ->title('Email Berhasil Dikirim')
+                                    ->body($result['message'])
+                                    ->success()
+                                    ->send();
+                            } elseif ($result['status'] === 'skipped') {
+                                Notification::make()
+                                    ->title('Pengiriman Email Ditahan')
+                                    ->body($result['message'])
+                                    ->warning()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Gagal Mengirim Email')
+                                    ->body($result['message'])
+                                    ->danger()
+                                    ->send();
+                            }
                         }),
 
                     // ACTION TENTUKAN PIC (MUNCUL JIKA BELUM ADA PIC)

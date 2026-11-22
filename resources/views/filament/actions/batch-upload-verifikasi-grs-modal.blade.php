@@ -512,6 +512,7 @@
 
                 const data = await res.json();
                 if (data.jenis) item.doc_type = data.jenis;
+                if (data.email_status) item.email_status = data.email_status;
                 if (res.ok && data.success && data.matched) {
                     item.status = 'verified';
                     item.message = data.message || 'Berhasil diverifikasi';
@@ -742,6 +743,17 @@
                                     </span>
                                     <span x-text="getStatusLabel(item)"></span>
                                 </span>
+
+                                <span
+                                    x-show="item.email_status && item.email_status !== 'disabled'"
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                                    :class="{
+                                        'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800': item.email_status === 'sent',
+                                        'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800': item.email_status === 'skipped',
+                                        'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800': item.email_status === 'failed',
+                                    }"
+                                    x-text="item.email_status === 'sent' ? 'Email Terkirim' : (item.email_status === 'skipped' ? 'Email Ditahan' : 'Email Gagal')"
+                                ></span>
 
                                 <button
                                     type="button"

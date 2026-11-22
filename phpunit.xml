@@ -32,5 +32,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="ZIMBRA_ENABLED" value="false" force="true"/>
+        <env name="ZIMBRA_TEST_OVERRIDE_TO" value="" force="true"/>
     </php>
 </phpunit>

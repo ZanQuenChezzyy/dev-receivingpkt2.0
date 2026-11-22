@@ -1,0 +1,402 @@
+<?php
+
+use App\Models\GrsRdtv;
+use App\Models\GrsRdtvItem;
+use App\Models\InvoicingEmailLog;
+use App\Models\InvoicingReceipt;
+use App\Models\User;
+use App\Services\EmailTemplateRenderer;
+use App\Services\InvoicingGrsEmailDispatcher;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Client\Request as HttpClientRequest;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema as DbSchema;
+use Illuminate\Support\Facades\Storage;
+use Spatie\Permission\Models\Role;
+
+beforeEach(function (): void {
+    Storage::fake('public');
+
+    if (! DbSchema::hasTable('users')) {
+        DbSchema::create('users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
+        });
+    }
+
+    if (! DbSchema::hasTable('permissions')) {
+        $permissionMigration = include database_path('migrations/2026_05_15_101350_create_permission_tables.php');
+        $permissionMigration->up();
+    }
+
+    Role::firstOrCreate(['name' => 'Developer', 'guard_name' => 'web']);
+
+    if (! DbSchema::hasTable('settings')) {
+        DbSchema::create('settings', function (Blueprint $table): void {
+            $table->id();
+            $table->string('key')->unique();
+            $table->text('value')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! DbSchema::hasTable('vendors')) {
+        DbSchema::create('vendors', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! DbSchema::hasTable('grs_rdtvs')) {
+        DbSchema::create('grs_rdtvs', function (Blueprint $table): void {
+            $table->id();
+            $table->string('category')->default('GRS');
+            $table->timestamps();
+        });
+    }
+
+    if (! DbSchema::hasTable('grs_rdtv_items')) {
+        DbSchema::create('grs_rdtv_items', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('grs_rdtv_id')->nullable();
+            $table->foreignId('delivery_order_receipt_id')->nullable();
+            $table->string('document_code')->nullable();
+            $table->string('file_path')->nullable();
+            $table->string('status')->nullable();
+            $table->text('reason')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! DbSchema::hasTable('invoicing_receipts')) {
+        DbSchema::create('invoicing_receipts', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('grs_rdtv_item_id')->nullable();
+            $table->foreignId('delivery_order_receipt_id')->nullable();
+            $table->foreignId('purchase_order_issued_id')->nullable();
+            $table->foreignId('vendor_id')->nullable();
+            $table->foreignId('pic_id')->nullable();
+            $table->date('tanggal_terima_grs')->nullable();
+            $table->date('delivery_date')->nullable();
+            $table->date('tanggal_penerimaan')->nullable();
+            $table->date('tanggal_po')->nullable();
+            $table->string('jenis')->default('GRS');
+            $table->string('kategori_barang')->default('Barang');
+            $table->string('no_grs')->nullable();
+            $table->string('no_rdtv')->nullable();
+            $table->string('no_po')->default('-');
+            $table->string('no_do')->nullable();
+            $table->string('material_type')->nullable();
+            $table->string('vendor_name')->nullable();
+            $table->text('deskripsi')->nullable();
+            $table->string('email_vendor')->nullable();
+            $table->date('tanggal_info_grs')->nullable();
+            $table->text('nama_barang')->nullable();
+            $table->text('keterangan')->nullable();
+            $table->string('dokumen_verifikasi_grs')->nullable();
+            $table->string('dokumen_invoice')->nullable();
+            $table->string('status')->default('Menunggu Verifikasi');
+            $table->timestamps();
+        });
+    }
+
+    if (! DbSchema::hasTable('invoicing_receipt_items')) {
+        DbSchema::create('invoicing_receipt_items', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('invoicing_receipt_id');
+            $table->string('no_grs')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! DbSchema::hasTable('invoicing_email_logs')) {
+        $logMigration = include database_path('migrations/2026_11_23_012849_create_invoicing_email_logs_table.php');
+        $logMigration->up();
+    }
+
+    config([
+        'services.zimbra.enabled' => true,
+        'services.zimbra.base_url' => 'https://mailpkt.pupukkaltim.com',
+        'services.zimbra.username' => 'receiving.jasa@pupukkaltim.com',
+        'services.zimbra.password' => 'secret-pass',
+        'services.zimbra.from_name' => 'Receiving Jasa - PT Pupuk Kalimantan Timur',
+        'services.zimbra.test_override_to' => '',
+    ]);
+});
+
+function fakeZimbraSuccess(): void
+{
+    $uploadCount = 0;
+
+    Http::fake([
+        'https://mailpkt.pupukkaltim.com/service/upload*' => function () use (&$uploadCount) {
+            $uploadCount++;
+
+            return Http::response("200,'null','aid-file-{$uploadCount}'", 200);
+        },
+        'https://mailpkt.pupukkaltim.com/service/soap' => function (HttpClientRequest $request) {
+            $body = $request->data();
+
+            if (isset($body['Body']['AuthRequest'])) {
+                return Http::response([
+                    'Body' => [
+                        'AuthResponse' => [
+                            'authToken' => [['_content' => 'fake-zimbra-token']],
+                            'lifetime' => 3600000,
+                        ],
+                    ],
+                ], 200);
+            }
+
+            return Http::response([
+                'Body' => [
+                    'SendMsgResponse' => [
+                        'm' => [['id' => '998877']],
+                    ],
+                ],
+            ], 200);
+        },
+    ]);
+}
+
+it('mengirim email otomatis via Zimbra dengan 2 lampiran PDF saat upload Verifikasi GRS dan mengisi tanggal_info_grs', function (): void {
+    fakeZimbraSuccess();
+
+    $user = User::create([
+        'name' => 'Staff Receiving',
+        'email' => 'staff@pkt.test',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Developer');
+
+    Storage::disk('public')->put('grs-files/grs-5007711111.pdf', '%PDF-1.4 GRS SLIP');
+
+    $grsHeader = GrsRdtv::create(['category' => 'GRS']);
+    $grsItem = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grsHeader->id,
+        'document_code' => '5007711111',
+        'file_path' => 'grs-files/grs-5007711111.pdf',
+    ]);
+
+    $receipt = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $grsItem->id,
+        'jenis' => 'GRS',
+        'no_grs' => '5007711111',
+        'no_po' => '5300058418',
+        'no_do' => 'DO-100',
+        'vendor_name' => 'PT Mitra Sejahtera',
+        'email_vendor' => 'billing@mitra.test finance@mitra.test',
+        'status' => 'Menunggu Verifikasi',
+        'tanggal_info_grs' => null,
+    ]);
+
+    $verifPdf = UploadedFile::fake()->create('Verifikasi_GRS_5007711111.pdf', 30, 'application/pdf');
+
+    $response = $this->actingAs($user)->postJson(
+        route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'),
+        [
+            'file' => $verifPdf,
+            'jenis' => 'GRS',
+            'no_grs' => '5007711111',
+            'no_po' => '5300058418',
+            'original_name' => 'Verifikasi_GRS_5007711111.pdf',
+        ]
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('matched', true)
+        ->assertJsonPath('email_status', 'sent');
+
+    $receipt->refresh();
+    expect($receipt->status)->toBe('Terverifikasi')
+        ->and($receipt->tanggal_info_grs?->toDateString())->toBe(now()->toDateString());
+
+    $log = InvoicingEmailLog::first();
+    expect($log)->not->toBeNull()
+        ->and($log->status)->toBe('sent')
+        ->and($log->jenis)->toBe('GRS')
+        ->and($log->recipients)->toBe(['billing@mitra.test', 'finance@mitra.test'])
+        ->and($log->attachments)->toHaveCount(2)
+        ->and($log->attachments[0]['filename'])->toBe('GRS_5007711111.pdf')
+        ->and($log->attachments[1]['filename'])->toBe('Verifikasi_GRS_5007711111.pdf')
+        ->and($log->zimbra_message_id)->toBe('998877');
+
+    Http::assertSent(function (HttpClientRequest $request): bool {
+        if (! str_ends_with($request->url(), '/service/soap')) {
+            return false;
+        }
+        $data = $request->data();
+
+        return isset($data['Body']['SendMsgRequest']['m']['attach']['aid'])
+            && $data['Body']['SendMsgRequest']['m']['attach']['aid'] === 'aid-file-1,aid-file-2';
+    });
+});
+
+it('menahan pengiriman email (skipped) jika dokumen GRS/RDTV fisik belum ada karena wajib 2 lampiran', function (): void {
+    Http::fake();
+
+    $user = User::create([
+        'name' => 'Staff Receiving',
+        'email' => 'staff2@pkt.test',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Developer');
+
+    $receipt = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => null,
+        'jenis' => 'GRS',
+        'no_grs' => '5007722222',
+        'no_po' => '5300099999',
+        'vendor_name' => 'PT Tanpa Slip',
+        'email_vendor' => 'vendor@tanpaslip.test',
+        'status' => 'Menunggu Verifikasi',
+        'tanggal_info_grs' => null,
+    ]);
+
+    $verifPdf = UploadedFile::fake()->create('Verifikasi_GRS_5007722222.pdf', 30, 'application/pdf');
+
+    $response = $this->actingAs($user)->postJson(
+        route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'),
+        [
+            'file' => $verifPdf,
+            'jenis' => 'GRS',
+            'no_grs' => '5007722222',
+            'no_po' => '5300099999',
+        ]
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('matched', true)
+        ->assertJsonPath('email_status', 'skipped');
+
+    $receipt->refresh();
+    expect($receipt->status)->toBe('Terverifikasi')
+        ->and($receipt->tanggal_info_grs)->toBeNull();
+
+    $log = InvoicingEmailLog::first();
+    expect($log)->not->toBeNull()
+        ->and($log->status)->toBe('skipped')
+        ->and($log->error_message)->toContain('wajib 2 lampiran');
+
+    Http::assertNothingSent();
+});
+
+it('menggunakan template RDTV kustom dari halaman pengaturan dan mendukung ZIMBRA_TEST_OVERRIDE_TO', function (): void {
+    fakeZimbraSuccess();
+
+    config(['services.zimbra.test_override_to' => 'pribadi@gmail.test']);
+
+    app(EmailTemplateRenderer::class)->saveSettingsFormData([
+        'auto_send_enabled' => true,
+        'grs_subject' => 'Custom GRS {no_grs}',
+        'grs_body' => '<p>Halo {vendor_name}</p>',
+        'rdtv_subject' => 'Penolakan Resmi RDTV {no_rdtv} untuk PO {no_po}',
+        'rdtv_body' => '<p>Yth {vendor_name}, barang ditolak karena {keterangan}.</p>',
+    ]);
+
+    Storage::disk('public')->put('rdtv-files/rdtv-5007733333.pdf', '%PDF-1.4 RDTV');
+    Storage::disk('public')->put('verifikasi-rdtv/verif-5007733333.pdf', '%PDF-1.4 VERIF RDTV');
+
+    $rdtvHeader = GrsRdtv::create(['category' => 'RDTV']);
+    $rdtvItem = GrsRdtvItem::create([
+        'grs_rdtv_id' => $rdtvHeader->id,
+        'document_code' => '5007733333',
+        'file_path' => 'rdtv-files/rdtv-5007733333.pdf',
+    ]);
+
+    $receipt = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $rdtvItem->id,
+        'jenis' => 'RDTV',
+        'no_rdtv' => '5007733333',
+        'no_po' => '5300077777',
+        'vendor_name' => 'CV Sumber Makmur',
+        'email_vendor' => 'vendor-asli@makmur.test',
+        'keterangan' => 'Dimensi baut tidak sesuai gambar teknik',
+        'dokumen_verifikasi_grs' => 'verifikasi-rdtv/verif-5007733333.pdf',
+        'status' => 'Terverifikasi',
+    ]);
+
+    $result = app(InvoicingGrsEmailDispatcher::class)->dispatchIfEligible($receipt, 'row_upload');
+
+    expect($result['status'])->toBe('sent');
+
+    $log = InvoicingEmailLog::first();
+    expect($log->jenis)->toBe('RDTV')
+        ->and($log->recipients)->toBe(['pribadi@gmail.test'])
+        ->and($log->original_recipients)->toBe(['vendor-asli@makmur.test'])
+        ->and($log->subject)->toBe('[UJI COBA] Penolakan Resmi RDTV 5007733333 untuk PO 5300077777')
+        ->and($log->body_html)->toContain('Dimensi baut tidak sesuai gambar teknik')
+        ->and($log->attachments[0]['filename'])->toBe('RDTV_5007733333.pdf')
+        ->and($log->attachments[1]['filename'])->toBe('Verifikasi_RDTV_5007733333.pdf');
+});
+
+it('mengisolasi error Zimbra sehingga upload Verifikasi GRS tetap tersimpan dan tercatat gagal di log', function (): void {
+    Http::fake([
+        'https://mailpkt.pupukkaltim.com/service/soap' => Http::response([
+            'Body' => [
+                'Fault' => [
+                    'Reason' => ['Text' => 'authentication failed for [receiving.jasa@pupukkaltim.com]'],
+                    'Detail' => ['Error' => ['Code' => 'account.AUTH_FAILED']],
+                ],
+            ],
+        ], 500),
+    ]);
+
+    $user = User::create([
+        'name' => 'Staff Receiving',
+        'email' => 'staff3@pkt.test',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Developer');
+
+    Storage::disk('public')->put('grs-files/grs-5007744444.pdf', '%PDF-1.4 GRS');
+    $grsHeader = GrsRdtv::create(['category' => 'GRS']);
+    $grsItem = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grsHeader->id,
+        'document_code' => '5007744444',
+        'file_path' => 'grs-files/grs-5007744444.pdf',
+    ]);
+
+    $receipt = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $grsItem->id,
+        'jenis' => 'GRS',
+        'no_grs' => '5007744444',
+        'no_po' => '5300088888',
+        'vendor_name' => 'PT Uji Error',
+        'email_vendor' => 'billing@ujierror.test',
+        'status' => 'Menunggu Verifikasi',
+        'tanggal_info_grs' => null,
+    ]);
+
+    $verifPdf = UploadedFile::fake()->create('Verifikasi_GRS_5007744444.pdf', 30, 'application/pdf');
+
+    $response = $this->actingAs($user)->postJson(
+        route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'),
+        [
+            'file' => $verifPdf,
+            'jenis' => 'GRS',
+            'no_grs' => '5007744444',
+            'no_po' => '5300088888',
+        ]
+    );
+
+    $response->assertOk()
+        ->assertJsonPath('matched', true)
+        ->assertJsonPath('email_status', 'failed');
+
+    $receipt->refresh();
+    expect($receipt->status)->toBe('Terverifikasi')
+        ->and($receipt->tanggal_info_grs)->toBeNull();
+
+    $log = InvoicingEmailLog::first();
+    expect($log->status)->toBe('failed')
+        ->and($log->error_message)->toContain('account.AUTH_FAILED');
+});

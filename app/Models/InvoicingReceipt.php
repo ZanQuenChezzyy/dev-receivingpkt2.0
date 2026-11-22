@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 #[Fillable([
@@ -217,6 +218,16 @@ class InvoicingReceipt extends Model
     public function items(): HasMany
     {
         return $this->hasMany(InvoicingReceiptItem::class);
+    }
+
+    public function emailLogs(): HasMany
+    {
+        return $this->hasMany(InvoicingEmailLog::class)->latest();
+    }
+
+    public function latestEmailLog(): HasOne
+    {
+        return $this->hasOne(InvoicingEmailLog::class)->latestOfMany();
     }
 
     /**
