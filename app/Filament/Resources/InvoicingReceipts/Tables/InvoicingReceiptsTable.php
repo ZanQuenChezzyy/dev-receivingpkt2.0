@@ -461,13 +461,11 @@ class InvoicingReceiptsTable
 
                 SelectFilter::make('pic_id')
                     ->label('Filter PIC (Staff Invoice)')
-                    ->relationship('pic', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice')))
-                    ->hidden(fn ($livewire) => ($livewire?->activeTab ?? null) === 'my_tasks'),
+                    ->relationship('pic', 'name', modifyQueryUsing: fn ($query) => $query->where('is_active', true)->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))),
 
                 SelectFilter::make('material_type')
                     ->label('Filter Tipe Material')
-                    ->options(InvoicingReceipt::materialTypeOptions())
-                    ->hidden(fn ($livewire) => ($livewire?->activeTab ?? null) === 'my_tasks'),
+                    ->options(InvoicingReceipt::materialTypeOptions()),
             ], layout: FiltersLayout::AboveContent)
             ->deferFilters(false)
             ->filtersFormColumns(['default' => 1, 'sm' => 2, 'lg' => 3])

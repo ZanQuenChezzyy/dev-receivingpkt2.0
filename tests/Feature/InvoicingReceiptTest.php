@@ -1349,12 +1349,11 @@ test('InvoicingReceiptsTable has correct column order: tanggal terima grs, no_po
         ->and($picIndex)->toBe(3)
         ->and($vendorIndex)->toBe(4);
 
-    // 4. On my_tasks tab, only 4 filters are visible (pic_id & material_type are hidden)
+    // 4. On my_tasks tab, all 6 filters (3 columns x 2 rows) remain visible including pic_id & material_type
     $page->activeTab = 'my_tasks';
-    expect($table->getFilter('pic_id'))->toBeNull()
-        ->and($table->getFilter('material_type'))->toBeNull()
-        ->and($table->getFilter('pic_id', withHidden: true))->not->toBeNull()
-        ->and(count($table->getFilters()))->toBe(4);
+    expect($table->getFilter('pic_id'))->not->toBeNull()
+        ->and($table->getFilter('material_type'))->not->toBeNull()
+        ->and(count($table->getFilters()))->toBe(6);
 });
 
 test('syncSummaryFromItems formats multi-item deskripsi as numbered list and command runs cleanly', function () {
