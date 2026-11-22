@@ -1116,6 +1116,11 @@ class InvoicingReceiptsTable
                                     .'</div>'
                                 );
 
+                            $effectiveTestOverride = $renderer->resolveEffectiveTestOverrideTo();
+                            $testModeHelper = $effectiveTestOverride !== null
+                                ? "Mode Uji Coba AKTIF: pengiriman akan dialihkan ke {$effectiveTestOverride} (tidak dikirim ke vendor asli)."
+                                : 'Mode Normal: email akan dikirim langsung ke alamat email vendor di atas. Pisahkan dengan koma atau spasi jika lebih dari satu.';
+
                             return [
                                 Placeholder::make('attachment_status')
                                     ->hiddenLabel()
@@ -1125,7 +1130,7 @@ class InvoicingReceiptsTable
                                     ->label('Alamat Email Tujuan Vendor')
                                     ->required()
                                     ->default(implode(', ', $vendorEmails))
-                                    ->helperText('Pisahkan dengan koma atau spasi jika lebih dari satu alamat email. (Jika mode uji coba aktif di .env, email akan dialihkan ke alamat uji coba.)'),
+                                    ->helperText($testModeHelper),
 
                                 TextInput::make('subject')
                                     ->label('Subjek Email')

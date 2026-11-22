@@ -17,6 +17,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
@@ -80,13 +81,27 @@ class EmailGrsSettings extends Page implements HasForms
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('Pengaturan Pengiriman Otomatis')
+                Section::make('Pengaturan Pengiriman Otomatis & Mode Uji Coba')
                     ->description('Email dikirim via Zimbra (Receiving Jasa) secara otomatis begitu berkas Verifikasi GRS/RDTV diunggah dan kedua berkas lampiran lengkap.')
                     ->schema([
                         Toggle::make('auto_send_enabled')
                             ->label('Aktifkan Pengiriman Email Otomatis saat Upload Verifikasi GRS/RDTV')
                             ->helperText('Wajib 2 lampiran lengkap (Dokumen GRS/RDTV + Dokumen Verifikasi GRS/RDTV). Jika salah satu berkas belum tersedia, pengiriman otomatis ditahan hingga lengkap.')
                             ->onColor('primary'),
+
+                        Toggle::make('test_mode_enabled')
+                            ->label('Aktifkan Mode Uji Coba (Alihkan Semua Email ke Email Tes)')
+                            ->helperText('Jika aktif, seluruh pengiriman otomatis maupun kirim ulang dialihkan ke alamat email uji coba di bawah dan TIDAK terkirim ke vendor asli. Nonaktifkan bila siap mengirim langsung ke vendor.')
+                            ->onColor('warning')
+                            ->live(),
+
+                        TextInput::make('test_mode_email')
+                            ->label('Alamat Email Tujuan Uji Coba')
+                            ->placeholder('contoh: andereyan@gmail.com')
+                            ->visible(fn (Get $get): bool => (bool) $get('test_mode_enabled'))
+                            ->required(fn (Get $get): bool => (bool) $get('test_mode_enabled'))
+                            ->maxLength(255)
+                            ->helperText('Pisahkan dengan koma bila ingin mengirim salinan uji coba ke lebih dari satu alamat email.'),
                     ]),
 
                 Tabs::make('TemplateEmailTabs')
@@ -179,7 +194,7 @@ class EmailGrsSettings extends Page implements HasForms
                         ->label('Alamat Email Tujuan Uji Coba')
                         ->email()
                         ->required()
-                        ->default(fn (ZimbraMailService $zimbra): ?string => $zimbra->testOverrideTo() ?? Auth::user()?->email),
+                        ->default(fn (EmailTemplateRenderer $renderer): ?string => $renderer->getTestModeEmail() ?: Auth::user()?->email),
 
                     Radio::make('test_jenis')
                         ->label('Template yang Diuji')
@@ -265,6 +280,8 @@ class EmailGrsSettings extends Page implements HasForms
 
                     $this->form->fill([
                         'auto_send_enabled' => (bool) ($current['auto_send_enabled'] ?? true),
+                        'test_mode_enabled' => (bool) ($current['test_mode_enabled'] ?? false),
+                        'test_mode_email' => (string) ($current['test_mode_email'] ?? ''),
                         'grs_subject' => EmailTemplateRenderer::defaultGrsSubject(),
                         'grs_body' => EmailTemplateRenderer::defaultGrsBody(),
                         'rdtv_subject' => EmailTemplateRenderer::defaultRdtvSubject(),
@@ -306,13 +323,14 @@ class EmailGrsSettings extends Page implements HasForms
     public function getZimbraStatus(): array
     {
         $zimbra = app(ZimbraMailService::class);
+        $renderer = app(EmailTemplateRenderer::class);
 
         return [
             'configured' => $zimbra->isConfigured(),
             'enabled' => (bool) config('services.zimbra.enabled', false),
             'base_url' => $zimbra->baseUrl(),
             'username' => $zimbra->username(),
-            'test_override_to' => $zimbra->testOverrideTo(),
+            'test_override_to' => $renderer->resolveEffectiveTestOverrideTo(),
         ];
     }
 

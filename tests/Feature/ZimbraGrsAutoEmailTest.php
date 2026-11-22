@@ -423,3 +423,66 @@ it('mengonversi state array TipTap RichEditor Filament v5 menjadi HTML tanpa err
     expect($preview['wrapped_html'])->toContain('PT Contoh Mitra Industri')
         ->and($preview['wrapped_html'])->toContain('5300058418');
 });
+
+it('dapat mengaktifkan dan menonaktifkan Mode Uji Coba langsung dari pengaturan Filament tanpa ubah .env', function (): void {
+    fakeZimbraSuccess();
+
+    // Meski .env memiliki ZIMBRA_TEST_OVERRIDE_TO, toggle di Filament yang menentukan aktif/nonaktifnya
+    config(['services.zimbra.test_override_to' => 'env-fallback@gmail.test']);
+
+    Storage::disk('public')->put('grs-files/grs-5007755555.pdf', '%PDF-1.4 GRS');
+    Storage::disk('public')->put('verifikasi-grs/verif-5007755555.pdf', '%PDF-1.4 VERIF');
+
+    $grsHeader = GrsRdtv::create(['category' => 'GRS']);
+    $grsItem = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grsHeader->id,
+        'document_code' => '5007755555',
+        'file_path' => 'grs-files/grs-5007755555.pdf',
+    ]);
+
+    $receipt = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $grsItem->id,
+        'jenis' => 'GRS',
+        'no_grs' => '5007755555',
+        'no_po' => '5300066666',
+        'vendor_name' => 'PT Uji Toggle',
+        'email_vendor' => 'asli@vendor.test',
+        'dokumen_verifikasi_grs' => 'verifikasi-grs/verif-5007755555.pdf',
+        'status' => 'Terverifikasi',
+    ]);
+
+    $renderer = app(EmailTemplateRenderer::class);
+    $dispatcher = app(InvoicingGrsEmailDispatcher::class);
+
+    // 1. Aktifkan Mode Uji Coba dengan alamat kustom
+    $renderer->saveSettingsFormData([
+        'auto_send_enabled' => true,
+        'test_mode_enabled' => true,
+        'test_mode_email' => 'tes-custom@gmail.test',
+        'grs_subject' => 'GRS {no_grs}',
+        'grs_body' => '<p>Halo</p>',
+        'rdtv_subject' => 'RDTV {no_rdtv}',
+        'rdtv_body' => '<p>Halo</p>',
+    ]);
+
+    $resOn = $dispatcher->dispatchIfEligible($receipt, 'row_upload');
+    expect($resOn['status'])->toBe('sent')
+        ->and($resOn['log']->recipients)->toBe(['tes-custom@gmail.test'])
+        ->and($resOn['log']->original_recipients)->toBe(['asli@vendor.test']);
+
+    // 2. Nonaktifkan Mode Uji Coba -> langsung kirim ke email vendor asli
+    $renderer->saveSettingsFormData([
+        'auto_send_enabled' => true,
+        'test_mode_enabled' => false,
+        'test_mode_email' => 'tes-custom@gmail.test',
+        'grs_subject' => 'GRS {no_grs}',
+        'grs_body' => '<p>Halo</p>',
+        'rdtv_subject' => 'RDTV {no_rdtv}',
+        'rdtv_body' => '<p>Halo</p>',
+    ]);
+
+    $resOff = $dispatcher->dispatchIfEligible($receipt, 'row_upload');
+    expect($resOff['status'])->toBe('sent')
+        ->and($resOff['log']->recipients)->toBe(['asli@vendor.test'])
+        ->and($resOff['log']->original_recipients)->toBeNull();
+});

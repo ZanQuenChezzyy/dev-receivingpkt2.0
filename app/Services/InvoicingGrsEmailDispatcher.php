@@ -219,8 +219,8 @@ class InvoicingGrsEmailDispatcher
             ];
         }
 
-        // 2. Validasi alamat email penerima (jika test override aktif, tetap boleh kirim untuk uji coba meski vendor kosong? Tidak, tetap cek tujuan akhir)
-        $overrideTo = $this->zimbra->testOverrideTo();
+        // 2. Validasi alamat email penerima (mengikuti toggle Mode Uji Coba di panel Filament / fallback .env)
+        $overrideTo = $this->renderer->resolveEffectiveTestOverrideTo();
         $overrideEmails = $overrideTo !== null
             ? array_values(array_filter(
                 Vendor::parseEmails($overrideTo),

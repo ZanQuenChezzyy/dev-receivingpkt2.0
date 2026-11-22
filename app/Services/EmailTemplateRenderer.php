@@ -11,6 +11,10 @@ class EmailTemplateRenderer
 {
     public const KEY_AUTO_SEND_ENABLED = 'grs_email_auto_send_enabled';
 
+    public const KEY_TEST_MODE_ENABLED = 'grs_email_test_mode_enabled';
+
+    public const KEY_TEST_MODE_EMAIL = 'grs_email_test_mode_email';
+
     public const KEY_GRS_SUBJECT = 'grs_email_grs_subject';
 
     public const KEY_GRS_BODY = 'grs_email_grs_body';
@@ -103,10 +107,55 @@ HTML;
     }
 
     /**
+     * Memeriksa apakah Mode Uji Coba (pengalihan semua email ke email tes) sedang aktif.
+     * Jika belum pernah disimpan di tabel settings, fallback ke keberadaan ZIMBRA_TEST_OVERRIDE_TO di .env.
+     */
+    public function isTestModeEnabled(): bool
+    {
+        $stored = $this->getRawSetting(self::KEY_TEST_MODE_ENABLED);
+
+        if ($stored !== null) {
+            return filter_var($stored, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        return trim((string) config('services.zimbra.test_override_to', '')) !== '';
+    }
+
+    /**
+     * Mengembalikan alamat email uji coba yang dikonfigurasi (prioritas settings DB, fallback .env).
+     */
+    public function getTestModeEmail(): string
+    {
+        $stored = $this->getRawSetting(self::KEY_TEST_MODE_EMAIL);
+
+        if ($stored !== null && trim($stored) !== '') {
+            return trim($stored);
+        }
+
+        return trim((string) config('services.zimbra.test_override_to', ''));
+    }
+
+    /**
+     * Mengembalikan alamat email tujuan pengalih jika Mode Uji Coba aktif, atau null jika mode normal (langsung ke vendor).
+     */
+    public function resolveEffectiveTestOverrideTo(): ?string
+    {
+        if (! $this->isTestModeEnabled()) {
+            return null;
+        }
+
+        $email = $this->getTestModeEmail();
+
+        return $email !== '' ? $email : null;
+    }
+
+    /**
      * Mengambil seluruh konfigurasi template saat ini untuk diisi ke form Filament.
      *
      * @return array{
      *     auto_send_enabled: bool,
+     *     test_mode_enabled: bool,
+     *     test_mode_email: string,
      *     grs_subject: string,
      *     grs_body: string,
      *     rdtv_subject: string,
@@ -117,6 +166,8 @@ HTML;
     {
         return [
             'auto_send_enabled' => $this->isAutoSendEnabled(),
+            'test_mode_enabled' => $this->isTestModeEnabled(),
+            'test_mode_email' => $this->getTestModeEmail(),
             'grs_subject' => $this->getSetting(self::KEY_GRS_SUBJECT, self::defaultGrsSubject()),
             'grs_body' => $this->getSetting(self::KEY_GRS_BODY, self::defaultGrsBody()),
             'rdtv_subject' => $this->getSetting(self::KEY_RDTV_SUBJECT, self::defaultRdtvSubject()),
@@ -153,6 +204,12 @@ HTML;
     {
         $pairs = [
             self::KEY_AUTO_SEND_ENABLED => ! empty($data['auto_send_enabled']) ? '1' : '0',
+            self::KEY_TEST_MODE_ENABLED => array_key_exists('test_mode_enabled', $data)
+                ? (! empty($data['test_mode_enabled']) ? '1' : '0')
+                : ($this->isTestModeEnabled() ? '1' : '0'),
+            self::KEY_TEST_MODE_EMAIL => array_key_exists('test_mode_email', $data)
+                ? trim((string) ($data['test_mode_email'] ?? ''))
+                : $this->getTestModeEmail(),
             self::KEY_GRS_SUBJECT => trim((string) ($data['grs_subject'] ?? '')) ?: self::defaultGrsSubject(),
             self::KEY_GRS_BODY => $this->normalizeRichContentToHtml($data['grs_body'] ?? null, self::defaultGrsBody()),
             self::KEY_RDTV_SUBJECT => trim((string) ($data['rdtv_subject'] ?? '')) ?: self::defaultRdtvSubject(),
@@ -351,12 +408,19 @@ HTML;
 
     private function getSetting(string $key, string $default): string
     {
+        $value = $this->getRawSetting($key);
+
+        return ($value !== null && trim($value) !== '') ? $value : $default;
+    }
+
+    private function getRawSetting(string $key): ?string
+    {
         try {
             $value = Setting::query()->where('key', $key)->value('value');
 
-            return ($value !== null && trim((string) $value) !== '') ? (string) $value : $default;
+            return $value !== null ? (string) $value : null;
         } catch (\Throwable) {
-            return $default;
+            return null;
         }
     }
 
