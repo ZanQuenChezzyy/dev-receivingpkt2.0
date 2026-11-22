@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InvoicingReceipts\Pages;
 
+use App\Filament\Resources\CashierTransmittals\CashierTransmittalResource;
 use App\Filament\Resources\InvoicingReceipts\InvoicingReceiptResource;
 use App\Filament\Resources\InvoicingReceipts\Widgets\InvoicingOverviewWidget;
 use App\Http\Controllers\Admin\ChunkedImportUploadController;
@@ -170,6 +171,12 @@ class ListInvoicingReceipts extends ListRecords
                 ->modalContent(view('filament.actions.batch-upload-verifikasi-grs-modal'))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Tutup'),
+
+            Action::make('cashierTransmittalHistory')
+                ->label('Riwayat Transmittal Kasir')
+                ->icon(Heroicon::DocumentText)
+                ->color('gray')
+                ->url(fn (): string => CashierTransmittalResource::getUrl('index')),
 
             CreateAction::make()
                 ->label('Tambah Tagihan Baru')

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\InvoicingReceipts\Tables;
 
+use App\Filament\Resources\CashierTransmittals\CashierTransmittalResource;
+use App\Models\CashierTransmittal;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
 use App\Models\User;
@@ -22,6 +24,7 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -271,6 +274,18 @@ class InvoicingReceiptsTable
                         ->tooltip(fn ($state, InvoicingReceipt $record): ?string => ($record->jenis !== 'RDTV' && $record->status === 'Selesai' && blank($state)) ? 'Invoice sudah ada (Selesai), namun tanggal kirim kasir masih kosong.' : null)
                         ->icon('heroicon-m-arrow-right-circle')
                         ->sortable(),
+
+                    TextColumn::make('cashierTransmittal.transmittal_no')
+                        ->label('No. Transmittal Kasir')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tidak Perlu (RDTV)' : 'Belum Masuk Transmittal')
+                        ->color(fn ($state): string => filled($state) ? 'primary' : 'gray')
+                        ->weight(fn ($state): ?FontWeight => filled($state) ? FontWeight::SemiBold : null)
+                        ->icon(fn ($state): ?string => filled($state) ? 'heroicon-m-document-text' : null)
+                        ->url(fn (InvoicingReceipt $record): ?string => $record->cashierTransmittal
+                            ? CashierTransmittalResource::getUrl('view', ['record' => $record->cashierTransmittal])
+                            : null)
+                        ->searchable()
+                        ->toggleable(),
 
                     TextColumn::make('lama_pekerjaan')
                         ->label('Lama Pekerjaan')
@@ -1070,63 +1085,83 @@ class InvoicingReceiptsTable
                                 ->send();
                         }),
 
-                    // Kirim ke Kasir & Cetak Transmittal
+                    // Kirim ke Kasir (otomatis gabung ke Transmittal Kasir tanggal tersebut)
                     Action::make('sendToCashier')
-                        ->label('Kirim ke Kasir & Cetak Transmittal')
+                        ->label('Kirim ke Kasir')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('info')
-                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV' && blank($record?->tanggal_kirim_kasir))
+                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV' && ($record?->cashier_transmittal_id === null))
                         ->modalHeading(fn (InvoicingReceipt $record): string => "Kirim Berkas ke Kasir — PO: {$record->no_po}")
-                        ->modalDescription('Sistem akan mencatat Tanggal Kirim Kasir, memperbarui status ke Terkirim Kasir, dan langsung membuka PDF Transmittal Pengiriman Invoice ke Dept. Akuntansi.')
-                        ->modalSubmitActionLabel('Kirim & Cetak Transmittal')
+                        ->modalDescription('Invoice akan otomatis digabung ke Transmittal Kasir pada tanggal yang dipilih (termasuk dari PIC lain pada tanggal yang sama) agar cukup 1 cetakan transmittal gabungan.')
+                        ->modalSubmitActionLabel('Simpan ke Transmittal Kasir')
                         ->schema([
                             DatePicker::make('tanggal_kirim_kasir')
                                 ->label('Tanggal Kirim ke Kasir')
                                 ->native(false)
                                 ->required()
-                                ->default(now()->toDateString()),
+                                ->default(fn (InvoicingReceipt $record): string => $record->tanggal_kirim_kasir?->toDateString() ?? now()->toDateString()),
+
+                            Toggle::make('open_pdf_immediately')
+                                ->label('Langsung buka PDF Transmittal setelah disimpan')
+                                ->helperText('Nonaktifkan jika masih ada PIC lain yang akan memasukkan invoice di tanggal yang sama.')
+                                ->default(false),
                         ])
                         ->action(function (InvoicingReceipt $record, array $data, $livewire): void {
-                            $sentDate = $data['tanggal_kirim_kasir'] ?? now()->toDateString();
+                            $sentDate = (string) ($data['tanggal_kirim_kasir'] ?? now()->toDateString());
+                            $openImmediately = (bool) ($data['open_pdf_immediately'] ?? false);
 
-                            $record->update([
-                                'tanggal_kirim_kasir' => $sentDate,
-                                'status' => $record->status === 'Selesai' ? 'Selesai' : 'Terkirim Kasir',
+                            $result = CashierTransmittal::attachReceipts(
+                                receipts: [$record],
+                                sentDate: $sentDate,
+                                userId: Auth::id(),
+                            );
+
+                            $transmittal = $result['transmittal'];
+                            if ($transmittal === null) {
+                                return;
+                            }
+
+                            $totalInBatch = $transmittal->invoicingReceipts()->count();
+                            $formattedDate = Carbon::parse($sentDate)->locale('id')->translatedFormat('d F Y');
+                            $printUrl = route('filament.admin.resources.cashier-transmittals.print', [
+                                'cashierTransmittal' => $transmittal->transmittal_no,
                             ]);
 
-                            $printUrl = route('filament.admin.resources.invoicing-receipts.print_cashier_transmittal', [
-                                'ids' => (string) $record->id,
-                                'sent_date' => $sentDate,
-                            ]);
-
-                            if ($livewire && method_exists($livewire, 'js')) {
+                            if ($openImmediately && $livewire && method_exists($livewire, 'js')) {
                                 $livewire->js('window.open('.json_encode($printUrl).', "_blank");');
                             }
 
                             Notification::make()
-                                ->title('Terkirim ke Kasir')
-                                ->body("Dokumen PO {$record->no_po} telah diserahkan ke Dept. Akuntansi / Kasir.")
+                                ->title("Masuk Transmittal {$transmittal->transmittal_no}")
+                                ->body("PO {$record->no_po} digabung ke Transmittal Kasir tanggal {$formattedDate} (total saat ini: {$totalInBatch} invoice).")
                                 ->actions([
                                     Action::make('openCashierTransmittalPdf')
-                                        ->label('Cetak Transmittal PDF')
+                                        ->label('Cetak Transmittal Gabungan (PDF)')
                                         ->button()
                                         ->url($printUrl)
                                         ->openUrlInNewTab(),
+                                    Action::make('viewCashierTransmittalHistory')
+                                        ->label('Lihat Riwayat')
+                                        ->url(CashierTransmittalResource::getUrl('view', ['record' => $transmittal])),
                                 ])
                                 ->success()
                                 ->send();
                         }),
 
-                    // Cetak Ulang Transmittal Kasir (untuk GRS yang sudah dikirim / selesai)
+                    // Cetak Transmittal Kasir (cetak gabungan jika sudah tergabung di Transmittal Kasir)
                     Action::make('printCashierTransmittal')
                         ->label('Cetak Transmittal Kasir')
                         ->icon('heroicon-o-printer')
                         ->color('gray')
-                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV' && (filled($record?->tanggal_kirim_kasir) || in_array($record?->status, ['Terkirim Kasir', 'Selesai'], true)))
-                        ->url(fn (InvoicingReceipt $record): string => route('filament.admin.resources.invoicing-receipts.print_cashier_transmittal', [
-                            'ids' => (string) $record->id,
-                            'sent_date' => $record->tanggal_kirim_kasir?->toDateString(),
-                        ]))
+                        ->visible(fn (?InvoicingReceipt $record): bool => $record?->jenis !== 'RDTV' && ($record?->cashier_transmittal_id !== null || filled($record?->tanggal_kirim_kasir) || in_array($record?->status, ['Terkirim Kasir', 'Selesai'], true)))
+                        ->url(fn (InvoicingReceipt $record): string => $record->cashierTransmittal
+                            ? route('filament.admin.resources.cashier-transmittals.print', [
+                                'cashierTransmittal' => $record->cashierTransmittal->transmittal_no,
+                            ])
+                            : route('filament.admin.resources.invoicing-receipts.print_cashier_transmittal', [
+                                'ids' => (string) $record->id,
+                                'sent_date' => $record->tanggal_kirim_kasir?->toDateString(),
+                            ]))
                         ->openUrlInNewTab(),
 
                     ViewAction::make(),
@@ -1147,26 +1182,39 @@ class InvoicingReceiptsTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('sendToCashierBulk')
-                        ->label('Kirim ke Kasir & Cetak Transmittal')
+                        ->label('Kirim ke Kasir (Gabung Transmittal)')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('info')
-                        ->modalHeading('Kirim Berkas Invoice ke Kasir & Cetak Transmittal')
-                        ->modalDescription('Seluruh dokumen GRS terpilih akan dicatat tanggal kirim kasirnya (dokumen RDTV otomatis dilewati) dan dicetak dalam 1 Transmittal Pengiriman Invoice ke Dept. Akuntansi.')
-                        ->modalSubmitActionLabel('Kirim & Cetak Transmittal')
+                        ->modalHeading('Kirim Berkas Invoice ke Kasir')
+                        ->modalDescription('Seluruh dokumen GRS terpilih akan digabung ke Transmittal Kasir pada tanggal yang dipilih (otomatis bergabung dengan invoice dari PIC lain di tanggal yang sama; dokumen RDTV dilewati).')
+                        ->modalSubmitActionLabel('Simpan ke Transmittal Kasir')
                         ->schema([
                             DatePicker::make('tanggal_kirim_kasir')
                                 ->label('Tanggal Kirim ke Kasir')
                                 ->native(false)
                                 ->required()
                                 ->default(now()->toDateString()),
+
+                            Toggle::make('open_pdf_immediately')
+                                ->label('Langsung buka PDF Transmittal gabungan setelah disimpan')
+                                ->helperText('Nonaktifkan jika masih menunggu PIC lain memasukkan invoice pada tanggal yang sama.')
+                                ->default(false),
                         ])
                         ->action(function (Collection $records, array $data, $livewire): void {
-                            $sentDate = $data['tanggal_kirim_kasir'] ?? now()->toDateString();
+                            $sentDate = (string) ($data['tanggal_kirim_kasir'] ?? now()->toDateString());
+                            $openImmediately = (bool) ($data['open_pdf_immediately'] ?? false);
 
-                            $grsRecords = $records->filter(fn (InvoicingReceipt $record): bool => $record->jenis !== 'RDTV')->values();
-                            $skippedRdtvCount = $records->count() - $grsRecords->count();
+                            $result = CashierTransmittal::attachReceipts(
+                                receipts: $records,
+                                sentDate: $sentDate,
+                                userId: Auth::id(),
+                            );
 
-                            if ($grsRecords->isEmpty()) {
+                            $transmittal = $result['transmittal'];
+                            $attachedCount = $result['attached_count'];
+                            $skippedRdtvCount = $result['skipped_rdtv_count'];
+
+                            if ($transmittal === null || $attachedCount === 0) {
                                 Notification::make()
                                     ->title('Tidak Ada Invoice GRS yang Valid')
                                     ->body('Dokumen RDTV (retur material) tidak dapat dikirim ke Kasir. Pilih dokumen berjenis GRS.')
@@ -1176,36 +1224,33 @@ class InvoicingReceiptsTable
                                 return;
                             }
 
-                            $grsRecords->each(function (InvoicingReceipt $record) use ($sentDate): void {
-                                $record->update([
-                                    'tanggal_kirim_kasir' => $sentDate,
-                                    'status' => $record->status === 'Selesai' ? 'Selesai' : 'Terkirim Kasir',
-                                ]);
-                            });
-
-                            $printUrl = route('filament.admin.resources.invoicing-receipts.print_cashier_transmittal', [
-                                'ids' => $grsRecords->pluck('id')->join(','),
-                                'sent_date' => $sentDate,
+                            $totalInBatch = $transmittal->invoicingReceipts()->count();
+                            $formattedDate = Carbon::parse($sentDate)->locale('id')->translatedFormat('d F Y');
+                            $printUrl = route('filament.admin.resources.cashier-transmittals.print', [
+                                'cashierTransmittal' => $transmittal->transmittal_no,
                             ]);
 
-                            if ($livewire && method_exists($livewire, 'js')) {
+                            if ($openImmediately && $livewire && method_exists($livewire, 'js')) {
                                 $livewire->js('window.open('.json_encode($printUrl).', "_blank");');
                             }
 
-                            $body = "Sebanyak {$grsRecords->count()} invoice berhasil dikirim ke Dept. Akuntansi / Kasir.";
+                            $body = "{$attachedCount} invoice dimasukkan ke {$transmittal->transmittal_no} (tanggal {$formattedDate}, total {$totalInBatch} invoice).";
                             if ($skippedRdtvCount > 0) {
                                 $body .= " ({$skippedRdtvCount} dokumen RDTV dilewati otomatis).";
                             }
 
                             Notification::make()
-                                ->title('Terkirim ke Kasir & Transmittal Siap')
+                                ->title("Masuk Transmittal {$transmittal->transmittal_no}")
                                 ->body($body)
                                 ->actions([
                                     Action::make('openBulkCashierTransmittalPdf')
-                                        ->label('Cetak Transmittal PDF')
+                                        ->label('Cetak Transmittal Gabungan (PDF)')
                                         ->button()
                                         ->url($printUrl)
                                         ->openUrlInNewTab(),
+                                    Action::make('viewBulkCashierTransmittalHistory')
+                                        ->label('Lihat Riwayat')
+                                        ->url(CashierTransmittalResource::getUrl('view', ['record' => $transmittal])),
                                 ])
                                 ->success()
                                 ->send();

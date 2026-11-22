@@ -551,6 +551,7 @@ function ensureInvoicingReceiptTableExists(): bool
         Illuminate\Support\Facades\Schema::create('invoicing_receipts', function ($table) {
             $table->id();
             $table->unsignedBigInteger('grs_rdtv_item_id')->nullable();
+            $table->unsignedBigInteger('cashier_transmittal_id')->nullable();
             $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
             $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
             $table->unsignedBigInteger('vendor_id')->nullable();

@@ -208,9 +208,18 @@
             <tr>
                 <td style="width: 65%; vertical-align: bottom;">
                     <div class="document-title">TRANSMITTAL PENGIRIMAN INVOICE KE KASIR</div>
-                    <div class="document-subtitle">Dokumen Penyerahan Berkas Tagihan Invoice &bull; Unit Penerimaan Invoice</div>
+                    <div class="document-subtitle">
+                        Dokumen Penyerahan Berkas Tagihan Invoice &bull; Unit Penerimaan Invoice
+                        @if (! empty($transmittalNo))
+                            &bull; No: <span class="pkt-blue">{{ $transmittalNo }}</span>
+                        @endif
+                    </div>
                 </td>
                 <td style="width: 35%; vertical-align: bottom; text-align: right;">
+                    @if (! empty($transmittalNo))
+                        <div class="info-label">NO. TRANSMITTAL</div>
+                        <div class="info-value pkt-blue" style="margin-bottom: 4px;">{{ $transmittalNo }}</div>
+                    @endif
                     <div class="info-label">TANGGAL &amp; WAKTU CETAK</div>
                     <div class="info-value">{{ $printedAt->locale('id')->translatedFormat('d F Y, H:i') }} WITA</div>
                 </td>

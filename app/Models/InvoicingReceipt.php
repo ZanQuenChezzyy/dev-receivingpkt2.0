@@ -13,6 +13,7 @@ use Illuminate\Support\Carbon;
 
 #[Fillable([
     'grs_rdtv_item_id',
+    'cashier_transmittal_id',
     'delivery_order_receipt_id',
     'purchase_order_issued_id',
     'vendor_id',
@@ -178,6 +179,11 @@ class InvoicingReceipt extends Model
     public function grsRdtvItem(): BelongsTo
     {
         return $this->belongsTo(GrsRdtvItem::class);
+    }
+
+    public function cashierTransmittal(): BelongsTo
+    {
+        return $this->belongsTo(CashierTransmittal::class);
     }
 
     /**

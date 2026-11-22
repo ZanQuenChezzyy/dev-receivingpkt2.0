@@ -23,6 +23,7 @@ use Livewire\Livewire;
 beforeEach(function () {
     Schema::dropIfExists('invoicing_receipt_items');
     Schema::dropIfExists('invoicing_receipts');
+    Schema::dropIfExists('cashier_transmittals');
     Schema::dropIfExists('grs_rdtv_items');
     Schema::dropIfExists('grs_rdtvs');
     Schema::dropIfExists('delivery_order_receipt_details');
@@ -124,8 +125,12 @@ beforeEach(function () {
         $table->timestamps();
     });
 
+    $createCashierTransmittalsMigration = include database_path('migrations/2026_11_22_194126_create_cashier_transmittals_table.php');
+    $createCashierTransmittalsMigration->up();
     $createInvoicingMigration = include database_path('migrations/2026_10_24_121247_create_invoicing_receipts_table.php');
     $createInvoicingMigration->up();
+    $addCashierTransmittalIdMigration = include database_path('migrations/2026_11_22_194127_add_cashier_transmittal_id_to_invoicing_receipts_table.php');
+    $addCashierTransmittalIdMigration->up();
     $addInvoiceDocMigration = include database_path('migrations/2026_10_24_135117_add_dokumen_invoice_to_invoicing_receipts_table.php');
     $addInvoiceDocMigration->up();
     $addKelengkapanMigration = include database_path('migrations/2026_10_26_194128_add_dokumen_kelengkapan_to_invoicing_receipts_table.php');
@@ -696,7 +701,7 @@ it('registers Selesai tab, single unified importInvoiceBarang action, and katego
     $headerMethod->setAccessible(true);
     $headerActions = collect($headerMethod->invoke($page))->map(fn ($a) => $a->getName())->values()->all();
 
-    expect($headerActions)->toBe(['importInvoiceBarang', 'batchUploadVerifikasiGrs', 'create']);
+    expect($headerActions)->toBe(['importInvoiceBarang', 'batchUploadVerifikasiGrs', 'cashierTransmittalHistory', 'create']);
 
     $selesaiRecord = new InvoicingReceipt([
         'no_po' => '5300066419',

@@ -58,6 +58,11 @@ Route::get('/admin/invoicing-receipts/print-cashier-transmittal', [CashierTransm
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.invoicing-receipts.print_cashier_transmittal');
 
+Route::get('/admin/cashier-transmittals/{cashierTransmittal:transmittal_no}/print', [CashierTransmittalPrintController::class, 'printTransmittal'])
+    ->where('cashierTransmittal', '.*')
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.resources.cashier-transmittals.print');
+
 Route::post('/admin/invoicing-receipts/import-chunks', [ChunkedImportUploadController::class, 'store'])
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.invoicing-receipts.import_chunks');
