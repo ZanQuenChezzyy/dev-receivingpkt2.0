@@ -36,18 +36,22 @@
                 </div>
             </div>
 
-            <div class="rounded-2xl border p-4 shadow-sm backdrop-blur-md {{ $zimbraStatus['test_override_to'] ? 'border-amber-300/80 bg-amber-50/80 dark:border-amber-700/60 dark:bg-amber-950/35' : 'border-slate-200/80 bg-white/75 dark:border-white/10 dark:bg-slate-900/60' }}">
+            <div class="rounded-2xl border p-4 shadow-sm backdrop-blur-md transition-colors duration-200 {{ $zimbraStatus['test_mode_enabled'] ? 'border-amber-300/80 bg-amber-50/80 dark:border-amber-700/60 dark:bg-amber-950/35' : 'border-slate-200/80 bg-white/75 dark:border-white/10 dark:bg-slate-900/60' }}">
                 <div class="flex items-start justify-between gap-3">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider {{ $zimbraStatus['test_override_to'] ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400' }}">
+                        <p class="text-xs font-semibold uppercase tracking-wider {{ $zimbraStatus['test_mode_enabled'] ? 'text-amber-700 dark:text-amber-300' : 'text-slate-500 dark:text-slate-400' }}">
                             Mode Tujuan Pengiriman
                         </p>
-                        @if ($zimbraStatus['test_override_to'])
+                        @if ($zimbraStatus['test_mode_enabled'])
                             <p class="mt-1 text-sm font-semibold text-amber-900 dark:text-amber-200">
                                 Mode Uji Coba Aktif
                             </p>
                             <p class="mt-0.5 text-xs text-amber-800 dark:text-amber-300">
-                                Seluruh email sementara dialihkan ke: <span class="font-mono font-semibold">{{ $zimbraStatus['test_override_to'] }}</span>
+                                @if ($zimbraStatus['test_override_to'])
+                                    Seluruh email sementara dialihkan ke: <span class="font-mono font-semibold">{{ $zimbraStatus['test_override_to'] }}</span>
+                                @else
+                                    Silakan isi alamat email tujuan uji coba di bawah lalu simpan.
+                                @endif
                             </p>
                         @else
                             <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
@@ -58,9 +62,16 @@
                             </p>
                         @endif
                     </div>
-                    <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $zimbraStatus['test_override_to'] ? 'bg-amber-200/80 text-amber-900 dark:bg-amber-900/70 dark:text-amber-200' : 'bg-blue-100 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300' }}">
-                        {{ $zimbraStatus['test_override_to'] ? 'Uji Coba' : 'Produksi' }}
-                    </span>
+                    <div class="flex flex-col items-end gap-1 shrink-0">
+                        <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold {{ $zimbraStatus['test_mode_enabled'] ? 'bg-amber-200/80 text-amber-900 dark:bg-amber-900/70 dark:text-amber-200' : 'bg-blue-100 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300' }}">
+                            {{ $zimbraStatus['test_mode_enabled'] ? 'Uji Coba' : 'Produksi' }}
+                        </span>
+                        @if ($zimbraStatus['test_mode_unsaved'])
+                            <span class="text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                                Belum disimpan
+                            </span>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>

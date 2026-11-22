@@ -101,6 +101,7 @@ class EmailGrsSettings extends Page implements HasForms
                             ->visible(fn (Get $get): bool => (bool) $get('test_mode_enabled'))
                             ->required(fn (Get $get): bool => (bool) $get('test_mode_enabled'))
                             ->maxLength(255)
+                            ->live(debounce: 300)
                             ->helperText('Pisahkan dengan koma bila ingin mengirim salinan uji coba ke lebih dari satu alamat email.'),
 
                         TextInput::make('cc_emails')
@@ -326,19 +327,43 @@ class EmailGrsSettings extends Page implements HasForms
     }
 
     /**
-     * @return array{configured: bool, enabled: bool, base_url: string, username: string, test_override_to: ?string}
+     * @return array{
+     *     configured: bool,
+     *     enabled: bool,
+     *     base_url: string,
+     *     username: string,
+     *     test_mode_enabled: bool,
+     *     test_override_to: ?string,
+     *     test_mode_unsaved: bool
+     * }
      */
     public function getZimbraStatus(): array
     {
         $zimbra = app(ZimbraMailService::class);
         $renderer = app(EmailTemplateRenderer::class);
 
+        $liveTestEnabled = is_array($this->data) && array_key_exists('test_mode_enabled', $this->data)
+            ? (bool) $this->data['test_mode_enabled']
+            : $renderer->isTestModeEnabled();
+
+        $liveTestEmail = is_array($this->data) && array_key_exists('test_mode_email', $this->data)
+            ? trim((string) ($this->data['test_mode_email'] ?? ''))
+            : $renderer->getTestModeEmail();
+
+        $savedTestEnabled = $renderer->isTestModeEnabled();
+        $savedTestEmail = $renderer->getTestModeEmail();
+
+        $unsaved = ($liveTestEnabled !== $savedTestEnabled)
+            || ($liveTestEnabled && $liveTestEmail !== $savedTestEmail);
+
         return [
             'configured' => $zimbra->isConfigured(),
             'enabled' => (bool) config('services.zimbra.enabled', false),
             'base_url' => $zimbra->baseUrl(),
             'username' => $zimbra->username(),
-            'test_override_to' => $renderer->resolveEffectiveTestOverrideTo(),
+            'test_mode_enabled' => $liveTestEnabled,
+            'test_override_to' => $liveTestEnabled ? ($liveTestEmail !== '' ? $liveTestEmail : null) : null,
+            'test_mode_unsaved' => $unsaved,
         ];
     }
 
