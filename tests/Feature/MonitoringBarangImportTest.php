@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     Schema::dropIfExists('invoicing_receipt_items');
@@ -1684,4 +1685,50 @@ it('defaults Invoice Barang date filter to current month and syncs all tab badge
         ->and($tabsLastMonth['verified']->getBadge())->toBe('0')
         ->and($tabsLastMonth['sent_cashier']->getBadge())->toBe('1')
         ->and($tabsLastMonth['selesai']->getBadge())->toBe('0');
+});
+
+it('automatically opens Tugas Saya tab by default when accessed by Staff Invoice role, and Semua Dokumen for other roles', function () {
+    $users = seedMonitoringPicUsers();
+    $staffUser = $users['alex@receiving.com'];
+    $otherUser = $users['camel@receiving.com'];
+
+    $staffRole = Role::firstOrCreate(['name' => 'Staff Invoice', 'guard_name' => 'web']);
+    $adminRole = Role::firstOrCreate(['name' => 'Administrator', 'guard_name' => 'web']);
+
+    $staffUser->assignRole($staffRole);
+    $otherUser->assignRole($adminRole);
+
+    $thisMonthDate = now()->startOfMonth()->addDays(2)->toDateString();
+
+    $ownTask = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300092001',
+        'tanggal_terima_grs' => $thisMonthDate,
+        'pic_id' => $staffUser->id,
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $otherPicTask = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300092002',
+        'tanggal_terima_grs' => $thisMonthDate,
+        'pic_id' => $otherUser->id,
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    // 1. User dengan role "Staff Invoice" otomatis masuk ke tab "my_tasks" (Tugas Saya)
+    $staffComponent = Livewire::actingAs($staffUser)
+        ->test(ListInvoicingReceipts::class)
+        ->assertSet('activeTab', 'my_tasks')
+        ->assertCanSeeTableRecords([$ownTask])
+        ->assertCanNotSeeTableRecords([$otherPicTask]);
+
+    expect($staffComponent->instance()->activeTab)->toBe('my_tasks');
+
+    // 2. User dengan role selain "Staff Invoice" tetap default ke tab "all" (Semua Dokumen)
+    $adminComponent = Livewire::actingAs($otherUser)
+        ->test(ListInvoicingReceipts::class)
+        ->assertSet('activeTab', 'all')
+        ->assertCanSeeTableRecords([$ownTask, $otherPicTask]);
+
+    expect($adminComponent->instance()->activeTab)->toBe('all');
 });

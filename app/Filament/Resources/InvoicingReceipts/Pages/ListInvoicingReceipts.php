@@ -7,6 +7,7 @@ use App\Filament\Resources\InvoicingReceipts\InvoicingReceiptResource;
 use App\Filament\Resources\InvoicingReceipts\Widgets\InvoicingOverviewWidget;
 use App\Http\Controllers\Admin\ChunkedImportUploadController;
 use App\Models\InvoicingReceipt;
+use App\Models\User;
 use App\Services\InvoicingCsvImportService;
 use App\Services\MonitoringBarangImportService;
 use Filament\Actions\Action;
@@ -44,6 +45,17 @@ class ListInvoicingReceipts extends ListRecords
     {
         $this->cachedFilteredTabCounts = null;
         $this->cachedFilteredTabCountsKey = null;
+    }
+
+    public function getDefaultActiveTab(): string|int|null
+    {
+        $user = Auth::user();
+
+        if ($user instanceof User && $user->hasRole('Staff Invoice')) {
+            return 'my_tasks';
+        }
+
+        return parent::getDefaultActiveTab();
     }
 
     protected function getHeaderActions(): array
