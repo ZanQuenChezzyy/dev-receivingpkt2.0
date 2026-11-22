@@ -146,7 +146,7 @@ HTML;
      */
     public function resolveEffectiveTestOverrideTo(): ?string
     {
-        if (!$this->isTestModeEnabled()) {
+        if (! $this->isTestModeEnabled()) {
             return null;
         }
 
@@ -178,7 +178,7 @@ HTML;
     {
         return array_values(array_filter(
             Vendor::parseEmails($this->getCcEmailsRaw()),
-            static fn(string $email): bool => (bool) filter_var($email, FILTER_VALIDATE_EMAIL),
+            static fn (string $email): bool => (bool) filter_var($email, FILTER_VALIDATE_EMAIL),
         ));
     }
 
@@ -238,9 +238,9 @@ HTML;
     public function saveSettingsFormData(array $data): void
     {
         $pairs = [
-            self::KEY_AUTO_SEND_ENABLED => !empty($data['auto_send_enabled']) ? '1' : '0',
+            self::KEY_AUTO_SEND_ENABLED => ! empty($data['auto_send_enabled']) ? '1' : '0',
             self::KEY_TEST_MODE_ENABLED => array_key_exists('test_mode_enabled', $data)
-                ? (!empty($data['test_mode_enabled']) ? '1' : '0')
+                ? (! empty($data['test_mode_enabled']) ? '1' : '0')
                 : ($this->isTestModeEnabled() ? '1' : '0'),
             self::KEY_TEST_MODE_EMAIL => array_key_exists('test_mode_email', $data)
                 ? trim((string) ($data['test_mode_email'] ?? ''))
@@ -409,11 +409,23 @@ HTML;
      */
     private function applyPlaceholders(string $template, array $replacements, bool $escapeHtml): string
     {
-        $search = array_keys($replacements);
-        $replace = array_map(
-            static fn(string $value): string => $escapeHtml ? e($value) : $value,
-            array_values($replacements),
-        );
+        $search = [];
+        $replace = [];
+
+        foreach ($replacements as $token => $value) {
+            $formatted = $escapeHtml ? e($value) : $value;
+            $search[] = $token;
+            $replace[] = $formatted;
+
+            // Antisipasi TipTap/RichEditor yang kadang meng-encode "{...}" menjadi "%7B...%7D" di dalam atribut href
+            $encodedToken = str_replace(['{', '}'], ['%7B', '%7D'], $token);
+            if ($encodedToken !== $token) {
+                $search[] = $encodedToken;
+                $replace[] = $formatted;
+                $search[] = strtolower($encodedToken);
+                $replace[] = $formatted;
+            }
+        }
 
         return str_replace($search, $replace, $template);
     }
@@ -453,10 +465,10 @@ HTML;
 
             return route('frontend.vendor.tracking');
         } catch (\Throwable) {
-            $base = rtrim((string) config('app.url', 'https://dev.receivingpkt.com'), '/') . '/lacak-po-vendor';
+            $base = rtrim((string) config('app.url', 'https://dev.receivingpkt.com'), '/').'/lacak-po-vendor';
 
             return ($cleanPo !== '' && $cleanPo !== '-')
-                ? $base . '?po=' . urlencode($cleanPo)
+                ? $base.'?po='.urlencode($cleanPo)
                 : $base;
         }
     }
