@@ -311,7 +311,7 @@ class GrsPdfParserService
         ];
 
         // Format tabel / sekuensial (sering muncul pada OCR atau dokumen dua kolom)
-        if (preg_match('/Nomor\s*PO.*?Nomor\s*GR.*?Nomor\s*GRS.*?(53\d{8})\s+(500\d{7})\s+(500\d{7})/si', $text, $seq)) {
+        if (preg_match('/Nomor\s*PO.*?Nomor\s*GR.*?Nomor\s*GRS.*?([345]\d{9})\s+(500\d{7})\s+(500\d{7})/si', $text, $seq)) {
             $data['no_po'] = $seq[1];
             $data['no_gr_103'] = $seq[2];
             $data['no_grs'] = $seq[3];
@@ -333,11 +333,13 @@ class GrsPdfParserService
             }
         }
 
-        // 3. Nomor PO (530xxxxxxx)
+        // 3. Nomor PO (530xxxxxxx / 5000xxxxxx / 4xxxxxxxxx)
         if (! $data['no_po']) {
-            if (preg_match('/(?:Nomor\s*PO|No\s*PO)\s*[:\s]+(53\d{8})/i', $text, $m)) {
-                $data['no_po'] = $m[1];
-            } elseif (preg_match('/No\s*PO.*?Tanggal\s*PO.*?(53\d{8})\s+(\d{1,2}\.\d{1,2}\.\d{4})/s', $text, $m)) {
+            if (preg_match('/(?:Nomor\s*PO|No\.?\s*PO)\s*[:\s]+([345]\d{9})/i', $text, $m)) {
+                if ($m[1] !== $data['no_grs'] && $m[1] !== $data['no_gr_103']) {
+                    $data['no_po'] = $m[1];
+                }
+            } elseif (preg_match('/No\s*PO.*?Tanggal\s*PO.*?([345]\d{9})\s+(\d{1,2}\.\d{1,2}\.\d{4})/s', $text, $m)) {
                 $data['no_po'] = $m[1];
             } elseif (preg_match('/(?:^|[^0-9])(530\d{7})(?:[^0-9]|$)/', $text, $m)) {
                 $data['no_po'] = $m[1];

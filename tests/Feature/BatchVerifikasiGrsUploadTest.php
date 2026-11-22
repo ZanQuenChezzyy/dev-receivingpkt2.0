@@ -271,3 +271,59 @@ test('BatchVerifikasiGrsUploadController matches receipt with comma separated GR
     expect($receipt->status)->toBe('Terverifikasi')
         ->and($receipt->dokumen_verifikasi_grs)->not->toBeNull();
 });
+
+test('BatchVerifikasiGrsUploadController falls back to PO matching even when no_do on receipt is empty or formatted differently', function () {
+    $user = User::create([
+        'name' => 'Admin PO Fallback DO',
+        'email' => 'admin_po_do_'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('super_admin');
+
+    $receipt = InvoicingReceipt::create([
+        'no_grs' => null,
+        'no_po' => '5300066928',
+        'no_do' => null,
+        'vendor_name' => 'PT GRASIKA KARYA PRIMA',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $file = UploadedFile::fake()->create('Print.pdf', 150, 'application/pdf');
+
+    $response = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $file,
+            'no_grs' => '5007725170',
+            'no_po' => '5300066928',
+            'no_do' => '26020653',
+            'original_name' => 'Print.pdf',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => true,
+            'matched' => true,
+            'receipt_id' => $receipt->id,
+            'no_grs' => '5007725170',
+            'no_po' => '5300066928',
+            'no_do' => '26020653',
+            'status' => 'Terverifikasi',
+        ]);
+
+    $receipt->refresh();
+    expect($receipt->status)->toBe('Terverifikasi')
+        ->and($receipt->no_grs)->toBe('5007725170')
+        ->and($receipt->no_do)->toBe('26020653')
+        ->and($receipt->dokumen_verifikasi_grs)->not->toBeNull();
+});
+
+test('batch upload verifikasi GRS modal uses valid tesseract.js-core v5 CDN and disambiguates GR 103 from GRS 105', function () {
+    $bladeContent = file_get_contents(resource_path('views/filament/actions/batch-upload-verifikasi-grs-modal.blade.php'));
+
+    expect($bladeContent)
+        ->toContain('tesseract.js-core')
+        ->not->toContain("jsdelivr.net/npm/tesseract-core'")
+        ->toContain('__batchOcrScriptPromises')
+        ->toContain('cropCanvasRegion')
+        ->toContain('mGr103');
+});

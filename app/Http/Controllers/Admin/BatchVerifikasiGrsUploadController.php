@@ -80,11 +80,11 @@ class BatchVerifikasiGrsUploadController extends Controller
                 ?? $grsQuery->first();
         }
 
-        // 2. Fallback pencocokan: Nomor PO + DO atau PO saja
+        // 2. Fallback pencocokan: Nomor PO + DO terlebih dahulu, lalu fallback PO saja bila format DO berbeda/kosong
         if (! $receipt && ! empty($noPo)) {
             $cleanPo = preg_replace('/\D/', '', $noPo);
 
-            $poQuery = InvoicingReceipt::where(function ($q) use ($noPo, $cleanPo) {
+            $basePoQuery = InvoicingReceipt::where(function ($q) use ($noPo, $cleanPo) {
                 $q->where('no_po', $noPo);
                 if (! empty($cleanPo)) {
                     $q->orWhere('no_po', $cleanPo)
@@ -93,13 +93,18 @@ class BatchVerifikasiGrsUploadController extends Controller
             });
 
             if (! empty($noDo)) {
-                $poQuery->where('no_do', 'like', "%{$noDo}%");
+                $poWithDoQuery = (clone $basePoQuery)->where('no_do', 'like', "%{$noDo}%");
+                $receipt = (clone $poWithDoQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
+                    ?? (clone $poWithDoQuery)->where('status', 'Menunggu Verifikasi')->first()
+                    ?? $poWithDoQuery->first();
             }
 
-            // Prioritaskan tagihan yang masih Menunggu Verifikasi dan belum memiliki berkas verifikasi
-            $receipt = (clone $poQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
-                ?? (clone $poQuery)->where('status', 'Menunggu Verifikasi')->first()
-                ?? $poQuery->first();
+            if (! $receipt) {
+                // Prioritaskan tagihan yang masih Menunggu Verifikasi dan belum memiliki berkas verifikasi
+                $receipt = (clone $basePoQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
+                    ?? (clone $basePoQuery)->where('status', 'Menunggu Verifikasi')->first()
+                    ?? $basePoQuery->first();
+            }
         }
 
         if ($receipt) {

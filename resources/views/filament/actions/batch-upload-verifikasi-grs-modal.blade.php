@@ -64,17 +64,36 @@
         },
 
         loadScript(src) {
-            const scripts = Array.from(document.getElementsByTagName('script'));
-            if (scripts.some(s => s.src === src)) {
+            window.__batchOcrScriptPromises = window.__batchOcrScriptPromises || {};
+            if (window.__batchOcrScriptPromises[src]) {
+                return window.__batchOcrScriptPromises[src];
+            }
+
+            const existing = Array.from(document.getElementsByTagName('script')).find(s => s.src === src);
+            if (existing && existing.dataset.loaded === '1') {
                 return Promise.resolve();
             }
-            return new Promise((resolve, reject) => {
-                const s = document.createElement('script');
-                s.src = src;
-                s.onload = () => resolve();
-                s.onerror = (err) => reject(err);
-                document.head.appendChild(s);
+
+            const promise = new Promise((resolve, reject) => {
+                const s = existing || document.createElement('script');
+                s.addEventListener('load', () => {
+                    s.dataset.loaded = '1';
+                    resolve();
+                }, { once: true });
+                s.addEventListener('error', (err) => {
+                    delete window.__batchOcrScriptPromises[src];
+                    reject(err);
+                }, { once: true });
+
+                if (!existing) {
+                    s.src = src;
+                    s.async = true;
+                    document.head.appendChild(s);
+                }
             });
+
+            window.__batchOcrScriptPromises[src] = promise;
+            return promise;
         },
 
         async ensureLibraries() {
@@ -143,9 +162,14 @@
         retryUnmatched() {
             if (this.isProcessing) return;
             this.items.forEach(item => {
-                if (item.status === 'unmatched') {
-                    item.status = 'scanned';
-                    item.message = 'Mengantre untuk pencocokan ulang...';
+                if (item.status === 'unmatched' || item.status === 'error') {
+                    if (!item.no_grs && !item.no_po) {
+                        item.status = 'queued';
+                        item.message = 'Mengantre untuk pembacaan ulang...';
+                    } else {
+                        item.status = 'scanned';
+                        item.message = 'Mengantre untuk pencocokan ulang...';
+                    }
                 }
             });
             this.startProcessAll();
@@ -173,37 +197,89 @@
 
         cleanOcrText(raw) {
             if (!raw) return '';
-            return raw
+            let cleaned = raw
                 .replace(/\r?\n/g, ' ')
-                .replace(/([0-9])O([0-9])/gi, '$10$2')
-                .replace(/\bS(00\d{7})\b/gi, '5$1')
-                .replace(/\b([5S])([0O])([0O])(\d{7})\b/gi, '500$4')
+                .replace(/\(\s*[1Il][0Oo][5S]\s*\)/gi, '(105)')
+                .replace(/\(\s*[1Il][0Oo]3\s*\)/gi, '(103)');
+
+            // Ulangi 2x agar pola seperti 5OO77 -> 50077 ikut ternormalisasi
+            cleaned = cleaned
+                .replace(/([0-9])[Oo]([0-9])/g, '$10$2')
+                .replace(/([0-9])[Oo]([0-9])/g, '$10$2')
+                .replace(/\b[5S]([0Oo])([0Oo])(\d{7})\b/gi, '500$3')
+                .replace(/\b[5S]3(\d{8})\b/gi, '53$1')
                 .replace(/\b(500)\s+(\d{3,4})\s+(\d{3,4})\b/g, '$1$2$3')
                 .replace(/\b([45]\d{2,3})\s+(\d{3})\s+(\d{3,4})\b/g, '$1$2$3');
+
+            return cleaned;
         },
 
         extractIdentifiers(rawText) {
             const text = this.cleanOcrText(rawText);
             let grs = null;
+            let gr103 = null;
             let po = null;
             let doNum = null;
 
-            if (text && text.length > 20) {
-                const mGrs = text.match(/(?:GRS(?:\s*\(105\))?|105|Release\s*GR)[\s\S]{1,40}?(500\d{7})/i)
-                          || text.match(/No\s*Release\s*GR\s*[:\s1©]+(500\d{7})/i)
-                          || text.match(/\b(500\d{7})\b/);
+            if (text && text.length > 15) {
+                // 0. Pola kolom berurutan (PO -> GR 103 -> GRS 105) bila OCR membaca per kolom
+                const mSeq = text.match(/Nomor\s*PO[\s\S]{0,120}?Nomor\s*GR[\s\S]{0,80}?Nomor\s*GRS[\s\S]{0,160}?([345]\d{9})[\s\S]{1,40}?(500\d{7})[\s\S]{1,40}?(500\d{7})/i);
+                if (mSeq) {
+                    po = mSeq[1];
+                    gr103 = mSeq[2];
+                    grs = mSeq[3];
+                }
 
-                const mPo = text.match(/(?:PO|Purchase\s*Order|P\.O\.?)[\s\S]{1,35}?([345]\d{9})/i)
-                         || text.match(/\b(53\d{8})\b/)
-                         || text.match(/\b(5\d{9})\b/)
-                         || text.match(/\b(4\d{9})\b/);
+                // 1. Deteksi GR (103) terlebih dahulu agar tidak tertukar dengan GRS (105)
+                if (!gr103) {
+                    const mGr103 = text.match(/(?:Nomor\s*GR\s*\(?103\)?|GR\s*\(?103\)?|\(103\))[\s:;|—–-]{0,25}(500\d{7})/i);
+                    if (mGr103) gr103 = mGr103[1];
+                }
 
-                const mDo = text.match(/Nomor\s*DO(?:\/S[J\]])?\s*[:©1]?\s*([A-Za-z0-9\/-]+)/i)
-                         || text.match(/DO\s*[:\s1]+([A-Za-z0-9\/-]{4,30})/i);
+                // 2. Prioritas utama GRS (105)
+                if (!grs) {
+                    const mGrsExplicit = text.match(/(?:Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?|\(105\)|No\.?\s*Release\s*GR)[\s:;|—–-]{0,25}(500\d{7})/i)
+                        || text.match(/(?:Nomor\s*GRS|No\.?\s*GRS)[\s:;|—–-]{0,25}(500\d{7})/i);
+                    if (mGrsExplicit) {
+                        grs = mGrsExplicit[1];
+                    }
+                }
 
-                if (mGrs) grs = mGrs[1];
-                if (mPo && mPo[1] !== grs) po = mPo[1];
-                if (mDo) doNum = mDo[1];
+                // 3. Fallback GRS: kumpulkan semua angka 500xxxxxxx
+                if (!grs) {
+                    const all500 = [...new Set(Array.from(text.matchAll(/\b(500\d{7})\b/g), m => m[1]))];
+                    const without103 = gr103 ? all500.filter(n => n !== gr103) : all500;
+                    if (without103.length >= 2 && /103/i.test(text) && /105/i.test(text)) {
+                        // Bila teks memuat 103 sebelum 105 dan belum terikat label, angka kedua adalah GRS (105)
+                        grs = without103[1];
+                    } else if (without103.length >= 1) {
+                        grs = without103[0];
+                    } else if (all500.length >= 1) {
+                        grs = all500[all500.length - 1];
+                    }
+                }
+
+                // 4. Deteksi Nomor PO
+                if (!po) {
+                    const mPo = text.match(/(?:Nomor\s*PO|No\.?\s*PO|Purchase\s*Order|P\.O\.?)[\s:;|—–-]{0,25}([345]\d{9})/i)
+                        || text.match(/\b(53\d{8})\b/);
+                    if (mPo && mPo[1] !== grs && mPo[1] !== gr103) {
+                        po = mPo[1];
+                    } else {
+                        const allPoCandidates = [...new Set(Array.from(text.matchAll(/\b([345]\d{9})\b/g), m => m[1]))]
+                            .filter(n => n !== grs && n !== gr103);
+                        if (allPoCandidates.length > 0) {
+                            po = allPoCandidates[0];
+                        }
+                    }
+                }
+
+                // 5. Deteksi Nomor DO/SJ
+                const mDo = text.match(/Nomor\s*DO(?:\/S[J\]])?[\s:;|—–-]{0,20}([A-Za-z0-9\/-]{4,30})/i)
+                    || text.match(/No\.?\s*Surat\s*Jalan[\s:;|—–-]{0,20}([A-Za-z0-9\/-]{4,30})/i);
+                if (mDo && mDo[1] !== '-' && mDo[1].toLowerCase() !== 'status' && mDo[1] !== po) {
+                    doNum = mDo[1];
+                }
             }
 
             return { grs, po, doNum };
@@ -212,13 +288,46 @@
         async getTesseractWorker() {
             await this.ensureLibraries();
             if (!this.tesseractWorker && typeof window.Tesseract !== 'undefined') {
-                this.currentStepMessage = 'Menyiapkan pemrosesan dokumen...';
+                this.currentStepMessage = 'Menyiapkan mesin pembaca dokumen (OCR)...';
                 this.tesseractWorker = await window.Tesseract.createWorker('eng', 1, {
                     workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js' + '@' + '5/dist/worker.min.js',
-                    corePath: 'https://cdn.jsdelivr.net/npm/tesseract-core' + '@' + '5/tesseract-core.wasm.js',
+                    corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core' + '@' + '5',
+                    langPath: 'https://tessdata.projectnaptha.com/4.0.0_fast',
                 });
             }
             return this.tesseractWorker;
+        },
+
+        async renderPdfPageToCanvas(page, scale = 2.2) {
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            canvas.width = Math.ceil(viewport.width);
+            canvas.height = Math.ceil(viewport.height);
+
+            // Isi latar putih solid agar OCR jauh lebih akurat pada PDF dengan background transparan
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            await page.render({
+                canvasContext: ctx,
+                viewport: viewport,
+            }).promise;
+
+            return canvas;
+        },
+
+        cropCanvasRegion(sourceCanvas, yStartRatio, yEndRatio) {
+            const sy = Math.floor(sourceCanvas.height * yStartRatio);
+            const sh = Math.max(1, Math.floor(sourceCanvas.height * (yEndRatio - yStartRatio)));
+            const cropped = document.createElement('canvas');
+            cropped.width = sourceCanvas.width;
+            cropped.height = sh;
+            const ctx = cropped.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, cropped.width, cropped.height);
+            ctx.drawImage(sourceCanvas, 0, sy, sourceCanvas.width, sh, 0, 0, cropped.width, sh);
+            return cropped;
         },
 
         async scanFileOcr(item) {
@@ -240,31 +349,32 @@
                     item.source = 'digital_text';
                 }
 
-                // 2. Scan jika tidak ada teks digital atau belum menemukan nomor GRS
-                if (!detected.grs) {
-                    this.currentStepMessage = 'Membaca berkas: ' + item.name + '...';
+                // 2. Jalankan OCR jika PDF berupa gambar / teks digital belum menemukan GRS (105)
+                if (!detected.grs || !detected.po) {
+                    this.currentStepMessage = 'Memindai teks gambar (OCR): ' + item.name + '...';
                     const worker = await this.getTesseractWorker();
 
                     if (worker) {
-                        const scale = 1.5;
-                        const viewport = page.getViewport({ scale });
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        canvas.width = viewport.width;
-                        canvas.height = viewport.height; // Render full height
+                        const fullCanvas = await this.renderPdfPageToCanvas(page, 2.2);
 
-                        await page.render({
-                            canvasContext: ctx,
-                            viewport: viewport
-                        }).promise;
+                        // Tahap 2a: Pindai area tabel rincian dokumen (12% - 56% halaman) terlebih dahulu agar lebih cepat & tajam
+                        const metaCanvas = this.cropCanvasRegion(fullCanvas, 0.12, 0.56);
+                        const metaRes = await worker.recognize(metaCanvas);
+                        const metaDetected = this.extractIdentifiers(metaRes?.data?.text || '');
 
-                        const ocrRes = await worker.recognize(canvas);
-                        const ocrText = ocrRes?.data?.text || '';
-                        const ocrDetected = this.extractIdentifiers(ocrText);
+                        if (!detected.grs && metaDetected.grs) detected.grs = metaDetected.grs;
+                        if (!detected.po && metaDetected.po) detected.po = metaDetected.po;
+                        if (!detected.doNum && metaDetected.doNum) detected.doNum = metaDetected.doNum;
 
-                        if (ocrDetected.grs) detected.grs = ocrDetected.grs;
-                        if (ocrDetected.po) detected.po = ocrDetected.po;
-                        if (ocrDetected.doNum) detected.doNum = ocrDetected.doNum;
+                        // Tahap 2b: Fallback pindai seluruh halaman jika GRS atau PO belum ditemukan
+                        if (!detected.grs || !detected.po) {
+                            const fullRes = await worker.recognize(fullCanvas);
+                            const fullDetected = this.extractIdentifiers(fullRes?.data?.text || '');
+
+                            if (!detected.grs && fullDetected.grs) detected.grs = fullDetected.grs;
+                            if (!detected.po && fullDetected.po) detected.po = fullDetected.po;
+                            if (!detected.doNum && fullDetected.doNum) detected.doNum = fullDetected.doNum;
+                        }
 
                         if (detected.grs || detected.po) {
                             item.source = 'ocr_image';
@@ -277,11 +387,13 @@
                 if (detected.doNum) item.no_do = detected.doNum;
 
                 item.status = 'scanned';
-                item.message = item.no_grs ? 'GRS: ' + item.no_grs : (item.no_po ? 'PO: ' + item.no_po : 'Nomor belum ditemukan');
+                item.message = item.no_grs
+                    ? 'GRS: ' + item.no_grs + (item.no_po ? ' | PO: ' + item.no_po : '')
+                    : (item.no_po ? 'PO: ' + item.no_po : 'Nomor belum ditemukan');
             } catch (err) {
                 console.error('Scan error:', err);
                 item.status = 'scanned';
-                item.message = 'Selesai membaca';
+                item.message = 'Gagal memindai OCR otomatis — melanjutkan pengecekan server';
             }
         },
 
