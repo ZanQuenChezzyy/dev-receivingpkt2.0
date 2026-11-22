@@ -55,7 +55,7 @@ class EmailTemplateRenderer
 
     public static function defaultGrsSubject(): string
     {
-        return 'Pemberitahuan Verifikasi Penerimaan Barang (GRS {no_grs}) - PO {no_po}';
+        return 'INFORMASI GRS {no_grs} - PO {no_po}';
     }
 
     public static function defaultGrsBody(): string
@@ -67,19 +67,18 @@ class EmailTemplateRenderer
 <ul>
     <li><strong>Nomor PO:</strong> {no_po}</li>
     <li><strong>Nomor GRS (105):</strong> {no_grs}</li>
-    <li><strong>Nomor DO / Surat Jalan:</strong> {no_do}</li>
-    <li><strong>Deskripsi Barang:</strong> {nama_barang}</li>
-    <li><strong>Tanggal Terima GRS:</strong> {tanggal_terima_grs}</li>
 </ul>
-<p>Terlampir kami sertakan <strong>2 berkas dokumen</strong> (Dokumen GRS dan Dokumen Verifikasi GRS) sebagai dasar proses penagihan invoice. Status dokumen dan penagihan dapat dipantau langsung (otomatis terverifikasi) melalui tautan berikut: <a href="{link_tracking}">Lacak Status PO {no_po}</a>.</p>
-<p>Terima kasih atas kerja samanya.</p>
-<p>Hormat kami,<br><strong>Tim Receiving Jasa — PT Pupuk Kalimantan Timur</strong><br>PIC: {pic_name}</p>
+<p>Terlampir kami sertakan <strong>2 berkas dokumen</strong> (Dokumen GRS dan Dokumen Verifikasi GRS) sebagai dasar proses penagihan invoice. Status dokumen dan penagihan juga dapat dipantau melalui portal: <a href="{link_tracking}">Lacak Status PO {no_po}</a>.</p>
+<p>Harap mengirimkan dokumen tagihan ke alamat PT Pupuk Kalimantan Timur (Dept PP&amp;P) paling lambat pada tanggal 20 di bulan terbitnya faktur pajak.<br>Harap mengirim softfilenya terlebih dahulu untuk saya cek kelengkapannya.</p>
+<p><strong><em>Note : Surat Verifikasi Penerimaan Barang dan GRS Digital merupakan satu kesatuan, sehingga tanda tangan pada GRS tidak lagi diperlukan. Rekanan WAJIB melampirkan print out Surat Verifikasi Penerimaan Barang dan GRS saat melakukan penagihan.</em></strong></p>
+<p>Demikian pemberitahuan ini disampaikan, atas kerjasamanya diucapkan terima kasih.</p>
+<p>Hormat saya,<br>{pic_name}<br><strong>Staff Penerimaan Invoice Barang</strong><br>Dept. PP&amp;P</p>
 HTML;
     }
 
     public static function defaultRdtvSubject(): string
     {
-        return 'Pemberitahuan Verifikasi Penolakan Barang (RDTV {no_rdtv}) - PO {no_po}';
+        return 'INFORMASI RDTV {no_rdtv} - PO {no_po}';
     }
 
     public static function defaultRdtvBody(): string
@@ -87,18 +86,15 @@ HTML;
         return <<<'HTML'
 <p>Kepada Yth. <strong>{vendor_name}</strong>,</p>
 <p>Dengan hormat,</p>
-<p>Bersama ini kami sampaikan dokumen <strong>Return Delivery to Vendor (RDTV)</strong> beserta <strong>Surat Verifikasi Penolakan Barang</strong> untuk pengiriman dengan rincian berikut:</p>
+<p>Bersama ini kami sampaikan bahwa material Anda telah kami tolak, beserta <strong>Surat Verifikasi Penolakan Barang</strong> untuk pengiriman dengan rincian berikut:</p>
 <ul>
     <li><strong>Nomor PO:</strong> {no_po}</li>
     <li><strong>Nomor RDTV (124):</strong> {no_rdtv}</li>
-    <li><strong>Nomor DO / Surat Jalan:</strong> {no_do}</li>
-    <li><strong>Deskripsi Barang:</strong> {nama_barang}</li>
-    <li><strong>Tanggal Terima RDTV:</strong> {tanggal_terima_grs}</li>
-    <li><strong>Catatan / Keterangan:</strong> {keterangan}</li>
 </ul>
-<p>Terlampir kami sertakan <strong>2 berkas dokumen</strong> (Dokumen RDTV dan Dokumen Verifikasi RDTV) sebagai acuan tindak lanjut pengambilan atau penggantian barang. Anda juga dapat memantau status dan mengunggah kelengkapan langsung melalui tautan berikut: <a href="{link_tracking}">Lacak Status PO {no_po}</a>.</p>
-<p>Terima kasih atas perhatian dan kerja samanya.</p>
-<p>Hormat kami,<br><strong>Tim Receiving Jasa — PT Pupuk Kalimantan Timur</strong><br>PIC: {pic_name}</p>
+<p>Terlampir kami sertakan <strong>2 berkas dokumen</strong> (Dokumen RDTV dan Dokumen Verifikasi RDTV), status dokumen serta alasan penolakan juga dapat dipantau melalui portal: <a href="{link_tracking}">Lacak Status PO {no_po}</a> atau dapat menghubungi WhatsApp dengan nomor <strong>081139008113</strong>.</p>
+<p>Untuk koordinasi mengenai klarifikasi maupun pengambilan barang tolak dapat menghubungi bagian penerimaan barang melalui email <a href="mailto:receiving.barang@pupukkaltim.com">receiving.barang@pupukkaltim.com</a>.</p>
+<p>Demikian pemberitahuan ini disampaikan, atas kerjasamanya diucapkan terima kasih.</p>
+<p>Hormat saya,<br>{pic_name}<br><strong>Staff Penerimaan Invoice Barang</strong><br>Dept. PP&amp;P</p>
 HTML;
     }
 
@@ -387,12 +383,15 @@ HTML;
         $namaBarang = trim((string) ($receipt->nama_barang ?: $receipt->deskripsi ?: '-'));
         $keterangan = trim((string) ($receipt->keterangan ?: $receipt->grsRdtvItem?->reason ?: '-'));
 
+        $resolvedGrs = trim((string) ($receipt->no_grs ?: ($isRdtv ? ($receipt->no_rdtv ?: '-') : '-')));
+        $resolvedRdtv = trim((string) ($receipt->no_rdtv ?: ($isRdtv ? ($receipt->no_grs ?: '-') : '-')));
+
         return [
             '{vendor_name}' => trim((string) ($receipt->vendor_name ?: $receipt->vendor?->name ?: 'Mitra Vendor')),
             '{no_po}' => trim((string) ($receipt->no_po ?: '-')),
             '{no_do}' => trim((string) ($receipt->no_do ?: '-')),
-            '{no_grs}' => trim((string) ($receipt->no_grs ?: '-')),
-            '{no_rdtv}' => trim((string) ($receipt->no_rdtv ?: '-')),
+            '{no_grs}' => $resolvedGrs,
+            '{no_rdtv}' => $resolvedRdtv,
             '{jenis_dokumen}' => $isRdtv ? 'RDTV' : 'GRS',
             '{nama_barang}' => $namaBarang,
             '{tanggal_terima_grs}' => $this->formatDate($receipt->tanggal_terima_grs),
