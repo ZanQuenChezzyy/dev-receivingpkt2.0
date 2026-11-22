@@ -1178,9 +1178,10 @@ class InvoicingReceiptsTable
                     ->outlined()
                     ->button()
                     ->dropdownPlacement('bottom-start')
-                    ->dropdownFlip(false)
+                    ->dropdownFlip(true)
+                    ->dropdownTeleport(true)
                     ->dropdownOffset(6)
-                    ->dropdownMaxHeight('20rem'),
+                    ->dropdownMaxHeight('min(22rem, 65vh)'),
             ], position: RecordActionsPosition::BeforeCells)
             ->toolbarActions([
                 BulkActionGroup::make([

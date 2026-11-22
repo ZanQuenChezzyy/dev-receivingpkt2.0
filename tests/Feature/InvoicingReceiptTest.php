@@ -2039,13 +2039,18 @@ test('invoicing receipts table shows clickable Lihat Dokumen without badge on Do
         ->and($columns->get('lama_pekerjaan')->record($grsWithoutFile)->getPlaceholder())->toBe('Belum Dihitung')
         ->and($columns->get('lama_pekerjaan')->record($rdtvWithoutFile)->getPlaceholder())->toBe('Tidak Dihitung (RDTV)');
 
-    // 3. Bulk Actions Kirim ke Kasir & Cetak Transmittal tersedia
+    // 3. Bulk Actions Kirim ke Kasir & Cetak Transmittal tersedia, serta dropdown aksi baris mendukung auto-flip & teleport
     $toolbarActions = collect($table->getToolbarActions())
         ->flatMap(fn ($a) => method_exists($a, 'getActions') ? $a->getActions() : [$a])
         ->keyBy(fn ($a) => method_exists($a, 'getName') ? $a->getName() : null);
 
+    $recordActionGroup = collect($table->getRecordActions())->first(fn ($a) => $a instanceof ActionGroup);
+
     expect($toolbarActions)->toHaveKey('sendToCashierBulk')
-        ->and($toolbarActions)->toHaveKey('printCashierTransmittalBulk');
+        ->and($toolbarActions)->toHaveKey('printCashierTransmittalBulk')
+        ->and($recordActionGroup)->not->toBeNull()
+        ->and($recordActionGroup->hasDropdownFlip())->toBeTrue()
+        ->and($recordActionGroup->hasDropdownTeleport())->toBeTrue();
 });
 
 test('cashier transmittal print controller renders PDF with required columns, destination, watermark, and excludes RDTV', function () {
