@@ -131,19 +131,23 @@
                     continue;
                 }
 
-                const fnGrsMatch = file.name.match(/(?:grs|105)[^0-9]*(500\d{7})/i) || file.name.match(/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/);
-                const fnPoMatch = file.name.match(/(?:po)[^0-9]*([345]\d{9})/i) || file.name.match(/(?:^|[^0-9])([345]\d{9})(?:[^0-9]|$)/);
+                const isRdtvFilename = /(?:^|[^a-z])(rdtv|124)(?:[^a-z]|$)/i.test(file.name);
+                const isGrsFilename = !isRdtvFilename && /(?:^|[^a-z])(grs|105)(?:[^a-z]|$)/i.test(file.name);
+                const fnDocMatch = file.name.match(/(?:grs|rdtv|105|124)[^0-9]*(500\d{7})/i) || file.name.match(/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/);
+                const fnPoMatch = file.name.match(/(?:po)[^0-9]*([345]\d{9})/i) || file.name.match(/(?:^|[^0-9])(53\d{8})(?:[^0-9]|$)/);
 
                 this.items.push({
                     file: file,
                     name: file.name,
                     size: file.size,
                     status: 'queued',
-                    no_grs: fnGrsMatch ? fnGrsMatch[1] : '',
+                    doc_type: isRdtvFilename ? 'RDTV' : (isGrsFilename ? 'GRS' : ''),
+                    no_grs: (!isRdtvFilename && fnDocMatch) ? fnDocMatch[1] : '',
+                    no_rdtv: (isRdtvFilename && fnDocMatch) ? fnDocMatch[1] : '',
                     no_po: fnPoMatch ? fnPoMatch[1] : '',
                     no_do: '',
-                    source: fnGrsMatch ? 'filename' : 'pending',
-                    message: fnGrsMatch ? 'Nomor GRS ditemukan' : 'Menunggu proses',
+                    source: fnDocMatch ? 'filename' : 'pending',
+                    message: fnDocMatch ? (isRdtvFilename ? 'Nomor RDTV ditemukan' : 'Nomor GRS ditemukan') : 'Menunggu proses',
                 });
             }
         },
@@ -163,7 +167,7 @@
             if (this.isProcessing) return;
             this.items.forEach(item => {
                 if (item.status === 'unmatched' || item.status === 'error') {
-                    if (!item.no_grs && !item.no_po) {
+                    if (!item.no_grs && !item.no_rdtv && !item.no_po) {
                         item.status = 'queued';
                         item.message = 'Mengantre untuk pembacaan ulang...';
                     } else {
@@ -173,6 +177,27 @@
                 }
             });
             this.startProcessAll();
+        },
+
+        toggleDocType(item) {
+            if (item.status === 'verified' || this.isProcessing) return;
+            if (item.doc_type === 'RDTV') {
+                item.doc_type = 'GRS';
+                if (!item.no_grs && item.no_rdtv) {
+                    item.no_grs = item.no_rdtv;
+                    item.no_rdtv = '';
+                }
+            } else {
+                item.doc_type = 'RDTV';
+                if (!item.no_rdtv && item.no_grs) {
+                    item.no_rdtv = item.no_grs;
+                    item.no_grs = '';
+                }
+            }
+            if (item.status === 'unmatched') {
+                item.status = 'scanned';
+                item.message = 'Jenis dokumen diubah ke ' + item.doc_type;
+            }
         },
 
         getStatusLabel(item) {
@@ -200,7 +225,8 @@
             let cleaned = raw
                 .replace(/\r?\n/g, ' ')
                 .replace(/\(\s*[1Il][0Oo][5S]\s*\)/gi, '(105)')
-                .replace(/\(\s*[1Il][0Oo]3\s*\)/gi, '(103)');
+                .replace(/\(\s*[1Il][0Oo]3\s*\)/gi, '(103)')
+                .replace(/\(\s*[1Il][2Z][4A]\s*\)/gi, '(124)');
 
             // Ulangi 2x agar pola seperti 5OO77 -> 50077 ikut ternormalisasi
             cleaned = cleaned
@@ -216,58 +242,102 @@
 
         extractIdentifiers(rawText) {
             const text = this.cleanOcrText(rawText);
+            let docType = null;
             let grs = null;
+            let rdtv = null;
             let gr103 = null;
             let po = null;
             let doNum = null;
 
             if (text && text.length > 15) {
-                // 0. Pola kolom berurutan (PO -> GR 103 -> GRS 105) bila OCR membaca per kolom
-                const mSeq = text.match(/Nomor\s*PO[\s\S]{0,120}?Nomor\s*GR[\s\S]{0,80}?Nomor\s*GRS[\s\S]{0,160}?([345]\d{9})[\s\S]{1,40}?(500\d{7})[\s\S]{1,40}?(500\d{7})/i);
-                if (mSeq) {
-                    po = mSeq[1];
-                    gr103 = mSeq[2];
-                    grs = mSeq[3];
+                // 0a. Deteksi jenis dokumen: RDTV (Verifikasi Penolakan Barang / 124) vs GRS (Verifikasi Penerimaan Barang / 105)
+                const isRdtv = /VERIFIKASI\s+PENOLAKAN\s+BARANG|Return\s+Delivery\s+To\s+Vendor|Berita\s+Acara\s+Penolakan|Nomor\s*:\s*RDTV-|Nomor\s*RDTV\s*\(?124\)?|RDTV\s*\(?124\)?|Alasan\s+Pengembalian|BELUM\s+DITERIMA/i.test(text);
+                const isGrs = /VERIFIKASI\s+PENERIMAAN\s+BARANG|Goods\s+Receipt\s+Slip|Berita\s+Acara\s+Penerimaan|Nomor\s*:\s*GRS-|Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?/i.test(text);
+
+                if (isRdtv) {
+                    docType = 'RDTV';
+                } else if (isGrs) {
+                    docType = 'GRS';
                 }
 
-                // 1. Deteksi GR (103) terlebih dahulu agar tidak tertukar dengan GRS (105)
+                // 0b. Pola kolom berurutan bila OCR membaca per kolom
+                if (docType === 'RDTV') {
+                    const mSeqRdtv = text.match(/Nomor\s*PO[\s\S]{0,120}?Nomor\s*GR[\s\S]{0,80}?Nomor\s*RDTV[\s\S]{0,160}?([345]\d{9})[\s\S]{1,40}?(500\d{7})[\s\S]{1,40}?(500\d{7})/i);
+                    if (mSeqRdtv) {
+                        po = mSeqRdtv[1];
+                        gr103 = mSeqRdtv[2];
+                        rdtv = mSeqRdtv[3];
+                    }
+                } else {
+                    const mSeqGrs = text.match(/Nomor\s*PO[\s\S]{0,120}?Nomor\s*GR[\s\S]{0,80}?Nomor\s*GRS[\s\S]{0,160}?([345]\d{9})[\s\S]{1,40}?(500\d{7})[\s\S]{1,40}?(500\d{7})/i);
+                    if (mSeqGrs) {
+                        po = mSeqGrs[1];
+                        gr103 = mSeqGrs[2];
+                        grs = mSeqGrs[3];
+                        docType = docType || 'GRS';
+                    }
+                }
+
+                // 1. Deteksi GR (103) terlebih dahulu agar tidak tertukar dengan GRS (105) / RDTV (124)
                 if (!gr103) {
                     const mGr103 = text.match(/(?:Nomor\s*GR\s*\(?103\)?|GR\s*\(?103\)?|\(103\))[\s:;|—–-]{0,25}(500\d{7})/i);
                     if (mGr103) gr103 = mGr103[1];
                 }
 
-                // 2. Prioritas utama GRS (105)
-                if (!grs) {
+                // 2. Deteksi nomor dokumen utama (RDTV 124 atau GRS 105)
+                if (docType === 'RDTV' || !docType) {
+                    const mRdtvExplicit = text.match(/(?:Nomor\s*RDTV\s*\(?124\)?|RDTV\s*\(?124\)?|\(124\))[\s:;|—–-]{0,25}(500\d{7})/i)
+                        || text.match(/(?:Nomor\s*RDTV|No\.?\s*RDTV)[\s:;|—–-]{0,25}(500\d{7})/i);
+                    if (mRdtvExplicit) {
+                        rdtv = mRdtvExplicit[1];
+                        docType = 'RDTV';
+                    }
+                }
+
+                if (docType !== 'RDTV' && !grs) {
                     const mGrsExplicit = text.match(/(?:Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?|\(105\)|No\.?\s*Release\s*GR)[\s:;|—–-]{0,25}(500\d{7})/i)
                         || text.match(/(?:Nomor\s*GRS|No\.?\s*GRS)[\s:;|—–-]{0,25}(500\d{7})/i);
                     if (mGrsExplicit) {
                         grs = mGrsExplicit[1];
+                        docType = docType || 'GRS';
                     }
                 }
 
-                // 3. Fallback GRS: kumpulkan semua angka 500xxxxxxx
-                if (!grs) {
+                // 3. Fallback angka 500xxxxxxx jika label terpotong OCR
+                if (!grs && !rdtv) {
                     const all500 = [...new Set(Array.from(text.matchAll(/\b(500\d{7})\b/g), m => m[1]))];
                     const without103 = gr103 ? all500.filter(n => n !== gr103) : all500;
-                    if (without103.length >= 2 && /103/i.test(text) && /105/i.test(text)) {
-                        // Bila teks memuat 103 sebelum 105 dan belum terikat label, angka kedua adalah GRS (105)
-                        grs = without103[1];
+                    let picked = null;
+
+                    if (without103.length >= 2 && /103/i.test(text) && /(?:105|124)/i.test(text)) {
+                        picked = without103[1];
                     } else if (without103.length >= 1) {
-                        grs = without103[0];
+                        picked = without103[0];
                     } else if (all500.length >= 1) {
-                        grs = all500[all500.length - 1];
+                        picked = all500[all500.length - 1];
+                    }
+
+                    if (picked) {
+                        if (docType === 'RDTV') {
+                            rdtv = picked;
+                        } else {
+                            grs = picked;
+                            docType = docType || 'GRS';
+                        }
                     }
                 }
+
+                const activeDocNum = rdtv || grs;
 
                 // 4. Deteksi Nomor PO
                 if (!po) {
                     const mPo = text.match(/(?:Nomor\s*PO|No\.?\s*PO|Purchase\s*Order|P\.O\.?)[\s:;|—–-]{0,25}([345]\d{9})/i)
                         || text.match(/\b(53\d{8})\b/);
-                    if (mPo && mPo[1] !== grs && mPo[1] !== gr103) {
+                    if (mPo && mPo[1] !== activeDocNum && mPo[1] !== gr103) {
                         po = mPo[1];
                     } else {
                         const allPoCandidates = [...new Set(Array.from(text.matchAll(/\b([345]\d{9})\b/g), m => m[1]))]
-                            .filter(n => n !== grs && n !== gr103);
+                            .filter(n => n !== activeDocNum && n !== gr103);
                         if (allPoCandidates.length > 0) {
                             po = allPoCandidates[0];
                         }
@@ -282,7 +352,7 @@
                 }
             }
 
-            return { grs, po, doNum };
+            return { docType, grs, rdtv, po, doNum };
         },
 
         async getTesseractWorker() {
@@ -345,51 +415,71 @@
                 const digitalText = textContent.items.map(t => t.str).join(' ');
                 let detected = this.extractIdentifiers(digitalText);
 
-                if (detected.grs || detected.po) {
+                if (detected.grs || detected.rdtv || detected.po) {
                     item.source = 'digital_text';
                 }
 
-                // 2. Jalankan OCR jika PDF berupa gambar / teks digital belum menemukan GRS (105)
-                if (!detected.grs || !detected.po) {
+                // 2. Jalankan OCR jika PDF berupa gambar / teks digital belum menemukan GRS (105) atau RDTV (124)
+                if ((!detected.grs && !detected.rdtv) || !detected.po || !detected.docType) {
                     this.currentStepMessage = 'Memindai teks gambar (OCR): ' + item.name + '...';
                     const worker = await this.getTesseractWorker();
 
                     if (worker) {
                         const fullCanvas = await this.renderPdfPageToCanvas(page, 2.2);
 
-                        // Tahap 2a: Pindai area tabel rincian dokumen (12% - 56% halaman) terlebih dahulu agar lebih cepat & tajam
+                        // Tahap 2a: Pindai area judul & tabel rincian dokumen (12% - 56% halaman)
                         const metaCanvas = this.cropCanvasRegion(fullCanvas, 0.12, 0.56);
                         const metaRes = await worker.recognize(metaCanvas);
                         const metaDetected = this.extractIdentifiers(metaRes?.data?.text || '');
 
+                        if (!detected.docType && metaDetected.docType) detected.docType = metaDetected.docType;
                         if (!detected.grs && metaDetected.grs) detected.grs = metaDetected.grs;
+                        if (!detected.rdtv && metaDetected.rdtv) detected.rdtv = metaDetected.rdtv;
                         if (!detected.po && metaDetected.po) detected.po = metaDetected.po;
                         if (!detected.doNum && metaDetected.doNum) detected.doNum = metaDetected.doNum;
 
-                        // Tahap 2b: Fallback pindai seluruh halaman jika GRS atau PO belum ditemukan
-                        if (!detected.grs || !detected.po) {
+                        // Tahap 2b: Fallback pindai seluruh halaman jika nomor utama atau PO belum ditemukan
+                        if ((!detected.grs && !detected.rdtv) || !detected.po) {
                             const fullRes = await worker.recognize(fullCanvas);
                             const fullDetected = this.extractIdentifiers(fullRes?.data?.text || '');
 
+                            if (!detected.docType && fullDetected.docType) detected.docType = fullDetected.docType;
                             if (!detected.grs && fullDetected.grs) detected.grs = fullDetected.grs;
+                            if (!detected.rdtv && fullDetected.rdtv) detected.rdtv = fullDetected.rdtv;
                             if (!detected.po && fullDetected.po) detected.po = fullDetected.po;
                             if (!detected.doNum && fullDetected.doNum) detected.doNum = fullDetected.doNum;
                         }
 
-                        if (detected.grs || detected.po) {
+                        if (detected.grs || detected.rdtv || detected.po) {
                             item.source = 'ocr_image';
                         }
                     }
                 }
 
-                if (detected.grs) item.no_grs = detected.grs;
+                if (detected.docType) item.doc_type = detected.docType;
+                if (item.doc_type === 'RDTV') {
+                    if (detected.rdtv) item.no_rdtv = detected.rdtv;
+                    item.no_grs = '';
+                } else {
+                    if (detected.grs) item.no_grs = detected.grs;
+                    if (detected.rdtv && !detected.grs) {
+                        item.doc_type = 'RDTV';
+                        item.no_rdtv = detected.rdtv;
+                    }
+                }
                 if (detected.po) item.no_po = detected.po;
                 if (detected.doNum) item.no_do = detected.doNum;
 
                 item.status = 'scanned';
-                item.message = item.no_grs
-                    ? 'GRS: ' + item.no_grs + (item.no_po ? ' | PO: ' + item.no_po : '')
-                    : (item.no_po ? 'PO: ' + item.no_po : 'Nomor belum ditemukan');
+                if (item.doc_type === 'RDTV') {
+                    item.message = item.no_rdtv
+                        ? 'RDTV: ' + item.no_rdtv + (item.no_po ? ' | PO: ' + item.no_po : '')
+                        : (item.no_po ? 'RDTV | PO: ' + item.no_po : 'Nomor RDTV belum ditemukan');
+                } else {
+                    item.message = item.no_grs
+                        ? 'GRS: ' + item.no_grs + (item.no_po ? ' | PO: ' + item.no_po : '')
+                        : (item.no_po ? 'PO: ' + item.no_po : 'Nomor belum ditemukan');
+                }
             } catch (err) {
                 console.error('Scan error:', err);
                 item.status = 'scanned';
@@ -403,7 +493,9 @@
 
             const formData = new FormData();
             formData.append('file', item.file);
+            formData.append('jenis', item.doc_type || '');
             formData.append('no_grs', item.no_grs || '');
+            formData.append('no_rdtv', item.no_rdtv || '');
             formData.append('no_po', item.no_po || '');
             formData.append('no_do', item.no_do || '');
             formData.append('original_name', item.name);
@@ -419,10 +511,12 @@
                 });
 
                 const data = await res.json();
+                if (data.jenis) item.doc_type = data.jenis;
                 if (res.ok && data.success && data.matched) {
                     item.status = 'verified';
                     item.message = data.message || 'Berhasil diverifikasi';
                     if (data.no_grs) item.no_grs = data.no_grs;
+                    if (data.no_rdtv) item.no_rdtv = data.no_rdtv;
                     if (data.no_po) item.no_po = data.no_po;
                 } else {
                     item.status = 'unmatched';
@@ -572,17 +666,48 @@
 
                             <!-- Detected Data / Editable Inputs -->
                             <div class="flex flex-wrap items-center gap-2 shrink-0">
-                                <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md border border-gray-200 dark:border-white/10">
-                                    <span class="text-[10px] uppercase font-bold text-gray-500">GRS:</span>
-                                    <input
-                                        type="text"
-                                        x-model="item.no_grs"
-                                        @input="if (item.status === 'unmatched') { item.status = 'scanned'; item.message = 'Nomor GRS disesuaikan manual'; }"
-                                        placeholder="500xxxxxxx"
-                                        class="w-24 text-xs font-mono font-bold bg-transparent border-none p-0 focus:ring-0 text-indigo-600 dark:text-indigo-400 placeholder-gray-400"
-                                        :disabled="item.status === 'verified'"
-                                    />
-                                </div>
+                                <!-- Badge Jenis Dokumen (GRS / RDTV) — bisa diklik untuk koreksi manual -->
+                                <button
+                                    type="button"
+                                    @click="toggleDocType(item)"
+                                    :disabled="item.status === 'verified' || isProcessing"
+                                    title="Klik untuk mengganti jenis dokumen (GRS / RDTV)"
+                                    class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border transition cursor-pointer disabled:cursor-default"
+                                    :class="{
+                                        'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800': item.doc_type === 'GRS',
+                                        'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800': item.doc_type === 'RDTV',
+                                        'bg-gray-100 text-gray-500 border-gray-200 dark:bg-white/5 dark:text-gray-400 dark:border-white/10': !item.doc_type,
+                                    }"
+                                    x-text="item.doc_type || 'Auto'"
+                                ></button>
+
+                                <template x-if="item.doc_type === 'RDTV'">
+                                    <div class="flex items-center gap-1.5 bg-rose-50/70 dark:bg-rose-950/30 px-2 py-1 rounded-md border border-rose-200 dark:border-rose-800/60">
+                                        <span class="text-[10px] uppercase font-bold text-rose-600 dark:text-rose-400">RDTV:</span>
+                                        <input
+                                            type="text"
+                                            x-model="item.no_rdtv"
+                                            @input="if (item.status === 'unmatched') { item.status = 'scanned'; item.message = 'Nomor RDTV disesuaikan manual'; }"
+                                            placeholder="500xxxxxxx"
+                                            class="w-24 text-xs font-mono font-bold bg-transparent border-none p-0 focus:ring-0 text-rose-700 dark:text-rose-300 placeholder-rose-300"
+                                            :disabled="item.status === 'verified'"
+                                        />
+                                    </div>
+                                </template>
+
+                                <template x-if="item.doc_type !== 'RDTV'">
+                                    <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md border border-gray-200 dark:border-white/10">
+                                        <span class="text-[10px] uppercase font-bold text-gray-500">GRS:</span>
+                                        <input
+                                            type="text"
+                                            x-model="item.no_grs"
+                                            @input="if (item.status === 'unmatched') { item.status = 'scanned'; item.message = 'Nomor GRS disesuaikan manual'; }"
+                                            placeholder="500xxxxxxx"
+                                            class="w-24 text-xs font-mono font-bold bg-transparent border-none p-0 focus:ring-0 text-indigo-600 dark:text-indigo-400 placeholder-gray-400"
+                                            :disabled="item.status === 'verified'"
+                                        />
+                                    </div>
+                                </template>
                                 <div class="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md border border-gray-200 dark:border-white/10">
                                     <span class="text-[10px] uppercase font-bold text-gray-500">PO:</span>
                                     <input

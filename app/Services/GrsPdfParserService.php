@@ -259,10 +259,13 @@ class GrsPdfParserService
     }
 
     /**
-     * Parsing dan ekstraksi metadata dokumen Verifikasi Penerimaan Barang (GRS / Kode 105).
+     * Parsing dan ekstraksi metadata dokumen Verifikasi Penerimaan Barang (GRS / Kode 105)
+     * maupun Verifikasi Penolakan Barang (RDTV / Kode 124).
      *
      * @return array{
+     *     jenis: ?string,
      *     no_grs: ?string,
+     *     no_rdtv: ?string,
      *     no_gr_103: ?string,
      *     no_po: ?string,
      *     no_do: ?string,
@@ -270,7 +273,7 @@ class GrsPdfParserService
      *     nomor_surat: ?string,
      *     tanggal_verifikasi: ?string,
      *     tanggal_release_gr: ?string,
-     *     detection_source: 'text'|'ocr'|'filename'|'none',
+     *     detection_source: 'text'|'stream'|'ocr'|'filename'|'none',
      *     raw_text: string
      * }
      */
@@ -282,7 +285,7 @@ class GrsPdfParserService
         // 1. Ekstrak teks digital langsung dari PDF stream (pure PHP, instan < 5ms)
         $text = $this->extractText($content);
 
-        if (strlen(trim($text)) >= 30 && (str_contains($text, 'GRS') || str_contains($text, '500') || str_contains($text, '530'))) {
+        if (strlen(trim($text)) >= 30 && (str_contains($text, 'GRS') || str_contains($text, 'RDTV') || str_contains($text, '500') || str_contains($text, '530'))) {
             $detectionSource = 'text';
         }
 
@@ -297,8 +300,16 @@ class GrsPdfParserService
             }
         }
 
+        // Jika input bukan biner PDF melainkan teks mentah (mis. untuk unit test / teks hasil OCR)
+        if (empty(trim($text)) && ! str_starts_with(ltrim($content), '%PDF') && ! empty(trim($content))) {
+            $text = $content;
+            $detectionSource = 'text';
+        }
+
         $data = [
+            'jenis' => null,
             'no_grs' => null,
+            'no_rdtv' => null,
             'no_gr_103' => null,
             'no_po' => null,
             'no_do' => null,
@@ -310,19 +321,44 @@ class GrsPdfParserService
             'raw_text' => $text,
         ];
 
+        // 0. Deteksi jenis dokumen: RDTV (Verifikasi Penolakan Barang / 124) vs GRS (Verifikasi Penerimaan Barang / 105)
+        $isRdtvText = preg_match('/VERIFIKASI\s+PENOLAKAN\s+BARANG|Return\s+Delivery\s+To\s+Vendor|Berita\s+Acara\s+Penolakan|Nomor\s*:\s*RDTV-|Nomor\s*RDTV\s*\(?124\)?|RDTV\s*\(?124\)?|Alasan\s+Pengembalian/i', $text) === 1;
+        $isGrsText = preg_match('/VERIFIKASI\s+PENERIMAAN\s+BARANG|Goods\s+Receipt\s+Slip|Berita\s+Acara\s+Penerimaan|Nomor\s*:\s*GRS-|Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?/i', $text) === 1;
+
+        if ($isRdtvText) {
+            $data['jenis'] = 'RDTV';
+        } elseif ($isGrsText) {
+            $data['jenis'] = 'GRS';
+        }
+
         // Format tabel / sekuensial (sering muncul pada OCR atau dokumen dua kolom)
-        if (preg_match('/Nomor\s*PO.*?Nomor\s*GR.*?Nomor\s*GRS.*?([345]\d{9})\s+(500\d{7})\s+(500\d{7})/si', $text, $seq)) {
+        if ($data['jenis'] === 'RDTV' && preg_match('/Nomor\s*PO.*?Nomor\s*GR.*?Nomor\s*RDTV.*?([345]\d{9})\s+(500\d{7})\s+(500\d{7})/si', $text, $seqRdtv)) {
+            $data['no_po'] = $seqRdtv[1];
+            $data['no_gr_103'] = $seqRdtv[2];
+            $data['no_rdtv'] = $seqRdtv[3];
+        } elseif (preg_match('/Nomor\s*PO.*?Nomor\s*GR.*?Nomor\s*GRS.*?([345]\d{9})\s+(500\d{7})\s+(500\d{7})/si', $text, $seq)) {
             $data['no_po'] = $seq[1];
             $data['no_gr_103'] = $seq[2];
             $data['no_grs'] = $seq[3];
+            $data['jenis'] ??= 'GRS';
         }
 
-        // 1. Nomor GRS (105) - Key-Value
-        if (! $data['no_grs']) {
+        // 1a. Nomor RDTV (124) - Key-Value
+        if (! $data['no_rdtv']) {
+            if (preg_match('/(?:Nomor\s*RDTV(?:\s*\(124\))?|RDTV\s*\(124\)|124\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
+                $data['no_rdtv'] = $m[1];
+                $data['jenis'] = 'RDTV';
+            }
+        }
+
+        // 1b. Nomor GRS (105) - Key-Value
+        if (! $data['no_grs'] && $data['jenis'] !== 'RDTV') {
             if (preg_match('/(?:Nomor\s*GRS(?:\s*\(105\))?|GRS\s*\(105\)|105\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
                 $data['no_grs'] = $m[1];
+                $data['jenis'] ??= 'GRS';
             } elseif (preg_match('/No\s*Release\s*GR\s*[:\s]+(500\d{7})/i', $text, $m)) {
                 $data['no_grs'] = $m[1];
+                $data['jenis'] ??= 'GRS';
             }
         }
 
@@ -376,9 +412,12 @@ class GrsPdfParserService
             $data['vendor_name'] = trim($m[0]);
         }
 
-        // 6. Nomor Surat Verifikasi (e.g. GRS- 55983/D/PL/D52100/IT/2026)
-        if (preg_match('/Nomor:\s*(GRS-\s*[A-Za-z0-9\/_-]+)/i', $text, $m)) {
+        // 6. Nomor Surat Verifikasi (e.g. GRS- 55983/D/PL/D52100/IT/2026 atau RDTV- 58872/D/PL/D52100/IT/2026)
+        if (preg_match('/Nomor:\s*((?:GRS|RDTV)-\s*[A-Za-z0-9\/_-]+)/i', $text, $m)) {
             $data['nomor_surat'] = trim($m[1]);
+            if ($data['jenis'] === null) {
+                $data['jenis'] = stripos($data['nomor_surat'], 'RDTV') === 0 ? 'RDTV' : 'GRS';
+            }
         }
 
         // 7. Tanggal Verifikasi / Surat (e.g. "Tanggal: 28 Oktober 2026" atau "Tanggal : 28.10.2026")
@@ -394,14 +433,31 @@ class GrsPdfParserService
             }
         }
 
-        // 8. Fallback: Ekstraksi Nomor GRS (500xxxxxxx) dan PO (530xxxxxxx) dari Nama File jika belum ditemukan
-        if (! $data['no_grs'] || ! $data['no_po']) {
+        // 8. Fallback: Ekstraksi Jenis (GRS/RDTV), Nomor GRS/RDTV (500xxxxxxx), dan PO (530xxxxxxx) dari Nama File jika belum ditemukan
+        if ((! $data['no_grs'] && ! $data['no_rdtv']) || ! $data['no_po'] || ! $data['jenis']) {
             $filenameToCheck = $originalFilename ?: (file_exists($filePathOrContent) ? basename($filePathOrContent) : '');
             if (! empty($filenameToCheck)) {
-                if (! $data['no_grs']) {
+                if (! $data['jenis']) {
+                    if (preg_match('/\b(?:rdtv|124)\b|rdtv/i', $filenameToCheck) === 1) {
+                        $data['jenis'] = 'RDTV';
+                    } elseif (preg_match('/\b(?:grs|105)\b|grs/i', $filenameToCheck) === 1) {
+                        $data['jenis'] = 'GRS';
+                    }
+                }
+
+                if ($data['jenis'] === 'RDTV' && ! $data['no_rdtv']) {
+                    if (preg_match('/(?:rdtv|124)[^0-9]*(500\d{7})/i', $filenameToCheck, $rdtvSpecific)) {
+                        $data['no_rdtv'] = $rdtvSpecific[1];
+                        $data['detection_source'] = 'filename';
+                    } elseif (preg_match('/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
+                        $data['no_rdtv'] = $fnMatch[1];
+                        $data['detection_source'] = 'filename';
+                    }
+                } elseif (! $data['no_grs'] && $data['jenis'] !== 'RDTV') {
                     // Prioritaskan jika ada label GRS atau 105 di nama file
                     if (preg_match('/(?:grs|105)[^0-9]*(500\d{7})/i', $filenameToCheck, $grsSpecific)) {
                         $data['no_grs'] = $grsSpecific[1];
+                        $data['jenis'] ??= 'GRS';
                         $data['detection_source'] = 'filename';
                     } elseif (preg_match('/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
                         $data['no_grs'] = $fnMatch[1];

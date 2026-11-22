@@ -317,7 +317,7 @@ test('BatchVerifikasiGrsUploadController falls back to PO matching even when no_
         ->and($receipt->dokumen_verifikasi_grs)->not->toBeNull();
 });
 
-test('batch upload verifikasi GRS modal uses valid tesseract.js-core v5 CDN and disambiguates GR 103 from GRS 105', function () {
+test('batch upload verifikasi GRS modal uses valid tesseract.js-core v5 CDN and disambiguates GR 103 from GRS 105 and RDTV 124', function () {
     $bladeContent = file_get_contents(resource_path('views/filament/actions/batch-upload-verifikasi-grs-modal.blade.php'));
 
     expect($bladeContent)
@@ -325,5 +325,136 @@ test('batch upload verifikasi GRS modal uses valid tesseract.js-core v5 CDN and 
         ->not->toContain("jsdelivr.net/npm/tesseract-core'")
         ->toContain('__batchOcrScriptPromises')
         ->toContain('cropCanvasRegion')
-        ->toContain('mGr103');
+        ->toContain('mGr103')
+        ->toContain('VERIFIKASI\\s+PENOLAKAN\\s+BARANG')
+        ->toContain('toggleDocType');
+});
+
+test('GrsPdfParserService distinguishes Verifikasi Penerimaan Barang (GRS 105) from Verifikasi Penolakan Barang (RDTV 124)', function () {
+    $parser = app(GrsPdfParserService::class);
+
+    $rdtvText = <<<'TEXT'
+    VERIFIKASI PENOLAKAN BARANG
+    Nomor: RDTV- 58872/D/PL/D52100/IT/2026
+    Tanggal: 11 November 2026
+    Bersama ini terlampir dokumen Return Delivery To Vendor (Berita Acara Penolakan Barang)
+    Nomor PO : 5300065841
+    Nomor GR (103) : 5007689041
+    Nomor RDTV (124) : 5007730671
+    Nama Penyedia Barang : INDOMOULD ANUGRAH CIPTA
+    Alasan Pengembalian : DITOLAK ITEM 10 & 30 MATERIAL TDK SESUAI PO
+    Nomor DO/SJ : DN109026PKT
+    TEXT;
+
+    $grsText = <<<'TEXT'
+    VERIFIKASI PENERIMAAN BARANG
+    Nomor: GRS- 58718/D/PL/D52100/IT/2026
+    Tanggal: 10 November 2026
+    Bersama ini terlampir dokumen Goods Receipt Slip (Berita Acara Penerimaan Barang)
+    Nomor PO : 5300066928
+    Nomor GR (103) : 5007689045
+    Nomor GRS (105) : 5007725170
+    Nama Penyedia Barang : PT GRASIKA KARYA PRIMA
+    Nomor DO/SJ : 26020653
+    TEXT;
+
+    $parsedRdtv = $parser->parseVerifikasiGrs($rdtvText, 'Print.pdf');
+    $parsedGrs = $parser->parseVerifikasiGrs($grsText, 'Print.pdf');
+
+    expect($parsedRdtv['jenis'])->toBe('RDTV')
+        ->and($parsedRdtv['no_rdtv'])->toBe('5007730671')
+        ->and($parsedRdtv['no_gr_103'])->toBe('5007689041')
+        ->and($parsedRdtv['no_grs'])->toBeNull()
+        ->and($parsedRdtv['no_po'])->toBe('5300065841')
+        ->and($parsedRdtv['no_do'])->toBe('DN109026PKT');
+
+    expect($parsedGrs['jenis'])->toBe('GRS')
+        ->and($parsedGrs['no_grs'])->toBe('5007725170')
+        ->and($parsedGrs['no_gr_103'])->toBe('5007689045')
+        ->and($parsedGrs['no_rdtv'])->toBeNull()
+        ->and($parsedGrs['no_po'])->toBe('5300066928')
+        ->and($parsedGrs['no_do'])->toBe('26020653');
+});
+
+test('BatchVerifikasiGrsUploadController strictly separates RDTV and GRS receipts on the same PO', function () {
+    $user = User::create([
+        'name' => 'Admin Strict Type',
+        'email' => 'admin_strict_type_'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('super_admin');
+
+    // PO yang sama memiliki 1 baris GRS dan 1 baris RDTV
+    $grsReceipt = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300065841',
+        'no_grs' => null,
+        'vendor_name' => 'INDOMOULD ANUGRAH CIPTA',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $rdtvReceipt = InvoicingReceipt::create([
+        'jenis' => 'RDTV',
+        'no_po' => '5300065841',
+        'no_rdtv' => null,
+        'vendor_name' => 'INDOMOULD ANUGRAH CIPTA',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    // 1. Upload Verifikasi Penolakan Barang (RDTV 124) -> hanya menyentuh baris RDTV
+    $rdtvFile = UploadedFile::fake()->create('Print_RDTV.pdf', 150, 'application/pdf');
+    $rdtvResponse = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $rdtvFile,
+            'jenis' => 'RDTV',
+            'no_rdtv' => '5007730671',
+            'no_po' => '5300065841',
+            'no_do' => 'DN109026PKT',
+            'original_name' => 'Print_RDTV.pdf',
+        ]);
+
+    $rdtvResponse->assertOk()
+        ->assertJson([
+            'success' => true,
+            'matched' => true,
+            'receipt_id' => $rdtvReceipt->id,
+            'jenis' => 'RDTV',
+            'no_rdtv' => '5007730671',
+            'status' => 'Terverifikasi',
+        ]);
+
+    $rdtvReceipt->refresh();
+    $grsReceipt->refresh();
+
+    expect($rdtvReceipt->status)->toBe('Terverifikasi')
+        ->and($rdtvReceipt->no_rdtv)->toBe('5007730671')
+        ->and($rdtvReceipt->dokumen_verifikasi_grs)->toStartWith('verifikasi-rdtv/')
+        ->and($grsReceipt->status)->toBe('Menunggu Verifikasi')
+        ->and($grsReceipt->dokumen_verifikasi_grs)->toBeNull();
+
+    // 2. Upload Verifikasi Penerimaan Barang (GRS 105) -> hanya menyentuh baris GRS
+    $grsFile = UploadedFile::fake()->create('Print_GRS.pdf', 150, 'application/pdf');
+    $grsResponse = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $grsFile,
+            'jenis' => 'GRS',
+            'no_grs' => '5007725170',
+            'no_po' => '5300065841',
+            'no_do' => '26020653',
+            'original_name' => 'Print_GRS.pdf',
+        ]);
+
+    $grsResponse->assertOk()
+        ->assertJson([
+            'success' => true,
+            'matched' => true,
+            'receipt_id' => $grsReceipt->id,
+            'jenis' => 'GRS',
+            'no_grs' => '5007725170',
+            'status' => 'Terverifikasi',
+        ]);
+
+    $grsReceipt->refresh();
+    expect($grsReceipt->status)->toBe('Terverifikasi')
+        ->and($grsReceipt->no_grs)->toBe('5007725170')
+        ->and($grsReceipt->dokumen_verifikasi_grs)->toStartWith('verifikasi-grs/');
 });

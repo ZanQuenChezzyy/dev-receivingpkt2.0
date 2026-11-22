@@ -5,21 +5,23 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\InvoicingReceipt;
 use App\Services\GrsPdfParserService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class BatchVerifikasiGrsUploadController extends Controller
 {
     /**
-     * Menerima satu berkas PDF Verifikasi GRS, metadata hasil OCR client-side,
-     * mencocokkannya ke InvoicingReceipt, dan memperbarui status menjadi Terverifikasi.
+     * Menerima satu berkas PDF Verifikasi GRS (105) atau RDTV (124), metadata hasil OCR client-side,
+     * mencocokkannya ke InvoicingReceipt sesuai jenis dokumen (GRS vs RDTV), dan memperbarui status menjadi Terverifikasi.
      */
     public function uploadAndVerify(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'file' => ['required', 'file', 'mimes:pdf', 'max:25600'], // max 25MB
+            'jenis' => ['nullable', 'string', 'in:GRS,RDTV'],
             'no_grs' => ['nullable', 'string', 'max:50'],
+            'no_rdtv' => ['nullable', 'string', 'max:50'],
             'no_po' => ['nullable', 'string', 'max:50'],
             'no_do' => ['nullable', 'string', 'max:100'],
             'original_name' => ['nullable', 'string', 'max:255'],
@@ -27,47 +29,108 @@ class BatchVerifikasiGrsUploadController extends Controller
 
         $uploadedFile = $request->file('file');
         $originalName = $validated['original_name'] ?? $uploadedFile->getClientOriginalName();
+        $jenis = strtoupper(trim((string) ($validated['jenis'] ?? '')));
         $noGrs = trim((string) ($validated['no_grs'] ?? ''));
+        $noRdtv = trim((string) ($validated['no_rdtv'] ?? ''));
         $noPo = trim((string) ($validated['no_po'] ?? ''));
         $noDo = trim((string) ($validated['no_do'] ?? ''));
 
-        // Jika nomor GRS atau PO belum terisi dari client, gunakan parser backend sebagai fallback
-        if (empty($noGrs) || empty($noPo)) {
+        // Jika jenis / nomor GRS / RDTV / PO belum terisi dari client, gunakan parser backend sebagai fallback
+        if (empty($jenis) || (empty($noGrs) && empty($noRdtv)) || empty($noPo)) {
             try {
                 $parser = app(GrsPdfParserService::class);
                 $parsed = $parser->parseVerifikasiGrs($uploadedFile->getRealPath(), $originalName);
+
+                if (empty($jenis) && ! empty($parsed['jenis'])) {
+                    $jenis = strtoupper((string) $parsed['jenis']);
+                }
+                if (empty($noRdtv) && ! empty($parsed['no_rdtv'])) {
+                    $noRdtv = (string) $parsed['no_rdtv'];
+                }
                 if (empty($noGrs) && ! empty($parsed['no_grs'])) {
-                    $noGrs = $parsed['no_grs'];
+                    $noGrs = (string) $parsed['no_grs'];
                 }
                 if (empty($noPo) && ! empty($parsed['no_po'])) {
-                    $noPo = $parsed['no_po'];
+                    $noPo = (string) $parsed['no_po'];
                 }
                 if (empty($noDo) && ! empty($parsed['no_do'])) {
-                    $noDo = $parsed['no_do'];
+                    $noDo = (string) $parsed['no_do'];
                 }
             } catch (\Throwable $e) {
                 report($e);
             }
         }
 
+        // Jika jenis RDTV namun user/client menaruh nomor di no_grs, pindahkan ke no_rdtv
+        if ($jenis === 'RDTV' && empty($noRdtv) && ! empty($noGrs)) {
+            $noRdtv = $noGrs;
+            $noGrs = '';
+        }
+
+        // Jika no_rdtv terisi tanpa jenis eksplisit, tandai sebagai RDTV
+        if (empty($jenis) && ! empty($noRdtv) && empty($noGrs)) {
+            $jenis = 'RDTV';
+        }
+
+        $applyJenisScope = static function (Builder $query) use ($jenis): Builder {
+            if ($jenis === 'RDTV') {
+                return $query->where('jenis', 'RDTV');
+            }
+
+            if ($jenis === 'GRS') {
+                return $query->where(function (Builder $q): void {
+                    $q->whereNull('jenis')
+                        ->orWhere('jenis', '!=', 'RDTV');
+                });
+            }
+
+            return $query;
+        };
+
         $receipt = null;
 
-        // 1. Pencocokan utama: Nomor GRS (105) (500xxxxxxx)
-        if (! empty($noGrs)) {
+        // 1a. Pencocokan utama untuk RDTV: Nomor RDTV (124) pada record berjenis RDTV
+        if ($jenis === 'RDTV' && ! empty($noRdtv)) {
+            $cleanRdtv = preg_replace('/\D/', '', $noRdtv);
+
+            $rdtvQuery = $applyJenisScope(InvoicingReceipt::query())->where(function (Builder $q) use ($noRdtv, $cleanRdtv): void {
+                $q->where('no_rdtv', $noRdtv)
+                    ->orWhere('no_rdtv', 'like', "%{$noRdtv}%")
+                    ->orWhere('no_grs', $noRdtv)
+                    ->orWhere('no_grs', 'like', "%{$noRdtv}%");
+
+                if (! empty($cleanRdtv)) {
+                    $q->orWhere('no_rdtv', 'like', "%{$cleanRdtv}%")
+                        ->orWhere('no_grs', 'like', "%{$cleanRdtv}%");
+                }
+            });
+
+            $receipt = (clone $rdtvQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
+                ?? (clone $rdtvQuery)->where('status', 'Menunggu Verifikasi')->first()
+                ?? $rdtvQuery->first();
+        }
+
+        // 1b. Pencocokan utama untuk GRS (atau tanpa jenis): Nomor GRS (105) (500xxxxxxx)
+        if (! $receipt && $jenis !== 'RDTV' && ! empty($noGrs)) {
             $cleanGrs = preg_replace('/\D/', '', $noGrs);
 
-            $grsQuery = InvoicingReceipt::where(function ($q) use ($noGrs, $cleanGrs) {
+            $grsQuery = $applyJenisScope(InvoicingReceipt::query())->where(function (Builder $q) use ($noGrs, $cleanGrs, $jenis): void {
                 $q->where('no_grs', $noGrs)
-                    ->orWhere('no_grs', 'like', "%{$noGrs}%")
-                    ->orWhere('no_rdtv', $noGrs)
-                    ->orWhere('no_rdtv', 'like', "%{$noGrs}%");
+                    ->orWhere('no_grs', 'like', "%{$noGrs}%");
 
-                if (! empty($cleanGrs)) {
-                    $q->orWhere('no_grs', 'like', "%{$cleanGrs}%")
-                        ->orWhere('no_rdtv', 'like', "%{$cleanGrs}%");
+                if ($jenis !== 'GRS') {
+                    $q->orWhere('no_rdtv', $noGrs)
+                        ->orWhere('no_rdtv', 'like', "%{$noGrs}%");
                 }
 
-                $q->orWhereHas('items', function ($itemQuery) use ($noGrs, $cleanGrs) {
+                if (! empty($cleanGrs)) {
+                    $q->orWhere('no_grs', 'like', "%{$cleanGrs}%");
+                    if ($jenis !== 'GRS') {
+                        $q->orWhere('no_rdtv', 'like', "%{$cleanGrs}%");
+                    }
+                }
+
+                $q->orWhereHas('items', function (Builder $itemQuery) use ($noGrs, $cleanGrs): void {
                     $itemQuery->where('no_grs', $noGrs)
                         ->orWhere('no_grs', 'like', "%{$noGrs}%");
                     if (! empty($cleanGrs)) {
@@ -76,15 +139,16 @@ class BatchVerifikasiGrsUploadController extends Controller
                 });
             });
 
-            $receipt = (clone $grsQuery)->where('status', 'Menunggu Verifikasi')->first()
+            $receipt = (clone $grsQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
+                ?? (clone $grsQuery)->where('status', 'Menunggu Verifikasi')->first()
                 ?? $grsQuery->first();
         }
 
-        // 2. Fallback pencocokan: Nomor PO + DO terlebih dahulu, lalu fallback PO saja bila format DO berbeda/kosong
+        // 2. Fallback pencocokan: Nomor PO + DO terlebih dahulu, lalu fallback PO saja (tetap dibatasi jenis GRS vs RDTV!)
         if (! $receipt && ! empty($noPo)) {
             $cleanPo = preg_replace('/\D/', '', $noPo);
 
-            $basePoQuery = InvoicingReceipt::where(function ($q) use ($noPo, $cleanPo) {
+            $basePoQuery = $applyJenisScope(InvoicingReceipt::query())->where(function (Builder $q) use ($noPo, $cleanPo): void {
                 $q->where('no_po', $noPo);
                 if (! empty($cleanPo)) {
                     $q->orWhere('no_po', $cleanPo)
@@ -100,7 +164,6 @@ class BatchVerifikasiGrsUploadController extends Controller
             }
 
             if (! $receipt) {
-                // Prioritaskan tagihan yang masih Menunggu Verifikasi dan belum memiliki berkas verifikasi
                 $receipt = (clone $basePoQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
                     ?? (clone $basePoQuery)->where('status', 'Menunggu Verifikasi')->first()
                     ?? $basePoQuery->first();
@@ -108,8 +171,9 @@ class BatchVerifikasiGrsUploadController extends Controller
         }
 
         if ($receipt) {
-            // Simpan file ke storage disk public
-            $storedPath = $uploadedFile->store('verifikasi-grs', 'public');
+            $resolvedJenis = $jenis ?: ($receipt->jenis === 'RDTV' ? 'RDTV' : 'GRS');
+            $storageDir = $resolvedJenis === 'RDTV' ? 'verifikasi-rdtv' : 'verifikasi-grs';
+            $storedPath = $uploadedFile->store($storageDir, 'public');
 
             if ($storedPath) {
                 $receipt->dokumen_verifikasi_grs = $storedPath;
@@ -119,9 +183,16 @@ class BatchVerifikasiGrsUploadController extends Controller
                 $receipt->status = 'Terverifikasi';
             }
 
-            if (empty($receipt->no_grs) && ! empty($noGrs)) {
-                $receipt->no_grs = $noGrs;
+            if ($resolvedJenis === 'RDTV') {
+                if (empty($receipt->no_rdtv) && ! empty($noRdtv)) {
+                    $receipt->no_rdtv = $noRdtv;
+                }
+            } else {
+                if (empty($receipt->no_grs) && ! empty($noGrs)) {
+                    $receipt->no_grs = $noGrs;
+                }
             }
+
             if (empty($receipt->no_do) && ! empty($noDo)) {
                 $receipt->no_do = $noDo;
             }
@@ -132,25 +203,36 @@ class BatchVerifikasiGrsUploadController extends Controller
                 'success' => true,
                 'matched' => true,
                 'receipt_id' => $receipt->id,
-                'no_grs' => $receipt->no_grs ?: $noGrs,
+                'jenis' => $resolvedJenis,
+                'no_grs' => $receipt->no_grs ?: ($noGrs ?: null),
+                'no_rdtv' => $receipt->no_rdtv ?: ($noRdtv ?: null),
                 'no_po' => $receipt->no_po,
                 'no_do' => $receipt->no_do,
                 'vendor_name' => $receipt->vendor_name ?: '-',
                 'status' => $receipt->status,
                 'stored_path' => $storedPath,
-                'message' => "Tagihan PO {$receipt->no_po} berhasil dicocokkan dan status diubah menjadi Terverifikasi.",
+                'message' => "Dokumen Verifikasi {$resolvedJenis} untuk PO {$receipt->no_po} berhasil dicocokkan dan status diubah menjadi Terverifikasi.",
             ]);
         }
 
         // Jika tagihan belum ditemukan
+        $hasAnyNumber = ! empty($noGrs) || ! empty($noRdtv) || ! empty($noPo);
+        if (! $hasAnyNumber) {
+            $notFoundMessage = 'Nomor GRS (105), RDTV (124), maupun PO tidak terdeteksi dari dokumen ini.';
+        } elseif ($jenis === 'RDTV') {
+            $notFoundMessage = 'Tidak ditemukan dokumen RDTV dengan No. RDTV: '.($noRdtv ?: '-').' / PO: '.($noPo ?: '-');
+        } else {
+            $notFoundMessage = 'Tidak ditemukan tagihan Invoice Barang (GRS) dengan No. GRS: '.($noGrs ?: '-').' / PO: '.($noPo ?: '-');
+        }
+
         return response()->json([
             'success' => false,
             'matched' => false,
+            'jenis' => $jenis ?: null,
             'no_grs' => $noGrs ?: null,
+            'no_rdtv' => $noRdtv ?: null,
             'no_po' => $noPo ?: null,
-            'message' => empty($noGrs) && empty($noPo)
-                ? 'Nomor GRS (105) maupun PO tidak terdeteksi dari dokumen ini.'
-                : 'Tidak ditemukan tagihan Invoice Barang dengan GRS: '.($noGrs ?: '-').' / PO: '.($noPo ?: '-'),
+            'message' => $notFoundMessage,
         ]);
     }
 }

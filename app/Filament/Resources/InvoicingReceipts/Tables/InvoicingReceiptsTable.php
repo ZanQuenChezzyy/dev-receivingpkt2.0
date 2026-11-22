@@ -320,7 +320,7 @@ class InvoicingReceiptsTable
                             : 'Klik untuk membuka berkas Goods Receipt Slip (GRS) dari modul GRS/RDTV.'),
 
                     TextColumn::make('dokumen_verifikasi_grs')
-                        ->label('Verifikasi GRS')
+                        ->label('Verifikasi GRS/RDTV')
                         ->state(function (InvoicingReceipt $record): ?string {
                             if (! $record->dokumen_verifikasi_grs) {
                                 return null;
@@ -333,8 +333,8 @@ class InvoicingReceiptsTable
                             return $record->dokumen_verifikasi_grs;
                         })
                         ->formatStateUsing(fn (): string => 'Lihat Verifikasi')
-                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Tidak Perlu (RDTV)' : 'Verifikasi Belum Diupload')
-                        ->color(fn ($state): string => $state ? 'success' : 'gray')
+                        ->placeholder(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV' ? 'Verifikasi RDTV Belum Diupload' : 'Verifikasi GRS Belum Diupload')
+                        ->color(fn ($state, InvoicingReceipt $record): string => $state ? ($record->jenis === 'RDTV' ? 'danger' : 'success') : 'gray')
                         ->weight(fn ($state): ?FontWeight => $state ? FontWeight::SemiBold : null)
                         ->icon(fn ($state): ?string => $state ? 'heroicon-m-check-badge' : null)
                         ->extraAttributes(fn ($state): array => $state ? ['class' => 'underline decoration-dotted underline-offset-4 hover:decoration-solid cursor-pointer'] : [])
@@ -346,7 +346,9 @@ class InvoicingReceiptsTable
                             return Storage::disk('public')->url($record->dokumen_verifikasi_grs);
                         })
                         ->openUrlInNewTab()
-                        ->tooltip('Surat Verifikasi Penerimaan Barang resmi yang telah disetujui / ditandatangani VP.'),
+                        ->tooltip(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV'
+                            ? 'Surat Verifikasi Penolakan Barang (RDTV 124) yang telah disetujui VP.'
+                            : 'Surat Verifikasi Penerimaan Barang (GRS 105) yang telah disetujui VP.'),
 
                     TextColumn::make('dokumen_invoice')
                         ->label('Berkas Inv.')
