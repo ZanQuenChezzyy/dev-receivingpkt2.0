@@ -7,6 +7,7 @@ use App\Models\CashierTransmittal;
 use App\Models\InvoicingReceipt;
 use App\Models\PurchaseOrderIssued;
 use App\Models\User;
+use App\Models\Vendor;
 use App\Services\GrsPdfParserService;
 use App\Services\InvoicingAssignmentService;
 use App\Services\UserBadgeRenderer;
@@ -399,10 +400,16 @@ class InvoicingReceiptsTable
 
                 TextColumn::make('email_vendor')
                     ->label('Email Vendor')
+                    ->state(fn (InvoicingReceipt $record): array => Vendor::parseEmails($record->email_vendor))
+                    ->badge()
+                    ->listWithLineBreaks()
+                    ->limitList(2)
+                    ->expandableLimitedList()
                     ->icon('heroicon-m-envelope')
                     ->iconColor('info')
                     ->placeholder('Email Belum Ada')
                     ->copyable()
+                    ->copyMessage('Email disalin')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
 

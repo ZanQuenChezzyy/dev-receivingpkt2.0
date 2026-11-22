@@ -82,8 +82,9 @@ class VendorForm
                         TagsInput::make('email')
                             ->label('Email')
                             ->placeholder('Ketik email lalu tekan Enter...')
+                            ->splitKeys(['Tab', ' ', ',', ';'])
                             ->nestedRecursiveRules(['email'])
-                            ->helperText('Vendor dapat memiliki lebih dari 1 email. Masukkan alamat email lalu tekan Enter.')
+                            ->helperText('Vendor dapat memiliki lebih dari 1 email. Masukkan alamat email lalu tekan Enter atau spasi.')
                             ->columnSpanFull(),
                     ]),
             ]);

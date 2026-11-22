@@ -30,46 +30,68 @@ class Vendor extends Model
     use HasFactory;
 
     /**
+     * Memecah dan membersihkan daftar email dari berbagai format (array, JSON, koma, titik koma, spasi, atau baris baru).
+     *
+     * @return array<int, string>
+     */
+    public static function parseEmails(mixed $value): array
+    {
+        if (blank($value)) {
+            return [];
+        }
+
+        $items = [];
+        if (is_array($value)) {
+            $items = $value;
+        } else {
+            $raw = trim((string) $value);
+            $decoded = json_decode($raw, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $items = $decoded;
+            } else {
+                $items = [$raw];
+            }
+        }
+
+        $emails = [];
+        $seen = [];
+
+        foreach ($items as $item) {
+            if (! is_scalar($item)) {
+                continue;
+            }
+
+            $parts = preg_split('/[\s,;]+/', trim((string) $item)) ?: [];
+            foreach ($parts as $part) {
+                $clean = trim($part, " \t\n\r\0\x0B<>,;");
+                if ($clean === '' || $clean === '-') {
+                    continue;
+                }
+
+                $lower = strtolower($clean);
+                if (! isset($seen[$lower])) {
+                    $seen[$lower] = true;
+                    $emails[] = $clean;
+                }
+            }
+        }
+
+        return $emails;
+    }
+
+    /**
      * Interact with the vendor's email attribute.
      * Mengembalikan array email untuk multi-email support,
-     * serta mendukung format JSON maupun string (koma / titik koma).
+     * serta mendukung format JSON maupun string (koma / titik koma / spasi).
      *
-     * @return Attribute<array<string>, array<string>|string|null>
+     * @return Attribute<array<int, string>, array<int, string>|string|null>
      */
     protected function email(): Attribute
     {
         return Attribute::make(
-            get: function ($value): array {
-                if (blank($value)) {
-                    return [];
-                }
-
-                if (is_array($value)) {
-                    return array_values(array_filter(array_map('trim', $value)));
-                }
-
-                $decoded = json_decode((string) $value, true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                    return array_values(array_filter(array_map('trim', $decoded)));
-                }
-
-                $parts = preg_split('/[,;]+/', (string) $value);
-
-                return array_values(array_filter(array_map('trim', (array) $parts)));
-            },
-            set: function ($value): ?string {
-                if (blank($value)) {
-                    return null;
-                }
-
-                if (is_array($value)) {
-                    $cleaned = array_values(array_filter(array_map('trim', $value)));
-
-                    return ! empty($cleaned) ? json_encode($cleaned) : null;
-                }
-
-                $parts = preg_split('/[,;]+/', (string) $value);
-                $cleaned = array_values(array_filter(array_map('trim', (array) $parts)));
+            get: fn (mixed $value): array => self::parseEmails($value),
+            set: function (mixed $value): ?string {
+                $cleaned = self::parseEmails($value);
 
                 return ! empty($cleaned) ? json_encode($cleaned) : null;
             }

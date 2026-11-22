@@ -6,6 +6,7 @@ use App\Filament\Resources\InvoicingReceipts\Schemas\InvoicingReceiptForm;
 use App\Filament\Resources\InvoicingReceipts\Tables\InvoicingReceiptsTable;
 use App\Filament\Resources\InvoicingReceipts\Widgets\InvoicingOverviewWidget;
 use App\Filament\Resources\PicMaterialAssignments\Schemas\PicMaterialAssignmentForm;
+use App\Filament\Resources\Vendors\Pages\ListVendors;
 use App\Http\Controllers\Admin\CashierTransmittalPrintController;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\GrsRdtvItem;
@@ -59,6 +60,14 @@ test('vendor model has all 13 required columns and handles multiple emails', fun
     // Comma-separated string
     $vendor->email = 'finance@pkt.com, tax@pkt.com';
     expect($vendor->email)->toBe(['finance@pkt.com', 'tax@pkt.com']);
+
+    // Space-separated string (misal data impor/lama)
+    $vendor->email = 'cv.rafikapasifikutama@gmail.com imel.riadin@gmail.com';
+    expect($vendor->email)->toBe(['cv.rafikapasifikutama@gmail.com', 'imel.riadin@gmail.com']);
+
+    // JSON array yang elemen tunggalnya berisi beberapa email dipisah spasi
+    $vendor->setRawAttributes(['email' => json_encode(['cv.rafikapasifikutama@gmail.com imel.riadin@gmail.com'])]);
+    expect($vendor->email)->toBe(['cv.rafikapasifikutama@gmail.com', 'imel.riadin@gmail.com']);
 
     // Single email string
     $vendor->email = 'sales@pkt.com';
@@ -2147,4 +2156,30 @@ test('cashier transmittal print controller renders PDF with required columns, de
             Illuminate\Support\Facades\Schema::dropIfExists('invoicing_receipts');
         }
     }
+});
+
+test('vendors table displays each email on its own row, limits to 2 expandable rows, and copies only 1 clicked email', function () {
+    $livewire = app(ListVendors::class);
+    $livewire->bootedInteractsWithTable();
+    $table = $livewire->getTable();
+    $emailCol = $table->getColumn('email');
+
+    $vendor = new Vendor;
+    $vendor->setRawAttributes([
+        'id' => 999,
+        'name' => 'CV RAFIKA PASIFIK UTAMA',
+        'email' => json_encode(['cv.rafikapasifikutama@gmail.com imel.riadin@gmail.com', 'finance@rafika.co.id']),
+    ]);
+
+    $emailCol->record($vendor);
+    $html = $emailCol->toEmbeddedHtml();
+
+    expect($emailCol->isListWithLineBreaks())->toBeTrue()
+        ->and($emailCol->getListLimit())->toBe(2)
+        ->and($emailCol->isLimitedListExpandable())->toBeTrue()
+        ->and($html)->toContain("clipboard.writeText('cv.rafikapasifikutama@gmail.com')")
+        ->and($html)->toContain("clipboard.writeText('imel.riadin@gmail.com')")
+        ->and($html)->toContain("clipboard.writeText('finance@rafika.co.id')")
+        ->and($html)->not->toContain('cv.rafikapasifikutama@gmail.com imel.riadin@gmail.com')
+        ->and($html)->toContain('isLimited: true');
 });
