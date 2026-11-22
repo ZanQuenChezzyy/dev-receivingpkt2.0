@@ -722,17 +722,24 @@
 
                                 <!-- Status Badge -->
                                 <span
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
                                     :class="{
                                         'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400': item.status === 'queued',
-                                        'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 animate-pulse': item.status === 'scanning',
+                                        'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300': item.status === 'scanning',
                                         'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300': item.status === 'scanned',
-                                        'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 animate-pulse': item.status === 'uploading',
+                                        'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300': item.status === 'uploading',
                                         'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300': item.status === 'verified',
                                         'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300': item.status === 'unmatched',
                                         'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300': item.status === 'error',
                                     }"
                                 >
+                                    <span
+                                        x-show="item.status === 'scanning' || item.status === 'uploading'"
+                                        class="uiverse-loader-dots scale-75"
+                                        aria-hidden="true"
+                                    >
+                                        <span></span><span></span><span></span>
+                                    </span>
                                     <span x-text="getStatusLabel(item)"></span>
                                 </span>
 
@@ -788,11 +795,10 @@
                         class="w-full sm:w-auto px-5 py-2.5 text-xs font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition flex items-center justify-center gap-2"
                         :disabled="isProcessing"
                     >
-                        <svg x-show="isProcessing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span x-text="isProcessing ? 'Memproses...' : 'Mulai Upload'"></span>
+                        <span x-show="isProcessing" class="uiverse-loader-dots" aria-hidden="true">
+                            <span></span><span></span><span></span>
+                        </span>
+                        <span x-text="isProcessing ? 'Memproses' : 'Mulai Upload'"></span>
                     </button>
 
                     <button
