@@ -80,47 +80,47 @@
                     </div>
                 @endauth
 
-                <!-- Apple Style Actions -->
+                <!-- Uiverse-Enhanced Primary & Secondary Actions -->
                 <div class="flex flex-col sm:flex-row items-center gap-3.5 w-full sm:w-auto">
                     <a href="{{ auth()->check() ? filament()->getUrl() : filament()->getLoginUrl() }}"
-                        class="apple-btn-primary w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 text-sm sm:text-base font-semibold rounded-full shadow-md">
+                        class="uiverse-cta-btn w-full sm:w-auto px-8 py-3.5 text-sm sm:text-base rounded-full">
                         <span>{{ __('Masuk Dashboard') }}</span>
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        <svg class="uiverse-arrow w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </a>
                     <a href="{{ route('frontend.list-material') }}" wire:navigate 
-                       class="glass-btn w-full sm:w-auto flex items-center justify-center px-7 py-3.5 text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100 rounded-full">
+                       class="uiverse-outline-btn w-full sm:w-auto px-7 py-3.5 text-sm sm:text-base text-slate-800 dark:text-slate-100 rounded-full">
                         <span>{{ __('Daftar PD & Non-Stock') }}</span>
                     </a>
                 </div>
 
-                <!-- Material Types Tiles (Apple App-Icon Look) -->
+                <!-- Material Types Tiles (Uiverse Interactive Spotlight Cards) -->
                 <div class="mt-8 sm:mt-10 w-full max-w-lg">
                     <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
                         {{ __('Tipe Material SAP (MTART)') }}
                     </p>
                     <div class="grid grid-cols-5 gap-2 sm:gap-2.5">
                         <!-- ZSP -->
-                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
+                        <div class="glass-panel uiverse-card p-2.5 sm:p-3 text-center rounded-2xl overflow-hidden">
                             <span class="text-xs sm:text-sm font-extrabold text-[#F47920] block tracking-tight">ZSP</span>
                             <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">{{ __('Sparepart') }}</span>
                         </div>
                         <!-- ZRM -->
-                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
+                        <div class="glass-panel uiverse-card p-2.5 sm:p-3 text-center rounded-2xl overflow-hidden">
                             <span class="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400 block tracking-tight">ZRM</span>
                             <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">{{ __('Raw Mat.') }}</span>
                         </div>
                         <!-- ZPM -->
-                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
+                        <div class="glass-panel uiverse-card p-2.5 sm:p-3 text-center rounded-2xl overflow-hidden">
                             <span class="text-xs sm:text-sm font-extrabold text-purple-600 dark:text-purple-400 block tracking-tight">ZPM</span>
                             <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">{{ __('Packaging') }}</span>
                         </div>
                         <!-- ZSM -->
-                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
+                        <div class="glass-panel uiverse-card p-2.5 sm:p-3 text-center rounded-2xl overflow-hidden">
                             <span class="text-xs sm:text-sm font-extrabold text-[#0A4F86] dark:text-sky-400 block tracking-tight">ZSM</span>
                             <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">{{ __('Support') }}</span>
                         </div>
                         <!-- ZFP -->
-                        <div class="glass-panel p-2.5 sm:p-3 text-center rounded-2xl hover:-translate-y-0.5 transition-all duration-200">
+                        <div class="glass-panel uiverse-card p-2.5 sm:p-3 text-center rounded-2xl overflow-hidden">
                             <span class="text-xs sm:text-sm font-extrabold text-amber-600 dark:text-amber-400 block tracking-tight">ZFP</span>
                             <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium block truncate">{{ __('Finish Prod.') }}</span>
                         </div>

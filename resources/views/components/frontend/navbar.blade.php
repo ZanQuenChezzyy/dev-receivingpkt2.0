@@ -202,47 +202,24 @@
                     </a>
                 </div>
 
-                <!-- Theme Toggler: Apple Style Pill with Framer Motion Spring Physics -->
-                <button x-data="{ pressing: false }"
-                        @mousedown="pressing = true"
-                        @mouseup="pressing = false"
-                        @mouseleave="pressing = false"
-                        @touchstart.passive="pressing = true"
-                        @touchend.passive="pressing = false"
-                        @touchcancel.passive="pressing = false"
-                        @click="isDark = !isDark" 
+                <!-- Theme Toggler: Uiverse Celestial Day/Night Switch -->
+                <button @click="isDark = !isDark"
                         type="button"
+                        role="switch"
+                        :aria-checked="isDark.toString()"
                         :title="isDark ? '{{ __('Mode Terang') }}' : '{{ __('Mode Gelap') }}'"
                         :aria-label="isDark ? '{{ __('Mode Terang') }}' : '{{ __('Mode Gelap') }}'"
-                        :class="pressing ? 'scale-[0.88]' : 'scale-100'"
-                        class="spring-theme-btn relative p-2 sm:p-2.5 rounded-full shrink-0 bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.14] border border-black/[0.04] dark:border-white/10 text-slate-700 dark:text-yellow-400 flex items-center justify-center select-none overflow-hidden focus:outline-none dark:shadow-[0_0_12px_rgba(250,204,21,0.2)] isolate [transform:translateZ(0)]">
-                    <!-- Subtle Dark Mode Radial Glow Ring (Pure circular radial gradient, no square blur artifacts) -->
-                    <span class="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(250,204,21,0.35)_0%,rgba(250,204,21,0.1)_45%,transparent_70%)] pointer-events-none transition-opacity duration-300"
-                          :class="isDark ? 'opacity-100' : 'opacity-0'"></span>
-
-                    <!-- Overlapping Spring Morphing Icons -->
-                    <span class="relative w-4 h-4 sm:w-4.5 sm:h-4.5 flex items-center justify-center pointer-events-none">
-                        <!-- Moon Icon (Light Mode -> suggests click for Dark) -->
-                        <svg class="spring-theme-icon w-4 h-4 sm:w-4.5 sm:h-4.5 absolute text-slate-700 dark:text-slate-300"
-                             :class="!isDark ? 'rotate-0 scale-100 opacity-100' : 'rotate-90 scale-0 opacity-0'"
-                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
-
-                        <!-- Sun Icon (Dark Mode -> suggests click for Light) -->
-                        <svg class="spring-theme-icon w-4 h-4 sm:w-4.5 sm:h-4.5 absolute text-yellow-500 dark:text-yellow-400"
-                             :class="isDark ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-0 opacity-0'"
-                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                    </span>
+                        class="uiverse-theme-switch shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F47920]/60">
+                    <span class="uiverse-theme-stars" aria-hidden="true"></span>
+                    <span class="uiverse-theme-cloud" aria-hidden="true"></span>
+                    <span class="uiverse-theme-knob" aria-hidden="true"></span>
                 </button>
 
-                <!-- Login / Dashboard: Apple Pill Button -->
+                <!-- Login / Dashboard: Uiverse Shimmering CTA Pill -->
                 <a href="{{ auth()->check() ? filament()->getUrl() : filament()->getLoginUrl() }}"
-                    class="apple-btn-primary px-3.5 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm font-semibold rounded-full flex items-center gap-1.5 shadow-sm shrink-0">
+                    class="uiverse-cta-btn px-3.5 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm rounded-full shrink-0">
                     <span>{{ auth()->check() ? __('Dashboard') : __('Login') }}</span>
-                    <svg class="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <svg class="uiverse-arrow w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                     </svg>
                 </a>

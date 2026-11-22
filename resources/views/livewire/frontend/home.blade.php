@@ -27,7 +27,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
                 <!-- Pilar 1: Penerimaan Barang -->
                 <a href="#alur-proses" onclick="window.dispatchEvent(new CustomEvent('select-pillar', { detail: 'barang' }))"
-                    class="glass-panel p-6 rounded-3xl border border-emerald-500/30 dark:border-emerald-500/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                    class="glass-panel uiverse-card p-6 rounded-3xl border border-emerald-500/30 dark:border-emerald-500/20 group relative overflow-hidden">
                     <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-emerald-500/15 blur-2xl group-hover:scale-125 transition-transform"></div>
                     <div class="flex items-center justify-between mb-3">
                         <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
@@ -43,7 +43,7 @@
 
                 <!-- Pilar 2: Invoicing Barang -->
                 <a href="#alur-proses" onclick="window.dispatchEvent(new CustomEvent('select-pillar', { detail: 'invoicing_barang' }))"
-                    class="glass-panel p-6 rounded-3xl border border-blue-500/30 dark:border-blue-500/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                    class="glass-panel uiverse-card p-6 rounded-3xl border border-blue-500/30 dark:border-blue-500/20 group relative overflow-hidden">
                     <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-[#0A4F86]/20 blur-2xl group-hover:scale-125 transition-transform"></div>
                     <div class="flex items-center justify-between mb-3">
                         <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-blue-500/15 text-[#0A4F86] dark:text-blue-300 border border-blue-500/25">
@@ -59,7 +59,7 @@
 
                 <!-- Pilar 3: Penerimaan & Invoicing Jasa -->
                 <a href="#alur-proses" onclick="window.dispatchEvent(new CustomEvent('select-pillar', { detail: 'jasa' }))"
-                    class="glass-panel p-6 rounded-3xl border border-teal-500/30 dark:border-teal-500/20 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                    class="glass-panel uiverse-card p-6 rounded-3xl border border-teal-500/30 dark:border-teal-500/20 group relative overflow-hidden">
                     <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-teal-500/15 blur-2xl group-hover:scale-125 transition-transform"></div>
                     <div class="flex items-center justify-between mb-3">
                         <span class="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/25">
@@ -137,12 +137,12 @@
                                 <span>{{ __('Khusus Rekanan / Vendor PKT — gunakan Nomor PO & Email Resmi Vendor') }}</span>
                             </div>
                             <a href="{{ route('frontend.vendor.tracking') }}" wire:navigate
-                                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-[#F47920] to-[#BE5A27] shadow-md hover:shadow-xl hover:scale-105 active:scale-95 transition-all shrink-0">
+                                class="uiverse-cta-btn px-5 py-3 rounded-xl text-xs sm:text-sm shrink-0">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
                                 <span>{{ __('Portal Lacak PO Vendor') }}</span>
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <svg class="uiverse-arrow w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                                 </svg>
                             </a>

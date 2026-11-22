@@ -62,17 +62,21 @@
             </div>
 
             <div class="flex items-center gap-2.5 w-full md:w-auto">
-                <!-- Apple-Style Search Field -->
-                <div class="relative flex-1 md:w-80 group">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
-                        <svg class="h-4 w-4 text-slate-400 group-focus-within:text-[#F47920] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                <!-- Uiverse Animated Focus Search Field -->
+                <div class="uiverse-search-shell flex-1 md:w-80 group">
+                    <div class="uiverse-search-inner relative flex items-center">
+                        <div class="pl-3.5 pr-1 flex items-center pointer-events-none shrink-0">
+                            <svg class="h-4 w-4 text-slate-400 group-focus-within:text-[#F47920] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input wire:model.live.debounce.300ms="search" type="text" 
+                               class="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none pl-2 pr-3 py-2.5 text-base sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500" 
+                               placeholder="{{ __('Cari PO, Deskripsi, Requisitioner...') }}">
+                        <div wire:loading wire:target="search, setTab" class="pr-3.5 flex items-center shrink-0">
+                            <span class="uiverse-loader-dots text-[#F47920]" aria-hidden="true"><span></span><span></span><span></span></span>
+                        </div>
                     </div>
-                    <input wire:model.live.debounce.300ms="search" type="text" 
-                           class="glass-input !pl-11 pr-4 py-2.5 text-base sm:text-sm font-medium w-full" 
-                           style="padding-left: 2.75rem !important;"
-                           placeholder="{{ __('Cari PO, Deskripsi, Requisitioner...') }}">
                 </div>
 
                 <!-- Apple Layout Segmented Buttons (Grid / Table) with Spring Feedback -->
@@ -111,7 +115,7 @@
         <!-- Data Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
             @forelse($this->items as $item)
-                <div class="glass-panel p-6 hover:-translate-y-1 group flex flex-col justify-between h-full relative overflow-hidden">
+                <div class="glass-panel uiverse-card p-6 group flex flex-col justify-between h-full relative overflow-hidden">
 
                     
                     <div>
@@ -178,11 +182,11 @@
                         </div>
                     </div>
 
-                    <!-- Action Button: Apple Primary Pill -->
+                    <!-- Action Button: Uiverse Shimmering CTA -->
                     <a href="{{ route('frontend.mir.create', ['po' => $item->purchaseOrderIssued?->purchase_order_no]) }}" wire:navigate 
-                       class="apple-btn-primary w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold shadow-xs">
+                       class="uiverse-cta-btn w-full py-3 px-4 rounded-xl text-xs sm:text-sm">
                         <span>{{ __('Buat Pengambilan (MIR)') }}</span>
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        <svg class="uiverse-arrow w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
             @empty

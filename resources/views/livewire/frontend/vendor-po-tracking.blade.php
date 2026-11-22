@@ -42,58 +42,57 @@
 
                     <!-- Input & Button Row -->
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <!-- Apple-Style High-Contrast Input Container -->
-                        <div class="relative flex-grow flex items-center rounded-2xl bg-slate-100/80 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 focus-within:border-[#F47920] dark:focus-within:border-[#F47920] focus-within:ring-4 focus-within:ring-[#F47920]/15 transition-all duration-200 shadow-xs">
-                            <!-- Left Search Icon -->
-                            <div class="pl-4 pr-2 text-[#F47920] flex items-center pointer-events-none shrink-0">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </div> 
-
-                            <!-- Real Input Element -->
-                            <input id="poNumberInput"
-                                wire:model="poNumber"
-                                type="text"
-                                placeholder="{{ __('Ketik nomor PO (misal: 53000xxxxx)') }}"
-                                class="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3 py-3.5 sm:py-4 text-base sm:text-lg font-bold font-mono tracking-wider text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-sm sm:placeholder:text-base"
-                                autocomplete="off"
-                                maxlength="15"
-                                autofocus>
-
-                            <!-- Clear Button (when poNumber is filled) -->
-                            @if (!empty($poNumber))
-                                <button type="button" wire:click="$set('poNumber', '')"
-                                    class="p-2 mr-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
-                                    title="{{ __('Hapus input') }}">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        <!-- Uiverse Animated Focus Search Shell -->
+                        <div class="uiverse-search-shell flex-grow">
+                            <div class="uiverse-search-inner relative flex items-center">
+                                <!-- Left Search Icon -->
+                                <div class="pl-4 pr-2 text-[#F47920] flex items-center pointer-events-none shrink-0">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
-                                </button>
-                            @endif
+                                </div> 
 
-                            <!-- Keyboard Hint Badge -->
-                            <div class="hidden md:flex items-center pr-3.5 select-none pointer-events-none shrink-0">
-                                <kbd class="px-2 py-1 text-[10px] font-bold font-mono text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-xs">
-                                    ↵ Enter
-                                </kbd>
+                                <!-- Real Input Element -->
+                                <input id="poNumberInput"
+                                    wire:model="poNumber"
+                                    type="text"
+                                    placeholder="{{ __('Ketik nomor PO (misal: 53000xxxxx)') }}"
+                                    class="w-full bg-transparent border-0 ring-0 focus:ring-0 focus:outline-none px-3 py-3.5 sm:py-4 text-base sm:text-lg font-bold font-mono tracking-wider text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-sm sm:placeholder:text-base"
+                                    autocomplete="off"
+                                    maxlength="15"
+                                    autofocus>
+
+                                <!-- Clear Button (when poNumber is filled) -->
+                                @if (!empty($poNumber))
+                                    <button type="button" wire:click="$set('poNumber', '')"
+                                        class="p-2 mr-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+                                        title="{{ __('Hapus input') }}">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                @endif
+
+                                <!-- Keyboard Hint Badge -->
+                                <div class="hidden md:flex items-center pr-3.5 select-none pointer-events-none shrink-0">
+                                    <kbd class="px-2 py-1 text-[10px] font-bold font-mono text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-xs">
+                                        ↵ Enter
+                                    </kbd>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Submit Button: Apple Primary Pill -->
+                        <!-- Submit Button: Uiverse Shimmering CTA -->
                         <button type="submit" wire:loading.attr="disabled"
-                            class="apple-btn-primary px-7 py-3.5 sm:py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 shrink-0 cursor-pointer">
+                            class="uiverse-cta-btn px-7 py-3.5 sm:py-4 rounded-2xl text-sm shrink-0 cursor-pointer disabled:opacity-75">
                             <span wire:loading.remove wire:target="initiateSearch, selectSamplePo" class="flex items-center gap-2">
                                 <span>{{ __('Lacak Dokumen') }}</span>
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <svg class="uiverse-arrow w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                 </svg>
                             </span>
-                            <span wire:loading wire:target="initiateSearch, selectSamplePo" class="flex items-center gap-2">
-                                <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                                </svg>
+                            <span wire:loading wire:target="initiateSearch, selectSamplePo" class="flex items-center gap-2.5">
+                                <span class="uiverse-loader-dots text-white" aria-hidden="true"><span></span><span></span><span></span></span>
                                 <span>{{ __('Mengecek PO...') }}</span>
                             </span>
                         </button>

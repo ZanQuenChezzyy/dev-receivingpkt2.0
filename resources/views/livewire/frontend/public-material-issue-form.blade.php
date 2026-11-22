@@ -54,7 +54,7 @@
             <!-- Header Action Button: Buka Panduan Pengisian -->
             <div class="mt-5 flex justify-center">
                 <button type="button" @click.prevent="startTour()"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-white/10 hover:bg-white dark:hover:bg-white/15 text-slate-800 dark:text-white text-xs font-semibold shadow-xs border border-black/[0.08] dark:border-white/[0.15] active:scale-95 transition-all cursor-pointer">
+                    class="uiverse-outline-btn px-4.5 py-2 rounded-full text-slate-800 dark:text-white text-xs cursor-pointer">
                     <span class="text-amber-500">💡</span>
                     <span>{{ __('Panduan Pengisian') }}</span>
                 </button>
