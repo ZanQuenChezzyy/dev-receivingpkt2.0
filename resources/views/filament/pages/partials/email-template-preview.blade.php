@@ -26,6 +26,7 @@
     <div x-show="tab === 'GRS'" class="space-y-3">
         <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs dark:border-white/10 dark:bg-white/5">
             <div><span class="font-semibold text-slate-500 dark:text-slate-400">Subjek:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ $grsPreview['subject'] }}</span></div>
+            <div class="mt-1"><span class="font-semibold text-slate-500 dark:text-slate-400">CC:</span> <span class="font-mono text-slate-700 dark:text-slate-200">{{ filled($ccEmails ?? null) ? $ccEmails : '(Tanpa CC)' }}</span></div>
             <div class="mt-2 flex flex-wrap items-center gap-2">
                 <span class="font-semibold text-slate-500 dark:text-slate-400">Lampiran (2 PDF):</span>
                 <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 font-mono text-[11px] font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">GRS_5007712345.pdf</span>
@@ -45,6 +46,7 @@
     <div x-show="tab === 'RDTV'" x-cloak class="space-y-3">
         <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs dark:border-white/10 dark:bg-white/5">
             <div><span class="font-semibold text-slate-500 dark:text-slate-400">Subjek:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ $rdtvPreview['subject'] }}</span></div>
+            <div class="mt-1"><span class="font-semibold text-slate-500 dark:text-slate-400">CC:</span> <span class="font-mono text-slate-700 dark:text-slate-200">{{ filled($ccEmails ?? null) ? $ccEmails : '(Tanpa CC)' }}</span></div>
             <div class="mt-2 flex flex-wrap items-center gap-2">
                 <span class="font-semibold text-slate-500 dark:text-slate-400">Lampiran (2 PDF):</span>
                 <span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 font-mono text-[11px] font-medium text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">RDTV_5007798765.pdf</span>

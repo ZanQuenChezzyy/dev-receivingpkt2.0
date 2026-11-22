@@ -486,3 +486,69 @@ it('dapat mengaktifkan dan menonaktifkan Mode Uji Coba langsung dari pengaturan 
         ->and($resOff['log']->recipients)->toBe(['asli@vendor.test'])
         ->and($resOff['log']->original_recipients)->toBeNull();
 });
+
+it('menyertakan CC default receiving.barang@pupukkaltim.com pada mode normal, dapat diedit dari pengaturan, dan ditahan saat Mode Uji Coba', function (): void {
+    fakeZimbraSuccess();
+
+    Storage::disk('public')->put('grs-files/grs-5007766666.pdf', '%PDF-1.4 GRS');
+    Storage::disk('public')->put('verifikasi-grs/verif-5007766666.pdf', '%PDF-1.4 VERIF');
+
+    $grsHeader = GrsRdtv::create(['category' => 'GRS']);
+    $grsItem = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grsHeader->id,
+        'document_code' => '5007766666',
+        'file_path' => 'grs-files/grs-5007766666.pdf',
+    ]);
+
+    $receipt = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $grsItem->id,
+        'jenis' => 'GRS',
+        'no_grs' => '5007766666',
+        'no_po' => '5300077788',
+        'vendor_name' => 'PT Uji CC',
+        'email_vendor' => 'vendor@ujicc.test',
+        'dokumen_verifikasi_grs' => 'verifikasi-grs/verif-5007766666.pdf',
+        'status' => 'Terverifikasi',
+    ]);
+
+    $renderer = app(EmailTemplateRenderer::class);
+    $dispatcher = app(InvoicingGrsEmailDispatcher::class);
+
+    // 1. Default CC saat Mode Normal -> receiving.barang@pupukkaltim.com
+    $resDefault = $dispatcher->dispatchIfEligible($receipt, 'row_upload');
+    expect($resDefault['status'])->toBe('sent')
+        ->and($resDefault['log']->cc_recipients)->toBe(['receiving.barang@pupukkaltim.com']);
+
+    Http::assertSent(function (HttpClientRequest $request): bool {
+        if (! str_ends_with($request->url(), '/service/soap')) {
+            return false;
+        }
+        $recipients = $request->data()['Body']['SendMsgRequest']['m']['e'] ?? [];
+
+        return collect($recipients)->contains(
+            fn (array $r): bool => ($r['t'] ?? null) === 'c' && ($r['a'] ?? null) === 'receiving.barang@pupukkaltim.com'
+        );
+    });
+
+    // 2. Edit CC via pengaturan + aktifkan Mode Uji Coba -> CC asli ditahan agar tidak spam tim
+    $renderer->saveSettingsFormData([
+        'auto_send_enabled' => true,
+        'test_mode_enabled' => true,
+        'test_mode_email' => 'tes@gmail.test',
+        'cc_emails' => 'receiving.barang@pupukkaltim.com, arsip@pupukkaltim.com',
+        'grs_subject' => 'GRS {no_grs}',
+        'grs_body' => '<p>Halo</p>',
+        'rdtv_subject' => 'RDTV {no_rdtv}',
+        'rdtv_body' => '<p>Halo</p>',
+    ]);
+
+    expect($renderer->resolveCcEmails())->toBe([
+        'receiving.barang@pupukkaltim.com',
+        'arsip@pupukkaltim.com',
+    ]);
+
+    $resTest = $dispatcher->dispatchIfEligible($receipt, 'row_upload');
+    expect($resTest['status'])->toBe('sent')
+        ->and($resTest['log']->recipients)->toBe(['tes@gmail.test'])
+        ->and($resTest['log']->cc_recipients)->toBeNull();
+});

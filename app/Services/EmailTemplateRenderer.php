@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\InvoicingReceipt;
 use App\Models\Setting;
+use App\Models\Vendor;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Support\Carbon;
 
@@ -14,6 +15,10 @@ class EmailTemplateRenderer
     public const KEY_TEST_MODE_ENABLED = 'grs_email_test_mode_enabled';
 
     public const KEY_TEST_MODE_EMAIL = 'grs_email_test_mode_email';
+
+    public const KEY_CC_EMAILS = 'grs_email_cc_emails';
+
+    public const DEFAULT_CC_EMAILS = 'receiving.barang@pupukkaltim.com';
 
     public const KEY_GRS_SUBJECT = 'grs_email_grs_subject';
 
@@ -150,12 +155,40 @@ HTML;
     }
 
     /**
+     * Mengembalikan string mentah alamat CC (default receiving.barang@pupukkaltim.com jika belum pernah disimpan).
+     */
+    public function getCcEmailsRaw(): string
+    {
+        $stored = $this->getRawSetting(self::KEY_CC_EMAILS);
+
+        if ($stored !== null) {
+            return trim($stored);
+        }
+
+        return self::DEFAULT_CC_EMAILS;
+    }
+
+    /**
+     * Mengembalikan daftar alamat CC valid hasil parsing dari pengaturan.
+     *
+     * @return array<int, string>
+     */
+    public function resolveCcEmails(): array
+    {
+        return array_values(array_filter(
+            Vendor::parseEmails($this->getCcEmailsRaw()),
+            static fn (string $email): bool => (bool) filter_var($email, FILTER_VALIDATE_EMAIL),
+        ));
+    }
+
+    /**
      * Mengambil seluruh konfigurasi template saat ini untuk diisi ke form Filament.
      *
      * @return array{
      *     auto_send_enabled: bool,
      *     test_mode_enabled: bool,
      *     test_mode_email: string,
+     *     cc_emails: string,
      *     grs_subject: string,
      *     grs_body: string,
      *     rdtv_subject: string,
@@ -168,6 +201,7 @@ HTML;
             'auto_send_enabled' => $this->isAutoSendEnabled(),
             'test_mode_enabled' => $this->isTestModeEnabled(),
             'test_mode_email' => $this->getTestModeEmail(),
+            'cc_emails' => $this->getCcEmailsRaw(),
             'grs_subject' => $this->getSetting(self::KEY_GRS_SUBJECT, self::defaultGrsSubject()),
             'grs_body' => $this->getSetting(self::KEY_GRS_BODY, self::defaultGrsBody()),
             'rdtv_subject' => $this->getSetting(self::KEY_RDTV_SUBJECT, self::defaultRdtvSubject()),
@@ -210,6 +244,9 @@ HTML;
             self::KEY_TEST_MODE_EMAIL => array_key_exists('test_mode_email', $data)
                 ? trim((string) ($data['test_mode_email'] ?? ''))
                 : $this->getTestModeEmail(),
+            self::KEY_CC_EMAILS => array_key_exists('cc_emails', $data)
+                ? trim((string) ($data['cc_emails'] ?? ''))
+                : $this->getCcEmailsRaw(),
             self::KEY_GRS_SUBJECT => trim((string) ($data['grs_subject'] ?? '')) ?: self::defaultGrsSubject(),
             self::KEY_GRS_BODY => $this->normalizeRichContentToHtml($data['grs_body'] ?? null, self::defaultGrsBody()),
             self::KEY_RDTV_SUBJECT => trim((string) ($data['rdtv_subject'] ?? '')) ?: self::defaultRdtvSubject(),

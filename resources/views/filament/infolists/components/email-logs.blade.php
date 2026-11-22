@@ -26,6 +26,7 @@
                 };
 
                 $recipients = is_array($log->recipients) ? $log->recipients : [];
+                $ccRecipients = is_array($log->cc_recipients) ? $log->cc_recipients : [];
                 $originalRecipients = is_array($log->original_recipients) ? $log->original_recipients : [];
                 $attachments = is_array($log->attachments) ? $log->attachments : [];
             @endphp
@@ -54,6 +55,11 @@
                         <span class="text-slate-800 dark:text-slate-200">
                             {{ $recipients !== [] ? implode(', ', $recipients) : '-' }}
                         </span>
+                        @if ($ccRecipients !== [])
+                            <div class="mt-0.5 text-[11px] text-slate-600 dark:text-slate-300">
+                                <span class="font-semibold text-slate-500 dark:text-slate-400">CC:</span> {{ implode(', ', $ccRecipients) }}
+                            </div>
+                        @endif
                         @if ($originalRecipients !== [])
                             <div class="mt-0.5 text-[11px] text-amber-700 dark:text-amber-300">
                                 (Mode Uji Coba — vendor asli: {{ implode(', ', $originalRecipients) }})

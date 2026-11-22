@@ -102,6 +102,12 @@ class EmailGrsSettings extends Page implements HasForms
                             ->required(fn (Get $get): bool => (bool) $get('test_mode_enabled'))
                             ->maxLength(255)
                             ->helperText('Pisahkan dengan koma bila ingin mengirim salinan uji coba ke lebih dari satu alamat email.'),
+
+                        TextInput::make('cc_emails')
+                            ->label('Alamat Email CC (Opsional)')
+                            ->placeholder('contoh: receiving.barang@pupukkaltim.com')
+                            ->maxLength(500)
+                            ->helperText('Bawaan: receiving.barang@pupukkaltim.com. Pisahkan dengan koma atau spasi jika lebih dari satu. Kosongkan jika tidak ingin menyertakan CC. Selama Mode Uji Coba aktif, CC asli ditahan agar tidak mengganggu inbox tim.'),
                     ]),
 
                 Tabs::make('TemplateEmailTabs')
@@ -180,6 +186,7 @@ class EmailGrsSettings extends Page implements HasForms
                     return view('filament.pages.partials.email-template-preview', [
                         'grsPreview' => $grsPreview,
                         'rdtvPreview' => $rdtvPreview,
+                        'ccEmails' => trim((string) ($state['cc_emails'] ?? EmailTemplateRenderer::DEFAULT_CC_EMAILS)),
                     ]);
                 }),
 
@@ -282,6 +289,7 @@ class EmailGrsSettings extends Page implements HasForms
                         'auto_send_enabled' => (bool) ($current['auto_send_enabled'] ?? true),
                         'test_mode_enabled' => (bool) ($current['test_mode_enabled'] ?? false),
                         'test_mode_email' => (string) ($current['test_mode_email'] ?? ''),
+                        'cc_emails' => (string) ($current['cc_emails'] ?? EmailTemplateRenderer::DEFAULT_CC_EMAILS),
                         'grs_subject' => EmailTemplateRenderer::defaultGrsSubject(),
                         'grs_body' => EmailTemplateRenderer::defaultGrsBody(),
                         'rdtv_subject' => EmailTemplateRenderer::defaultRdtvSubject(),

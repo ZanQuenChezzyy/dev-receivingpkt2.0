@@ -134,10 +134,12 @@ class InvoicingGrsEmailDispatcher
 
         $rendered = $this->renderer->renderForReceipt($receipt);
         $vendorEmails = $this->resolveVendorEmails($receipt);
+        $ccEmails = $this->renderer->resolveCcEmails();
 
         return $this->executeDelivery(
             receipt: $receipt,
             intendedRecipients: $vendorEmails,
+            intendedCc: $ccEmails,
             subject: $rendered['subject'],
             bodyHtml: $rendered['body_html'],
             triggerSource: $triggerSource,
@@ -149,6 +151,7 @@ class InvoicingGrsEmailDispatcher
      * Mengirim atau mengirim ulang email secara manual dari modal aksi baris Invoice Barang.
      *
      * @param  array<int, string>  $recipients
+     * @param  array<int, string>|null  $ccRecipients
      * @return array{status: string, message: string, log: ?InvoicingEmailLog}
      */
     public function sendManual(
@@ -157,6 +160,7 @@ class InvoicingGrsEmailDispatcher
         string $subject,
         string $bodyHtml,
         ?int $userId = null,
+        ?array $ccRecipients = null,
     ): array {
         if (! $this->zimbra->isConfigured()) {
             return [
@@ -171,9 +175,17 @@ class InvoicingGrsEmailDispatcher
             static fn (string $email): bool => (bool) filter_var($email, FILTER_VALIDATE_EMAIL),
         ));
 
+        $cleanCc = $ccRecipients === null
+            ? $this->renderer->resolveCcEmails()
+            : array_values(array_filter(
+                Vendor::parseEmails($ccRecipients),
+                static fn (string $email): bool => (bool) filter_var($email, FILTER_VALIDATE_EMAIL),
+            ));
+
         return $this->executeDelivery(
             receipt: $receipt,
             intendedRecipients: $cleanRecipients,
+            intendedCc: $cleanCc,
             subject: trim($subject),
             bodyHtml: $bodyHtml,
             triggerSource: 'manual_resend',
@@ -183,11 +195,13 @@ class InvoicingGrsEmailDispatcher
 
     /**
      * @param  array<int, string>  $intendedRecipients
+     * @param  array<int, string>  $intendedCc
      * @return array{status: string, message: string, log: ?InvoicingEmailLog}
      */
     private function executeDelivery(
         InvoicingReceipt $receipt,
         array $intendedRecipients,
+        array $intendedCc,
         string $subject,
         string $bodyHtml,
         string $triggerSource,
@@ -205,6 +219,7 @@ class InvoicingGrsEmailDispatcher
                 'jenis' => $jenis,
                 'trigger_source' => $triggerSource,
                 'recipients' => $intendedRecipients,
+                'cc_recipients' => $intendedCc,
                 'subject' => $subject,
                 'body_html' => $bodyHtml,
                 'attachments' => [],
@@ -238,6 +253,7 @@ class InvoicingGrsEmailDispatcher
                 'jenis' => $jenis,
                 'trigger_source' => $triggerSource,
                 'recipients' => [],
+                'cc_recipients' => $intendedCc,
                 'subject' => $subject,
                 'body_html' => $bodyHtml,
                 'attachments' => $this->formatAttachmentMetadata($attachmentCheck['attachments']),
@@ -253,16 +269,21 @@ class InvoicingGrsEmailDispatcher
         }
 
         $actualRecipients = $isTestMode ? $overrideEmails : $intendedRecipients;
+        // Selama Mode Uji Coba aktif, jangan kirim CC ke alamat asli agar tidak mengganggu inbox tim
+        $actualCc = $isTestMode ? [] : $intendedCc;
         $testBannerHtml = null;
 
         if ($isTestMode) {
             $intendedList = $intendedRecipients !== []
                 ? e(implode(', ', $intendedRecipients))
                 : '<em>(alamat email vendor kosong)</em>';
+            $intendedCcText = $intendedCc !== []
+                ? ' | CC asli (ditahan saat uji coba): <code>'.e(implode(', ', $intendedCc)).'</code>'
+                : '';
 
             $testBannerHtml = '<tr><td style="padding:12px 28px;background-color:#fffbeb;border-bottom:1px solid #fde68a;font-size:12px;color:#92400e;">'
                 .'<strong>MODE UJI COBA AKTIF:</strong> Email ini dialihkan ke <code>'.e(implode(', ', $overrideEmails)).'</code>. '
-                .'Tujuan vendor asli: '.$intendedList.'.'
+                .'Tujuan vendor asli: '.$intendedList.$intendedCcText.'.'
                 .'</td></tr>';
         }
 
@@ -281,6 +302,7 @@ class InvoicingGrsEmailDispatcher
                     ],
                     $attachmentCheck['attachments'],
                 ),
+                cc: $actualCc,
             );
 
             $log = InvoicingEmailLog::create([
@@ -290,6 +312,7 @@ class InvoicingGrsEmailDispatcher
                 'trigger_source' => $triggerSource,
                 'recipients' => $actualRecipients,
                 'original_recipients' => $isTestMode ? $intendedRecipients : null,
+                'cc_recipients' => $actualCc !== [] ? $actualCc : null,
                 'subject' => $finalSubject,
                 'body_html' => $bodyHtml,
                 'attachments' => $this->formatAttachmentMetadata($attachmentCheck['attachments']),
@@ -303,11 +326,12 @@ class InvoicingGrsEmailDispatcher
             $receipt->saveQuietly();
 
             $targetText = implode(', ', $actualRecipients);
+            $ccNote = $actualCc !== [] ? ' | CC: '.implode(', ', $actualCc) : '';
             $modeNote = $isTestMode ? ' [Mode Uji Coba]' : '';
 
             return [
                 'status' => 'sent',
-                'message' => "Email berhasil dikirim ke {$targetText} (2 lampiran PDF){$modeNote}.",
+                'message' => "Email berhasil dikirim ke {$targetText}{$ccNote} (2 lampiran PDF){$modeNote}.",
                 'log' => $log,
             ];
         } catch (Throwable $e) {
@@ -320,6 +344,7 @@ class InvoicingGrsEmailDispatcher
                 'trigger_source' => $triggerSource,
                 'recipients' => $actualRecipients,
                 'original_recipients' => $isTestMode ? $intendedRecipients : null,
+                'cc_recipients' => $actualCc !== [] ? $actualCc : null,
                 'subject' => $finalSubject,
                 'body_html' => $bodyHtml,
                 'attachments' => $this->formatAttachmentMetadata($attachmentCheck['attachments']),

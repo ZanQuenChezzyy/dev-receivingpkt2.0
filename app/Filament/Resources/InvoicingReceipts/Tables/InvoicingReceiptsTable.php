@@ -1132,6 +1132,14 @@ class InvoicingReceiptsTable
                                     ->default(implode(', ', $vendorEmails))
                                     ->helperText($testModeHelper),
 
+                                TextInput::make('cc_recipients')
+                                    ->label('Alamat Email CC (Opsional)')
+                                    ->default($renderer->getCcEmailsRaw())
+                                    ->maxLength(500)
+                                    ->helperText($effectiveTestOverride !== null
+                                        ? 'Selama Mode Uji Coba aktif, CC asli ditahan agar tidak terkirim ke inbox tim.'
+                                        : 'Pisahkan dengan koma atau spasi jika lebih dari satu. Kosongkan jika tanpa CC.'),
+
                                 TextInput::make('subject')
                                     ->label('Subjek Email')
                                     ->required()
@@ -1159,6 +1167,7 @@ class InvoicingReceiptsTable
                                 subject: (string) ($data['subject'] ?? ''),
                                 bodyHtml: $bodyHtml,
                                 userId: Auth::id(),
+                                ccRecipients: Vendor::parseEmails($data['cc_recipients'] ?? ''),
                             );
 
                             if ($result['status'] === 'sent') {
