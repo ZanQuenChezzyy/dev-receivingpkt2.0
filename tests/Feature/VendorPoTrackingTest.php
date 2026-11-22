@@ -12,6 +12,7 @@ use App\Models\PurchaseOrderIssued;
 use App\Models\RdtvCompliance;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\EmailTemplateRenderer;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -950,4 +951,80 @@ test('penerimaan DO highlights and notifies receiving staff when vendor uploads 
     expect(DeliveryOrderReceiptResource::getPendingSoftcopyCount())->toBe(0)
         ->and(DeliveryOrderReceiptResource::getNavigationBadge())->toBeNull()
         ->and($do->fresh()->status)->toBe('Diterima');
+});
+
+test('vendor opening signed email tracking link auto-fills PO and verifies without modal', function () {
+    $vendor = Vendor::create([
+        'name' => 'PT Auto Verified Vendor',
+        'vendor_number' => 'V-AUTO-01',
+        'email' => 'auto@vendor.test',
+    ]);
+
+    PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300071234',
+        'vendor_id' => $vendor->vendor_number,
+        'vendor_name' => $vendor->name,
+        'material_number' => 'MAT-AUTO-01',
+        'description' => 'Valve Tekanan Tinggi',
+        'quantity' => 5,
+        'uoi' => 'EA',
+        'total_amount_in_lc' => 12500000,
+    ]);
+
+    $receipt = InvoicingReceipt::create([
+        'vendor_id' => $vendor->id,
+        'jenis' => 'GRS',
+        'no_grs' => '5007781234',
+        'no_po' => '5300071234',
+        'vendor_name' => $vendor->name,
+        'email_vendor' => 'auto@vendor.test',
+        'status' => 'Terverifikasi',
+    ]);
+
+    $rendered = app(EmailTemplateRenderer::class)->renderForReceipt(
+        $receipt,
+        'Subjek {no_po}',
+        '<p>Link: {link_tracking}</p>',
+    );
+
+    expect($rendered['text'])->toContain('/lacak-po-vendor')
+        ->and($rendered['text'])->not->toContain('/tracking-po')
+        ->and($rendered['text'])->toContain('po=5300071234')
+        ->and($rendered['text'])->toContain('auto=1')
+        ->and($rendered['text'])->toContain('signature=');
+
+    preg_match('/https?:\/\/[^\s"<]+/', $rendered['text'], $matches);
+    $signedUrl = $matches[0] ?? '';
+    expect($signedUrl)->not->toBeEmpty();
+
+    $response = $this->get($signedUrl);
+    $response->assertOk()
+        ->assertSee('5300071234')
+        ->assertSee('PT Auto Verified Vendor');
+
+    expect(session('vendor_po_tracking.verified.po_number'))->toBe('5300071234')
+        ->and(session('vendor_po_tracking.verified.email'))->toBe('auto@vendor.test');
+});
+
+test('unsigned or tampered auto=1 tracking URL does not bypass vendor verification', function () {
+    $vendor = Vendor::create([
+        'name' => 'PT Protected Vendor',
+        'vendor_number' => 'V-PROT-01',
+        'email' => 'protected@vendor.test',
+    ]);
+
+    PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300079999',
+        'vendor_id' => $vendor->vendor_number,
+        'vendor_name' => $vendor->name,
+        'material_number' => 'MAT-PROT-01',
+        'description' => 'Pompa Khusus',
+        'quantity' => 1,
+        'uoi' => 'EA',
+    ]);
+
+    $this->get(route('frontend.vendor.tracking', ['po' => '5300079999', 'auto' => '1']))
+        ->assertOk();
+
+    expect(session('vendor_po_tracking.verified'))->toBeNull();
 });

@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Models\Vendor;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\URL;
 
 class EmailTemplateRenderer
 {
@@ -70,7 +71,7 @@ class EmailTemplateRenderer
     <li><strong>Deskripsi Barang:</strong> {nama_barang}</li>
     <li><strong>Tanggal Terima GRS:</strong> {tanggal_terima_grs}</li>
 </ul>
-<p>Terlampir kami sertakan <strong>2 berkas dokumen</strong> (Dokumen GRS dan Dokumen Verifikasi GRS) sebagai dasar proses penagihan invoice. Status dokumen dan penagihan juga dapat dipantau melalui portal: <a href="{link_tracking}">{link_tracking}</a>.</p>
+<p>Terlampir kami sertakan <strong>2 berkas dokumen</strong> (Dokumen GRS dan Dokumen Verifikasi GRS) sebagai dasar proses penagihan invoice. Status dokumen dan penagihan dapat dipantau langsung (otomatis terverifikasi) melalui tautan berikut: <a href="{link_tracking}">Lacak Status PO {no_po}</a>.</p>
 <p>Terima kasih atas kerja samanya.</p>
 <p>Hormat kami,<br><strong>Tim Receiving Jasa — PT Pupuk Kalimantan Timur</strong><br>PIC: {pic_name}</p>
 HTML;
@@ -95,7 +96,7 @@ HTML;
     <li><strong>Tanggal Terima RDTV:</strong> {tanggal_terima_grs}</li>
     <li><strong>Catatan / Keterangan:</strong> {keterangan}</li>
 </ul>
-<p>Terlampir kami sertakan <strong>2 berkas dokumen</strong> (Dokumen RDTV dan Dokumen Verifikasi RDTV) sebagai acuan tindak lanjut pengambilan atau penggantian barang.</p>
+<p>Terlampir kami sertakan <strong>2 berkas dokumen</strong> (Dokumen RDTV dan Dokumen Verifikasi RDTV) sebagai acuan tindak lanjut pengambilan atau penggantian barang. Anda juga dapat memantau status dan mengunggah kelengkapan langsung melalui tautan berikut: <a href="{link_tracking}">Lacak Status PO {no_po}</a>.</p>
 <p>Terima kasih atas perhatian dan kerja samanya.</p>
 <p>Hormat kami,<br><strong>Tim Receiving Jasa — PT Pupuk Kalimantan Timur</strong><br>PIC: {pic_name}</p>
 HTML;
@@ -145,7 +146,7 @@ HTML;
      */
     public function resolveEffectiveTestOverrideTo(): ?string
     {
-        if (! $this->isTestModeEnabled()) {
+        if (!$this->isTestModeEnabled()) {
             return null;
         }
 
@@ -177,7 +178,7 @@ HTML;
     {
         return array_values(array_filter(
             Vendor::parseEmails($this->getCcEmailsRaw()),
-            static fn (string $email): bool => (bool) filter_var($email, FILTER_VALIDATE_EMAIL),
+            static fn(string $email): bool => (bool) filter_var($email, FILTER_VALIDATE_EMAIL),
         ));
     }
 
@@ -237,9 +238,9 @@ HTML;
     public function saveSettingsFormData(array $data): void
     {
         $pairs = [
-            self::KEY_AUTO_SEND_ENABLED => ! empty($data['auto_send_enabled']) ? '1' : '0',
+            self::KEY_AUTO_SEND_ENABLED => !empty($data['auto_send_enabled']) ? '1' : '0',
             self::KEY_TEST_MODE_ENABLED => array_key_exists('test_mode_enabled', $data)
-                ? (! empty($data['test_mode_enabled']) ? '1' : '0')
+                ? (!empty($data['test_mode_enabled']) ? '1' : '0')
                 : ($this->isTestModeEnabled() ? '1' : '0'),
             self::KEY_TEST_MODE_EMAIL => array_key_exists('test_mode_email', $data)
                 ? trim((string) ($data['test_mode_email'] ?? ''))
@@ -317,7 +318,7 @@ HTML;
             '{pic_name}' => 'Staf Receiving Jasa',
             '{keterangan}' => $isRdtv ? 'Spesifikasi material tidak sesuai standar QC ISTEK' : '-',
             '{tanggal_hari_ini}' => now()->format('d/m/Y'),
-            '{link_tracking}' => $this->trackingUrl(),
+            '{link_tracking}' => $this->trackingUrl(new InvoicingReceipt(['no_po' => '5300058418'])),
         ];
 
         $subject = $this->applyPlaceholders($subjectTemplate, $sample, escapeHtml: false);
@@ -336,8 +337,8 @@ HTML;
     {
         $accentColor = strtoupper($jenis) === 'RDTV' ? '#DC2626' : '#F47920';
         $badgeLabel = strtoupper($jenis) === 'RDTV'
-            ? 'VERIFIKASI PENOLAKAN BARANG (RDTV 124)'
-            : 'VERIFIKASI PENERIMAAN BARANG (GRS 105)';
+            ? 'VERIFIKASI PENOLAKAN BARANG (RDTV)'
+            : 'VERIFIKASI PENERIMAAN BARANG (GRS)';
 
         $bannerSection = $testBannerHtml ? $testBannerHtml : '';
 
@@ -355,7 +356,7 @@ HTML;
         <tr>
             <td style="padding:20px 28px 14px 28px;border-bottom:1px solid #f1f5f9;">
                 <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:{$accentColor};text-transform:uppercase;">{$badgeLabel}</div>
-                <div style="font-size:16px;font-weight:700;color:#0f172a;margin-top:4px;">PT Pupuk Kalimantan Timur — Receiving Jasa</div>
+                <div style="font-size:16px;font-weight:700;color:#0f172a;margin-top:4px;">Receiving Jasa - PT. Pupuk Kalimantan Timur</div>
             </td>
         </tr>
         {$bannerSection}
@@ -399,7 +400,7 @@ HTML;
             '{pic_name}' => trim((string) ($receipt->pic?->name ?: 'Tim Receiving Jasa')),
             '{keterangan}' => $keterangan,
             '{tanggal_hari_ini}' => now()->format('d/m/Y'),
-            '{link_tracking}' => $this->trackingUrl(),
+            '{link_tracking}' => $this->trackingUrl($receipt),
         ];
     }
 
@@ -410,7 +411,7 @@ HTML;
     {
         $search = array_keys($replacements);
         $replace = array_map(
-            static fn (string $value): string => $escapeHtml ? e($value) : $value,
+            static fn(string $value): string => $escapeHtml ? e($value) : $value,
             array_values($replacements),
         );
 
@@ -434,12 +435,29 @@ HTML;
         return '-';
     }
 
-    private function trackingUrl(): string
+    private function trackingUrl(?InvoicingReceipt $receipt = null): string
     {
+        $cleanPo = trim((string) ($receipt?->no_po ?? ''));
+
         try {
-            return route('vendor.po.tracking');
+            if ($cleanPo !== '' && $cleanPo !== '-') {
+                return URL::temporarySignedRoute(
+                    'frontend.vendor.tracking',
+                    now()->addDays(30),
+                    [
+                        'po' => $cleanPo,
+                        'auto' => '1',
+                    ],
+                );
+            }
+
+            return route('frontend.vendor.tracking');
         } catch (\Throwable) {
-            return rtrim((string) config('app.url', 'https://dev.receivingpkt.com'), '/').'/tracking-po';
+            $base = rtrim((string) config('app.url', 'https://dev.receivingpkt.com'), '/') . '/lacak-po-vendor';
+
+            return ($cleanPo !== '' && $cleanPo !== '-')
+                ? $base . '?po=' . urlencode($cleanPo)
+                : $base;
         }
     }
 

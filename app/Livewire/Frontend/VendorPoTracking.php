@@ -222,9 +222,70 @@ class VendorPoTracking extends Component
     {
         $this->restoreVerificationFromSession();
 
+        if ($this->attemptSignedEmailAutoVerify()) {
+            return;
+        }
+
         if (! empty($this->poNumber)) {
             $this->initiateSearch();
         }
+    }
+
+    /**
+     * Memverifikasi otomatis vendor saat membuka tautan bertanda tangan (signed URL) dari email GRS/RDTV.
+     */
+    protected function attemptSignedEmailAutoVerify(): bool
+    {
+        $request = request();
+
+        if ((string) $request->query('auto') !== '1' || ! $request->hasValidSignature()) {
+            return false;
+        }
+
+        $targetPo = trim((string) ($request->query('po') ?: $this->poNumber));
+        if ($targetPo === '') {
+            return false;
+        }
+
+        $po = PurchaseOrderIssued::where('purchase_order_no', $targetPo)->first();
+        if (! $po) {
+            $this->poNumber = $targetPo;
+            $this->initiateSearch();
+
+            return true;
+        }
+
+        $this->poNumber = $po->purchase_order_no;
+        $this->activePo = $po->purchase_order_no;
+        $this->resolvePoAndVendor($po->purchase_order_no);
+
+        $vendor = $this->resolveVendorForPo($po);
+        $registeredEmails = $this->extractEmailsFromVendor($vendor);
+        $fallbackReceiptEmail = null;
+
+        if ($registeredEmails === []) {
+            $receiptEmailRaw = InvoicingReceipt::query()
+                ->where('no_po', $po->purchase_order_no)
+                ->whereNotNull('email_vendor')
+                ->latest('id')
+                ->value('email_vendor');
+            $fallbackReceiptEmail = Vendor::parseEmails($receiptEmailRaw)[0] ?? null;
+        }
+
+        $verifiedEmail = $registeredEmails[0]
+            ?? ($fallbackReceiptEmail ? strtolower($fallbackReceiptEmail) : 'verified-email@receivingpkt.local');
+
+        $this->isVerified = true;
+        $this->verifiedEmail = $verifiedEmail;
+        $this->verifiedVendorNumber = $vendor?->vendor_number ?? $po->vendor_id;
+        $this->verifiedVendorId = $vendor?->id;
+        $this->showVerificationModal = false;
+        $this->verificationError = null;
+        $this->searchError = null;
+        $this->persistVerificationToSession($po->purchase_order_no);
+        $this->loadTrackingData();
+
+        return true;
     }
 
     public function selectSamplePo(string $po): void
