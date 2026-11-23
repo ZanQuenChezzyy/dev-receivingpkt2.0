@@ -64,7 +64,7 @@ class InvoicingReceiptInfolist
                             ->placeholder('-'),
 
                         TextEntry::make('delivery_date')
-                            ->label('Delivery Date (GRS)')
+                            ->label('Delivery Date (GRS/RDTV)')
                             ->date('d F Y')
                             ->icon('heroicon-m-truck')
                             ->copyable()

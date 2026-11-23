@@ -318,6 +318,11 @@ class InvoicingReceipt extends Model
     {
         return Attribute::make(
             get: function () {
+                // Utamakan Delivery Date yang diekstrak dari berkas GRS/RDTV yang diunggah
+                if ($this->delivery_date) {
+                    return $this->delivery_date;
+                }
+
                 if ($this->relationLoaded('purchaseOrderIssued') && $this->purchaseOrderIssued) {
                     return $this->purchaseOrderIssued->delivery_date_po;
                 }

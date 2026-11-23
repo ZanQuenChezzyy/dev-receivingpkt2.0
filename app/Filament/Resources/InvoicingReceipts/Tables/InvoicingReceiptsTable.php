@@ -414,6 +414,14 @@ class InvoicingReceiptsTable
                 ]),
 
                 // Kolom pelengkap (toggleable)
+                TextColumn::make('delivery_date')
+                    ->label('Delivery Date (GRS/RDTV)')
+                    ->date('d/m/Y')
+                    ->placeholder('Belum Ada')
+                    ->icon('heroicon-m-truck')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('tanggal_terima_koreksi_invoice')
                     ->label('Tanggal Terima Invoice')
                     ->date('d/m/Y')

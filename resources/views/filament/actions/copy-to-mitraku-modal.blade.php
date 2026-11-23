@@ -28,7 +28,7 @@
     $materialName = $record->nama_barang ?: ($record->deskripsi ?: '-');
     $materialCode = $record->purchaseOrderIssued?->material_code ?? $record->deliveryOrderReceipt?->deliveryOrderReceiptDetails?->first()?->material_code;
 
-    $rawDeliveryDate = $record->delivery_date_po ?? $record->purchaseOrderIssued?->delivery_date_po;
+    $rawDeliveryDate = $record->delivery_date ?? $record->delivery_date_po ?? $record->purchaseOrderIssued?->delivery_date_po;
     $deliveryDatePoFormatted = $rawDeliveryDate ? \Illuminate\Support\Carbon::parse($rawDeliveryDate)->format('d-m-Y') : '';
 
     $rawDeliveryDateGrs = $record->delivery_date;

@@ -4,9 +4,11 @@ use App\Filament\Resources\GrsRdtvs\Pages\CreateGrsRdtv;
 use App\Filament\Resources\GrsRdtvs\Pages\EditGrsRdtv;
 use App\Filament\Resources\GrsRdtvs\RelationManagers\GrsRdtvItemsRelationManager;
 use App\Models\DeliveryOrderReceipt;
+use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\GrsRdtv;
 use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
+use App\Models\PurchaseOrderIssued;
 use App\Models\QcHistory;
 use App\Models\User;
 use App\Services\GrsRdtvProcessingService;
@@ -801,4 +803,101 @@ test('GrsRdtvItemsRelationManager replace_file and delete table actions work cle
         ->and(InvoicingReceipt::find($inv->id))->toBeNull()
         ->and(Storage::disk('public')->exists($replacedPath))->toBeFalse()
         ->and($do->fresh()->status)->toBe('Kembali dari ISTEK');
+});
+
+test('uploading GRS PDF populates delivery_date from GRS document rather than PurchaseOrderIssued and copy modal prioritizes it', function () {
+    $user = User::create(['name' => 'Staff DelivDate', 'email' => 'delivdate@example.com', 'password' => 'secret']);
+    $this->actingAs($user);
+
+    $po = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300066637',
+        'material_type' => 'ZSP',
+        'description' => 'VIDEO CONFERENCE DEP DANBA',
+        'qty_po' => 1,
+        'uoi' => 'SET',
+        'total_amount_in_lc' => 40770000,
+        'delivery_date_po' => '2026-09-01', // Tanggal lama di Purchase Order Terbit
+    ]);
+
+    $do = DeliveryOrderReceipt::create([
+        'document_code' => 'DO-GRS-DELIV-1201',
+        'delivery_order_no' => '66637',
+        'status' => 'Kembali dari ISTEK',
+        'post_103' => now(),
+        'received_by' => $user->id,
+        'created_by' => $user->id,
+    ]);
+
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $do->id,
+        'purchase_order_issued_id' => $po->id,
+        'description' => 'VIDEO CONFERENCE DEP DANBA',
+        'quantity' => 1,
+        'uoi' => 'SET',
+        'material_type' => 'ZSP',
+    ]);
+
+    QcHistory::create([
+        'delivery_order_receipt_id' => $do->id,
+        'status' => 'Kembali',
+    ]);
+
+    // contoh_GRS.pdf memiliki Delivery Date 23.11.2026 (berbeda dengan PO Terbit 01.09.2026)
+    $fixtureContent = file_get_contents(base_path('tests/Fixtures/contoh_GRS.pdf'));
+    $file = TemporaryUploadedFile::fake()->createWithContent('DO-GRS-DELIV-1201.pdf', $fixtureContent);
+
+    Livewire::test(CreateGrsRdtv::class)
+        ->fillForm([
+            'transaction_date' => '2026-11-23',
+            'category' => 'GRS',
+            'files' => [$file],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $receipt = InvoicingReceipt::with('purchaseOrderIssued')->where('delivery_order_receipt_id', $do->id)->first();
+    expect($receipt)->not->toBeNull()
+        ->and($receipt->delivery_date?->format('Y-m-d'))->toBe('2026-11-23')
+        ->and($receipt->delivery_date_po?->format('Y-m-d'))->toBe('2026-11-23')
+        ->and($receipt->purchaseOrderIssued?->delivery_date_po?->format('Y-m-d'))->toBe('2026-09-01');
+
+    // Modal Salin ke Mitraku harus menampilkan Delivery Date dari GRS (23-11-2026), bukan dari PO Terbit (01-09-2026)
+    $modalHtml = (string) view('filament.actions.copy-to-mitraku-modal', ['record' => $receipt]);
+    expect($modalHtml)->toContain("copyText('23-11-2026', 'delivery_date_po')")
+        ->and($modalHtml)->toContain("copyText('23-11-2026', 'delivery_date_grs')")
+        ->and($modalHtml)->not->toContain("copyText('01-09-2026', 'delivery_date_po')");
+});
+
+test('invoicing:backfill-grs-delivery-date command fills missing delivery_date from stored GRS PDFs', function () {
+    $do = DeliveryOrderReceipt::create([
+        'document_code' => 'DO-BACKFILL-1301',
+        'delivery_order_no' => '66637',
+        'status' => 'GRS',
+        'post_103' => now(),
+    ]);
+
+    $pdfPath = 'grs-rdtv-docs/DO-BACKFILL-1301__20261123000001_abc123.pdf';
+    Storage::disk('public')->put($pdfPath, file_get_contents(base_path('tests/Fixtures/contoh_GRS.pdf')));
+
+    $grs = GrsRdtv::create(['transaction_date' => '2026-11-10', 'category' => 'GRS']);
+    $item = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grs->id,
+        'delivery_order_receipt_id' => $do->id,
+        'document_code' => 'DO-BACKFILL-1301',
+        'file_path' => $pdfPath,
+        'status' => 'Matched',
+    ]);
+
+    $inv = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $item->id,
+        'delivery_order_receipt_id' => $do->id,
+        'no_po' => '5300066637',
+        'jenis' => 'GRS',
+        'delivery_date' => null,
+    ]);
+
+    $this->artisan('invoicing:backfill-grs-delivery-date')
+        ->assertExitCode(0);
+
+    expect($inv->fresh()->delivery_date?->format('Y-m-d'))->toBe('2026-11-23');
 });

@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\GrsRdtvs\Pages;
 
 use App\Filament\Resources\GrsRdtvs\GrsRdtvResource;
+use App\Models\DeliveryOrderReceipt;
+use App\Models\GrsRdtvItem;
 use App\Services\GrsRdtvProcessingService;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
@@ -96,5 +98,10 @@ class CreateGrsRdtv extends CreateRecord
             ->body($body)
             ->success()
             ->send();
+    }
+
+    protected function createInvoicingReceiptFor(GrsRdtvItem $grsRdtvItem, ?DeliveryOrderReceipt $do, string $category, mixed $transactionDate): void
+    {
+        $this->getProcessingService()->createInvoicingReceiptFor($grsRdtvItem, $do, $category, $transactionDate);
     }
 }

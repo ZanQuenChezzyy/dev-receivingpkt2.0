@@ -96,9 +96,9 @@ class InvoicingReceiptForm
                             ->helperText('Tanggal penerimaan barang di gudang (sesuai dokumen GRS).'),
 
                         DatePicker::make('delivery_date')
-                            ->label('Delivery Date (GRS)')
+                            ->label('Delivery Date (GRS/RDTV)')
                             ->native(false)
-                            ->helperText('Tanggal delivery barang dari vendor (sesuai dokumen GRS).'),
+                            ->helperText('Diambil otomatis dari berkas GRS/RDTV yang diunggah.'),
                     ])->columns(2),
 
                 Section::make('Referensi PO & DO')

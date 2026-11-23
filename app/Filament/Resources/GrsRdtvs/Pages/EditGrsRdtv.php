@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\GrsRdtvs\Pages;
 
 use App\Filament\Resources\GrsRdtvs\GrsRdtvResource;
+use App\Models\DeliveryOrderReceipt;
 use App\Models\GrsRdtv;
+use App\Models\GrsRdtvItem;
 use App\Services\GrsRdtvProcessingService;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
@@ -130,5 +132,10 @@ class EditGrsRdtv extends EditRecord
             ->body($body)
             ->success()
             ->send();
+    }
+
+    protected function createInvoicingReceiptFor(GrsRdtvItem $grsRdtvItem, ?DeliveryOrderReceipt $do, string $category, mixed $transactionDate): void
+    {
+        $this->getProcessingService()->createInvoicingReceiptFor($grsRdtvItem, $do, $category, $transactionDate);
     }
 }

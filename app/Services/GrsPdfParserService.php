@@ -247,10 +247,20 @@ class GrsPdfParserService
         // 8. Normalisasi Format Tanggal ke Y-m-d (MySQL date)
         foreach (['tanggal_release_gr', 'tanggal_penolakan', 'delivery_date', 'tanggal_penerimaan', 'tanggal_po'] as $field) {
             if (! empty($data[$field])) {
-                $val = str_replace(['/', '-'], '.', $data[$field]);
+                $val = str_replace(['/', '-'], '.', trim((string) $data[$field]));
                 $parts = explode('.', $val);
                 if (count($parts) === 3) {
-                    $data[$field] = sprintf('%04d-%02d-%02d', (int) $parts[2], (int) $parts[1], (int) $parts[0]);
+                    $day = (int) $parts[0];
+                    $month = (int) $parts[1];
+                    $year = (int) $parts[2];
+                    if ($year < 100) {
+                        $year += 2000;
+                    }
+                    $data[$field] = checkdate($month, $day, $year)
+                        ? sprintf('%04d-%02d-%02d', $year, $month, $day)
+                        : null;
+                } else {
+                    $data[$field] = null;
                 }
             }
         }
