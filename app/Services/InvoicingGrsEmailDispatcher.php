@@ -303,6 +303,7 @@ class InvoicingGrsEmailDispatcher
                     $attachmentCheck['attachments'],
                 ),
                 cc: $actualCc,
+                fromName: $this->renderer->getSenderName(),
             );
 
             $log = InvoicingEmailLog::create([

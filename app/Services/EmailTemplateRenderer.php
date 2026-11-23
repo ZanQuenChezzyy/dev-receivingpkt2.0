@@ -21,6 +21,20 @@ class EmailTemplateRenderer
 
     public const DEFAULT_CC_EMAILS = 'receiving.barang@pupukkaltim.com';
 
+    public const KEY_SENDER_NAME = 'grs_email_sender_name';
+
+    public const KEY_HEADER_TITLE = 'grs_email_header_title';
+
+    public const KEY_HEADER_BADGE_GRS = 'grs_email_header_badge_grs';
+
+    public const KEY_HEADER_BADGE_RDTV = 'grs_email_header_badge_rdtv';
+
+    public const KEY_FOOTER_TEXT = 'grs_email_footer_text';
+
+    public const KEY_ACCENT_COLOR_GRS = 'grs_email_accent_color_grs';
+
+    public const KEY_ACCENT_COLOR_RDTV = 'grs_email_accent_color_rdtv';
+
     public const KEY_GRS_SUBJECT = 'grs_email_grs_subject';
 
     public const KEY_GRS_BODY = 'grs_email_grs_body';
@@ -51,6 +65,43 @@ class EmailTemplateRenderer
             '{tanggal_hari_ini}' => 'Tanggal Pengiriman Email',
             '{link_tracking}' => 'Tautan Halaman Lacak Status PO Publik',
         ];
+    }
+
+    public static function defaultSenderName(): string
+    {
+        $configured = trim((string) config('services.zimbra.from_name', ''));
+
+        return $configured !== '' ? $configured : 'receiving jasa';
+    }
+
+    public static function defaultHeaderTitle(): string
+    {
+        return 'Receiving Jasa - PT. Pupuk Kalimantan Timur';
+    }
+
+    public static function defaultHeaderBadgeGrs(): string
+    {
+        return 'VERIFIKASI PENERIMAAN BARANG (GRS)';
+    }
+
+    public static function defaultHeaderBadgeRdtv(): string
+    {
+        return 'VERIFIKASI PENOLAKAN BARANG (RDTV)';
+    }
+
+    public static function defaultFooterText(): string
+    {
+        return 'Email ini dikirim melalui sistem Receiving PKT v2.0. Mohon pastikan kedua berkas lampiran PDF telah diterima dengan lengkap.';
+    }
+
+    public static function defaultAccentColorGrs(): string
+    {
+        return '#F47920';
+    }
+
+    public static function defaultAccentColorRdtv(): string
+    {
+        return '#DC2626';
     }
 
     public static function defaultGrsSubject(): string
@@ -179,6 +230,55 @@ HTML;
     }
 
     /**
+     * Mengembalikan nama pengirim (From Name) email dari pengaturan Filament atau fallback .env.
+     */
+    public function getSenderName(): string
+    {
+        return $this->getSetting(self::KEY_SENDER_NAME, self::defaultSenderName());
+    }
+
+    /**
+     * Mengembalikan seluruh konfigurasi tampilan header, footer, dan warna aksen email.
+     *
+     * @param  array<string, mixed>  $overrides
+     * @return array{
+     *     sender_name: string,
+     *     header_title: string,
+     *     header_badge_grs: string,
+     *     header_badge_rdtv: string,
+     *     footer_text: string,
+     *     accent_color_grs: string,
+     *     accent_color_rdtv: string
+     * }
+     */
+    public function getLayoutSettings(array $overrides = []): array
+    {
+        $pick = function (string $field, string $key, string $default) use ($overrides): string {
+            if (array_key_exists($field, $overrides) && is_string($overrides[$field]) && trim($overrides[$field]) !== '') {
+                return trim($overrides[$field]);
+            }
+
+            return $this->getSetting($key, $default);
+        };
+
+        return [
+            'sender_name' => $pick('sender_name', self::KEY_SENDER_NAME, self::defaultSenderName()),
+            'header_title' => $pick('header_title', self::KEY_HEADER_TITLE, self::defaultHeaderTitle()),
+            'header_badge_grs' => $pick('header_badge_grs', self::KEY_HEADER_BADGE_GRS, self::defaultHeaderBadgeGrs()),
+            'header_badge_rdtv' => $pick('header_badge_rdtv', self::KEY_HEADER_BADGE_RDTV, self::defaultHeaderBadgeRdtv()),
+            'footer_text' => $pick('footer_text', self::KEY_FOOTER_TEXT, self::defaultFooterText()),
+            'accent_color_grs' => $this->sanitizeHexColor(
+                $pick('accent_color_grs', self::KEY_ACCENT_COLOR_GRS, self::defaultAccentColorGrs()),
+                self::defaultAccentColorGrs(),
+            ),
+            'accent_color_rdtv' => $this->sanitizeHexColor(
+                $pick('accent_color_rdtv', self::KEY_ACCENT_COLOR_RDTV, self::defaultAccentColorRdtv()),
+                self::defaultAccentColorRdtv(),
+            ),
+        ];
+    }
+
+    /**
      * Mengambil seluruh konfigurasi template saat ini untuk diisi ke form Filament.
      *
      * @return array{
@@ -186,6 +286,13 @@ HTML;
      *     test_mode_enabled: bool,
      *     test_mode_email: string,
      *     cc_emails: string,
+     *     sender_name: string,
+     *     header_title: string,
+     *     header_badge_grs: string,
+     *     header_badge_rdtv: string,
+     *     footer_text: string,
+     *     accent_color_grs: string,
+     *     accent_color_rdtv: string,
      *     grs_subject: string,
      *     grs_body: string,
      *     rdtv_subject: string,
@@ -194,11 +301,20 @@ HTML;
      */
     public function getSettingsFormData(): array
     {
+        $layout = $this->getLayoutSettings();
+
         return [
             'auto_send_enabled' => $this->isAutoSendEnabled(),
             'test_mode_enabled' => $this->isTestModeEnabled(),
             'test_mode_email' => $this->getTestModeEmail(),
             'cc_emails' => $this->getCcEmailsRaw(),
+            'sender_name' => $layout['sender_name'],
+            'header_title' => $layout['header_title'],
+            'header_badge_grs' => $layout['header_badge_grs'],
+            'header_badge_rdtv' => $layout['header_badge_rdtv'],
+            'footer_text' => $layout['footer_text'],
+            'accent_color_grs' => $layout['accent_color_grs'],
+            'accent_color_rdtv' => $layout['accent_color_rdtv'],
             'grs_subject' => $this->getSetting(self::KEY_GRS_SUBJECT, self::defaultGrsSubject()),
             'grs_body' => $this->getSetting(self::KEY_GRS_BODY, self::defaultGrsBody()),
             'rdtv_subject' => $this->getSetting(self::KEY_RDTV_SUBJECT, self::defaultRdtvSubject()),
@@ -233,6 +349,8 @@ HTML;
      */
     public function saveSettingsFormData(array $data): void
     {
+        $layout = $this->getLayoutSettings();
+
         $pairs = [
             self::KEY_AUTO_SEND_ENABLED => ! empty($data['auto_send_enabled']) ? '1' : '0',
             self::KEY_TEST_MODE_ENABLED => array_key_exists('test_mode_enabled', $data)
@@ -244,6 +362,27 @@ HTML;
             self::KEY_CC_EMAILS => array_key_exists('cc_emails', $data)
                 ? trim((string) ($data['cc_emails'] ?? ''))
                 : $this->getCcEmailsRaw(),
+            self::KEY_SENDER_NAME => array_key_exists('sender_name', $data)
+                ? (trim((string) ($data['sender_name'] ?? '')) ?: self::defaultSenderName())
+                : $layout['sender_name'],
+            self::KEY_HEADER_TITLE => array_key_exists('header_title', $data)
+                ? (trim((string) ($data['header_title'] ?? '')) ?: self::defaultHeaderTitle())
+                : $layout['header_title'],
+            self::KEY_HEADER_BADGE_GRS => array_key_exists('header_badge_grs', $data)
+                ? (trim((string) ($data['header_badge_grs'] ?? '')) ?: self::defaultHeaderBadgeGrs())
+                : $layout['header_badge_grs'],
+            self::KEY_HEADER_BADGE_RDTV => array_key_exists('header_badge_rdtv', $data)
+                ? (trim((string) ($data['header_badge_rdtv'] ?? '')) ?: self::defaultHeaderBadgeRdtv())
+                : $layout['header_badge_rdtv'],
+            self::KEY_FOOTER_TEXT => array_key_exists('footer_text', $data)
+                ? (trim((string) ($data['footer_text'] ?? '')) ?: self::defaultFooterText())
+                : $layout['footer_text'],
+            self::KEY_ACCENT_COLOR_GRS => array_key_exists('accent_color_grs', $data)
+                ? $this->sanitizeHexColor((string) ($data['accent_color_grs'] ?? ''), self::defaultAccentColorGrs())
+                : $layout['accent_color_grs'],
+            self::KEY_ACCENT_COLOR_RDTV => array_key_exists('accent_color_rdtv', $data)
+                ? $this->sanitizeHexColor((string) ($data['accent_color_rdtv'] ?? ''), self::defaultAccentColorRdtv())
+                : $layout['accent_color_rdtv'],
             self::KEY_GRS_SUBJECT => trim((string) ($data['grs_subject'] ?? '')) ?: self::defaultGrsSubject(),
             self::KEY_GRS_BODY => $this->normalizeRichContentToHtml($data['grs_body'] ?? null, self::defaultGrsBody()),
             self::KEY_RDTV_SUBJECT => trim((string) ($data['rdtv_subject'] ?? '')) ?: self::defaultRdtvSubject(),
@@ -296,10 +435,15 @@ HTML;
     /**
      * Merender pratinjau template menggunakan contoh data realistis untuk tampilan Preview di Filament.
      *
+     * @param  array<string, mixed>  $layoutOverrides
      * @return array{subject: string, wrapped_html: string}
      */
-    public function renderPreview(string $jenis, string $subjectTemplate, string $bodyTemplate): array
-    {
+    public function renderPreview(
+        string $jenis,
+        string $subjectTemplate,
+        string $bodyTemplate,
+        array $layoutOverrides = [],
+    ): array {
         $isRdtv = strtoupper($jenis) === 'RDTV';
         $sample = [
             '{vendor_name}' => 'PT Contoh Mitra Industri',
@@ -322,19 +466,28 @@ HTML;
 
         return [
             'subject' => $subject,
-            'wrapped_html' => $this->wrapInCorporateLayout($bodyHtml, $isRdtv ? 'RDTV' : 'GRS'),
+            'wrapped_html' => $this->wrapInCorporateLayout($bodyHtml, $isRdtv ? 'RDTV' : 'GRS', null, $layoutOverrides),
         ];
     }
 
     /**
      * Membungkus konten email dengan tata letak email korporat PKT yang bersih dan kompatibel dengan seluruh klien email.
+     *
+     * @param  array<string, mixed>  $layoutOverrides
      */
-    public function wrapInCorporateLayout(string $bodyHtml, string $jenis = 'GRS', ?string $testBannerHtml = null): string
-    {
-        $accentColor = strtoupper($jenis) === 'RDTV' ? '#DC2626' : '#F47920';
-        $badgeLabel = strtoupper($jenis) === 'RDTV'
-            ? 'VERIFIKASI PENOLAKAN BARANG (RDTV)'
-            : 'VERIFIKASI PENERIMAAN BARANG (GRS)';
+    public function wrapInCorporateLayout(
+        string $bodyHtml,
+        string $jenis = 'GRS',
+        ?string $testBannerHtml = null,
+        array $layoutOverrides = [],
+    ): string {
+        $isRdtv = strtoupper($jenis) === 'RDTV';
+        $layout = $this->getLayoutSettings($layoutOverrides);
+
+        $accentColor = $isRdtv ? $layout['accent_color_rdtv'] : $layout['accent_color_grs'];
+        $badgeLabel = e($isRdtv ? $layout['header_badge_rdtv'] : $layout['header_badge_grs']);
+        $headerTitle = e($layout['header_title']);
+        $footerText = nl2br(e($layout['footer_text']));
 
         $bannerSection = $testBannerHtml ? $testBannerHtml : '';
 
@@ -352,7 +505,7 @@ HTML;
         <tr>
             <td style="padding:20px 28px 14px 28px;border-bottom:1px solid #f1f5f9;">
                 <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:{$accentColor};text-transform:uppercase;">{$badgeLabel}</div>
-                <div style="font-size:16px;font-weight:700;color:#0f172a;margin-top:4px;">Receiving Jasa - PT. Pupuk Kalimantan Timur</div>
+                <div style="font-size:16px;font-weight:700;color:#0f172a;margin-top:4px;">{$headerTitle}</div>
             </td>
         </tr>
         {$bannerSection}
@@ -363,13 +516,20 @@ HTML;
         </tr>
         <tr>
             <td style="padding:14px 28px;background-color:#f8fafc;border-top:1px solid #f1f5f9;font-size:12px;color:#64748b;">
-                Email ini dikirim melalui sistem Receiving PKT v2.0. Mohon pastikan kedua berkas lampiran PDF telah diterima dengan lengkap.
+                {$footerText}
             </td>
         </tr>
     </table>
 </body>
 </html>
 HTML;
+    }
+
+    private function sanitizeHexColor(string $color, string $fallback): string
+    {
+        $clean = trim($color);
+
+        return preg_match('/^#[0-9A-Fa-f]{6}$/', $clean) ? strtoupper($clean) : $fallback;
     }
 
     /**

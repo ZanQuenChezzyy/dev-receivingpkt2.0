@@ -180,6 +180,7 @@ class ZimbraMailService
         array $attachments = [],
         array $cc = [],
         ?string $plainTextBody = null,
+        ?string $fromName = null,
     ): array {
         $validTo = $this->filterValidEmails($to);
         if ($validTo === []) {
@@ -189,7 +190,7 @@ class ZimbraMailService
         $validCc = $this->filterValidEmails($cc);
 
         try {
-            return $this->performSend($validTo, $validCc, $subject, $htmlBody, $plainTextBody, $attachments, false);
+            return $this->performSend($validTo, $validCc, $subject, $htmlBody, $plainTextBody, $attachments, false, $fromName);
         } catch (RuntimeException $e) {
             if (str_contains($e->getMessage(), 'AUTH_EXPIRED') || str_contains($e->getMessage(), 'AUTH_REQUIRED')) {
                 try {
@@ -198,7 +199,7 @@ class ZimbraMailService
                     // Abaikan gangguan cache saat membersihkan token.
                 }
 
-                return $this->performSend($validTo, $validCc, $subject, $htmlBody, $plainTextBody, $attachments, true);
+                return $this->performSend($validTo, $validCc, $subject, $htmlBody, $plainTextBody, $attachments, true, $fromName);
             }
 
             throw $e;
@@ -235,6 +236,7 @@ class ZimbraMailService
         ?string $plainTextBody,
         array $attachments,
         bool $forceRefreshAuth,
+        ?string $fromNameOverride = null,
     ): array {
         $token = $this->authenticate(forceRefresh: $forceRefreshAuth);
 
@@ -255,7 +257,7 @@ class ZimbraMailService
             $recipients[] = ['t' => 'c', 'a' => $email];
         }
 
-        $fromName = trim((string) config('services.zimbra.from_name', ''));
+        $fromName = trim((string) ($fromNameOverride ?? config('services.zimbra.from_name', '')));
         if ($fromName !== '') {
             $recipients[] = [
                 't' => 'f',

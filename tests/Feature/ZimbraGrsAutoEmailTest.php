@@ -552,3 +552,69 @@ it('menyertakan CC default receiving.barang@pupukkaltim.com pada mode normal, da
         ->and($resTest['log']->recipients)->toBe(['tes@gmail.test'])
         ->and($resTest['log']->cc_recipients)->toBeNull();
 });
+
+it('menerapkan kustomisasi nama pengirim, judul header, badge, warna aksen, dan footer dari pengaturan Filament', function (): void {
+    fakeZimbraSuccess();
+
+    $renderer = app(EmailTemplateRenderer::class);
+    $renderer->saveSettingsFormData([
+        'auto_send_enabled' => true,
+        'test_mode_enabled' => false,
+        'sender_name' => 'receiving jasa custom',
+        'header_title' => 'Dept. PP&P — PKT Bontang',
+        'header_badge_grs' => 'DOKUMEN GRS RESMI',
+        'header_badge_rdtv' => 'DOKUMEN RDTV RESMI',
+        'footer_text' => 'Catatan footer kustom untuk vendor PKT.',
+        'accent_color_grs' => '#0054A6',
+        'accent_color_rdtv' => '#B91C1C',
+        'grs_subject' => 'GRS {no_grs}',
+        'grs_body' => '<p>Halo {vendor_name}</p>',
+        'rdtv_subject' => 'RDTV {no_rdtv}',
+        'rdtv_body' => '<p>Halo {vendor_name}</p>',
+    ]);
+
+    Storage::disk('public')->put('grs-files/grs-5007790001.pdf', '%PDF-1.4 GRS');
+    Storage::disk('public')->put('verifikasi-grs/verif-5007790001.pdf', '%PDF-1.4 VERIF');
+
+    $grsHeader = GrsRdtv::create(['category' => 'GRS']);
+    $grsItem = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grsHeader->id,
+        'document_code' => '5007790001',
+        'file_path' => 'grs-files/grs-5007790001.pdf',
+    ]);
+
+    $receipt = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $grsItem->id,
+        'jenis' => 'GRS',
+        'no_grs' => '5007790001',
+        'no_po' => '5300090001',
+        'vendor_name' => 'PT Kustomisasi',
+        'email_vendor' => 'vendor@kustom.test',
+        'dokumen_verifikasi_grs' => 'verifikasi-grs/verif-5007790001.pdf',
+        'status' => 'Terverifikasi',
+    ]);
+
+    $res = app(InvoicingGrsEmailDispatcher::class)->dispatchIfEligible($receipt, 'row_upload');
+    expect($res['status'])->toBe('sent');
+
+    Http::assertSent(function (HttpClientRequest $request): bool {
+        if (! str_ends_with($request->url(), '/service/soap')) {
+            return false;
+        }
+        $msg = $request->data()['Body']['SendMsgRequest']['m'] ?? null;
+        if (! is_array($msg)) {
+            return false;
+        }
+
+        $hasSender = collect($msg['e'] ?? [])->contains(
+            fn (array $r): bool => ($r['t'] ?? null) === 'f' && ($r['p'] ?? null) === 'receiving jasa custom'
+        );
+        $html = $msg['mp'][0]['mp'][1]['content']['_content'] ?? '';
+
+        return $hasSender
+            && str_contains($html, 'Dept. PP&amp;P — PKT Bontang')
+            && str_contains($html, 'DOKUMEN GRS RESMI')
+            && str_contains($html, 'Catatan footer kustom untuk vendor PKT.')
+            && str_contains($html, '#0054A6');
+    });
+});

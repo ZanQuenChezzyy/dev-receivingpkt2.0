@@ -6,14 +6,17 @@ use App\Services\EmailTemplateRenderer;
 use App\Services\ZimbraMailService;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -153,6 +156,56 @@ class EmailGrsSettings extends Page implements HasForms
                                     ])
                                     ->helperText('Ketik isi surat pemberitahuan penolakan barang (RDTV 124). Anda dapat menyertakan variabel {no_rdtv} dan {keterangan}.'),
                             ]),
+
+                        Tab::make('Header, Pengirim & Footer')
+                            ->icon(Heroicon::OutlinedPaintBrush)
+                            ->schema([
+                                Grid::make(2)
+                                    ->schema([
+                                        TextInput::make('sender_name')
+                                            ->label('Nama Pengirim Email (From Name)')
+                                            ->required()
+                                            ->maxLength(120)
+                                            ->placeholder('receiving jasa')
+                                            ->helperText('Nama yang tampil sebagai pengirim di kotak masuk vendor.'),
+
+                                        TextInput::make('header_title')
+                                            ->label('Judul Header di Dalam Email')
+                                            ->required()
+                                            ->maxLength(160)
+                                            ->placeholder('Receiving Jasa - PT. Pupuk Kalimantan Timur')
+                                            ->helperText('Judul utama yang tampil pada bagian atas kotak email.'),
+
+                                        TextInput::make('header_badge_grs')
+                                            ->label('Label Badge Header GRS')
+                                            ->required()
+                                            ->maxLength(120)
+                                            ->placeholder('VERIFIKASI PENERIMAAN BARANG (GRS)'),
+
+                                        TextInput::make('header_badge_rdtv')
+                                            ->label('Label Badge Header RDTV')
+                                            ->required()
+                                            ->maxLength(120)
+                                            ->placeholder('VERIFIKASI PENOLAKAN BARANG (RDTV)'),
+
+                                        ColorPicker::make('accent_color_grs')
+                                            ->label('Warna Aksen Header GRS')
+                                            ->required()
+                                            ->helperText('Warna garis atas dan label badge untuk email GRS (default #F47920).'),
+
+                                        ColorPicker::make('accent_color_rdtv')
+                                            ->label('Warna Aksen Header RDTV')
+                                            ->required()
+                                            ->helperText('Warna garis atas dan label badge untuk email RDTV (default #DC2626).'),
+                                    ]),
+
+                                Textarea::make('footer_text')
+                                    ->label('Teks Footer Email')
+                                    ->rows(3)
+                                    ->required()
+                                    ->maxLength(600)
+                                    ->helperText('Catatan kaki di bagian bawah kotak email yang diterima vendor.'),
+                            ]),
                     ]),
             ]);
     }
@@ -169,25 +222,30 @@ class EmailGrsSettings extends Page implements HasForms
                 ->modalWidth('4xl')
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('Tutup')
-                ->modalContent(function (EmailTemplateRenderer $renderer) {
+                ->modalContent(function (EmailTemplateRenderer $renderer, ZimbraMailService $zimbra) {
                     $state = $this->form->getRawState();
+                    $layoutOverrides = $this->extractLayoutOverrides($state);
 
                     $grsPreview = $renderer->renderPreview(
                         'GRS',
                         (string) ($state['grs_subject'] ?? EmailTemplateRenderer::defaultGrsSubject()),
                         $renderer->normalizeRichContentToHtml($state['grs_body'] ?? null, EmailTemplateRenderer::defaultGrsBody()),
+                        $layoutOverrides,
                     );
 
                     $rdtvPreview = $renderer->renderPreview(
                         'RDTV',
                         (string) ($state['rdtv_subject'] ?? EmailTemplateRenderer::defaultRdtvSubject()),
                         $renderer->normalizeRichContentToHtml($state['rdtv_body'] ?? null, EmailTemplateRenderer::defaultRdtvBody()),
+                        $layoutOverrides,
                     );
 
                     return view('filament.pages.partials.email-template-preview', [
                         'grsPreview' => $grsPreview,
                         'rdtvPreview' => $rdtvPreview,
                         'ccEmails' => trim((string) ($state['cc_emails'] ?? EmailTemplateRenderer::DEFAULT_CC_EMAILS)),
+                        'senderName' => $layoutOverrides['sender_name'] ?: $renderer->getSenderName(),
+                        'senderAddress' => $zimbra->username(),
                     ]);
                 }),
 
@@ -226,6 +284,7 @@ class EmailGrsSettings extends Page implements HasForms
                     }
 
                     $state = $this->form->getRawState();
+                    $layoutOverrides = $this->extractLayoutOverrides($state);
                     $jenis = strtoupper((string) ($data['test_jenis'] ?? 'GRS')) === 'RDTV' ? 'RDTV' : 'GRS';
                     $subjectTpl = $jenis === 'RDTV'
                         ? (string) ($state['rdtv_subject'] ?? EmailTemplateRenderer::defaultRdtvSubject())
@@ -234,7 +293,7 @@ class EmailGrsSettings extends Page implements HasForms
                         ? $renderer->normalizeRichContentToHtml($state['rdtv_body'] ?? null, EmailTemplateRenderer::defaultRdtvBody())
                         : $renderer->normalizeRichContentToHtml($state['grs_body'] ?? null, EmailTemplateRenderer::defaultGrsBody());
 
-                    $preview = $renderer->renderPreview($jenis, $subjectTpl, $bodyTpl);
+                    $preview = $renderer->renderPreview($jenis, $subjectTpl, $bodyTpl, $layoutOverrides);
 
                     $tempFiles = [];
 
@@ -252,6 +311,7 @@ class EmailGrsSettings extends Page implements HasForms
                                 ['path' => $file1, 'filename' => "{$jenis}_{$docCode}.pdf"],
                                 ['path' => $file2, 'filename' => "Verifikasi_{$jenis}_{$docCode}.pdf"],
                             ],
+                            fromName: $layoutOverrides['sender_name'] ?: $renderer->getSenderName(),
                         );
 
                         Notification::make()
@@ -291,6 +351,13 @@ class EmailGrsSettings extends Page implements HasForms
                         'test_mode_enabled' => (bool) ($current['test_mode_enabled'] ?? false),
                         'test_mode_email' => (string) ($current['test_mode_email'] ?? ''),
                         'cc_emails' => (string) ($current['cc_emails'] ?? EmailTemplateRenderer::DEFAULT_CC_EMAILS),
+                        'sender_name' => EmailTemplateRenderer::defaultSenderName(),
+                        'header_title' => EmailTemplateRenderer::defaultHeaderTitle(),
+                        'header_badge_grs' => EmailTemplateRenderer::defaultHeaderBadgeGrs(),
+                        'header_badge_rdtv' => EmailTemplateRenderer::defaultHeaderBadgeRdtv(),
+                        'footer_text' => EmailTemplateRenderer::defaultFooterText(),
+                        'accent_color_grs' => EmailTemplateRenderer::defaultAccentColorGrs(),
+                        'accent_color_rdtv' => EmailTemplateRenderer::defaultAccentColorRdtv(),
                         'grs_subject' => EmailTemplateRenderer::defaultGrsSubject(),
                         'grs_body' => EmailTemplateRenderer::defaultGrsBody(),
                         'rdtv_subject' => EmailTemplateRenderer::defaultRdtvSubject(),
@@ -364,6 +431,23 @@ class EmailGrsSettings extends Page implements HasForms
             'test_mode_enabled' => $liveTestEnabled,
             'test_override_to' => $liveTestEnabled ? ($liveTestEmail !== '' ? $liveTestEmail : null) : null,
             'test_mode_unsaved' => $unsaved,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $state
+     * @return array<string, string>
+     */
+    private function extractLayoutOverrides(array $state): array
+    {
+        return [
+            'sender_name' => trim((string) ($state['sender_name'] ?? '')),
+            'header_title' => trim((string) ($state['header_title'] ?? '')),
+            'header_badge_grs' => trim((string) ($state['header_badge_grs'] ?? '')),
+            'header_badge_rdtv' => trim((string) ($state['header_badge_rdtv'] ?? '')),
+            'footer_text' => trim((string) ($state['footer_text'] ?? '')),
+            'accent_color_grs' => trim((string) ($state['accent_color_grs'] ?? '')),
+            'accent_color_rdtv' => trim((string) ($state['accent_color_rdtv'] ?? '')),
         ];
     }
 

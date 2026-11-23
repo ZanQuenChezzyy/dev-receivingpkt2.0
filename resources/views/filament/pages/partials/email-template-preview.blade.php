@@ -25,7 +25,8 @@
     {{-- Preview GRS --}}
     <div x-show="tab === 'GRS'" class="space-y-3">
         <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs dark:border-white/10 dark:bg-white/5">
-            <div><span class="font-semibold text-slate-500 dark:text-slate-400">Subjek:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ $grsPreview['subject'] }}</span></div>
+            <div><span class="font-semibold text-slate-500 dark:text-slate-400">Pengirim:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ $senderName ?? 'receiving jasa' }}</span> @if (filled($senderAddress ?? null)) <span class="font-mono text-slate-500 dark:text-slate-400">&lt;{{ $senderAddress }}&gt;</span> @endif</div>
+            <div class="mt-1"><span class="font-semibold text-slate-500 dark:text-slate-400">Subjek:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ $grsPreview['subject'] }}</span></div>
             <div class="mt-1"><span class="font-semibold text-slate-500 dark:text-slate-400">CC:</span> <span class="font-mono text-slate-700 dark:text-slate-200">{{ filled($ccEmails ?? null) ? $ccEmails : '(Tanpa CC)' }}</span></div>
             <div class="mt-2 flex flex-wrap items-center gap-2">
                 <span class="font-semibold text-slate-500 dark:text-slate-400">Lampiran (2 PDF):</span>
@@ -45,7 +46,8 @@
     {{-- Preview RDTV --}}
     <div x-show="tab === 'RDTV'" x-cloak class="space-y-3">
         <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs dark:border-white/10 dark:bg-white/5">
-            <div><span class="font-semibold text-slate-500 dark:text-slate-400">Subjek:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ $rdtvPreview['subject'] }}</span></div>
+            <div><span class="font-semibold text-slate-500 dark:text-slate-400">Pengirim:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ $senderName ?? 'receiving jasa' }}</span> @if (filled($senderAddress ?? null)) <span class="font-mono text-slate-500 dark:text-slate-400">&lt;{{ $senderAddress }}&gt;</span> @endif</div>
+            <div class="mt-1"><span class="font-semibold text-slate-500 dark:text-slate-400">Subjek:</span> <span class="font-semibold text-slate-900 dark:text-white">{{ $rdtvPreview['subject'] }}</span></div>
             <div class="mt-1"><span class="font-semibold text-slate-500 dark:text-slate-400">CC:</span> <span class="font-mono text-slate-700 dark:text-slate-200">{{ filled($ccEmails ?? null) ? $ccEmails : '(Tanpa CC)' }}</span></div>
             <div class="mt-2 flex flex-wrap items-center gap-2">
                 <span class="font-semibold text-slate-500 dark:text-slate-400">Lampiran (2 PDF):</span>
