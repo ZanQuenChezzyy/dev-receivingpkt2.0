@@ -267,12 +267,15 @@ class ScanWarehouseTransmittal extends Page implements HasForms
         $alreadyInThisCount = 0;
 
         foreach ($batchItems as $batchItem) {
-            // Check if already in this transmittal
+            // Check if already in this transmittal (per batch item; hanya cek detail_id untuk item legacy tanpa batch_item_id)
             $existsInCurrent = WarehouseTransmittalItem::where('warehouse_transmittal_id', $transmittal->id)
-                ->where(function ($q) use ($batchItem) {
+                ->where(function ($q) use ($batchItem): void {
                     $q->where('warehouse_delivery_batch_item_id', $batchItem->id);
                     if ($batchItem->delivery_order_receipt_detail_id) {
-                        $q->orWhere('delivery_order_receipt_detail_id', $batchItem->delivery_order_receipt_detail_id);
+                        $q->orWhere(function ($legacy) use ($batchItem): void {
+                            $legacy->whereNull('warehouse_delivery_batch_item_id')
+                                ->where('delivery_order_receipt_detail_id', $batchItem->delivery_order_receipt_detail_id);
+                        });
                     }
                 })
                 ->exists();

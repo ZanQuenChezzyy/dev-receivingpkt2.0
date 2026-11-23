@@ -1,0 +1,227 @@
+<?php
+
+use App\Filament\Pages\ScanWarehouseTransmittal;
+use App\Models\DeliveryOrderReceipt;
+use App\Models\DeliveryOrderReceiptDetail;
+use App\Models\PurchaseOrderIssued;
+use App\Models\User;
+use App\Models\WarehouseDeliveryBatch;
+use App\Models\WarehouseDeliveryBatchItem;
+use App\Models\WarehouseDestination;
+use App\Models\WarehouseTransmittalItem;
+use App\Services\SapMb51ImportService;
+use Filament\Facades\Filament;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
+
+beforeEach(function (): void {
+    if (! Schema::hasTable('users')) {
+        Schema::create('users', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('npk')->nullable();
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->boolean('is_active')->default(true);
+            $table->rememberToken();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('permissions')) {
+        $permissionMigration = include database_path('migrations/2026_05_15_101350_create_permission_tables.php');
+        $permissionMigration->up();
+    }
+
+    Role::firstOrCreate(['name' => 'Developer', 'guard_name' => 'web']);
+
+    if (! Schema::hasTable('purchase_order_issueds')) {
+        Schema::create('purchase_order_issueds', function (Blueprint $table): void {
+            $table->id();
+            $table->string('purchase_order_no')->nullable();
+            $table->integer('item_no')->default(10);
+            $table->decimal('qty_po', 15, 2)->default(1);
+            $table->decimal('net_price', 18, 2)->default(0);
+            $table->decimal('total_amount_in_lc', 18, 2)->default(0);
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('warehouse_destinations')) {
+        Schema::create('warehouse_destinations', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->unsignedBigInteger('pic_id')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('delivery_order_receipts')) {
+        Schema::create('delivery_order_receipts', function (Blueprint $table): void {
+            $table->id();
+            $table->string('delivery_order_no')->nullable();
+            $table->string('post_103')->nullable();
+            $table->string('status')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('delivery_order_receipt_details')) {
+        Schema::create('delivery_order_receipt_details', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_id');
+            $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
+            $table->integer('item_no')->default(10);
+            $table->decimal('quantity', 15, 2)->default(1);
+            $table->decimal('total_amount_snapshot', 18, 2)->default(0);
+            $table->unsignedBigInteger('warehouse_destination_id')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('warehouse_delivery_batches')) {
+        Schema::create('warehouse_delivery_batches', function (Blueprint $table): void {
+            $table->id();
+            $table->string('batch_title');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->unsignedInteger('total_items')->default(0);
+            $table->decimal('total_value', 18, 2)->default(0);
+            $table->string('file_name')->nullable();
+            $table->string('file_path')->nullable();
+            $table->string('status')->default('active');
+            $table->unsignedBigInteger('uploaded_by')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('warehouse_transmittals')) {
+        Schema::create('warehouse_transmittals', function (Blueprint $table): void {
+            $table->id();
+            $table->string('transmittal_no')->unique();
+            $table->unsignedBigInteger('warehouse_destination_id');
+            $table->date('tanggal');
+            $table->unsignedBigInteger('created_by');
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('warehouse_delivery_batch_items')) {
+        Schema::create('warehouse_delivery_batch_items', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('warehouse_delivery_batch_id');
+            $table->date('posting_date')->nullable();
+            $table->string('material_code')->nullable();
+            $table->string('description')->nullable();
+            $table->string('po_number')->nullable();
+            $table->string('item_no')->nullable();
+            $table->string('ref_doc_103')->nullable();
+            $table->string('mat_doc_105')->nullable();
+            $table->string('doc_year')->nullable();
+            $table->decimal('quantity', 15, 2)->default(1);
+            $table->string('uom')->default('EA');
+            $table->decimal('amount', 18, 2)->default(0);
+            $table->string('storage_text')->nullable();
+            $table->string('status')->default('pending');
+            $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
+            $table->unsignedBigInteger('delivery_order_receipt_detail_id')->nullable();
+            $table->unsignedBigInteger('warehouse_transmittal_id')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('warehouse_transmittal_items')) {
+        Schema::create('warehouse_transmittal_items', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('warehouse_transmittal_id');
+            $table->unsignedBigInteger('warehouse_delivery_batch_item_id')->nullable();
+            $table->unsignedBigInteger('delivery_order_receipt_detail_id')->nullable();
+            $table->timestamps();
+        });
+    }
+});
+
+test('SapMb51ImportService matches each item_no to its distinct DO detail even when details share one purchase_order_issued_id', function (): void {
+    $poi = PurchaseOrderIssued::query()->create([
+        'purchase_order_no' => '5300062704',
+        'item_no' => 10,
+    ]);
+
+    $do = DeliveryOrderReceipt::query()->create([
+        'delivery_order_no' => '62704',
+        'status' => 'GRS',
+    ]);
+
+    $d10 = DeliveryOrderReceiptDetail::query()->create(['delivery_order_receipt_id' => $do->id, 'purchase_order_issued_id' => $poi->id, 'item_no' => 10, 'quantity' => 1]);
+    $d20 = DeliveryOrderReceiptDetail::query()->create(['delivery_order_receipt_id' => $do->id, 'purchase_order_issued_id' => $poi->id, 'item_no' => 20, 'quantity' => 1]);
+    $d30 = DeliveryOrderReceiptDetail::query()->create(['delivery_order_receipt_id' => $do->id, 'purchase_order_issued_id' => $poi->id, 'item_no' => 30, 'quantity' => 1]);
+    $d40 = DeliveryOrderReceiptDetail::query()->create(['delivery_order_receipt_id' => $do->id, 'purchase_order_issued_id' => $poi->id, 'item_no' => 40, 'quantity' => 1]);
+
+    $parsed = [
+        ['po_number' => '5300062704', 'item_no' => '10'],
+        ['po_number' => '5300062704', 'item_no' => '20'],
+        ['po_number' => '5300062704', 'item_no' => '30'],
+        ['po_number' => '5300062704', 'item_no' => '40'],
+    ];
+
+    $service = app(SapMb51ImportService::class);
+    $lookups = $service->buildDeliveryOrderLookup($parsed);
+
+    expect($service->matchFast($parsed[0], $lookups)['delivery_order_receipt_detail_id'])->toBe($d10->id)
+        ->and($service->matchFast($parsed[1], $lookups)['delivery_order_receipt_detail_id'])->toBe($d20->id)
+        ->and($service->matchFast($parsed[2], $lookups)['delivery_order_receipt_detail_id'])->toBe($d30->id)
+        ->and($service->matchFast($parsed[3], $lookups)['delivery_order_receipt_detail_id'])->toBe($d40->id);
+});
+
+test('ScanWarehouseTransmittal marks ALL items of a multi-item GRS 105 as delivered even if detail_id overlaps', function (): void {
+    $user = User::query()->create([
+        'name' => 'Admin Gudang',
+        'npk' => '2100009',
+        'email' => 'gudang@pupukkaltim.com',
+        'password' => bcrypt('password'),
+        'is_active' => true,
+    ]);
+    $user->assignRole('Developer');
+
+    $this->actingAs($user);
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+    $warehouse = WarehouseDestination::query()->create(['name' => 'Gudang 1']);
+    $do = DeliveryOrderReceipt::query()->create(['delivery_order_no' => '62704', 'status' => 'GRS']);
+    $sharedDetail = DeliveryOrderReceiptDetail::query()->create(['delivery_order_receipt_id' => $do->id, 'item_no' => 40, 'quantity' => 1]);
+
+    $batch = WarehouseDeliveryBatch::query()->create([
+        'batch_title' => 'Periode 07 Nov 2026',
+        'start_date' => '2026-11-07',
+        'end_date' => '2026-11-07',
+        'total_items' => 4,
+        'uploaded_by' => $user->id,
+    ]);
+
+    foreach ([10, 20, 30, 40] as $itm) {
+        WarehouseDeliveryBatchItem::query()->create([
+            'warehouse_delivery_batch_id' => $batch->id,
+            'posting_date' => '2026-04-01',
+            'po_number' => '5300062704',
+            'item_no' => (string) $itm,
+            'mat_doc_105' => '5007150563',
+            'description' => 'GEARCASE-MOTOR ITEM '.$itm,
+            'status' => 'pending',
+            'delivery_order_receipt_id' => $do->id,
+            // Simulasi data lama di mana seluruh item sempat mendapat detail_id yang sama
+            'delivery_order_receipt_detail_id' => $sharedDetail->id,
+        ]);
+    }
+
+    Livewire::test(ScanWarehouseTransmittal::class)
+        ->fillForm([
+            'warehouse_destination_id' => $warehouse->id,
+        ])
+        ->call('processScan', '5007150563');
+
+    expect(WarehouseDeliveryBatchItem::query()->where('mat_doc_105', '5007150563')->where('status', 'delivered')->count())->toBe(4)
+        ->and(WarehouseTransmittalItem::query()->count())->toBe(4);
+});

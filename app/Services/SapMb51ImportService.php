@@ -195,24 +195,36 @@ class SapMb51ImportService
 
             if ($pois->isNotEmpty()) {
                 $poiIds = $pois->pluck('id')->toArray();
-                $details = DeliveryOrderReceiptDetail::whereIn('purchase_order_issued_id', $poiIds)
-                    ->select('id', 'delivery_order_receipt_id', 'purchase_order_issued_id')
+                $detailsByPoi = DeliveryOrderReceiptDetail::whereIn('purchase_order_issued_id', $poiIds)
+                    ->select('id', 'delivery_order_receipt_id', 'purchase_order_issued_id', 'item_no')
                     ->get()
-                    ->keyBy('purchase_order_issued_id');
+                    ->groupBy('purchase_order_issued_id');
 
                 foreach ($pois as $poi) {
-                    $detail = $details->get($poi->id);
-                    if ($detail) {
+                    $matchedDetails = $detailsByPoi->get($poi->id);
+                    if (! $matchedDetails || $matchedDetails->isEmpty()) {
+                        continue;
+                    }
+
+                    foreach ($matchedDetails as $detail) {
                         $matchData = [
                             'delivery_order_receipt_id' => $detail->delivery_order_receipt_id,
                             'delivery_order_receipt_detail_id' => $detail->id,
                         ];
 
-                        $itemKey = $poi->purchase_order_no.'_'.((int) $poi->item_no);
-                        $poiExactMap[$itemKey] = $matchData;
+                        $detailItemNo = (int) ($detail->item_no ?: $poi->item_no);
+                        if ($detailItemNo > 0) {
+                            $itemKey = $poi->purchase_order_no.'_'.$detailItemNo;
+                            if (! isset($poiExactMap[$itemKey])) {
+                                $poiExactMap[$itemKey] = $matchData;
+                            }
+                        }
 
                         if (! isset($poiPoMap[$poi->purchase_order_no])) {
-                            $poiPoMap[$poi->purchase_order_no] = $matchData;
+                            $poiPoMap[$poi->purchase_order_no] = [
+                                'delivery_order_receipt_id' => $detail->delivery_order_receipt_id,
+                                'delivery_order_receipt_detail_id' => null,
+                            ];
                         }
                     }
                 }
@@ -223,14 +235,21 @@ class SapMb51ImportService
         $refDoc103Map = [];
         if (! empty($refDocs103)) {
             $doReceipts103 = DeliveryOrderReceipt::whereIn('post_103', $refDocs103)
-                ->with(['deliveryOrderReceiptDetails' => fn ($q) => $q->select('id', 'delivery_order_receipt_id')])
+                ->with(['deliveryOrderReceiptDetails' => fn ($q) => $q->select('id', 'delivery_order_receipt_id', 'item_no')])
                 ->get();
 
             foreach ($doReceipts103 as $do) {
-                $firstDetail = $do->deliveryOrderReceiptDetails->first();
+                $itemDetails = [];
+                foreach ($do->deliveryOrderReceiptDetails as $d) {
+                    if ((int) $d->item_no > 0 && ! isset($itemDetails[(int) $d->item_no])) {
+                        $itemDetails[(int) $d->item_no] = $d->id;
+                    }
+                }
+
                 $refDoc103Map[$do->post_103] = [
                     'delivery_order_receipt_id' => $do->id,
-                    'delivery_order_receipt_detail_id' => $firstDetail?->id,
+                    'delivery_order_receipt_detail_id' => null,
+                    'details_by_item' => $itemDetails,
                 ];
             }
         }
@@ -239,14 +258,21 @@ class SapMb51ImportService
         $referenceDoMap = [];
         if (! empty($referenceDoNos)) {
             $doReceiptsRef = DeliveryOrderReceipt::whereIn('delivery_order_no', $referenceDoNos)
-                ->with(['deliveryOrderReceiptDetails' => fn ($q) => $q->select('id', 'delivery_order_receipt_id')])
+                ->with(['deliveryOrderReceiptDetails' => fn ($q) => $q->select('id', 'delivery_order_receipt_id', 'item_no')])
                 ->get();
 
             foreach ($doReceiptsRef as $do) {
-                $firstDetail = $do->deliveryOrderReceiptDetails->first();
+                $itemDetails = [];
+                foreach ($do->deliveryOrderReceiptDetails as $d) {
+                    if ((int) $d->item_no > 0 && ! isset($itemDetails[(int) $d->item_no])) {
+                        $itemDetails[(int) $d->item_no] = $d->id;
+                    }
+                }
+
                 $referenceDoMap[$do->delivery_order_no] = [
                     'delivery_order_receipt_id' => $do->id,
-                    'delivery_order_receipt_detail_id' => $firstDetail?->id,
+                    'delivery_order_receipt_detail_id' => null,
+                    'details_by_item' => $itemDetails,
                 ];
             }
         }
@@ -290,12 +316,22 @@ class SapMb51ImportService
 
         // Prioritas 2: Cocokkan Kode 103 ke DeliveryOrderReceipt.post_103
         if ($refDoc103 !== '' && isset($lookups['ref_103'][$refDoc103])) {
-            return $lookups['ref_103'][$refDoc103];
+            $entry = $lookups['ref_103'][$refDoc103];
+
+            return [
+                'delivery_order_receipt_id' => $entry['delivery_order_receipt_id'],
+                'delivery_order_receipt_detail_id' => $itemNo > 0 ? ($entry['details_by_item'][$itemNo] ?? null) : null,
+            ];
         }
 
         // Prioritas 3: Cocokkan Reference DO ke DeliveryOrderReceipt.delivery_order_no
         if ($referenceDoNo !== '' && isset($lookups['ref_do'][$referenceDoNo])) {
-            return $lookups['ref_do'][$referenceDoNo];
+            $entry = $lookups['ref_do'][$referenceDoNo];
+
+            return [
+                'delivery_order_receipt_id' => $entry['delivery_order_receipt_id'],
+                'delivery_order_receipt_detail_id' => $itemNo > 0 ? ($entry['details_by_item'][$itemNo] ?? null) : null,
+            ];
         }
 
         return null;

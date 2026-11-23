@@ -112,88 +112,118 @@ class NonStockAgingMonitoring extends Page implements HasTable
         $this->resetTable();
     }
 
+    public function deleteSnapshot(int $snapshotId): void
+    {
+        $snapshot = NonStockAgingSnapshot::query()->find($snapshotId);
+
+        if ($snapshot === null) {
+            Notification::make()
+                ->title('Snapshot tidak ditemukan')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $label = $snapshot->label;
+        $snapshot->delete();
+        $this->refreshCounter++;
+
+        Notification::make()
+            ->title('Snapshot dihapus')
+            ->body("Snapshot \"{$label}\" berhasil dihapus.")
+            ->success()
+            ->send();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            ImportNonStockAgingAction::make()
-                ->after(function (): void {
-                    $this->refreshCounter++;
-                }),
+            ActionGroup::make([
+                ImportNonStockAgingAction::make()
+                    ->after(function (): void {
+                        $this->refreshCounter++;
+                    }),
 
-            Action::make('syncWebDo')
-                ->label('Sinkronkan DO & MIR')
-                ->icon('heroicon-o-arrow-path')
-                ->color('info')
-                ->action(function (NonStockAgingService $service): void {
-                    $stats = $service->syncFromDeliveryOrderDetails();
-                    $this->refreshCounter++;
+                Action::make('syncWebDo')
+                    ->label('Sinkronkan DO & MIR')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('info')
+                    ->action(function (NonStockAgingService $service): void {
+                        $stats = $service->syncFromDeliveryOrderDetails();
+                        $this->refreshCounter++;
 
-                    Notification::make()
-                        ->title('Sinkronisasi Web 2.0 selesai')
-                        ->body("Baru: {$stats['created']} | Diperbarui: {$stats['updated']} | Auto-Close MIR: {$stats['auto_closed']} | Unit Terpetakan: {$stats['mapped']}.")
-                        ->success()
-                        ->send();
-                }),
-
-            Action::make('sendWeeklyDigestManual')
-                ->label('Kirim Rekap Mingguan (Email)')
-                ->icon('heroicon-o-envelope')
-                ->color('warning')
-                ->modalHeading('Kirim Rekap Mingguan per Unit Peminta (Manual)')
-                ->modalDescription('Pilih Unit Peminta untuk mengirimkan rekap daftar material Non-Stock/PD berstatus Belum Diambil melalui Zimbra Email.')
-                ->modalSubmitActionLabel('Kirim Email Sekarang')
-                ->schema([
-                    Select::make('requesting_unit_id')
-                        ->label('Unit Peminta')
-                        ->options(fn (): array => RequestingUnit::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
-                        ->searchable()
-                        ->preload()
-                        ->required(),
-                    TextInput::make('custom_to')
-                        ->label('Email Tujuan Tambahan / Pengganti (Opsional)')
-                        ->placeholder('Kosongkan untuk memakai email PIC pada Master Unit Peminta')
-                        ->helperText('Pisahkan dengan koma jika lebih dari satu alamat email.'),
-                    Textarea::make('additional_note')
-                        ->label('Catatan Pengantar (Opsional)')
-                        ->rows(3)
-                        ->placeholder('Contoh: Rekap mingguan hari Senin, mohon penjadwalan pengambilan di area Receiving.'),
-                ])
-                ->action(function (array $data, NonStockAgingMailDispatcher $dispatcher): void {
-                    $controls = $this->applyMrpScope(NonStockAgingControl::query())
-                        ->where('requesting_unit_id', (int) $data['requesting_unit_id'])
-                        ->whereIn('operational_status', [
-                            AgingOperationalStatus::BelumDiambil->value,
-                            AgingOperationalStatus::ScheduledHold->value,
-                        ])
-                        ->get();
-
-                    if ($controls->isEmpty()) {
                         Notification::make()
-                            ->title('Tidak ada item outstanding')
-                            ->body('Unit terpilih tidak memiliki item Belum Diambil pada cakupan MRP saat ini.')
-                            ->warning()
+                            ->title('Sinkronisasi Web 2.0 selesai')
+                            ->body("Baru: {$stats['created']} | Diperbarui: {$stats['updated']} | Auto-Close MIR: {$stats['auto_closed']} | Unit Terpetakan: {$stats['mapped']}.")
+                            ->success()
                             ->send();
+                    }),
 
-                        return;
-                    }
+                Action::make('sendWeeklyDigestManual')
+                    ->label('Kirim Rekap Mingguan (Email)')
+                    ->icon('heroicon-o-envelope')
+                    ->color('warning')
+                    ->modalHeading('Kirim Rekap Mingguan per Unit Peminta (Manual)')
+                    ->modalDescription('Pilih Unit Peminta untuk mengirimkan rekap daftar material Non-Stock/PD berstatus Belum Diambil melalui Zimbra Email.')
+                    ->modalSubmitActionLabel('Kirim Email Sekarang')
+                    ->schema([
+                        Select::make('requesting_unit_id')
+                            ->label('Unit Peminta')
+                            ->options(fn (): array => RequestingUnit::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
+                            ->searchable()
+                            ->preload()
+                            ->required(),
+                        TextInput::make('custom_to')
+                            ->label('Email Tujuan Tambahan / Pengganti (Opsional)')
+                            ->placeholder('Kosongkan untuk memakai email PIC pada Master Unit Peminta')
+                            ->helperText('Pisahkan dengan koma jika lebih dari satu alamat email.'),
+                        Textarea::make('additional_note')
+                            ->label('Catatan Pengantar (Opsional)')
+                            ->rows(3)
+                            ->placeholder('Contoh: Rekap mingguan hari Senin, mohon penjadwalan pengambilan di area Receiving.'),
+                    ])
+                    ->action(function (array $data, NonStockAgingMailDispatcher $dispatcher): void {
+                        $controls = $this->applyMrpScope(NonStockAgingControl::query())
+                            ->where('requesting_unit_id', (int) $data['requesting_unit_id'])
+                            ->whereIn('operational_status', [
+                                AgingOperationalStatus::BelumDiambil->value,
+                                AgingOperationalStatus::ScheduledHold->value,
+                            ])
+                            ->get();
 
-                    $res = $dispatcher->sendPicReminder(
-                        controls: $controls,
-                        mode: 'weekly_digest',
-                        additionalNote: $data['additional_note'] ?? null,
-                        customTo: $data['custom_to'] ?? null,
-                        actorId: Auth::id() !== null ? (int) Auth::id() : null,
-                    );
+                        if ($controls->isEmpty()) {
+                            Notification::make()
+                                ->title('Tidak ada item outstanding')
+                                ->body('Unit terpilih tidak memiliki item Belum Diambil pada cakupan MRP saat ini.')
+                                ->warning()
+                                ->send();
 
-                    $this->refreshCounter++;
+                            return;
+                        }
 
-                    Notification::make()
-                        ->title($res['status'] === 'sent' ? 'Rekap Mingguan Terkirim' : 'Pengiriman Rekap Ditahan')
-                        ->body($res['message'])
-                        ->status($res['status'] === 'sent' ? 'success' : ($res['status'] === 'skipped' ? 'warning' : 'danger'))
-                        ->persistent()
-                        ->send();
-                }),
+                        $res = $dispatcher->sendPicReminder(
+                            controls: $controls,
+                            mode: 'weekly_digest',
+                            additionalNote: $data['additional_note'] ?? null,
+                            customTo: $data['custom_to'] ?? null,
+                            actorId: Auth::id() !== null ? (int) Auth::id() : null,
+                        );
+
+                        $this->refreshCounter++;
+
+                        Notification::make()
+                            ->title($res['status'] === 'sent' ? 'Rekap Mingguan Terkirim' : 'Pengiriman Rekap Ditahan')
+                            ->body($res['message'])
+                            ->status($res['status'] === 'sent' ? 'success' : ($res['status'] === 'skipped' ? 'warning' : 'danger'))
+                            ->persistent()
+                            ->send();
+                    }),
+            ])
+                ->label('Kelola Data')
+                ->icon('heroicon-o-squares-plus')
+                ->color('primary')
+                ->button(),
 
             ActionGroup::make([
                 Action::make('exportExcel')
@@ -210,15 +240,8 @@ class NonStockAgingMonitoring extends Page implements HasTable
                         mrpScope: $this->mrpScope,
                         activeTab: $this->activeTab,
                     )),
-            ])
-                ->label('Ekspor Register')
-                ->icon('heroicon-o-arrow-down-tray')
-                ->color('gray')
-                ->button(),
-
-            ActionGroup::make([
                 Action::make('captureSnapshot')
-                    ->label('Ambil Snapshot Baru')
+                    ->label('Ambil Snapshot KPI Baru')
                     ->icon('heroicon-o-camera')
                     ->modalHeading('Simpan Snapshot KPI Aging')
                     ->modalDescription('Merekam posisi item, nilai tertahan (IDR), distribusi 4 zona, dan Pareto unit sebagai patokan evaluasi Before vs. After (8 Minggu).')
@@ -250,9 +273,9 @@ class NonStockAgingMonitoring extends Page implements HasTable
                             ->send();
                     }),
                 Action::make('viewSnapshots')
-                    ->label('Evaluasi Before vs. After')
+                    ->label('Evaluasi Before vs. After & Kelola Snapshot')
                     ->icon('heroicon-o-chart-bar-square')
-                    ->modalHeading('Evaluasi KPI 8 Minggu (Before vs. After)')
+                    ->modalHeading('Evaluasi KPI 8 Minggu & Riwayat Snapshot')
                     ->modalWidth('5xl')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
@@ -275,7 +298,7 @@ class NonStockAgingMonitoring extends Page implements HasTable
                         ]);
                     }),
             ])
-                ->label('Snapshot KPI')
+                ->label('Laporan & KPI')
                 ->icon('heroicon-o-chart-bar')
                 ->color('gray')
                 ->button(),

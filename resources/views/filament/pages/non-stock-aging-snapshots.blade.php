@@ -111,6 +111,7 @@
                             <th class="px-3 py-2 text-center">Critical (&gt;60H)</th>
                             <th class="px-3 py-2 text-center">On Check</th>
                             <th class="px-3 py-2 text-right">Follow-Up %</th>
+                            <th class="px-3 py-2 text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -124,6 +125,16 @@
                                 <td class="px-3 py-2 text-center text-red-600 font-semibold">{{ $snap->critical_count }}</td>
                                 <td class="px-3 py-2 text-center text-sky-600">{{ $snap->on_check_items }}</td>
                                 <td class="px-3 py-2 text-right">{{ number_format($snap->warning_critical_followed_up_percentage, 1, ',', '.') }}%</td>
+                                <td class="px-3 py-2 text-right">
+                                    <button
+                                        type="button"
+                                        wire:click="deleteSnapshot({{ $snap->id }})"
+                                        wire:confirm="Yakin ingin menghapus snapshot '{{ addslashes($snap->label) }}'?"
+                                        class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25"
+                                    >
+                                        Hapus
+                                    </button>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

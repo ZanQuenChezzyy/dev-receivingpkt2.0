@@ -280,7 +280,14 @@ test('Filament NonStockAgingMonitoring executes captureSnapshot and export actio
         ])
         ->assertHasNoActionErrors();
 
-    expect(NonStockAgingSnapshot::query()->where('label', 'Baseline W1 (23 Nov 2026)')->exists())->toBeTrue();
+    $snapshot = NonStockAgingSnapshot::query()->where('label', 'Baseline W1 (23 Nov 2026)')->first();
+    expect($snapshot)->not->toBeNull();
+
+    Livewire::test(NonStockAgingMonitoring::class)
+        ->call('deleteSnapshot', $snapshot->id)
+        ->assertHasNoErrors();
+
+    expect(NonStockAgingSnapshot::query()->where('id', $snapshot->id)->exists())->toBeFalse();
 
     Livewire::test(NonStockAgingMonitoring::class)
         ->callAction('exportCsv')
