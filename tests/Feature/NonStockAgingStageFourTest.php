@@ -244,7 +244,7 @@ test('exports standardized CSV with UTF-8 BOM and 2-sheet Excel XLSX workbook ac
         $ssXml = (string) $zip->getFromName('xl/sharedStrings.xml');
         $zip->close();
 
-        expect($wbXml)->toContain('Ringkasan KPI &amp; Pareto')
+        expect($wbXml)->toContain('Ringkasan &amp; Rekap Unit')
             ->and($wbXml)->toContain('Register Monitoring')
             ->and($ssXml)->toContain('5300055468-10')
             ->and($ssXml)->toContain('CONTROL VALVE EXPORT TEST')

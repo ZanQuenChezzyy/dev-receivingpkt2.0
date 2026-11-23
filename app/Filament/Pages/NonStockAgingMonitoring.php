@@ -84,7 +84,7 @@ class NonStockAgingMonitoring extends Page implements HasTable
 
     public function getSubheading(): ?string
     {
-        return __('Pengendalian umur tunggu material pasca-GRS, pemetaan PIC unit peminta, serta pengiriman reminder & eskalasi berjenjang.');
+        return null;
     }
 
     public function mount(): void
@@ -227,33 +227,33 @@ class NonStockAgingMonitoring extends Page implements HasTable
 
             ActionGroup::make([
                 Action::make('exportExcel')
-                    ->label('Ekspor Excel (.xlsx) — KPI & Register')
+                    ->label('Ekspor Excel (.xlsx)')
                     ->icon('heroicon-o-document-arrow-down')
                     ->action(fn (NonStockAgingReportService $reportService) => $reportService->exportRegisterXlsx(
                         mrpScope: $this->mrpScope,
                         activeTab: $this->activeTab,
                     )),
                 Action::make('exportCsv')
-                    ->label('Ekspor CSV (.csv) — Register Monitoring')
+                    ->label('Ekspor CSV (.csv)')
                     ->icon('heroicon-o-table-cells')
                     ->action(fn (NonStockAgingReportService $reportService) => $reportService->exportRegisterCsv(
                         mrpScope: $this->mrpScope,
                         activeTab: $this->activeTab,
                     )),
                 Action::make('captureSnapshot')
-                    ->label('Ambil Snapshot KPI Baru')
+                    ->label('Ambil Snapshot')
                     ->icon('heroicon-o-camera')
-                    ->modalHeading('Simpan Snapshot KPI Aging')
-                    ->modalDescription('Merekam posisi item, nilai tertahan (IDR), distribusi 4 zona, dan Pareto unit sebagai patokan evaluasi Before vs. After (8 Minggu).')
+                    ->modalHeading('Simpan Snapshot')
+                    ->modalDescription('Simpan rekap jumlah item, nilai tertahan, dan rincian unit saat ini.')
                     ->modalSubmitActionLabel('Simpan Snapshot')
                     ->schema([
                         TextInput::make('label')
                             ->label('Label Snapshot')
                             ->required()
                             ->maxLength(120)
-                            ->placeholder('Contoh: Baseline W1 (23 Nov 2026) atau Mid-Review W5'),
+                            ->placeholder('Contoh: Snapshot November 2026'),
                         Toggle::make('pilot_only')
-                            ->label('Khusus Unit Pilot Pareto')
+                            ->label('Khusus Unit Prioritas')
                             ->default(false),
                     ])
                     ->action(function (array $data, NonStockAgingReportService $reportService): void {
@@ -267,15 +267,15 @@ class NonStockAgingMonitoring extends Page implements HasTable
                         $this->refreshCounter++;
 
                         Notification::make()
-                            ->title('Snapshot KPI tersimpan')
+                            ->title('Snapshot tersimpan')
                             ->body("{$snap->label}: {$snap->total_outstanding_items} item ({$snap->total_outstanding_po} PO) senilai Rp ".number_format($snap->total_outstanding_value, 0, ',', '.'))
                             ->success()
                             ->send();
                     }),
                 Action::make('viewSnapshots')
-                    ->label('Evaluasi Before vs. After & Kelola Snapshot')
+                    ->label('Riwayat & Perbandingan Snapshot')
                     ->icon('heroicon-o-chart-bar-square')
-                    ->modalHeading('Evaluasi KPI 8 Minggu & Riwayat Snapshot')
+                    ->modalHeading('Riwayat & Perbandingan Snapshot')
                     ->modalWidth('5xl')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Tutup')
@@ -298,7 +298,7 @@ class NonStockAgingMonitoring extends Page implements HasTable
                         ]);
                     }),
             ])
-                ->label('Laporan & KPI')
+                ->label('Laporan & Snapshot')
                 ->icon('heroicon-o-chart-bar')
                 ->color('gray')
                 ->button(),
@@ -714,7 +714,7 @@ class NonStockAgingMonitoring extends Page implements HasTable
                                 ->required()
                                 ->rows(2),
                             Toggle::make('set_scheduled_hold')
-                                ->label('Tandai sebagai Scheduled Hold (dipisah dari Unattended Aging)')
+                                ->label('Tandai sebagai Scheduled Hold')
                                 ->default(true),
                             Toggle::make('send_avp_email')
                                 ->label('Sekaligus kirim email konfirmasi ke AVP Unit Peminta (Zimbra)')

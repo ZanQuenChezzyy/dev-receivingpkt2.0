@@ -6,7 +6,7 @@
     @if ($snapshots->isEmpty())
         <div class="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
             Belum ada snapshot yang tersimpan untuk cakupan <strong>{{ $mrpScope }}</strong>.
-            Gunakan tombol <strong>Ambil Snapshot Baru</strong> untuk menyimpan Baseline W1 sebelum memulai pilot.
+            Gunakan menu <strong>Ambil Snapshot</strong> untuk menyimpan data awal.
         </div>
     @else
         @if ($comparison !== null)
@@ -14,7 +14,7 @@
                 <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div>
                         <h4 class="text-sm font-bold text-gray-900 dark:text-white">
-                            Evaluasi Before vs. After — {{ $comparison['baseline']->label }} vs. {{ $comparison['evaluation']->label }}
+                            Perbandingan Snapshot — {{ $comparison['baseline']->label }} vs. {{ $comparison['evaluation']->label }}
                         </h4>
                         <p class="text-xs text-gray-600 dark:text-gray-300">
                             {{ $comparison['baseline']->snapshot_date->format('d M Y') }} → {{ $comparison['evaluation']->snapshot_date->format('d M Y') }}
@@ -24,35 +24,32 @@
 
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
-                        <div class="text-[11px] font-semibold uppercase text-gray-500">Penurunan Item (Target ≥ 25%)</div>
-                        <div class="mt-1 text-xl font-bold {{ $comparison['item_target_met'] ? 'text-emerald-600' : 'text-amber-600' }}">
+                        <div class="text-[11px] font-semibold uppercase text-gray-500">Perubahan Item</div>
+                        <div class="mt-1 text-xl font-bold {{ $comparison['item_reduction_pct'] > 0 ? 'text-emerald-600' : 'text-amber-600' }}">
                             {{ $comparison['item_reduction_pct'] >= 0 ? '-' : '+' }}{{ abs($comparison['item_reduction_pct']) }}%
                         </div>
                         <div class="text-xs text-gray-600 dark:text-gray-300">
                             {{ $comparison['baseline']->total_outstanding_items }} → {{ $comparison['evaluation']->total_outstanding_items }} item
-                            ({{ $comparison['item_target_met'] ? 'Target Tercapai' : 'Dalam Progres' }})
                         </div>
                     </div>
 
                     <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
-                        <div class="text-[11px] font-semibold uppercase text-gray-500">Penurunan Nilai (Target ≥ 20%)</div>
-                        <div class="mt-1 text-xl font-bold {{ $comparison['value_target_met'] ? 'text-emerald-600' : 'text-amber-600' }}">
+                        <div class="text-[11px] font-semibold uppercase text-gray-500">Perubahan Nilai</div>
+                        <div class="mt-1 text-xl font-bold {{ $comparison['value_reduction_pct'] > 0 ? 'text-emerald-600' : 'text-amber-600' }}">
                             {{ $comparison['value_reduction_pct'] >= 0 ? '-' : '+' }}{{ abs($comparison['value_reduction_pct']) }}%
                         </div>
                         <div class="text-xs text-gray-600 dark:text-gray-300">
                             {{ $fmt($comparison['baseline']->total_outstanding_value) }} → {{ $fmt($comparison['evaluation']->total_outstanding_value) }}
-                            ({{ $comparison['value_target_met'] ? 'Target Tercapai' : 'Dalam Progres' }})
                         </div>
                     </div>
 
                     <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
-                        <div class="text-[11px] font-semibold uppercase text-gray-500">Follow-Up Warning & Critical</div>
+                        <div class="text-[11px] font-semibold uppercase text-gray-500">Follow-Up (&gt; 30 Hari)</div>
                         <div class="mt-1 text-xl font-bold {{ $comparison['followup_target_met'] ? 'text-emerald-600' : 'text-amber-600' }}">
                             {{ number_format($comparison['evaluation']->warning_critical_followed_up_percentage, 1, ',', '.') }}%
                         </div>
                         <div class="text-xs text-gray-600 dark:text-gray-300">
-                            Baseline: {{ number_format($comparison['baseline']->warning_critical_followed_up_percentage, 1, ',', '.') }}%
-                            (Target 100%)
+                            Sebelumnya: {{ number_format($comparison['baseline']->warning_critical_followed_up_percentage, 1, ',', '.') }}%
                         </div>
                     </div>
                 </div>

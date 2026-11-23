@@ -413,12 +413,12 @@ test('Dashboard widget, Overview widget, and NonStockAgingMonitoring page render
 
     Livewire::test(DashboardNonStockAgingWidget::class)
         ->assertSee('Non-Stock Belum Diambil')
-        ->assertSee('Zona Critical (> 60 Hari)')
-        ->assertSee('Status On Check');
+        ->assertSee('Critical (> 60 Hari)')
+        ->assertSee('On Check');
 
-    // 2. Overview widget merender KPI, 4 Zona & Pareto
+    // 2. Overview widget merender ringkasan, 4 Zona & Rekap per Unit
     Livewire::test(NonStockAgingOverviewWidget::class, ['mrpScope' => 'NONSTOCK'])
-        ->assertSee('Analisa Pareto 80/20')
+        ->assertSee('Rekap per Unit Peminta')
         ->assertSee('Rendal TA P5');
 
     // 3. Halaman NonStockAgingMonitoring merender tabel & aksi operasional

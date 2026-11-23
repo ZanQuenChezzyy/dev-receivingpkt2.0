@@ -33,8 +33,7 @@ class RequestingUnitForm
                         ]),
                         Grid::make(2)->schema([
                             Toggle::make('is_pilot')
-                                ->label('Unit Pilot Pareto (Prioritas 80/20)')
-                                ->helperText('Tandai jika unit ini termasuk gelombang pilot pengendalian aging.')
+                                ->label('Unit Prioritas')
                                 ->default(false),
                             Toggle::make('is_active')
                                 ->label('Aktif')

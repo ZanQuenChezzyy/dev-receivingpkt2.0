@@ -22,12 +22,12 @@ class DashboardNonStockAgingWidget extends BaseWidget
 
     protected function getHeading(): ?string
     {
-        return 'Ringkasan Aging Material Non-Stock (LEAD 2026)';
+        return 'Aging Material Non-Stock';
     }
 
     protected function getDescription(): ?string
     {
-        return 'Pantauan material Non-Stock tertahan di area Receiving. Klik kartu untuk membuka rincian pada menu Monitoring Receiving.';
+        return null;
     }
 
     protected function getStats(): array
@@ -42,7 +42,7 @@ class DashboardNonStockAgingWidget extends BaseWidget
         if ($summary['baseline_comparison'] !== null) {
             $cmp = $summary['baseline_comparison'];
             $sign = $cmp['item_reduction_pct'] >= 0 ? 'Turun ' : 'Naik ';
-            $baselineDesc .= ' • '.$sign.abs($cmp['item_reduction_pct']).'% vs Baseline';
+            $baselineDesc .= ' • '.$sign.abs($cmp['item_reduction_pct']).'%';
         }
 
         $critical = $summary['zones']['Critical'];
@@ -55,20 +55,20 @@ class DashboardNonStockAgingWidget extends BaseWidget
                 ->color($summary['outstanding_items'] > 0 ? 'primary' : 'success')
                 ->url(NonStockAgingMonitoring::getUrl(['activeTab' => 'belum_diambil'])),
 
-            Stat::make('Zona Critical (> 60 Hari)', number_format($critical['items'], 0, ',', '.').' item')
-                ->description($this->formatRupiahShort($critical['value']).' • '.$critical['po_count'].' PO (Eskalasi VP)')
+            Stat::make('Critical (> 60 Hari)', number_format($critical['items'], 0, ',', '.').' item')
+                ->description($this->formatRupiahShort($critical['value']).' • '.$critical['po_count'].' PO')
                 ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color($critical['items'] > 0 ? 'danger' : 'success')
                 ->url(NonStockAgingMonitoring::getUrl(['activeTab' => 'critical'])),
 
-            Stat::make('Zona Warning (31–60 Hari)', number_format($warning['items'], 0, ',', '.').' item')
-                ->description($this->formatRupiahShort($warning['value']).' • '.$warning['po_count'].' PO (Konfirmasi AVP)')
+            Stat::make('Warning (31–60 Hari)', number_format($warning['items'], 0, ',', '.').' item')
+                ->description($this->formatRupiahShort($warning['value']).' • '.$warning['po_count'].' PO')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color($warning['items'] > 0 ? 'warning' : 'success')
                 ->url(NonStockAgingMonitoring::getUrl(['activeTab' => 'warning'])),
 
-            Stat::make('Status On Check (Cek Fisik)', number_format($summary['on_check_items'], 0, ',', '.').' item')
-                ->description($this->formatRupiahShort($summary['on_check_value']).' • '.$summary['on_check_po'].' PO menunggu verifikasi')
+            Stat::make('On Check', number_format($summary['on_check_items'], 0, ',', '.').' item')
+                ->description($this->formatRupiahShort($summary['on_check_value']).' • '.$summary['on_check_po'].' PO')
                 ->descriptionIcon('heroicon-m-clipboard-document-check')
                 ->color($summary['on_check_items'] > 0 ? 'info' : 'gray')
                 ->url(NonStockAgingMonitoring::getUrl(['activeTab' => 'on_check'])),

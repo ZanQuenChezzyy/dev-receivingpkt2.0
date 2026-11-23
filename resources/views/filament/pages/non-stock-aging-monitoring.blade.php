@@ -3,11 +3,11 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-1.5">
             @foreach ([
-                'NONSTOCK' => 'NONSTOCK (Fokus LEAD 2026)',
+                'NONSTOCK' => 'NONSTOCK',
                 'PD' => 'PD',
                 'NONSTOCK_PD' => 'NONSTOCK + PD',
                 'INVESTASI' => 'INVESTASI',
-                'ALL' => 'Semua MRP',
+                'ALL' => 'Semua',
             ] as $scopeKey => $scopeLabel)
                 <button
                     type="button"

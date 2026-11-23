@@ -34,7 +34,7 @@ class RequestingUnitsTable
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Bold)
-                    ->description(fn (RequestingUnit $record): string => $record->is_pilot ? 'Unit Pilot Pareto' : 'Unit Reguler'),
+                    ->description(fn (RequestingUnit $record): string => $record->is_pilot ? 'Unit Prioritas' : 'Unit Reguler'),
                 TextColumn::make('requisitioner_aliases')
                     ->label('Alias Requisitioner')
                     ->badge()
@@ -76,7 +76,7 @@ class RequestingUnitsTable
             ->defaultSort('is_pilot', 'desc')
             ->filters([
                 TernaryFilter::make('is_pilot')
-                    ->label('Unit Pilot Pareto'),
+                    ->label('Unit Prioritas'),
                 TernaryFilter::make('is_active')
                     ->label('Status Aktif'),
             ])

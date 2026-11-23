@@ -213,24 +213,24 @@ class NonStockAgingReportService
         $controls = $this->queryControlsForExport($mrpScope, $activeTab, $pilotOnly);
 
         $summaryRows = [
-            ['LAPORAN RINGKASAN AGING MATERIAL NON-STOCK & PD — DEPARTEMEN PP&P'],
+            ['RINGKASAN AGING MATERIAL NON-STOCK & PD — DEPARTEMEN PP&P'],
             ['Tanggal Cetak', now()->format('d M Y H:i'), 'Cakupan MRP', $summary['mrp_scope'], 'Filter Tab', $activeTab ?? 'belum_diambil'],
             [],
-            ['METRIK KPI LEAD 2026', 'JUMLAH ITEM', 'JUMLAH PO', 'NILAI TERTAHAN (IDR)', 'KETERANGAN'],
-            ['Outstanding Belum Diambil (+ Hold)', $summary['outstanding_items'], $summary['outstanding_po'], $summary['outstanding_value'], 'Target 8 Minggu: Turun >= 25% item & >= 20% nilai'],
-            ['Status On Check (Cek Fisik)', $summary['on_check_items'], $summary['on_check_po'], $summary['on_check_value'], 'Menunggu verifikasi cek fisik user'],
-            ['Scheduled Hold (Terjadwal Ambil)', $summary['scheduled_hold_items'], '-', $summary['scheduled_hold_value'], 'Sudah memiliki komitmen tanggal ambil'],
-            ['Unattended Critical (> 60 Hari)', $summary['unattended_critical_items'], '-', $summary['unattended_critical_value'], 'Prioritas eskalasi formal antar-VP'],
-            ['Kepatuhan Follow-Up Warning & Critical (%)', $summary['warning_critical_followed_up'], $summary['warning_critical_total'], $summary['warning_critical_followed_up_percentage'], 'Target: 100%'],
-            ['Pemetaan Unit & PIC (%)', $summary['pic_mapped_count'], $summary['outstanding_items'], $summary['pic_mapped_percentage'], 'Target: 100%'],
+            ['RINGKASAN DATA', 'JUMLAH ITEM', 'JUMLAH PO', 'NILAI TERTAHAN (IDR)', 'KETERANGAN'],
+            ['Belum Diambil (+ Scheduled Hold)', $summary['outstanding_items'], $summary['outstanding_po'], $summary['outstanding_value'], 'Material belum diambil di area Receiving'],
+            ['On Check', $summary['on_check_items'], $summary['on_check_po'], $summary['on_check_value'], 'Menunggu verifikasi cek fisik'],
+            ['Scheduled Hold', $summary['scheduled_hold_items'], '-', $summary['scheduled_hold_value'], 'Sudah memiliki jadwal pengambilan'],
+            ['Critical Belum Terjadwal (> 60 Hari)', $summary['unattended_critical_items'], '-', $summary['unattended_critical_value'], 'Perlu tindak lanjut / eskalasi'],
+            ['Follow-Up > 30 Hari (%)', $summary['warning_critical_followed_up'], $summary['warning_critical_total'], $summary['warning_critical_followed_up_percentage'], 'Persentase item ditindaklanjuti'],
+            ['Pemetaan Unit & PIC (%)', $summary['pic_mapped_count'], $summary['outstanding_items'], $summary['pic_mapped_percentage'], 'Persentase item terpetakan'],
             [],
-            ['DISTRIBUSI 4 ZONA AGING', 'JUMLAH ITEM', 'JUMLAH PO', 'NILAI TERTAHAN (IDR)', 'PENANGGUNG JAWAB'],
-            ['Normal (0–14 Hari)', $summary['zones']['Normal']['items'], $summary['zones']['Normal']['po_count'], $summary['zones']['Normal']['value'], 'Admin Receiving -> PIC Unit'],
-            ['Attention (15–30 Hari)', $summary['zones']['Attention']['items'], $summary['zones']['Attention']['po_count'], $summary['zones']['Attention']['value'], 'Koordinator Receiving -> PIC Unit'],
-            ['Warning (31–60 Hari)', $summary['zones']['Warning']['items'], $summary['zones']['Warning']['po_count'], $summary['zones']['Warning']['value'], 'AVP Receiving -> AVP Unit Peminta'],
-            ['Critical (> 60 Hari)', $summary['zones']['Critical']['items'], $summary['zones']['Critical']['po_count'], $summary['zones']['Critical']['value'], 'VP PP&P -> VP Unit Peminta'],
+            ['DISTRIBUSI ZONA AGING', 'JUMLAH ITEM', 'JUMLAH PO', 'NILAI TERTAHAN (IDR)', 'TINDAK LANJUT'],
+            ['Normal (0–14 Hari)', $summary['zones']['Normal']['items'], $summary['zones']['Normal']['po_count'], $summary['zones']['Normal']['value'], 'Notifikasi Awal'],
+            ['Attention (15–30 Hari)', $summary['zones']['Attention']['items'], $summary['zones']['Attention']['po_count'], $summary['zones']['Attention']['value'], 'Reminder PIC'],
+            ['Warning (31–60 Hari)', $summary['zones']['Warning']['items'], $summary['zones']['Warning']['po_count'], $summary['zones']['Warning']['value'], 'Konfirmasi AVP'],
+            ['Critical (> 60 Hari)', $summary['zones']['Critical']['items'], $summary['zones']['Critical']['po_count'], $summary['zones']['Critical']['value'], 'Eskalasi VP'],
             [],
-            ['ANALISA PARETO 80/20 PER UNIT PEMINTA', 'PILOT', 'JUMLAH ITEM', 'JUMLAH PO', 'NILAI TERTAHAN (IDR)', 'KONTRIBUSI (%)', 'KUMULATIF (%)'],
+            ['REKAP PER UNIT PEMINTA', 'PRIORITAS', 'JUMLAH ITEM', 'JUMLAH PO', 'NILAI TERTAHAN (IDR)', 'KONTRIBUSI (%)', 'KUMULATIF (%)'],
         ];
 
         foreach ($summary['pareto'] as $row) {
@@ -251,7 +251,7 @@ class NonStockAgingReportService
         }
 
         return $this->writeMultiSheetXlsx([
-            'Ringkasan KPI & Pareto' => $summaryRows,
+            'Ringkasan & Rekap Unit' => $summaryRows,
             'Register Monitoring' => $registerRows,
         ]);
     }
