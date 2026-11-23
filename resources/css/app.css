@@ -663,10 +663,130 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
     .uiverse-cta-btn::before,
-    .uiverse-loader-dots span {
+    .uiverse-loader-dots span,
+    .journey-node-card,
+    .journey-beam-shimmer,
+    .journey-spotlight-panel {
         animation: none !important;
         transition: none !important;
     }
+}
+
+/* =========================================================
+   Interactive Document Journey (Framer Motion Spring Track)
+   ========================================================= */
+@keyframes journeyNodeSpringIn {
+    0% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.92);
+    }
+    65% {
+        opacity: 1;
+        transform: translateY(-3px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes journeyBeamFlow {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(250%);
+    }
+}
+
+@keyframes journeySpotlightPop {
+    0% {
+        opacity: 0;
+        transform: translateY(6px) scale(0.985);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.journey-scroll-track {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    cursor: grab;
+}
+
+.journey-scroll-track::-webkit-scrollbar {
+    display: none;
+}
+
+.journey-scroll-track.is-dragging {
+    cursor: grabbing;
+    scroll-behavior: auto;
+    user-select: none;
+}
+
+.journey-node-card {
+    animation: journeyNodeSpringIn 0.5s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+    transition:
+        transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.3s ease,
+        border-color 0.25s ease,
+        background-color 0.25s ease,
+        opacity 0.25s ease;
+    will-change: transform, box-shadow;
+}
+
+.journey-node-card:hover,
+.journey-node-card.is-active-node {
+    transform: translateY(-6px) scale(1.025);
+}
+
+.journey-node-card:active {
+    transform: translateY(-2px) scale(0.985);
+    transition-duration: 0.1s;
+}
+
+.journey-node-card .journey-node-icon {
+    transition: transform 0.36s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+
+.journey-node-card:hover .journey-node-icon,
+.journey-node-card.is-active-node .journey-node-icon {
+    transform: scale(1.12) rotate(-6deg);
+}
+
+.journey-node-card .journey-hover-reveal {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(6px);
+    overflow: hidden;
+    transition:
+        max-height 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.25s ease,
+        transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1),
+        margin-top 0.25s ease;
+}
+
+.journey-node-card:hover .journey-hover-reveal,
+.journey-node-card.is-active-node .journey-hover-reveal {
+    max-height: 36px;
+    opacity: 1;
+    transform: translateY(0);
+    margin-top: 0.625rem;
+}
+
+.journey-beam-shimmer {
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.72) 50%, transparent 100%);
+    animation: journeyBeamFlow 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.journey-spotlight-panel {
+    animation: journeySpotlightPop 0.28s cubic-bezier(0.34, 1.4, 0.64, 1) both;
 }
 
 

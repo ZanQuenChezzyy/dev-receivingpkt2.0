@@ -404,181 +404,443 @@
                     </div>
                 </div>
 
-                <!-- 3.2 VISUAL PROGRESS PIPELINE STEPPER -->
-                <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl">
-                    <div class="flex items-center justify-between mb-8">
+                <!-- 3.2 INTERACTIVE DYNAMIC DOCUMENT JOURNEY (SCROLLABLE SPRING TRACK + INTEGRATED AUDIT TRAIL) -->
+                @php
+                    $isRdtv = $trackingData['pipeline']['is_rdtv'] ?? false;
+                    $stageIdx = $trackingData['pipeline']['current_stage_index'] ?? 1;
+                    $timelineEvents = $trackingData['timeline'] ?? [];
+
+                    $journeyNodes = [];
+                    $realCount = count($timelineEvents);
+
+                    foreach ($timelineEvents as $evIdx => $ev) {
+                        $isLatestReal = ($evIdx === $realCount - 1);
+                        $colorKey = match (true) {
+                            str_contains($ev['badge_color'] ?? '', 'emerald') => 'emerald',
+                            str_contains($ev['badge_color'] ?? '', 'indigo') => 'indigo',
+                            str_contains($ev['badge_color'] ?? '', 'sky') => 'sky',
+                            str_contains($ev['badge_color'] ?? '', 'purple') => 'purple',
+                            str_contains($ev['badge_color'] ?? '', 'rose') || str_contains($ev['badge_color'] ?? '', 'red') => 'rose',
+                            str_contains($ev['badge_color'] ?? '', 'amber') => 'amber',
+                            str_contains($ev['badge_color'] ?? '', 'teal') => 'teal',
+                            str_contains($ev['badge_color'] ?? '', 'cyan') => 'cyan',
+                            default => 'orange',
+                        };
+
+                        $journeyNodes[] = [
+                            'index' => $evIdx + 1,
+                            'status' => $isLatestReal ? 'current' : 'done',
+                            'color' => $colorKey,
+                            'icon' => $ev['icon'] ?? 'check',
+                            'title' => $ev['short_title'] ?? __($ev['title'] ?? ''),
+                            'full_title' => __($ev['title'] ?? ''),
+                            'short_desc' => $ev['short_desc'] ?? ($ev['desc'] ?? ''),
+                            'desc' => $ev['desc'] ?? '',
+                            'badge' => __($ev['badge'] ?? ''),
+                            'date' => $ev['date'] ?? '-',
+                            'time' => ($ev['time'] ?? '-') !== '-' ? $ev['time'] : '',
+                        ];
+                    }
+
+                    // Tambahkan tahapan SOP berikutnya yang belum dilalui sebagai pratinjau (dimmed upcoming nodes)
+                    $upcomingSteps = [
+                        2 => ['title' => __('DO & Fisik Tiba'), 'sub' => __('Pintu Receiving'), 'desc' => __('Menunggu kedatangan fisik barang & surat jalan di Pintu Gudang Receiving PKT.'), 'icon' => 'truck'],
+                        3 => ['title' => __('Posting Penerimaan (103)'), 'sub' => __('Validasi Sistem'), 'desc' => __('Pencatatan MIGO 103 di sistem setelah dokumen kedatangan diterima.'), 'icon' => 'qr-code'],
+                        4 => ['title' => __('Inspeksi QC'), 'sub' => __('Uji Mutu ISTEK'), 'desc' => __('Pemeriksaan kesesuaian spesifikasi & mutu barang oleh tim ISTEK.'), 'icon' => 'beaker'],
+                        5 => ['title' => $isRdtv ? __('Slip RDTV (Retur)') : __('Slip GRS (105)'), 'sub' => $isRdtv ? __('Ditolak / Retur') : __('Arsip Penagihan'), 'desc' => __('Penerbitan dokumen GRS (105) sebagai dasar penagihan vendor.'), 'icon' => 'clipboard-check'],
+                    ];
+
+                    if ($realCount === 0) {
+                        $journeyNodes[] = [
+                            'index' => 1,
+                            'status' => 'current',
+                            'color' => 'orange',
+                            'icon' => 'document-check',
+                            'title' => __('PO Terbit'),
+                            'full_title' => __('Purchase Order (PO) Diterbitkan'),
+                            'short_desc' => __('Diterbitkan PKT'),
+                            'desc' => __('Purchase Order telah terbit dan menunggu pengiriman material dari vendor.'),
+                            'badge' => __('PO Issued'),
+                            'date' => '-',
+                            'time' => '',
+                        ];
+                    }
+
+                    foreach ($upcomingSteps as $stepNum => $uStep) {
+                        if ($stageIdx < $stepNum) {
+                            $journeyNodes[] = [
+                                'index' => count($journeyNodes) + 1,
+                                'status' => 'upcoming',
+                                'color' => 'slate',
+                                'icon' => $uStep['icon'],
+                                'title' => $uStep['title'],
+                                'full_title' => $uStep['title'],
+                                'short_desc' => $uStep['sub'],
+                                'desc' => $uStep['desc'],
+                                'badge' => __('Tahap Berikutnya'),
+                                'date' => __('Menunggu'),
+                                'time' => '',
+                            ];
+                        }
+                    }
+
+                    $defaultActiveIdx = max(0, $realCount - 1);
+                    $totalNodes = count($journeyNodes);
+                    $completedRatio = $totalNodes > 1
+                        ? min(100, max(12, round((($defaultActiveIdx + 0.5) / $totalNodes) * 100)))
+                        : 100;
+                @endphp
+
+                <div
+                    class="glass-panel p-5 sm:p-8 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl relative overflow-hidden"
+                    x-data="{
+                        nodes: [],
+                        pinnedIdx: {{ $defaultActiveIdx }},
+                        hoveredIdx: null,
+                        canScrollLeft: false,
+                        canScrollRight: false,
+                        isDragging: false,
+                        startX: 0,
+                        scrollStart: 0,
+                        dragMoved: false,
+                        get activeIdx() {
+                            return this.hoveredIdx !== null ? this.hoveredIdx : this.pinnedIdx;
+                        },
+                        get activeNode() {
+                            return this.nodes[this.activeIdx] || this.nodes[0] || null;
+                        },
+                        init() {
+                            try {
+                                this.nodes = JSON.parse(this.$refs.journeyData?.textContent || '[]');
+                            } catch (e) {
+                                this.nodes = [];
+                            }
+                            this.$nextTick(() => {
+                                this.updateArrows();
+                                this.scrollToNode(this.pinnedIdx, false);
+                            });
+                        },
+                        updateArrows() {
+                            const el = this.$refs.track;
+                            if (!el) return;
+                            this.canScrollLeft = el.scrollLeft > 8;
+                            this.canScrollRight = (el.scrollLeft + el.clientWidth) < (el.scrollWidth - 8);
+                        },
+                        scrollByAmount(delta) {
+                            const el = this.$refs.track;
+                            if (!el) return;
+                            el.scrollBy({ left: delta, behavior: 'smooth' });
+                        },
+                        scrollToNode(idx, smooth = true) {
+                            const el = this.$refs.track;
+                            const card = el?.querySelector(`[data-journey-idx='${idx}']`);
+                            if (!el || !card) return;
+                            const targetLeft = Math.max(0, card.offsetLeft - (el.clientWidth / 2) + (card.offsetWidth / 2));
+                            el.scrollTo({ left: targetLeft, behavior: smooth ? 'smooth' : 'auto' });
+                            setTimeout(() => this.updateArrows(), 280);
+                        },
+                        selectNode(idx) {
+                            if (this.dragMoved) return;
+                            this.pinnedIdx = idx;
+                            this.hoveredIdx = null;
+                            this.scrollToNode(idx, true);
+                        },
+                        stepSpotlight(dir) {
+                            if (!this.nodes.length) return;
+                            const next = Math.min(this.nodes.length - 1, Math.max(0, this.activeIdx + dir));
+                            this.pinnedIdx = next;
+                            this.hoveredIdx = null;
+                            this.scrollToNode(next, true);
+                        },
+                        onPointerDown(e) {
+                            const el = this.$refs.track;
+                            if (!el || e.button !== 0) return;
+                            this.isDragging = true;
+                            this.dragMoved = false;
+                            this.startX = e.pageX - el.offsetLeft;
+                            this.scrollStart = el.scrollLeft;
+                        },
+                        onPointerMove(e) {
+                            if (!this.isDragging) return;
+                            const el = this.$refs.track;
+                            if (!el) return;
+                            const x = e.pageX - el.offsetLeft;
+                            const walk = (x - this.startX) * 1.25;
+                            if (Math.abs(walk) > 6) this.dragMoved = true;
+                            el.scrollLeft = this.scrollStart - walk;
+                            this.updateArrows();
+                        },
+                        onPointerUp() {
+                            this.isDragging = false;
+                            setTimeout(() => { this.dragMoved = false; }, 60);
+                        }
+                    }"
+                    @resize.window="updateArrows()"
+                >
+                    <script type="application/json" x-ref="journeyData">@json($journeyNodes)</script>
+
+                    <!-- Header Row -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">{{ __('Alur Proses Logistik') }}</span>
-                            <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-[#F47920]">{{ __('Alur Proses Logistik') }}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                                    {{ $realCount }} {{ __('Tahap Tercatat') }}
+                                </span>
+                            </div>
+                            <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight mt-0.5">
                                 {{ __('Posisi Perjalanan Dokumen Saat Ini') }}
                             </h3>
                         </div>
-                        @php
-                            $isRdtv = $trackingData['pipeline']['is_rdtv'] ?? false;
-                        @endphp
-                        <span class="px-3.5 py-1.5 rounded-full text-xs font-black {{ $isRdtv ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30' : 'bg-[#F47920]/15 text-[#F47920] border border-[#F47920]/30' }}">
-                            {{ $trackingData['pipeline']['current_stage_label'] ?? __('Menunggu') }}
-                        </span>
-                    </div>
 
-                    <!-- Responsive Stepper (Framer Motion Animated Progress) -->
-                    @php
-                        $stageIdx = $trackingData['pipeline']['current_stage_index'] ?? 1;
-                        $steps = [
-                            ['num' => 1, 'label' => __('PO Terbit'), 'sub' => __('Diterbitkan PKT')],
-                            ['num' => 2, 'label' => __('DO & Fisik Tiba'), 'sub' => __('Pintu Receiving')],
-                            ['num' => 3, 'label' => __('Posting Penerimaan (103)'), 'sub' => __('Validasi Sistem')],
-                            ['num' => 4, 'label' => __('Inspeksi QC'), 'sub' => __('Uji Mutu ISTEK')],
-                            ['num' => 5, 'label' => $isRdtv ? __('Slip RDTV (Retur)') : __('Slip GRS (105)'), 'sub' => $isRdtv ? __('Ditolak / Retur') : __('Arsip Penagihan')],
-                        ];
-                        $progressPercent = min(100, max(10, (($stageIdx - 1) / 4) * 100));
-                    @endphp
-
-                    <!-- Animated Progress Bar Connector (Desktop & Tablet) -->
-                    <div class="hidden sm:block relative mb-4 mx-3">
-                        <div class="h-1.5 w-full bg-slate-200/80 dark:bg-white/10 rounded-full overflow-hidden">
-                            <div class="h-full {{ $isRdtv ? 'bg-gradient-to-r from-emerald-500 via-[#F47920] to-rose-500' : 'bg-gradient-to-r from-emerald-500 via-[#F47920] to-orange-500' }} rounded-full transition-all duration-700 ease-[cubic-bezier(0.34,1.2,0.64,1)]"
-                                 style="width: {{ $progressPercent }}%;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                        @foreach ($steps as $step)
-                            @php
-                                $isDone = $stageIdx > $step['num'];
-                                $isCurrent = $stageIdx === $step['num'];
-                                $isPending = $stageIdx < $step['num'];
-                                $isStepRdtv = $isRdtv && $step['num'] === 5;
-                            @endphp
-                            <div class="p-3.5 rounded-2xl transition-all duration-300 relative overflow-hidden hover:-translate-y-0.5
-                                @if ($isCurrent)
-                                    @if ($isStepRdtv)
-                                        bg-gradient-to-br from-rose-500/15 to-transparent border-2 border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.22)] scale-[1.01]
-                                    @else
-                                        bg-gradient-to-br from-[#F47920]/15 to-transparent border-2 border-[#F47920] shadow-[0_0_20px_rgba(244,121,32,0.22)] scale-[1.01]
-                                    @endif
-                                @elseif ($isDone)
-                                    bg-emerald-500/10 border border-emerald-500/25
-                                @else
-                                    bg-white/30 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 opacity-60
-                                @endif">
-                                
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black
-                                        @if ($isDone)
-                                            bg-emerald-500 text-white
-                                        @elseif ($isCurrent)
-                                            @if ($isStepRdtv)
-                                                bg-rose-500 text-white shadow-md shadow-rose-500/40
-                                            @else
-                                                bg-[#F47920] text-white shadow-md shadow-orange-500/40
-                                            @endif
-                                        @else
-                                            bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400
-                                        @endif">
-                                        @if ($isDone)
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        @elseif ($isStepRdtv)
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        @else
-                                            {{ $step['num'] }}
-                                        @endif
-                                    </div>
-                                    @if ($isCurrent)
-                                        <span class="flex h-2 w-2 relative">
-                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $isStepRdtv ? 'bg-rose-500' : 'bg-[#F47920]' }} opacity-75"></span>
-                                            <span class="relative inline-flex rounded-full h-2 w-2 {{ $isStepRdtv ? 'bg-rose-500' : 'bg-[#F47920]' }}"></span>
-                                        </span>
-                                    @endif
-                                </div>
-
-                                <div class="font-bold text-xs sm:text-sm text-slate-800 dark:text-white leading-snug">
-                                    {{ $step['label'] }}
-                                </div>
-                                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                                    {{ $step['sub'] }}
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-
-                    <!-- INTEGRATED COMPACT AUDIT TRAIL (RIWAYAT PERGERAKAN DOKUMEN) -->
-                    @php
-                        $timelineEvents = $trackingData['timeline'] ?? [];
-                        $timelineCount = count($timelineEvents);
-                    @endphp
-                    <div
-                        class="mt-6 pt-5 border-t border-slate-200/70 dark:border-white/10"
-                        x-data="{ expanded: false }"
-                    >
-                        <div class="flex items-center justify-between gap-2 mb-3.5">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                    {{ __('Riwayat Pergerakan Dokumen') }}
+                        <div class="flex items-center gap-2 self-start sm:self-center">
+                            <span class="px-3.5 py-1.5 rounded-full text-xs font-black inline-flex items-center gap-1.5 {{ $isRdtv ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30' : 'bg-[#F47920]/15 text-[#F47920] border border-[#F47920]/30' }}">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full {{ $isRdtv ? 'bg-rose-500' : 'bg-[#F47920]' }} opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 {{ $isRdtv ? 'bg-rose-500' : 'bg-[#F47920]' }}"></span>
                                 </span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
-                                    {{ $timelineCount }} {{ __('Peristiwa') }}
-                                </span>
-                            </div>
+                                {{ $trackingData['pipeline']['current_stage_label'] ?? __('Menunggu') }}
+                            </span>
 
-                            @if ($timelineCount > 6)
+                            <!-- Horizontal Scroll Nav Buttons -->
+                            <div class="hidden sm:flex items-center gap-1.5 ml-1">
                                 <button
                                     type="button"
-                                    @click="expanded = !expanded"
-                                    class="text-xs font-bold text-[#F47920] hover:underline cursor-pointer"
-                                    x-text="expanded ? '{{ __('Tampilkan lebih ringkas') }}' : '{{ __('Tampilkan semua') }} ({{ $timelineCount }})'"
-                                ></button>
-                            @endif
+                                    @click="scrollByAmount(-280)"
+                                    :disabled="!canScrollLeft"
+                                    aria-label="{{ __('Geser ke kiri') }}"
+                                    class="w-8 h-8 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/15 bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 shadow-xs transition-all duration-200 hover:border-[#F47920]/60 hover:text-[#F47920] hover:scale-105 active:scale-95 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                                >
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="scrollByAmount(280)"
+                                    :disabled="!canScrollRight"
+                                    aria-label="{{ __('Geser ke kanan') }}"
+                                    class="w-8 h-8 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/15 bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 shadow-xs transition-all duration-200 hover:border-[#F47920]/60 hover:text-[#F47920] hover:scale-105 active:scale-95 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                                >
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
+                    </div>
 
-                        @if (empty($timelineEvents))
-                            <p class="text-xs text-slate-400 dark:text-slate-500 py-2">
-                                {{ __('Belum ada riwayat pergerakan dokumen tercatat.') }}
-                            </p>
-                        @else
-                            <div class="relative pl-5 space-y-2 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-slate-200 dark:before:bg-white/10">
-                                @foreach ($timelineEvents as $evIndex => $event)
-                                    @php
-                                        $dotColor = match (true) {
-                                            str_contains($event['badge_color'] ?? '', 'emerald') => 'bg-emerald-500 ring-emerald-500/20',
-                                            str_contains($event['badge_color'] ?? '', 'indigo') => 'bg-indigo-500 ring-indigo-500/20',
-                                            str_contains($event['badge_color'] ?? '', 'sky') => 'bg-sky-500 ring-sky-500/20',
-                                            str_contains($event['badge_color'] ?? '', 'purple') => 'bg-purple-500 ring-purple-500/20',
-                                            str_contains($event['badge_color'] ?? '', 'rose') || str_contains($event['badge_color'] ?? '', 'red') => 'bg-rose-500 ring-rose-500/20',
-                                            str_contains($event['badge_color'] ?? '', 'amber') => 'bg-amber-500 ring-amber-500/20',
-                                            str_contains($event['badge_color'] ?? '', 'teal') => 'bg-teal-500 ring-teal-500/20',
-                                            str_contains($event['badge_color'] ?? '', 'cyan') => 'bg-cyan-500 ring-cyan-500/20',
-                                            default => 'bg-[#F47920] ring-[#F47920]/20',
-                                        };
-                                    @endphp
-                                    <div
-                                        @if ($evIndex >= 6) x-show="expanded" x-cloak @endif
-                                        class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 py-1.5 px-3 rounded-xl bg-white/45 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5"
-                                    >
-                                        <span class="absolute -left-[17px] top-3 sm:top-1/2 sm:-translate-y-1/2 w-2.5 h-2.5 rounded-full ring-4 {{ $dotColor }}"></span>
+                    <!-- Animated Luminous Progress Beam -->
+                    <div class="relative mb-5">
+                        <div class="h-1.5 w-full bg-slate-200/80 dark:bg-white/10 rounded-full overflow-hidden">
+                            <div
+                                class="relative h-full {{ $isRdtv ? 'bg-gradient-to-r from-emerald-500 via-[#F47920] to-rose-500' : 'bg-gradient-to-r from-[#0054A6] via-emerald-500 to-[#F47920]' }} rounded-full transition-all duration-700 ease-[cubic-bezier(0.34,1.2,0.64,1)] overflow-hidden"
+                                style="width: {{ $completedRatio }}%;"
+                            >
+                                <span class="journey-beam-shimmer" aria-hidden="true"></span>
+                            </div>
+                        </div>
+                    </div>
 
-                                        <div class="min-w-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                            <span class="text-xs font-bold text-slate-800 dark:text-white">
-                                                {{ $event['short_title'] ?? __($event['title']) }}
-                                            </span>
-                                            <span class="text-[11px] text-slate-500 dark:text-slate-400">
-                                                {{ $event['short_desc'] ?? $event['desc'] }}
-                                            </span>
+                    <!-- Draggable & Scrollable Horizontal Node Rail -->
+                    <div class="relative -mx-2 px-2">
+                        <!-- Soft Edge Fade Hints -->
+                        <div
+                            x-show="canScrollLeft"
+                            x-transition.opacity.duration.200ms
+                            class="pointer-events-none absolute left-0 top-0 bottom-0 w-10 z-20 bg-gradient-to-r from-white/90 dark:from-[#0b1626]/90 to-transparent"
+                        ></div>
+                        <div
+                            x-show="canScrollRight"
+                            x-transition.opacity.duration.200ms
+                            class="pointer-events-none absolute right-0 top-0 bottom-0 w-10 z-20 bg-gradient-to-l from-white/90 dark:from-[#0b1626]/90 to-transparent"
+                        ></div>
+
+                        <div
+                            x-ref="track"
+                            @scroll.passive="updateArrows()"
+                            @mousedown="onPointerDown($event)"
+                            @mousemove="onPointerMove($event)"
+                            @mouseup="onPointerUp()"
+                            @mouseleave="onPointerUp(); hoveredIdx = null"
+                            :class="isDragging ? 'is-dragging' : ''"
+                            class="journey-scroll-track flex items-stretch gap-3.5 overflow-x-auto pt-3 pb-4 px-1 snap-x snap-proximity"
+                        >
+                            @foreach ($journeyNodes as $nIdx => $node)
+                                @php
+                                    $isCurrent = $node['status'] === 'current';
+                                    $isDone = $node['status'] === 'done';
+                                    $isUpcoming = $node['status'] === 'upcoming';
+                                    $c = $node['color'];
+
+                                    $accentCard = match ($c) {
+                                        'emerald' => 'border-emerald-500/35 bg-gradient-to-br from-emerald-500/12 via-white/75 to-white/50 dark:from-emerald-500/15 dark:via-white/[0.04] dark:to-white/[0.02] hover:border-emerald-500 hover:shadow-[0_14px_30px_-10px_rgba(16,185,129,0.35)]',
+                                        'indigo' => 'border-indigo-500/35 bg-gradient-to-br from-indigo-500/12 via-white/75 to-white/50 dark:from-indigo-500/15 dark:via-white/[0.04] dark:to-white/[0.02] hover:border-indigo-500 hover:shadow-[0_14px_30px_-10px_rgba(99,102,241,0.35)]',
+                                        'sky' => 'border-sky-500/35 bg-gradient-to-br from-sky-500/12 via-white/75 to-white/50 dark:from-sky-500/15 dark:via-white/[0.04] dark:to-white/[0.02] hover:border-sky-500 hover:shadow-[0_14px_30px_-10px_rgba(14,165,233,0.35)]',
+                                        'purple' => 'border-purple-500/35 bg-gradient-to-br from-purple-500/12 via-white/75 to-white/50 dark:from-purple-500/15 dark:via-white/[0.04] dark:to-white/[0.02] hover:border-purple-500 hover:shadow-[0_14px_30px_-10px_rgba(168,85,247,0.35)]',
+                                        'rose' => 'border-rose-500/45 bg-gradient-to-br from-rose-500/15 via-white/75 to-white/50 dark:from-rose-500/20 dark:via-white/[0.04] dark:to-white/[0.02] hover:border-rose-500 hover:shadow-[0_14px_30px_-10px_rgba(244,63,94,0.4)]',
+                                        'amber' => 'border-amber-500/40 bg-gradient-to-br from-amber-500/12 via-white/75 to-white/50 dark:from-amber-500/15 dark:via-white/[0.04] dark:to-white/[0.02] hover:border-amber-500 hover:shadow-[0_14px_30px_-10px_rgba(245,158,11,0.35)]',
+                                        'teal' => 'border-teal-500/35 bg-gradient-to-br from-teal-500/12 via-white/75 to-white/50 dark:from-teal-500/15 dark:via-white/[0.04] dark:to-white/[0.02] hover:border-teal-500 hover:shadow-[0_14px_30px_-10px_rgba(20,184,166,0.35)]',
+                                        'cyan' => 'border-cyan-500/35 bg-gradient-to-br from-cyan-500/12 via-white/75 to-white/50 dark:from-cyan-500/15 dark:via-white/[0.04] dark:to-white/[0.02] hover:border-cyan-500 hover:shadow-[0_14px_30px_-10px_rgba(6,182,212,0.35)]',
+                                        'slate' => 'border-dashed border-slate-300/70 dark:border-white/15 bg-white/35 dark:bg-white/[0.02] opacity-65 hover:opacity-95 hover:border-slate-400',
+                                        default => 'border-[#F47920]/40 bg-gradient-to-br from-[#F47920]/15 via-white/75 to-white/50 dark:from-[#F47920]/18 dark:via-white/[0.04] dark:to-white/[0.02] hover:border-[#F47920] hover:shadow-[0_14px_30px_-10px_rgba(244,121,32,0.38)]',
+                                    };
+
+                                    $iconBg = match ($c) {
+                                        'emerald' => 'bg-emerald-500 text-white shadow-emerald-500/30',
+                                        'indigo' => 'bg-indigo-500 text-white shadow-indigo-500/30',
+                                        'sky' => 'bg-sky-500 text-white shadow-sky-500/30',
+                                        'purple' => 'bg-purple-500 text-white shadow-purple-500/30',
+                                        'rose' => 'bg-rose-500 text-white shadow-rose-500/35',
+                                        'amber' => 'bg-amber-500 text-white shadow-amber-500/30',
+                                        'teal' => 'bg-teal-500 text-white shadow-teal-500/30',
+                                        'cyan' => 'bg-cyan-500 text-white shadow-cyan-500/30',
+                                        'slate' => 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400',
+                                        default => 'bg-[#F47920] text-white shadow-orange-500/35',
+                                    };
+                                @endphp
+
+                                <div
+                                    data-journey-idx="{{ $nIdx }}"
+                                    role="button"
+                                    tabindex="0"
+                                    @mouseenter="hoveredIdx = {{ $nIdx }}"
+                                    @mouseleave="hoveredIdx = null"
+                                    @focus="hoveredIdx = {{ $nIdx }}"
+                                    @blur="hoveredIdx = null"
+                                    @click="selectNode({{ $nIdx }})"
+                                    @keydown.enter.prevent="selectNode({{ $nIdx }})"
+                                    style="animation-delay: {{ min($nIdx * 55, 450) }}ms;"
+                                    :class="activeIdx === {{ $nIdx }} ? 'is-active-node ring-2 ring-[#F47920]/50 dark:ring-[#F47920]/60' : ''"
+                                    class="journey-node-card snap-start shrink-0 w-[215px] sm:w-[230px] p-4 rounded-2xl border {{ $isCurrent ? 'border-2 shadow-lg' : '' }} {{ $accentCard }} relative flex flex-col justify-between text-left cursor-pointer select-none"
+                                >
+                                    <div>
+                                        <!-- Top Row: Icon Badge + Step Number / Live Pulse -->
+                                        <div class="flex items-center justify-between gap-2 mb-2.5">
+                                            <div class="flex items-center gap-2">
+                                                <div class="journey-node-icon w-8 h-8 rounded-xl flex items-center justify-center shadow-md {{ $iconBg }}">
+                                                    @if ($node['icon'] === 'truck')
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                                                    @elseif ($node['icon'] === 'qr-code')
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                                    @elseif ($node['icon'] === 'beaker')
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                                                    @elseif ($node['icon'] === 'clipboard-check')
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                                    @elseif ($node['icon'] === 'clock')
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    @elseif ($node['icon'] === 'currency-dollar' || $node['icon'] === 'banknotes')
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    @elseif ($node['icon'] === 'arrow-right-on-rectangle')
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                                    @else
+                                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                                    @endif
+                                                </div>
+                                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                                    #{{ $node['index'] }}
+                                                </span>
+                                            </div>
+
+                                            @if ($isCurrent)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide {{ $c === 'rose' ? 'bg-rose-500 text-white' : 'bg-[#F47920] text-white' }} shadow-xs">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                                    {{ __('Terkini') }}
+                                                </span>
+                                            @elseif ($isDone)
+                                                <span class="inline-flex items-center text-[10px] font-semibold text-slate-400 dark:text-slate-500 tabular-nums">
+                                                    {{ $node['date'] }}
+                                                </span>
+                                            @else
+                                                <span class="text-[9px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                                    {{ __('Berikutnya') }}
+                                                </span>
+                                            @endif
                                         </div>
 
-                                        <span class="shrink-0 text-[11px] font-semibold text-slate-400 dark:text-slate-500 tabular-nums">
-                                            {{ $event['date'] }}@if (($event['time'] ?? '-') && $event['time'] !== '-') • {{ $event['time'] }}@endif
+                                        <!-- Concise Title & Brief Summary -->
+                                        <div class="font-black text-xs sm:text-sm text-slate-800 dark:text-white leading-snug line-clamp-2">
+                                            {{ $node['title'] }}
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1 line-clamp-2">
+                                            {{ $node['short_desc'] }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Hover / Active Spring-Reveal Footer -->
+                                    <div class="journey-hover-reveal pt-2 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between gap-2 text-[10px]">
+                                        <span class="font-semibold text-slate-500 dark:text-slate-400 truncate tabular-nums">
+                                            {{ $node['date'] }}@if ($node['time']) • {{ $node['time'] }}@endif
+                                        </span>
+                                        <span class="font-bold text-[#F47920] shrink-0 flex items-center gap-0.5">
+                                            {{ __('Rincian') }}
+                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                                         </span>
                                     </div>
-                                @endforeach
-                            </div>
-                        @endif
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
+
+                    <!-- Interactive Hover / Active Detail Spotlight Bar (Morphs smoothly on hover or click) -->
+                    <template x-if="activeNode">
+                        <div
+                            :key="activeIdx"
+                            class="journey-spotlight-panel mt-3 p-4 sm:p-5 rounded-2xl bg-white/75 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        >
+                            <div class="min-w-0 space-y-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span
+                                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide"
+                                        :class="{
+                                            'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300': activeNode.color === 'emerald',
+                                            'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300': activeNode.color === 'indigo',
+                                            'bg-sky-500/15 text-sky-700 dark:text-sky-300': activeNode.color === 'sky',
+                                            'bg-purple-500/15 text-purple-700 dark:text-purple-300': activeNode.color === 'purple',
+                                            'bg-rose-500/15 text-rose-700 dark:text-rose-300': activeNode.color === 'rose',
+                                            'bg-amber-500/15 text-amber-700 dark:text-amber-300': activeNode.color === 'amber',
+                                            'bg-teal-500/15 text-teal-700 dark:text-teal-300': activeNode.color === 'teal',
+                                            'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300': activeNode.color === 'cyan',
+                                            'bg-slate-200/80 text-slate-600 dark:bg-white/10 dark:text-slate-300': activeNode.color === 'slate',
+                                            'bg-[#F47920]/15 text-[#F47920]': activeNode.color === 'orange',
+                                        }"
+                                        x-text="'Tahap #' + activeNode.index + ' • ' + activeNode.badge"
+                                    ></span>
+                                    <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 tabular-nums" x-text="activeNode.date + (activeNode.time ? ' • ' + activeNode.time : '')"></span>
+                                </div>
+                                <h4 class="text-sm sm:text-base font-black text-slate-800 dark:text-white leading-snug" x-text="activeNode.full_title"></h4>
+                                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed" x-text="activeNode.desc"></p>
+                            </div>
+
+                            <!-- Quick Stepper Controls -->
+                            <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 dark:border-white/10">
+                                <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 sm:hidden">
+                                    {{ __('Geser kartu atau gunakan panah') }}
+                                </span>
+                                <div class="flex items-center gap-1.5">
+                                    <button
+                                        type="button"
+                                        @click="stepSpotlight(-1)"
+                                        :disabled="activeIdx <= 0"
+                                        aria-label="{{ __('Tahap sebelumnya') }}"
+                                        class="px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/15 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:border-[#F47920]/60 hover:text-[#F47920] transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                                    >
+                                        ‹
+                                    </button>
+                                    <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tabular-nums min-w-[44px] text-center" x-text="(activeIdx + 1) + ' / ' + nodes.length"></span>
+                                    <button
+                                        type="button"
+                                        @click="stepSpotlight(1)"
+                                        :disabled="activeIdx >= nodes.length - 1"
+                                        aria-label="{{ __('Tahap berikutnya') }}"
+                                        class="px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/15 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:border-[#F47920]/60 hover:text-[#F47920] transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                                    >
+                                        ›
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- BANNER PERINGATAN RDTV JIKA ADA DOKUMEN RETUR -->
