@@ -287,7 +287,7 @@ class DeliveryOrderReceiptInfolist
                                         TextEntry::make('file_path')
                                             ->label('File Dokumen')
                                             ->formatStateUsing(fn () => 'Lihat Dokumen')
-                                            ->url(fn ($record) => Storage::url($record->file_path))
+                                            ->url(fn ($record) => $record->document_url)
                                             ->openUrlInNewTab()
                                             ->icon('heroicon-m-arrow-top-right-on-square')
                                             ->color('primary'),

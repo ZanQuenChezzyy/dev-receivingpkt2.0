@@ -446,9 +446,9 @@ class AntreanPengirimanGudang extends Page implements HasTable
                         ->icon('heroicon-o-eye')
                         ->color('info')
                         ->url(function (DeliveryOrderReceipt $record) {
-                            $grsItem = $record->grsRdtvItems->first();
+                            $grsItem = $record->grsRdtvItems->sortByDesc('id')->first();
 
-                            return $grsItem ? asset('storage/'.$grsItem->file_path) : '#';
+                            return $grsItem?->document_url ?? '#';
                         })
                         ->openUrlInNewTab()
                         ->visible(fn (DeliveryOrderReceipt $record) => $record->grsRdtvItems->isNotEmpty()),

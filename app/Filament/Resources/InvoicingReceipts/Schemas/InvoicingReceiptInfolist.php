@@ -256,7 +256,7 @@ class InvoicingReceiptInfolist
                             ->badge()
                             ->color(fn ($state) => $state ? 'info' : 'gray')
                             ->icon(fn ($state) => $state ? 'heroicon-m-arrow-top-right-on-square' : null)
-                            ->url(fn ($record) => $record->grsRdtvItem?->file_path ? Storage::url($record->grsRdtvItem->file_path) : null)
+                            ->url(fn ($record) => $record->grsRdtvItem?->document_url)
                             ->openUrlInNewTab()
                             ->placeholder('-'),
 

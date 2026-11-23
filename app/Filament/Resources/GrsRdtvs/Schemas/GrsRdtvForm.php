@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\GrsRdtvs\Schemas;
 
+use App\Models\GrsRdtv;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -46,6 +47,8 @@ class GrsRdtvForm
                             ])
                             ->inline()
                             ->live()
+                            ->disabled(fn (?GrsRdtv $record, string $operation): bool => $operation === 'edit' && $record !== null && $record->grsRdtvItems()->exists())
+                            ->dehydrated()
                             ->required(),
                         Hidden::make('created_by')
                             ->default(fn () => Auth::id()),

@@ -100,7 +100,12 @@ class GrsRdtvsTable
                 //
             ])
             ->defaultSort('transaction_date', 'desc')
-            ->modifyQueryUsing(fn (Builder $query) => $query->orderBy('id', 'desc'))
+            ->modifyQueryUsing(fn (Builder $query) => $query
+                ->with([
+                    'createdBy',
+                    'grsRdtvItems.deliveryOrderReceipt.deliveryOrderReceiptDetails.purchaseOrderIssued',
+                ])
+                ->orderBy('id', 'desc'))
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),

@@ -2,12 +2,15 @@
 
 use App\Filament\Resources\GrsRdtvs\Pages\CreateGrsRdtv;
 use App\Filament\Resources\GrsRdtvs\Pages\EditGrsRdtv;
+use App\Filament\Resources\GrsRdtvs\RelationManagers\GrsRdtvItemsRelationManager;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\GrsRdtv;
 use App\Models\GrsRdtvItem;
 use App\Models\InvoicingReceipt;
 use App\Models\QcHistory;
 use App\Models\User;
+use App\Services\GrsRdtvProcessingService;
+use Filament\Actions\DeleteAction;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema as DbSchema;
 use Illuminate\Support\Facades\Storage;
@@ -507,4 +510,295 @@ test('uploading rdtv document populates no_rdtv and parsed fields on invoicing_r
         ->and($receipt->no_grs)->toBeNull()
         ->and($receipt->tanggal_terima_grs?->format('Y-m-d'))->toBe('2026-11-21')
         ->and($receipt->dokumen_verifikasi_grs)->not->toBeNull();
+});
+
+test('re-uploading via EditGrsRdtv stores a unique versioned file path, clears upload state, and dispatches refresh', function () {
+    $user = User::create(['name' => 'Staff Audit', 'email' => 'audit@example.com', 'password' => 'secret']);
+    $this->actingAs($user);
+
+    $do = DeliveryOrderReceipt::create([
+        'document_code' => 'DO-VERSION-701',
+        'delivery_order_no' => 'DO-701',
+        'status' => 'Diterima',
+        'post_103' => now(),
+        'received_by' => $user->id,
+        'created_by' => $user->id,
+    ]);
+
+    QcHistory::create([
+        'delivery_order_receipt_id' => $do->id,
+        'status' => 'Kembali',
+    ]);
+
+    $grs = GrsRdtv::create(['transaction_date' => '2026-11-23', 'category' => 'GRS', 'created_by' => $user->id]);
+
+    $oldFile = TemporaryUploadedFile::fake()->createWithContent('DO-VERSION-701.pdf', '%PDF-1.4 OLD_CONTENT_V1');
+
+    $component = Livewire::test(EditGrsRdtv::class, ['record' => $grs->id])
+        ->fillForm([
+            'files' => [$oldFile],
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors()
+        ->assertDispatched('grs-rdtv-items-updated');
+
+    $firstItem = $do->grsRdtvItems()->first();
+    expect($firstItem)->not->toBeNull()
+        ->and($firstItem->file_path)->not->toBe('grs-rdtv-docs/DO-VERSION-701.pdf')
+        ->and(Storage::disk('public')->get($firstItem->file_path))->toBe('%PDF-1.4 OLD_CONTENT_V1');
+
+    // Klik simpan ulang tanpa upload file baru tidak boleh gagal karena state upload sudah dibersihkan
+    $component
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $oldPath = $firstItem->file_path;
+
+    // Hapus item lama lalu unggah file baru dengan nama yang sama persis
+    $firstItem->delete();
+    expect(Storage::disk('public')->exists($oldPath))->toBeFalse()
+        ->and($do->fresh()->status)->toBe('Kembali dari ISTEK');
+
+    $newFile = TemporaryUploadedFile::fake()->createWithContent('DO-VERSION-701.pdf', '%PDF-1.4 NEW_CONTENT_V2');
+
+    Livewire::test(EditGrsRdtv::class, ['record' => $grs->id])
+        ->fillForm([
+            'files' => [$newFile],
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors()
+        ->assertDispatched('grs-rdtv-items-updated');
+
+    $secondItem = $do->grsRdtvItems()->first();
+    expect($secondItem)->not->toBeNull()
+        ->and($secondItem->file_path)->not->toBe($oldPath)
+        ->and(Storage::disk('public')->get($secondItem->file_path))->toBe('%PDF-1.4 NEW_CONTENT_V2')
+        ->and($secondItem->document_url)->toContain('?v=');
+});
+
+test('re-uploading via CreateGrsRdtv on same date produces new unique file content and reuses batch', function () {
+    $user = User::create(['name' => 'Staff Create Same Date', 'email' => 'createsame@example.com', 'password' => 'secret']);
+    $this->actingAs($user);
+
+    $do = DeliveryOrderReceipt::create([
+        'document_code' => 'DO-SAMEDATE-801',
+        'delivery_order_no' => 'DO-801',
+        'status' => 'Diterima',
+        'post_103' => now(),
+        'received_by' => $user->id,
+        'created_by' => $user->id,
+    ]);
+
+    QcHistory::create([
+        'delivery_order_receipt_id' => $do->id,
+        'status' => 'Kembali',
+    ]);
+
+    $fileV1 = TemporaryUploadedFile::fake()->createWithContent('DO-SAMEDATE-801.pdf', '%PDF-1.4 VERSION_1');
+
+    Livewire::test(CreateGrsRdtv::class)
+        ->fillForm([
+            'transaction_date' => '2026-11-23',
+            'category' => 'GRS',
+            'files' => [$fileV1],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $item1 = $do->grsRdtvItems()->first();
+    $batchId = $item1->grs_rdtv_id;
+    $path1 = $item1->file_path;
+
+    // Hapus item lama lalu create ulang di tanggal yang sama
+    $item1->delete();
+
+    $fileV2 = TemporaryUploadedFile::fake()->createWithContent('DO-SAMEDATE-801.pdf', '%PDF-1.4 VERSION_2_LATEST');
+
+    Livewire::test(CreateGrsRdtv::class)
+        ->fillForm([
+            'transaction_date' => '2026-11-23',
+            'category' => 'GRS',
+            'files' => [$fileV2],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $item2 = $do->grsRdtvItems()->first();
+    expect($item2)->not->toBeNull()
+        ->and($item2->grs_rdtv_id)->toBe($batchId)
+        ->and($item2->file_path)->not->toBe($path1)
+        ->and(Storage::disk('public')->exists($path1))->toBeFalse()
+        ->and(Storage::disk('public')->get($item2->file_path))->toBe('%PDF-1.4 VERSION_2_LATEST');
+});
+
+test('deleting one item sharing a legacy file_path preserves the physical file for the remaining item', function () {
+    $do = DeliveryOrderReceipt::create([
+        'document_code' => 'DO-SHARED-901',
+        'delivery_order_no' => 'DO-901',
+        'status' => 'GRS',
+        'post_103' => now(),
+    ]);
+
+    $sharedPath = 'grs-rdtv-docs/DO-SHARED-901.pdf';
+    Storage::disk('public')->put($sharedPath, '%PDF-1.4 SHARED_LEGACY');
+
+    $rdtvBatch = GrsRdtv::create(['transaction_date' => '2026-11-20', 'category' => 'RDTV']);
+    $grsBatch = GrsRdtv::create(['transaction_date' => '2026-11-23', 'category' => 'GRS']);
+
+    $rdtvItem = GrsRdtvItem::create([
+        'grs_rdtv_id' => $rdtvBatch->id,
+        'delivery_order_receipt_id' => $do->id,
+        'document_code' => 'DO-SHARED-901',
+        'file_path' => $sharedPath,
+        'status' => 'Matched',
+    ]);
+
+    $grsItem = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grsBatch->id,
+        'delivery_order_receipt_id' => $do->id,
+        'document_code' => 'DO-SHARED-901',
+        'file_path' => $sharedPath,
+        'status' => 'Matched',
+    ]);
+
+    // Hapus RDTV lama -> file fisik harus tetap aman karena masih dipakai oleh GRS
+    $rdtvItem->delete();
+
+    expect(Storage::disk('public')->exists($sharedPath))->toBeTrue()
+        ->and($do->fresh()->status)->toBe('GRS');
+
+    // Baru setelah GRS terakhir ikut dihapus, file fisik ikut dihapus
+    $grsItem->delete();
+    expect(Storage::disk('public')->exists($sharedPath))->toBeFalse();
+});
+
+test('replacing an item PDF via GrsRdtvProcessingService swaps file safely without deleting InvoicingReceipt', function () {
+    $do = DeliveryOrderReceipt::create([
+        'document_code' => 'DO-REPLACE-1001',
+        'delivery_order_no' => 'DO-1001',
+        'status' => 'GRS',
+        'post_103' => now(),
+    ]);
+
+    $oldPath = 'grs-rdtv-docs/DO-REPLACE-1001__20261123000001_aaaaaa.pdf';
+    Storage::disk('public')->put($oldPath, '%PDF-1.4 OLD_SLIP');
+
+    $grs = GrsRdtv::create(['transaction_date' => '2026-11-23', 'category' => 'GRS']);
+    $item = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grs->id,
+        'delivery_order_receipt_id' => $do->id,
+        'document_code' => 'DO-REPLACE-1001',
+        'file_path' => $oldPath,
+        'status' => 'Matched',
+    ]);
+
+    $inv = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $item->id,
+        'delivery_order_receipt_id' => $do->id,
+        'no_po' => '5300099999',
+        'jenis' => 'GRS',
+        'dokumen_verifikasi_grs' => 'verifikasi-grs/official-vp-signed.pdf',
+        'no_invoice' => 'INV-2026-001',
+        'status' => 'Selesai',
+    ]);
+
+    $replacement = TemporaryUploadedFile::fake()->createWithContent('DO-REPLACE-1001 (1).pdf', '%PDF-1.4 NEW_REVISED_SLIP');
+
+    $updated = app(GrsRdtvProcessingService::class)->replaceItemFile($item, $replacement);
+
+    expect($updated->file_path)->not->toBe($oldPath)
+        ->and(Storage::disk('public')->exists($oldPath))->toBeFalse()
+        ->and(Storage::disk('public')->get($updated->file_path))->toBe('%PDF-1.4 NEW_REVISED_SLIP')
+        ->and($inv->fresh()->id)->toBe($inv->id)
+        ->and($inv->fresh()->no_invoice)->toBe('INV-2026-001')
+        ->and($inv->fresh()->dokumen_verifikasi_grs)->toBe('verifikasi-grs/official-vp-signed.pdf');
+});
+
+test('EditGrsRdtv blocks changing transaction_date to a date that already has a batch of the same category', function () {
+    $user = User::create(['name' => 'Staff Dup Date', 'email' => 'dupdate@example.com', 'password' => 'secret']);
+    $this->actingAs($user);
+
+    $existingBatch = GrsRdtv::create(['transaction_date' => '2026-11-20', 'category' => 'GRS', 'created_by' => $user->id]);
+    $editedBatch = GrsRdtv::create(['transaction_date' => '2026-11-23', 'category' => 'GRS', 'created_by' => $user->id]);
+
+    Livewire::test(EditGrsRdtv::class, ['record' => $editedBatch->id])
+        ->fillForm([
+            'transaction_date' => '2026-11-20',
+        ])
+        ->call('save');
+
+    expect($editedBatch->fresh()->transaction_date->toDateString())->toBe('2026-11-23')
+        ->and($existingBatch->fresh()->transaction_date->toDateString())->toBe('2026-11-20');
+});
+
+test('GrsRdtvItemsRelationManager replace_file and delete table actions work cleanly end-to-end', function () {
+    $user = User::create(['name' => 'Staff RM', 'email' => 'rm@example.com', 'password' => 'secret']);
+    $this->actingAs($user);
+
+    $do = DeliveryOrderReceipt::create([
+        'document_code' => 'DO-RM-1101',
+        'delivery_order_no' => 'DO-1101',
+        'status' => 'GRS',
+        'post_103' => now(),
+        'received_by' => $user->id,
+        'created_by' => $user->id,
+    ]);
+
+    QcHistory::create([
+        'delivery_order_receipt_id' => $do->id,
+        'status' => 'Kembali',
+    ]);
+
+    $oldPath = 'grs-rdtv-docs/DO-RM-1101__20261123000001_111111.pdf';
+    Storage::disk('public')->put($oldPath, '%PDF-1.4 OLD_RM_FILE');
+
+    $grs = GrsRdtv::create(['transaction_date' => '2026-11-23', 'category' => 'GRS', 'created_by' => $user->id]);
+    $item = GrsRdtvItem::create([
+        'grs_rdtv_id' => $grs->id,
+        'delivery_order_receipt_id' => $do->id,
+        'document_code' => 'DO-RM-1101',
+        'file_path' => $oldPath,
+        'status' => 'Matched',
+    ]);
+
+    $inv = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $item->id,
+        'delivery_order_receipt_id' => $do->id,
+        'no_po' => '5300099988',
+        'jenis' => 'GRS',
+        'dokumen_verifikasi_grs' => $oldPath,
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $newFile = TemporaryUploadedFile::fake()->createWithContent('DO-RM-1101.pdf', '%PDF-1.4 NEW_RM_FILE');
+
+    Livewire::test(GrsRdtvItemsRelationManager::class, [
+        'ownerRecord' => $grs,
+        'pageClass' => EditGrsRdtv::class,
+    ])
+        ->callTableAction('replace_file', $item, [
+            'file' => [$newFile],
+        ])
+        ->assertHasNoTableActionErrors();
+
+    $item->refresh();
+    expect($item->file_path)->not->toBe($oldPath)
+        ->and(Storage::disk('public')->exists($oldPath))->toBeFalse()
+        ->and(Storage::disk('public')->get($item->file_path))->toBe('%PDF-1.4 NEW_RM_FILE')
+        ->and($inv->fresh()->dokumen_verifikasi_grs)->toBe($item->file_path);
+
+    $replacedPath = $item->file_path;
+
+    // Sekarang hapus item lewat DeleteAction di RelationManager
+    Livewire::test(GrsRdtvItemsRelationManager::class, [
+        'ownerRecord' => $grs,
+        'pageClass' => EditGrsRdtv::class,
+    ])
+        ->callTableAction(DeleteAction::class, $item)
+        ->assertHasNoTableActionErrors();
+
+    expect(GrsRdtvItem::find($item->id))->toBeNull()
+        ->and(InvoicingReceipt::find($inv->id))->toBeNull()
+        ->and(Storage::disk('public')->exists($replacedPath))->toBeFalse()
+        ->and($do->fresh()->status)->toBe('Kembali dari ISTEK');
 });

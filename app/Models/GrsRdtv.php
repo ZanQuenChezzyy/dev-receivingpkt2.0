@@ -29,7 +29,7 @@ class GrsRdtv extends Model
     protected static function booted(): void
     {
         static::deleting(function (GrsRdtv $grsRdtv) {
-            foreach ($grsRdtv->grsRdtvItems as $item) {
+            foreach ($grsRdtv->grsRdtvItems()->get() as $item) {
                 $item->delete();
             }
         });

@@ -316,7 +316,11 @@ class InvoicingReceiptsTable
                         ->icon(fn ($state): ?string => $state ? 'heroicon-m-arrow-top-right-on-square' : null)
                         ->extraAttributes(fn ($state): array => $state ? ['class' => 'underline decoration-dotted underline-offset-4 hover:decoration-solid cursor-pointer'] : [])
                         ->url(function (InvoicingReceipt $record): ?string {
-                            $filePath = $record->grsRdtvItem?->file_path ?: $record->dokumen_grs;
+                            if ($record->grsRdtvItem?->file_path) {
+                                return $record->grsRdtvItem->document_url;
+                            }
+
+                            $filePath = $record->dokumen_grs;
 
                             return $filePath ? Storage::disk('public')->url($filePath) : null;
                         })

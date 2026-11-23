@@ -394,18 +394,8 @@ class InvoicingReceipt extends Model
                 }
             } elseif ($record->delivery_order_receipt_id) {
                 $do = $record->deliveryOrderReceipt;
-                if ($do && in_array($do->status, ['GRS', 'RDTV'])) {
-                    $hasGrs = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))->exists();
-                    $hasRdtv = $do->grsRdtvItems()->whereHas('grsRdtv', fn ($q) => $q->where('category', 'RDTV'))->exists();
-                    if (! $hasGrs && ! $hasRdtv) {
-                        $latestQc = $do->qcHistories()->latest()->first();
-                        $do->status = $latestQc && $latestQc->status === 'Kembali' ? 'Kembali dari ISTEK' : 'Diterima';
-                        if (in_array($do->delay_reason, ['RDTV', 'GRS'])) {
-                            $do->delay_reason = null;
-                            $do->delay_notes = null;
-                        }
-                        $do->save();
-                    }
+                if ($do && in_array($do->status, ['GRS', 'RDTV'], true)) {
+                    GrsRdtvItem::syncDeliveryOrderStatus($do);
                 }
             }
         });

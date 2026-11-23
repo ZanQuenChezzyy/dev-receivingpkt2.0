@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\DeliveryOrderReceipts\Tables;
 
 use App\Models\DeliveryOrderReceipt;
+use App\Models\GrsRdtvItem;
 use App\Models\LocationReceiving;
 use App\Services\UserBadgeRenderer;
 use Filament\Actions\Action;
@@ -773,17 +774,11 @@ class DeliveryOrderReceiptsTable
                         ->modalSubmitActionLabel('Ya, Hapus & Tarik Kembali')
                         ->visible(fn ($record): bool => in_array($record->status, ['GRS', 'RDTV']) || $record->grsRdtvItems()->exists())
                         ->action(function ($record) {
-                            foreach ($record->grsRdtvItems as $item) {
+                            foreach ($record->grsRdtvItems()->get() as $item) {
                                 $item->delete();
                             }
 
-                            if (in_array($record->status, ['GRS', 'RDTV'])) {
-                                $latestQc = $record->qcHistories()->latest()->first();
-                                $record->status = ($latestQc && $latestQc->status === 'Kembali') ? 'Kembali dari ISTEK' : 'Diterima';
-                                $record->delay_reason = null;
-                                $record->delay_notes = null;
-                                $record->save();
-                            }
+                            GrsRdtvItem::syncDeliveryOrderStatus($record);
 
                             Notification::make()
                                 ->title('Berkas GRS/RDTV Berhasil Dihapus')
