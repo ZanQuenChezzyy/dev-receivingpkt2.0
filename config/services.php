@@ -48,7 +48,7 @@ return [
         'base_url' => rtrim((string) env('ZIMBRA_BASE_URL', 'https://mailpkt.pupukkaltim.com'), '/'),
         'username' => env('ZIMBRA_USERNAME'),
         'password' => env('ZIMBRA_PASSWORD'),
-        'from_name' => env('ZIMBRA_FROM_NAME', 'Receiving Jasa - PT Pupuk Kalimantan Timur'),
+        'from_name' => env('ZIMBRA_FROM_NAME', 'receiving jasa'),
         'timeout' => (int) env('ZIMBRA_TIMEOUT', 20),
         'verify_ssl' => filter_var(env('ZIMBRA_VERIFY_SSL', true), FILTER_VALIDATE_BOOLEAN),
         'test_override_to' => env('ZIMBRA_TEST_OVERRIDE_TO'),
