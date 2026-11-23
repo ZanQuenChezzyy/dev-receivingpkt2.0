@@ -497,6 +497,7 @@
                         nodes: [],
                         pinnedIdx: {{ $defaultActiveIdx }},
                         hoveredIdx: null,
+                        spotlightPulse: false,
                         canScrollLeft: false,
                         canScrollRight: false,
                         isDragging: false,
@@ -544,6 +545,11 @@
                             this.pinnedIdx = idx;
                             this.hoveredIdx = null;
                             this.scrollToNode(idx, true);
+                            this.spotlightPulse = false;
+                            this.$nextTick(() => {
+                                this.spotlightPulse = true;
+                                setTimeout(() => { this.spotlightPulse = false; }, 550);
+                            });
                         },
                         stepSpotlight(dir) {
                             if (!this.nodes.length) return;
@@ -767,14 +773,28 @@
                                         </div>
                                     </div>
 
-                                    <!-- Hover / Active Spring-Reveal Footer -->
+                                    <!-- Hover / Active Spring-Reveal Footer (No duplicate date, clear click feedback) -->
                                     <div class="journey-hover-reveal pt-2 border-t border-slate-200/60 dark:border-white/10 flex items-center justify-between gap-2 text-[10px]">
-                                        <span class="font-semibold text-slate-500 dark:text-slate-400 truncate tabular-nums">
-                                            {{ $node['date'] }}@if ($node['time']) • {{ $node['time'] }}@endif
+                                        <span class="font-semibold text-slate-500 dark:text-slate-400 truncate">
+                                            @if ($node['time'])
+                                                {{ __('Pukul') }} {{ $node['time'] }}
+                                            @else
+                                                {{ $node['badge'] }}
+                                            @endif
                                         </span>
-                                        <span class="font-bold text-[#F47920] shrink-0 flex items-center gap-0.5">
-                                            {{ __('Rincian') }}
-                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                        <span
+                                            class="shrink-0 inline-flex items-center gap-1 font-bold transition-colors"
+                                            :class="pinnedIdx === {{ $nIdx }} ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#F47920]'"
+                                        >
+                                            <template x-if="pinnedIdx === {{ $nIdx }}">
+                                                <span class="inline-flex items-center gap-0.5">
+                                                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.75"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                                    {{ __('Terpilih') }}
+                                                </span>
+                                            </template>
+                                            <template x-if="pinnedIdx !== {{ $nIdx }}">
+                                                <span>{{ __('Klik untuk pilih') }}</span>
+                                            </template>
                                         </span>
                                     </div>
                                 </div>
@@ -786,7 +806,8 @@
                     <template x-if="activeNode">
                         <div
                             :key="activeIdx"
-                            class="journey-spotlight-panel mt-3 p-4 sm:p-5 rounded-2xl bg-white/75 dark:bg-white/[0.04] border border-slate-200/80 dark:border-white/10 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                            :class="spotlightPulse ? 'ring-2 ring-[#F47920]/60 border-[#F47920]/60 bg-[#F47920]/[0.06] dark:bg-[#F47920]/10' : 'border-slate-200/80 dark:border-white/10 bg-white/75 dark:bg-white/[0.04]'"
+                            class="journey-spotlight-panel mt-3 p-4 sm:p-5 rounded-2xl border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-300"
                         >
                             <div class="min-w-0 space-y-1">
                                 <div class="flex flex-wrap items-center gap-2">
