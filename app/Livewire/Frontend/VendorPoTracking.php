@@ -951,11 +951,14 @@ class VendorPoTracking extends Component
 
             // Invoicing Receipts
             foreach ($do->invoicingReceipts as $inv) {
-                if ($inv->tanggal_terima_grs) {
-                    $invDate = Carbon::parse($inv->tanggal_terima_grs)->locale(app()->getLocale());
-                    $invoiceNoSuffix = $inv->no_invoice
-                        ? ' '.__('No Invoice: :invoice', ['invoice' => $inv->no_invoice])
-                        : '';
+                if ($inv->hasInvoiceData()) {
+                    $rawInvDate = $inv->tanggal_terima_koreksi_invoice
+                        ?? $inv->tanggal_invoice
+                        ?? $inv->tanggal_terima_grs
+                        ?? $inv->updated_at
+                        ?? $inv->created_at;
+                    $invDate = Carbon::parse($rawInvDate)->locale(app()->getLocale());
+
                     $timeline[] = [
                         'do_order' => $doOrder,
                         'stage_order' => 80,
@@ -966,10 +969,11 @@ class VendorPoTracking extends Component
                         'short_title' => __('Berkas Penagihan Diterima'),
                         'badge' => __('Invoicing Entry'),
                         'badge_color' => 'cyan',
-                        'desc' => __('Berkas penagihan untuk DO :do diterima oleh Bagian Penerimaan Invoice.', ['do' => $inv->no_do]).$invoiceNoSuffix,
-                        'short_desc' => $inv->no_invoice
-                            ? __('Bagian Invoice • No. :invoice', ['invoice' => $inv->no_invoice])
-                            : __('Bagian Penerimaan Invoice'),
+                        'desc' => __('Berkas penagihan untuk DO :do diterima oleh Bagian Penerimaan Invoice. No Invoice: :invoice', [
+                            'do' => $inv->no_do,
+                            'invoice' => $inv->no_invoice,
+                        ]),
+                        'short_desc' => __('Bagian Invoice • No. :invoice', ['invoice' => $inv->no_invoice]),
                         'icon' => 'currency-dollar',
                     ];
                 }

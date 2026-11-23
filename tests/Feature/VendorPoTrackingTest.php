@@ -52,6 +52,11 @@ beforeEach(function () {
             $table->string('status')->nullable();
             $table->text('keterangan')->nullable();
             $table->date('tanggal_terima_grs')->nullable();
+            $table->string('no_invoice')->nullable();
+            $table->date('tanggal_invoice')->nullable();
+            $table->date('tanggal_terima_koreksi_invoice')->nullable();
+            $table->date('tanggal_kirim_kasir')->nullable();
+            $table->integer('lama_pekerjaan')->nullable();
             $table->string('dokumen_grs')->nullable();
             $table->string('dokumen_verifikasi_grs')->nullable();
             $table->string('dokumen_invoice')->nullable();
@@ -1027,4 +1032,64 @@ test('unsigned or tampered auto=1 tracking URL does not bypass vendor verificati
         ->assertOk();
 
     expect(session('vendor_po_tracking.verified'))->toBeNull();
+});
+
+test('timeline hides Berkas Penagihan Diterima when no_invoice is still empty and shows it once no_invoice exists', function () {
+    $vendor = Vendor::create([
+        'name' => 'PT Invoice Timeline Check',
+        'vendor_number' => 'V-INV-01',
+        'email' => 'inv@vendor.test',
+    ]);
+
+    $po = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5300081111',
+        'vendor_id' => $vendor->vendor_number,
+        'vendor_name' => $vendor->name,
+        'material_number' => 'MAT-INV-01',
+        'description' => 'Gasket Flange',
+        'quantity' => 10,
+        'uoi' => 'EA',
+    ]);
+
+    $do = DeliveryOrderReceipt::create([
+        'document_code' => 'DO-INV-01',
+        'delivery_order_no' => 'SJ-INV-01',
+        'received_date' => now()->subDays(2),
+        'status' => 'GRS',
+    ]);
+
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $do->id,
+        'purchase_order_issued_id' => $po->id,
+        'description' => 'Gasket Flange',
+        'quantity' => 10,
+    ]);
+
+    $receipt = InvoicingReceipt::create([
+        'delivery_order_receipt_id' => $do->id,
+        'no_po' => '5300081111',
+        'no_do' => 'SJ-INV-01',
+        'tanggal_terima_grs' => now()->toDateString(),
+        'no_invoice' => null,
+        'status' => 'Terverifikasi',
+    ]);
+
+    $component = Livewire::test(VendorPoTracking::class)
+        ->set('poNumber', '5300081111')
+        ->call('initiateSearch')
+        ->set('verificationEmail', 'inv@vendor.test')
+        ->call('verifyVendorEmail');
+
+    $timelineBefore = collect($component->get('trackingData.timeline'));
+    expect($timelineBefore->pluck('short_title')->all())->not->toContain('Berkas Penagihan Diterima');
+
+    $receipt->update([
+        'no_invoice' => 'INV/2026/0099',
+        'tanggal_terima_koreksi_invoice' => now()->toDateString(),
+    ]);
+
+    $component->call('verifyVendorEmail');
+    $timelineAfter = collect($component->get('trackingData.timeline'));
+    expect($timelineAfter->pluck('short_title')->all())->toContain('Berkas Penagihan Diterima')
+        ->and($timelineAfter->firstWhere('short_title', 'Berkas Penagihan Diterima')['short_desc'])->toContain('INV/2026/0099');
 });
