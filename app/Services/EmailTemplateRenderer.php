@@ -471,7 +471,8 @@ HTML;
     }
 
     /**
-     * Membungkus konten email dengan tata letak email korporat PKT yang bersih dan kompatibel dengan seluruh klien email.
+     * Membungkus konten email dengan tata letak email korporat PKT yang bersih, menggunakan logo Receiving & PKT pattern,
+     * dan tetap kompatibel dengan klien email utama (Gmail, Zimbra, Outlook, Apple Mail).
      *
      * @param  array<string, mixed>  $layoutOverrides
      */
@@ -489,40 +490,170 @@ HTML;
         $headerTitle = e($layout['header_title']);
         $footerText = nl2br(e($layout['footer_text']));
 
+        $heroGradient = $isRdtv
+            ? 'linear-gradient(135deg,#2a0912 0%,#681023 56%,#991b1b 100%)'
+            : 'linear-gradient(135deg,#071a33 0%,#0a3b73 54%,#0054a6 100%)';
+        $heroBgFallback = $isRdtv ? '#681023' : '#0a3b73';
+        $badgeBg = $isRdtv ? 'rgba(254,205,211,0.16)' : 'rgba(255,255,255,0.14)';
+        $badgeBorder = $isRdtv ? 'rgba(254,205,211,0.34)' : 'rgba(255,255,255,0.28)';
+        $dotColor = $isRdtv ? '#fda4af' : $accentColor;
+
+        $attachmentPrimaryLabel = $isRdtv ? 'Dokumen RDTV (124)' : 'Dokumen GRS (105)';
+        $attachmentVerifLabel = $isRdtv ? 'Verifikasi Penolakan (RDTV)' : 'Verifikasi Penerimaan (GRS)';
+        $chipBg = $isRdtv ? '#fff1f2' : '#eff6ff';
+        $chipBorder = $isRdtv ? '#fecdd3' : '#bfdbfe';
+        $chipText = $isRdtv ? '#be123c' : '#0054a6';
+        $chip2Bg = $isRdtv ? '#fef2f2' : '#fff7ed';
+        $chip2Border = $isRdtv ? '#fecaca' : '#fed7aa';
+        $chip2Text = $isRdtv ? '#b91c1c' : '#c2410c';
+
+        $baseUrl = $this->publicAssetBaseUrl();
+        $logoWhiteUrl = e($baseUrl.'/images/logo/receiving_white.png');
+        $patternWhiteUrl = e($baseUrl.'/images/pattern/pkt-pattern-white.png');
+        $patternNavyUrl = e($baseUrl.'/images/pattern/pkt-pattern-navy.png');
+
         $bannerSection = $testBannerHtml ? $testBannerHtml : '';
+        $year = now()->year;
 
         return <<<HTML
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @keyframes pktEmailFadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pkt-email-shell {
+            animation: pktEmailFadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        .pkt-email-body p {
+            margin: 0 0 13px 0;
+            line-height: 1.68;
+            color: #1e293b;
+        }
+        .pkt-email-body p:last-child {
+            margin-bottom: 0;
+        }
+        .pkt-email-body ul,
+        .pkt-email-body ol {
+            margin: 14px 0 16px 0;
+            padding: 14px 18px 14px 32px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 3.5px solid {$accentColor};
+            border-radius: 10px;
+        }
+        .pkt-email-body li {
+            margin: 5px 0;
+            color: #0f172a;
+        }
+        .pkt-email-body li p {
+            margin: 0;
+        }
+        .pkt-email-body a {
+            color: #0054A6;
+            font-weight: 700;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .pkt-email-body a:hover {
+            color: {$accentColor};
+        }
+    </style>
 </head>
-<body style="margin:0;padding:24px 12px;background-color:#f3f6fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;line-height:1.6;">
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+<body style="margin:0;padding:28px 12px;background-color:#eef3f9;background-image:radial-gradient(circle at 12% 10%,rgba(244,121,32,0.08) 0%,transparent 42%),radial-gradient(circle at 88% 90%,rgba(0,84,166,0.09) 0%,transparent 48%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;line-height:1.65;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="pkt-email-shell" style="max-width:650px;margin:0 auto;background-color:#ffffff;border:1px solid #dbe4f0;border-radius:18px;overflow:hidden;box-shadow:0 18px 44px -14px rgba(10,59,115,0.18),0 4px 12px -4px rgba(15,23,42,0.06);">
+        <!-- Top Brand Accent Bar -->
         <tr>
-            <td style="height:4px;background:linear-gradient(90deg,#0054A6 0%,{$accentColor} 100%);"></td>
+            <td style="height:5px;line-height:5px;font-size:0;background-color:{$accentColor};background-image:linear-gradient(90deg,#0054A6 0%,{$accentColor} 100%);">&nbsp;</td>
         </tr>
+
+        <!-- Corporate Hero Header with Receiving Logo & PKT Geometric Pattern -->
         <tr>
-            <td style="padding:20px 28px 14px 28px;border-bottom:1px solid #f1f5f9;">
-                <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:{$accentColor};text-transform:uppercase;">{$badgeLabel}</div>
-                <div style="font-size:16px;font-weight:700;color:#0f172a;margin-top:4px;">{$headerTitle}</div>
+            <td style="background-color:{$heroBgFallback};background-image:url('{$patternWhiteUrl}'),{$heroGradient};background-repeat:no-repeat,no-repeat;background-position:right -18px center,center center;background-size:215px auto,cover;padding:26px 30px 24px 30px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                        <td valign="middle" align="left">
+                            <img src="{$logoWhiteUrl}" alt="Receiving PKT" height="36" style="display:block;height:36px;width:auto;border:0;outline:none;text-decoration:none;">
+                        </td>
+                        <td valign="middle" align="right">
+                            <span style="display:inline-block;padding:6px 12px;border-radius:999px;background-color:{$badgeBg};border:1px solid {$badgeBorder};font-size:10px;font-weight:800;letter-spacing:0.06em;color:#ffffff;text-transform:uppercase;white-space:nowrap;">
+                                <span style="display:inline-block;width:7px;height:7px;border-radius:999px;background-color:{$dotColor};margin-right:6px;vertical-align:middle;"></span>{$badgeLabel}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+
+                <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.16);">
+                    <div style="font-size:18px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;line-height:1.3;">
+                        {$headerTitle}
+                    </div>
+                    <div style="margin-top:4px;font-size:12px;color:rgba(226,232,240,0.88);font-weight:500;">
+                        Sistem Layanan Penerimaan Barang &amp; Verifikasi Dokumen • PT Pupuk Kalimantan Timur
+                    </div>
+                </div>
             </td>
         </tr>
+
         {$bannerSection}
+
+        <!-- Main Letter Body -->
         <tr>
-            <td style="padding:22px 28px;font-size:14px;color:#1e293b;">
+            <td class="pkt-email-body" style="padding:28px 32px 24px 32px;font-size:14px;color:#1e293b;background-color:#ffffff;">
                 {$bodyHtml}
             </td>
         </tr>
+
+        <!-- Mandatory 2-Attachment Visual Strip -->
         <tr>
-            <td style="padding:14px 28px;background-color:#f8fafc;border-top:1px solid #f1f5f9;font-size:12px;color:#64748b;">
-                {$footerText}
+            <td style="padding:0 32px 24px 32px;background-color:#ffffff;">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">
+                    <tr>
+                        <td style="padding:14px 16px;">
+                            <div style="font-size:11px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#475569;margin-bottom:8px;">
+                                Kelengkapan Lampiran Email (2 Berkas PDF — Satu Kesatuan)
+                            </div>
+                            <span style="display:inline-block;margin:0 6px 6px 0;padding:5px 11px;border-radius:8px;background-color:{$chipBg};border:1px solid {$chipBorder};font-size:11px;font-weight:700;color:{$chipText};">
+                                1. {$attachmentPrimaryLabel}
+                            </span>
+                            <span style="display:inline-block;margin:0 0 6px 0;padding:5px 11px;border-radius:8px;background-color:{$chip2Bg};border:1px solid {$chip2Border};font-size:11px;font-weight:700;color:{$chip2Text};">
+                                2. {$attachmentVerifLabel}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+
+        <!-- Corporate Footer with Subtle PKT Pattern Accent -->
+        <tr>
+            <td style="padding:18px 32px 20px 32px;background-color:#f4f7fb;background-image:url('{$patternNavyUrl}');background-repeat:no-repeat;background-position:right -14px bottom -18px;background-size:135px auto;border-top:1px solid #e2e8f0;">
+                <div style="font-size:12px;color:#475569;line-height:1.55;max-width:480px;">
+                    {$footerText}
+                </div>
+                <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(148,163,184,0.25);font-size:11px;color:#64748b;font-weight:600;">
+                    &copy; {$year} Receiving PKT &bull; PT Pupuk Kalimantan Timur, Bontang
+                </div>
             </td>
         </tr>
     </table>
 </body>
 </html>
 HTML;
+    }
+
+    private function publicAssetBaseUrl(): string
+    {
+        $configured = rtrim((string) config('app.url', ''), '/');
+
+        if ($configured !== '' && ! str_contains($configured, 'localhost') && ! str_contains($configured, '127.0.0.1')) {
+            return $configured;
+        }
+
+        return 'https://dev.receivingpkt.com';
     }
 
     private function sanitizeHexColor(string $color, string $fallback): string

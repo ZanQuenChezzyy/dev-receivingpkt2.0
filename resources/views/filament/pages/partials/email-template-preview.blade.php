@@ -37,7 +37,7 @@
         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/10">
             <iframe
                 srcdoc="{{ $grsPreview['wrapped_html'] }}"
-                class="h-[420px] w-full border-0"
+                class="h-[560px] w-full border-0"
                 sandbox="allow-same-origin"
             ></iframe>
         </div>
@@ -58,7 +58,7 @@
         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/10">
             <iframe
                 srcdoc="{{ $rdtvPreview['wrapped_html'] }}"
-                class="h-[420px] w-full border-0"
+                class="h-[560px] w-full border-0"
                 sandbox="allow-same-origin"
             ></iframe>
         </div>
