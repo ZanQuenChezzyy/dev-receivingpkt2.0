@@ -609,9 +609,9 @@
                                     @click="scrollByAmount(-280)"
                                     :disabled="!canScrollLeft"
                                     aria-label="{{ __('Geser ke kiri') }}"
-                                    class="w-8 h-8 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/15 bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 shadow-xs transition-all duration-200 hover:border-[#F47920]/60 hover:text-[#F47920] hover:scale-105 active:scale-95 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                                    class="w-9 h-9 rounded-full inline-flex items-center justify-center border border-[#F47920]/40 bg-[#F47920]/15 text-[#F47920] shadow-xs transition-all duration-200 hover:bg-[#F47920] hover:text-white hover:border-[#F47920] hover:shadow-md hover:shadow-[#F47920]/30 hover:scale-105 active:scale-95 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:border-slate-200/70 dark:disabled:border-white/10 disabled:shadow-none disabled:hover:scale-100 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
                                 >
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
@@ -620,9 +620,9 @@
                                     @click="scrollByAmount(280)"
                                     :disabled="!canScrollRight"
                                     aria-label="{{ __('Geser ke kanan') }}"
-                                    class="w-8 h-8 rounded-full flex items-center justify-center border border-slate-200/80 dark:border-white/15 bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 shadow-xs transition-all duration-200 hover:border-[#F47920]/60 hover:text-[#F47920] hover:scale-105 active:scale-95 disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                                    class="w-9 h-9 rounded-full inline-flex items-center justify-center border border-[#F47920]/40 bg-[#F47920]/15 text-[#F47920] shadow-xs transition-all duration-200 hover:bg-[#F47920] hover:text-white hover:border-[#F47920] hover:shadow-md hover:shadow-[#F47920]/30 hover:scale-105 active:scale-95 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:border-slate-200/70 dark:disabled:border-white/10 disabled:shadow-none disabled:hover:scale-100 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
                                 >
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                                     </svg>
                                 </button>
@@ -817,25 +817,29 @@
                                 <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 sm:hidden">
                                     {{ __('Geser kartu atau gunakan panah') }}
                                 </span>
-                                <div class="flex items-center gap-1.5">
+                                <div class="flex items-center gap-2">
                                     <button
                                         type="button"
                                         @click="stepSpotlight(-1)"
                                         :disabled="activeIdx <= 0"
                                         aria-label="{{ __('Tahap sebelumnya') }}"
-                                        class="px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/15 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:border-[#F47920]/60 hover:text-[#F47920] transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                                        class="w-9 h-9 rounded-xl inline-flex items-center justify-center border border-[#F47920]/45 bg-[#F47920]/15 text-[#F47920] shadow-xs transition-all duration-200 hover:bg-[#F47920] hover:text-white hover:border-[#F47920] hover:shadow-md hover:shadow-[#F47920]/30 hover:scale-105 active:scale-95 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:border-slate-200/70 dark:disabled:border-white/10 disabled:shadow-none disabled:hover:scale-100 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
                                     >
-                                        ‹
+                                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.75">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                                        </svg>
                                     </button>
-                                    <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tabular-nums min-w-[44px] text-center" x-text="(activeIdx + 1) + ' / ' + nodes.length"></span>
+                                    <span class="text-xs font-extrabold text-slate-600 dark:text-slate-300 tabular-nums min-w-[44px] text-center" x-text="(activeIdx + 1) + ' / ' + nodes.length"></span>
                                     <button
                                         type="button"
                                         @click="stepSpotlight(1)"
                                         :disabled="activeIdx >= nodes.length - 1"
                                         aria-label="{{ __('Tahap berikutnya') }}"
-                                        class="px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/15 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:border-[#F47920]/60 hover:text-[#F47920] transition disabled:opacity-35 disabled:cursor-not-allowed cursor-pointer"
+                                        class="w-9 h-9 rounded-xl inline-flex items-center justify-center border border-[#F47920]/45 bg-[#F47920]/15 text-[#F47920] shadow-xs transition-all duration-200 hover:bg-[#F47920] hover:text-white hover:border-[#F47920] hover:shadow-md hover:shadow-[#F47920]/30 hover:scale-105 active:scale-95 disabled:bg-slate-100 dark:disabled:bg-white/5 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:border-slate-200/70 dark:disabled:border-white/10 disabled:shadow-none disabled:hover:scale-100 disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer"
                                     >
-                                        ›
+                                        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.75">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                        </svg>
                                     </button>
                                 </div>
                             </div>
