@@ -490,22 +490,13 @@ HTML;
         $headerTitle = e($layout['header_title']);
         $footerText = nl2br(e($layout['footer_text']));
 
-        $heroGradient = $isRdtv
-            ? 'linear-gradient(135deg,#2a0912 0%,#681023 56%,#991b1b 100%)'
-            : 'linear-gradient(135deg,#071a33 0%,#0a3b73 54%,#0054a6 100%)';
+        $heroOverlayGradient = $isRdtv
+            ? 'linear-gradient(95deg,rgba(42,9,18,0.97) 0%,rgba(104,16,35,0.92) 55%,rgba(153,27,27,0.78) 100%)'
+            : 'linear-gradient(95deg,rgba(7,26,51,0.97) 0%,rgba(10,59,115,0.92) 55%,rgba(0,84,166,0.76) 100%)';
         $heroBgFallback = $isRdtv ? '#681023' : '#0a3b73';
-        $badgeBg = $isRdtv ? 'rgba(254,205,211,0.16)' : 'rgba(255,255,255,0.14)';
-        $badgeBorder = $isRdtv ? 'rgba(254,205,211,0.34)' : 'rgba(255,255,255,0.28)';
+        $badgeBg = $isRdtv ? 'rgba(42,9,18,0.84)' : 'rgba(7,26,51,0.84)';
+        $badgeBorder = $isRdtv ? 'rgba(254,205,211,0.48)' : 'rgba(255,255,255,0.35)';
         $dotColor = $isRdtv ? '#fda4af' : $accentColor;
-
-        $attachmentPrimaryLabel = $isRdtv ? 'Dokumen RDTV (124)' : 'Dokumen GRS (105)';
-        $attachmentVerifLabel = $isRdtv ? 'Verifikasi Penolakan (RDTV)' : 'Verifikasi Penerimaan (GRS)';
-        $chipBg = $isRdtv ? '#fff1f2' : '#eff6ff';
-        $chipBorder = $isRdtv ? '#fecdd3' : '#bfdbfe';
-        $chipText = $isRdtv ? '#be123c' : '#0054a6';
-        $chip2Bg = $isRdtv ? '#fef2f2' : '#fff7ed';
-        $chip2Border = $isRdtv ? '#fecaca' : '#fed7aa';
-        $chip2Text = $isRdtv ? '#b91c1c' : '#c2410c';
 
         $baseUrl = $this->publicAssetBaseUrl();
         $logoWhiteUrl = e($baseUrl.'/images/logo/receiving_white.png');
@@ -571,27 +562,27 @@ HTML;
             <td style="height:5px;line-height:5px;font-size:0;background-color:{$accentColor};background-image:linear-gradient(90deg,#0054A6 0%,{$accentColor} 100%);">&nbsp;</td>
         </tr>
 
-        <!-- Corporate Hero Header with Receiving Logo & PKT Geometric Pattern -->
+        <!-- Corporate Hero Header with Receiving Logo & Subtle Embossed PKT Pattern -->
         <tr>
-            <td style="background-color:{$heroBgFallback};background-image:url('{$patternWhiteUrl}'),{$heroGradient};background-repeat:no-repeat,no-repeat;background-position:right -18px center,center center;background-size:215px auto,cover;padding:26px 30px 24px 30px;">
+            <td style="background-color:{$heroBgFallback};background-image:{$heroOverlayGradient},url('{$patternWhiteUrl}');background-repeat:no-repeat,no-repeat;background-position:center center,right -16px center;background-size:cover,210px auto;padding:26px 30px 24px 30px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
                         <td valign="middle" align="left">
                             <img src="{$logoWhiteUrl}" alt="Receiving PKT" height="36" style="display:block;height:36px;width:auto;border:0;outline:none;text-decoration:none;">
                         </td>
                         <td valign="middle" align="right">
-                            <span style="display:inline-block;padding:6px 12px;border-radius:999px;background-color:{$badgeBg};border:1px solid {$badgeBorder};font-size:10px;font-weight:800;letter-spacing:0.06em;color:#ffffff;text-transform:uppercase;white-space:nowrap;">
+                            <span style="display:inline-block;padding:6px 13px;border-radius:999px;background-color:{$badgeBg};border:1px solid {$badgeBorder};font-size:10px;font-weight:800;letter-spacing:0.06em;color:#ffffff;text-transform:uppercase;white-space:nowrap;">
                                 <span style="display:inline-block;width:7px;height:7px;border-radius:999px;background-color:{$dotColor};margin-right:6px;vertical-align:middle;"></span>{$badgeLabel}
                             </span>
                         </td>
                     </tr>
                 </table>
 
-                <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.16);">
+                <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.18);">
                     <div style="font-size:18px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;line-height:1.3;">
                         {$headerTitle}
                     </div>
-                    <div style="margin-top:4px;font-size:12px;color:rgba(226,232,240,0.88);font-weight:500;">
+                    <div style="margin-top:4px;font-size:12px;color:rgba(241,245,249,0.9);font-weight:500;">
                         Sistem Layanan Penerimaan Barang &amp; Verifikasi Dokumen • PT Pupuk Kalimantan Timur
                     </div>
                 </div>
@@ -602,36 +593,15 @@ HTML;
 
         <!-- Main Letter Body -->
         <tr>
-            <td class="pkt-email-body" style="padding:28px 32px 24px 32px;font-size:14px;color:#1e293b;background-color:#ffffff;">
+            <td class="pkt-email-body" style="padding:28px 32px 28px 32px;font-size:14px;color:#1e293b;background-color:#ffffff;">
                 {$bodyHtml}
             </td>
         </tr>
 
-        <!-- Mandatory 2-Attachment Visual Strip -->
+        <!-- Corporate Footer with Subtle PKT Pattern Watermark -->
         <tr>
-            <td style="padding:0 32px 24px 32px;background-color:#ffffff;">
-                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">
-                    <tr>
-                        <td style="padding:14px 16px;">
-                            <div style="font-size:11px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#475569;margin-bottom:8px;">
-                                Kelengkapan Lampiran Email (2 Berkas PDF — Satu Kesatuan)
-                            </div>
-                            <span style="display:inline-block;margin:0 6px 6px 0;padding:5px 11px;border-radius:8px;background-color:{$chipBg};border:1px solid {$chipBorder};font-size:11px;font-weight:700;color:{$chipText};">
-                                1. {$attachmentPrimaryLabel}
-                            </span>
-                            <span style="display:inline-block;margin:0 0 6px 0;padding:5px 11px;border-radius:8px;background-color:{$chip2Bg};border:1px solid {$chip2Border};font-size:11px;font-weight:700;color:{$chip2Text};">
-                                2. {$attachmentVerifLabel}
-                            </span>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-
-        <!-- Corporate Footer with Subtle PKT Pattern Accent -->
-        <tr>
-            <td style="padding:18px 32px 20px 32px;background-color:#f4f7fb;background-image:url('{$patternNavyUrl}');background-repeat:no-repeat;background-position:right -14px bottom -18px;background-size:135px auto;border-top:1px solid #e2e8f0;">
-                <div style="font-size:12px;color:#475569;line-height:1.55;max-width:480px;">
+            <td style="padding:18px 32px 20px 32px;background-color:#f4f7fb;background-image:linear-gradient(95deg,rgba(244,247,251,0.97) 0%,rgba(244,247,251,0.92) 65%,rgba(244,247,251,0.78) 100%),url('{$patternNavyUrl}');background-repeat:no-repeat,no-repeat;background-position:center center,right -14px bottom -18px;background-size:cover,135px auto;border-top:1px solid #e2e8f0;">
+                <div style="font-size:12px;color:#475569;line-height:1.55;max-width:500px;">
                     {$footerText}
                 </div>
                 <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(148,163,184,0.25);font-size:11px;color:#64748b;font-weight:600;">
