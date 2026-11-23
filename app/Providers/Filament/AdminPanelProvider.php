@@ -101,6 +101,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
                 NavigationGroup::make(fn () => __('Penerimaan Receiving')),
+                NavigationGroup::make(fn () => __('Monitoring Receiving')),
                 NavigationGroup::make(fn () => __('Penerimaan Jasa / Invoice')),
                 NavigationGroup::make(fn () => __('Transaksi')),
                 NavigationGroup::make(fn () => __('Pengeluaran Material')),

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\DashboardNonStockAgingWidget;
 use App\Filament\Widgets\MaterialItemOverview;
 use App\Filament\Widgets\MaterialValueOverview;
 use BackedEnum;
@@ -96,6 +97,7 @@ class Dashboard extends BaseDashboard
         return [
             MaterialValueOverview::class,
             MaterialItemOverview::class,
+            DashboardNonStockAgingWidget::class,
         ];
     }
 }

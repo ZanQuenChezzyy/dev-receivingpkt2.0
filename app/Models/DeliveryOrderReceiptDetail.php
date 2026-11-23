@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'delivery_order_receipt_id',
@@ -76,6 +77,11 @@ class DeliveryOrderReceiptDetail extends Model
     public function warehouseTransmittalItems(): HasMany
     {
         return $this->hasMany(WarehouseTransmittalItem::class);
+    }
+
+    public function nonStockAgingControl(): HasOne
+    {
+        return $this->hasOne(NonStockAgingControl::class);
     }
 
     public function getIssuedQuantityAttribute()

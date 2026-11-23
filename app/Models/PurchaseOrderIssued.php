@@ -191,4 +191,9 @@ class PurchaseOrderIssued extends Model
     {
         return $this->hasMany(InvoicingReceipt::class);
     }
+
+    public function nonStockAgingControls(): HasMany
+    {
+        return $this->hasMany(NonStockAgingControl::class);
+    }
 }

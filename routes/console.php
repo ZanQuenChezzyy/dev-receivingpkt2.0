@@ -13,3 +13,8 @@ Artisan::command('inspire', function () {
 Schedule::command('queue:work --stop-when-empty')
     ->everyMinute()
     ->withoutOverlapping();
+
+// Sinkronisasi harian data Aging Non-Stock & PD + notifikasi In-App internal (non-email)
+Schedule::command('nonstock:check-aging-alerts')
+    ->dailyAt('07:30')
+    ->withoutOverlapping();
