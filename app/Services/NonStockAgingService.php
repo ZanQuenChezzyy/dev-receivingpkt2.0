@@ -399,13 +399,33 @@ class NonStockAgingService
         $reference = ($asOf ?? now())->copy()->startOfDay();
         $scopeUpper = strtoupper(trim($mrpScope));
 
-        $controls = NonStockAgingControl::query()
+        $controlsQuery = NonStockAgingControl::query()
+            ->select([
+                'id',
+                'delivery_order_receipt_detail_id',
+                'purchase_order_issued_id',
+                'po_by_item',
+                'mrp_type_snapshot',
+                'grs_posting_date',
+                'initial_qty_gr',
+                'manual_qty_issued',
+                'initial_value_lc',
+                'requesting_unit_id',
+                'pic_name_override',
+                'operational_status',
+                'followup_stage',
+                'created_at',
+            ])
             ->with([
-                'deliveryOrderReceiptDetail.deliveryOrderReceipt.grsRdtvItems.grsRdtv',
-                'deliveryOrderReceiptDetail.materialIssueDetails',
-                'deliveryOrderReceiptDetail.purchaseOrderIssued',
-                'purchaseOrderIssued',
-                'requestingUnit',
+                'deliveryOrderReceiptDetail' => fn ($q) => $q
+                    ->select('id', 'delivery_order_receipt_id', 'purchase_order_issued_id', 'quantity', 'mrp_type', 'total_amount_snapshot')
+                    ->withSum('materialIssueDetails as mir_issued_sum', 'diserahkan'),
+                'deliveryOrderReceiptDetail.deliveryOrderReceipt:id,received_date,physical_received_date',
+                'deliveryOrderReceiptDetail.deliveryOrderReceipt.grsRdtvItems:id,grs_rdtv_id,delivery_order_receipt_id',
+                'deliveryOrderReceiptDetail.deliveryOrderReceipt.grsRdtvItems.grsRdtv:id,category,transaction_date',
+                'deliveryOrderReceiptDetail.purchaseOrderIssued:id,purchase_order_no,mrp_type,qty_po,total_amount_in_lc',
+                'purchaseOrderIssued:id,purchase_order_no,mrp_type,qty_po,total_amount_in_lc',
+                'requestingUnit:id,name,is_pilot,pic_name',
             ])
             ->whereIn('operational_status', [
                 AgingOperationalStatus::BelumDiambil->value,
@@ -414,21 +434,15 @@ class NonStockAgingService
             ])
             ->when($pilotOnly, function ($query): void {
                 $query->whereHas('requestingUnit', fn ($sub) => $sub->where('is_pilot', true));
-            })
-            ->get()
-            ->filter(function (NonStockAgingControl $control) use ($scopeUpper): bool {
-                $mrp = $control->resolvedMrpType();
-
-                if ($scopeUpper === 'ALL') {
-                    return true;
-                }
-
-                if ($scopeUpper === 'NONSTOCK_PD') {
-                    return in_array($mrp, self::TRACKED_MRP_TYPES, true);
-                }
-
-                return $mrp === $scopeUpper;
             });
+
+        if ($scopeUpper === 'NONSTOCK_PD') {
+            $controlsQuery->whereIn('mrp_type_snapshot', self::TRACKED_MRP_TYPES);
+        } elseif ($scopeUpper !== 'ALL') {
+            $controlsQuery->where('mrp_type_snapshot', $scopeUpper);
+        }
+
+        $controls = $controlsQuery->get();
 
         $zones = [];
         $zonePos = [];

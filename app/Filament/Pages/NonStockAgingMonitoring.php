@@ -67,6 +67,11 @@ class NonStockAgingMonitoring extends Page implements HasTable
 
     public int $refreshCounter = 0;
 
+    /**
+     * @var array<string, int>|null
+     */
+    protected ?array $tabCountsCache = null;
+
     public static function getNavigationGroup(): ?string
     {
         return __('Monitoring Receiving');
@@ -102,6 +107,7 @@ class NonStockAgingMonitoring extends Page implements HasTable
         $allowed = ['NONSTOCK', 'PD', 'NONSTOCK_PD', 'INVESTASI', 'ALL'];
         if (in_array($scope, $allowed, true)) {
             $this->mrpScope = $scope;
+            $this->tabCountsCache = null;
             $this->resetTable();
             $this->refreshCounter++;
         }
@@ -306,6 +312,71 @@ class NonStockAgingMonitoring extends Page implements HasTable
     }
 
     /**
+     * Menghitung seluruh badge tab dalam 1 query agregasi tunggal (pengganti 9 query COUNT terpisah).
+     *
+     * @return array<string, int>
+     */
+    protected function getTabCounts(): array
+    {
+        if ($this->tabCountsCache !== null) {
+            return $this->tabCountsCache;
+        }
+
+        $today = Carbon::today();
+        $d14 = $today->copy()->subDays(14)->toDateString();
+        $d15 = $today->copy()->subDays(15)->toDateString();
+        $d30 = $today->copy()->subDays(30)->toDateString();
+        $d31 = $today->copy()->subDays(31)->toDateString();
+        $d60 = $today->copy()->subDays(60)->toDateString();
+        $d61 = $today->copy()->subDays(61)->toDateString();
+
+        $activeStatuses = [
+            AgingOperationalStatus::BelumDiambil->value,
+            AgingOperationalStatus::ScheduledHold->value,
+        ];
+
+        $query = $this->applyMrpScope(NonStockAgingControl::query())
+            ->leftJoin('requesting_units as ru', 'ru.id', '=', 'nonstock_aging_controls.requesting_unit_id');
+
+        $row = $query->selectRaw(
+            'SUM(CASE WHEN operational_status IN (?, ?) THEN 1 ELSE 0 END) as belum_diambil, '.
+            'SUM(CASE WHEN operational_status IN (?, ?) AND grs_posting_date <= ? THEN 1 ELSE 0 END) as critical, '.
+            'SUM(CASE WHEN operational_status IN (?, ?) AND grs_posting_date <= ? AND grs_posting_date >= ? THEN 1 ELSE 0 END) as warning, '.
+            'SUM(CASE WHEN operational_status IN (?, ?) AND grs_posting_date <= ? AND grs_posting_date >= ? THEN 1 ELSE 0 END) as attention, '.
+            'SUM(CASE WHEN operational_status IN (?, ?) AND (grs_posting_date >= ? OR grs_posting_date IS NULL) THEN 1 ELSE 0 END) as normal, '.
+            'SUM(CASE WHEN operational_status = ? THEN 1 ELSE 0 END) as on_check, '.
+            'SUM(CASE WHEN operational_status = ? THEN 1 ELSE 0 END) as scheduled_hold, '.
+            'SUM(CASE WHEN operational_status IN (?, ?) AND ru.is_pilot = 1 THEN 1 ELSE 0 END) as pilot, '.
+            'SUM(CASE WHEN operational_status IN (?, ?) THEN 1 ELSE 0 END) as selesai_dipindah',
+            [
+                $activeStatuses[0], $activeStatuses[1],
+                $activeStatuses[0], $activeStatuses[1], $d61,
+                $activeStatuses[0], $activeStatuses[1], $d31, $d60,
+                $activeStatuses[0], $activeStatuses[1], $d15, $d30,
+                $activeStatuses[0], $activeStatuses[1], $d14,
+                AgingOperationalStatus::OnCheck->value,
+                AgingOperationalStatus::ScheduledHold->value,
+                $activeStatuses[0], $activeStatuses[1],
+                AgingOperationalStatus::Dipindah->value, AgingOperationalStatus::SelesaiDiambil->value,
+            ]
+        )->first();
+
+        $this->tabCountsCache = [
+            'belum_diambil' => (int) ($row?->belum_diambil ?? 0),
+            'critical' => (int) ($row?->critical ?? 0),
+            'warning' => (int) ($row?->warning ?? 0),
+            'attention' => (int) ($row?->attention ?? 0),
+            'normal' => (int) ($row?->normal ?? 0),
+            'on_check' => (int) ($row?->on_check ?? 0),
+            'scheduled_hold' => (int) ($row?->scheduled_hold ?? 0),
+            'pilot' => (int) ($row?->pilot ?? 0),
+            'selesai_dipindah' => (int) ($row?->selesai_dipindah ?? 0),
+        ];
+
+        return $this->tabCountsCache;
+    }
+
+    /**
      * @return array<string, Tab>
      */
     public function getTabs(): array
@@ -318,11 +389,7 @@ class NonStockAgingMonitoring extends Page implements HasTable
         $d60 = $today->copy()->subDays(60)->toDateString();
         $d61 = $today->copy()->subDays(61)->toDateString();
 
-        $baseActive = fn (): Builder => $this->applyMrpScope(NonStockAgingControl::query())
-            ->whereIn('operational_status', [
-                AgingOperationalStatus::BelumDiambil->value,
-                AgingOperationalStatus::ScheduledHold->value,
-            ]);
+        $counts = $this->getTabCounts();
 
         return [
             'belum_diambil' => Tab::make('Belum Diambil')
@@ -330,13 +397,13 @@ class NonStockAgingMonitoring extends Page implements HasTable
                     AgingOperationalStatus::BelumDiambil->value,
                     AgingOperationalStatus::ScheduledHold->value,
                 ]))
-                ->badge($baseActive()->count()),
+                ->badge($counts['belum_diambil']),
 
             'critical' => Tab::make('Critical (>60H)')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query
                     ->whereIn('operational_status', [AgingOperationalStatus::BelumDiambil->value, AgingOperationalStatus::ScheduledHold->value])
                     ->whereDate('grs_posting_date', '<=', $d61))
-                ->badge($baseActive()->whereDate('grs_posting_date', '<=', $d61)->count())
+                ->badge($counts['critical'])
                 ->badgeColor('danger'),
 
             'warning' => Tab::make('Warning (31–60H)')
@@ -344,7 +411,7 @@ class NonStockAgingMonitoring extends Page implements HasTable
                     ->whereIn('operational_status', [AgingOperationalStatus::BelumDiambil->value, AgingOperationalStatus::ScheduledHold->value])
                     ->whereDate('grs_posting_date', '<=', $d31)
                     ->whereDate('grs_posting_date', '>=', $d60))
-                ->badge($baseActive()->whereDate('grs_posting_date', '<=', $d31)->whereDate('grs_posting_date', '>=', $d60)->count())
+                ->badge($counts['warning'])
                 ->badgeColor('warning'),
 
             'attention' => Tab::make('Attention (15–30H)')
@@ -352,7 +419,7 @@ class NonStockAgingMonitoring extends Page implements HasTable
                     ->whereIn('operational_status', [AgingOperationalStatus::BelumDiambil->value, AgingOperationalStatus::ScheduledHold->value])
                     ->whereDate('grs_posting_date', '<=', $d15)
                     ->whereDate('grs_posting_date', '>=', $d30))
-                ->badge($baseActive()->whereDate('grs_posting_date', '<=', $d15)->whereDate('grs_posting_date', '>=', $d30)->count())
+                ->badge($counts['attention'])
                 ->badgeColor('info'),
 
             'normal' => Tab::make('Normal (0–14H)')
@@ -362,36 +429,31 @@ class NonStockAgingMonitoring extends Page implements HasTable
                         $sub->whereDate('grs_posting_date', '>=', $d14)
                             ->orWhereNull('grs_posting_date');
                     }))
-                ->badge($baseActive()->where(function (Builder $sub) use ($d14): void {
-                    $sub->whereDate('grs_posting_date', '>=', $d14)->orWhereNull('grs_posting_date');
-                })->count())
+                ->badge($counts['normal'])
                 ->badgeColor('success'),
 
             'on_check' => Tab::make('On Check')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('operational_status', AgingOperationalStatus::OnCheck->value))
-                ->badge($this->applyMrpScope(NonStockAgingControl::query())->where('operational_status', AgingOperationalStatus::OnCheck->value)->count())
+                ->badge($counts['on_check'])
                 ->badgeColor('info'),
 
             'scheduled_hold' => Tab::make('Scheduled Hold')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('operational_status', AgingOperationalStatus::ScheduledHold->value))
-                ->badge($this->applyMrpScope(NonStockAgingControl::query())->where('operational_status', AgingOperationalStatus::ScheduledHold->value)->count())
+                ->badge($counts['scheduled_hold'])
                 ->badgeColor('primary'),
 
-            'pilot' => Tab::make('Unit Pilot')
+            'pilot' => Tab::make('Unit Prioritas')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query
                     ->whereIn('operational_status', [AgingOperationalStatus::BelumDiambil->value, AgingOperationalStatus::ScheduledHold->value])
                     ->whereHas('requestingUnit', fn (Builder $sub): Builder => $sub->where('is_pilot', true)))
-                ->badge($baseActive()->whereHas('requestingUnit', fn (Builder $sub): Builder => $sub->where('is_pilot', true))->count()),
+                ->badge($counts['pilot']),
 
             'selesai_dipindah' => Tab::make('Dipindah / Selesai')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereIn('operational_status', [
                     AgingOperationalStatus::Dipindah->value,
                     AgingOperationalStatus::SelesaiDiambil->value,
                 ]))
-                ->badge($this->applyMrpScope(NonStockAgingControl::query())->whereIn('operational_status', [
-                    AgingOperationalStatus::Dipindah->value,
-                    AgingOperationalStatus::SelesaiDiambil->value,
-                ])->count())
+                ->badge($counts['selesai_dipindah'])
                 ->badgeColor('gray'),
         ];
     }
@@ -399,6 +461,7 @@ class NonStockAgingMonitoring extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
+            ->deferLoading()
             ->query(fn (): Builder => $this->buildTableQuery())
             ->columns([
                 TextColumn::make('po_by_item')

@@ -177,9 +177,13 @@ class NonStockAgingControl extends Model
     public function resolvedIssuedQuantity(): float
     {
         if ($this->deliveryOrderReceiptDetail !== null) {
-            $mirIssued = $this->deliveryOrderReceiptDetail->relationLoaded('materialIssueDetails')
-                ? (float) $this->deliveryOrderReceiptDetail->materialIssueDetails->sum('diserahkan')
-                : (float) $this->deliveryOrderReceiptDetail->issued_quantity;
+            if ($this->deliveryOrderReceiptDetail->getAttribute('mir_issued_sum') !== null) {
+                $mirIssued = (float) $this->deliveryOrderReceiptDetail->getAttribute('mir_issued_sum');
+            } else {
+                $mirIssued = $this->deliveryOrderReceiptDetail->relationLoaded('materialIssueDetails')
+                    ? (float) $this->deliveryOrderReceiptDetail->materialIssueDetails->sum('diserahkan')
+                    : (float) $this->deliveryOrderReceiptDetail->issued_quantity;
+            }
 
             return max($mirIssued, (float) ($this->manual_qty_issued ?? 0));
         }

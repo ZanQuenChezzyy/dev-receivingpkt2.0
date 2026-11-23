@@ -421,8 +421,9 @@ test('Dashboard widget, Overview widget, and NonStockAgingMonitoring page render
         ->assertSee('Rekap per Unit Peminta')
         ->assertSee('Rendal TA P5');
 
-    // 3. Halaman NonStockAgingMonitoring merender tabel & aksi operasional
+    // 3. Halaman NonStockAgingMonitoring merender tabel (deferred) & aksi operasional
     Livewire::test(NonStockAgingMonitoring::class)
+        ->loadTable()
         ->assertCanSeeTableRecords([$criticalItem])
         ->assertCanNotSeeTableRecords([$onCheckItem])
         ->callTableAction('avpCommitmentAndHold', $criticalItem, [
@@ -439,6 +440,7 @@ test('Dashboard widget, Overview widget, and NonStockAgingMonitoring page render
 
     // 4. Validasi fisik pada item On Check -> berubah menjadi Belum Diambil
     Livewire::test(NonStockAgingMonitoring::class, ['activeTab' => 'on_check'])
+        ->loadTable()
         ->assertCanSeeTableRecords([$onCheckItem])
         ->callTableAction('validatePhysical', $onCheckItem, [
             'location_text' => 'FLR-C',

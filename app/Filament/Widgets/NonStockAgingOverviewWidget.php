@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Services\NonStockAgingService;
 use Filament\Widgets\Widget;
+use Illuminate\Contracts\View\View;
 
 class NonStockAgingOverviewWidget extends Widget
 {
@@ -14,6 +15,11 @@ class NonStockAgingOverviewWidget extends Widget
     public string $mrpScope = 'NONSTOCK';
 
     public bool $pilotOnly = false;
+
+    public function placeholder(): View
+    {
+        return view('filament.widgets.non-stock-aging-overview-skeleton');
+    }
 
     /**
      * @return array<string, mixed>
