@@ -685,11 +685,16 @@ class VendorPoTracking extends Component
                 'time' => '08:00',
                 'timestamp' => $firstPo->date_create->timestamp,
                 'title' => __('Purchase Order (PO) Diterbitkan'),
+                'short_title' => __('PO Terbit'),
                 'badge' => __('PO Issued'),
                 'badge_color' => 'blue',
                 'desc' => __('Nomor PO: :po resmi diterbitkan oleh PT Pupuk Kalimantan Timur kepada :vendor (:count item material).', [
                     'po' => $firstPo->purchase_order_no,
                     'vendor' => $firstPo->vendor_name,
+                    'count' => $poItems->count(),
+                ]),
+                'short_desc' => __('PO :po (:count item)', [
+                    'po' => $firstPo->purchase_order_no,
                     'count' => $poItems->count(),
                 ]),
                 'icon' => 'document-check',
@@ -712,6 +717,7 @@ class VendorPoTracking extends Component
                     'time' => $cDate->format('H:i') !== '00:00' ? $cDate->format('H:i') : '-',
                     'timestamp' => $cDate->timestamp,
                     'title' => __('Kedatangan Fisik Barang'),
+                    'short_title' => __('DO & Fisik Tiba'),
                     'badge' => __('Receiving Entry'),
                     'badge_color' => 'emerald',
                     'desc' => __('Surat Jalan (DO) No: :do diterima di Pintu Receiving oleh :receiver (Mode: :mode, Kode: :code).', [
@@ -719,6 +725,9 @@ class VendorPoTracking extends Component
                         'receiver' => $penerima,
                         'mode' => $mode,
                         'code' => $do->document_code,
+                    ]),
+                    'short_desc' => __('DO :do • Pintu Receiving', [
+                        'do' => $do->delivery_order_no,
                     ]),
                     'icon' => 'truck',
                 ];
@@ -737,9 +746,13 @@ class VendorPoTracking extends Component
                     'time' => $pDate->format('H:i') !== '00:00' ? $pDate->format('H:i') : '-',
                     'timestamp' => $pDate->timestamp,
                     'title' => __('Post 103 (Pengajuan QC)'),
+                    'short_title' => __('Posting Penerimaan (103)'),
                     'badge' => __('Post 103 (Pengajuan QC)'),
                     'badge_color' => 'indigo',
                     'desc' => __('Pencatatan MIGO 103 (Pengajuan QC) di sistem gudang berhasil.').$qr103Suffix,
+                    'short_desc' => $do->qr_103_code
+                        ? __('MIGO 103 • QR :code', ['code' => $do->qr_103_code])
+                        : __('Validasi sistem MIGO 103'),
                     'icon' => 'qr-code',
                 ];
             }
@@ -762,12 +775,17 @@ class VendorPoTracking extends Component
                                 'stage' => $termin->stage,
                                 'percentage' => $termin->percentage,
                             ]),
+                            'short_title' => __('Termin Post 103'),
                             'badge' => __('Termin Post 103'),
                             'badge_color' => 'indigo',
                             'desc' => __('Tahapan :stage dengan porsi :percentage% berhasil di-post 103.', [
                                 'stage' => $termin->stage,
                                 'percentage' => $termin->percentage,
                             ]).$terminQrSuffix,
+                            'short_desc' => __(':stage (:percentage%)', [
+                                'stage' => $termin->stage,
+                                'percentage' => $termin->percentage,
+                            ]),
                             'icon' => 'chart-pie',
                         ];
                     }
@@ -789,11 +807,17 @@ class VendorPoTracking extends Component
                     'title' => $isKirim
                         ? __('Dokumen Dikirim dari Receiving ke ISTEK (Transmittal QC Kirim)')
                         : __('Dokumen Kembali dari ISTEK ke Receiving (Transmittal QC Kembali)'),
+                    'short_title' => $isKirim
+                        ? __('Inspeksi QC — Kirim ke ISTEK')
+                        : __('Inspeksi QC — Kembali dari ISTEK'),
                     'badge' => $isKirim ? __('Transmittal QC Kirim') : __('Transmittal QC Kembali'),
                     'badge_color' => $isKirim ? 'sky' : 'purple',
                     'desc' => $isKirim
                         ? __('Berkas Surat Jalan diserahkan dari Receiving ke tim ISTEK (Inspeksi Teknik) untuk proses uji mutu & kesesuaian fisik oleh :officer.', ['officer' => $petugas])
                         : __('Pemeriksaan mutu oleh ISTEK selesai dan dokumen telah dikembalikan dari ISTEK ke Gudang Receiving oleh :officer.', ['officer' => $petugas]),
+                    'short_desc' => $isKirim
+                        ? __('Uji mutu ISTEK • DO :do', ['do' => $do->delivery_order_no])
+                        : __('Selesai uji mutu ISTEK • DO :do', ['do' => $do->delivery_order_no]),
                     'icon' => 'beaker',
                 ];
             }
@@ -815,12 +839,16 @@ class VendorPoTracking extends Component
                         'time' => $grsDate->format('H:i') !== '00:00' ? $grsDate->format('H:i') : '-',
                         'timestamp' => $grsDate->timestamp,
                         'title' => __('Dokumen :category Terbit', ['category' => $cat]),
+                        'short_title' => $cat === 'GRS' ? __('Slip GRS (105) Terbit') : __('Slip RDTV (Retur) Terbit'),
                         'badge' => __('Dokumen :category Terbit', ['category' => $cat]),
                         'badge_color' => $cat === 'GRS' ? 'emerald' : 'rose',
                         'desc' => __('Dokumen :category (105) resmi terbit dan ditautkan ke sistem penagihan oleh :officer.', [
                             'category' => $cat,
                             'officer' => $petugas,
                         ]).$reasonSuffix,
+                        'short_desc' => $item->reason
+                            ? __('Catatan: :reason', ['reason' => Str::limit($item->reason, 80)])
+                            : ($cat === 'GRS' ? __('Siap proses penagihan') : __('Material ditolak / retur')),
                         'icon' => 'clipboard-check',
                     ];
                 }
@@ -838,11 +866,15 @@ class VendorPoTracking extends Component
                     'time' => $logDate->format('H:i'),
                     'timestamp' => $logDate->timestamp,
                     'title' => $isClear ? __('Status Pending Diselesaikan') : __('Catatan Penundaan (Pending Status)'),
+                    'short_title' => $isClear ? __('Pending Selesai') : __('Status Pending'),
                     'badge' => $isClear ? __('Pending Resolved') : __('Pending'),
                     'badge_color' => $isClear ? 'emerald' : 'amber',
                     'desc' => $isClear
                         ? __('Status penundaan telah diselesaikan, alur penerimaan dilanjutkan kembali.')
                         : __('Penundaan: :reason', ['reason' => __($log->delay_reason)]).$notesSuffix,
+                    'short_desc' => $isClear
+                        ? __('Proses penerimaan dilanjutkan')
+                        : __($log->delay_reason).($log->delay_notes ? ' — '.Str::limit($log->delay_notes, 60) : ''),
                     'icon' => 'clock',
                 ];
             }
@@ -870,12 +902,14 @@ class VendorPoTracking extends Component
                             'time' => $tDate->format('H:i') !== '00:00' ? $tDate->format('H:i') : '-',
                             'timestamp' => $tDate->timestamp,
                             'title' => __('Dikirim Ke Gudang'),
+                            'short_title' => __('Dikirim ke Gudang'),
                             'badge' => __('Pengiriman Gudang'),
                             'badge_color' => 'teal',
                             'desc' => __(':destination - Oleh: :officer', [
                                 'destination' => $destName,
                                 'officer' => $petugas,
                             ]),
+                            'short_desc' => $destName,
                             'icon' => 'truck',
                         ];
                     }
@@ -894,6 +928,7 @@ class VendorPoTracking extends Component
                             'time' => $miDate->format('H:i') !== '00:00' ? $miDate->format('H:i') : '-',
                             'timestamp' => $miDate->timestamp,
                             'title' => __('Pengambilan Barang (MIR: :mir)', ['mir' => $miDetail->materialIssue->mir_number]),
+                            'short_title' => __('Pengambilan Barang (MIR)'),
                             'badge' => __('Material Issued'),
                             'badge_color' => 'teal',
                             'desc' => __("Material ':material' sebanyak :qty :uoi diserahkan kepada :recipient (Stage: :stage).", [
@@ -902,6 +937,11 @@ class VendorPoTracking extends Component
                                 'uoi' => $dDetail->uoi,
                                 'recipient' => $miDetail->materialIssue->diminta_oleh,
                                 'stage' => $miDetail->stage_when_issued,
+                            ]),
+                            'short_desc' => __('MIR :mir • :qty :uoi', [
+                                'mir' => $miDetail->materialIssue->mir_number,
+                                'qty' => $miDetail->diserahkan,
+                                'uoi' => $dDetail->uoi,
                             ]),
                             'icon' => 'arrow-right-on-rectangle',
                         ];
@@ -923,9 +963,13 @@ class VendorPoTracking extends Component
                         'time' => '-',
                         'timestamp' => $invDate->timestamp,
                         'title' => __('Penerimaan Berkas Penagihan (Invoicing)'),
+                        'short_title' => __('Berkas Penagihan Diterima'),
                         'badge' => __('Invoicing Entry'),
                         'badge_color' => 'cyan',
                         'desc' => __('Berkas penagihan untuk DO :do diterima oleh Bagian Penerimaan Invoice.', ['do' => $inv->no_do]).$invoiceNoSuffix,
+                        'short_desc' => $inv->no_invoice
+                            ? __('Bagian Invoice • No. :invoice', ['invoice' => $inv->no_invoice])
+                            : __('Bagian Penerimaan Invoice'),
                         'icon' => 'currency-dollar',
                     ];
                 }
@@ -939,9 +983,11 @@ class VendorPoTracking extends Component
                         'time' => '-',
                         'timestamp' => $kasirDate->timestamp,
                         'title' => __('Berkas Dikirim ke Kasir untuk Pembayaran'),
+                        'short_title' => __('Dikirim ke Kasir'),
                         'badge' => __('Kasir / Payment'),
                         'badge_color' => 'emerald',
                         'desc' => __('Dokumen penagihan telah diverifikasi dan diserahkan ke bagian Kasir untuk proses pembayaran.'),
+                        'short_desc' => __('Proses pembayaran Kasir'),
                         'icon' => 'banknotes',
                     ];
                 }

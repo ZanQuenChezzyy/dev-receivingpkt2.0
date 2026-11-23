@@ -506,6 +506,79 @@
                             </div>
                         @endforeach
                     </div>
+
+                    <!-- INTEGRATED COMPACT AUDIT TRAIL (RIWAYAT PERGERAKAN DOKUMEN) -->
+                    @php
+                        $timelineEvents = $trackingData['timeline'] ?? [];
+                        $timelineCount = count($timelineEvents);
+                    @endphp
+                    <div
+                        class="mt-6 pt-5 border-t border-slate-200/70 dark:border-white/10"
+                        x-data="{ expanded: false }"
+                    >
+                        <div class="flex items-center justify-between gap-2 mb-3.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    {{ __('Riwayat Pergerakan Dokumen') }}
+                                </span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                                    {{ $timelineCount }} {{ __('Peristiwa') }}
+                                </span>
+                            </div>
+
+                            @if ($timelineCount > 6)
+                                <button
+                                    type="button"
+                                    @click="expanded = !expanded"
+                                    class="text-xs font-bold text-[#F47920] hover:underline cursor-pointer"
+                                    x-text="expanded ? '{{ __('Tampilkan lebih ringkas') }}' : '{{ __('Tampilkan semua') }} ({{ $timelineCount }})'"
+                                ></button>
+                            @endif
+                        </div>
+
+                        @if (empty($timelineEvents))
+                            <p class="text-xs text-slate-400 dark:text-slate-500 py-2">
+                                {{ __('Belum ada riwayat pergerakan dokumen tercatat.') }}
+                            </p>
+                        @else
+                            <div class="relative pl-5 space-y-2 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-slate-200 dark:before:bg-white/10">
+                                @foreach ($timelineEvents as $evIndex => $event)
+                                    @php
+                                        $dotColor = match (true) {
+                                            str_contains($event['badge_color'] ?? '', 'emerald') => 'bg-emerald-500 ring-emerald-500/20',
+                                            str_contains($event['badge_color'] ?? '', 'indigo') => 'bg-indigo-500 ring-indigo-500/20',
+                                            str_contains($event['badge_color'] ?? '', 'sky') => 'bg-sky-500 ring-sky-500/20',
+                                            str_contains($event['badge_color'] ?? '', 'purple') => 'bg-purple-500 ring-purple-500/20',
+                                            str_contains($event['badge_color'] ?? '', 'rose') || str_contains($event['badge_color'] ?? '', 'red') => 'bg-rose-500 ring-rose-500/20',
+                                            str_contains($event['badge_color'] ?? '', 'amber') => 'bg-amber-500 ring-amber-500/20',
+                                            str_contains($event['badge_color'] ?? '', 'teal') => 'bg-teal-500 ring-teal-500/20',
+                                            str_contains($event['badge_color'] ?? '', 'cyan') => 'bg-cyan-500 ring-cyan-500/20',
+                                            default => 'bg-[#F47920] ring-[#F47920]/20',
+                                        };
+                                    @endphp
+                                    <div
+                                        @if ($evIndex >= 6) x-show="expanded" x-cloak @endif
+                                        class="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 py-1.5 px-3 rounded-xl bg-white/45 dark:bg-white/[0.03] border border-slate-200/50 dark:border-white/5"
+                                    >
+                                        <span class="absolute -left-[17px] top-3 sm:top-1/2 sm:-translate-y-1/2 w-2.5 h-2.5 rounded-full ring-4 {{ $dotColor }}"></span>
+
+                                        <div class="min-w-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                            <span class="text-xs font-bold text-slate-800 dark:text-white">
+                                                {{ $event['short_title'] ?? __($event['title']) }}
+                                            </span>
+                                            <span class="text-[11px] text-slate-500 dark:text-slate-400">
+                                                {{ $event['short_desc'] ?? $event['desc'] }}
+                                            </span>
+                                        </div>
+
+                                        <span class="shrink-0 text-[11px] font-semibold text-slate-400 dark:text-slate-500 tabular-nums">
+                                            {{ $event['date'] }}@if (($event['time'] ?? '-') && $event['time'] !== '-') • {{ $event['time'] }}@endif
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
                 <!-- BANNER PERINGATAN RDTV JIKA ADA DOKUMEN RETUR -->
@@ -1354,113 +1427,11 @@
 
                 </div>
 
-                <!-- 3.5 TWO-COLUMN DETAILS: TIMELINE & SURAT JALAN -->
+                <!-- 3.5 SURAT JALAN (DO) MASUK & BANTUAN -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                    
-                    <!-- LEFT COLUMN (7 Cols): VERTICAL CHRONOLOGICAL TIMELINE -->
-                    <div class="lg:col-span-7 glass-panel p-6 sm:p-8 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl">
-                        <div class="flex items-center justify-between mb-8 pb-4 border-b border-slate-200/70 dark:border-white/10">
-                            <div>
-                                <span class="text-xs font-bold uppercase tracking-wider text-[#F47920] block">{{ __('Audit Trail') }}</span>
-                                <h3 class="text-xl font-black text-slate-800 dark:text-white tracking-tight">
-                                    {{ __('Riwayat Pergerakan Dokumen') }}
-                                </h3>
-                            </div>
-                            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">
-                                {{ count($trackingData['timeline'] ?? []) }} {{ __('Peristiwa') }}
-                            </span>
-                        </div>
 
-                        @if (empty($trackingData['timeline']))
-                            <div class="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
-                                {{ __('Belum ada riwayat pergerakan dokumen tercatat.') }}
-                            </div>
-                        @else
-                            <div class="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700/80">
-                                @foreach (($trackingData['timeline'] ?? []) as $event)
-                                    <div class="relative group">
-                                        <!-- Timeline Node Icon -->
-                                        <div class="absolute -left-6 sm:-left-8 top-1 w-6 h-6 sm:w-8 sm:h-8 rounded-xl bg-white dark:bg-slate-900 border-2
-                                            @if (str_contains($event['badge_color'], 'emerald'))
-                                                border-emerald-500 text-emerald-600 dark:text-emerald-400 shadow-emerald-500/10
-                                            @elseif (str_contains($event['badge_color'], 'indigo'))
-                                                border-indigo-500 text-indigo-600 dark:text-indigo-400 shadow-indigo-500/10
-                                            @elseif (str_contains($event['badge_color'], 'sky'))
-                                                border-sky-500 text-sky-600 dark:text-sky-400 shadow-sky-500/10
-                                            @elseif (str_contains($event['badge_color'], 'purple'))
-                                                border-purple-500 text-purple-600 dark:text-purple-400 shadow-purple-500/10
-                                            @elseif (str_contains($event['badge_color'], 'rose') || str_contains($event['badge_color'], 'red'))
-                                                border-rose-500 text-rose-600 dark:text-rose-400 shadow-rose-500/10
-                                            @elseif (str_contains($event['badge_color'], 'amber'))
-                                                border-amber-500 text-amber-600 dark:text-amber-400 shadow-amber-500/10
-                                            @else
-                                                border-[#F47920] text-[#F47920] shadow-orange-500/10
-                                            @endif
-                                            flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                                            @if (($event['icon'] ?? '') === 'truck')
-                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
-                                            @elseif (($event['icon'] ?? '') === 'qr-code')
-                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
-                                            @elseif (($event['icon'] ?? '') === 'beaker')
-                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
-                                            @elseif (($event['icon'] ?? '') === 'clipboard-check')
-                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                                            @elseif (($event['icon'] ?? '') === 'exclamation-triangle')
-                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                            @elseif (($event['icon'] ?? '') === 'chart-pie')
-                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
-                                            @else
-                                                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                            @endif
-                                        </div>
-
-                                        <!-- Event Card -->
-                                        <div class="p-4 sm:p-5 rounded-2xl bg-white/50 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 hover:border-[#F47920]/30 transition-all duration-300">
-                                            <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold
-                                                    @if (str_contains($event['badge_color'], 'emerald'))
-                                                        bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20
-                                                    @elseif (str_contains($event['badge_color'], 'indigo'))
-                                                        bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20
-                                                    @elseif (str_contains($event['badge_color'], 'sky'))
-                                                        bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20
-                                                    @elseif (str_contains($event['badge_color'], 'purple'))
-                                                        bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20
-                                                    @elseif (str_contains($event['badge_color'], 'rose') || str_contains($event['badge_color'], 'red'))
-                                                        bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20
-                                                    @elseif (str_contains($event['badge_color'], 'amber'))
-                                                        bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20
-                                                    @else
-                                                        bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20
-                                                    @endif">
-                                                    {{ __($event['badge']) }}
-                                                </span>
-                                                <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
-                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    <span>{{ $event['date'] }}</span>
-                                                    @if ($event['time'] && $event['time'] !== '-')
-                                                        <span>• {{ $event['time'] }}</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-
-                                            <h4 class="text-sm sm:text-base font-black text-slate-800 dark:text-white mb-1.5">
-                                                {{ __($event['title']) }}
-                                            </h4>
-                                            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-                                                {{ $event['desc'] }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- RIGHT COLUMN (5 Cols): SURAT JALAN & GRS RECAP -->
-                    <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+                    <!-- LEFT COLUMN (8 Cols): SURAT JALAN (DO) CARDS -->
+                    <div class="lg:col-span-8">
 
                         <!-- Surat Jalan (DO) Cards with Spring Tab Selector -->
                         <div class="glass-panel p-6 sm:p-7 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl"
@@ -1531,7 +1502,7 @@
                                     </div>
                                 @endif
 
-                                <div class="space-y-4">
+                                <div class="grid grid-cols-1 {{ $trackingData['unique_dos']->count() > 1 ? 'md:grid-cols-2' : '' }} gap-4">
                                     @foreach ($trackingData['unique_dos'] as $do)
                                         <div x-show="activeDo === 'all' || activeDo == '{{ $do->id }}'"
                                              x-transition:enter="transition duration-300 ease-[cubic-bezier(0.34,1.4,0.64,1)]"
@@ -1658,8 +1629,10 @@
                                 </div>
                             @endif
                         </div>
+                    </div>
 
-                        <!-- Help / Vendor Contact Card -->
+                    <!-- RIGHT COLUMN (4 Cols): HELP / VENDOR CONTACT CARD -->
+                    <div class="lg:col-span-4 lg:sticky lg:top-24">
                         <div class="glass-panel p-6 rounded-3xl border border-white/80 dark:border-white/10 shadow-xl bg-gradient-to-br from-[#0A4F86]/10 via-transparent to-[#F47920]/5 text-xs">
                             <h4 class="font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2 text-sm">
                                 <div class="p-1.5 rounded-lg bg-[#F47920]/10 text-[#F47920]">
