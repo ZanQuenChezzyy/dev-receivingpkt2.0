@@ -508,11 +508,17 @@ HTML;
 
         return <<<HTML
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" style="color-scheme:light only;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light only">
     <style>
+        :root, html, body {
+            color-scheme: light only !important;
+            supported-color-schemes: light only !important;
+        }
         @keyframes pktEmailFadeUp {
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
@@ -549,13 +555,97 @@ HTML;
             font-weight: 700;
             text-decoration: underline;
             text-underline-offset: 3px;
+            word-break: break-word;
         }
         .pkt-email-body a:hover {
             color: {$accentColor};
         }
+        /* Proteksi Dark Mode (Apple Mail, iOS, Gmail Mobile, Outlook): pastikan teks hero tetap putih kontras di atas latar biru/merah tua */
+        @media (prefers-color-scheme: dark) {
+            body, .pkt-email-outer {
+                background-color: #eef3f9 !important;
+                color: #1e293b !important;
+            }
+            .pkt-email-shell {
+                background-color: #ffffff !important;
+                border-color: #dbe4f0 !important;
+            }
+            .pkt-email-hero {
+                background-color: {$heroBgFallback} !important;
+            }
+            .pkt-email-hero-title {
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+            }
+            .pkt-email-hero-subtitle {
+                color: #e2e8f0 !important;
+                -webkit-text-fill-color: #e2e8f0 !important;
+            }
+            .pkt-email-badge {
+                background-color: {$heroBgFallback} !important;
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+                border-color: rgba(255, 255, 255, 0.45) !important;
+            }
+            .pkt-email-body {
+                background-color: #ffffff !important;
+                color: #1e293b !important;
+            }
+            .pkt-email-body p,
+            .pkt-email-body li {
+                color: #1e293b !important;
+            }
+            .pkt-email-footer {
+                background-color: #f4f7fb !important;
+                color: #475569 !important;
+            }
+        }
+        [data-ogsc] .pkt-email-hero-title,
+        [data-ogsb] .pkt-email-hero-title {
+            color: #ffffff !important;
+        }
+        [data-ogsc] .pkt-email-hero-subtitle,
+        [data-ogsb] .pkt-email-hero-subtitle {
+            color: #e2e8f0 !important;
+        }
+        [data-ogsc] .pkt-email-badge,
+        [data-ogsb] .pkt-email-badge {
+            color: #ffffff !important;
+        }
+        @media only screen and (max-width: 520px) {
+            body {
+                padding: 12px 8px !important;
+            }
+            .pkt-email-hero {
+                padding: 20px 18px 18px 18px !important;
+            }
+            .pkt-email-hero-logo-cell,
+            .pkt-email-hero-badge-cell {
+                display: block !important;
+                width: 100% !important;
+                text-align: left !important;
+            }
+            .pkt-email-hero-badge-cell {
+                padding-top: 12px !important;
+            }
+            .pkt-email-badge {
+                white-space: normal !important;
+                line-height: 1.35 !important;
+            }
+            .pkt-email-hero-title {
+                font-size: 16px !important;
+            }
+            .pkt-email-body {
+                padding: 20px 18px !important;
+                font-size: 13.5px !important;
+            }
+            .pkt-email-footer {
+                padding: 16px 18px !important;
+            }
+        }
     </style>
 </head>
-<body style="margin:0;padding:28px 12px;background-color:#eef3f9;background-image:radial-gradient(circle at 12% 10%,rgba(244,121,32,0.08) 0%,transparent 42%),radial-gradient(circle at 88% 90%,rgba(0,84,166,0.09) 0%,transparent 48%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;line-height:1.65;">
+<body class="pkt-email-outer" style="margin:0;padding:28px 12px;background-color:#eef3f9;background-image:radial-gradient(circle at 12% 10%,rgba(244,121,32,0.08) 0%,transparent 42%),radial-gradient(circle at 88% 90%,rgba(0,84,166,0.09) 0%,transparent 48%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1e293b;line-height:1.65;color-scheme:light only;">
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="pkt-email-shell" style="max-width:650px;margin:0 auto;background-color:#ffffff;border:1px solid #dbe4f0;border-radius:18px;overflow:hidden;box-shadow:0 18px 44px -14px rgba(10,59,115,0.18),0 4px 12px -4px rgba(15,23,42,0.06);">
         <!-- Top Brand Accent Bar -->
         <tr>
@@ -564,25 +654,25 @@ HTML;
 
         <!-- Corporate Hero Header with Receiving Logo & Subtle Embossed PKT Pattern -->
         <tr>
-            <td style="background-color:{$heroBgFallback};background-image:{$heroOverlayGradient},url('{$patternWhiteUrl}');background-repeat:no-repeat,no-repeat;background-position:center center,right -16px center;background-size:cover,210px auto;padding:26px 30px 24px 30px;">
+            <td class="pkt-email-hero" bgcolor="{$heroBgFallback}" style="background-color:{$heroBgFallback};background-image:{$heroOverlayGradient},url('{$patternWhiteUrl}');background-repeat:no-repeat,no-repeat;background-position:center center,right -16px center;background-size:cover,210px auto;padding:26px 30px 24px 30px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
-                        <td valign="middle" align="left">
+                        <td class="pkt-email-hero-logo-cell" valign="middle" align="left">
                             <img src="{$logoWhiteUrl}" alt="Receiving PKT" height="36" style="display:block;height:36px;width:auto;border:0;outline:none;text-decoration:none;">
                         </td>
-                        <td valign="middle" align="right">
-                            <span style="display:inline-block;padding:6px 13px;border-radius:999px;background-color:{$badgeBg};border:1px solid {$badgeBorder};font-size:10px;font-weight:800;letter-spacing:0.06em;color:#ffffff;text-transform:uppercase;white-space:nowrap;">
+                        <td class="pkt-email-hero-badge-cell" valign="middle" align="right">
+                            <span class="pkt-email-badge" style="display:inline-block;padding:6px 13px;border-radius:999px;background-color:{$badgeBg};border:1px solid {$badgeBorder};font-size:10px;font-weight:800;letter-spacing:0.06em;color:#ffffff;text-transform:uppercase;white-space:nowrap;">
                                 <span style="display:inline-block;width:7px;height:7px;border-radius:999px;background-color:{$dotColor};margin-right:6px;vertical-align:middle;"></span>{$badgeLabel}
                             </span>
                         </td>
                     </tr>
                 </table>
 
-                <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.18);">
-                    <div style="font-size:18px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;line-height:1.3;">
+                <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.22);">
+                    <div class="pkt-email-hero-title" style="font-size:18px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;line-height:1.3;text-shadow:0 1px 2px rgba(0,0,0,0.25);">
                         {$headerTitle}
                     </div>
-                    <div style="margin-top:4px;font-size:12px;color:rgba(241,245,249,0.9);font-weight:500;">
+                    <div class="pkt-email-hero-subtitle" style="margin-top:4px;font-size:12px;color:#e2e8f0;font-weight:500;">
                         Sistem Layanan Penerimaan Barang &amp; Verifikasi Dokumen • PT Pupuk Kalimantan Timur
                     </div>
                 </div>
@@ -593,14 +683,14 @@ HTML;
 
         <!-- Main Letter Body -->
         <tr>
-            <td class="pkt-email-body" style="padding:28px 32px 28px 32px;font-size:14px;color:#1e293b;background-color:#ffffff;">
+            <td class="pkt-email-body" bgcolor="#ffffff" style="padding:28px 32px 28px 32px;font-size:14px;color:#1e293b;background-color:#ffffff;">
                 {$bodyHtml}
             </td>
         </tr>
 
         <!-- Corporate Footer with Subtle PKT Pattern Watermark -->
         <tr>
-            <td style="padding:18px 32px 20px 32px;background-color:#f4f7fb;background-image:linear-gradient(95deg,rgba(244,247,251,0.97) 0%,rgba(244,247,251,0.92) 65%,rgba(244,247,251,0.78) 100%),url('{$patternNavyUrl}');background-repeat:no-repeat,no-repeat;background-position:center center,right -14px bottom -18px;background-size:cover,135px auto;border-top:1px solid #e2e8f0;">
+            <td class="pkt-email-footer" bgcolor="#f4f7fb" style="padding:18px 32px 20px 32px;background-color:#f4f7fb;background-image:linear-gradient(95deg,rgba(244,247,251,0.97) 0%,rgba(244,247,251,0.92) 65%,rgba(244,247,251,0.78) 100%),url('{$patternNavyUrl}');background-repeat:no-repeat,no-repeat;background-position:center center,right -14px bottom -18px;background-size:cover,135px auto;border-top:1px solid #e2e8f0;">
                 <div style="font-size:12px;color:#475569;line-height:1.55;max-width:500px;">
                     {$footerText}
                 </div>

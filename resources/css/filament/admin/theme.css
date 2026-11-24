@@ -786,17 +786,48 @@ body.stats-already-loaded .stat-row-animated {
     border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Eliminate unnecessary inner vertical scrollbars while keeping smooth horizontal scroll */
+/* Prevent unintended horizontal page overflow without breaking position:sticky or position:fixed */
+html,
+body,
+.fi-layout,
+.fi-main-ctn,
+.fi-main {
+    overflow-x: clip;
+}
+
+@media (max-width: 1023px) {
+    /* iOS Safari smooth scrolling: avoid background-attachment: fixed jank */
+    body,
+    html.dark body {
+        background-attachment: scroll;
+    }
+}
+
+/* Eliminate unnecessary inner vertical scrollbars while keeping smooth horizontal scroll without clipping dropdowns */
 .fi-ta-content-ctn {
     overflow-x: auto !important;
-    overflow-y: hidden !important;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
 }
 
 .fi-ta-ctn,
 .fi-ta-main,
 .fi-ta-content {
-    overflow-y: hidden !important;
+    overflow: visible !important;
+}
+
+/* Guarantee table ancestors never trap position:fixed dropdown panels */
+.fi-ta-ctn,
+.fi-ta-main,
+.fi-ta-content,
+.fi-ta-content-ctn,
+.fi-ta-table,
+.fi-ta-row,
+.fi-ta-cell {
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
 }
 
 /* Sleek Apple-style horizontal scrollbar for tables on small viewports */
@@ -1083,7 +1114,6 @@ button.alex-ai-toggle-btn {
 .alex-ai-toggle-btn:not(.alex-ai-active) .fi-icon-btn-icon,
 .alex-ai-toggle-btn:not(.alex-ai-active) .fi-btn-icon {
     color: #94a3b8 !important;
-    fill: #94a3b8 !important;
     opacity: 0.9 !important;
 }
 
@@ -1115,8 +1145,8 @@ button.alex-ai-toggle-btn {
 
 .fi-resource-relation-manager,
 .fi-resource-relation-managers,
-.fi-sc-tabs-tab,
-.fi-sc-tabs:not(.fi-contained) > div:not(.fi-tabs-scroll-outer),
+.fi-sc-tabs:not(.fi-vertical) > .fi-sc-tabs-tab,
+.fi-sc-tabs:not(.fi-contained):not(.fi-vertical) > div:not(.fi-tabs-scroll-outer),
 .fi-resource-relation-manager .fi-ta,
 .fi-resource-relation-manager .fi-ta-ctn,
 .fi-resource-relation-manager .fi-ta-main,
@@ -1129,6 +1159,139 @@ button.alex-ai-toggle-btn {
     max-width: 100% !important;
     align-self: stretch !important;
     box-sizing: border-box !important;
+}
+
+/* =========================================================
+   6B. VERTICAL TABS (Responsive Desktop Side-by-Side & Mobile Stacked)
+   Fixes RoleForm & any Tabs::make()->vertical() on both Mobile & Desktop
+   ========================================================= */
+.fi-sc-tabs.fi-vertical {
+    display: flex !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.fi-sc-tabs.fi-vertical > .fi-sc-tabs-tab,
+.fi-sc-tabs.fi-vertical > div:not(nav) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (min-width: 1024px) {
+    .fi-sc-tabs.fi-vertical {
+        flex-direction: row !important;
+        align-items: stretch !important;
+    }
+
+    .fi-sc-tabs.fi-vertical > .fi-tabs.fi-vertical {
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        flex: 0 0 15.5rem !important;
+        width: 15.5rem !important;
+        max-width: 15.5rem !important;
+        min-width: 0 !important;
+        max-height: 75vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding: 0.75rem !important;
+        gap: 0.25rem !important;
+        border-right: 1px solid rgba(15, 23, 42, 0.08) !important;
+        border-bottom: none !important;
+        border-radius: 0 !important;
+        background: rgba(248, 250, 252, 0.45) !important;
+        box-shadow: none !important;
+    }
+
+    .dark .fi-sc-tabs.fi-vertical > .fi-tabs.fi-vertical {
+        border-right-color: rgba(255, 255, 255, 0.08) !important;
+        background: rgba(7, 15, 28, 0.38) !important;
+    }
+
+    .fi-sc-tabs.fi-vertical > .fi-tabs.fi-vertical .fi-tabs-item {
+        width: 100% !important;
+        min-width: 0 !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+
+    .fi-sc-tabs.fi-vertical > .fi-sc-tabs-tab,
+    .fi-sc-tabs.fi-vertical > div:not(nav) {
+        flex: 1 1 0% !important;
+        width: auto !important;
+        padding: 1.25rem !important;
+    }
+}
+
+@media (max-width: 1023px) {
+    .fi-sc-tabs.fi-vertical {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .fi-sc-tabs.fi-vertical > .fi-tabs.fi-vertical {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        padding: 0.625rem 0.75rem !important;
+        gap: 0.375rem !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+        border-radius: 0 !important;
+        background: rgba(248, 250, 252, 0.55) !important;
+        box-shadow: none !important;
+    }
+
+    .dark .fi-sc-tabs.fi-vertical > .fi-tabs.fi-vertical {
+        border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+        background: rgba(7, 15, 28, 0.45) !important;
+    }
+
+    .fi-sc-tabs.fi-vertical > .fi-tabs.fi-vertical::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .fi-sc-tabs.fi-vertical > .fi-tabs.fi-vertical .fi-tabs-item {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: max-content !important;
+        white-space: nowrap !important;
+    }
+
+    .fi-sc-tabs.fi-vertical > .fi-sc-tabs-tab,
+    .fi-sc-tabs.fi-vertical > div:not(nav) {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        padding: 0.875rem !important;
+    }
+}
+
+.fi-sc-tabs.fi-vertical > .fi-tabs.fi-vertical .fi-tabs-item.fi-active {
+    background: rgba(244, 121, 32, 0.14) !important;
+    color: #F47920 !important;
+    box-shadow: inset 0 0 0 1px rgba(244, 121, 32, 0.32) !important;
+}
+
+.dark .fi-sc-tabs.fi-vertical > .fi-tabs.fi-vertical .fi-tabs-item.fi-active {
+    background: rgba(244, 121, 32, 0.2) !important;
+    color: #fb923c !important;
+    box-shadow: inset 0 0 0 1px rgba(244, 121, 32, 0.4) !important;
 }
 
 .fi-sidebar-footer .fi-dropdown-panel {
@@ -2189,22 +2352,88 @@ footer.fi-footer {
     }
 }
 
-/* Responsive tabs: always smooth single-row horizontal scroll with arrow navigation */
-.fi-tabs {
+/* Responsive horizontal tabs: smooth single-row scroll (never override vertical tabs) */
+.fi-tabs:not(.fi-vertical) {
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none !important;
 }
 
-.fi-tabs::-webkit-scrollbar {
+.fi-tabs:not(.fi-vertical)::-webkit-scrollbar {
     display: none !important;
 }
 
-.fi-tabs-item {
+.fi-tabs:not(.fi-vertical) .fi-tabs-item {
     flex-shrink: 0 !important;
     white-space: nowrap !important;
     min-width: max-content !important;
+}
+
+/* =========================================================
+   14. MOBILE & SMALL-VIEWPORT UNIVERSAL HARDENING
+   Ensures modals, tables, pagination, and headers never clip or overflow
+   ========================================================= */
+@media (max-width: 639px) {
+    .fi-modal .fi-modal-window-ctn {
+        padding: 0.75rem !important;
+    }
+
+    .fi-modal:not(.fi-modal-slide-over) .fi-modal-window {
+        max-height: calc(100dvh - 1.5rem) !important;
+        border-radius: 1.25rem !important;
+    }
+
+    .fi-modal-header {
+        padding: 1rem 3.5rem 1rem 1rem !important;
+    }
+
+    .fi-modal-close-btn,
+    .fi-modal-header .fi-modal-close-btn {
+        top: 0.85rem !important;
+        right: 0.85rem !important;
+    }
+
+    .fi-modal-content {
+        padding: 1rem !important;
+    }
+
+    .fi-modal-footer {
+        padding: 0.875rem 1rem !important;
+    }
+
+    .fi-modal-footer-actions {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .fi-header-actions {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .fi-ta-header-toolbar {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        padding: 0.75rem !important;
+    }
+
+    .fi-ta-pagination-ctn,
+    .fi-pagination {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .fi-dropdown-panel {
+        max-width: calc(100vw - 1.5rem) !important;
+    }
+}
+
+/* Viewport-fixed table dropdown panel (escapes overflow-x:auto clipping on all rows & viewports) */
+.fi-dropdown-panel.fi-dropdown-viewport-fixed {
+    position: fixed !important;
+    z-index: 99999 !important;
+    margin: 0 !important;
 }
 
 /* =========================================================

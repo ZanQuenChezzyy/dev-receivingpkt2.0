@@ -31,7 +31,7 @@
                 <label for="widget-invoicing-period-select" class="text-xs font-medium text-slate-500 dark:text-slate-400 shrink-0">
                     Pilih Bulan:
                 </label>
-                <div class="relative min-w-[200px]">
+                <div class="relative flex-1 sm:flex-none sm:min-w-[200px]">
                     <select
                         id="widget-invoicing-period-select"
                         wire:model.live="selectedPeriod"

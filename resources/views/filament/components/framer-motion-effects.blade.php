@@ -154,6 +154,181 @@
         window.addEventListener('close-modal', () => setTimeout(updateModalActiveState, 20));
         window.addEventListener('close-modal-quietly', () => setTimeout(updateModalActiveState, 20));
 
+        // =========================================================
+        // 4. Anti-Clipping Viewport-Fixed Positioning for Table Dropdowns
+        //    Prevents .fi-dropdown-panel inside overflow-x:auto tables
+        //    from being sliced off on bottom rows (Mobile & Desktop)
+        // =========================================================
+        const activeFixedPanels = new Set();
+        let isRepositioningDropdowns = false;
+
+        function resetFixedPanel(panel) {
+            if (!panel) return;
+            if (!panel.classList.contains('fi-dropdown-viewport-fixed') && !panel.dataset.pktLastPos) {
+                activeFixedPanels.delete(panel);
+                return;
+            }
+            isRepositioningDropdowns = true;
+            try {
+                panel.classList.remove('fi-dropdown-viewport-fixed');
+                panel.style.removeProperty('position');
+                panel.style.removeProperty('top');
+                panel.style.removeProperty('left');
+                panel.style.removeProperty('right');
+                panel.style.removeProperty('bottom');
+                panel.style.removeProperty('transform');
+                panel.style.removeProperty('max-height');
+                delete panel.dataset.pktLastPos;
+                activeFixedPanels.delete(panel);
+            } finally {
+                isRepositioningDropdowns = false;
+            }
+        }
+
+        function positionTableDropdownPanel(panel) {
+            if (!panel || !panel.isConnected) {
+                activeFixedPanels.delete(panel);
+                return;
+            }
+
+            const isHidden = panel.style.display === 'none' || panel.hasAttribute('x-cloak') || window.getComputedStyle(panel).display === 'none';
+            if (isHidden) {
+                resetFixedPanel(panel);
+                return;
+            }
+
+            const dropdown = panel.closest('.fi-dropdown');
+            const trigger = dropdown ? dropdown.querySelector('.fi-dropdown-trigger') : null;
+            if (!trigger) return;
+
+            const triggerRect = trigger.getBoundingClientRect();
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const edgePad = 12;
+            const gap = 8;
+
+            // Jika trigger sudah tergulir keluar viewport, tutup panel agar tidak melayang di tempat kosong
+            if (triggerRect.bottom < 0 || triggerRect.top > vh || triggerRect.right < 0 || triggerRect.left > vw) {
+                resetFixedPanel(panel);
+                return;
+            }
+
+            isRepositioningDropdowns = true;
+            try {
+                if (!panel.classList.contains('fi-dropdown-viewport-fixed')) {
+                    panel.classList.add('fi-dropdown-viewport-fixed');
+                }
+                panel.style.setProperty('position', 'fixed', 'important');
+                panel.style.setProperty('right', 'auto', 'important');
+                panel.style.setProperty('bottom', 'auto', 'important');
+                panel.style.setProperty('transform', 'none', 'important');
+
+                const panelRect = panel.getBoundingClientRect();
+                const panelW = Math.min(panelRect.width || 220, vw - edgePad * 2);
+                const panelH = Math.min(panelRect.height || 200, Math.max(160, vh - 96));
+
+                const spaceBelow = vh - triggerRect.bottom - edgePad;
+                const spaceAbove = triggerRect.top - edgePad;
+
+                let top;
+                let availH;
+                if (spaceBelow >= Math.min(panelH, 180) || spaceBelow >= spaceAbove) {
+                    top = triggerRect.bottom + gap;
+                    availH = Math.max(120, vh - top - edgePad);
+                } else {
+                    availH = Math.max(120, spaceAbove - gap);
+                    const actualH = Math.min(panelH, availH);
+                    top = Math.max(edgePad, triggerRect.top - actualH - gap);
+                }
+
+                // Sejajarkan ke tepi kanan tombol (cocok untuk kolom aksi di sisi kanan) lalu clamp agar aman di mobile
+                let left = triggerRect.right - panelW;
+                if (left < edgePad) {
+                    left = Math.max(edgePad, triggerRect.left);
+                }
+                if (left + panelW > vw - edgePad) {
+                    left = Math.max(edgePad, vw - panelW - edgePad);
+                }
+
+                const rTop = Math.round(top);
+                const rLeft = Math.round(left);
+                const rMaxH = Math.round(Math.min(384, availH));
+                const posKey = `${rTop},${rLeft},${rMaxH}`;
+
+                if (panel.dataset.pktLastPos !== posKey) {
+                    panel.style.setProperty('top', `${rTop}px`, 'important');
+                    panel.style.setProperty('left', `${rLeft}px`, 'important');
+                    panel.style.setProperty('max-height', `${rMaxH}px`, 'important');
+                    panel.dataset.pktLastPos = posKey;
+                }
+
+                activeFixedPanels.add(panel);
+            } finally {
+                isRepositioningDropdowns = false;
+            }
+        }
+
+        function syncAllTableDropdowns() {
+            if (isRepositioningDropdowns) return;
+            const panels = document.querySelectorAll('.fi-ta-ctn .fi-dropdown-panel');
+            panels.forEach((panel) => {
+                const isVisible = panel.style.display !== 'none' && !panel.hasAttribute('x-cloak') && window.getComputedStyle(panel).display !== 'none';
+                if (isVisible) {
+                    positionTableDropdownPanel(panel);
+                } else {
+                    resetFixedPanel(panel);
+                }
+            });
+        }
+
+        if (!window.__pktTableDropdownWatcherInit) {
+            window.__pktTableDropdownWatcherInit = true;
+
+            const dropdownObserver = new MutationObserver((mutations) => {
+                if (isRepositioningDropdowns) return;
+                let needsSync = false;
+                for (const m of mutations) {
+                    if (m.target instanceof Element && m.target.classList.contains('fi-dropdown-panel') && m.target.closest('.fi-ta-ctn')) {
+                        needsSync = true;
+                        break;
+                    }
+                }
+                if (needsSync) {
+                    requestAnimationFrame(syncAllTableDropdowns);
+                }
+            });
+
+            if (document.body) {
+                dropdownObserver.observe(document.body, {
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['style', 'class', 'x-cloak'],
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (e.target instanceof Element && e.target.closest('.fi-ta-ctn .fi-dropdown-trigger')) {
+                    requestAnimationFrame(() => {
+                        syncAllTableDropdowns();
+                        setTimeout(syncAllTableDropdowns, 60);
+                    });
+                }
+            }, true);
+
+            document.addEventListener('livewire:navigated', () => {
+                Array.from(activeFixedPanels).forEach((panel) => resetFixedPanel(panel));
+                activeFixedPanels.clear();
+            });
+
+            const repositionActive = () => {
+                if (activeFixedPanels.size === 0 || isRepositioningDropdowns) return;
+                activeFixedPanels.forEach((panel) => positionTableDropdownPanel(panel));
+            };
+
+            window.addEventListener('scroll', repositionActive, { passive: true, capture: true });
+            window.addEventListener('resize', repositionActive, { passive: true });
+        }
+
         function runAll() {
             initStatsSpringPhysics();
             initStatsCounter();

@@ -34,10 +34,11 @@
                 <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 font-mono text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">Verifikasi_GRS_5007712345.pdf</span>
             </div>
         </div>
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/10">
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-[#eef3f9] dark:border-white/10" style="color-scheme: light;">
             <iframe
                 srcdoc="{{ $grsPreview['wrapped_html'] }}"
-                class="h-[560px] w-full border-0"
+                class="h-[460px] sm:h-[560px] w-full border-0 bg-[#eef3f9]"
+                style="color-scheme: light; background-color: #eef3f9;"
                 sandbox="allow-same-origin"
             ></iframe>
         </div>
@@ -55,10 +56,11 @@
                 <span class="inline-flex items-center rounded-md bg-rose-50 px-2 py-0.5 font-mono text-[11px] font-medium text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">Verifikasi_RDTV_5007798765.pdf</span>
             </div>
         </div>
-        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-white/10">
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-[#eef3f9] dark:border-white/10" style="color-scheme: light;">
             <iframe
                 srcdoc="{{ $rdtvPreview['wrapped_html'] }}"
-                class="h-[560px] w-full border-0"
+                class="h-[460px] sm:h-[560px] w-full border-0 bg-[#eef3f9]"
+                style="color-scheme: light; background-color: #eef3f9;"
                 sandbox="allow-same-origin"
             ></iframe>
         </div>

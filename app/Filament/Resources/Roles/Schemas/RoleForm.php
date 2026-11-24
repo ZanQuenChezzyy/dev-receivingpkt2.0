@@ -24,7 +24,10 @@ class RoleForm
         return $schema->components([
             self::getRoleInformationSection($permissionFieldMap),
             self::getPermissionsTabs($groupedPermissions),
-        ])->columns(3);
+        ])->columns([
+            'default' => 1,
+            'lg' => 3,
+        ]);
     }
 
     /**
@@ -72,7 +75,10 @@ class RoleForm
                     }),
             ])
             ->columns(1)
-            ->columnSpan(1)
+            ->columnSpan([
+                'default' => 'full',
+                'lg' => 1,
+            ])
             ->collapsible();
     }
 
@@ -132,7 +138,10 @@ class RoleForm
 
         return Tabs::make(__('role.permission'))
             ->contained()
-            ->columnSpan(2)
+            ->columnSpan([
+                'default' => 'full',
+                'lg' => 2,
+            ])
             ->vertical()
             ->tabs($tabs);
     }

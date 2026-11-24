@@ -10,7 +10,7 @@
                 wire:target="toggle"
                 :color="$isActive ? 'primary' : 'gray'"
                 size="md"
-                :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-s-moon'"
+                :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-o-sparkles'"
                 tooltip="{{ $isActive ? 'Matikan Asisten ALEX' : 'Hidupkan Asisten ALEX' }}"
                 style="margin: 0;"
                 class="alex-ai-toggle-btn !m-0 shrink-0 {{ $isActive ? 'alex-ai-active !text-white [&_svg]:!text-white [&_svg]:!fill-white' : '[&_svg]:!text-slate-400' }}"
@@ -26,7 +26,7 @@
                 wire:target="toggle"
                 :color="$isActive ? 'primary' : 'gray'"
                 size="sm"
-                :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-s-moon'"
+                :icon="$isActive ? 'heroicon-s-sparkles' : 'heroicon-o-sparkles'"
                 tooltip="{{ $isActive ? 'Asisten ALEX Aktif (Klik untuk mematikan)' : 'Asisten ALEX Sedang Maintenance (Klik untuk mengaktifkan)' }}"
                 class="alex-ai-toggle-btn {{ $isActive ? 'alex-ai-active !text-white [&_svg]:!text-white [&_svg]:!fill-white' : '' }}"
             >
