@@ -94,6 +94,89 @@ class InvoicingReceipt extends Model
     }
 
     /**
+     * Memeriksa apakah material tergolong Packaging Material / Karung (ZPM) berdasarkan kode material,
+     * deskripsi barang, atau keterdaftarannya pada Monitoring Karung.
+     *
+     * @param  string|array<int, string|null>|null  $materialCodes
+     * @param  string|array<int, string|null>|null  $descriptions
+     */
+    public static function isKarungPackagingMaterial(
+        ?string $rawType = null,
+        string|array|null $materialCodes = null,
+        string|array|null $descriptions = null,
+        ?string $noPo = null,
+    ): bool {
+        if (strtoupper(trim((string) $rawType)) === 'ZPM') {
+            return true;
+        }
+
+        // 1. Kode material SAP 7 digit berawalan 500 (500xxxx) — 100% eksklusif Packaging Material (ZPM)
+        $codes = is_array($materialCodes) ? $materialCodes : [$materialCodes];
+        foreach ($codes as $code) {
+            $cleanCode = trim((string) $code);
+            if ($cleanCode !== '' && preg_match('/^500\d{4}$/', $cleanCode) === 1) {
+                return true;
+            }
+        }
+
+        // 2. Deskripsi khas material Karung / Kantong / Sack / Benang Jahit Karung (hindari jasa inspeksi & geotextile)
+        $descs = is_array($descriptions) ? $descriptions : [$descriptions];
+        foreach ($descs as $desc) {
+            $cleanDesc = trim((string) $desc);
+            if ($cleanDesc === '') {
+                continue;
+            }
+
+            if (preg_match('/^(?:PEMERIKSAAN|JASA|INSPEKSI|TESTING|KALIBRASI)\b|GEOTEXTILE/i', $cleanDesc) === 1) {
+                continue;
+            }
+
+            if (
+                preg_match('/^(?:SACK|KARUNG|KANTONG|JUMBO\s*BAG|INNER\s*BAG|BENANG\s*JAHIT(?:\s+[A-Z]+)?\s*:\s*KARUNG)\b/i', $cleanDesc) === 1
+                || preg_match('/\b(?:SACK\s*:|KARUNG\s*(?:UREA|NPK|PHONSKA|NITREA|AMONIAK|50\s*KG|25\s*KG|1000\s*KG)|KANTONG\s*(?:UREA|NPK|PHONSKA|NITREA|JUMBO))\b/i', $cleanDesc) === 1
+            ) {
+                return true;
+            }
+        }
+
+        // 3. Nomor PO terdaftar di tabel monitoring_karungs
+        $cleanPo = trim((string) $noPo);
+        if ($cleanPo !== '' && $cleanPo !== '-') {
+            try {
+                if (MonitoringKarung::query()->where('no_po', $cleanPo)->exists()) {
+                    return true;
+                }
+            } catch (\Throwable) {
+                // Abaikan jika tabel monitoring_karungs tidak tersedia (mis. sebagian unit test SQLite)
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Menentukan tipe material akhir: mempertahankan tipe eksplisit (ZSP/ZRM/ZSM/ZPM/ZFP),
+     * dan bila kosong/Non Stock namun teridentifikasi sebagai material Karung, otomatis diklasifikasikan ke "ZPM".
+     *
+     * @param  string|array<int, string|null>|null  $materialCodes
+     * @param  string|array<int, string|null>|null  $descriptions
+     */
+    public static function resolveMaterialType(
+        ?string $rawType,
+        string|array|null $materialCodes = null,
+        string|array|null $descriptions = null,
+        ?string $noPo = null,
+    ): string {
+        $normalized = self::normalizeMaterialType($rawType);
+
+        if ($normalized === self::DEFAULT_MATERIAL_TYPE && self::isKarungPackagingMaterial($rawType, $materialCodes, $descriptions, $noPo)) {
+            return 'ZPM';
+        }
+
+        return $normalized;
+    }
+
+    /**
      * Menormalkan nilai Tipe Material; jika kosong, null, atau placeholder tidak valid maka dikembalikan sebagai "Non Stock".
      */
     public static function normalizeMaterialType(?string $rawType): string
@@ -388,8 +471,13 @@ class InvoicingReceipt extends Model
     protected static function booted(): void
     {
         static::saving(function (InvoicingReceipt $record) {
-            // Tipe material yang kosong/null otomatis diisi "Non Stock"
-            $record->material_type = self::normalizeMaterialType($record->material_type);
+            // Tipe material yang kosong/null otomatis diklasifikasikan ke ZPM jika material Karung, selain itu "Non Stock"
+            $record->material_type = self::resolveMaterialType(
+                $record->material_type,
+                null,
+                array_filter([$record->nama_barang, $record->deskripsi]),
+                $record->no_po,
+            );
 
             // Auto hitung Subtotal Include PPN: rumus = Exclude + (Exclude * 11%)
             // Hanya dijalankan bila subtotal_include_ppn kosong atau exclude diubah tanpa mempertahankan include eksplisit.

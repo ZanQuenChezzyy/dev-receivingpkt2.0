@@ -151,9 +151,18 @@ class CombinedGrsVerificationService
                     $emails = $this->emailDispatcher->resolveVendorEmails($receipt);
                     $hasSlip = filled($receipt->grsRdtvItem?->file_path)
                         && Storage::disk('public')->exists((string) $receipt->grsRdtvItem->file_path);
+                    $hasExistingVerif = filled($receipt->dokumen_verifikasi_grs)
+                        && ! str_starts_with((string) $receipt->dokumen_verifikasi_grs, 'grs-rdtv-docs/');
 
                     $notes = ["Cocok dengan Invoice Barang #{$receipt->id} (PO: {$receipt->no_po})."];
                     $status = 'ready';
+                    $reasonCode = null;
+
+                    if ($hasExistingVerif) {
+                        $status = 'warning';
+                        $reasonCode = 'already_verified';
+                        $notes = ["Invoice Barang #{$receipt->id} (PO: {$receipt->no_po}) sudah memiliki Surat Verifikasi sebelumnya (Status: {$receipt->status}). Tidak dicentang otomatis agar tidak menimpa berkas lama; centang hanya bila ingin memperbarui Surat Verifikasi."];
+                    }
 
                     if (! $hasSlip) {
                         $status = 'warning';
@@ -166,7 +175,8 @@ class CombinedGrsVerificationService
                     $results[] = [
                         'row_id' => $rowId,
                         'status' => $status,
-                        'reason_code' => null,
+                        'reason_code' => $reasonCode,
+                        'already_has_verif' => $hasExistingVerif,
                         'message' => implode(' ', $notes),
                         'target_receipt_id' => $receipt->id,
                         'vendor_name' => $receipt->vendor_name ?: ($receipt->vendor?->name ?: '-'),
@@ -257,7 +267,10 @@ class CombinedGrsVerificationService
             }
 
             $status = $eligibility['status'];
+            $reasonCode = $eligibility['reason_code'];
             $messages = [$eligibility['message']];
+            $targetReceiptId = null;
+            $alreadyHasVerif = false;
 
             if ($mode === 'pair') {
                 // Validasi konsistensi nomor antar Slip & Surat Verifikasi
@@ -273,20 +286,51 @@ class CombinedGrsVerificationService
                 } elseif ($do === null) {
                     $status = 'blocked';
                     $messages[] = 'Pasangan lengkap memerlukan kode DO yang ditemukan agar Invoice Barang dapat dibuat dan diverifikasi otomatis.';
+                } elseif ($reasonCode === 'already_processed') {
+                    // Slip sudah pernah diunggah sebelumnya: jangan timpa Slip lama, arahkan ke Invoice Barang eksisting untuk memasang Surat Verifikasi
+                    $existingReceipt = $this->findExistingReceiptForUploadedSlip(
+                        do: $do,
+                        jenis: $jenis,
+                        noGrs: $noGrs !== '' ? $noGrs : $verifNoGrs,
+                        noRdtv: $noRdtv !== '' ? $noRdtv : $verifNoRdtv,
+                        noPo: $firstPo?->purchase_order_no ?: ($noPo !== '' ? $noPo : $verifNoPo),
+                        noDo: $do->delivery_order_no ?: $noDo,
+                    );
+
+                    if ($existingReceipt) {
+                        $targetReceiptId = $existingReceipt->id;
+                        $alreadyHasVerif = filled($existingReceipt->dokumen_verifikasi_grs)
+                            && ! str_starts_with((string) $existingReceipt->dokumen_verifikasi_grs, 'grs-rdtv-docs/');
+                        $status = 'warning';
+                        $reasonCode = $alreadyHasVerif ? 'already_verified' : 'reuse_existing_slip';
+
+                        if ($alreadyHasVerif) {
+                            $messages = ["Slip {$jenis} & Surat Verifikasi untuk Invoice #{$existingReceipt->id} sudah ada di sistem (Status: {$existingReceipt->status}). Tidak dicentang otomatis agar tidak menimpa berkas lama; centang hanya bila ingin memperbarui Surat Verifikasi."];
+                        } else {
+                            $messages = ["Slip {$jenis} ini sudah ada di sistem (Invoice #{$existingReceipt->id}). Berkas Slip lama tetap dipertahankan (tidak ditimpa); hanya berkas Surat Verifikasi yang akan ditambahkan dan diverifikasi."];
+                        }
+
+                        if ($vendorEmails === []) {
+                            $messages[] = 'Email vendor belum terdaftar (dokumen tetap Terverifikasi, namun email otomatis ditahan).';
+                        }
+                    }
                 } elseif ($status === 'ready' && $vendorEmails === []) {
                     $status = 'warning';
                     $messages[] = 'Email vendor belum terdaftar (dokumen tetap Terverifikasi, namun email otomatis ditahan).';
                 }
             } elseif ($mode === 'slip_only' && $status === 'ready') {
                 $messages = ['Siap diproses — akan membuat Invoice Barang berstatus Menunggu Verifikasi (tanpa kirim email dulu).'];
+            } elseif ($mode === 'slip_only' && $reasonCode === 'already_processed') {
+                $messages[] = 'Berkas Slip lama tetap dipertahankan dan tidak ditimpa.';
             }
 
             $results[] = [
                 'row_id' => $rowId,
                 'status' => $status,
-                'reason_code' => $eligibility['reason_code'],
+                'reason_code' => $reasonCode,
+                'already_has_verif' => $alreadyHasVerif,
                 'message' => implode(' ', array_unique($messages)),
-                'target_receipt_id' => null,
+                'target_receipt_id' => $targetReceiptId,
                 'vendor_name' => $vendorName,
                 'vendor_emails' => $vendorEmails,
                 'resolved_no_po' => $firstPo?->purchase_order_no ?: ($noPo ?: null),
@@ -371,6 +415,42 @@ class CombinedGrsVerificationService
         );
 
         if ($eligibility['status'] === 'blocked') {
+            // Khusus Mode Pasangan Lengkap: bila Slip sudah ada sebelumnya, pertahankan Slip lama (tidak ditimpa)
+            // dan cukup pasang Surat Verifikasi ke Invoice Barang eksisting.
+            if ($mode === 'pair' && $eligibility['reason_code'] === 'already_processed' && $eligibility['do'] !== null) {
+                $existingReceipt = $targetReceiptId !== null
+                    ? InvoicingReceipt::find($targetReceiptId)
+                    : $this->findExistingReceiptForUploadedSlip(
+                        do: $eligibility['do'],
+                        jenis: $jenis,
+                        noGrs: $detectedNoGrs,
+                        noRdtv: $overrideNoRdtv,
+                        noPo: $overrideNoPo,
+                        noDo: $overrideNoDo ?: (string) ($eligibility['do']->delivery_order_no ?? ''),
+                    );
+
+                if ($existingReceipt) {
+                    $reuseRes = $this->commitVerificationOnly(
+                        verifFile: $verifFile,
+                        jenis: $jenis,
+                        noGrs: $detectedNoGrs,
+                        noRdtv: $overrideNoRdtv,
+                        noPo: $overrideNoPo,
+                        noDo: $overrideNoDo,
+                        targetReceiptId: $existingReceipt->id,
+                        sendEmail: $sendEmail,
+                        actorId: $actorId,
+                    );
+
+                    if ($reuseRes['success'] ?? false) {
+                        $reuseRes['reused_existing_slip'] = true;
+                        $reuseRes['message'] = "Slip {$jenis} lama dipertahankan (tidak ditimpa). ".$reuseRes['message'];
+                    }
+
+                    return $reuseRes;
+                }
+            }
+
             return [
                 'success' => false,
                 'message' => $eligibility['message'],
@@ -675,6 +755,49 @@ class CombinedGrsVerificationService
             'email_message' => $emailMessage,
             'message' => $baseMsg.$suffix,
         ];
+    }
+
+    /**
+     * Mencari InvoicingReceipt eksisting milik Slip GRS/RDTV yang sudah pernah diunggah pada DO terkait
+     * agar upload pasangan tidak menimpa Slip lama melainkan langsung memasangkan Surat Verifikasi.
+     */
+    protected function findExistingReceiptForUploadedSlip(
+        DeliveryOrderReceipt $do,
+        string $jenis,
+        string $noGrs = '',
+        string $noRdtv = '',
+        string $noPo = '',
+        string $noDo = '',
+    ): ?InvoicingReceipt {
+        $do->loadMissing(['grsRdtvItems.grsRdtv', 'grsRdtvItems.invoicingReceipt']);
+
+        $matchingReceipts = $do->grsRdtvItems
+            ->filter(fn ($it): bool => $it->grsRdtv !== null && strtoupper((string) $it->grsRdtv->category) === strtoupper($jenis))
+            ->map(fn ($it) => $it->invoicingReceipt)
+            ->filter()
+            ->values();
+
+        if ($matchingReceipts->count() === 1) {
+            return $matchingReceipts->first();
+        }
+
+        if ($matchingReceipts->count() > 1) {
+            $targetNum = $jenis === 'RDTV' ? trim($noRdtv) : trim($noGrs);
+            if ($targetNum !== '') {
+                $exact = $matchingReceipts->first(function (InvoicingReceipt $r) use ($jenis, $targetNum): bool {
+                    $val = $jenis === 'RDTV' ? (string) $r->no_rdtv : (string) $r->no_grs;
+
+                    return str_contains($val, $targetNum);
+                });
+                if ($exact) {
+                    return $exact;
+                }
+            }
+        }
+
+        $fallback = $this->findMatchingReceiptForVerification($jenis, $noGrs, $noRdtv, $noPo, $noDo);
+
+        return $fallback['receipt'];
     }
 
     /**

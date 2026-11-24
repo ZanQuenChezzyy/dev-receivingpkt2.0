@@ -708,7 +708,7 @@ it('registers Selesai tab, single unified importInvoiceBarang action, and katego
     $headerMethod->setAccessible(true);
     $headerActions = collect($headerMethod->invoke($page))->map(fn ($a) => $a->getName())->values()->all();
 
-    expect($headerActions)->toBe(['importInvoiceBarang', 'batchUploadVerifikasiGrs', 'cashierTransmittalHistory', 'create']);
+    expect($headerActions)->toBe(['importInvoiceBarang', 'combinedGrsVerificationUpload', 'batchUploadVerifikasiGrs', 'cashierTransmittalHistory', 'create']);
 
     $selesaiRecord = new InvoicingReceipt([
         'no_po' => '5300066419',

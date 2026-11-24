@@ -1630,7 +1630,7 @@
                                 if (item.status === 'blocked') {
                                     st.selected = false;
                                 } else if (!st.userToggledSelect) {
-                                    st.selected = true;
+                                    st.selected = !Boolean(item.already_has_verif);
                                 }
                             }
                             this.rebuildMappings();

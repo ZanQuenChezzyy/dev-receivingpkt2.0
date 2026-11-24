@@ -168,7 +168,12 @@ class InvoicingReceiptForm
                                         $set('uoi', $po->uoi);
                                     }
                                     if (! $get('material_type') || $get('material_type') === InvoicingReceipt::DEFAULT_MATERIAL_TYPE) {
-                                        $set('material_type', InvoicingReceipt::normalizeMaterialType($po->material_type));
+                                        $set('material_type', InvoicingReceipt::resolveMaterialType(
+                                            $po->material_type,
+                                            $po->material_code,
+                                            $po->description,
+                                            $po->purchase_order_no,
+                                        ));
                                     }
                                     if (! $get('nama_barang')) {
                                         $names = $poRecords->pluck('description')->filter()->unique()->implode(', ');

@@ -275,7 +275,7 @@ class InvoicingAssignmentService
             return $existingPicId;
         }
 
-        $assignedPicId = $this->resolvePicByRules($materialType, $materialCode, $description);
+        $assignedPicId = $this->resolvePicByRules($materialType, $materialCode, $description, $cleanNoPo);
 
         if ($assignedPicId !== null && $cleanNoPo !== null) {
             $this->poPicMap[$cleanNoPo] = $assignedPicId;
@@ -290,9 +290,13 @@ class InvoicingAssignmentService
      * @param  string|array<string>|null  $materialCode
      * @param  string|array<string>|null  $description
      */
-    protected function resolvePicByRules(?string $materialType, string|array|null $materialCode = null, string|array|null $description = null): ?int
-    {
-        $cleanType = InvoicingReceipt::normalizeMaterialType($materialType);
+    protected function resolvePicByRules(
+        ?string $materialType,
+        string|array|null $materialCode = null,
+        string|array|null $description = null,
+        ?string $noPo = null,
+    ): ?int {
+        $cleanType = InvoicingReceipt::resolveMaterialType($materialType, $materialCode, $description, $noPo);
 
         $rule = PicMaterialAssignment::with('users')->where('material_type', $cleanType)->first();
 

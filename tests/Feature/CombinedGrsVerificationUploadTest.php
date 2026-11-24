@@ -9,6 +9,7 @@ use App\Models\GrsRdtv;
 use App\Models\GrsRdtvItem;
 use App\Models\InvoicingEmailLog;
 use App\Models\InvoicingReceipt;
+use App\Models\PicMaterialAssignment;
 use App\Models\PurchaseOrderIssued;
 use App\Models\QcHistory;
 use App\Models\User;
@@ -819,4 +820,210 @@ test('CombinedGrsVerificationUpload classifies, prechecks, and commits Karung Sl
         ->assertJsonPath('no_po', '5000009408')
         ->assertJsonPath('status', 'Terverifikasi')
         ->assertJsonPath('email_status', 'sent');
+});
+
+test('Karung PO with missing material_type auto-classifies as ZPM, skips QC Kembali, and routes strictly to ZPM PICs', function (): void {
+    fakeCombinedZimbraSuccess();
+
+    $zpmPic1 = User::create([
+        'name' => 'Camelya ZPM',
+        'email' => 'camelya_zpm@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $zpmPic1->assignRole('Staff Invoice');
+
+    $zpmPic2 = User::create([
+        'name' => 'Rizki ZPM',
+        'email' => 'rizki_zpm@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $zpmPic2->assignRole('Staff Invoice');
+
+    $otherStaff = User::create([
+        'name' => 'Staff Lain Non ZPM',
+        'email' => 'staff_other@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $otherStaff->assignRole('Staff Invoice');
+
+    $zpmRule = PicMaterialAssignment::create([
+        'material_type' => 'ZPM',
+        'assignment_mode' => 'user',
+        'user_id' => $zpmPic1->id,
+        'notes' => 'PIC Khusus Karung / Packaging Material',
+    ]);
+    $zpmRule->users()->sync([$zpmPic1->id, $zpmPic2->id]);
+
+    // Guard false-positive: jasa inspeksi karung & geotextile TIDAK boleh dianggap ZPM
+    expect(InvoicingReceipt::resolveMaterialType(null, null, 'PEMERIKSAAN KUALITAS KARUNG UREA & NPK', '5300061045'))
+        ->toBe('Non Stock')
+        ->and(InvoicingReceipt::resolveMaterialType(null, null, 'POLYFELT NONWOVEN GEOTEXTILE', '5300061797'))
+        ->toBe('Non Stock')
+        ->and(InvoicingReceipt::resolveMaterialType(null, '5000024', 'SACK:UREA;PIHC;SS;50KG', '5000009305'))
+        ->toBe('ZPM');
+
+    // PO Karung tanpa material_type (null) dan tanpa QC Kembali
+    $vendor = Vendor::create([
+        'name' => 'POLIPLAS INDAH SEJAHTERA',
+        'vendor_number' => 'V-9305',
+        'email' => 'poliplas@test.local',
+    ]);
+    $po = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5000009305',
+        'material_type' => null,
+        'material_code' => '5000024',
+        'description' => 'SACK:UREA;PIHC;SS;50KG',
+        'qty_po' => 50000,
+        'uoi' => 'EA',
+        'total_amount_in_lc' => 200000000,
+        'vendor_id' => $vendor->vendor_number,
+        'vendor_name' => $vendor->name,
+    ]);
+    $do = DeliveryOrderReceipt::create([
+        'delivery_order_no' => 'SJ-9305',
+        'received_date' => '2026-11-22',
+        'document_code' => '5000009305-01-SJ9305',
+        'status' => 'Diterima',
+        'post_103' => now(),
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $do->id,
+        'purchase_order_issued_id' => $po->id,
+        'material_code' => '5000024',
+        'description' => 'SACK:UREA;PIHC;SS;50KG',
+        'quantity' => 10000,
+        'uoi' => 'EA',
+        'material_type' => null,
+        'total_amount_snapshot' => 40000000,
+    ]);
+
+    $slip = makeTextPdfUpload('5000009305-01-SJ9305.pdf', 'GOODS RECEIPT SLIP No Release GR : 5007761111 No PO : 5000009305');
+
+    $res = $this->actingAs($otherStaff)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'slip_only',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '0',
+        'no_grs' => '5007761111',
+        'no_po' => '5000009305',
+        'slip_file' => $slip,
+    ]);
+
+    $res->assertOk()->assertJsonPath('success', true);
+
+    $receipt = InvoicingReceipt::where('no_po', '5000009305')->first();
+    expect($receipt)->not->toBeNull()
+        ->and($receipt->material_type)->toBe('ZPM')
+        ->and($receipt->pic_id)->toBeIn([$zpmPic1->id, $zpmPic2->id])
+        ->and($receipt->pic_id)->not->toBe($otherStaff->id);
+});
+
+test('Combined upload keeps existing Slip intact without overwriting when uploading pair for already-uploaded GRS', function (): void {
+    fakeCombinedZimbraSuccess();
+
+    $user = User::create([
+        'name' => 'Staff Reuse Slip',
+        'email' => 'reuse_slip@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Staff Invoice');
+
+    createEligibleDoFixture('PKT-DO-8801', '5300068801', 'SJ-8801');
+
+    // 1. Unggah Slip Saja terlebih dahulu
+    $originalSlip = makeTextPdfUpload('PKT-DO-8801.pdf', 'GOODS RECEIPT SLIP No Release GR : 5007888801 No PO : 5300068801');
+    $firstRes = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'slip_only',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '0',
+        'no_grs' => '5007888801',
+        'no_po' => '5300068801',
+        'slip_file' => $originalSlip,
+    ]);
+    $firstRes->assertOk()->assertJsonPath('status', 'Menunggu Verifikasi');
+
+    $existingItem = GrsRdtvItem::first();
+    $existingReceipt = InvoicingReceipt::first();
+    $originalSlipPath = $existingItem->file_path;
+
+    // 2. Precheck Slip Saja lagi -> harus diblokir (tidak boleh menimpa/duplikat)
+    $precheckSlipOnly = $this->actingAs($user)->postJson(route('filament.admin.grs-rdtv.combined_upload.precheck'), [
+        'transaction_date' => '2026-11-24',
+        'rows' => [[
+            'row_id' => 'dup_slip',
+            'mode' => 'slip_only',
+            'jenis' => 'GRS',
+            'document_code' => 'PKT-DO-8801',
+            'no_grs' => '5007888801',
+            'no_po' => '5300068801',
+        ]],
+    ]);
+    $precheckSlipOnly->assertOk()
+        ->assertJsonPath('results.0.status', 'blocked')
+        ->assertJsonPath('results.0.reason_code', 'already_processed');
+
+    // 3. Precheck Pasangan (Slip lama + Verifikasi baru) -> status warning reuse_existing_slip
+    $precheckPair = $this->actingAs($user)->postJson(route('filament.admin.grs-rdtv.combined_upload.precheck'), [
+        'transaction_date' => '2026-11-24',
+        'rows' => [[
+            'row_id' => 'reuse_pair',
+            'mode' => 'pair',
+            'jenis' => 'GRS',
+            'document_code' => 'PKT-DO-8801',
+            'no_grs' => '5007888801',
+            'no_po' => '5300068801',
+            'verif_no_grs' => '5007888801',
+            'verif_no_po' => '5300068801',
+        ]],
+    ]);
+    $precheckPair->assertOk()
+        ->assertJsonPath('results.0.status', 'warning')
+        ->assertJsonPath('results.0.reason_code', 'reuse_existing_slip')
+        ->assertJsonPath('results.0.already_has_verif', false)
+        ->assertJsonPath('results.0.target_receipt_id', $existingReceipt->id);
+
+    // 4. Commit Pasangan -> Slip lama tetap dipertahankan, tidak membuat item/invoice duplikat, hanya memasang Verifikasi
+    $newSlip = makeTextPdfUpload('PKT-DO-8801.pdf', 'GOODS RECEIPT SLIP No Release GR : 5007888801 No PO : 5300068801');
+    $verif = makeTextPdfUpload('Verif_8801.pdf', 'VERIFIKASI PENERIMAAN BARANG Nomor GRS (105) 5007888801 Nomor PO 5300068801');
+
+    $commitReuse = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'pair',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '1',
+        'no_grs' => '5007888801',
+        'no_po' => '5300068801',
+        'target_receipt_id' => $existingReceipt->id,
+        'slip_file' => $newSlip,
+        'verif_file' => $verif,
+    ]);
+    $commitReuse->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('reused_existing_slip', true)
+        ->assertJsonPath('receipt_id', $existingReceipt->id)
+        ->assertJsonPath('status', 'Terverifikasi')
+        ->assertJsonPath('email_status', 'sent');
+
+    expect(GrsRdtvItem::count())->toBe(1)
+        ->and(InvoicingReceipt::count())->toBe(1)
+        ->and($existingItem->fresh()->file_path)->toBe($originalSlipPath)
+        ->and($existingReceipt->fresh()->status)->toBe('Terverifikasi')
+        ->and($existingReceipt->fresh()->dokumen_verifikasi_grs)->toStartWith('verifikasi-grs/');
+
+    // 5. Precheck ulang setelah sudah terverifikasi -> already_has_verif = true (tidak dicentang otomatis)
+    $precheckAlreadyVerif = $this->actingAs($user)->postJson(route('filament.admin.grs-rdtv.combined_upload.precheck'), [
+        'transaction_date' => '2026-11-24',
+        'rows' => [[
+            'row_id' => 'already_v',
+            'mode' => 'verif_only',
+            'jenis' => 'GRS',
+            'no_grs' => '5007888801',
+            'no_po' => '5300068801',
+        ]],
+    ]);
+    $precheckAlreadyVerif->assertOk()
+        ->assertJsonPath('results.0.status', 'warning')
+        ->assertJsonPath('results.0.reason_code', 'already_verified')
+        ->assertJsonPath('results.0.already_has_verif', true);
 });

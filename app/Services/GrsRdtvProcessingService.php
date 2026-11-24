@@ -472,8 +472,7 @@ class GrsRdtvProcessingService
                 $unposted103Documents[] = $documentCode;
                 $hasError = true;
             } else {
-                $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
-                if (! $isZrmZsmOrZpm) {
+                if (! $this->isDoExemptFromQcKembali($do)) {
                     $qcKembaliCount = $do->qcHistories()->where('status', 'Kembali')->count();
                     if ($qcKembaliCount <= $grsCount) {
                         $invalidDocuments[] = $documentCode;
@@ -514,8 +513,7 @@ class GrsRdtvProcessingService
                 $unposted103Documents[] = $documentCode;
                 $hasError = true;
             } else {
-                $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails()->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->exists();
-                if (! $isZrmZsmOrZpm) {
+                if (! $this->isDoExemptFromQcKembali($do)) {
                     $latestQc = $do->qcHistories()->latest('id')->first();
                     if (! $latestQc || $latestQc->status !== 'Kembali') {
                         $invalidDocuments[] = $documentCode;
@@ -631,8 +629,7 @@ class GrsRdtvProcessingService
                 ];
             }
 
-            $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->isNotEmpty();
-            if (! $isZrmZsmOrZpm) {
+            if (! $this->isDoExemptFromQcKembali($do)) {
                 $qcKembaliCount = $do->qcHistories->where('status', 'Kembali')->count();
                 if ($qcKembaliCount <= $grsCount) {
                     return [
@@ -685,8 +682,7 @@ class GrsRdtvProcessingService
                 ];
             }
 
-            $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->isNotEmpty();
-            if (! $isZrmZsmOrZpm) {
+            if (! $this->isDoExemptFromQcKembali($do)) {
                 $latestQc = $do->qcHistories->sortByDesc('id')->first();
                 if (! $latestQc || $latestQc->status !== 'Kembali') {
                     return [
@@ -735,7 +731,6 @@ class GrsRdtvProcessingService
         $resolvedNoPo = $po?->purchase_order_no ?? ($parsedPdf['no_po'] ?? null);
 
         $rawMaterialType = $firstDetail?->material_type ?? $po?->material_type;
-        $materialType = InvoicingReceipt::normalizeMaterialType($rawMaterialType);
 
         $materialCodes = $details->isNotEmpty()
             ? $details->pluck('material_code')->filter()->values()->all()
@@ -744,6 +739,13 @@ class GrsRdtvProcessingService
         $descriptions = $details->isNotEmpty()
             ? $details->pluck('description')->filter()->values()->all()
             : array_filter([$po?->description, $parsedPdf['nama_barang'] ?? null]);
+
+        $materialType = InvoicingReceipt::resolveMaterialType(
+            $rawMaterialType,
+            $materialCodes,
+            $descriptions,
+            $resolvedNoPo,
+        );
 
         $picId = $this->assignmentService->determinePicId(
             $materialType,
@@ -837,6 +839,31 @@ class GrsRdtvProcessingService
                 : "Auto-generate dari {$category}: {$grsRdtvItem->document_code} (DO: {$do->delivery_order_no})",
             'status' => 'Menunggu Verifikasi',
         ]);
+    }
+
+    /**
+     * Memeriksa apakah DO termasuk material ZRM/ZSM/ZPM (termasuk material Karung yang material_type PO-nya kosong)
+     * sehingga dikecualikan dari kewajiban status QC Kembali sebelum proses GRS.
+     */
+    protected function isDoExemptFromQcKembali(DeliveryOrderReceipt $do): bool
+    {
+        $do->loadMissing(['deliveryOrderReceiptDetails.purchaseOrderIssued']);
+
+        foreach ($do->deliveryOrderReceiptDetails as $detail) {
+            $rawType = $detail->material_type ?? $detail->purchaseOrderIssued?->material_type;
+            $resolvedType = InvoicingReceipt::resolveMaterialType(
+                $rawType,
+                array_filter([$detail->material_code, $detail->purchaseOrderIssued?->material_code]),
+                array_filter([$detail->description, $detail->purchaseOrderIssued?->description]),
+                $detail->purchaseOrderIssued?->purchase_order_no,
+            );
+
+            if (in_array(strtoupper($resolvedType), ['ZRM', 'ZSM', 'ZPM'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
