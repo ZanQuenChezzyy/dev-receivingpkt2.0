@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BatchVerifikasiGrsUploadController;
 use App\Http\Controllers\Admin\CashierTransmittalPrintController;
 use App\Http\Controllers\Admin\ChunkedImportUploadController;
+use App\Http\Controllers\Admin\CombinedGrsVerificationController;
 use App\Http\Controllers\Admin\MaterialIssuePrintController;
 use App\Http\Controllers\Admin\QCTransmittalPrintController;
 use App\Http\Controllers\Admin\TransmittalPrintController;
@@ -70,6 +71,18 @@ Route::post('/admin/invoicing-receipts/import-chunks', [ChunkedImportUploadContr
 Route::post('/admin/invoicing-receipts/upload-verifikasi-grs-ocr', [BatchVerifikasiGrsUploadController::class, 'uploadAndVerify'])
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr');
+
+Route::post('/admin/grs-rdtv/combined-upload/inspect', [CombinedGrsVerificationController::class, 'inspect'])
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.grs-rdtv.combined_upload.inspect');
+
+Route::post('/admin/grs-rdtv/combined-upload/precheck', [CombinedGrsVerificationController::class, 'precheck'])
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.grs-rdtv.combined_upload.precheck');
+
+Route::post('/admin/grs-rdtv/combined-upload/commit', [CombinedGrsVerificationController::class, 'commit'])
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.grs-rdtv.combined_upload.commit');
 
 Route::delete('/admin/invoicing-receipts/import-chunks', [ChunkedImportUploadController::class, 'destroy'])
     ->middleware(['web', 'auth'])

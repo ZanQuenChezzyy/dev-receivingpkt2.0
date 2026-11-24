@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InvoicingReceipts\Pages;
 
+use App\Filament\Pages\CombinedGrsVerificationUpload;
 use App\Filament\Resources\CashierTransmittals\CashierTransmittalResource;
 use App\Filament\Resources\InvoicingReceipts\InvoicingReceiptResource;
 use App\Filament\Resources\InvoicingReceipts\Widgets\InvoicingOverviewWidget;
@@ -193,6 +194,13 @@ class ListInvoicingReceipts extends ListRecords
                         }
                     }
                 }),
+
+            Action::make('combinedGrsVerificationUpload')
+                ->label('Upload Gabungan GRS & Verifikasi')
+                ->icon(Heroicon::OutlinedDocumentArrowUp)
+                ->color('primary')
+                ->url(fn (): string => CombinedGrsVerificationUpload::getUrl())
+                ->visible(fn (): bool => CombinedGrsVerificationUpload::canAccess()),
 
             Action::make('batchUploadVerifikasiGrs')
                 ->label('Upload Verifikasi GRS/RDTV')

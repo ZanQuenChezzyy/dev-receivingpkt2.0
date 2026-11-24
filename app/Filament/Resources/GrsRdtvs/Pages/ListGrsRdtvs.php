@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\GrsRdtvs\Pages;
 
+use App\Filament\Pages\CombinedGrsVerificationUpload;
 use App\Filament\Resources\GrsRdtvs\GrsRdtvResource;
 use App\Models\GrsRdtvItem;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -16,6 +18,13 @@ class ListGrsRdtvs extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('combinedUpload')
+                ->label('Upload Gabungan GRS & Verifikasi')
+                ->icon(Heroicon::OutlinedDocumentArrowUp)
+                ->color('info')
+                ->url(fn (): string => CombinedGrsVerificationUpload::getUrl())
+                ->visible(fn (): bool => CombinedGrsVerificationUpload::canAccess()),
+
             CreateAction::make()
                 ->label('Tambah GRS/RDTV')
                 ->icon(Heroicon::PlusCircle),

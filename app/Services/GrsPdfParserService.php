@@ -187,7 +187,7 @@ class GrsPdfParserService
         ];
 
         // 1. No Release GR / GRS (10 digit angka diawali 500xxxxxxx)
-        if (preg_match('/No\s*Release\s*GR\s*[:\s]+(\d+)/i', $text, $m)) {
+        if (preg_match('/No\.?\s*Release\s*GR\s*[:\s]+(\d+)/i', $text, $m)) {
             $data['no_grs'] = $m[1];
         } elseif (preg_match('/(?:Nomor\s*GRS(?:\s*\(105\))?|GRS\s*\(105\)|105\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
             $data['no_grs'] = $m[1];
@@ -330,6 +330,130 @@ class GrsPdfParserService
     }
 
     /**
+     * Mengklasifikasikan satu file PDF apakah termasuk Slip GRS (105), Surat Verifikasi GRS,
+     * Slip RDTV (124), atau Surat Verifikasi RDTV, sekaligus mengekstrak seluruh metadata pentingnya.
+     *
+     * @return array{
+     *     role: 'grs_slip'|'verifikasi_grs'|'rdtv_slip'|'verifikasi_rdtv'|'unknown',
+     *     jenis: ?string,
+     *     document_code: ?string,
+     *     no_grs: ?string,
+     *     no_rdtv: ?string,
+     *     no_po: ?string,
+     *     no_do: ?string,
+     *     delivery_date: ?string,
+     *     tanggal_release_gr: ?string,
+     *     tanggal_penolakan: ?string,
+     *     tanggal_penerimaan: ?string,
+     *     tanggal_po: ?string,
+     *     vendor_name: ?string,
+     *     alasan_penolakan: ?string,
+     *     needs_ocr: bool,
+     *     confidence: 'high'|'medium'|'low'
+     * }
+     */
+    public function classifyDocument(
+        string $filePathOrContent,
+        ?string $originalFilename = null,
+        bool $filenameMatchesDo = false,
+    ): array {
+        $content = file_exists($filePathOrContent) ? (string) file_get_contents($filePathOrContent) : $filePathOrContent;
+
+        $slipParsed = $this->parse($content);
+        $verifParsed = $this->parseVerifikasiGrs($content, $originalFilename);
+
+        $combinedText = trim(($slipParsed['raw_text'] ?? '')."\n".($verifParsed['raw_text'] ?? ''));
+        $filenameBase = $originalFilename !== null ? trim((string) pathinfo($originalFilename, PATHINFO_FILENAME)) : '';
+        $filenameLower = strtolower($filenameBase);
+
+        $isVerifText = preg_match(
+            '/VERIFIKASI\s+PENERIMAAN\s+BARANG|VERIFIKASI\s+PENOLAKAN\s+BARANG|SURAT\s+VERIFIKASI|BERITA\s+ACARA\s+(?:PENERIMAAN|PENOLAKAN)|Nomor\s*:\s*(?:GRS|RDTV)-|Nomor\s+GR\s*\(\s*103\s*\)|TELAH\s+DIVERIFIKASI/i',
+            $combinedText
+        ) === 1;
+
+        $isSlipText = preg_match(
+            '/GOODS\s+RECEIPT\s+SLIP|No\s*Release\s*GR|Tanggal\s*Release\s*GR|RETURN\s+DELIVERY\s+TO\s+VENDOR|No\.?\s*Document\s*Return|Tanggal\s*Penolakan|Delivery\s*Date/i',
+            $combinedText
+        ) === 1;
+
+        $isVerifFilename = preg_match('/\b(verif|verifikasi|surat[\s_-]*verif|berita[\s_-]*acara|ba[\s_-]*(?:grs|rdtv))\b/i', $filenameLower) === 1;
+        $isRdtvText = preg_match(
+            '/VERIFIKASI\s+PENOLAKAN\s+BARANG|RETURN\s+DELIVERY\s+TO\s+VENDOR|No\.?\s*Document\s*Return|Tanggal\s*Penolakan|Nomor\s*RDTV|RDTV\s*\(?124\)?|Nomor\s*:\s*RDTV-|Alasan\s+Pengembalian/i',
+            $combinedText
+        ) === 1;
+        $isRdtvFilename = str_contains($filenameLower, 'rdtv');
+
+        $noGrs = $slipParsed['no_grs'] ?: $verifParsed['no_grs'];
+        $noRdtv = $slipParsed['no_rdtv'] ?: $verifParsed['no_rdtv'];
+        $noPo = $slipParsed['no_po'] ?: $verifParsed['no_po'];
+        $noDo = $slipParsed['no_do'] ?: $verifParsed['no_do'];
+
+        // Deteksi jenis GRS vs RDTV
+        $jenis = null;
+        if ($isRdtvText || ($verifParsed['jenis'] ?? null) === 'RDTV' || filled($noRdtv) || $isRdtvFilename) {
+            $jenis = 'RDTV';
+        } elseif ($isSlipText || $isVerifText || ($verifParsed['jenis'] ?? null) === 'GRS' || filled($noGrs) || $filenameMatchesDo) {
+            $jenis = 'GRS';
+        }
+
+        // Jika RDTV tapi nomor sempat tertangkap di no_grs, pindahkan ke no_rdtv
+        if ($jenis === 'RDTV' && blank($noRdtv) && filled($noGrs)) {
+            $noRdtv = $noGrs;
+            $noGrs = null;
+        }
+
+        // Tentukan peran dokumen (Slip vs Verifikasi)
+        $role = 'unknown';
+        $confidence = 'low';
+
+        if ($isVerifText && ! $isSlipText) {
+            $role = $jenis === 'RDTV' ? 'verifikasi_rdtv' : 'verifikasi_grs';
+            $confidence = 'high';
+        } elseif ($isSlipText && ! $isVerifText) {
+            $role = $jenis === 'RDTV' ? 'rdtv_slip' : 'grs_slip';
+            $confidence = 'high';
+        } elseif ($isVerifText && $isSlipText) {
+            // Jika dua-duanya muncul (mis. kata "Goods Receipt Slip" disebut di dalam Surat Verifikasi),
+            // penanda judul Verifikasi lebih kuat kecuali nama file cocok persis dengan document_code DO.
+            if ($filenameMatchesDo && ! $isVerifFilename) {
+                $role = $jenis === 'RDTV' ? 'rdtv_slip' : 'grs_slip';
+                $confidence = 'medium';
+            } else {
+                $role = $jenis === 'RDTV' ? 'verifikasi_rdtv' : 'verifikasi_grs';
+                $confidence = 'high';
+            }
+        } elseif ($isVerifFilename) {
+            $role = $jenis === 'RDTV' ? 'verifikasi_rdtv' : 'verifikasi_grs';
+            $confidence = 'medium';
+        } elseif ($filenameMatchesDo) {
+            $role = $jenis === 'RDTV' ? 'rdtv_slip' : 'grs_slip';
+            $confidence = 'high';
+        }
+
+        $hasAnyNumber = filled($noGrs) || filled($noRdtv) || filled($noPo);
+        $needsOcr = strlen(trim($combinedText)) < 25 && ! $hasAnyNumber;
+
+        return [
+            'role' => $role,
+            'jenis' => $jenis,
+            'document_code' => $filenameBase !== '' ? $filenameBase : null,
+            'no_grs' => $noGrs ?: null,
+            'no_rdtv' => $noRdtv ?: null,
+            'no_po' => $noPo ?: null,
+            'no_do' => $noDo ?: null,
+            'delivery_date' => $slipParsed['delivery_date'] ?: null,
+            'tanggal_release_gr' => $slipParsed['tanggal_release_gr'] ?: ($verifParsed['tanggal_release_gr'] ?: null),
+            'tanggal_penolakan' => $slipParsed['tanggal_penolakan'] ?: null,
+            'tanggal_penerimaan' => $slipParsed['tanggal_penerimaan'] ?: null,
+            'tanggal_po' => $slipParsed['tanggal_po'] ?: null,
+            'vendor_name' => $slipParsed['vendor_name'] ?: ($verifParsed['vendor_name'] ?: null),
+            'alasan_penolakan' => $slipParsed['alasan_penolakan'] ?: null,
+            'needs_ocr' => $needsOcr,
+            'confidence' => $confidence,
+        ];
+    }
+
+    /**
      * Parsing dan ekstraksi metadata dokumen Verifikasi Penerimaan Barang (GRS / Kode 105)
      * maupun Verifikasi Penolakan Barang (RDTV / Kode 124).
      *
@@ -427,7 +551,7 @@ class GrsPdfParserService
             if (preg_match('/(?:Nomor\s*GRS(?:\s*\(105\))?|GRS\s*\(105\)|105\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
                 $data['no_grs'] = $m[1];
                 $data['jenis'] ??= 'GRS';
-            } elseif (preg_match('/No\s*Release\s*GR\s*[:\s]+(500\d{7})/i', $text, $m)) {
+            } elseif (preg_match('/No\.?\s*Release\s*GR\s*[:\s]+(500\d{7})/i', $text, $m)) {
                 $data['no_grs'] = $m[1];
                 $data['jenis'] ??= 'GRS';
             }

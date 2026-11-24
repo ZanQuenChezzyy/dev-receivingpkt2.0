@@ -553,6 +553,165 @@ class GrsRdtvProcessingService
     }
 
     /**
+     * Memeriksa kelayakan 1 kode dokumen terhadap DeliveryOrderReceipt (Post 103, QC Kembali, duplikat GRS vs parsial berbeda)
+     * tanpa mengubah status database, untuk kebutuhan Pre-Check upload gabungan.
+     *
+     * @return array{
+     *     status: 'ready'|'warning'|'blocked',
+     *     reason_code: ?string,
+     *     message: string,
+     *     do: ?DeliveryOrderReceipt,
+     *     is_distinct_partial: bool
+     * }
+     */
+    public function inspectDocumentEligibility(
+        string $documentCode,
+        string $category,
+        ?string $uploadedNoGrs = null,
+    ): array {
+        $do = DeliveryOrderReceipt::with([
+            'deliveryOrderReceiptDetails.purchaseOrderIssued',
+            'grsRdtvItems.grsRdtv',
+            'grsRdtvItems.invoicingReceipt',
+            'qcHistories',
+            'termins',
+        ])->where('document_code', trim($documentCode))->first();
+
+        if (! $do) {
+            return [
+                'status' => 'warning',
+                'reason_code' => 'not_found',
+                'message' => "Kode DO {$documentCode} tidak ditemukan di Penerimaan Barang (tetap bisa tersimpan sebagai Not Found, tanpa Invoice Barang otomatis).",
+                'do' => null,
+                'is_distinct_partial' => false,
+            ];
+        }
+
+        $activeGrsItems = $do->grsRdtvItems->filter(function (GrsRdtvItem $it): bool {
+            if ($it->grsRdtv === null || $it->grsRdtv->category !== 'GRS') {
+                return false;
+            }
+
+            return ! empty($it->file_path) && Storage::disk('public')->exists($it->file_path);
+        });
+
+        $grsCount = $activeGrsItems->count();
+        $existingDatesInfo = $activeGrsItems
+            ->map(fn (GrsRdtvItem $it) => $it->grsRdtv?->transaction_date ? Carbon::parse($it->grsRdtv->transaction_date)->format('d/m/Y') : null)
+            ->filter()
+            ->unique()
+            ->implode(', ');
+        $alreadyLabel = $existingDatesInfo !== ''
+            ? "Sudah pernah diunggah sebagai GRS (Tgl: {$existingDatesInfo})."
+            : 'Sudah pernah diunggah sebagai GRS sebelumnya.';
+
+        $isDistinctPartial = false;
+
+        if ($do->receipt_mode === 'Termin') {
+            $totalTermins = $do->termins->count();
+            $postedTermins = $do->termins->whereNotNull('post_103')->count();
+
+            if ($totalTermins > 0 && $grsCount >= $totalTermins) {
+                return [
+                    'status' => 'blocked',
+                    'reason_code' => 'already_processed',
+                    'message' => $alreadyLabel,
+                    'do' => $do,
+                    'is_distinct_partial' => false,
+                ];
+            }
+
+            if ($postedTermins <= $grsCount) {
+                return [
+                    'status' => 'blocked',
+                    'reason_code' => 'unposted_103',
+                    'message' => 'Belum Post 103 untuk termin berikutnya.',
+                    'do' => $do,
+                    'is_distinct_partial' => false,
+                ];
+            }
+
+            $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->isNotEmpty();
+            if (! $isZrmZsmOrZpm) {
+                $qcKembaliCount = $do->qcHistories->where('status', 'Kembali')->count();
+                if ($qcKembaliCount <= $grsCount) {
+                    return [
+                        'status' => 'blocked',
+                        'reason_code' => 'qc_not_returned',
+                        'message' => 'Belum kembali dari QC untuk termin berikutnya.',
+                        'do' => $do,
+                        'is_distinct_partial' => false,
+                    ];
+                }
+            }
+        } else {
+            if ($grsCount >= 1) {
+                if ($category === 'GRS' && filled($uploadedNoGrs)) {
+                    $existingGrsNumbers = $activeGrsItems
+                        ->flatMap(function (GrsRdtvItem $it): array {
+                            $raw = trim((string) ($it->invoicingReceipt?->no_grs ?? ''));
+                            if ($raw === '') {
+                                return [];
+                            }
+
+                            return array_values(array_filter(array_map('trim', explode(',', $raw))));
+                        })
+                        ->unique()
+                        ->all();
+
+                    if ($existingGrsNumbers !== [] && ! in_array(trim((string) $uploadedNoGrs), $existingGrsNumbers, true)) {
+                        $isDistinctPartial = true;
+                    }
+                }
+
+                if (! $isDistinctPartial) {
+                    return [
+                        'status' => 'blocked',
+                        'reason_code' => 'already_processed',
+                        'message' => $alreadyLabel,
+                        'do' => $do,
+                        'is_distinct_partial' => false,
+                    ];
+                }
+            }
+
+            if (is_null($do->post_103)) {
+                return [
+                    'status' => 'blocked',
+                    'reason_code' => 'unposted_103',
+                    'message' => 'Belum Post 103.',
+                    'do' => $do,
+                    'is_distinct_partial' => false,
+                ];
+            }
+
+            $isZrmZsmOrZpm = $do->deliveryOrderReceiptDetails->whereIn('material_type', ['ZRM', 'ZSM', 'ZPM'])->isNotEmpty();
+            if (! $isZrmZsmOrZpm) {
+                $latestQc = $do->qcHistories->sortByDesc('id')->first();
+                if (! $latestQc || $latestQc->status !== 'Kembali') {
+                    return [
+                        'status' => 'blocked',
+                        'reason_code' => 'qc_not_returned',
+                        'message' => 'Belum kembali dari QC.',
+                        'do' => $do,
+                        'is_distinct_partial' => false,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'status' => 'ready',
+            'reason_code' => null,
+            'message' => $isDistinctPartial
+                ? 'Siap diproses (GRS parsial baru dengan No. GRS berbeda).'
+                : 'Siap diproses.',
+            'do' => $do,
+            'is_distinct_partial' => $isDistinctPartial,
+        ];
+    }
+
+    /**
      * Membuat catatan InvoicingReceipt otomatis dari GrsRdtvItem yang berhasil diproses.
      */
     public function createInvoicingReceiptFor(
@@ -560,9 +719,10 @@ class GrsRdtvProcessingService
         ?DeliveryOrderReceipt $do,
         string $category,
         mixed $transactionDate,
-    ): void {
+        bool $attachSlipAsFallbackVerif = true,
+    ): ?InvoicingReceipt {
         if (! $do) {
-            return;
+            return null;
         }
 
         $do->loadMissing(['deliveryOrderReceiptDetails.purchaseOrderIssued']);
@@ -644,7 +804,7 @@ class GrsRdtvProcessingService
             }
         }
 
-        InvoicingReceipt::create([
+        return InvoicingReceipt::create([
             'grs_rdtv_item_id' => $grsRdtvItem->id,
             'delivery_order_receipt_id' => $do->id,
             'purchase_order_issued_id' => $po?->id,
@@ -671,7 +831,7 @@ class GrsRdtvProcessingService
             'subtotal_exclude_ppn' => $subtotalExclude,
             'subtotal_include_ppn' => $subtotalInclude,
             'tanggal_terima_koreksi_invoice' => $isRdtv ? null : $tanggalTerimaGrs,
-            'dokumen_verifikasi_grs' => $grsRdtvItem->file_path,
+            'dokumen_verifikasi_grs' => $attachSlipAsFallbackVerif ? $grsRdtvItem->file_path : null,
             'keterangan' => $isRdtv && ! empty($grsRdtvItem->reason)
                 ? "Auto-generate dari RDTV: {$grsRdtvItem->document_code} (Alasan: {$grsRdtvItem->reason})"
                 : "Auto-generate dari {$category}: {$grsRdtvItem->document_code} (DO: {$do->delivery_order_no})",
