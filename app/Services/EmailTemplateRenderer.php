@@ -54,7 +54,7 @@ class EmailTemplateRenderer
             '{vendor_name}' => 'Nama Vendor',
             '{no_po}' => 'Nomor Purchase Order (PO)',
             '{no_do}' => 'Nomor DO / Surat Jalan',
-            '{no_grs}' => 'Nomor GRS (105)',
+            '{no_grs}' => 'Nomor GRS (105 / 101)',
             '{no_rdtv}' => 'Nomor RDTV (124)',
             '{jenis_dokumen}' => 'Jenis Dokumen (GRS / RDTV)',
             '{nama_barang}' => 'Nama / Deskripsi Barang',
@@ -117,7 +117,7 @@ class EmailTemplateRenderer
 <p>Bersama ini kami sampaikan dokumen <strong>Goods Receipt Slip (GRS)</strong> beserta <strong>Surat Verifikasi Penerimaan Barang</strong> untuk pengiriman dengan rincian berikut:</p>
 <ul>
     <li><strong>Nomor PO:</strong> {no_po}</li>
-    <li><strong>Nomor GRS (105):</strong> {no_grs}</li>
+    <li><strong>Nomor GRS (105/101):</strong> {no_grs}</li>
 </ul>
 <p>Terlampir kami sertakan <strong>2 berkas dokumen</strong> (Dokumen GRS dan Dokumen Verifikasi GRS) sebagai dasar proses penagihan invoice. Status dokumen dan penagihan juga dapat dipantau melalui portal: <a href="{link_tracking}">Lacak Status PO {no_po}</a>.</p>
 <p>Harap mengirimkan dokumen tagihan ke alamat PT Pupuk Kalimantan Timur (Dept PP&amp;P) paling lambat pada tanggal 20 di bulan terbitnya faktur pajak.<br>Harap mengirim softfilenya terlebih dahulu untuk saya cek kelengkapannya.</p>

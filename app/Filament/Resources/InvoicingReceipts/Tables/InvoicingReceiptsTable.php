@@ -358,7 +358,7 @@ class InvoicingReceiptsTable
                         ->openUrlInNewTab()
                         ->tooltip(fn (InvoicingReceipt $record): string => $record->jenis === 'RDTV'
                             ? 'Surat Verifikasi Penolakan Barang (RDTV 124) yang telah disetujui VP.'
-                            : 'Surat Verifikasi Penerimaan Barang (GRS 105) yang telah disetujui VP.'),
+                            : 'Surat Verifikasi Penerimaan Barang (GRS 105 / GR 101) yang telah disetujui VP.'),
 
                     TextColumn::make('dokumen_invoice')
                         ->label('Berkas Inv.')
@@ -976,7 +976,7 @@ class InvoicingReceiptsTable
                                 ->default(fn (?InvoicingReceipt $record) => ($record?->dokumen_verifikasi_grs && $record?->dokumen_verifikasi_grs !== $record?->grsRdtvItem?->file_path) ? $record->dokumen_verifikasi_grs : null)
                                 ->helperText(fn (?InvoicingReceipt $record) => $record?->jenis === 'RDTV'
                                     ? 'Unggah surat verifikasi penolakan barang (RDTV 124) yang telah disahkan / ditandatangani.'
-                                    : 'Unggah surat verifikasi penerimaan barang (GRS 105) yang telah disahkan / ditandatangani.'),
+                                    : 'Unggah surat verifikasi penerimaan barang (GRS 105 / GR 101) yang telah disahkan / ditandatangani.'),
 
                             FileUpload::make('dokumen_invoice')
                                 ->label('Berkas Invoice Vendor')

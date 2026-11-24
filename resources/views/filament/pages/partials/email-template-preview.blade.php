@@ -8,7 +8,7 @@
                 ? 'bg-orange-500 text-white shadow-sm'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10'"
         >
-            Pratinjau GRS (105)
+            Pratinjau GRS (105/101)
         </button>
         <button
             type="button"

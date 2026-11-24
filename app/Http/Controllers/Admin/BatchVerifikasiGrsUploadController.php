@@ -291,7 +291,7 @@ class BatchVerifikasiGrsUploadController extends Controller
         if ($ambiguousMessage !== null) {
             $notFoundMessage = $ambiguousMessage;
         } elseif (! $hasAnyNumber) {
-            $notFoundMessage = 'Nomor GRS (105), RDTV (124), maupun PO tidak terdeteksi dari dokumen ini.';
+            $notFoundMessage = 'Nomor GRS (105/101), RDTV (124), maupun PO tidak terdeteksi dari dokumen ini.';
         } elseif ($jenis === 'RDTV') {
             $notFoundMessage = 'Tidak ditemukan dokumen RDTV dengan No. RDTV: '.($noRdtv ?: '-').' / PO: '.($noPo ?: '-');
         } else {

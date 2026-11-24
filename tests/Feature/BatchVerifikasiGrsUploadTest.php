@@ -597,3 +597,119 @@ test('BatchVerifikasiGrsUploadController blocks ambiguous PO-only fallback when 
     expect($p1->fresh()->status)->toBe('Menunggu Verifikasi')
         ->and($p2->fresh()->status)->toBe('Menunggu Verifikasi');
 });
+
+test('GrsPdfParserService parses Karung Verifikasi GRS using Nomor GR (101) and PO 5000xxxxxx without confusion', function () {
+    $parser = app(GrsPdfParserService::class);
+
+    // 1. Key-value layout (sesuai dokumen asli Verifikasi Karung GR 101)
+    $keyValueText = <<<'TEXT'
+Tanggal: 24 November 2026
+VERIFIKASI PENERIMAAN BARANG
+Nomor: GRS- 61937/D/PL/D52100/IT/2026
+Bersama ini terlampir dokumen Goods Receipt Slip (Berita Acara Penerimaan Barang) yang telah melewati proses pengecekan fisik dan sistem, dengan rincian data sebagai berikut:
+Nomor PO : 5000009408 Tahap 4
+Nomor GR (101) : 5007760024
+Nama Penyedia Barang : PT Samisuryaindah Plastik
+Nilai PO : Rp4.345.920.000
+Nilai GR : Rp321.920.000
+Nomor DO/SJ : 08517/08518
+Lokasi Penerimaan : Gudang Banyuwangi
+TEXT;
+
+    $parsedKv = $parser->parseVerifikasiGrs($keyValueText, 'Verifikasi_Karung_101.pdf');
+    expect($parsedKv['jenis'])->toBe('GRS')
+        ->and($parsedKv['no_grs'])->toBe('5007760024')
+        ->and($parsedKv['no_gr_103'])->toBeNull()
+        ->and($parsedKv['no_po'])->toBe('5000009408')
+        ->and($parsedKv['no_do'])->toBe('08517/08518')
+        ->and($parsedKv['vendor_name'])->toBe('PT Samisuryaindah Plastik')
+        ->and($parsedKv['nomor_surat'])->toBe('GRS- 61937/D/PL/D52100/IT/2026');
+
+    // 2. Columnar / 2-column OCR layout
+    $columnarText = <<<'TEXT'
+VERIFIKASI PENERIMAAN BARANG
+Nomor: GRS- 61937/D/PL/D52100/IT/2026
+Nomor PO
+Nomor GR (101)
+Nama Penyedia Barang
+Nilai PO
+Nilai GR
+Nomor DO/SJ
+: : : : : :
+5000009408 Tahap 4
+5007760024
+PT Samisuryaindah Plastik
+Rp4.345.920.000
+Rp321.920.000
+08517/08518
+TEXT;
+
+    $parsedCol = $parser->parseVerifikasiGrs($columnarText, 'Scan_Karung.pdf');
+    expect($parsedCol['jenis'])->toBe('GRS')
+        ->and($parsedCol['no_grs'])->toBe('5007760024')
+        ->and($parsedCol['no_gr_103'])->toBeNull()
+        ->and($parsedCol['no_po'])->toBe('5000009408');
+
+    // 3. Filename fallback tidak tertukar antara PO 5000009408 dan GR 101 5007760024
+    $parsedFn = $parser->parseVerifikasiGrs('', '5000009408_GR101_5007760024.pdf');
+    expect($parsedFn['jenis'])->toBe('GRS')
+        ->and($parsedFn['no_grs'])->toBe('5007760024')
+        ->and($parsedFn['no_po'])->toBe('5000009408');
+
+    // 4. Direct parse() juga mengenali Nomor GR (101)
+    $directParsed = $parser->parse($keyValueText);
+    expect($directParsed['no_grs'])->toBe('5007760024')
+        ->and($directParsed['no_po'])->toBe('5000009408');
+});
+
+test('BatchVerifikasiGrsUploadController verifies Karung GRS (101) PDF via backend parser fallback', function () {
+    $user = User::create([
+        'name' => 'Admin Karung 101',
+        'email' => 'admin_karung101_'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('super_admin');
+
+    $receipt = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_grs' => '5007760024',
+        'no_po' => '5000009408',
+        'no_do' => '08517/08518',
+        'material_type' => 'ZPM',
+        'status' => 'Menunggu Verifikasi',
+        'dokumen_verifikasi_grs' => null,
+    ]);
+
+    $text = 'VERIFIKASI PENERIMAAN BARANG Nomor: GRS- 61937/D/PL/D52100/IT/2026 Nomor PO : 5000009408 Tahap 4 Nomor GR (101) : 5007760024 Nomor DO/SJ : 08517/08518';
+    $escaped = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
+    $stream = "BT /F1 12 Tf 40 720 Td ({$escaped}) Tj ET";
+    $len = strlen($stream);
+    $pdfContent = "%PDF-1.4\n"
+        ."1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"
+        ."2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n"
+        ."3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj\n"
+        ."4 0 obj << /Length {$len} >> stream\n{$stream}\nendstream endobj\n"
+        ."5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n"
+        ."%%EOF\n";
+
+    $file = UploadedFile::fake()->createWithContent('Verifikasi_Karung_Banyuwangi.pdf', $pdfContent);
+
+    $response = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $file,
+            'original_name' => 'Verifikasi_Karung_Banyuwangi.pdf',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => true,
+            'matched' => true,
+            'jenis' => 'GRS',
+            'no_grs' => '5007760024',
+            'no_po' => '5000009408',
+            'status' => 'Terverifikasi',
+        ]);
+
+    expect($receipt->fresh()->status)->toBe('Terverifikasi')
+        ->and($receipt->fresh()->dokumen_verifikasi_grs)->toStartWith('verifikasi-grs/');
+});

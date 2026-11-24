@@ -492,17 +492,27 @@ class InvoicingReceiptForm
 
                                 if ($path && file_exists($path) && strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'pdf') {
                                     try {
-                                        $parsed = app(GrsPdfParserService::class)->parse($path);
-                                        if (! empty($parsed['no_grs'])) {
-                                            $set('no_grs', $parsed['no_grs']);
+                                        $parser = app(GrsPdfParserService::class);
+                                        $parsed = $parser->parse($path);
+                                        $verifParsed = $parser->parseVerifikasiGrs($path, basename($path));
+
+                                        $noGrs = $parsed['no_grs'] ?: ($verifParsed['no_grs'] ?? null);
+                                        $noRdtv = $parsed['no_rdtv'] ?: ($verifParsed['no_rdtv'] ?? null);
+                                        $noPo = $parsed['no_po'] ?: ($verifParsed['no_po'] ?? null);
+                                        $noDo = $parsed['no_do'] ?: ($verifParsed['no_do'] ?? null);
+                                        $vendorName = $parsed['vendor_name'] ?: ($verifParsed['vendor_name'] ?? null);
+                                        $tglRelease = $parsed['tanggal_release_gr'] ?: ($verifParsed['tanggal_release_gr'] ?? null);
+
+                                        if (! empty($noGrs)) {
+                                            $set('no_grs', $noGrs);
                                         }
-                                        if (! empty($parsed['no_rdtv'])) {
-                                            $set('no_rdtv', $parsed['no_rdtv']);
+                                        if (! empty($noRdtv)) {
+                                            $set('no_rdtv', $noRdtv);
                                         }
                                         if ($get('jenis') === 'RDTV' && ! empty($parsed['tanggal_penolakan'])) {
                                             $set('tanggal_terima_grs', $parsed['tanggal_penolakan']);
-                                        } elseif (! empty($parsed['tanggal_release_gr'])) {
-                                            $set('tanggal_terima_grs', $parsed['tanggal_release_gr']);
+                                        } elseif (! empty($tglRelease)) {
+                                            $set('tanggal_terima_grs', $tglRelease);
                                         }
                                         if (! empty($parsed['delivery_date'])) {
                                             $set('delivery_date', $parsed['delivery_date']);
@@ -510,14 +520,14 @@ class InvoicingReceiptForm
                                         if (! empty($parsed['tanggal_penerimaan'])) {
                                             $set('tanggal_penerimaan', $parsed['tanggal_penerimaan']);
                                         }
-                                        if (! empty($parsed['no_po']) && (! $get('no_po') || $get('no_po') === '-')) {
-                                            $set('no_po', $parsed['no_po']);
+                                        if (! empty($noPo) && (! $get('no_po') || $get('no_po') === '-')) {
+                                            $set('no_po', $noPo);
                                         }
-                                        if (! empty($parsed['no_do']) && ! $get('no_do')) {
-                                            $set('no_do', $parsed['no_do']);
+                                        if (! empty($noDo) && ! $get('no_do')) {
+                                            $set('no_do', $noDo);
                                         }
-                                        if (! empty($parsed['vendor_name']) && ! $get('vendor_name')) {
-                                            $set('vendor_name', $parsed['vendor_name']);
+                                        if (! empty($vendorName) && ! $get('vendor_name')) {
+                                            $set('vendor_name', $vendorName);
                                         }
                                     } catch (\Throwable $e) {
                                         report($e);

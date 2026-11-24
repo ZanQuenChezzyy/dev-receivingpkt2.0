@@ -186,10 +186,10 @@ class GrsPdfParserService
             'raw_text' => $text,
         ];
 
-        // 1. No Release GR / GRS (10 digit angka diawali 500xxxxxxx)
+        // 1. No Release GR / GRS (105 / 101 — 10 digit angka diawali 500xxxxxxx)
         if (preg_match('/No\.?\s*Release\s*GR\s*[:\s]+(\d+)/i', $text, $m)) {
             $data['no_grs'] = $m[1];
-        } elseif (preg_match('/(?:Nomor\s*GRS(?:\s*\(105\))?|GRS\s*\(105\)|105\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
+        } elseif (preg_match('/(?:Nomor\s*GRS(?:\s*\(105\))?|GRS\s*\(105\)|105\)|Nomor\s*GR\s*\(\s*101\s*\)|No\.?\s*GR\s*\(\s*101\s*\)|GR\s*\(\s*101\s*\)|\(\s*101\s*\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
             $data['no_grs'] = $m[1];
         }
 
@@ -245,8 +245,10 @@ class GrsPdfParserService
             $data['tanggal_penolakan'] = $m[1];
         }
 
-        if (! $data['no_po'] && preg_match('/No\s*PO\s*[:\s]+(\d+)/i', $text, $m)) {
-            $data['no_po'] = $m[1];
+        if (! $data['no_po'] && preg_match('/(?:Nomor\s*PO|No\.?\s*PO)\s*[:\s]+([345]\d{9})/i', $text, $m)) {
+            if ($m[1] !== $data['no_grs']) {
+                $data['no_po'] = $m[1];
+            }
         }
 
         if (! $data['tanggal_po'] && preg_match('/Tanggal\s*PO\s*[:\s]+(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})/i', $text, $m)) {
@@ -367,7 +369,7 @@ class GrsPdfParserService
         $filenameLower = strtolower($filenameBase);
 
         $isVerifText = preg_match(
-            '/VERIFIKASI\s+PENERIMAAN\s+BARANG|VERIFIKASI\s+PENOLAKAN\s+BARANG|SURAT\s+VERIFIKASI|BERITA\s+ACARA\s+(?:PENERIMAAN|PENOLAKAN)|Nomor\s*:\s*(?:GRS|RDTV)-|Nomor\s+GR\s*\(\s*103\s*\)|TELAH\s+DIVERIFIKASI/i',
+            '/VERIFIKASI\s+PENERIMAAN\s+BARANG|VERIFIKASI\s+PENOLAKAN\s+BARANG|SURAT\s+VERIFIKASI|BERITA\s+ACARA\s+(?:PENERIMAAN|PENOLAKAN)|Nomor\s*:\s*(?:GRS|RDTV)-|Nomor\s+GR\s*\(\s*(?:101|103)\s*\)|TELAH\s+DIVERIFIKASI/i',
             $combinedText
         ) === 1;
 
@@ -516,9 +518,9 @@ class GrsPdfParserService
             'raw_text' => $text,
         ];
 
-        // 0. Deteksi jenis dokumen: RDTV (Verifikasi Penolakan Barang / 124) vs GRS (Verifikasi Penerimaan Barang / 105)
+        // 0. Deteksi jenis dokumen: RDTV (Verifikasi Penolakan Barang / 124) vs GRS (Verifikasi Penerimaan Barang / 105 & GR 101)
         $isRdtvText = preg_match('/VERIFIKASI\s+PENOLAKAN\s+BARANG|Return\s+Delivery\s+To\s+Vendor|Berita\s+Acara\s+Penolakan|Nomor\s*:\s*RDTV-|Nomor\s*RDTV\s*\(?124\)?|RDTV\s*\(?124\)?|Alasan\s+Pengembalian/i', $text) === 1;
-        $isGrsText = preg_match('/VERIFIKASI\s+PENERIMAAN\s+BARANG|Goods\s+Receipt\s+Slip|Berita\s+Acara\s+Penerimaan|Nomor\s*:\s*GRS-|Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?/i', $text) === 1;
+        $isGrsText = preg_match('/VERIFIKASI\s+PENERIMAAN\s+BARANG|Goods\s+Receipt\s+Slip|Berita\s+Acara\s+Penerimaan|Nomor\s*:\s*GRS-|Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?|Nomor\s*GR\s*\(?101\)?|GR\s*\(?101\)?/i', $text) === 1;
 
         if ($isRdtvText) {
             $data['jenis'] = 'RDTV';
@@ -536,6 +538,10 @@ class GrsPdfParserService
             $data['no_gr_103'] = $seq[2];
             $data['no_grs'] = $seq[3];
             $data['jenis'] ??= 'GRS';
+        } elseif (preg_match('/Nomor\s*PO.*?Nomor\s*GR\s*\(\s*101\s*\).*?([345]\d{9})(?:\s+Tahap(?:\s+[A-Za-z0-9-]+){1,3})?[\s:;|—–-]+(500\d{7})/si', $text, $seq101)) {
+            $data['no_po'] = $seq101[1];
+            $data['no_grs'] = $seq101[2];
+            $data['jenis'] ??= 'GRS';
         }
 
         // 1a. Nomor RDTV (124) - Key-Value
@@ -546,9 +552,9 @@ class GrsPdfParserService
             }
         }
 
-        // 1b. Nomor GRS (105) - Key-Value
+        // 1b. Nomor GRS (105) atau Nomor GR (101) untuk Karung/Direct GR - Key-Value
         if (! $data['no_grs'] && $data['jenis'] !== 'RDTV') {
-            if (preg_match('/(?:Nomor\s*GRS(?:\s*\(105\))?|GRS\s*\(105\)|105\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
+            if (preg_match('/(?:Nomor\s*GRS(?:\s*\(105\))?|GRS\s*\(105\)|105\)|Nomor\s*GR\s*\(\s*101\s*\)|No\.?\s*GR\s*\(\s*101\s*\)|GR\s*\(\s*101\s*\)|\(\s*101\s*\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
                 $data['no_grs'] = $m[1];
                 $data['jenis'] ??= 'GRS';
             } elseif (preg_match('/No\.?\s*Release\s*GR\s*[:\s]+(500\d{7})/i', $text, $m)) {
@@ -557,9 +563,9 @@ class GrsPdfParserService
             }
         }
 
-        // 2. Nomor GR (103) - Key-Value
+        // 2. Nomor GR (103) - Key-Value (harus eksplisit 103 agar tidak tertukar dengan GR 101)
         if (! $data['no_gr_103']) {
-            if (preg_match('/(?:Nomor\s*GR(?:\s*\(103\))?|GR\s*\(103\)|103\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
+            if (preg_match('/(?:Nomor\s*GR\s*\(\s*103\s*\)|No\.?\s*GR\s*\(\s*103\s*\)|GR\s*\(\s*103\s*\)|103\))\s*[:\s]+(500\d{7})/i', $text, $m)) {
                 $data['no_gr_103'] = $m[1];
             }
         }
@@ -567,13 +573,15 @@ class GrsPdfParserService
         // 3. Nomor PO (530xxxxxxx / 5000xxxxxx / 4xxxxxxxxx)
         if (! $data['no_po']) {
             if (preg_match('/(?:Nomor\s*PO|No\.?\s*PO)\s*[:\s]+([345]\d{9})/i', $text, $m)) {
-                if ($m[1] !== $data['no_grs'] && $m[1] !== $data['no_gr_103']) {
+                if ($m[1] !== $data['no_grs'] && $m[1] !== $data['no_rdtv'] && $m[1] !== $data['no_gr_103']) {
                     $data['no_po'] = $m[1];
                 }
             } elseif (preg_match('/No\s*PO.*?Tanggal\s*PO.*?([345]\d{9})\s+(\d{1,2}\.\d{1,2}\.\d{4})/s', $text, $m)) {
                 $data['no_po'] = $m[1];
-            } elseif (preg_match('/(?:^|[^0-9])(530\d{7})(?:[^0-9]|$)/', $text, $m)) {
-                $data['no_po'] = $m[1];
+            } elseif (preg_match('/(?:^|[^0-9])(530\d{7}|5000\d{6})(?:[^0-9]|$)/', $text, $m)) {
+                if ($m[1] !== $data['no_grs'] && $m[1] !== $data['no_rdtv'] && $m[1] !== $data['no_gr_103']) {
+                    $data['no_po'] = $m[1];
+                }
             }
         }
 
@@ -628,14 +636,14 @@ class GrsPdfParserService
             }
         }
 
-        // 8. Fallback: Ekstraksi Jenis (GRS/RDTV), Nomor GRS/RDTV (500xxxxxxx), dan PO (530xxxxxxx) dari Nama File jika belum ditemukan
+        // 8. Fallback: Ekstraksi Jenis (GRS/RDTV), Nomor GRS/RDTV (500xxxxxxx), dan PO (530xxxxxxx / 5000xxxxxx) dari Nama File jika belum ditemukan
         if ((! $data['no_grs'] && ! $data['no_rdtv']) || ! $data['no_po'] || ! $data['jenis']) {
             $filenameToCheck = $originalFilename ?: (file_exists($filePathOrContent) ? basename($filePathOrContent) : '');
             if (! empty($filenameToCheck)) {
                 if (! $data['jenis']) {
                     if (preg_match('/\b(?:rdtv|124)\b|rdtv/i', $filenameToCheck) === 1) {
                         $data['jenis'] = 'RDTV';
-                    } elseif (preg_match('/\b(?:grs|105)\b|grs/i', $filenameToCheck) === 1) {
+                    } elseif (preg_match('/\b(?:grs|105|101)\b|grs/i', $filenameToCheck) === 1) {
                         $data['jenis'] = 'GRS';
                     }
                 }
@@ -644,26 +652,30 @@ class GrsPdfParserService
                     if (preg_match('/(?:rdtv|124)[^0-9]*(500\d{7})/i', $filenameToCheck, $rdtvSpecific)) {
                         $data['no_rdtv'] = $rdtvSpecific[1];
                         $data['detection_source'] = 'filename';
-                    } elseif (preg_match('/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
+                    } elseif (preg_match('/(?:^|[^0-9])(500[1-9]\d{6})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
                         $data['no_rdtv'] = $fnMatch[1];
                         $data['detection_source'] = 'filename';
                     }
                 } elseif (! $data['no_grs'] && $data['jenis'] !== 'RDTV') {
-                    // Prioritaskan jika ada label GRS atau 105 di nama file
-                    if (preg_match('/(?:grs|105)[^0-9]*(500\d{7})/i', $filenameToCheck, $grsSpecific)) {
+                    // Prioritaskan jika ada label GRS, 105, atau 101 di nama file
+                    if (preg_match('/(?:grs|105|101)[^0-9]*(500\d{7})/i', $filenameToCheck, $grsSpecific)) {
                         $data['no_grs'] = $grsSpecific[1];
                         $data['jenis'] ??= 'GRS';
                         $data['detection_source'] = 'filename';
-                    } elseif (preg_match('/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
+                    } elseif (preg_match('/(?:^|[^0-9])(500[1-9]\d{6})(?:[^0-9]|$)/', $filenameToCheck, $fnMatch)) {
                         $data['no_grs'] = $fnMatch[1];
                         $data['detection_source'] = 'filename';
                     }
                 }
                 if (! $data['no_po']) {
-                    if (preg_match('/(?:po)[^0-9]*(53\d{8})/i', $filenameToCheck, $poSpecific)) {
-                        $data['no_po'] = $poSpecific[1];
-                    } elseif (preg_match('/(?:^|[^0-9])(53\d{8})(?:[^0-9]|$)/', $filenameToCheck, $fnPo)) {
-                        $data['no_po'] = $fnPo[1];
+                    if (preg_match('/(?:po)[^0-9]*(53\d{8}|5000\d{6}|[345]\d{9})/i', $filenameToCheck, $poSpecific)) {
+                        if ($poSpecific[1] !== $data['no_grs'] && $poSpecific[1] !== $data['no_rdtv']) {
+                            $data['no_po'] = $poSpecific[1];
+                        }
+                    } elseif (preg_match('/(?:^|[^0-9])(53\d{8}|5000\d{6})(?:[^0-9]|$)/', $filenameToCheck, $fnPo)) {
+                        if ($fnPo[1] !== $data['no_grs'] && $fnPo[1] !== $data['no_rdtv']) {
+                            $data['no_po'] = $fnPo[1];
+                        }
                     }
                 }
             }

@@ -131,7 +131,7 @@
                         Pilih atau seret seluruh berkas PDF (Slip GRS/RDTV dan Surat Verifikasi) ke sini
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-                        Anda dapat mencampur berkas Slip GRS (105), Verifikasi GRS, Slip RDTV (124), maupun Verifikasi RDTV sekaligus dalam satu unggahan (maks. 25 MB per berkas). Berkas tanpa pasangan tetap dapat diproses.
+                        Anda dapat mencampur berkas Slip GRS (105/101), Verifikasi GRS, Slip RDTV (124), maupun Verifikasi RDTV sekaligus dalam satu unggahan (maks. 25 MB per berkas). Berkas tanpa pasangan tetap dapat diproses.
                     </p>
                 </div>
             </div>
@@ -353,7 +353,7 @@
                                                     :class="row.jenis === 'RDTV'
                                                         ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800'
                                                         : 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-800'"
-                                                    x-text="row.jenis === 'RDTV' ? 'RDTV (124)' : 'GRS (105)'"
+                                                    x-text="row.jenis === 'RDTV' ? 'RDTV (124)' : 'GRS (105/101)'"
                                                 ></button>
                                             </div>
                                             <div class="text-[10px] text-gray-500 dark:text-gray-400 leading-snug" x-text="row.pair_reason"></div>
@@ -595,7 +595,7 @@
                                         :class="row.jenis === 'RDTV'
                                             ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800'
                                             : 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-800'"
-                                        x-text="row.jenis === 'RDTV' ? 'RDTV (124)' : 'GRS (105)'"
+                                        x-text="row.jenis === 'RDTV' ? 'RDTV (124)' : 'GRS (105/101)'"
                                     ></button>
                                 </div>
 
@@ -947,6 +947,7 @@
                         .replace(/\r?\n/g, ' ')
                         .replace(/\(\s*[1Il][0Oo][5S]\s*\)/gi, '(105)')
                         .replace(/\(\s*[1Il][0Oo]3\s*\)/gi, '(103)')
+                        .replace(/\(\s*[1Il][0Oo][1Il]\s*\)/gi, '(101)')
                         .replace(/\(\s*[1Il][2Z][4A]\s*\)/gi, '(124)');
                     cleaned = cleaned
                         .replace(/([0-9])[Oo]([0-9])/g, '$10$2')
@@ -972,9 +973,9 @@
                         return { docType, role, grs, rdtv, po, doNum };
                     }
 
-                    const isVerif = /VERIFIKASI\s+PENERIMAAN\s+BARANG|VERIFIKASI\s+PENOLAKAN\s+BARANG|Berita\s+Acara\s+(?:Penerimaan|Penolakan)|Status\s+Penerimaan\s+Barang/i.test(text);
+                    const isVerif = /VERIFIKASI\s+PENERIMAAN\s+BARANG|VERIFIKASI\s+PENOLAKAN\s+BARANG|Berita\s+Acara\s+(?:Penerimaan|Penolakan)|Status\s+Penerimaan\s+Barang|Nomor\s*:\s*(?:GRS|RDTV)-|Nomor\s*GR\s*\(\s*(?:101|103)\s*\)/i.test(text);
                     const isRdtv = /VERIFIKASI\s+PENOLAKAN\s+BARANG|Return\s+Delivery\s+To\s+Vendor|Berita\s+Acara\s+Penolakan|Nomor\s*RDTV\s*\(?124\)?|RDTV\s*\(?124\)?|Alasan\s+Pengembalian/i.test(text);
-                    const isGrs = /VERIFIKASI\s+PENERIMAAN\s+BARANG|Goods\s+Receipt\s+Slip|Berita\s+Acara\s+Penerimaan|Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?/i.test(text);
+                    const isGrs = /VERIFIKASI\s+PENERIMAAN\s+BARANG|Goods\s+Receipt\s+Slip|Berita\s+Acara\s+Penerimaan|Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?|Nomor\s*GR\s*\(?101\)?|GR\s*\(?101\)?/i.test(text);
 
                     if (isRdtv) {
                         docType = 'RDTV';
@@ -984,7 +985,7 @@
                         role = isVerif ? 'verifikasi_grs' : 'grs_slip';
                     }
 
-                    const mGr103 = text.match(/(?:Nomor\s*GR\s*\(?103\)?|GR\s*\(?103\)?|\(103\))[\s:;|—–-]{0,25}(500\d{7})/i);
+                    const mGr103 = text.match(/(?:Nomor\s*GR\s*\(\s*103\s*\)|No\.?\s*GR\s*\(\s*103\s*\)|GR\s*\(\s*103\s*\)|\(103\))[\s:;|—–-]{0,25}(500\d{7})/i);
                     if (mGr103) gr103 = mGr103[1];
 
                     if (docType === 'RDTV' || !docType) {
@@ -996,17 +997,32 @@
                     }
 
                     if (docType !== 'RDTV') {
-                        const mGrs = text.match(/(?:Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?|\(105\)|No\.?\s*Release\s*GR|No\.?\s*GRS)[\s:;|—–-]{0,25}(500\d{7})/i);
-                        if (mGrs) {
-                            grs = mGrs[1];
+                        const mSeq101 = text.match(/Nomor\s*PO[\s\S]{0,120}?Nomor\s*GR\s*\(?101\)?[\s\S]{0,260}?([345]\d{9})(?:\s+Tahap(?:\s+[A-Za-z0-9-]+){1,3})?[\s:;|—–-]+(500\d{7})/i);
+                        if (mSeq101) {
+                            po = mSeq101[1];
+                            grs = mSeq101[2];
                             docType = docType || 'GRS';
+                        }
+
+                        if (!grs) {
+                            const mGrs = text.match(/(?:Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?|\(105\)|Nomor\s*GR\s*\(?101\)?|No\.?\s*GR\s*\(?101\)?|GR\s*\(?101\)?|\(101\)|No\.?\s*Release\s*GR|No\.?\s*GRS)[\s:;|—–-]{0,25}(500\d{7})/i);
+                            if (mGrs) {
+                                grs = mGrs[1];
+                                docType = docType || 'GRS';
+                            }
                         }
                     }
 
+                    const mPoExplicit = text.match(/(?:Nomor\s*PO|No\.?\s*PO|Purchase\s*Order|P\.O\.?)[\s:;|—–-]{0,25}([345]\d{9})/i);
+                    if (mPoExplicit && mPoExplicit[1] !== grs && mPoExplicit[1] !== rdtv && mPoExplicit[1] !== gr103) {
+                        po = mPoExplicit[1];
+                    }
+
                     if (!grs && !rdtv) {
-                        const all500 = [...new Set(Array.from(text.matchAll(/\b(500\d{7})\b/g), m => m[1]))];
+                        const all500 = [...new Set(Array.from(text.matchAll(/\b(500\d{7})\b/g), m => m[1]))]
+                            .filter(n => n !== po && !/^5000\d{6}$/.test(n));
                         const without103 = gr103 ? all500.filter(n => n !== gr103) : all500;
-                        const picked = without103.length >= 2 && /103/i.test(text) && /(?:105|124)/i.test(text)
+                        const picked = without103.length >= 2 && /103/i.test(text) && /(?:105|101|124)/i.test(text)
                             ? without103[1]
                             : (without103[0] || all500[all500.length - 1] || null);
                         if (picked) {
@@ -1019,13 +1035,15 @@
                     }
 
                     const activeDoc = rdtv || grs;
-                    const mPo = text.match(/(?:Nomor\s*PO|No\.?\s*PO|Purchase\s*Order|P\.O\.?)[\s:;|—–-]{0,25}([345]\d{9})/i) || text.match(/\b(53\d{8})\b/);
-                    if (mPo && mPo[1] !== activeDoc && mPo[1] !== gr103) {
-                        po = mPo[1];
-                    } else {
-                        const poCandidates = [...new Set(Array.from(text.matchAll(/\b([345]\d{9})\b/g), m => m[1]))]
-                            .filter(n => n !== activeDoc && n !== gr103);
-                        if (poCandidates.length > 0) po = poCandidates[0];
+                    if (!po) {
+                        const mPo = text.match(/\b(53\d{8}|5000\d{6})\b/);
+                        if (mPo && mPo[1] !== activeDoc && mPo[1] !== gr103) {
+                            po = mPo[1];
+                        } else {
+                            const poCandidates = [...new Set(Array.from(text.matchAll(/\b([345]\d{9})\b/g), m => m[1]))]
+                                .filter(n => n !== activeDoc && n !== gr103);
+                            if (poCandidates.length > 0) po = poCandidates[0];
+                        }
                     }
 
                     const mDo = text.match(/Nomor\s*DO(?:\/S[J\]])?[\s:;|—–-]{0,20}([A-Za-z0-9\/-]{4,30})/i)

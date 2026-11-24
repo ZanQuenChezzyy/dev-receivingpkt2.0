@@ -734,3 +734,89 @@ test('CombinedGrsVerificationUpload page and header actions on ListGrsRdtvs and 
         ->test(ListInvoicingReceipts::class)
         ->assertActionExists('combinedGrsVerificationUpload');
 });
+
+test('CombinedGrsVerificationUpload classifies, prechecks, and commits Karung Slip GRS + Verifikasi GR (101) pair', function (): void {
+    fakeCombinedZimbraSuccess();
+
+    $user = User::create([
+        'name' => 'Staff Karung Combined',
+        'email' => 'karung_combined@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Staff Invoice');
+
+    // ZPM (Karung) tanpa QC Kembali tetap eligible selama Post 103 terisi
+    $vendor = Vendor::create([
+        'name' => 'SAMISURYAINDAH PLASTIK',
+        'vendor_number' => 'V-9408',
+        'email' => 'karung@samisurya.test',
+    ]);
+    $po = PurchaseOrderIssued::create([
+        'purchase_order_no' => '5000009408',
+        'material_type' => 'ZPM',
+        'material_code' => '5000232',
+        'description' => 'SACK:UREA GRANUL;PIHC;SUB;50KG',
+        'qty_po' => 1080000,
+        'uoi' => 'EA',
+        'total_amount_in_lc' => 4345920000,
+        'vendor_id' => $vendor->vendor_number,
+        'vendor_name' => $vendor->name,
+    ]);
+    $do = DeliveryOrderReceipt::create([
+        'delivery_order_no' => '08517/08518',
+        'received_date' => '2026-11-21',
+        'document_code' => '5000009408-01-0851708518-21112026-TAHAP4SCI',
+        'status' => 'Diterima',
+        'post_103' => now(),
+    ]);
+    DeliveryOrderReceiptDetail::create([
+        'delivery_order_receipt_id' => $do->id,
+        'purchase_order_issued_id' => $po->id,
+        'material_code' => '5000232',
+        'description' => 'SACK:UREA GRANUL;PIHC;SUB;50KG',
+        'quantity' => 80000,
+        'uoi' => 'EA',
+        'material_type' => 'ZPM',
+        'total_amount_snapshot' => 321920000,
+    ]);
+
+    $slip = makeTextPdfUpload(
+        '5000009408-01-0851708518-21112026-TAHAP4SCI.pdf',
+        'GOODS RECEIPT SLIP No Release GR : 5007760024 No PO : 5000009408 No. Surat Jalan : 08517/08518'
+    );
+    $verif = makeTextPdfUpload(
+        'Verifikasi_Karung_5007760024.pdf',
+        'VERIFIKASI PENERIMAAN BARANG Nomor: GRS- 61937/D/PL/D52100/IT/2026 Bersama ini terlampir dokumen Goods Receipt Slip Nomor PO : 5000009408 Tahap 4 Nomor GR (101) : 5007760024 Nama Penyedia Barang : PT Samisuryaindah Plastik Nomor DO/SJ : 08517/08518'
+    );
+
+    $inspectVerif = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.inspect'), [
+        'file' => $verif,
+        'original_name' => 'Verifikasi_Karung_5007760024.pdf',
+    ]);
+    $inspectVerif->assertOk()
+        ->assertJsonPath('data.role', 'verifikasi_grs')
+        ->assertJsonPath('data.jenis', 'GRS')
+        ->assertJsonPath('data.no_grs', '5007760024')
+        ->assertJsonPath('data.no_po', '5000009408')
+        ->assertJsonPath('data.no_do', '08517/08518');
+
+    $commitRes = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'pair',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '1',
+        'no_grs' => '5007760024',
+        'no_po' => '5000009408',
+        'no_do' => '08517/08518',
+        'slip_file' => $slip,
+        'verif_file' => $verif,
+    ]);
+
+    $commitRes->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('jenis', 'GRS')
+        ->assertJsonPath('no_grs', '5007760024')
+        ->assertJsonPath('no_po', '5000009408')
+        ->assertJsonPath('status', 'Terverifikasi')
+        ->assertJsonPath('email_status', 'sent');
+});

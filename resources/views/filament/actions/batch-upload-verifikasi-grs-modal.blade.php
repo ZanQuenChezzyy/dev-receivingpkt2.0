@@ -132,9 +132,9 @@
                 }
 
                 const isRdtvFilename = /(?:^|[^a-z])(rdtv|124)(?:[^a-z]|$)/i.test(file.name);
-                const isGrsFilename = !isRdtvFilename && /(?:^|[^a-z])(grs|105)(?:[^a-z]|$)/i.test(file.name);
-                const fnDocMatch = file.name.match(/(?:grs|rdtv|105|124)[^0-9]*(500\d{7})/i) || file.name.match(/(?:^|[^0-9])(500\d{7})(?:[^0-9]|$)/);
-                const fnPoMatch = file.name.match(/(?:po)[^0-9]*([345]\d{9})/i) || file.name.match(/(?:^|[^0-9])(53\d{8})(?:[^0-9]|$)/);
+                const isGrsFilename = !isRdtvFilename && /(?:^|[^a-z])(grs|105|101)(?:[^a-z]|$)/i.test(file.name);
+                const fnDocMatch = file.name.match(/(?:grs|rdtv|105|101|124)[^0-9]*(500\d{7})/i) || file.name.match(/(?:^|[^0-9])(500[1-9]\d{6})(?:[^0-9]|$)/);
+                const fnPoMatch = file.name.match(/(?:po)[^0-9]*([345]\d{9})/i) || file.name.match(/(?:^|[^0-9])(53\d{8}|5000\d{6})(?:[^0-9]|$)/);
 
                 this.items.push({
                     file: file,
@@ -226,6 +226,7 @@
                 .replace(/\r?\n/g, ' ')
                 .replace(/\(\s*[1Il][0Oo][5S]\s*\)/gi, '(105)')
                 .replace(/\(\s*[1Il][0Oo]3\s*\)/gi, '(103)')
+                .replace(/\(\s*[1Il][0Oo][1Il]\s*\)/gi, '(101)')
                 .replace(/\(\s*[1Il][2Z][4A]\s*\)/gi, '(124)');
 
             // Ulangi 2x agar pola seperti 5OO77 -> 50077 ikut ternormalisasi
@@ -250,9 +251,9 @@
             let doNum = null;
 
             if (text && text.length > 15) {
-                // 0a. Deteksi jenis dokumen: RDTV (Verifikasi Penolakan Barang / 124) vs GRS (Verifikasi Penerimaan Barang / 105)
+                // 0a. Deteksi jenis dokumen: RDTV (Verifikasi Penolakan Barang / 124) vs GRS (Verifikasi Penerimaan Barang / 105 & GR 101)
                 const isRdtv = /VERIFIKASI\s+PENOLAKAN\s+BARANG|Return\s+Delivery\s+To\s+Vendor|Berita\s+Acara\s+Penolakan|Nomor\s*:\s*RDTV-|Nomor\s*RDTV\s*\(?124\)?|RDTV\s*\(?124\)?|Alasan\s+Pengembalian|BELUM\s+DITERIMA/i.test(text);
-                const isGrs = /VERIFIKASI\s+PENERIMAAN\s+BARANG|Goods\s+Receipt\s+Slip|Berita\s+Acara\s+Penerimaan|Nomor\s*:\s*GRS-|Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?/i.test(text);
+                const isGrs = /VERIFIKASI\s+PENERIMAAN\s+BARANG|Goods\s+Receipt\s+Slip|Berita\s+Acara\s+Penerimaan|Nomor\s*:\s*GRS-|Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?|Nomor\s*GR\s*\(?101\)?|GR\s*\(?101\)?/i.test(text);
 
                 if (isRdtv) {
                     docType = 'RDTV';
@@ -275,16 +276,23 @@
                         gr103 = mSeqGrs[2];
                         grs = mSeqGrs[3];
                         docType = docType || 'GRS';
+                    } else {
+                        const mSeq101 = text.match(/Nomor\s*PO[\s\S]{0,120}?Nomor\s*GR\s*\(?101\)?[\s\S]{0,260}?([345]\d{9})(?:\s+Tahap(?:\s+[A-Za-z0-9-]+){1,3})?[\s:;|—–-]+(500\d{7})/i);
+                        if (mSeq101) {
+                            po = mSeq101[1];
+                            grs = mSeq101[2];
+                            docType = docType || 'GRS';
+                        }
                     }
                 }
 
-                // 1. Deteksi GR (103) terlebih dahulu agar tidak tertukar dengan GRS (105) / RDTV (124)
+                // 1. Deteksi GR (103) terlebih dahulu agar tidak tertukar dengan GRS (105/101) / RDTV (124)
                 if (!gr103) {
-                    const mGr103 = text.match(/(?:Nomor\s*GR\s*\(?103\)?|GR\s*\(?103\)?|\(103\))[\s:;|—–-]{0,25}(500\d{7})/i);
+                    const mGr103 = text.match(/(?:Nomor\s*GR\s*\(\s*103\s*\)|No\.?\s*GR\s*\(\s*103\s*\)|GR\s*\(\s*103\s*\)|\(103\))[\s:;|—–-]{0,25}(500\d{7})/i);
                     if (mGr103) gr103 = mGr103[1];
                 }
 
-                // 2. Deteksi nomor dokumen utama (RDTV 124 atau GRS 105)
+                // 2. Deteksi nomor dokumen utama (RDTV 124 atau GRS 105 / GR 101)
                 if (docType === 'RDTV' || !docType) {
                     const mRdtvExplicit = text.match(/(?:Nomor\s*RDTV\s*\(?124\)?|RDTV\s*\(?124\)?|\(124\))[\s:;|—–-]{0,25}(500\d{7})/i)
                         || text.match(/(?:Nomor\s*RDTV|No\.?\s*RDTV)[\s:;|—–-]{0,25}(500\d{7})/i);
@@ -295,7 +303,7 @@
                 }
 
                 if (docType !== 'RDTV' && !grs) {
-                    const mGrsExplicit = text.match(/(?:Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?|\(105\)|No\.?\s*Release\s*GR)[\s:;|—–-]{0,25}(500\d{7})/i)
+                    const mGrsExplicit = text.match(/(?:Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?|\(105\)|Nomor\s*GR\s*\(?101\)?|No\.?\s*GR\s*\(?101\)?|GR\s*\(?101\)?|\(101\)|No\.?\s*Release\s*GR)[\s:;|—–-]{0,25}(500\d{7})/i)
                         || text.match(/(?:Nomor\s*GRS|No\.?\s*GRS)[\s:;|—–-]{0,25}(500\d{7})/i);
                     if (mGrsExplicit) {
                         grs = mGrsExplicit[1];
@@ -303,13 +311,22 @@
                     }
                 }
 
-                // 3. Fallback angka 500xxxxxxx jika label terpotong OCR
+                // 2b. Deteksi Nomor PO eksplisit sebelum fallback 500xxxxxxx agar PO 5000xxxxxx (Karung/ZPM) tidak tertukar dengan GRS
+                if (!po) {
+                    const mPoExplicit = text.match(/(?:Nomor\s*PO|No\.?\s*PO|Purchase\s*Order|P\.O\.?)[\s:;|—–-]{0,25}([345]\d{9})/i);
+                    if (mPoExplicit && mPoExplicit[1] !== grs && mPoExplicit[1] !== rdtv && mPoExplicit[1] !== gr103) {
+                        po = mPoExplicit[1];
+                    }
+                }
+
+                // 3. Fallback angka 500xxxxxxx jika label terpotong OCR (abaikan gr103, po, dan pola PO 5000xxxxxx)
                 if (!grs && !rdtv) {
-                    const all500 = [...new Set(Array.from(text.matchAll(/\b(500\d{7})\b/g), m => m[1]))];
+                    const all500 = [...new Set(Array.from(text.matchAll(/\b(500\d{7})\b/g), m => m[1]))]
+                        .filter(n => n !== po && !/^5000\d{6}$/.test(n));
                     const without103 = gr103 ? all500.filter(n => n !== gr103) : all500;
                     let picked = null;
 
-                    if (without103.length >= 2 && /103/i.test(text) && /(?:105|124)/i.test(text)) {
+                    if (without103.length >= 2 && /103/i.test(text) && /(?:105|101|124)/i.test(text)) {
                         picked = without103[1];
                     } else if (without103.length >= 1) {
                         picked = without103[0];
@@ -329,10 +346,9 @@
 
                 const activeDocNum = rdtv || grs;
 
-                // 4. Deteksi Nomor PO
+                // 4. Deteksi Nomor PO (fallback jika belum tertangkap dari label eksplisit)
                 if (!po) {
-                    const mPo = text.match(/(?:Nomor\s*PO|No\.?\s*PO|Purchase\s*Order|P\.O\.?)[\s:;|—–-]{0,25}([345]\d{9})/i)
-                        || text.match(/\b(53\d{8})\b/);
+                    const mPo = text.match(/\b(53\d{8}|5000\d{6})\b/);
                     if (mPo && mPo[1] !== activeDocNum && mPo[1] !== gr103) {
                         po = mPo[1];
                     } else {

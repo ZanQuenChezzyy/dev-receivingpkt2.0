@@ -117,7 +117,7 @@ class EmailGrsSettings extends Page implements HasForms
                 Tabs::make('TemplateEmailTabs')
                     ->contained(true)
                     ->tabs([
-                        Tab::make('Template Email GRS (105)')
+                        Tab::make('Template Email GRS (105/101)')
                             ->icon(Heroicon::OutlinedCheckBadge)
                             ->schema([
                                 TextInput::make('grs_subject')
@@ -265,7 +265,7 @@ class EmailGrsSettings extends Page implements HasForms
                     Radio::make('test_jenis')
                         ->label('Template yang Diuji')
                         ->options([
-                            'GRS' => 'Template GRS (105)',
+                            'GRS' => 'Template GRS (105/101)',
                             'RDTV' => 'Template RDTV (124)',
                         ])
                         ->default('GRS')
@@ -342,7 +342,7 @@ class EmailGrsSettings extends Page implements HasForms
                 ->color('warning')
                 ->requiresConfirmation()
                 ->modalHeading('Kembalikan Template Bawaan?')
-                ->modalDescription('Teks subjek dan isi surat untuk GRS (105) serta RDTV (124) akan dikembalikan ke format bawaan korporat PKT.')
+                ->modalDescription('Teks subjek dan isi surat untuk GRS (105/101) serta RDTV (124) akan dikembalikan ke format bawaan korporat PKT.')
                 ->action(function (): void {
                     $current = $this->form->getRawState();
 

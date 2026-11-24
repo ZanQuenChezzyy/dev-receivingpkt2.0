@@ -207,7 +207,7 @@ class ListInvoicingReceipts extends ListRecords
                 ->icon(Heroicon::ArrowUpTray)
                 ->color('info')
                 ->modalHeading('Upload Verifikasi GRS / RDTV')
-                ->modalDescription('Pilih berkas PDF Verifikasi Penerimaan Barang (GRS 105) atau Verifikasi Penolakan Barang (RDTV 124), maks. 10 MB per berkas. Sistem membedakan GRS dan RDTV secara otomatis.')
+                ->modalDescription('Pilih berkas PDF Verifikasi Penerimaan Barang (GRS 105 / GR 101) atau Verifikasi Penolakan Barang (RDTV 124), maks. 10 MB per berkas. Sistem membedakan GRS dan RDTV secara otomatis.')
                 ->modalWidth('4xl')
                 ->modalContent(view('filament.actions.batch-upload-verifikasi-grs-modal'))
                 ->modalSubmitAction(false)
