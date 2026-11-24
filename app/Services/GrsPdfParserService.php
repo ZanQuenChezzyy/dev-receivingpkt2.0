@@ -6,7 +6,8 @@ class GrsPdfParserService
 {
     /**
      * Mengekstrak seluruh teks dari file PDF secara mandiri (pure PHP tanpa eksternal dependency).
-     * Mendukung font CID Type0 (Identity-H) dengan /ToUnicode CMap yang umum digunakan oleh SAP ERP.
+     * Mendukung font CID Type0 (Identity-H), TrueType 1-byte /ToUnicode (Nitro Pro, Ghostscript, dsb.),
+     * kamus /Font inline maupun indirect, serta literal string dan hex string pada content stream.
      */
     public function extractText(string $pdfContent): string
     {
@@ -16,57 +17,117 @@ class GrsPdfParserService
             $objMap[(int) $o[1]] = $o[3];
         }
 
-        // 1. Parse semua CMap yang ada dalam objek PDF
-        $allCMapsByObj = [];
+        // 1. Kumpulkan seluruh ID objek CMap dari referensi /ToUnicode terlebih dahulu
+        $toUnicodeObjIds = [];
         foreach ($objMap as $id => $body) {
-            if (str_contains($body, 'begincmap') || str_contains($body, '/CMapType')) {
-                $stream = $this->getStream($body);
-                if ($stream) {
-                    $allCMapsByObj[$id] = $this->parseCMap($stream);
+            if (preg_match_all('/\/ToUnicode\s+(\d+)\s+\d+\s+R/', $body, $tuMatches)) {
+                foreach ($tuMatches[1] as $cmapObjId) {
+                    $toUnicodeObjIds[(int) $cmapObjId] = true;
                 }
             }
         }
 
-        // 2. Petakan identifier font (/F1, /F2, dst) ke CMap-nya
-        $fontCMaps = [];
+        // 2. Parse semua CMap (baik yang uncompressed maupun yang dikompresi FlateDecode)
+        /** @var array<int, array{byte_length: int, map: array<string, string>}> $allCMapsByObj */
+        $allCMapsByObj = [];
         foreach ($objMap as $id => $body) {
-            if (preg_match('/\/Font\s*<<([^>]*)>>/s', $body, $fontDict)) {
-                if (preg_match_all('/\/([A-Za-z0-9_]+)\s+(\d+)\s+\d+\s+R/', $fontDict[1], $fRefs, PREG_SET_ORDER)) {
-                    foreach ($fRefs as $fRef) {
-                        $fName = '/'.$fRef[1];
-                        $targetObjId = (int) $fRef[2];
-                        $targetBody = $objMap[$targetObjId] ?? '';
-                        if (preg_match('/\/ToUnicode\s+(\d+)\s+\d+\s+R/', $targetBody, $tu)) {
-                            $cmapId = (int) $tu[1];
-                            if (isset($allCMapsByObj[$cmapId])) {
-                                $fontCMaps[$fName] = $allCMapsByObj[$cmapId];
-                            }
+            $isReferencedCMap = isset($toUnicodeObjIds[$id]);
+            $hasRawCMapMarker = str_contains($body, 'begincmap') || str_contains($body, '/CMapType');
+
+            if (! $isReferencedCMap && ! $hasRawCMapMarker) {
+                continue;
+            }
+
+            $stream = $this->getStream($body);
+            if ($stream !== '' && (str_contains($stream, 'begincmap') || str_contains($stream, 'beginbfchar') || str_contains($stream, 'beginbfrange'))) {
+                $parsed = $this->parseCMap($stream);
+                if ($parsed['map'] !== []) {
+                    $allCMapsByObj[$id] = $parsed;
+                }
+            }
+        }
+
+        // 3. Petakan identifier font (/F1, /F0, /R7, /R9, dst) ke CMap-nya (inline maupun indirect /Font N 0 R)
+        /** @var array<string, array{byte_length: int, map: array<string, string>}> $fontCMaps */
+        $fontCMaps = [];
+        $fontDictBodies = [];
+
+        foreach ($objMap as $id => $body) {
+            if (preg_match_all('/\/Font\s*<<([^>]*)>>/s', $body, $inlineDicts)) {
+                foreach ($inlineDicts[1] as $dictContent) {
+                    $fontDictBodies[] = $dictContent;
+                }
+            }
+
+            if (preg_match_all('/\/Font\s+(\d+)\s+\d+\s+R/', $body, $indirectRefs)) {
+                foreach ($indirectRefs[1] as $fontDictObjId) {
+                    $resolvedBody = $objMap[(int) $fontDictObjId] ?? '';
+                    if ($resolvedBody !== '') {
+                        $fontDictBodies[] = $resolvedBody;
+                    }
+                }
+            }
+        }
+
+        foreach ($fontDictBodies as $dictBody) {
+            if (preg_match_all('/\/([A-Za-z0-9_.\-+]+)\s+(\d+)\s+\d+\s+R/', $dictBody, $fRefs, PREG_SET_ORDER)) {
+                foreach ($fRefs as $fRef) {
+                    $fName = '/'.$fRef[1];
+                    $targetObjId = (int) $fRef[2];
+                    $targetBody = $objMap[$targetObjId] ?? '';
+                    if (preg_match('/\/ToUnicode\s+(\d+)\s+\d+\s+R/', $targetBody, $tu)) {
+                        $cmapId = (int) $tu[1];
+                        if (isset($allCMapsByObj[$cmapId])) {
+                            $fontCMaps[$fName] = $allCMapsByObj[$cmapId];
                         }
                     }
                 }
             }
         }
 
-        // CMap gabungan sebagai fallback jika font spesifik belum terpetakan
-        $aggregatedCMap = [];
-        foreach ($allCMapsByObj as $c) {
-            foreach ($c as $k => $v) {
-                $aggregatedCMap[$k] = $v;
+        // CMap gabungan per lebar byte (1-byte dan 2-byte) sebagai fallback jika font alias belum terpetakan
+        $aggregatedCMap1 = [];
+        $aggregatedCMap2 = [];
+        foreach ($allCMapsByObj as $cmapData) {
+            if ($cmapData['byte_length'] === 1) {
+                foreach ($cmapData['map'] as $k => $v) {
+                    $aggregatedCMap1[$k] ??= $v;
+                }
+            } else {
+                foreach ($cmapData['map'] as $k => $v) {
+                    $aggregatedCMap2[$k] ??= $v;
+                }
             }
         }
 
-        // 3. Dekode seluruh content stream
+        $fallbackCMap = $aggregatedCMap2 !== []
+            ? ['byte_length' => 2, 'map' => $aggregatedCMap2]
+            : ['byte_length' => 1, 'map' => $aggregatedCMap1];
+
+        // 4. Dekode seluruh content stream (abaikan gambar, font biner, dan stream CMap)
         $text = '';
         foreach ($objMap as $id => $body) {
-            // Abaikan stream gambar agar tidak menghabiskan memori
-            if (str_contains($body, '/Subtype /Image') || str_contains($body, '/Subtype/Image')) {
+            if (isset($allCMapsByObj[$id]) || isset($toUnicodeObjIds[$id])) {
+                continue;
+            }
+
+            if (str_contains($body, '/Subtype /Image')
+                || str_contains($body, '/Subtype/Image')
+                || str_contains($body, '/Filter /DCTDecode')
+                || str_contains($body, '/Filter/DCTDecode')
+                || str_contains($body, '/Filter /CCITTFaxDecode')
+                || str_contains($body, '/Filter/CCITTFaxDecode')
+                || str_contains($body, '/Filter /JBIG2Decode')
+                || str_contains($body, '/Filter/JBIG2Decode')
+                || str_contains($body, '/Length1')
+            ) {
                 continue;
             }
 
             if (str_contains($body, 'stream')) {
                 $cs = $this->getStream($body);
-                if ($cs && (str_contains($cs, 'BT') || str_contains($cs, 'TJ') || str_contains($cs, 'Tj'))) {
-                    $text .= $this->tokenizeAndDecodeStream($cs, $fontCMaps, $aggregatedCMap)."\n";
+                if ($cs !== '' && (str_contains($cs, 'BT') || str_contains($cs, 'TJ') || str_contains($cs, 'Tj'))) {
+                    $text .= $this->tokenizeAndDecodeStream($cs, $fontCMaps, $fallbackCMap, $aggregatedCMap1, $aggregatedCMap2)."\n";
                 }
             }
         }
@@ -557,113 +618,532 @@ class GrsPdfParserService
 
     private function getStream(string $objStr): string
     {
-        if (preg_match('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $objStr, $m)) {
-            $s = @gzuncompress($m[1]);
-            if ($s === false) {
-                $s = @gzuncompress(ltrim($m[1]));
+        if (preg_match('/stream(?:\r\n|\n|\r)(.*?)endstream/s', $objStr, $m)) {
+            $raw = $m[1];
+            $trimmedRight = rtrim($raw, "\r\n");
+
+            if (str_contains($objStr, '/FlateDecode')) {
+                foreach ([$trimmedRight, $raw, ltrim($trimmedRight)] as $candidate) {
+                    $decompressed = @gzuncompress($candidate);
+                    if ($decompressed !== false) {
+                        return $decompressed;
+                    }
+                    $inflated = @gzinflate($candidate);
+                    if ($inflated !== false) {
+                        return $inflated;
+                    }
+                }
             }
 
-            return $s !== false ? $s : $m[1];
+            $s = @gzuncompress($trimmedRight);
+            if ($s === false) {
+                $s = @gzuncompress($raw);
+            }
+            if ($s === false) {
+                $s = @gzuncompress(ltrim($trimmedRight));
+            }
+
+            return $s !== false ? $s : $trimmedRight;
         }
 
         return '';
     }
 
+    /**
+     * @return array{byte_length: int, map: array<string, string>}
+     */
     private function parseCMap(string $cmapStr): array
     {
         $map = [];
+        $byteLength = 2;
 
-        // 1. bfchar: didalam beginbfchar ... endbfchar
+        // Deteksi lebar byte kode dari begincodespacerange (<00><ff> = 1 byte, <0000><ffff> = 2 byte)
+        if (preg_match('/begincodespacerange\s*<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>/s', $cmapStr, $csMatch)) {
+            $hexLen = max(strlen($csMatch[1]), strlen($csMatch[2]));
+            $byteLength = $hexLen <= 2 ? 1 : 2;
+        }
+
+        $padLen = $byteLength * 2;
+
+        // 1. bfchar: didalam beginbfchar ... endbfchar (mendukung spasi maupun tanpa spasi antar <hex>)
         if (preg_match_all('/beginbfchar(.*?)endbfchar/s', $cmapStr, $bfSections)) {
             foreach ($bfSections[1] as $section) {
-                if (preg_match_all('/<([0-9a-fA-F]+)>\s+<([0-9a-fA-F]+)>/', $section, $chars, PREG_SET_ORDER)) {
+                if (preg_match_all('/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>/', $section, $chars, PREG_SET_ORDER)) {
                     foreach ($chars as $ch) {
-                        $src = strtoupper(str_pad($ch[1], 4, '0', STR_PAD_LEFT));
-                        $dst = hexdec($ch[2]);
-                        $map[$src] = mb_chr($dst, 'UTF-8');
+                        $src = strtoupper(str_pad($ch[1], $padLen, '0', STR_PAD_LEFT));
+                        $map[$src] = $this->decodeUnicodeHex($ch[2]);
                     }
-                }
-            }
-        } else {
-            if (preg_match_all('/<([0-9a-fA-F]+)>\s+<([0-9a-fA-F]+)>/', $cmapStr, $chars, PREG_SET_ORDER)) {
-                foreach ($chars as $ch) {
-                    $src = strtoupper(str_pad($ch[1], 4, '0', STR_PAD_LEFT));
-                    $dst = hexdec($ch[2]);
-                    $map[$src] = mb_chr($dst, 'UTF-8');
                 }
             }
         }
 
-        // 2. bfrange: secara ketat didalam beginbfrange ... endbfrange
+        // 2. bfrange: format standar <start><end><dstStart> maupun format array <start><end>[<u1><u2>...]
         if (preg_match_all('/beginbfrange(.*?)endbfrange/s', $cmapStr, $rangeSections)) {
             foreach ($rangeSections[1] as $section) {
-                if (preg_match_all('/<([0-9a-fA-F]+)>\s+<([0-9a-fA-F]+)>\s+<([0-9a-fA-F]+)>/', $section, $ranges, PREG_SET_ORDER)) {
+                if (preg_match_all('/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>/', $section, $ranges, PREG_SET_ORDER)) {
                     foreach ($ranges as $r) {
                         $start = hexdec($r[1]);
                         $end = hexdec($r[2]);
                         $dstStart = hexdec($r[3]);
+                        if ($end - $start > 2048) {
+                            continue;
+                        }
                         for ($i = $start; $i <= $end; $i++) {
-                            $src = strtoupper(str_pad(dechex($i), 4, '0', STR_PAD_LEFT));
+                            $src = strtoupper(str_pad(dechex($i), $padLen, '0', STR_PAD_LEFT));
                             $map[$src] = mb_chr($dstStart + ($i - $start), 'UTF-8');
                         }
                     }
                 }
-            }
-        }
 
-        return $map;
-    }
-
-    private function tokenizeAndDecodeStream(string $cs, array $fontCMaps, array $aggregatedCMap): string
-    {
-        preg_match_all('/(\/F\d+)\s+([\d.]+)\s+Tf|\[(.*?)\]\s*TJ|<([0-9a-fA-F]+)>\s*Tj|\((.*?)\)\s*Tj|ET|BT|(?:[0-9.-]+\s+){6}Tm/s', $cs, $tokens, PREG_SET_ORDER);
-
-        $curFont = '/F1';
-        $fullText = '';
-
-        foreach ($tokens as $t) {
-            $matched = $t[0];
-            if (isset($t[1]) && $t[1] !== '') {
-                $curFont = $t[1];
-            } elseif (isset($t[3]) && $t[3] !== '') {
-                $inner = $t[3];
-                $activeMap = $fontCMaps[$curFont] ?? $aggregatedCMap;
-                $decoded = '';
-
-                if (preg_match_all('/<([0-9a-fA-F]+)>|\((.*?)\)|(-?[\d.]+)/', $inner, $elem, PREG_SET_ORDER)) {
-                    foreach ($elem as $el) {
-                        if (! empty($el[1])) {
-                            $hexes = str_split($el[1], 4);
-                            foreach ($hexes as $h) {
-                                $h = strtoupper(str_pad($h, 4, '0', STR_PAD_LEFT));
-                                $decoded .= $activeMap[$h] ?? ($aggregatedCMap[$h] ?? '');
+                if (preg_match_all('/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*\[([^\]]+)\]/s', $section, $arrayRanges, PREG_SET_ORDER)) {
+                    foreach ($arrayRanges as $ar) {
+                        $start = hexdec($ar[1]);
+                        if (preg_match_all('/<([0-9a-fA-F]+)>/', $ar[3], $dstItems)) {
+                            foreach ($dstItems[1] as $offset => $dstHex) {
+                                $src = strtoupper(str_pad(dechex($start + $offset), $padLen, '0', STR_PAD_LEFT));
+                                $map[$src] = $this->decodeUnicodeHex($dstHex);
                             }
-                        } elseif (isset($el[2]) && $el[2] !== '') {
-                            $decoded .= $el[2];
-                        } elseif (isset($el[3]) && (float) $el[3] < -100) {
-                            $decoded .= ' ';
                         }
                     }
                 }
-                $fullText .= $decoded.' ';
-            } elseif (isset($t[4]) && $t[4] !== '') {
-                $activeMap = $fontCMaps[$curFont] ?? $aggregatedCMap;
-                $hexes = str_split($t[4], 4);
-                $decoded = '';
-                foreach ($hexes as $h) {
-                    $h = strtoupper(str_pad($h, 4, '0', STR_PAD_LEFT));
-                    $decoded .= $activeMap[$h] ?? ($aggregatedCMap[$h] ?? '');
-                }
-                $fullText .= $decoded.' ';
-            } elseif (isset($t[5]) && $t[5] !== '') {
-                $fullText .= $t[5].' ';
-            }
-
-            if (str_contains($matched, 'Tm') || str_contains($matched, 'ET')) {
-                $fullText .= "\n";
             }
         }
 
+        return [
+            'byte_length' => $byteLength,
+            'map' => $map,
+        ];
+    }
+
+    private function decodeUnicodeHex(string $hex): string
+    {
+        $hex = strtoupper($hex);
+        if (strlen($hex) <= 4) {
+            return mb_chr((int) hexdec($hex), 'UTF-8');
+        }
+
+        $out = '';
+        foreach (str_split($hex, 4) as $chunk) {
+            if (strlen($chunk) === 4) {
+                $out .= mb_chr((int) hexdec($chunk), 'UTF-8');
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, array{byte_length: int, map: array<string, string>}>  $fontCMaps
+     * @param  array{byte_length: int, map: array<string, string>}  $fallbackCMap
+     * @param  array<string, string>  $aggregatedCMap1
+     * @param  array<string, string>  $aggregatedCMap2
+     */
+    private function tokenizeAndDecodeStream(
+        string $cs,
+        array $fontCMaps,
+        array $fallbackCMap,
+        array $aggregatedCMap1,
+        array $aggregatedCMap2,
+    ): string {
+        $len = strlen($cs);
+        $i = 0;
+        $curFont = '/F1';
+        $fullText = '';
+        $operands = [];
+
+        while ($i < $len) {
+            $ch = $cs[$i];
+
+            // Lewati whitespace
+            if ($ch === ' ' || $ch === "\t" || $ch === "\n" || $ch === "\r" || $ch === "\f" || $ch === "\0") {
+                $i++;
+
+                continue;
+            }
+
+            // Komentar PDF (% ... newline)
+            if ($ch === '%') {
+                while ($i < $len && $cs[$i] !== "\n" && $cs[$i] !== "\r") {
+                    $i++;
+                }
+
+                continue;
+            }
+
+            // Literal string: ( ... ) dengan dukungan tanda kurung bersarang dan escape PDF
+            if ($ch === '(') {
+                [$rawBytes, $nextIdx] = $this->readPdfLiteralString($cs, $i, $len);
+                $operands[] = ['type' => 'literal', 'value' => $rawBytes];
+                $i = $nextIdx;
+
+                continue;
+            }
+
+            // Dictionary << ... >> (lewati) atau Hex string < ... >
+            if ($ch === '<') {
+                if ($i + 1 < $len && $cs[$i + 1] === '<') {
+                    $depth = 1;
+                    $i += 2;
+                    while ($i < $len && $depth > 0) {
+                        if ($cs[$i] === '<' && $i + 1 < $len && $cs[$i + 1] === '<') {
+                            $depth++;
+                            $i += 2;
+                        } elseif ($cs[$i] === '>' && $i + 1 < $len && $cs[$i + 1] === '>') {
+                            $depth--;
+                            $i += 2;
+                        } else {
+                            $i++;
+                        }
+                    }
+
+                    continue;
+                }
+
+                $end = strpos($cs, '>', $i + 1);
+                if ($end === false) {
+                    break;
+                }
+                $hex = preg_replace('/\s+/', '', substr($cs, $i + 1, $end - $i - 1));
+                $operands[] = ['type' => 'hex', 'value' => (string) $hex];
+                $i = $end + 1;
+
+                continue;
+            }
+
+            // Array [ ... ] (digunakan oleh operator TJ)
+            if ($ch === '[') {
+                [$arrItems, $nextIdx] = $this->readPdfArray($cs, $i, $len);
+                $operands[] = ['type' => 'array', 'value' => $arrItems];
+                $i = $nextIdx;
+
+                continue;
+            }
+
+            // Name /FontName
+            if ($ch === '/') {
+                $start = $i;
+                $i++;
+                while ($i < $len && ! str_contains(" \t\n\r\f\0()<>[]{}/%", $cs[$i])) {
+                    $i++;
+                }
+                $operands[] = ['type' => 'name', 'value' => substr($cs, $start, $i - $start)];
+
+                continue;
+            }
+
+            // Operator kutip tunggal (') atau ganda (") -> tampilkan teks di baris berikutnya
+            if ($ch === "'" || $ch === '"') {
+                $last = end($operands);
+                if ($last && in_array($last['type'], ['literal', 'hex'], true)) {
+                    $decoded = $this->decodeTextToken($last, $curFont, $fontCMaps, $fallbackCMap, $aggregatedCMap1, $aggregatedCMap2);
+                    if ($decoded !== '') {
+                        $fullText .= "\n".$decoded.' ';
+                    }
+                }
+                $operands = [];
+                $i++;
+
+                continue;
+            }
+
+            // Token angka atau operator kata (Tf, Tj, TJ, Tm, Td, TD, T*, BT, ET, dsb.)
+            $start = $i;
+            while ($i < $len && ! str_contains(" \t\n\r\f\0()<>[]{}/%'\"", $cs[$i])) {
+                $i++;
+            }
+            $word = substr($cs, $start, $i - $start);
+
+            if ($word === '') {
+                $i++;
+
+                continue;
+            }
+
+            if (is_numeric($word)) {
+                $operands[] = ['type' => 'number', 'value' => (float) $word];
+
+                continue;
+            }
+
+            if ($word === 'Tf') {
+                foreach ($operands as $op) {
+                    if ($op['type'] === 'name') {
+                        $curFont = $op['value'];
+                    }
+                }
+            } elseif ($word === 'Tj') {
+                $last = end($operands);
+                if ($last && in_array($last['type'], ['literal', 'hex'], true)) {
+                    $decoded = $this->decodeTextToken($last, $curFont, $fontCMaps, $fallbackCMap, $aggregatedCMap1, $aggregatedCMap2);
+                    if ($decoded !== '') {
+                        $fullText .= $decoded.' ';
+                    }
+                }
+            } elseif ($word === 'TJ') {
+                $last = end($operands);
+                if ($last && $last['type'] === 'array') {
+                    $decoded = '';
+                    foreach ($last['value'] as $el) {
+                        if ($el['type'] === 'hex' || $el['type'] === 'literal') {
+                            $decoded .= $this->decodeTextToken($el, $curFont, $fontCMaps, $fallbackCMap, $aggregatedCMap1, $aggregatedCMap2);
+                        } elseif ($el['type'] === 'number' && $el['value'] < -100) {
+                            $decoded .= ' ';
+                        }
+                    }
+                    if ($decoded !== '') {
+                        $fullText .= $decoded.' ';
+                    }
+                }
+            } elseif ($word === 'Tm' || $word === 'Td' || $word === 'TD' || $word === 'T*' || $word === 'ET') {
+                $fullText .= "\n";
+            }
+
+            $operands = [];
+        }
+
         return $fullText;
+    }
+
+    /**
+     * Membaca PDF literal string (...) dengan unescape urutan escape standar PDF.
+     *
+     * @return array{0: string, 1: int}
+     */
+    private function readPdfLiteralString(string $cs, int $start, int $len): array
+    {
+        $i = $start + 1;
+        $depth = 1;
+        $out = '';
+
+        while ($i < $len && $depth > 0) {
+            $c = $cs[$i];
+            if ($c === '\\') {
+                $i++;
+                if ($i >= $len) {
+                    break;
+                }
+                $next = $cs[$i];
+                if ($next === 'n') {
+                    $out .= "\n";
+                    $i++;
+                } elseif ($next === 'r') {
+                    $out .= "\r";
+                    $i++;
+                } elseif ($next === 't') {
+                    $out .= "\t";
+                    $i++;
+                } elseif ($next === 'b') {
+                    $out .= "\x08";
+                    $i++;
+                } elseif ($next === 'f') {
+                    $out .= "\x0C";
+                    $i++;
+                } elseif ($next === '(' || $next === ')' || $next === '\\') {
+                    $out .= $next;
+                    $i++;
+                } elseif ($next === "\r" || $next === "\n") {
+                    if ($next === "\r" && $i + 1 < $len && $cs[$i + 1] === "\n") {
+                        $i += 2;
+                    } else {
+                        $i++;
+                    }
+                } elseif ($next >= '0' && $next <= '7') {
+                    $octal = $next;
+                    $i++;
+                    for ($k = 0; $k < 2 && $i < $len && $cs[$i] >= '0' && $cs[$i] <= '7'; $k++) {
+                        $octal .= $cs[$i];
+                        $i++;
+                    }
+                    $out .= chr(octdec($octal) & 0xFF);
+                } else {
+                    $out .= $next;
+                    $i++;
+                }
+            } elseif ($c === '(') {
+                $depth++;
+                $out .= '(';
+                $i++;
+            } elseif ($c === ')') {
+                $depth--;
+                if ($depth > 0) {
+                    $out .= ')';
+                }
+                $i++;
+            } else {
+                $out .= $c;
+                $i++;
+            }
+        }
+
+        return [$out, $i];
+    }
+
+    /**
+     * Membaca elemen di dalam array PDF [ ... ] untuk operator TJ.
+     *
+     * @return array{0: array<int, array{type: string, value: mixed}>, 1: int}
+     */
+    private function readPdfArray(string $cs, int $start, int $len): array
+    {
+        $i = $start + 1;
+        $items = [];
+
+        while ($i < $len) {
+            $c = $cs[$i];
+            if ($c === ']') {
+                $i++;
+                break;
+            }
+            if ($c === ' ' || $c === "\t" || $c === "\n" || $c === "\r" || $c === "\f" || $c === "\0") {
+                $i++;
+
+                continue;
+            }
+            if ($c === '(') {
+                [$rawBytes, $nextIdx] = $this->readPdfLiteralString($cs, $i, $len);
+                $items[] = ['type' => 'literal', 'value' => $rawBytes];
+                $i = $nextIdx;
+
+                continue;
+            }
+            if ($c === '<') {
+                $end = strpos($cs, '>', $i + 1);
+                if ($end === false) {
+                    break;
+                }
+                $hex = preg_replace('/\s+/', '', substr($cs, $i + 1, $end - $i - 1));
+                $items[] = ['type' => 'hex', 'value' => (string) $hex];
+                $i = $end + 1;
+
+                continue;
+            }
+
+            $numStart = $i;
+            while ($i < $len && ! str_contains(" \t\n\r\f\0()<>[]", $cs[$i])) {
+                $i++;
+            }
+            $tok = substr($cs, $numStart, $i - $numStart);
+            if ($tok !== '' && is_numeric($tok)) {
+                $items[] = ['type' => 'number', 'value' => (float) $tok];
+            }
+        }
+
+        return [$items, $i];
+    }
+
+    /**
+     * Mendekode satu token teks (hex maupun literal) menggunakan CMap font aktif.
+     *
+     * @param  array{type: string, value: mixed}  $token
+     * @param  array<string, array{byte_length: int, map: array<string, string>}>  $fontCMaps
+     * @param  array{byte_length: int, map: array<string, string>}  $fallbackCMap
+     * @param  array<string, string>  $aggregatedCMap1
+     * @param  array<string, string>  $aggregatedCMap2
+     */
+    private function decodeTextToken(
+        array $token,
+        string $curFont,
+        array $fontCMaps,
+        array $fallbackCMap,
+        array $aggregatedCMap1,
+        array $aggregatedCMap2,
+    ): string {
+        $fontCMap = $fontCMaps[$curFont] ?? null;
+
+        if ($token['type'] === 'hex') {
+            $hex = strtoupper((string) $token['value']);
+            if ($hex === '') {
+                return '';
+            }
+
+            $byteLen = $fontCMap['byte_length'] ?? $fallbackCMap['byte_length'];
+            $activeMap = $fontCMap['map'] ?? $fallbackCMap['map'];
+            $fallbackMap = $byteLen === 1 ? $aggregatedCMap1 : $aggregatedCMap2;
+            $chunkSize = $byteLen * 2;
+
+            $decoded = '';
+            foreach (str_split($hex, $chunkSize) as $h) {
+                $h = str_pad($h, $chunkSize, '0', STR_PAD_LEFT);
+                $decoded .= $activeMap[$h] ?? ($fallbackMap[$h] ?? '');
+            }
+
+            return $decoded;
+        }
+
+        // Literal string: cek apakah font aktif memakai CMap (1-byte Nitro Pro atau 2-byte CID)
+        $bytes = (string) $token['value'];
+        if ($bytes === '') {
+            return '';
+        }
+
+        if ($fontCMap !== null && $fontCMap['map'] !== []) {
+            if ($fontCMap['byte_length'] === 1) {
+                return $this->decodeBytesWith1ByteMap($bytes, $fontCMap['map'], $aggregatedCMap1);
+            }
+
+            if (strlen($bytes) % 2 === 0) {
+                $decoded2 = $this->decodeBytesWith2ByteMap($bytes, $fontCMap['map'], $aggregatedCMap2);
+                if ($decoded2 !== '') {
+                    return $decoded2;
+                }
+            }
+        }
+
+        // Fallback untuk PDF hasil incremental update yang memakai alias font (mis. /F0) dengan 2-byte CID literal string (\x00\x38)
+        if ($aggregatedCMap2 !== [] && strlen($bytes) >= 2 && strlen($bytes) % 2 === 0 && str_contains($bytes, "\0")) {
+            $decoded2 = $this->decodeBytesWith2ByteMap($bytes, $aggregatedCMap2, $aggregatedCMap2);
+            if ($decoded2 !== '') {
+                return $decoded2;
+            }
+        }
+
+        // Fallback untuk literal string 1-byte non-printable bila tersedia CMap 1-byte
+        if ($aggregatedCMap1 !== [] && preg_match('/[\x01-\x1F]/', $bytes) === 1) {
+            return $this->decodeBytesWith1ByteMap($bytes, $aggregatedCMap1, $aggregatedCMap1);
+        }
+
+        return $bytes;
+    }
+
+    /**
+     * @param  array<string, string>  $primary
+     * @param  array<string, string>  $fallback
+     */
+    private function decodeBytesWith1ByteMap(string $bytes, array $primary, array $fallback): string
+    {
+        $out = '';
+        $len = strlen($bytes);
+        for ($i = 0; $i < $len; $i++) {
+            $hex = strtoupper(bin2hex($bytes[$i]));
+            if (isset($primary[$hex])) {
+                $out .= $primary[$hex];
+            } elseif (isset($fallback[$hex])) {
+                $out .= $fallback[$hex];
+            } elseif ($bytes[$i] === ' ') {
+                $out .= ' ';
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, string>  $primary
+     * @param  array<string, string>  $fallback
+     */
+    private function decodeBytesWith2ByteMap(string $bytes, array $primary, array $fallback): string
+    {
+        $out = '';
+        $len = strlen($bytes);
+        for ($i = 0; $i + 1 < $len; $i += 2) {
+            $hex = strtoupper(bin2hex($bytes[$i].$bytes[$i + 1]));
+            if (isset($primary[$hex])) {
+                $out .= $primary[$hex];
+            } elseif (isset($fallback[$hex])) {
+                $out .= $fallback[$hex];
+            }
+        }
+
+        return $out;
     }
 }

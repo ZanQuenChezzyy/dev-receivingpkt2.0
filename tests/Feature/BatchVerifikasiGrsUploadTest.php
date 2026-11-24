@@ -458,3 +458,142 @@ test('BatchVerifikasiGrsUploadController strictly separates RDTV and GRS receipt
         ->and($grsReceipt->no_grs)->toBe('5007725170')
         ->and($grsReceipt->dokumen_verifikasi_grs)->toStartWith('verifikasi-grs/');
 });
+
+test('BatchVerifikasiGrsUploadController never overwrites an older partial GRS with a different no_grs on the same PO (PO 5300067497 regression)', function () {
+    $user = User::create([
+        'name' => 'Admin Partial Guard',
+        'email' => 'admin_partial_guard_'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('super_admin');
+
+    // Parsial 1 (5 item lama) sudah punya No. GRS 5007739482 & placeholder slip grs-rdtv-docs/
+    $partialOld = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300067497',
+        'no_grs' => '5007739482',
+        'no_do' => '67497',
+        'dokumen_verifikasi_grs' => 'grs-rdtv-docs/5300067497-06-67497-09112026.pdf',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    // Parsial 2 (1 item baru) belum sempat terisi no_grs
+    $partialNew = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300067497',
+        'no_grs' => null,
+        'no_do' => '05429715',
+        'dokumen_verifikasi_grs' => 'grs-rdtv-docs/5300067497-01-05429715-11112026.pdf',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $verifFile = UploadedFile::fake()->create('Verifikasi_5007756199.pdf', 150, 'application/pdf');
+
+    // Upload Verifikasi untuk No. GRS 5007756199 tanpa no_do -> WAJIB cocok ke $partialNew, BUKAN $partialOld!
+    $response = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $verifFile,
+            'jenis' => 'GRS',
+            'no_grs' => '5007756199',
+            'no_po' => '5300067497',
+            'original_name' => 'Verifikasi_5007756199.pdf',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => true,
+            'matched' => true,
+            'receipt_id' => $partialNew->id,
+            'no_grs' => '5007756199',
+            'status' => 'Terverifikasi',
+        ]);
+
+    expect($partialOld->fresh()->status)->toBe('Menunggu Verifikasi')
+        ->and($partialOld->fresh()->no_grs)->toBe('5007739482')
+        ->and($partialOld->fresh()->dokumen_verifikasi_grs)->toBe('grs-rdtv-docs/5300067497-06-67497-09112026.pdf')
+        ->and($partialNew->fresh()->status)->toBe('Terverifikasi')
+        ->and($partialNew->fresh()->no_grs)->toBe('5007756199')
+        ->and($partialNew->fresh()->dokumen_verifikasi_grs)->toStartWith('verifikasi-grs/');
+});
+
+test('BatchVerifikasiGrsUploadController rejects unmatched no_grs instead of overwriting a different existing no_grs on the same PO', function () {
+    $user = User::create([
+        'name' => 'Admin Strict NoGrs',
+        'email' => 'admin_strict_nogrs_'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('super_admin');
+
+    $existingPartial = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300067497',
+        'no_grs' => '5007739482',
+        'no_do' => '67497',
+        'dokumen_verifikasi_grs' => 'grs-rdtv-docs/5300067497-06-67497-09112026.pdf',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $verifFile = UploadedFile::fake()->create('Verifikasi_5007799999.pdf', 150, 'application/pdf');
+
+    $response = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $verifFile,
+            'jenis' => 'GRS',
+            'no_grs' => '5007799999',
+            'no_po' => '5300067497',
+            'original_name' => 'Verifikasi_5007799999.pdf',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => false,
+            'matched' => false,
+        ]);
+
+    expect($existingPartial->fresh()->status)->toBe('Menunggu Verifikasi')
+        ->and($existingPartial->fresh()->no_grs)->toBe('5007739482');
+});
+
+test('BatchVerifikasiGrsUploadController blocks ambiguous PO-only fallback when multiple partial receipts have null no_grs', function () {
+    $user = User::create([
+        'name' => 'Admin Ambiguous Partial',
+        'email' => 'admin_ambig_'.uniqid().'@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('super_admin');
+
+    $p1 = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300067498',
+        'no_grs' => null,
+        'no_do' => 'DO-A',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $p2 = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300067498',
+        'no_grs' => null,
+        'no_do' => 'DO-B',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $verifFile = UploadedFile::fake()->create('Verifikasi_Ambig.pdf', 150, 'application/pdf');
+
+    $response = $this->actingAs($user)
+        ->post(route('filament.admin.resources.invoicing-receipts.upload_verifikasi_grs_ocr'), [
+            'file' => $verifFile,
+            'jenis' => 'GRS',
+            'no_grs' => '5007788888',
+            'no_po' => '5300067498',
+            'original_name' => 'Verifikasi_Ambig.pdf',
+        ]);
+
+    $response->assertOk()
+        ->assertJson([
+            'success' => false,
+            'matched' => false,
+        ]);
+
+    expect($p1->fresh()->status)->toBe('Menunggu Verifikasi')
+        ->and($p2->fresh()->status)->toBe('Menunggu Verifikasi');
+});

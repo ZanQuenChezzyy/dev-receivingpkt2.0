@@ -901,3 +901,75 @@ test('invoicing:backfill-grs-delivery-date command fills missing delivery_date f
 
     expect($inv->fresh()->delivery_date?->format('Y-m-d'))->toBe('2026-11-23');
 });
+
+test('uploading a partial GRS with a different no_grs is allowed even when DO status is already GRS, while duplicate no_grs is blocked', function () {
+    $user = User::create(['name' => 'Staff Partial', 'email' => 'partial@example.com', 'password' => 'secret']);
+    $this->actingAs($user);
+
+    $do = DeliveryOrderReceipt::create([
+        'document_code' => 'DO-PARTIAL-GRS-1401',
+        'delivery_order_no' => '66637',
+        'status' => 'GRS',
+        'post_103' => now(),
+        'received_by' => $user->id,
+        'created_by' => $user->id,
+    ]);
+
+    QcHistory::create([
+        'delivery_order_receipt_id' => $do->id,
+        'status' => 'Kembali',
+    ]);
+
+    // Parsial 1 sudah GRS dengan nomor 5007739482
+    $path1 = 'grs-rdtv-docs/DO-PARTIAL-GRS-1401__20261117000001_111111.pdf';
+    Storage::disk('public')->put($path1, '%PDF-1.4 PARTIAL_1');
+
+    $batch1 = GrsRdtv::create(['transaction_date' => '2026-11-17', 'category' => 'GRS', 'created_by' => $user->id]);
+    $item1 = GrsRdtvItem::create([
+        'grs_rdtv_id' => $batch1->id,
+        'delivery_order_receipt_id' => $do->id,
+        'document_code' => 'DO-PARTIAL-GRS-1401',
+        'file_path' => $path1,
+        'status' => 'Matched',
+    ]);
+    InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $item1->id,
+        'delivery_order_receipt_id' => $do->id,
+        'no_po' => '5300066637',
+        'no_grs' => '5007739482',
+        'jenis' => 'GRS',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    // Parsial 2 dengan nomor GRS berbeda (contoh_GRS.pdf -> No Release GR 5007731110) harus DIIZINKAN
+    $batch2 = GrsRdtv::create(['transaction_date' => '2026-11-24', 'category' => 'GRS', 'created_by' => $user->id]);
+    $partialFile2 = TemporaryUploadedFile::fake()->createWithContent(
+        'DO-PARTIAL-GRS-1401.pdf',
+        file_get_contents(base_path('tests/Fixtures/contoh_GRS.pdf')),
+    );
+
+    Livewire::test(EditGrsRdtv::class, ['record' => $batch2->id])
+        ->fillForm([
+            'files' => [$partialFile2],
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($do->grsRdtvItems()->count())->toBe(2)
+        ->and(InvoicingReceipt::where('delivery_order_receipt_id', $do->id)->pluck('no_grs')->sort()->values()->all())
+        ->toBe(['5007731110', '5007739482']);
+
+    // Mengunggah ulang nomor GRS yang SAMA (5007731110) harus TETAP DITOLAK
+    $duplicateFile = TemporaryUploadedFile::fake()->createWithContent(
+        'DO-PARTIAL-GRS-1401.pdf',
+        file_get_contents(base_path('tests/Fixtures/contoh_GRS.pdf')),
+    );
+
+    Livewire::test(EditGrsRdtv::class, ['record' => $batch2->id])
+        ->fillForm([
+            'files' => [$duplicateFile],
+        ])
+        ->call('save');
+
+    expect($do->grsRdtvItems()->count())->toBe(2);
+});

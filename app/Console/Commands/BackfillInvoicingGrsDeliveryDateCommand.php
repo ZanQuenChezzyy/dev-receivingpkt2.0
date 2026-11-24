@@ -38,7 +38,19 @@ class BackfillInvoicingGrsDeliveryDateCommand extends Command
         $query = InvoicingReceipt::query()
             ->with('grsRdtvItem')
             ->whereNotNull('grs_rdtv_item_id')
-            ->when(! $force, fn ($q) => $q->whereNull('delivery_date'));
+            ->when(! $force, function ($q): void {
+                $q->where(function ($sub): void {
+                    $sub->whereNull('delivery_date')
+                        ->orWhere(function ($grsMissing): void {
+                            $grsMissing->where('jenis', 'GRS')
+                                ->where(fn ($g) => $g->whereNull('no_grs')->orWhere('no_grs', ''));
+                        })
+                        ->orWhere(function ($rdtvMissing): void {
+                            $rdtvMissing->where('jenis', 'RDTV')
+                                ->where(fn ($r) => $r->whereNull('no_rdtv')->orWhere('no_rdtv', ''));
+                        });
+                });
+            });
 
         $total = $query->count();
         $this->info("Memeriksa {$total} data Invoice Barang yang terhubung ke berkas GRS/RDTV...");
@@ -75,15 +87,16 @@ class BackfillInvoicingGrsDeliveryDateCommand extends Command
                 }
 
                 $deliveryDate = $parsed['delivery_date'] ?? null;
-                if (blank($deliveryDate)) {
-                    $skippedNoDate++;
-
-                    continue;
-                }
-
                 $updates = [];
-                if ($force || blank($receipt->delivery_date)) {
+
+                if (($force || blank($receipt->delivery_date)) && filled($deliveryDate)) {
                     $updates['delivery_date'] = $deliveryDate;
+                }
+                if ($receipt->jenis === 'GRS' && blank($receipt->no_grs) && filled($parsed['no_grs'] ?? null)) {
+                    $updates['no_grs'] = $parsed['no_grs'];
+                }
+                if ($receipt->jenis === 'RDTV' && blank($receipt->no_rdtv) && filled($parsed['no_rdtv'] ?? null)) {
+                    $updates['no_rdtv'] = $parsed['no_rdtv'];
                 }
                 if (blank($receipt->tanggal_penerimaan) && filled($parsed['tanggal_penerimaan'] ?? null)) {
                     $updates['tanggal_penerimaan'] = $parsed['tanggal_penerimaan'];
@@ -97,6 +110,8 @@ class BackfillInvoicingGrsDeliveryDateCommand extends Command
                         $receipt->updateQuietly($updates);
                     }
                     $updated++;
+                } else {
+                    $skippedNoDate++;
                 }
             }
 

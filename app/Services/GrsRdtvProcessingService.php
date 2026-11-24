@@ -60,6 +60,8 @@ class GrsRdtvProcessingService
 
                 $this->validateSingleDocument(
                     $documentCode,
+                    $category,
+                    $file,
                     $alreadyProcessed,
                     $unposted103Documents,
                     $invalidDocuments,
@@ -88,6 +90,8 @@ class GrsRdtvProcessingService
 
                 $this->validateSingleDocument(
                     $documentCode,
+                    $category,
+                    $file,
                     $alreadyProcessed,
                     $unposted103Documents,
                     $invalidDocuments,
@@ -250,6 +254,17 @@ class GrsRdtvProcessingService
         if ($reason !== null) {
             $updateItem['reason'] = $reason;
         }
+
+        // Jika sebelumnya Not Found / belum tertaut ke DO, cek ulang apakah DO kini sudah tersedia
+        $linkedDo = $item->deliveryOrderReceipt;
+        if (! $linkedDo) {
+            $linkedDo = DeliveryOrderReceipt::where('document_code', $item->document_code)->first();
+            if ($linkedDo) {
+                $updateItem['delivery_order_receipt_id'] = $linkedDo->id;
+                $updateItem['status'] = 'Matched';
+            }
+        }
+
         $item->update($updateItem);
 
         // Hapus file fisik lama secara aman (hanya jika tidak dipakai item lain)
@@ -258,7 +273,7 @@ class GrsRdtvProcessingService
         }
 
         // Parsing ulang PDF baru dan sinkronkan metadata ke InvoicingReceipt terkait
-        $item->loadMissing(['grsRdtv', 'deliveryOrderReceipt', 'invoicingReceipt']);
+        $item->refresh()->loadMissing(['grsRdtv', 'deliveryOrderReceipt', 'invoicingReceipt']);
         $category = $item->grsRdtv?->category ?? 'GRS';
         $isRdtv = $category === 'RDTV';
         $parsedPdf = $this->parsePdfIfAvailable($newPath);
@@ -271,6 +286,17 @@ class GrsRdtvProcessingService
         }
 
         $invoicingReceipt = $item->invoicingReceipt;
+        if (! $invoicingReceipt && $item->deliveryOrderReceipt) {
+            $this->createInvoicingReceiptFor(
+                $item,
+                $item->deliveryOrderReceipt,
+                $category,
+                $item->grsRdtv?->transaction_date,
+            );
+
+            return $item->fresh();
+        }
+
         if ($invoicingReceipt) {
             $invUpdates = [];
 
@@ -300,6 +326,9 @@ class GrsRdtvProcessingService
                 }
                 if (! empty($parsedPdf['tanggal_po'])) {
                     $invUpdates['tanggal_po'] = $parsedPdf['tanggal_po'];
+                }
+                if (empty($invoicingReceipt->no_do) && ! empty($parsedPdf['no_do'])) {
+                    $invUpdates['no_do'] = $parsedPdf['no_do'];
                 }
             }
 
@@ -376,6 +405,8 @@ class GrsRdtvProcessingService
      */
     protected function validateSingleDocument(
         string $documentCode,
+        string $category,
+        UploadedFile $file,
         array &$alreadyProcessed,
         array &$unposted103Documents,
         array &$invalidDocuments,
@@ -402,9 +433,9 @@ class GrsRdtvProcessingService
             }
         }
 
-        // 2. Hitung ulang item GRS aktif yang benar-benar valid
+        // 2. Hitung ulang item GRS aktif yang benar-benar valid beserta nomor GRS masing-masing
         $activeGrsItems = $do->grsRdtvItems()
-            ->with('grsRdtv')
+            ->with(['grsRdtv', 'invoicingReceipt'])
             ->whereHas('grsRdtv', fn ($q) => $q->where('category', 'GRS'))
             ->get();
 
@@ -452,8 +483,31 @@ class GrsRdtvProcessingService
             }
         } else {
             if ($grsCount >= 1) {
-                $alreadyProcessed[] = $alreadyLabel;
-                $hasError = true;
+                // Izinkan unggah GRS parsial pada DO yang sudah GRS bila PDF memiliki No. GRS yang berbeda dari seluruh GRS sebelumnya
+                $isDistinctPartialGrs = false;
+                if ($category === 'GRS') {
+                    $uploadedNoGrs = $this->extractNoGrsFromUploadedFile($file);
+                    $existingGrsNumbers = $activeGrsItems
+                        ->flatMap(function (GrsRdtvItem $it): array {
+                            $raw = trim((string) ($it->invoicingReceipt?->no_grs ?? ''));
+                            if ($raw === '') {
+                                return [];
+                            }
+
+                            return array_values(array_filter(array_map('trim', explode(',', $raw))));
+                        })
+                        ->unique()
+                        ->all();
+
+                    if ($uploadedNoGrs !== null && $existingGrsNumbers !== [] && ! in_array($uploadedNoGrs, $existingGrsNumbers, true)) {
+                        $isDistinctPartialGrs = true;
+                    }
+                }
+
+                if (! $isDistinctPartialGrs) {
+                    $alreadyProcessed[] = $alreadyLabel;
+                    $hasError = true;
+                }
             }
 
             if (is_null($do->post_103)) {
@@ -473,6 +527,28 @@ class GrsRdtvProcessingService
 
         if (! $hasError) {
             $readyDocuments[] = $documentCode;
+        }
+    }
+
+    /**
+     * Mengekstrak No. GRS dari file PDF yang baru diunggah (untuk mendeteksi GRS parsial berbeda pada DO/PO yang sama).
+     */
+    protected function extractNoGrsFromUploadedFile(UploadedFile $file): ?string
+    {
+        $realPath = $file->getRealPath();
+        if (! $realPath || ! is_file($realPath)) {
+            return null;
+        }
+
+        try {
+            $parsed = $this->pdfParser->parse($realPath);
+            $noGrs = trim((string) ($parsed['no_grs'] ?? ''));
+
+            return $noGrs !== '' ? $noGrs : null;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
         }
     }
 

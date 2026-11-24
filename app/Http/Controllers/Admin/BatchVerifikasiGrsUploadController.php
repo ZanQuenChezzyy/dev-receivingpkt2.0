@@ -88,7 +88,16 @@ class BatchVerifikasiGrsUploadController extends Controller
             return $query;
         };
 
+        $whereUnverifiedDoc = static function (Builder $q): void {
+            $q->where(function (Builder $sub): void {
+                $sub->whereNull('dokumen_verifikasi_grs')
+                    ->orWhere('dokumen_verifikasi_grs', '')
+                    ->orWhere('dokumen_verifikasi_grs', 'like', 'grs-rdtv-docs/%');
+            });
+        };
+
         $receipt = null;
+        $ambiguousMessage = null;
 
         // 1a. Pencocokan utama untuk RDTV: Nomor RDTV (124) pada record berjenis RDTV
         if ($jenis === 'RDTV' && ! empty($noRdtv)) {
@@ -106,7 +115,7 @@ class BatchVerifikasiGrsUploadController extends Controller
                 }
             });
 
-            $receipt = (clone $rdtvQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
+            $receipt = (clone $rdtvQuery)->where('status', 'Menunggu Verifikasi')->tap($whereUnverifiedDoc)->first()
                 ?? (clone $rdtvQuery)->where('status', 'Menunggu Verifikasi')->first()
                 ?? $rdtvQuery->first();
         }
@@ -140,14 +149,17 @@ class BatchVerifikasiGrsUploadController extends Controller
                 });
             });
 
-            $receipt = (clone $grsQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
+            $receipt = (clone $grsQuery)->where('status', 'Menunggu Verifikasi')->tap($whereUnverifiedDoc)->first()
                 ?? (clone $grsQuery)->where('status', 'Menunggu Verifikasi')->first()
                 ?? $grsQuery->first();
         }
 
-        // 2. Fallback pencocokan: Nomor PO + DO terlebih dahulu, lalu fallback PO saja (tetap dibatasi jenis GRS vs RDTV!)
+        // 2. Fallback pencocokan aman: Nomor PO + DO terlebih dahulu, lalu fallback PO saja
+        //    PENTING: Jangan pernah menimpa record parsial lain pada PO yang sama yang sudah memiliki No. GRS / No. RDTV berbeda!
         if (! $receipt && ! empty($noPo)) {
             $cleanPo = preg_replace('/\D/', '', $noPo);
+            $cleanGrs = preg_replace('/\D/', '', $noGrs);
+            $cleanRdtv = preg_replace('/\D/', '', $noRdtv);
 
             $basePoQuery = $applyJenisScope(InvoicingReceipt::query())->where(function (Builder $q) use ($noPo, $cleanPo): void {
                 $q->where('no_po', $noPo);
@@ -157,17 +169,59 @@ class BatchVerifikasiGrsUploadController extends Controller
                 }
             });
 
+            // Guard anti-bentrok antar parsial PO: bila dokumen punya No. GRS / No. RDTV, abaikan baris yang sudah punya nomor BERBEDA
+            if ($jenis === 'RDTV' && ! empty($noRdtv)) {
+                $basePoQuery->where(function (Builder $q) use ($noRdtv, $cleanRdtv): void {
+                    $q->whereNull('no_rdtv')
+                        ->orWhere('no_rdtv', '')
+                        ->orWhere('no_rdtv', $noRdtv);
+                    if (! empty($cleanRdtv)) {
+                        $q->orWhere('no_rdtv', 'like', "%{$cleanRdtv}%");
+                    }
+                });
+            } elseif ($jenis !== 'RDTV' && ! empty($noGrs)) {
+                $basePoQuery->where(function (Builder $q) use ($noGrs, $cleanGrs): void {
+                    $q->whereNull('no_grs')
+                        ->orWhere('no_grs', '')
+                        ->orWhere('no_grs', $noGrs);
+                    if (! empty($cleanGrs)) {
+                        $q->orWhere('no_grs', 'like', "%{$cleanGrs}%");
+                    }
+                });
+            }
+
             if (! empty($noDo)) {
                 $poWithDoQuery = (clone $basePoQuery)->where('no_do', 'like', "%{$noDo}%");
-                $receipt = (clone $poWithDoQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
+                $receipt = (clone $poWithDoQuery)->where('status', 'Menunggu Verifikasi')->tap($whereUnverifiedDoc)->first()
                     ?? (clone $poWithDoQuery)->where('status', 'Menunggu Verifikasi')->first()
                     ?? $poWithDoQuery->first();
             }
 
             if (! $receipt) {
-                $receipt = (clone $basePoQuery)->where('status', 'Menunggu Verifikasi')->whereNull('dokumen_verifikasi_grs')->first()
-                    ?? (clone $basePoQuery)->where('status', 'Menunggu Verifikasi')->first()
-                    ?? $basePoQuery->first();
+                $unverifiedCandidates = (clone $basePoQuery)
+                    ->where('status', 'Menunggu Verifikasi')
+                    ->tap($whereUnverifiedDoc)
+                    ->get();
+
+                if ($unverifiedCandidates->count() === 1) {
+                    $receipt = $unverifiedCandidates->first();
+                } elseif ($unverifiedCandidates->count() > 1) {
+                    $docLabel = $jenis === 'RDTV' ? 'RDTV' : 'GRS';
+                    $ambiguousMessage = "Ditemukan {$unverifiedCandidates->count()} tagihan parsial pada PO {$noPo} yang belum memiliki No. {$docLabel} cocok. Silakan pastikan No. {$docLabel} terisi atau unggah langsung di baris tagihan yang sesuai agar tidak salah kirim ke vendor.";
+                } else {
+                    $waitingCandidates = (clone $basePoQuery)->where('status', 'Menunggu Verifikasi')->get();
+                    if ($waitingCandidates->count() === 1) {
+                        $receipt = $waitingCandidates->first();
+                    } elseif ($waitingCandidates->count() > 1) {
+                        $docLabel = $jenis === 'RDTV' ? 'RDTV' : 'GRS';
+                        $ambiguousMessage = "Ditemukan {$waitingCandidates->count()} tagihan parsial pada PO {$noPo} yang menunggu verifikasi tanpa No. {$docLabel} cocok. Silakan unggah langsung di baris tagihan yang sesuai.";
+                    } elseif (empty($noGrs) && empty($noRdtv)) {
+                        $allCandidates = (clone $basePoQuery)->get();
+                        if ($allCandidates->count() === 1) {
+                            $receipt = $allCandidates->first();
+                        }
+                    }
+                }
             }
         }
 
@@ -232,9 +286,11 @@ class BatchVerifikasiGrsUploadController extends Controller
             ]);
         }
 
-        // Jika tagihan belum ditemukan
+        // Jika tagihan belum ditemukan atau ambigu antar parsial PO
         $hasAnyNumber = ! empty($noGrs) || ! empty($noRdtv) || ! empty($noPo);
-        if (! $hasAnyNumber) {
+        if ($ambiguousMessage !== null) {
+            $notFoundMessage = $ambiguousMessage;
+        } elseif (! $hasAnyNumber) {
             $notFoundMessage = 'Nomor GRS (105), RDTV (124), maupun PO tidak terdeteksi dari dokumen ini.';
         } elseif ($jenis === 'RDTV') {
             $notFoundMessage = 'Tidak ditemukan dokumen RDTV dengan No. RDTV: '.($noRdtv ?: '-').' / PO: '.($noPo ?: '-');

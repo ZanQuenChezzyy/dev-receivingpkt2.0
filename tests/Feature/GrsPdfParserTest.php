@@ -113,3 +113,59 @@ test('grs pdf parser service extracts rdtv fields directly from real rdtv pdf fi
         ->and($data['qty_penagihan'])->toBe(1.0)
         ->and($data['alasan_penolakan'])->toBe('TIDAK MELAMPIRKAN COO FROM MANUFACTURE');
 });
+
+test('grs pdf parser decodes Nitro Pro style PDFs with indirect /Font dictionary, /R7 font names, compressed 1-byte CMap, and literal strings', function () {
+    // Bangun peta CMap 1-byte (<00><ff>) mirip output Nitro Pro 13 (tanpa spasi antar <hex>)
+    $sampleText = '22.12.2026 Delivery Date GOODS RECEIPT SLIP No Release GR : 5007756199 No PO : 5300067497 Tanggal PO : 28.10.2026 Tanggal Penerimaan : 11.11.2026 Tanggal Release GR : 21.11.2026 No. Surat Jalan : 05429715';
+    $charToByte = [];
+    $bfRanges = [];
+    $nextCode = 1;
+    for ($i = 0; $i < strlen($sampleText); $i++) {
+        $ch = $sampleText[$i];
+        if (! isset($charToByte[$ch])) {
+            $hexSrc = sprintf('%02x', $nextCode);
+            $hexDst = sprintf('%04x', ord($ch));
+            $charToByte[$ch] = chr($nextCode);
+            $bfRanges[] = "<{$hexSrc}><{$hexSrc}><{$hexDst}>";
+            $nextCode++;
+        }
+    }
+
+    $cmapStream = '/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapType 2 def 1 begincodespacerange <00><ff> endcodespacerange '
+        .count($bfRanges).' beginbfrange '.implode(' ', $bfRanges).' endbfrange endcmap';
+    $compressedCmap = gzcompress($cmapStream);
+
+    // Encode teks menjadi literal string PDF dengan escape karakter spesial
+    $encodedBytes = '';
+    for ($i = 0; $i < strlen($sampleText); $i++) {
+        $b = $charToByte[$sampleText[$i]];
+        if ($b === '\\' || $b === '(' || $b === ')') {
+            $encodedBytes .= '\\'.$b;
+        } elseif ($b === "\n") {
+            $encodedBytes .= '\\n';
+        } elseif ($b === "\r") {
+            $encodedBytes .= '\\r';
+        } else {
+            $encodedBytes .= $b;
+        }
+    }
+
+    $contentStream = gzcompress("BT /R7 9.96 Tf 0 1 -1 0 100 100 Tm ({$encodedBytes})' ET");
+
+    $fakeNitroPdf = "%PDF-1.7\n"
+        ."4 0 obj\n<</Type /Page /Resources <</Font 15 0 R>> /Contents 5 0 R>>\nendobj\n"
+        ."5 0 obj\n<</Filter /FlateDecode /Length ".strlen($contentStream).">>\nstream\n{$contentStream}\nendstream\nendobj\n"
+        ."7 0 obj\n<</Type /Font /Subtype /TrueType /ToUnicode 18 0 R>>\nendobj\n"
+        ."15 0 obj\n<</R7 7 0 R>>\nendobj\n"
+        ."18 0 obj\n<</Filter /FlateDecode /Length ".strlen($compressedCmap).">>\nstream\n{$compressedCmap}\nendstream\nendobj\n";
+
+    $data = app(GrsPdfParserService::class)->parse($fakeNitroPdf);
+
+    expect($data['no_grs'])->toBe('5007756199')
+        ->and($data['delivery_date'])->toBe('2026-12-22')
+        ->and($data['no_po'])->toBe('5300067497')
+        ->and($data['tanggal_po'])->toBe('2026-10-28')
+        ->and($data['tanggal_penerimaan'])->toBe('2026-11-11')
+        ->and($data['tanggal_release_gr'])->toBe('2026-11-21')
+        ->and($data['no_do'])->toBe('05429715');
+});
