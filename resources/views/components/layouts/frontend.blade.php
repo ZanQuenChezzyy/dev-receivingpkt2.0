@@ -138,6 +138,9 @@
       })"
       class="bg-[#F5F5F7] dark:bg-[#070E18] text-[#1D1D1F] dark:text-[#F5F5F7] antialiased overflow-x-hidden transition-colors duration-200 flex flex-col min-h-screen selection:bg-[#F47920] selection:text-white">
 
+    <!-- Top Page Load Progress Bar (untuk navigasi non-SPA seperti Login / Dashboard / Ganti Bahasa) -->
+    <div id="pkt-page-load-bar" aria-hidden="true"></div>
+
     <x-frontend.navbar />
 
     <!-- Ambient Subtle Apple-Style Canvas Background -->
