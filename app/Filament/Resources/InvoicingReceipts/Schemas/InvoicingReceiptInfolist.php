@@ -289,7 +289,7 @@ class InvoicingReceiptInfolist
                                     return null;
                                 }
 
-                                return Storage::url($record->dokumen_verifikasi_grs);
+                                return Storage::disk('public')->url($record->dokumen_verifikasi_grs);
                             })
                             ->openUrlInNewTab()
                             ->placeholder('-'),
@@ -300,7 +300,7 @@ class InvoicingReceiptInfolist
                             ->badge()
                             ->color(fn ($state) => $state ? 'primary' : 'gray')
                             ->icon(fn ($state) => $state ? 'heroicon-m-arrow-top-right-on-square' : null)
-                            ->url(fn ($record) => $record->dokumen_invoice ? Storage::url($record->dokumen_invoice) : null)
+                            ->url(fn ($record) => $record->dokumen_invoice ? Storage::disk('public')->url($record->dokumen_invoice) : null)
                             ->openUrlInNewTab()
                             ->placeholder('-'),
 

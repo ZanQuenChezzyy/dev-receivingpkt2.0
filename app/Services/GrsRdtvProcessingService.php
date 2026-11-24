@@ -364,11 +364,25 @@ class GrsRdtvProcessingService
     }
 
     /**
+     * Menghapus akhiran unik hasil penyimpanan aplikasi (__YYYYMMDDHHMMSS_xxxxxx) pada kode dokumen
+     * agar unggah ulang berkas hasil unduhan tetap cocok ke DO eksisting.
+     */
+    public function stripStoredFilenameSuffix(string $documentCode): string
+    {
+        $trimmed = trim($documentCode);
+        $cleaned = preg_replace('/(?:__\d{14}_[a-z0-9]{6})+$/i', '', $trimmed);
+
+        return trim((string) ($cleaned ?? $trimmed));
+    }
+
+    /**
      * Ekstrak kode dokumen dari nama file asli yang diunggah.
      */
     public function extractDocumentCode(UploadedFile $file): string
     {
-        return trim((string) pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+        $baseName = trim((string) pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+
+        return $this->stripStoredFilenameSuffix($baseName);
     }
 
     /**

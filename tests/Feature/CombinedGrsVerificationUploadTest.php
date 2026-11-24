@@ -1278,3 +1278,153 @@ test('Skipped email can be updated with vendor_email and resent via resend-email
     expect(InvoicingReceipt::find($receiptId)->email_vendor)->toBe('info@tanpaemail.test')
         ->and($fixture['vendor']->fresh()->email)->toContain('info@tanpaemail.test');
 });
+
+test('Re-uploading downloaded Slip with stored timestamp_hash suffix matches existing DO without duplicating DO or Invoice', function (): void {
+    fakeCombinedZimbraSuccess();
+
+    $user = User::create([
+        'name' => 'Staff Suffix Dedup',
+        'email' => 'suffix_dedup@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Staff Invoice');
+
+    createEligibleDoFixture('5000009305-01-S-PKT04726-17112026-TAHAP5SCI', '5000009305', 'S-PKT04726');
+
+    // 1. Unggah Slip Saja awal
+    $firstSlip = makeTextPdfUpload('5000009305-01-S-PKT04726-17112026-TAHAP5SCI.pdf', 'GOODS RECEIPT SLIP No Release GR : 5007761421 No PO : 5000009305');
+    $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'slip_only',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '0',
+        'no_grs' => '5007761421',
+        'no_po' => '5000009305',
+        'slip_file' => $firstSlip,
+    ])->assertOk();
+
+    $existingReceipt = InvoicingReceipt::where('no_grs', '5007761421')->first();
+    expect($existingReceipt)->not->toBeNull();
+
+    // 2. Unggah ulang Slip yang diunduh dengan akhiran __20261124083036_p96zzg + Verifikasi
+    $downloadedSlip = makeTextPdfUpload('5000009305-01-S-PKT04726-17112026-TAHAP5SCI__20261124083036_p96zzg.pdf', 'GOODS RECEIPT SLIP No Release GR : 5007761421 No PO : 5000009305');
+    $verif = makeTextPdfUpload('5000009305-Verifikasi-TAHAP5SCI.pdf', 'VERIFIKASI PENERIMAAN BARANG Nomor GR (101) 5007761421 Nomor PO 5000009305');
+
+    $inspectRes = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.inspect'), [
+        'file' => $downloadedSlip,
+    ]);
+    $inspectRes->assertOk()
+        ->assertJsonPath('data.document_code', '5000009305-01-S-PKT04726-17112026-TAHAP5SCI')
+        ->assertJsonPath('data.filename_matches_do', true);
+
+    $precheckRes = $this->actingAs($user)->postJson(route('filament.admin.grs-rdtv.combined_upload.precheck'), [
+        'transaction_date' => '2026-11-24',
+        'rows' => [[
+            'row_id' => 'suffix_pair',
+            'mode' => 'pair',
+            'jenis' => 'GRS',
+            'document_code' => '5000009305-01-S-PKT04726-17112026-TAHAP5SCI__20261124083036_p96zzg',
+            'no_grs' => '5007761421',
+            'no_po' => '5000009305',
+            'verif_no_grs' => '5007761421',
+            'verif_no_po' => '5000009305',
+        ]],
+    ]);
+    $precheckRes->assertOk()
+        ->assertJsonPath('results.0.reason_code', 'reuse_existing_slip')
+        ->assertJsonPath('results.0.will_auto_create_do', false)
+        ->assertJsonPath('results.0.target_receipt_id', $existingReceipt->id);
+
+    $commitRes = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'pair',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '1',
+        'no_grs' => '5007761421',
+        'no_po' => '5000009305',
+        'slip_file' => $downloadedSlip,
+        'verif_file' => $verif,
+    ]);
+    $commitRes->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('receipt_id', $existingReceipt->id)
+        ->assertJsonPath('reused_existing_slip', true)
+        ->assertJsonPath('status', 'Terverifikasi');
+
+    expect(DeliveryOrderReceipt::count())->toBe(1)
+        ->and(InvoicingReceipt::count())->toBe(1)
+        ->and($existingReceipt->fresh()->status)->toBe('Terverifikasi')
+        ->and($existingReceipt->fresh()->dokumen_verifikasi_grs)->toStartWith('verifikasi-grs/');
+});
+
+test('Uploading renamed Slip whose No. GRS already exists reuses existing Invoice instead of auto-creating duplicate DO and Invoice', function (): void {
+    fakeCombinedZimbraSuccess();
+
+    $user = User::create([
+        'name' => 'Staff Renamed Dedup',
+        'email' => 'renamed_dedup@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Staff Invoice');
+
+    createEligibleDoFixture('PKT-DO-7701', '5000009305', 'SJ-7701');
+
+    // 1. Unggah Slip Saja awal
+    $firstSlip = makeTextPdfUpload('PKT-DO-7701.pdf', 'GOODS RECEIPT SLIP No Release GR : 5007761425 No PO : 5000009305');
+    $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'slip_only',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '0',
+        'no_grs' => '5007761425',
+        'no_po' => '5000009305',
+        'slip_file' => $firstSlip,
+    ])->assertOk();
+
+    $existingReceipt = InvoicingReceipt::where('no_grs', '5007761425')->first();
+    expect($existingReceipt)->not->toBeNull();
+
+    // 2. Unggah ulang dengan nama berkas berbeda total, tetapi No. GRS sama (5007761425)
+    $renamedSlip = makeTextPdfUpload('Slip_Karung_Revisi_Final.pdf', 'GOODS RECEIPT SLIP No Release GR : 5007761425 No PO : 5000009305');
+    $verif = makeTextPdfUpload('Verif_Karung_Final.pdf', 'VERIFIKASI PENERIMAAN BARANG Nomor GR (101) 5007761425 Nomor PO 5000009305');
+
+    $precheckRes = $this->actingAs($user)->postJson(route('filament.admin.grs-rdtv.combined_upload.precheck'), [
+        'transaction_date' => '2026-11-24',
+        'rows' => [[
+            'row_id' => 'renamed_pair',
+            'mode' => 'pair',
+            'jenis' => 'GRS',
+            'document_code' => 'Slip_Karung_Revisi_Final',
+            'no_grs' => '5007761425',
+            'no_po' => '5000009305',
+            'verif_no_grs' => '5007761425',
+            'verif_no_po' => '5000009305',
+        ]],
+    ]);
+    $precheckRes->assertOk()
+        ->assertJsonPath('results.0.status', 'warning')
+        ->assertJsonPath('results.0.reason_code', 'reuse_existing_slip')
+        ->assertJsonPath('results.0.will_auto_create_do', false)
+        ->assertJsonPath('results.0.target_receipt_id', $existingReceipt->id);
+
+    $commitRes = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'pair',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '1',
+        'no_grs' => '5007761425',
+        'no_po' => '5000009305',
+        'slip_file' => $renamedSlip,
+        'verif_file' => $verif,
+    ]);
+    $commitRes->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('receipt_id', $existingReceipt->id)
+        ->assertJsonPath('reused_existing_slip', true)
+        ->assertJsonPath('status', 'Terverifikasi');
+
+    expect(DeliveryOrderReceipt::count())->toBe(1)
+        ->and(InvoicingReceipt::count())->toBe(1)
+        ->and($existingReceipt->fresh()->status)->toBe('Terverifikasi')
+        ->and($existingReceipt->fresh()->dokumen_verifikasi_grs)->toStartWith('verifikasi-grs/');
+});

@@ -36,7 +36,9 @@ class CombinedGrsVerificationService
     public function inspectFile(UploadedFile $file, array $clientMetadata = []): array
     {
         $originalName = trim((string) ($clientMetadata['original_name'] ?? $file->getClientOriginalName()));
-        $documentCode = trim((string) pathinfo($originalName, PATHINFO_FILENAME));
+        $documentCode = $this->processingService->stripStoredFilenameSuffix(
+            trim((string) pathinfo($originalName, PATHINFO_FILENAME))
+        );
         $filenameMatchesDo = $documentCode !== ''
             && DeliveryOrderReceipt::query()->where('document_code', $documentCode)->exists();
 
@@ -149,7 +151,7 @@ class CombinedGrsVerificationService
             $rowId = (string) ($row['row_id'] ?? '');
             $mode = (string) ($row['mode'] ?? 'pair');
             $jenis = strtoupper(trim((string) ($row['jenis'] ?? 'GRS'))) === 'RDTV' ? 'RDTV' : 'GRS';
-            $documentCode = trim((string) ($row['document_code'] ?? ''));
+            $documentCode = $this->processingService->stripStoredFilenameSuffix(trim((string) ($row['document_code'] ?? '')));
             $noGrs = trim((string) ($row['no_grs'] ?? ''));
             $noRdtv = trim((string) ($row['no_rdtv'] ?? ''));
             $noPo = trim((string) ($row['no_po'] ?? ''));
@@ -304,9 +306,52 @@ class CombinedGrsVerificationService
             $autoLocationName = null;
 
             $effectivePoNo = $firstPo?->purchase_order_no ?: ($noPo !== '' ? $noPo : $verifNoPo);
+            $effectiveDocNo = $jenis === 'RDTV'
+                ? ($noRdtv !== '' ? $noRdtv : $verifNoRdtv)
+                : ($noGrs !== '' ? $noGrs : $verifNoGrs);
 
-            // Jika DO belum ditemukan di Penerimaan Barang namun Nomor PO tersedia, siapkan rencana auto-create DO (+ PO Terbit jika belum ada)
-            if ($do === null && $effectivePoNo !== '') {
+            // Cegah duplikasi DO & Invoice Barang bila kode DO belum cocok (mis. nama file berubah),
+            // tetapi No. GRS / No. RDTV sudah terdaftar di Invoice Barang eksisting.
+            $existingByDocNo = ($do === null && $effectiveDocNo !== '')
+                ? $this->findExistingReceiptByExactDocNumber($jenis, $effectiveDocNo)
+                : null;
+
+            if ($existingByDocNo !== null) {
+                $existingByDocNo->loadMissing(['grsRdtvItem', 'vendor', 'deliveryOrderReceipt']);
+                $targetReceiptId = $existingByDocNo->id;
+                $vendorName = $existingByDocNo->vendor_name ?: ($existingByDocNo->vendor?->name ?: ($vendorName !== '-' ? $vendorName : '-'));
+                $vendorEmails = $this->emailDispatcher->resolveVendorEmails($existingByDocNo);
+                $hasPhysicalSlip = filled($existingByDocNo->grsRdtvItem?->file_path)
+                    && Storage::disk('public')->exists((string) $existingByDocNo->grsRdtvItem->file_path);
+                $alreadyHasVerif = filled($existingByDocNo->dokumen_verifikasi_grs)
+                    && ! str_starts_with((string) $existingByDocNo->dokumen_verifikasi_grs, 'grs-rdtv-docs/');
+
+                if ($mode === 'pair') {
+                    $status = 'warning';
+                    $reasonCode = $alreadyHasVerif ? 'already_verified' : 'reuse_existing_slip';
+
+                    if ($alreadyHasVerif) {
+                        $messages = ["No. {$jenis} {$effectiveDocNo} sudah ada pada Invoice Barang #{$existingByDocNo->id} dan sudah memiliki Surat Verifikasi (Status: {$existingByDocNo->status}). Tidak dicentang otomatis agar tidak menimpa berkas lama."];
+                    } elseif ($hasPhysicalSlip) {
+                        $messages = ["No. {$jenis} {$effectiveDocNo} sudah terdaftar pada Invoice Barang #{$existingByDocNo->id}. Berkas Slip lama tetap dipertahankan (tidak membuat DO/Invoice duplikat); hanya berkas Surat Verifikasi yang akan ditambahkan dan diverifikasi."];
+                    } else {
+                        $messages = ["No. {$jenis} {$effectiveDocNo} sudah terdaftar pada Invoice Barang #{$existingByDocNo->id} (belum ada berkas Slip fisik). Slip & Surat Verifikasi akan dilampirkan ke Invoice #{$existingByDocNo->id} tanpa membuat duplikat."];
+                    }
+
+                    if ($vendorEmails === []) {
+                        $messages[] = 'Email vendor belum terdaftar (dokumen tetap Terverifikasi, namun email otomatis ditahan).';
+                    }
+                } elseif ($hasPhysicalSlip) {
+                    $status = 'blocked';
+                    $reasonCode = 'already_processed';
+                    $messages = ["No. {$jenis} {$effectiveDocNo} sudah terdaftar pada Invoice Barang #{$existingByDocNo->id}. Berkas Slip lama tetap dipertahankan dan tidak ditimpa."];
+                } else {
+                    $status = 'warning';
+                    $reasonCode = 'attach_slip_to_existing';
+                    $messages = ["No. {$jenis} {$effectiveDocNo} sudah terdaftar pada Invoice Barang #{$existingByDocNo->id} (belum ada berkas Slip fisik). Berkas Slip akan dilampirkan tanpa membuat duplikat."];
+                }
+            } elseif ($do === null && $effectivePoNo !== '') {
+                // Jika DO belum ditemukan di Penerimaan Barang namun Nomor PO tersedia, siapkan rencana auto-create DO (+ PO Terbit jika belum ada)
                 $existingPo = PurchaseOrderIssued::query()->where('purchase_order_no', $effectivePoNo)->first();
                 $willAutoCreateDo = true;
                 $willAutoCreatePo = $existingPo === null;
@@ -360,10 +405,10 @@ class CombinedGrsVerificationService
                 } elseif ($noPo !== '' && $verifNoPo !== '' && strcasecmp($noPo, $verifNoPo) !== 0) {
                     $status = 'blocked';
                     $messages[] = "Nomor PO tidak cocok antara Slip ({$noPo}) dan Verifikasi ({$verifNoPo}).";
-                } elseif ($do === null && ! $willAutoCreateDo) {
+                } elseif ($do === null && ! $willAutoCreateDo && $existingByDocNo === null) {
                     $status = 'blocked';
                     $messages[] = 'Kode DO belum ditemukan dan Nomor PO kosong — isi Nomor PO agar sistem dapat membuat DO Receipt & PO Terbit otomatis.';
-                } elseif ($reasonCode === 'already_processed') {
+                } elseif ($reasonCode === 'already_processed' && $do !== null) {
                     // Slip sudah pernah diunggah sebelumnya: jangan timpa Slip lama, arahkan ke Invoice Barang eksisting untuk memasang Surat Verifikasi
                     $existingReceipt = $this->findExistingReceiptForUploadedSlip(
                         do: $do,
@@ -399,7 +444,7 @@ class CombinedGrsVerificationService
                 $messages = ['Siap diproses — akan membuat Invoice Barang berstatus Menunggu Verifikasi (tanpa kirim email dulu).'];
             } elseif ($mode === 'slip_only' && $willAutoCreateDo) {
                 $messages[] = 'Invoice Barang akan dibuat dengan status Menunggu Verifikasi (tanpa kirim email dulu).';
-            } elseif ($mode === 'slip_only' && $reasonCode === 'already_processed') {
+            } elseif ($mode === 'slip_only' && $reasonCode === 'already_processed' && $existingByDocNo === null) {
                 $messages[] = 'Berkas Slip lama tetap dipertahankan dan tidak ditimpa.';
             }
 
@@ -561,10 +606,97 @@ class CombinedGrsVerificationService
         }
 
         if ($mode === 'pair' && $eligibility['do'] === null && $detectedNoPo === '') {
-            return [
-                'success' => false,
-                'message' => "Kode DO {$documentCode} tidak ditemukan dan Nomor PO kosong sehingga DO Receipt & PO Terbit tidak dapat dibuat otomatis.",
-            ];
+            $detectedDocNoFallback = $jenis === 'RDTV'
+                ? ($overrideNoRdtv !== '' ? $overrideNoRdtv : trim((string) ($parsedSlip['no_rdtv'] ?? ($parsedVerif['no_rdtv'] ?? ''))))
+                : $detectedNoGrs;
+
+            if ($detectedDocNoFallback === '' || ! $this->findExistingReceiptByExactDocNumber($jenis, $detectedDocNoFallback)) {
+                return [
+                    'success' => false,
+                    'message' => "Kode DO {$documentCode} tidak ditemukan dan Nomor PO kosong sehingga DO Receipt & PO Terbit tidak dapat dibuat otomatis.",
+                ];
+            }
+        }
+
+        // Cegah duplikasi DO & Invoice Barang apabila DO belum ditemukan dari nama berkas,
+        // tetapi No. GRS / No. RDTV sudah terdaftar pada Invoice Barang eksisting.
+        $detectedDocNo = $jenis === 'RDTV'
+            ? ($overrideNoRdtv !== '' ? $overrideNoRdtv : trim((string) ($parsedSlip['no_rdtv'] ?? ($parsedVerif['no_rdtv'] ?? ''))))
+            : $detectedNoGrs;
+
+        if ($eligibility['do'] === null && $detectedDocNo !== '') {
+            $existingByDocNo = ($targetReceiptId !== null ? InvoicingReceipt::find($targetReceiptId) : null)
+                ?? $this->findExistingReceiptByExactDocNumber($jenis, $detectedDocNo);
+
+            if ($existingByDocNo) {
+                $existingByDocNo->loadMissing(['grsRdtvItem', 'deliveryOrderReceipt']);
+                $hasPhysicalSlip = filled($existingByDocNo->grsRdtvItem?->file_path)
+                    && Storage::disk('public')->exists((string) $existingByDocNo->grsRdtvItem->file_path);
+
+                if ($mode === 'slip_only' && $hasPhysicalSlip) {
+                    return [
+                        'success' => false,
+                        'message' => "No. {$jenis} {$detectedDocNo} sudah terdaftar pada Invoice Barang #{$existingByDocNo->id}. Berkas Slip lama tetap dipertahankan dan tidak ditimpa.",
+                    ];
+                }
+
+                // Jika Invoice eksisting belum memiliki Slip fisik (mis. hasil impor Monitoring), simpan Slip & tautkan tanpa membuat duplikat Invoice
+                if (! $hasPhysicalSlip) {
+                    $batch = $this->processingService->findOrCreateBatch($transactionDate, $jenis, $actorId);
+                    $attachedSlipPath = $this->processingService->storeDocumentFile($slipFile, $documentCode);
+                    $attachedItem = $batch->grsRdtvItems()->create([
+                        'delivery_order_receipt_id' => $existingByDocNo->delivery_order_receipt_id,
+                        'document_code' => $documentCode,
+                        'file_path' => $attachedSlipPath,
+                        'status' => $existingByDocNo->delivery_order_receipt_id ? 'Matched' : 'Not Found',
+                        'reason' => $jenis === 'RDTV' && $reason !== '' ? $reason : null,
+                    ]);
+                    $existingByDocNo->update(['grs_rdtv_item_id' => $attachedItem->id]);
+
+                    if ($mode === 'slip_only') {
+                        return [
+                            'success' => true,
+                            'mode' => $mode,
+                            'jenis' => $jenis,
+                            'grs_rdtv_id' => $batch->id,
+                            'grs_rdtv_item_id' => $attachedItem->id,
+                            'receipt_id' => $existingByDocNo->id,
+                            'no_po' => $existingByDocNo->no_po,
+                            'no_grs' => $existingByDocNo->no_grs,
+                            'no_rdtv' => $existingByDocNo->no_rdtv,
+                            'status' => $existingByDocNo->status,
+                            'email_status' => 'waiting_verification',
+                            'email_message' => 'Menunggu berkas Surat Verifikasi diunggah di kemudian hari.',
+                            'message' => "Slip {$jenis} dilampirkan ke Invoice Barang #{$existingByDocNo->id} tanpa membuat duplikat.",
+                        ];
+                    }
+                }
+
+                if ($mode === 'pair') {
+                    $reuseRes = $this->commitVerificationOnly(
+                        verifFile: $verifFile,
+                        jenis: $jenis,
+                        noGrs: $detectedNoGrs,
+                        noRdtv: $overrideNoRdtv,
+                        noPo: $detectedNoPo,
+                        noDo: $overrideNoDo,
+                        targetReceiptId: $existingByDocNo->id,
+                        sendEmail: $sendEmail,
+                        actorId: $actorId,
+                        overrideVendorEmail: $overrideVendorEmail,
+                    );
+
+                    if ($reuseRes['success'] ?? false) {
+                        $reuseRes['reused_existing_slip'] = $hasPhysicalSlip;
+                        $prefix = $hasPhysicalSlip
+                            ? "Slip {$jenis} lama pada Invoice #{$existingByDocNo->id} dipertahankan (tidak membuat duplikat). "
+                            : "Slip {$jenis} dilampirkan ke Invoice #{$existingByDocNo->id} tanpa membuat duplikat. ";
+                        $reuseRes['message'] = $prefix.$reuseRes['message'];
+                    }
+
+                    return $reuseRes;
+                }
+            }
         }
 
         $storedSlipPath = null;
@@ -1412,6 +1544,42 @@ class CombinedGrsVerificationService
         $fallback = $this->findMatchingReceiptForVerification($jenis, $noGrs, $noRdtv, $noPo, $noDo);
 
         return $fallback['receipt'];
+    }
+
+    /**
+     * Mencari InvoicingReceipt eksisting secara ketat berdasarkan kecocokan tepat No. GRS atau No. RDTV
+     * untuk mencegah duplikasi DO & Invoice Barang saat nama file Slip berubah/memiliki akhiran unduhan.
+     */
+    protected function findExistingReceiptByExactDocNumber(string $jenis, string $docNo): ?InvoicingReceipt
+    {
+        $docNo = trim($docNo);
+        if ($docNo === '') {
+            return null;
+        }
+
+        $query = InvoicingReceipt::query();
+        if ($jenis === 'RDTV') {
+            $query->where('jenis', 'RDTV')->where('no_rdtv', $docNo);
+        } else {
+            $query->where(function (Builder $q): void {
+                $q->whereNull('jenis')->orWhere('jenis', '!=', 'RDTV');
+            })->where(function (Builder $q) use ($docNo): void {
+                $q->where('no_grs', $docNo)
+                    ->orWhereHas('items', fn (Builder $sub) => $sub->where('no_grs', $docNo));
+            });
+        }
+
+        return (clone $query)
+            ->where('status', 'Menunggu Verifikasi')
+            ->where(function (Builder $sub): void {
+                $sub->whereNull('dokumen_verifikasi_grs')
+                    ->orWhere('dokumen_verifikasi_grs', '')
+                    ->orWhere('dokumen_verifikasi_grs', 'like', 'grs-rdtv-docs/%');
+            })
+            ->orderByDesc('id')
+            ->first()
+            ?? (clone $query)->where('status', 'Menunggu Verifikasi')->orderByDesc('id')->first()
+            ?? $query->orderByDesc('id')->first();
     }
 
     /**
