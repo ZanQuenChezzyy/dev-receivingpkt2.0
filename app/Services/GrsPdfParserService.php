@@ -265,15 +265,15 @@ class GrsPdfParserService
             }
         }
 
-        // 4. Nama Vendor
-        if (preg_match('/(?:PT\.?|CV\.?|[A-Z\s]+,\s*(?:PT|CV)\.?)\s*\n\s*:\s*\n\s*:\s*\n\s*Nama\s*Vendor/i', $text, $vm)) {
-            preg_match('/([A-Z\s.,]+(?:PT|CV|LTD|TBK)[A-Z\s.,]*)/i', $vm[0], $vname);
-            if (! empty($vname[1])) {
-                $data['vendor_name'] = trim($vname[1]);
+        // 4. Nama Vendor (gunakan spasi horizontal [ \t] agar tidak ikut menarik baris alamat di atasnya)
+        if (preg_match('/(?:^|\n)[ \t]*((?:PT\.?|CV\.?)[ \t]+[A-Z0-9 \t.&,-]+|[A-Z0-9 \t.&-]+,[ \t]*(?:PT|CV)\.?)[ \t]*\r?\n\s*:\s*\r?\n\s*:\s*\r?\n\s*Nama\s*Vendor/i', $text, $vm)) {
+            $cleanedVendor = trim(preg_replace('/[ \t]+/', ' ', $vm[1]) ?? $vm[1]);
+            if ($cleanedVendor !== '') {
+                $data['vendor_name'] = $cleanedVendor;
             }
-        } elseif (preg_match('/Nama\s*Vendor\s*\n\s*Alamat\s*Vendor\s*\n\s*:\s*\n\s*:\s*\n\s*([^\r\n:]+)/i', $text, $vm)) {
+        } elseif (preg_match('/Nama\s*Vendor\s*\r?\n\s*Alamat\s*Vendor\s*\r?\n\s*:\s*\r?\n\s*:\s*\r?\n\s*([^\r\n:]+)/i', $text, $vm)) {
             $data['vendor_name'] = trim($vm[1]);
-        } elseif (preg_match('/Nama\s*Vendor\s*[:\s]+([^\r\n]+)/i', $text, $vm)) {
+        } elseif (preg_match('/Nama\s*Vendor[ \t]*:[ \t]*([^\r\n]+)/i', $text, $vm)) {
             $data['vendor_name'] = trim($vm[1]);
         }
 

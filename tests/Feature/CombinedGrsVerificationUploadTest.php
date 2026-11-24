@@ -1210,3 +1210,14 @@ test('Chrome PDF.js viewer printed Verifikasi PDF (header/footer text > 150 char
         ->assertJsonPath('data.no_do', '20261108407')
         ->assertJsonPath('data.lokasi_penerimaan', 'Gudang Banyuwangi');
 });
+
+test('GrsPdfParserService extracts vendor_name cleanly without bleeding into previous address line', function (): void {
+    $parser = app(GrsPdfParserService::class);
+
+    $rawSapHeader = "Ciruas Kab. Serang \n\nJl. Raya Serang KM. 80 Cimiung, Kas \n\nMURNI MAPAN MANDIRI, PT. \n\n: \n\n: \n\nNama Vendor \n\nAlamat Vendor \n\nGOODS RECEIPT SLIP \nNo Release GR : 5007734805\nNo PO : 5000009407";
+    $parsed = $parser->parse($rawSapHeader);
+
+    expect($parsed['vendor_name'])->toBe('MURNI MAPAN MANDIRI, PT.')
+        ->and($parsed['no_grs'])->toBe('5007734805')
+        ->and($parsed['no_po'])->toBe('5000009407');
+});

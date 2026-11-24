@@ -1102,6 +1102,18 @@ class CombinedGrsVerificationService
                 ->orWhere('name', 'like', "%{$stripped}%")
                 ->first();
 
+            if (! $found && strlen($stripped) >= 5) {
+                // Reverse-contain fallback jika nama vendor dari PDF memiliki kata tambahan di depan/belakang
+                $found = Vendor::query()
+                    ->whereRaw('LENGTH(name) >= 5')
+                    ->get()
+                    ->first(static function (Vendor $v) use ($stripped): bool {
+                        $vName = trim((string) $v->name);
+
+                        return $vName !== '' && stripos($stripped, $vName) !== false;
+                    });
+            }
+
             if ($found) {
                 return $found;
             }
