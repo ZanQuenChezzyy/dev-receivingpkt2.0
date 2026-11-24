@@ -52,12 +52,15 @@ class CombinedGrsVerificationService
         $clientNoRdtv = trim((string) ($clientMetadata['no_rdtv'] ?? ''));
         $clientNoPo = trim((string) ($clientMetadata['no_po'] ?? ''));
         $clientNoDo = trim((string) ($clientMetadata['no_do'] ?? ''));
+        $clientLokasi = trim((string) ($clientMetadata['lokasi_penerimaan'] ?? ''));
+        $ocrDone = filter_var($clientMetadata['ocr_done'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         $jenis = $parsed['jenis'] ?: (in_array($clientJenis, ['GRS', 'RDTV'], true) ? $clientJenis : null);
         $noGrs = $parsed['no_grs'] ?: ($clientNoGrs !== '' ? $clientNoGrs : null);
         $noRdtv = $parsed['no_rdtv'] ?: ($clientNoRdtv !== '' ? $clientNoRdtv : null);
         $noPo = $parsed['no_po'] ?: ($clientNoPo !== '' ? $clientNoPo : null);
         $noDo = $parsed['no_do'] ?: ($clientNoDo !== '' ? $clientNoDo : null);
+        $lokasi = ($parsed['lokasi_penerimaan'] ?? null) ?: ($clientLokasi !== '' ? $clientLokasi : null);
 
         if ($jenis === 'RDTV' && blank($noRdtv) && filled($noGrs)) {
             $noRdtv = $noGrs;
@@ -70,7 +73,8 @@ class CombinedGrsVerificationService
 
         $role = $parsed['role'];
         $validRoles = ['grs_slip', 'verifikasi_grs', 'rdtv_slip', 'verifikasi_rdtv'];
-        if ($role === 'unknown' && in_array($clientRole, $validRoles, true)) {
+        $backendHadNoDocNumber = blank($parsed['no_grs'] ?? null) && blank($parsed['no_rdtv'] ?? null);
+        if (in_array($clientRole, $validRoles, true) && ($role === 'unknown' || ($ocrDone && $backendHadNoDocNumber))) {
             $role = $clientRole;
         }
 
@@ -97,7 +101,8 @@ class CombinedGrsVerificationService
             }
         }
 
-        $hasAnyNumber = filled($noGrs) || filled($noRdtv) || filled($noPo);
+        $hasCompleteNumbers = (filled($noGrs) || filled($noRdtv)) && filled($noPo);
+        $needsOcr = ! $ocrDone && (! $hasCompleteNumbers || $role === 'unknown');
 
         return [
             'original_name' => $originalName,
@@ -122,9 +127,9 @@ class CombinedGrsVerificationService
             'subtotal_exclude_ppn' => $parsed['subtotal_exclude_ppn'] ?? null,
             'nilai_po' => $parsed['nilai_po'] ?? null,
             'nilai_gr' => $parsed['nilai_gr'] ?? null,
-            'lokasi_penerimaan' => $parsed['lokasi_penerimaan'] ?? null,
+            'lokasi_penerimaan' => $lokasi,
             'alasan_penolakan' => $parsed['alasan_penolakan'],
-            'needs_ocr' => $parsed['needs_ocr'] && ! $hasAnyNumber,
+            'needs_ocr' => $needsOcr,
             'confidence' => $parsed['confidence'],
         ];
     }

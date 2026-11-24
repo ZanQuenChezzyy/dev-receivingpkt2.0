@@ -27,6 +27,8 @@ class CombinedGrsVerificationController extends Controller
             'no_rdtv' => ['nullable', 'string', 'max:50'],
             'no_po' => ['nullable', 'string', 'max:50'],
             'no_do' => ['nullable', 'string', 'max:100'],
+            'lokasi_penerimaan' => ['nullable', 'string', 'max:100'],
+            'ocr_done' => ['nullable'],
         ]);
 
         $result = $this->service->inspectFile($request->file('file'), $validated);

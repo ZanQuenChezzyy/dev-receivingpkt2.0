@@ -1163,3 +1163,50 @@ test('Missing DO auto-creates PO Terbit, new LocationReceiving, DO Receipt with 
         ->and($service->resolveAutoReceiverInfo('ZRM')['user_id'])->toBe($dio->id)
         ->and($service->resolveAutoReceiverInfo('ZSM')['user_id'])->toBe($dio->id);
 });
+
+test('Chrome PDF.js viewer printed Verifikasi PDF (header/footer text > 150 chars, image body) triggers needs_ocr=true and accepts client OCR metadata', function (): void {
+    $user = User::create([
+        'name' => 'Staff PDFJS',
+        'email' => 'pdfjs_staff@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Staff Invoice');
+
+    // Simulasikan PDF cetak Chrome PDF.js viewer dari Digital Office (hanya punya header/footer teks, body gambar kosong)
+    $chromePrintPdf = makeTextPdfUpload(
+        'Verifikasi_Karung_Tahap3.pdf',
+        '11/24/26, 7:51 PM PDF.js viewer https://dof.pupuk-indonesia.com/FileHandling/Print/53e0802c-d832-4c7a-bc44-d4bc2432bf1b?type=PRINT_DOC&hmm=oprx 1/1'
+    );
+
+    // 1. Inspect awal WAJIB menandai needs_ocr = true walau teks header/footer > 150 karakter
+    $firstInspect = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.inspect'), [
+        'file' => $chromePrintPdf,
+        'original_name' => 'Verifikasi_Karung_Tahap3.pdf',
+    ]);
+
+    $firstInspect->assertOk()
+        ->assertJsonPath('data.needs_ocr', true)
+        ->assertJsonPath('data.no_grs', null);
+
+    // 2. Re-inspect setelah OCR client-side mengisi metadata + ocr_done=1
+    $secondInspect = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.inspect'), [
+        'file' => $chromePrintPdf,
+        'original_name' => 'Verifikasi_Karung_Tahap3.pdf',
+        'ocr_done' => '1',
+        'jenis' => 'GRS',
+        'role' => 'verifikasi_grs',
+        'no_grs' => '5007754968',
+        'no_po' => '5000009408',
+        'no_do' => '20261108407',
+        'lokasi_penerimaan' => 'Gudang Banyuwangi',
+    ]);
+
+    $secondInspect->assertOk()
+        ->assertJsonPath('data.needs_ocr', false)
+        ->assertJsonPath('data.role', 'verifikasi_grs')
+        ->assertJsonPath('data.jenis', 'GRS')
+        ->assertJsonPath('data.no_grs', '5007754968')
+        ->assertJsonPath('data.no_po', '5000009408')
+        ->assertJsonPath('data.no_do', '20261108407')
+        ->assertJsonPath('data.lokasi_penerimaan', 'Gudang Banyuwangi');
+});

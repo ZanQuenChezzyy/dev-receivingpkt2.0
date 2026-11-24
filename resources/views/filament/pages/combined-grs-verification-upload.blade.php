@@ -977,10 +977,10 @@
                     if (!raw) return '';
                     let cleaned = raw
                         .replace(/\r?\n/g, ' ')
-                        .replace(/\(\s*[1Il][0Oo][5S]\s*\)/gi, '(105)')
-                        .replace(/\(\s*[1Il][0Oo]3\s*\)/gi, '(103)')
-                        .replace(/\(\s*[1Il][0Oo][1Il]\s*\)/gi, '(101)')
-                        .replace(/\(\s*[1Il][2Z][4A]\s*\)/gi, '(124)');
+                        .replace(/[\(\[]\s*[1Il|!][0Oo][5S]\s*[\)\]]/gi, '(105)')
+                        .replace(/[\(\[]\s*[1Il|!][0Oo]3\s*[\)\]]/gi, '(103)')
+                        .replace(/[\(\[]\s*[1Il|!][0Oo][1Il|!]\s*[\)\]]/gi, '(101)')
+                        .replace(/[\(\[]\s*[1Il|!][2Z][4A]\s*[\)\]]/gi, '(124)');
                     cleaned = cleaned
                         .replace(/([0-9])[Oo]([0-9])/g, '$10$2')
                         .replace(/([0-9])[Oo]([0-9])/g, '$10$2')
@@ -1000,12 +1000,13 @@
                     let gr103 = null;
                     let po = null;
                     let doNum = null;
+                    let lokasi = null;
 
                     if (!text || text.length < 15) {
-                        return { docType, role, grs, rdtv, po, doNum };
+                        return { docType, role, grs, rdtv, po, doNum, lokasi };
                     }
 
-                    const isVerif = /VERIFIKASI\s+PENERIMAAN\s+BARANG|VERIFIKASI\s+PENOLAKAN\s+BARANG|Berita\s+Acara\s+(?:Penerimaan|Penolakan)|Status\s+Penerimaan\s+Barang|Nomor\s*:\s*(?:GRS|RDTV)-|Nomor\s*GR\s*\(\s*(?:101|103)\s*\)/i.test(text);
+                    const isVerif = /VERIFIKASI\s+PENERIMAAN\s+BARANG|VERIFIKASI\s+PENOLAKAN\s+BARANG|Berita\s+Acara\s+(?:Penerimaan|Penolakan)|Status\s+Penerimaan\s+Barang|Nomor\s*:\s*(?:GRS|RDTV)-|Nomor\s*GR\s*\(\s*(?:101|103)\s*\)|Lokasi\s+Penerimaan|Dokumen\s+ini\s+telah\s+disetujui/i.test(text);
                     const isRdtv = /VERIFIKASI\s+PENOLAKAN\s+BARANG|Return\s+Delivery\s+To\s+Vendor|Berita\s+Acara\s+Penolakan|Nomor\s*RDTV\s*\(?124\)?|RDTV\s*\(?124\)?|Alasan\s+Pengembalian/i.test(text);
                     const isGrs = /VERIFIKASI\s+PENERIMAAN\s+BARANG|Goods\s+Receipt\s+Slip|Berita\s+Acara\s+Penerimaan|Nomor\s*GRS\s*\(?105\)?|GRS\s*\(?105\)?|Nomor\s*GR\s*\(?101\)?|GR\s*\(?101\)?/i.test(text);
 
@@ -1084,7 +1085,25 @@
                         doNum = mDo[1];
                     }
 
-                    return { docType, role, grs, rdtv, po, doNum };
+                    const mLoc = text.match(/Lokasi\s*Penerimaan[\s:;|—–-]{0,15}([A-Za-z0-9 \-_\/]{3,60}?)(?=\s+(?:Dapat\s*kami|Status|Diajukan|Disetujui)|$)/i);
+                    if (mLoc && mLoc[1] && mLoc[1].trim() !== '-') {
+                        lokasi = mLoc[1].trim();
+                    }
+
+                    return { docType, role, grs, rdtv, po, doNum, lokasi };
+                },
+
+                cropCanvasRegion(sourceCanvas, yStartRatio, yEndRatio) {
+                    const sy = Math.floor(sourceCanvas.height * yStartRatio);
+                    const sh = Math.max(1, Math.floor(sourceCanvas.height * (yEndRatio - yStartRatio)));
+                    const cropped = document.createElement('canvas');
+                    cropped.width = sourceCanvas.width;
+                    cropped.height = sh;
+                    const ctx = cropped.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, cropped.width, cropped.height);
+                    ctx.drawImage(sourceCanvas, 0, sy, sourceCanvas.width, sh, 0, 0, cropped.width, sh);
+                    return cropped;
                 },
 
                 async runClientOcr(fileObj) {
@@ -1100,23 +1119,39 @@
                     if ((!detected.grs && !detected.rdtv) || !detected.po || !detected.role) {
                         const worker = await this.getTesseractWorker();
                         if (worker) {
-                            const viewport = page.getViewport({ scale: 2.0 });
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                            canvas.width = Math.ceil(viewport.width);
-                            canvas.height = Math.ceil(viewport.height);
+                            const viewport = page.getViewport({ scale: 2.2 });
+                            const fullCanvas = document.createElement('canvas');
+                            const ctx = fullCanvas.getContext('2d', { willReadFrequently: true });
+                            fullCanvas.width = Math.ceil(viewport.width);
+                            fullCanvas.height = Math.ceil(viewport.height);
                             ctx.fillStyle = '#ffffff';
-                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.fillRect(0, 0, fullCanvas.width, fullCanvas.height);
                             await page.render({ canvasContext: ctx, viewport }).promise;
 
-                            const res = await worker.recognize(canvas);
-                            const ocrDetected = this.extractOcrMetadata(res?.data?.text || '');
-                            detected.docType = detected.docType || ocrDetected.docType;
-                            detected.role = detected.role || ocrDetected.role;
-                            detected.grs = detected.grs || ocrDetected.grs;
-                            detected.rdtv = detected.rdtv || ocrDetected.rdtv;
-                            detected.po = detected.po || ocrDetected.po;
-                            detected.doNum = detected.doNum || ocrDetected.doNum;
+                            // Tahap 1: Pindai area judul & tabel rincian dokumen (12% - 56% halaman) agar bebas noise header/footer Chrome
+                            const metaCanvas = this.cropCanvasRegion(fullCanvas, 0.12, 0.56);
+                            const metaRes = await worker.recognize(metaCanvas);
+                            const metaDetected = this.extractOcrMetadata(metaRes?.data?.text || '');
+                            detected.docType = detected.docType || metaDetected.docType;
+                            detected.role = detected.role || metaDetected.role;
+                            detected.grs = detected.grs || metaDetected.grs;
+                            detected.rdtv = detected.rdtv || metaDetected.rdtv;
+                            detected.po = detected.po || metaDetected.po;
+                            detected.doNum = detected.doNum || metaDetected.doNum;
+                            detected.lokasi = detected.lokasi || metaDetected.lokasi;
+
+                            // Tahap 2: Fallback halaman penuh jika nomor dokumen, PO, atau peran belum lengkap
+                            if ((!detected.grs && !detected.rdtv) || !detected.po || !detected.role) {
+                                const fullRes = await worker.recognize(fullCanvas);
+                                const fullDetected = this.extractOcrMetadata(fullRes?.data?.text || '');
+                                detected.docType = detected.docType || fullDetected.docType;
+                                detected.role = detected.role || fullDetected.role;
+                                detected.grs = detected.grs || fullDetected.grs;
+                                detected.rdtv = detected.rdtv || fullDetected.rdtv;
+                                detected.po = detected.po || fullDetected.po;
+                                detected.doNum = detected.doNum || fullDetected.doNum;
+                                detected.lokasi = detected.lokasi || fullDetected.lokasi;
+                            }
                         }
                     }
 
@@ -1191,19 +1226,21 @@
                                     let data = await this.callInspectEndpoint(fileObj);
                                     this.applyInspectResult(fileObj, data);
 
-                                    if (data.needs_ocr || data.role === 'unknown') {
+                                    if (data.needs_ocr || data.role === 'unknown' || (!data.no_grs && !data.no_rdtv) || !data.no_po) {
                                         fileObj.scan_status = 'ocr';
                                         this.activityMessage = 'Memindai teks gambar (OCR): ' + fileObj.name;
                                         try {
                                             const ocrMeta = await this.runClientOcr(fileObj);
-                                            if (ocrMeta.docType || ocrMeta.role || ocrMeta.grs || ocrMeta.rdtv || ocrMeta.po) {
+                                            if (ocrMeta.docType || ocrMeta.role || ocrMeta.grs || ocrMeta.rdtv || ocrMeta.po || ocrMeta.lokasi) {
                                                 data = await this.callInspectEndpoint(fileObj, {
+                                                    ocr_done: '1',
                                                     jenis: ocrMeta.docType,
                                                     role: ocrMeta.role,
                                                     no_grs: ocrMeta.grs,
                                                     no_rdtv: ocrMeta.rdtv,
                                                     no_po: ocrMeta.po,
                                                     no_do: ocrMeta.doNum,
+                                                    lokasi_penerimaan: ocrMeta.lokasi,
                                                 });
                                                 this.applyInspectResult(fileObj, data);
                                             }

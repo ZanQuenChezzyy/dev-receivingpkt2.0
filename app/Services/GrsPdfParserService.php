@@ -466,8 +466,11 @@ class GrsPdfParserService
             $confidence = 'high';
         }
 
-        $hasAnyNumber = filled($noGrs) || filled($noRdtv) || filled($noPo);
-        $needsOcr = strlen(trim($combinedText)) < 25 && ! $hasAnyNumber;
+        $hasDocNumber = filled($noGrs) || filled($noRdtv);
+        $hasCompleteNumbers = $hasDocNumber && filled($noPo);
+        // PDF hasil cetak browser (mis. PDF.js viewer / Digital Office) bisa memiliki >150 karakter header/footer URL
+        // meski isi dokumennya berupa gambar — wajib picu OCR jika nomor dokumen / PO / peran belum terbaca.
+        $needsOcr = ! $hasCompleteNumbers || $role === 'unknown';
 
         return [
             'role' => $role,
