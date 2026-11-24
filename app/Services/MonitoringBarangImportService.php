@@ -2690,7 +2690,7 @@ class MonitoringBarangImportService
 
     protected function parseSingleNumeric(string $value): ?float
     {
-        $clean = trim(str_ireplace(['rp', 'idr'], '', $value));
+        $clean = trim(str_ireplace(['rp.', 'rp', 'idr', 'us$', 'usd', 'eur', 'sgd', 'jpy', '$', '¥', '€'], '', $value));
         $clean = trim($clean);
         if ($clean === '' || $clean === '-' || str_starts_with($clean, '=')) {
             return null;

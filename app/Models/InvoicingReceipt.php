@@ -112,6 +112,8 @@ class InvoicingReceipt extends Model
 
     /**
      * Parsing input mata uang Rupiah / angka dari masked string menjadi float integer bulat.
+     * Menangani format bertitik ribuan Indonesia (misal "946.000", "1.050", "1.050.060", "946.000,50"),
+     * string desimal database (misal "946000.00"), maupun tipe int/float tanpa salah membaca titik ribuan sebagai desimal.
      */
     public static function parseRupiah(mixed $value): ?float
     {
@@ -119,18 +121,61 @@ class InvoicingReceipt extends Model
             return null;
         }
 
-        if (is_numeric($value)) {
+        if (is_int($value) || is_float($value)) {
             return (float) round((float) $value);
         }
 
-        $withDot = str_replace(',', '.', (string) $value);
-        if (is_numeric($withDot)) {
-            return (float) round((float) $withDot);
+        $clean = trim((string) $value);
+        $clean = preg_replace('/^\s*(?:rp\.?|idr)\s*/i', '', $clean) ?? $clean;
+        $clean = trim($clean);
+
+        if ($clean === '' || $clean === '-') {
+            return null;
         }
 
-        $digits = preg_replace('/[^\d]/', '', (string) $value);
+        // Angka bulat murni tanpa pemisah (misal "946000", "0")
+        if (preg_match('/^-?\d+$/', $clean) === 1) {
+            return (float) $clean;
+        }
 
-        return $digits !== '' ? (float) $digits : null;
+        // Format ribuan Indonesia bertitik dengan opsional desimal koma (misal "946.000", "1.050", "1.050.060", "946.000,50")
+        if (preg_match('/^-?[1-9]\d{0,2}(\.\d{3})+(,\d{1,2})?$/', $clean) === 1) {
+            $normalized = str_replace('.', '', $clean);
+            $normalized = str_replace(',', '.', $normalized);
+
+            return (float) round((float) $normalized);
+        }
+
+        // Format nol dengan titik ribuan (misal "0.000")
+        if (preg_match('/^-?0(\.000)+(,0{1,2})?$/', $clean) === 1) {
+            return 0.0;
+        }
+
+        // Format string desimal database / standar 1-2 angka di belakang titik (misal "946000.00", "1050.50")
+        if (preg_match('/^-?\d+\.\d{1,2}$/', $clean) === 1) {
+            return (float) round((float) $clean);
+        }
+
+        // Format desimal koma Indonesia tanpa titik ribuan (misal "946000,50")
+        if (preg_match('/^-?\d+,\d{1,2}$/', $clean) === 1) {
+            return (float) round((float) str_replace(',', '.', $clean));
+        }
+
+        // Format ribuan internasional berkoma (misal "946,000", "1,050,060.00")
+        if (preg_match('/^-?[1-9]\d{0,2}(,\d{3})+(\.\d{1,2})?$/', $clean) === 1) {
+            return (float) round((float) str_replace(',', '', $clean));
+        }
+
+        $isNegative = str_starts_with($clean, '-');
+        $digits = preg_replace('/[^\d]/', '', $clean) ?? '';
+
+        if ($digits === '') {
+            return null;
+        }
+
+        $number = (float) $digits;
+
+        return $isNegative ? -$number : $number;
     }
 
     /**
