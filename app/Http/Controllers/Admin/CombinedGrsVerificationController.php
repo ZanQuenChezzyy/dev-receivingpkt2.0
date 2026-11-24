@@ -56,6 +56,11 @@ class CombinedGrsVerificationController extends Controller
             'rows.*.verif_no_grs' => ['nullable', 'string', 'max:50'],
             'rows.*.verif_no_rdtv' => ['nullable', 'string', 'max:50'],
             'rows.*.verif_no_po' => ['nullable', 'string', 'max:50'],
+            'rows.*.lokasi_penerimaan' => ['nullable', 'string', 'max:100'],
+            'rows.*.tanggal_penerimaan' => ['nullable', 'string', 'max:30'],
+            'rows.*.material_code' => ['nullable', 'string', 'max:30'],
+            'rows.*.nama_barang' => ['nullable', 'string', 'max:500'],
+            'rows.*.vendor_name' => ['nullable', 'string', 'max:150'],
         ]);
 
         $results = $this->service->precheckItems(
@@ -84,6 +89,11 @@ class CombinedGrsVerificationController extends Controller
             'no_rdtv' => ['nullable', 'string', 'max:50'],
             'no_po' => ['nullable', 'string', 'max:50'],
             'no_do' => ['nullable', 'string', 'max:100'],
+            'lokasi_penerimaan' => ['nullable', 'string', 'max:100'],
+            'tanggal_penerimaan' => ['nullable', 'string', 'max:30'],
+            'vendor_name' => ['nullable', 'string', 'max:150'],
+            'material_code' => ['nullable', 'string', 'max:30'],
+            'nama_barang' => ['nullable', 'string', 'max:500'],
             'target_receipt_id' => ['nullable', 'integer'],
             'slip_file' => ['nullable', 'file', 'mimes:pdf', 'max:25600'],
             'verif_file' => ['nullable', 'file', 'mimes:pdf', 'max:25600'],

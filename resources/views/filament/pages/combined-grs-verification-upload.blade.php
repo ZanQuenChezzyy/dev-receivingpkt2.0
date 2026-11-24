@@ -488,6 +488,20 @@
                                                 Vendor: <span class="font-medium text-gray-700 dark:text-gray-200" x-text="row.vendor_name"></span>
                                             </div>
 
+                                            <template x-if="row.will_auto_create_do && row.mode !== 'verif_only'">
+                                                <div class="flex items-center gap-1.5 rounded-lg border border-sky-200 dark:border-sky-800/60 bg-sky-50/50 dark:bg-sky-950/25 px-2 py-1">
+                                                    <span class="text-[10px] font-bold uppercase text-sky-700 dark:text-sky-400 shrink-0">Lokasi</span>
+                                                    <input
+                                                        type="text"
+                                                        :value="row.lokasi_penerimaan"
+                                                        @input="updateRowLokasi(row, $event.target.value)"
+                                                        :disabled="isCommitting || row.commit_status === 'success'"
+                                                        placeholder="Gudang Banyuwangi..."
+                                                        class="w-full bg-transparent border-0 p-0 text-[11px] font-medium text-gray-900 dark:text-white focus:ring-0 placeholder-sky-400"
+                                                    />
+                                                </div>
+                                            </template>
+
                                             <template x-if="row.jenis === 'RDTV' && row.mode !== 'verif_only'">
                                                 <input
                                                     type="text"
@@ -675,6 +689,20 @@
                                     />
                                 </div>
                             </div>
+
+                            <template x-if="row.will_auto_create_do && row.mode !== 'verif_only'">
+                                <div class="rounded-lg border border-sky-200 dark:border-sky-800/60 bg-sky-50/40 dark:bg-sky-950/20 px-2.5 py-1.5">
+                                    <div class="text-[10px] font-bold uppercase text-sky-700 dark:text-sky-400">Lokasi Penerimaan (Auto DO)</div>
+                                    <input
+                                        type="text"
+                                        :value="row.lokasi_penerimaan"
+                                        @input="updateRowLokasi(row, $event.target.value)"
+                                        :disabled="isCommitting || row.commit_status === 'success'"
+                                        placeholder="Gudang Banyuwangi..."
+                                        class="w-full bg-transparent border-0 p-0 text-xs text-gray-900 dark:text-white focus:ring-0"
+                                    />
+                                </div>
+                            </template>
 
                             <template x-if="row.jenis === 'RDTV' && row.mode !== 'verif_only'">
                                 <input
@@ -873,6 +901,10 @@
                             no_po: '',
                             no_do: '',
                             vendor_name: '',
+                            lokasi_penerimaan: '',
+                            tanggal_penerimaan: '',
+                            material_code: '',
+                            nama_barang: '',
                             reason: '',
                             needs_ocr: false,
                             confidence: 'low',
@@ -1127,6 +1159,10 @@
                     fileObj.no_po = data.no_po || '';
                     fileObj.no_do = data.no_do || '';
                     fileObj.vendor_name = data.vendor_name || '';
+                    fileObj.lokasi_penerimaan = data.lokasi_penerimaan || '';
+                    fileObj.tanggal_penerimaan = data.tanggal_penerimaan || '';
+                    fileObj.material_code = data.material_code || '';
+                    fileObj.nama_barang = data.nama_barang || '';
                     if (data.alasan_penolakan && !fileObj.reason) {
                         fileObj.reason = data.alasan_penolakan;
                     }
@@ -1210,6 +1246,8 @@
                             precheck_status: 'pending',
                             precheck_message: 'Memeriksa kelayakan dokumen...',
                             target_receipt_id: null,
+                            will_auto_create_do: false,
+                            auto_location_name: '',
                             vendor_name: '-',
                             vendor_emails: [],
                             resolved_no_po: null,
@@ -1328,6 +1366,11 @@
                             verif_no_grs: verif?.no_grs || '',
                             verif_no_rdtv: verif?.no_rdtv || '',
                             verif_no_po: verif?.no_po || '',
+                            lokasi_penerimaan: verif?.lokasi_penerimaan || slip.lokasi_penerimaan || st.auto_location_name || '',
+                            tanggal_penerimaan: slip.tanggal_penerimaan || '',
+                            material_code: slip.material_code || '',
+                            nama_barang: slip.nama_barang || '',
+                            will_auto_create_do: Boolean(st.will_auto_create_do),
                             reason: slip.reason || verif?.reason || '',
                             pair_reason: verif ? (pairReasons[slip.id] || 'Dipetakan') : 'Slip Saja — Menunggu Verifikasi',
                             vendor_name: st.vendor_name !== '-' ? st.vendor_name : (slip.vendor_name || verif?.vendor_name || '-'),
@@ -1507,6 +1550,14 @@
                     row.reason = value;
                 },
 
+                updateRowLokasi(row, value) {
+                    const clean = String(value || '');
+                    if (row.verifFile) row.verifFile.lokasi_penerimaan = clean;
+                    if (row.slipFile) row.slipFile.lokasi_penerimaan = clean;
+                    row.lokasi_penerimaan = clean;
+                    this.schedulePrecheck();
+                },
+
                 toggleRowSelection(rowId, checked) {
                     const st = this.getOrCreateRowState(rowId);
                     st.selected = Boolean(checked);
@@ -1600,6 +1651,11 @@
                             verif_no_grs: r.verifFile?.no_grs || null,
                             verif_no_rdtv: r.verifFile?.no_rdtv || null,
                             verif_no_po: r.verifFile?.no_po || null,
+                            lokasi_penerimaan: r.lokasi_penerimaan || null,
+                            tanggal_penerimaan: r.tanggal_penerimaan || null,
+                            material_code: r.material_code || null,
+                            nama_barang: r.nama_barang || null,
+                            vendor_name: r.vendor_name && r.vendor_name !== '-' ? r.vendor_name : null,
                         }));
 
                         const res = await fetch(this.config.precheckUrl, {
@@ -1622,6 +1678,8 @@
                                 st.precheck_status = item.status || 'warning';
                                 st.precheck_message = item.message || '';
                                 st.target_receipt_id = item.target_receipt_id || null;
+                                st.will_auto_create_do = Boolean(item.will_auto_create_do);
+                                st.auto_location_name = item.auto_location_name || '';
                                 st.vendor_name = item.vendor_name || '-';
                                 st.vendor_emails = item.vendor_emails || [];
                                 st.resolved_no_po = item.resolved_no_po || null;
@@ -1670,6 +1728,11 @@
                             if (row.no_rdtv) formData.append('no_rdtv', row.no_rdtv);
                             if (row.no_po) formData.append('no_po', row.no_po);
                             if (row.no_do) formData.append('no_do', row.no_do);
+                            if (row.lokasi_penerimaan) formData.append('lokasi_penerimaan', row.lokasi_penerimaan);
+                            if (row.tanggal_penerimaan) formData.append('tanggal_penerimaan', row.tanggal_penerimaan);
+                            if (row.vendor_name && row.vendor_name !== '-') formData.append('vendor_name', row.vendor_name);
+                            if (row.material_code) formData.append('material_code', row.material_code);
+                            if (row.nama_barang) formData.append('nama_barang', row.nama_barang);
                             if (row.target_receipt_id) formData.append('target_receipt_id', String(row.target_receipt_id));
                             if (row.slipFile) formData.append('slip_file', row.slipFile.file, row.slipFile.name);
                             if (row.verifFile) formData.append('verif_file', row.verifFile.file, row.verifFile.name);

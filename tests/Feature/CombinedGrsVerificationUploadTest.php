@@ -9,11 +9,13 @@ use App\Models\GrsRdtv;
 use App\Models\GrsRdtvItem;
 use App\Models\InvoicingEmailLog;
 use App\Models\InvoicingReceipt;
+use App\Models\LocationReceiving;
 use App\Models\PicMaterialAssignment;
 use App\Models\PurchaseOrderIssued;
 use App\Models\QcHistory;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\CombinedGrsVerificationService;
 use App\Services\GrsPdfParserService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Client\Request as HttpClientRequest;
@@ -141,19 +143,34 @@ beforeEach(function (): void {
         });
     }
 
+    if (! DbSchema::hasTable('location_receivings')) {
+        DbSchema::create('location_receivings', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name', 100)->unique();
+            $table->timestamps();
+        });
+    }
+
     if (! DbSchema::hasTable('purchase_order_issueds')) {
         DbSchema::create('purchase_order_issueds', function (Blueprint $table): void {
             $table->id();
+            $table->string('purchase_order_and_item')->nullable();
             $table->string('purchase_order_no')->unique();
+            $table->integer('item_no')->default(10);
             $table->string('material_type')->nullable();
+            $table->string('mrp_type')->default('ND');
             $table->string('material_code')->nullable();
             $table->text('description')->nullable();
             $table->decimal('qty_po', 15, 4)->nullable();
             $table->string('uoi', 20)->nullable();
+            $table->decimal('net_price', 18, 4)->default(0);
             $table->decimal('total_amount_in_lc', 18, 2)->nullable();
-            $table->foreignId('vendor_id')->nullable();
+            $table->string('vendor_id')->nullable();
             $table->string('vendor_name')->nullable();
+            $table->date('date_create')->nullable();
             $table->date('delivery_date_po')->nullable();
+            $table->string('currency', 5)->default('IDR');
+            $table->string('requisitioner')->default('RECEIVING');
             $table->timestamps();
         });
     }
@@ -163,6 +180,7 @@ beforeEach(function (): void {
             $table->id();
             $table->string('delivery_order_no', 50)->nullable();
             $table->date('received_date')->nullable();
+            $table->date('physical_received_date')->nullable();
             $table->foreignId('received_by')->nullable();
             $table->foreignId('created_by')->nullable();
             $table->string('source_type', 20)->nullable();
@@ -174,6 +192,8 @@ beforeEach(function (): void {
             $table->text('delay_notes')->nullable();
             $table->string('receipt_mode', 30)->default('Standard');
             $table->boolean('is_physically_received')->default(false);
+            $table->string('current_location')->nullable();
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
@@ -183,12 +203,17 @@ beforeEach(function (): void {
             $table->id();
             $table->foreignId('delivery_order_receipt_id');
             $table->foreignId('purchase_order_issued_id')->nullable();
+            $table->integer('item_no')->default(10);
             $table->string('material_code')->nullable();
             $table->text('description')->nullable();
             $table->decimal('quantity', 15, 4)->nullable();
             $table->string('uoi', 20)->nullable();
+            $table->string('mrp_type')->nullable();
             $table->string('material_type')->nullable();
             $table->decimal('total_amount_snapshot', 18, 2)->nullable();
+            $table->foreignId('location_id')->nullable();
+            $table->boolean('is_different_location')->default(false);
+            $table->boolean('is_qty_tolerance')->default(false);
             $table->timestamps();
         });
     }
@@ -1026,4 +1051,115 @@ test('Combined upload keeps existing Slip intact without overwriting when upload
         ->assertJsonPath('results.0.status', 'warning')
         ->assertJsonPath('results.0.reason_code', 'already_verified')
         ->assertJsonPath('results.0.already_has_verif', true);
+});
+
+test('Missing DO auto-creates PO Terbit, new LocationReceiving, DO Receipt with Tanggal Penerimaan & category-based Receiver (Arief/Michael/Dio)', function (): void {
+    fakeCombinedZimbraSuccess();
+
+    $arief = User::create(['name' => 'Arief', 'email' => 'arief@receiving.com', 'password' => bcrypt('password')]);
+    $michael = User::create(['name' => 'Michael Siburian', 'email' => 'michael@receiving.com', 'password' => bcrypt('password')]);
+    $dio = User::create(['name' => 'Dio Indranata', 'email' => 'dio@receiving.com', 'password' => bcrypt('password')]);
+
+    $zpmPic = User::create(['name' => 'Rizki Ardita', 'email' => 'rizki@receiving.com', 'password' => bcrypt('password')]);
+    $zpmPic->assignRole('Staff Invoice');
+    $zpmRule = PicMaterialAssignment::create(['material_type' => 'ZPM', 'assignment_mode' => 'user', 'user_id' => $zpmPic->id]);
+    $zpmRule->users()->sync([$zpmPic->id]);
+
+    $actor = User::create(['name' => 'Uploader Staff', 'email' => 'uploader@receiving.com', 'password' => bcrypt('password')]);
+    $actor->assignRole('Staff Invoice');
+
+    Vendor::create([
+        'name' => 'SAMISURYAINDAH PLASTIK',
+        'vendor_number' => 'V-9999',
+        'email' => 'samisurya@test.local',
+    ]);
+
+    // 1. Karung (ZPM) tanpa DO & tanpa PO Terbit & Lokasi baru "Gudang Banyuwangi" -> Penerima = Arief
+    $slipKarung = makeTextPdfUpload(
+        'GRS TAHAP 2-5007734805.pdf',
+        "GOODS RECEIPT SLIP\nNo Release GR : 5007734805\nNo PO : 5000009999\nTanggal PO : 23.07.2026\nTanggal Penerimaan : 18.11.2026\nTanggal Release GR : 19.11.2026\nNo. Surat Jalan : 08517/08518\n1 5000232 SACK:UREA GRANUL;PIHC;SUB;50KG D205 EA 80.000\n0 Gudang Banyuwangi\nTotal : 321.920.00\n0"
+    );
+    $verifKarung = makeTextPdfUpload(
+        'Verifikasi_5007734805.pdf',
+        "VERIFIKASI PENERIMAAN BARANG\nNomor: GRS- 61937/D/PL/D52100/IT/2026\nNomor PO : 5000009999 Tahap 2\nNomor GR (101) : 5007734805\nNama Penyedia Barang : PT Samisuryaindah Plastik\nNilai PO : Rp4.345.920.000\nNilai GR : Rp321.920.000\nNomor DO/SJ : 08517/08518\nLokasi Penerimaan : Gudang Banyuwangi\nDapat kami sampaikan"
+    );
+
+    $precheckRes = $this->actingAs($actor)->postJson(route('filament.admin.grs-rdtv.combined_upload.precheck'), [
+        'transaction_date' => '2026-11-24',
+        'rows' => [[
+            'row_id' => 'karung_auto',
+            'mode' => 'pair',
+            'jenis' => 'GRS',
+            'document_code' => 'GRS TAHAP 2-5007734805',
+            'no_grs' => '5007734805',
+            'no_po' => '5000009999',
+            'verif_no_grs' => '5007734805',
+            'verif_no_po' => '5000009999',
+            'lokasi_penerimaan' => 'Gudang Banyuwangi',
+            'tanggal_penerimaan' => '2026-11-18',
+            'material_code' => '5000232',
+            'nama_barang' => 'SACK:UREA GRANUL;PIHC;SUB;50KG',
+        ]],
+    ]);
+
+    $precheckRes->assertOk()
+        ->assertJsonPath('results.0.status', 'warning')
+        ->assertJsonPath('results.0.reason_code', 'auto_create_do')
+        ->assertJsonPath('results.0.will_auto_create_do', true)
+        ->assertJsonPath('results.0.will_auto_create_po', true)
+        ->assertJsonPath('results.0.auto_receiver_name', 'Arief')
+        ->assertJsonPath('results.0.auto_location_name', 'GUDANG BANYUWANGI');
+
+    $commitKarung = $this->actingAs($actor)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'pair',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '1',
+        'no_grs' => '5007734805',
+        'no_po' => '5000009999',
+        'no_do' => '08517/08518',
+        'lokasi_penerimaan' => 'Gudang Banyuwangi',
+        'tanggal_penerimaan' => '2026-11-18',
+        'material_code' => '5000232',
+        'nama_barang' => 'SACK:UREA GRANUL;PIHC;SUB;50KG',
+        'slip_file' => $slipKarung,
+        'verif_file' => $verifKarung,
+    ]);
+
+    $commitKarung->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('auto_created_do', true)
+        ->assertJsonPath('auto_created_po', true)
+        ->assertJsonPath('auto_created_location', true)
+        ->assertJsonPath('auto_receiver_name', 'Arief')
+        ->assertJsonPath('auto_location_name', 'GUDANG BANYUWANGI')
+        ->assertJsonPath('status', 'Terverifikasi')
+        ->assertJsonPath('email_status', 'sent');
+
+    $createdLoc = LocationReceiving::where('name', 'GUDANG BANYUWANGI')->first();
+    expect($createdLoc)->not->toBeNull();
+
+    $createdPo = PurchaseOrderIssued::where('purchase_order_no', '5000009999')->first();
+    expect($createdPo)->not->toBeNull()
+        ->and($createdPo->material_type)->toBe('ZPM');
+
+    $createdDo = DeliveryOrderReceipt::where('document_code', 'GRS TAHAP 2-5007734805')->first();
+    expect($createdDo)->not->toBeNull()
+        ->and($createdDo->received_date->toDateString())->toBe('2026-11-18')
+        ->and((int) $createdDo->received_by)->toBe($arief->id)
+        ->and($createdDo->current_location)->toBe('GUDANG BANYUWANGI');
+
+    $receiptKarung = InvoicingReceipt::where('no_po', '5000009999')->first();
+    expect($receiptKarung)->not->toBeNull()
+        ->and($receiptKarung->material_type)->toBe('ZPM')
+        ->and((int) $receiptKarung->pic_id)->toBe($zpmPic->id)
+        ->and($receiptKarung->status)->toBe('Terverifikasi');
+
+    // 2. Sparepart (ZSP) tanpa DO -> Penerima = Michael Siburian; Bahan Baku (ZRM) tanpa DO -> Penerima = Dio Indranata
+    $service = app(CombinedGrsVerificationService::class);
+    expect($service->resolveAutoReceiverInfo('ZPM')['user_id'])->toBe($arief->id)
+        ->and($service->resolveAutoReceiverInfo('ZSP')['user_id'])->toBe($michael->id)
+        ->and($service->resolveAutoReceiverInfo('Non Stock')['user_id'])->toBe($michael->id)
+        ->and($service->resolveAutoReceiverInfo('ZRM')['user_id'])->toBe($dio->id)
+        ->and($service->resolveAutoReceiverInfo('ZSM')['user_id'])->toBe($dio->id);
 });

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\InvoicingReceipt;
+
 class GrsPdfParserService
 {
     /**
@@ -178,11 +180,13 @@ class GrsPdfParserService
             'tanggal_po' => null,
             'no_do' => null,
             'vendor_name' => null,
+            'material_code' => null,
             'nama_barang' => null,
             'uoi' => null,
             'qty_penagihan' => null,
             'subtotal_exclude_ppn' => null,
             'alasan_penolakan' => null,
+            'lokasi_penerimaan' => null,
             'raw_text' => $text,
         ];
 
@@ -273,17 +277,30 @@ class GrsPdfParserService
             $data['vendor_name'] = trim($vm[1]);
         }
 
-        // 5. Item description & UoM
+        // 5. Item description, material code & UoM
         // Pola A: Format RDTV (e.g. 1 6043966 IMPELLER,PUMP:RHEINHT;RCE-80/320;POS.230 EA D601 1 1 1 10000464480 ...)
         if (preg_match('/(?:^|\n)\s*1\s+(\d{6,10})\s+([A-Z0-9\s\/\-_\.,:;]+?)\s+([A-Z]{2,4})\s+([A-Z0-9]{4})\s+(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)\s+(\d+(?:[.,]\d+)?)/mi', $text, $rm)) {
             $cleanedDesc = trim(preg_replace('/\s+/', ' ', $rm[2]));
             if (! empty($cleanedDesc)) {
+                $data['material_code'] = trim($rm[1]);
                 $data['nama_barang'] = $cleanedDesc;
                 $data['uoi'] = trim($rm[3]);
                 $data['qty_penagihan'] = (float) str_replace(',', '.', $rm[7]); // Qty Reject
             }
         }
-        // Pola B: Format GRS (e.g. 1 VIDEO CONFERENCE DEP DANBA D601 SET 1 1 1)
+        // Pola B1: Format GRS dengan Kode Material (e.g. 1 5000232 SACK:UREA GRANUL;PIHC;SUB;50KG D205 EA 80.000)
+        elseif (preg_match('/(?:^|\n)\s*1\s+(\d{6,10})\s+([A-Z0-9\s\/\-_\.,:;]+?)\s+[A-Z0-9]{4}\s+([A-Z]{2,4})\s+([0-9.,]+)/mi', $text, $gm)) {
+            $cleanedDesc = trim(preg_replace('/\s+/', ' ', $gm[2]));
+            if (! empty($cleanedDesc)) {
+                $data['material_code'] = trim($gm[1]);
+                $data['nama_barang'] = $cleanedDesc;
+                $data['uoi'] = trim($gm[3]);
+                $rawQty = str_replace('.', '', $gm[4]);
+                $rawQty = str_replace(',', '.', $rawQty);
+                $data['qty_penagihan'] = (float) $rawQty;
+            }
+        }
+        // Pola B2: Format GRS tanpa Kode Material (e.g. 1 VIDEO CONFERENCE DEP DANBA D601 SET 1 1 1)
         elseif (preg_match('/(?:Keterangan\s+)?1\s+([A-Z0-9\s\/\-_\.,]+?)\s+[A-Z0-9]{4}\s+([A-Z]{2,4})\s+(\d+)/si', $text, $im)) {
             $cleanedDesc = trim(preg_replace('/\s+/', ' ', $im[1]));
             if (! empty($cleanedDesc)) {
@@ -300,9 +317,26 @@ class GrsPdfParserService
             $data['alasan_penolakan'] = trim(preg_replace('/\s+/', ' ', $km[1]));
         }
 
-        // 7. Total Amount
-        if (preg_match('/Total\s*:\s*([0-9.,]+)/i', $text, $tm)) {
-            $clean = str_replace('.', '', $tm[1]);
+        // 6b. Lokasi Penerimaan dari kolom Keterangan GRS (mis. "0 Gudang Banyuwangi" sebelum baris "Total :")
+        if (preg_match('/Lokasi\s*Penerimaan\s*[:\s]+([^\r\n:]+?)(?=\s*(?:Dapat\s*kami|Status|Catatan|\r|\n|$))/i', $text, $lm)) {
+            $loc = trim(preg_replace('/\s+/', ' ', $lm[1]));
+            if ($loc !== '' && $loc !== '-') {
+                $data['lokasi_penerimaan'] = $loc;
+            }
+        } elseif (preg_match_all('/\b((?:Gudang|Gd\.?|Floor|Laydown|Warehouse|Dermaga|Pelabuhan|Pabrik|Site)\s+[A-Za-z0-9][A-Za-z0-9 \-_\/]{1,50}?)(?=\s*(?:\r?\n\s*Total\s*:|\r?\n|$))/i', $text, $locMatches)) {
+            $candidates = array_values(array_filter(
+                array_map(static fn (string $v): string => trim((string) preg_replace('/\s+/', ' ', $v)), $locMatches[1]),
+                static fn (string $v): bool => $v !== '' && ! preg_match('/^Gudang\s+Qty\b|^Gudang\s+Storage\b/i', $v),
+            ));
+            if ($candidates !== []) {
+                $data['lokasi_penerimaan'] = end($candidates);
+            }
+        }
+
+        // 7. Total Amount (termasuk angka yang terpotong baris oleh layout SAP, mis. "321.920.00\n0")
+        if (preg_match('/Total\s*:\s*([0-9.,]+(?:\s*\r?\n\s*\d{1,3})?)/i', $text, $tm)) {
+            $rawTotal = preg_replace('/\s+/', '', $tm[1]) ?? $tm[1];
+            $clean = str_replace('.', '', $rawTotal);
             $clean = str_replace(',', '.', $clean);
             $data['subtotal_exclude_ppn'] = (float) $clean;
         }
@@ -449,6 +483,14 @@ class GrsPdfParserService
             'tanggal_penerimaan' => $slipParsed['tanggal_penerimaan'] ?: null,
             'tanggal_po' => $slipParsed['tanggal_po'] ?: null,
             'vendor_name' => $slipParsed['vendor_name'] ?: ($verifParsed['vendor_name'] ?: null),
+            'material_code' => $slipParsed['material_code'] ?: null,
+            'nama_barang' => $slipParsed['nama_barang'] ?: null,
+            'uoi' => $slipParsed['uoi'] ?: null,
+            'qty_penagihan' => $slipParsed['qty_penagihan'],
+            'subtotal_exclude_ppn' => $slipParsed['subtotal_exclude_ppn'] ?: ($verifParsed['nilai_gr'] ?: null),
+            'nilai_po' => $verifParsed['nilai_po'] ?? null,
+            'nilai_gr' => $verifParsed['nilai_gr'] ?? null,
+            'lokasi_penerimaan' => ($verifParsed['lokasi_penerimaan'] ?? null) ?: ($slipParsed['lokasi_penerimaan'] ?? null),
             'alasan_penolakan' => $slipParsed['alasan_penolakan'] ?: null,
             'needs_ocr' => $needsOcr,
             'confidence' => $confidence,
@@ -511,6 +553,9 @@ class GrsPdfParserService
             'no_po' => null,
             'no_do' => null,
             'vendor_name' => null,
+            'lokasi_penerimaan' => null,
+            'nilai_po' => null,
+            'nilai_gr' => null,
             'nomor_surat' => null,
             'tanggal_verifikasi' => null,
             'tanggal_release_gr' => null,
@@ -613,6 +658,20 @@ class GrsPdfParserService
         }
         if (! $data['vendor_name'] && preg_match('/(?:PT|CV)\.?\s+[A-Z\s]+(?:CIPTA|INDONESIA|JAYA|MAKMUR|PERSADA|UTAMA|KARYA|ABADI|LESTARI|MANDIRI)/i', $text, $m)) {
             $data['vendor_name'] = trim($m[0]);
+        }
+
+        // 5b. Lokasi Penerimaan, Nilai PO, dan Nilai GR pada Surat Verifikasi
+        if (preg_match('/Lokasi\s*Penerimaan\s*[:\s]+([^\r\n:]+?)(?=\s*(?:Dapat\s*kami|Status|Catatan|Diajukan|\r|\n|$))/i', $text, $m)) {
+            $loc = trim(preg_replace('/\s+/', ' ', $m[1]));
+            if ($loc !== '' && $loc !== '-') {
+                $data['lokasi_penerimaan'] = $loc;
+            }
+        }
+        if (preg_match('/Nilai\s*PO\s*[:\s]+(?:Rp\.?|IDR)?\s*([0-9.,]+)/i', $text, $m)) {
+            $data['nilai_po'] = InvoicingReceipt::parseRupiah($m[1]);
+        }
+        if (preg_match('/Nilai\s*(?:GR|GRS)\s*[:\s]+(?:Rp\.?|IDR)?\s*([0-9.,]+)/i', $text, $m)) {
+            $data['nilai_gr'] = InvoicingReceipt::parseRupiah($m[1]);
         }
 
         // 6. Nomor Surat Verifikasi (e.g. GRS- 55983/D/PL/D52100/IT/2026 atau RDTV- 58872/D/PL/D52100/IT/2026)
