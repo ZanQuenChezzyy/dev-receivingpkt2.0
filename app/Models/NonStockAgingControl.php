@@ -167,11 +167,15 @@ class NonStockAgingControl extends Model
 
     public function resolvedReceivedQuantity(): float
     {
+        if ((float) ($this->initial_qty_gr ?? 0) > 0) {
+            return max(0.0, (float) $this->initial_qty_gr);
+        }
+
         if ($this->deliveryOrderReceiptDetail !== null) {
             return max(0.0, (float) $this->deliveryOrderReceiptDetail->quantity);
         }
 
-        return max(0.0, (float) ($this->initial_qty_gr ?? 0));
+        return 0.0;
     }
 
     public function resolvedIssuedQuantity(): float
@@ -210,10 +214,10 @@ class NonStockAgingControl extends Model
 
         $baseValueLc = null;
 
-        if ($this->deliveryOrderReceiptDetail !== null && (float) $this->deliveryOrderReceiptDetail->total_amount_snapshot > 0) {
-            $baseValueLc = (float) $this->deliveryOrderReceiptDetail->total_amount_snapshot;
-        } elseif ((float) ($this->initial_value_lc ?? 0) > 0) {
+        if ((float) ($this->initial_value_lc ?? 0) > 0) {
             $baseValueLc = (float) $this->initial_value_lc;
+        } elseif ($this->deliveryOrderReceiptDetail !== null && (float) $this->deliveryOrderReceiptDetail->total_amount_snapshot > 0) {
+            $baseValueLc = (float) $this->deliveryOrderReceiptDetail->total_amount_snapshot;
         } elseif ($this->purchaseOrderIssued !== null && (float) $this->purchaseOrderIssued->total_amount_in_lc > 0) {
             $po = $this->purchaseOrderIssued;
             $unitLc = (float) $po->qty_po > 0
@@ -248,9 +252,9 @@ class NonStockAgingControl extends Model
     public function resolvedMrpType(): string
     {
         return strtoupper((string) (
-            $this->deliveryOrderReceiptDetail?->mrp_type
+            $this->mrp_type_snapshot
+            ?? $this->deliveryOrderReceiptDetail?->mrp_type
             ?? $this->purchaseOrderIssued?->mrp_type
-            ?? $this->mrp_type_snapshot
             ?? 'NONSTOCK'
         ));
     }

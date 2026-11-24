@@ -14,7 +14,8 @@ class ImportNonStockAgingCommand extends Command
                             {path : Path lengkap file Excel (.xlsx) atau CSV (.csv) Monitoring PD & Non-Stock}
                             {--active-only : Hanya mengimpor item berstatus aktif (Belum Diambil, On Check, Scheduled Hold)}
                             {--dry-run : Simulasi impor tanpa menulis perubahan ke database}
-                            {--sync-web : Jalankan sinkronisasi transaksi DO Web 2.0 setelah impor selesai}';
+                            {--sync-web : Jalankan sinkronisasi transaksi DO Web 2.0 setelah impor selesai}
+                            {--replace-baseline : Hapus data lama di luar file ini yang belum memiliki tindak lanjut manual}';
 
     /**
      * @var string
@@ -34,6 +35,7 @@ class ImportNonStockAgingCommand extends Command
         $dryRun = (bool) $this->option('dry-run');
         $activeOnly = (bool) $this->option('active-only');
         $syncWeb = (bool) $this->option('sync-web');
+        $replaceBaseline = (bool) $this->option('replace-baseline');
 
         $this->info(($dryRun ? '[DRY RUN] ' : '')."Memproses file: {$path}");
 
@@ -42,6 +44,7 @@ class ImportNonStockAgingCommand extends Command
                 'only_active_statuses' => $activeOnly,
                 'dry_run' => $dryRun,
                 'sync_web_do_after' => $syncWeb,
+                'replace_baseline' => $replaceBaseline,
             ]);
         } catch (\Throwable $e) {
             $this->error('Impor gagal: '.$e->getMessage());
@@ -57,6 +60,7 @@ class ImportNonStockAgingCommand extends Command
                 ['Baris PO-Item Dipindai', (string) $result['rows_scanned']],
                 ['Data Baru Dibuat', (string) $result['created']],
                 ['Data Diperbarui', (string) $result['updated']],
+                ['Data Usang Dihapus', (string) ($result['deleted_stale'] ?? 0)],
                 ['Dilewati (Filter Status)', (string) $result['skipped']],
                 ['Cocok PO Terbit (DB)', (string) $result['matched_db_po']],
                 ['Cocok DO Web 2.0 (DB)', (string) $result['matched_db_do']],

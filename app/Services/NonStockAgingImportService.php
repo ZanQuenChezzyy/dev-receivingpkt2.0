@@ -61,6 +61,7 @@ class NonStockAgingImportService
         $dryRun = (bool) ($options['dry_run'] ?? false);
         $importedBy = $options['imported_by'] ?? null;
         $syncWebDoAfter = (bool) ($options['sync_web_do_after'] ?? false);
+        $replaceBaseline = (bool) ($options['replace_baseline'] ?? false);
 
         $header = file_get_contents($filePath, false, null, 0, 4);
         $isXlsx = is_string($header) && str_starts_with($header, "PK\x03\x04");
@@ -124,7 +125,8 @@ class NonStockAgingImportService
             $dryRun,
             $importedBy,
             $mode,
-            $sheetsDetected
+            $sheetsDetected,
+            $replaceBaseline
         );
 
         if (! $dryRun && $syncWebDoAfter) {
@@ -526,7 +528,7 @@ class NonStockAgingImportService
             $isGrsFormat = false;
             $records = [];
 
-            while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            while (($row = fgetcsv($handle, 0, $delimiter, '"', '')) !== false) {
                 $cells = [];
                 foreach ($row as $idx => $val) {
                     $clean = trim((string) $val);
@@ -708,6 +710,7 @@ class NonStockAgingImportService
         ?int $importedBy,
         string $mode,
         array $sheetsDetected,
+        bool $replaceBaseline = false,
     ): array {
         $summary = [
             'mode' => $mode,
@@ -715,6 +718,7 @@ class NonStockAgingImportService
             'rows_scanned' => count($parsedRecords),
             'created' => 0,
             'updated' => 0,
+            'deleted_stale' => 0,
             'skipped' => 0,
             'matched_db_po' => 0,
             'matched_db_do' => 0,
@@ -792,8 +796,10 @@ class NonStockAgingImportService
             $onlyActiveStatuses,
             $dryRun,
             $importedBy,
+            $replaceBaseline,
             &$summary
         ): void {
+            $touchedIds = [];
             foreach ($parsedRecords as $key => $row) {
                 $status = $this->mapOperationalStatus((string) ($row['status_raw'] ?? ''), (bool) ($row['physical_checked'] ?? false));
 
@@ -815,30 +821,32 @@ class NonStockAgingImportService
                     $summary['matched_db_do']++;
                 }
 
-                // Tentukan MRP Type (prioritas: DO Detail -> DB PO -> GRS -> MONITORING -> default NONSTOCK)
+                // Tentukan MRP Type (prioritas: GRS/MONITORING spreadsheet aktual -> DO Detail -> DB PO -> default NONSTOCK)
                 $mrpType = strtoupper((string) (
-                    $dbDoDetail?->mrp_type
+                    ($grs['mrp_type'] ?? null)
+                    ?? ($row['mrp_type'] ?? null)
+                    ?? $dbDoDetail?->mrp_type
                     ?? $dbPo?->mrp_type
-                    ?? $grs['mrp_type']
-                    ?? $row['mrp_type']
                     ?? 'NONSTOCK'
                 ));
                 if ($mrpType === '') {
                     $mrpType = 'NONSTOCK';
                 }
 
-                // Tentukan Tanggal GRS (T0)
+                // Tentukan Tanggal GRS (T0) — prioritaskan Posting Date SAP dari sheet GRS
                 $grsDate = $this->resolveGrsDateFromSources($dbDoDetail, $grs['posting_date'] ?? null, $row['grs_posting_date'] ?? null);
                 if ($grsDate === null) {
                     $summary['missing_grs_date_count']++;
                 }
 
                 // Tentukan Qty GR & Nilai IDR (Local Currency)
-                $qtyGr = max(
-                    (float) ($row['qty_gr'] ?? 0),
-                    (float) ($grs['qty_gr'] ?? 0),
-                    (float) ($dbDoDetail?->quantity ?? 0),
-                );
+                $qtyGr = (float) ($row['qty_gr'] ?? 0);
+                if ($qtyGr <= 0) {
+                    $qtyGr = (float) ($grs['qty_gr'] ?? 0);
+                }
+                if ($qtyGr <= 0) {
+                    $qtyGr = (float) ($dbDoDetail?->quantity ?? 0);
+                }
                 if ($qtyGr <= 0 && $dbPo !== null && (float) $dbPo->qty_po > 0) {
                     $qtyGr = (float) $dbPo->qty_po;
                 }
@@ -925,6 +933,8 @@ class NonStockAgingImportService
                         'last_followup_note' => $catatan,
                     ]);
 
+                    $touchedIds[] = $created->id;
+
                     NonStockAgingLog::create([
                         'nonstock_aging_control_id' => $created->id,
                         'action_type' => 'import_baseline',
@@ -941,69 +951,66 @@ class NonStockAgingImportService
                 }
 
                 $summary['updated']++;
+                $touchedIds[] = $control->id;
 
                 if ($dryRun) {
                     continue;
                 }
 
-                // Upsert aman: lengkapi data yang kosong/terbaru tanpa menimpa kontrol manual web (Scheduled Hold / Eskalasi AVP & VP)
+                // Upsert aktual: sinkronkan nilai/status/tanggal dari spreadsheet tanpa menimpa kontrol manual web (Scheduled Hold / Eskalasi)
                 if ($control->purchase_order_issued_id === null && $dbPo !== null) {
                     $control->purchase_order_issued_id = $dbPo->id;
                 }
                 if ($control->delivery_order_receipt_detail_id === null && $dbDoDetail !== null) {
                     $control->delivery_order_receipt_detail_id = $dbDoDetail->id;
                 }
-                if (blank($control->mrp_type_snapshot) || $control->mrp_type_snapshot === 'NONSTOCK') {
-                    $control->mrp_type_snapshot = $mrpType;
-                }
+                $control->mrp_type_snapshot = $mrpType;
                 if (blank($control->description_snapshot)) {
-                    $control->description_snapshot = $dbDoDetail?->description ?? $dbPo?->description ?? ($grs['description'] ?? null) ?? ($row['description'] ?? null);
+                    $control->description_snapshot = ($row['description'] ?? null) ?? ($grs['description'] ?? null) ?? $dbDoDetail?->description ?? $dbPo?->description;
                 }
                 if (blank($control->material_code_snapshot)) {
-                    $control->material_code_snapshot = $dbDoDetail?->material_code ?? $dbPo?->material_code ?? ($grs['material_code'] ?? null) ?? ($row['material_code'] ?? null);
+                    $control->material_code_snapshot = ($row['material_code'] ?? null) ?? ($grs['material_code'] ?? null) ?? $dbDoDetail?->material_code ?? $dbPo?->material_code;
                 }
                 if (blank($control->vendor_name_snapshot)) {
-                    $control->vendor_name_snapshot = $dbPo?->vendor_name ?? ($row['vendor_name'] ?? null) ?? ($r02['vendor_name'] ?? null);
+                    $control->vendor_name_snapshot = ($row['vendor_name'] ?? null) ?? $dbPo?->vendor_name ?? ($r02['vendor_name'] ?? null);
                 }
-                if (blank($control->requisitioner_raw) && filled($requisitionerRaw)) {
+                if (filled($requisitionerRaw)) {
                     $control->requisitioner_raw = $requisitionerRaw;
                 }
-                if ($control->grs_posting_date === null && $grsDate !== null) {
+                if ($grsDate !== null) {
                     $control->grs_posting_date = $grsDate;
                 }
-                if (($control->initial_qty_gr === null || $control->initial_qty_gr <= 0) && $qtyGr > 0) {
+                if ($qtyGr > 0) {
                     $control->initial_qty_gr = $qtyGr;
                 }
-                if ((float) ($row['qty_issued'] ?? 0) > (float) $control->manual_qty_issued) {
-                    $control->manual_qty_issued = (float) $row['qty_issued'];
-                }
-                if (($control->initial_value_lc === null || $control->initial_value_lc <= 0) && $valueLc > 0) {
+                $control->manual_qty_issued = (float) ($row['qty_issued'] ?? 0);
+                if ($valueLc > 0) {
                     $control->initial_value_lc = $valueLc;
                 }
-                if (blank($control->location_text) && filled($locationText)) {
+                if (filled($locationText)) {
                     $control->location_text = $locationText;
                 }
-                if ($control->requesting_unit_id === null && $matchedUnit !== null) {
+                if ($matchedUnit !== null) {
                     $control->requesting_unit_id = $matchedUnit->id;
                 }
-                if (blank($control->pic_name_override) && filled($parsedContact['name'])) {
+                if (filled($parsedContact['name'])) {
                     $control->pic_name_override = $parsedContact['name'];
                 }
-                if (blank($control->pic_phone_override) && filled($parsedContact['phone'])) {
+                if (filled($parsedContact['phone'])) {
                     $control->pic_phone_override = $parsedContact['phone'];
                 }
                 if ($control->operational_status !== AgingOperationalStatus::ScheduledHold) {
                     $control->operational_status = $status;
                 }
-                if (! $control->physical_checked && (bool) ($row['physical_checked'] ?? false)) {
-                    $control->physical_checked = true;
+                $control->physical_checked = $status === AgingOperationalStatus::OnCheck ? false : (bool) ($row['physical_checked'] ?? false);
+                if ($control->physical_checked) {
                     $control->warehouse_validated_at ??= ($row['updated_date'] ?? now());
                 }
                 if ($status === AgingOperationalStatus::Dipindah && blank($control->moved_to_location)) {
                     $control->moved_to_location = $movedLocation;
                     $control->moved_at ??= ($row['updated_date'] ?? now());
                 }
-                if (blank($control->last_followup_note) && filled($catatan)) {
+                if (filled($catatan)) {
                     $control->last_followup_note = $catatan;
                 }
                 if ($control->followup_stage === AgingFollowupStage::BelumDitindaklanjuti && $inferredStage !== AgingFollowupStage::BelumDitindaklanjuti) {
@@ -1011,6 +1018,19 @@ class NonStockAgingImportService
                 }
 
                 $control->save();
+            }
+
+            if ($replaceBaseline && ! empty($touchedIds)) {
+                $staleQuery = NonStockAgingControl::query()
+                    ->whereNotIn('id', $touchedIds)
+                    ->where('operational_status', '!=', AgingOperationalStatus::ScheduledHold->value)
+                    ->where('reminder_count', 0);
+
+                $summary['deleted_stale'] = (int) $staleQuery->count();
+
+                if (! $dryRun && $summary['deleted_stale'] > 0) {
+                    $staleQuery->delete();
+                }
             }
         };
 
@@ -1025,6 +1045,10 @@ class NonStockAgingImportService
 
     protected function resolveGrsDateFromSources(?DeliveryOrderReceiptDetail $dbDoDetail, ?string $grsSheetDate, ?string $monitoringDate): ?string
     {
+        if ($grsSheetDate !== null) {
+            return $grsSheetDate;
+        }
+
         if ($dbDoDetail?->deliveryOrderReceipt !== null) {
             $webGrsDate = $dbDoDetail->deliveryOrderReceipt->grsRdtvItems
                 ->filter(fn ($item): bool => strtoupper((string) $item->grsRdtv?->category) === 'GRS' && $item->grsRdtv?->transaction_date !== null)
@@ -1035,10 +1059,6 @@ class NonStockAgingImportService
             if ($webGrsDate instanceof Carbon) {
                 return $webGrsDate->toDateString();
             }
-        }
-
-        if ($grsSheetDate !== null) {
-            return $grsSheetDate;
         }
 
         if ($monitoringDate !== null) {
@@ -1072,6 +1092,26 @@ class NonStockAgingImportService
         float $qtyGr,
         int &$foreignCurrencyUnconvertedCount,
     ): float {
+        // 1. Prioritaskan Amount in LC langsung dari SAP GRS 105 (paling akurat dalam Rupiah sesuai qty GR)
+        if ($grs !== null && (float) ($grs['amount_lc'] ?? 0) > 0) {
+            return round((float) $grs['amount_lc'], 2);
+        }
+
+        if ((float) ($row['amount_lc_direct'] ?? 0) > 0) {
+            return round((float) $row['amount_lc_direct'], 2);
+        }
+
+        // 2. Fallback ke nilai IDR dari sheet MONITORING bila mata uang IDR
+        $currency = strtoupper(trim((string) ($row['currency'] ?? '')));
+        $rawVal = (float) ($row['raw_total_value'] ?? 0);
+        if ($rawVal <= 0) {
+            $rawVal = (float) ($row['raw_avail_value'] ?? 0);
+        }
+        if ($rawVal > 0 && ($currency === '' || $currency === 'IDR' || $currency === 'RP')) {
+            return round($rawVal, 2);
+        }
+
+        // 3. Fallback ke DB DO Detail / DB PO / R02
         if ($dbDoDetail !== null && (float) $dbDoDetail->total_amount_snapshot > 0) {
             return round((float) $dbDoDetail->total_amount_snapshot, 2);
         }
@@ -1085,10 +1125,6 @@ class NonStockAgingImportService
             return round($unitLc * $effectiveQty, 2);
         }
 
-        if ($grs !== null && (float) ($grs['amount_lc'] ?? 0) > 0) {
-            return round((float) $grs['amount_lc'], 2);
-        }
-
         if ($r02 !== null && (float) ($r02['amount_lc'] ?? 0) > 0) {
             $r02QtyPo = (float) ($r02['qty_po'] ?? 0);
             if ($r02QtyPo > 0 && $qtyGr > 0) {
@@ -1098,21 +1134,7 @@ class NonStockAgingImportService
             return round((float) $r02['amount_lc'], 2);
         }
 
-        if ((float) ($row['amount_lc_direct'] ?? 0) > 0) {
-            return round((float) $row['amount_lc_direct'], 2);
-        }
-
-        $currency = strtoupper(trim((string) ($row['currency'] ?? '')));
-        $rawVal = (float) ($row['raw_total_value'] ?? 0);
-        if ($rawVal <= 0) {
-            $rawVal = (float) ($row['raw_avail_value'] ?? 0);
-        }
-
         if ($rawVal > 0) {
-            if ($currency === '' || $currency === 'IDR' || $currency === 'RP') {
-                return round($rawVal, 2);
-            }
-
             // Mata uang asing tanpa konversi Local Currency tidak boleh dijumlahkan mentah sebagai Rupiah
             $foreignCurrencyUnconvertedCount++;
         }
