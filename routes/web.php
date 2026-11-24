@@ -84,6 +84,10 @@ Route::post('/admin/grs-rdtv/combined-upload/commit', [CombinedGrsVerificationCo
     ->middleware(['web', 'auth'])
     ->name('filament.admin.grs-rdtv.combined_upload.commit');
 
+Route::post('/admin/grs-rdtv/combined-upload/resend-email', [CombinedGrsVerificationController::class, 'resendEmail'])
+    ->middleware(['web', 'auth'])
+    ->name('filament.admin.grs-rdtv.combined_upload.resend_email');
+
 Route::delete('/admin/invoicing-receipts/import-chunks', [ChunkedImportUploadController::class, 'destroy'])
     ->middleware(['web', 'auth'])
     ->name('filament.admin.resources.invoicing-receipts.import_chunks.destroy');

@@ -99,6 +99,7 @@ class CombinedGrsVerificationUpload extends Page
             'inspectUrl' => route('filament.admin.grs-rdtv.combined_upload.inspect', absolute: false),
             'precheckUrl' => route('filament.admin.grs-rdtv.combined_upload.precheck', absolute: false),
             'commitUrl' => route('filament.admin.grs-rdtv.combined_upload.commit', absolute: false),
+            'resendEmailUrl' => route('filament.admin.grs-rdtv.combined_upload.resend_email', absolute: false),
             'defaultDate' => now()->toDateString(),
             'emailAutoSendEnabled' => $renderer->isAutoSendEnabled(),
             'emailTestModeEnabled' => $renderer->isTestModeEnabled(),

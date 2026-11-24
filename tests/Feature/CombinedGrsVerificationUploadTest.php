@@ -1221,3 +1221,60 @@ test('GrsPdfParserService extracts vendor_name cleanly without bleeding into pre
         ->and($parsed['no_grs'])->toBe('5007734805')
         ->and($parsed['no_po'])->toBe('5000009407');
 });
+
+test('Skipped email can be updated with vendor_email and resent via resend-email endpoint', function (): void {
+    fakeCombinedZimbraSuccess();
+
+    $user = User::create([
+        'name' => 'Staff Resend',
+        'email' => 'resend_staff@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Staff Invoice');
+
+    // Vendor tanpa alamat email
+    $fixture = createEligibleDoFixture('PKT-DO-9901', '5300069901', 'SJ-9901', 'PT Tanpa Email', '');
+
+    $slip = makeTextPdfUpload('PKT-DO-9901.pdf', 'GOODS RECEIPT SLIP No Release GR : 5007990101 No PO : 5300069901');
+    $verif = makeTextPdfUpload('Verif_9901.pdf', 'VERIFIKASI PENERIMAAN BARANG Nomor GRS (105) 5007990101 Nomor PO 5300069901');
+
+    // 1. Commit awal -> tersimpan & Terverifikasi, namun email_status = skipped
+    $commitRes = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'pair',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '1',
+        'no_grs' => '5007990101',
+        'no_po' => '5300069901',
+        'slip_file' => $slip,
+        'verif_file' => $verif,
+    ]);
+
+    $commitRes->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'Terverifikasi')
+        ->assertJsonPath('email_status', 'skipped');
+
+    $receiptId = $commitRes->json('receipt_id');
+
+    // 2. Email format tidak valid -> ditolak 422 dengan pesan jelas
+    $invalidRes = $this->actingAs($user)->postJson(route('filament.admin.grs-rdtv.combined_upload.resend_email'), [
+        'receipt_id' => $receiptId,
+        'vendor_email' => 'bukan-email-valid',
+    ]);
+    $invalidRes->assertStatus(422)
+        ->assertJsonPath('success', false);
+
+    // 3. Isi email vendor valid & kirim ulang -> tersimpan ke receipt & master vendor, email terkirim!
+    $resendRes = $this->actingAs($user)->postJson(route('filament.admin.grs-rdtv.combined_upload.resend_email'), [
+        'receipt_id' => $receiptId,
+        'vendor_email' => 'info@tanpaemail.test',
+    ]);
+    $resendRes->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('email_status', 'sent')
+        ->assertJsonPath('email_vendor', 'info@tanpaemail.test');
+
+    expect(InvoicingReceipt::find($receiptId)->email_vendor)->toBe('info@tanpaemail.test')
+        ->and($fixture['vendor']->fresh()->email)->toContain('info@tanpaemail.test');
+});

@@ -94,6 +94,7 @@ class CombinedGrsVerificationController extends Controller
             'lokasi_penerimaan' => ['nullable', 'string', 'max:100'],
             'tanggal_penerimaan' => ['nullable', 'string', 'max:30'],
             'vendor_name' => ['nullable', 'string', 'max:150'],
+            'vendor_email' => ['nullable', 'string', 'max:500'],
             'material_code' => ['nullable', 'string', 'max:30'],
             'nama_barang' => ['nullable', 'string', 'max:500'],
             'target_receipt_id' => ['nullable', 'integer'],
@@ -105,6 +106,26 @@ class CombinedGrsVerificationController extends Controller
             payload: $validated,
             slipFile: $request->file('slip_file'),
             verifFile: $request->file('verif_file'),
+            actorId: $request->user()?->id,
+        );
+
+        return response()->json($result, ($result['success'] ?? false) ? 200 : 422);
+    }
+
+    /**
+     * Memperbarui alamat email vendor (jika diisi) pada Invoice Barang yang emailnya tertahan/gagal,
+     * lalu mencoba mengirim ulang email verifikasi via Zimbra.
+     */
+    public function resendEmail(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'receipt_id' => ['required', 'integer', 'exists:invoicing_receipts,id'],
+            'vendor_email' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $result = $this->service->updateVendorEmailAndResend(
+            receiptId: (int) $validated['receipt_id'],
+            vendorEmail: trim((string) ($validated['vendor_email'] ?? '')),
             actorId: $request->user()?->id,
         );
 

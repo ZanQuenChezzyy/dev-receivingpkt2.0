@@ -449,6 +449,7 @@ class CombinedGrsVerificationService
         $overrideLokasi = trim((string) ($payload['lokasi_penerimaan'] ?? ''));
         $overrideTanggalPenerimaan = trim((string) ($payload['tanggal_penerimaan'] ?? ''));
         $overrideVendorName = trim((string) ($payload['vendor_name'] ?? ''));
+        $overrideVendorEmail = trim((string) ($payload['vendor_email'] ?? ''));
         $overrideMaterialCode = trim((string) ($payload['material_code'] ?? ''));
         $overrideNamaBarang = trim((string) ($payload['nama_barang'] ?? ''));
         $targetReceiptId = isset($payload['target_receipt_id']) && is_numeric($payload['target_receipt_id'])
@@ -466,6 +467,7 @@ class CombinedGrsVerificationService
                 targetReceiptId: $targetReceiptId,
                 sendEmail: $sendEmail,
                 actorId: $actorId,
+                overrideVendorEmail: $overrideVendorEmail,
             );
         }
 
@@ -540,6 +542,7 @@ class CombinedGrsVerificationService
                         targetReceiptId: $existingReceipt->id,
                         sendEmail: $sendEmail,
                         actorId: $actorId,
+                        overrideVendorEmail: $overrideVendorEmail,
                     );
 
                     if ($reuseRes['success'] ?? false) {
@@ -584,6 +587,7 @@ class CombinedGrsVerificationService
                 $overrideLokasi,
                 $overrideTanggalPenerimaan,
                 $overrideVendorName,
+                $overrideVendorEmail,
                 $overrideMaterialCode,
                 $overrideNamaBarang,
                 $detectedNoPo,
@@ -674,6 +678,14 @@ class CombinedGrsVerificationService
 
                     if (empty($receipt->no_do) && $overrideNoDo !== '') {
                         $receiptUpdates['no_do'] = $overrideNoDo;
+                    }
+
+                    if ($overrideVendorEmail !== '') {
+                        $validEmails = $this->parseValidEmails($overrideVendorEmail);
+                        if ($validEmails !== []) {
+                            $receiptUpdates['email_vendor'] = implode(', ', $validEmails);
+                            $this->syncMissingEmailToVendorMaster($receipt->vendor, $validEmails);
+                        }
                     }
 
                     if ($mode === 'pair' && $verifFile instanceof UploadedFile) {
@@ -1139,6 +1151,86 @@ class CombinedGrsVerificationService
     }
 
     /**
+     * Memperbarui email vendor pada Invoice Barang yang pengiriman emailnya ditahan/gagal,
+     * menyinkronkan ke Master Vendor bila email di master masih kosong, lalu mengirim ulang email verifikasi.
+     *
+     * @return array<string, mixed>
+     */
+    public function updateVendorEmailAndResend(
+        int $receiptId,
+        string $vendorEmail = '',
+        ?int $actorId = null,
+    ): array {
+        $receipt = InvoicingReceipt::with(['grsRdtvItem', 'vendor', 'pic'])->find($receiptId);
+        if (! $receipt) {
+            return [
+                'success' => false,
+                'email_status' => 'failed',
+                'message' => "Invoice Barang #{$receiptId} tidak ditemukan.",
+            ];
+        }
+
+        if ($vendorEmail !== '') {
+            $validEmails = $this->parseValidEmails($vendorEmail);
+            if ($validEmails === []) {
+                return [
+                    'success' => false,
+                    'email_status' => 'skipped',
+                    'message' => 'Format alamat email vendor tidak valid. Contoh: vendor@perusahaan.com (pisahkan dengan koma bila lebih dari satu).',
+                ];
+            }
+
+            $receipt->email_vendor = implode(', ', $validEmails);
+            $receipt->save();
+            $this->syncMissingEmailToVendorMaster($receipt->vendor, $validEmails);
+        }
+
+        $freshReceipt = $receipt->fresh(['grsRdtvItem', 'vendor', 'pic']);
+        $emailResult = $this->emailDispatcher->dispatchIfEligible(
+            receipt: $freshReceipt,
+            triggerSource: 'combined_upload_retry',
+            userId: $actorId,
+        );
+
+        $isSent = ($emailResult['status'] ?? '') === 'sent';
+
+        return [
+            'success' => $isSent,
+            'receipt_id' => $freshReceipt->id,
+            'email_vendor' => $freshReceipt->email_vendor,
+            'email_status' => $emailResult['status'],
+            'email_message' => $emailResult['message'],
+            'message' => $emailResult['message'],
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function parseValidEmails(string $raw): array
+    {
+        return array_values(array_unique(array_filter(
+            Vendor::parseEmails($raw),
+            static fn (string $email): bool => (bool) filter_var($email, FILTER_VALIDATE_EMAIL),
+        )));
+    }
+
+    /**
+     * @param  list<string>  $validEmails
+     */
+    protected function syncMissingEmailToVendorMaster(?Vendor $vendor, array $validEmails): void
+    {
+        if (! $vendor || $validEmails === []) {
+            return;
+        }
+
+        $existing = Vendor::parseEmails($vendor->email);
+        if ($existing === []) {
+            $vendor->update(['email' => $validEmails]);
+        }
+    }
+
+    /**
      * Memproses baris Mode C (Surat Verifikasi saja, tanpa Slip di batch ini) dengan mencocokkan ke InvoicingReceipt eksisting.
      *
      * @return array<string, mixed>
@@ -1153,6 +1245,7 @@ class CombinedGrsVerificationService
         ?int $targetReceiptId,
         bool $sendEmail,
         ?int $actorId,
+        string $overrideVendorEmail = '',
     ): array {
         if (! $verifFile instanceof UploadedFile) {
             return [
@@ -1191,6 +1284,7 @@ class CombinedGrsVerificationService
                 $noGrs,
                 $noRdtv,
                 $noDo,
+                $overrideVendorEmail,
                 &$storedPath,
             ): void {
                 $storedPath = $verifFile->store($storageDir, 'public') ?: null;
@@ -1215,6 +1309,14 @@ class CombinedGrsVerificationService
 
                 if (empty($receipt->no_do) && $noDo !== '') {
                     $receipt->no_do = $noDo;
+                }
+
+                if ($overrideVendorEmail !== '') {
+                    $validEmails = $this->parseValidEmails($overrideVendorEmail);
+                    if ($validEmails !== []) {
+                        $receipt->email_vendor = implode(', ', $validEmails);
+                        $this->syncMissingEmailToVendorMaster($receipt->vendor, $validEmails);
+                    }
                 }
 
                 $receipt->save();

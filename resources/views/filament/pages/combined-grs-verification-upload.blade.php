@@ -238,6 +238,36 @@
                     </div>
                 </div>
 
+                {{-- Pemberitahuan Khusus Email Ditahan / Gagal --}}
+                <template x-if="emailRetryableCount > 0">
+                    <div class="rounded-2xl border border-amber-300 dark:border-amber-700/80 bg-amber-50/90 dark:bg-amber-950/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="space-y-0.5 text-xs">
+                            <div class="font-bold text-amber-900 dark:text-amber-200">
+                                <span x-text="emailRetryableCount"></span> dokumen berhasil disimpan & Terverifikasi, namun pengiriman emailnya ditahan / gagal
+                            </div>
+                            <p class="text-amber-800 dark:text-amber-300/90 leading-relaxed">
+                                Silakan lengkapi atau perbaiki alamat <strong>Email Vendor</strong> pada baris yang ditandai <strong>Email Ditahan / Gagal</strong> di bawah, lalu klik <strong>Simpan & Kirim</strong> per baris atau tombol kirim massal di samping.
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 shrink-0">
+                            <button
+                                type="button"
+                                @click="activeFilter = 'email_pending'"
+                                class="px-3 py-1.5 rounded-xl text-xs font-semibold border border-amber-400/70 dark:border-amber-700 bg-white dark:bg-gray-900 text-amber-900 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-900/40 transition"
+                            >
+                                Lihat Daftar (<span x-text="emailRetryableCount"></span>)
+                            </button>
+                            <button
+                                type="button"
+                                @click="resendAllSkippedEmails()"
+                                :disabled="isCommitting || isResendingBatch"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 transition"
+                                x-text="isResendingBatch ? 'Mengirim Email...' : ('Kirim Semua Email Tertahan (' + emailRetryableCount + ')')"
+                            ></button>
+                        </div>
+                    </div>
+                </template>
+
                 {{-- Berkas Belum Terklasifikasi (jika ada) --}}
                 <template x-if="unknownFiles.length > 0">
                     <div class="rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/40 p-4 space-y-3">
@@ -535,13 +565,38 @@
                                             <p
                                                 class="text-[11px] leading-relaxed"
                                                 :class="{
-                                                    'text-emerald-700 dark:text-emerald-300': row.commit_status === 'success',
+                                                    'text-emerald-700 dark:text-emerald-300': row.commit_status === 'success' && row.email_status !== 'skipped' && row.email_status !== 'failed',
+                                                    'text-amber-700 dark:text-amber-300 font-medium': (row.commit_status === 'success' && (row.email_status === 'skipped' || row.email_status === 'failed')) || (row.commit_status === 'idle' && row.precheck_status === 'warning'),
                                                     'text-rose-700 dark:text-rose-300 font-medium': row.commit_status === 'error' || row.precheck_status === 'blocked',
-                                                    'text-amber-700 dark:text-amber-300': row.commit_status === 'idle' && row.precheck_status === 'warning',
                                                     'text-gray-600 dark:text-gray-400': row.commit_status === 'idle' && (row.precheck_status === 'ready' || row.precheck_status === 'pending'),
                                                 }"
                                                 x-text="row.commit_status !== 'idle' ? row.commit_message : row.precheck_message"
                                             ></p>
+
+                                            {{-- Input Email Vendor (sebelum simpan bila email kosong, atau sesudah simpan bila email ditahan/gagal) --}}
+                                            <template x-if="(row.mode !== 'slip_only' && row.commit_status === 'idle' && row.precheck_status !== 'pending' && row.precheck_status !== 'blocked' && row.vendor_emails.length === 0) || (row.commit_status === 'success' && (row.email_status === 'skipped' || row.email_status === 'failed'))">
+                                                <div class="pt-1 space-y-1.5">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <input
+                                                            type="text"
+                                                            :value="row.vendor_email_input"
+                                                            @input="updateRowVendorEmail(row, $event.target.value)"
+                                                            :disabled="isCommitting || row.is_resending_email"
+                                                            placeholder="Isi email vendor (mis. vendor@email.com)..."
+                                                            class="w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/30 px-2.5 py-1 text-[11px] text-gray-900 dark:text-white placeholder-amber-500/80 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                                                        />
+                                                        <template x-if="row.commit_status === 'success' && row.saved_receipt_id">
+                                                            <button
+                                                                type="button"
+                                                                @click="resendRowEmail(row)"
+                                                                :disabled="isCommitting || isResendingBatch || row.is_resending_email"
+                                                                class="shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 transition"
+                                                                x-text="row.is_resending_email ? 'Mengirim...' : 'Simpan & Kirim'"
+                                                            ></button>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
                                         </td>
 
                                         {{-- Aksi Hapus Baris --}}
@@ -723,6 +778,28 @@
                                 </template>
                             </div>
                             <p class="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed" x-text="row.commit_status !== 'idle' ? row.commit_message : row.precheck_message"></p>
+
+                            <template x-if="(row.mode !== 'slip_only' && row.commit_status === 'idle' && row.precheck_status !== 'pending' && row.precheck_status !== 'blocked' && row.vendor_emails.length === 0) || (row.commit_status === 'success' && (row.email_status === 'skipped' || row.email_status === 'failed'))">
+                                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+                                    <input
+                                        type="text"
+                                        :value="row.vendor_email_input"
+                                        @input="updateRowVendorEmail(row, $event.target.value)"
+                                        :disabled="isCommitting || row.is_resending_email"
+                                        placeholder="Isi email vendor (mis. vendor@email.com)..."
+                                        class="w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/30 px-2.5 py-1.5 text-xs text-gray-900 dark:text-white"
+                                    />
+                                    <template x-if="row.commit_status === 'success' && row.saved_receipt_id">
+                                        <button
+                                            type="button"
+                                            @click="resendRowEmail(row)"
+                                            :disabled="isCommitting || isResendingBatch || row.is_resending_email"
+                                            class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 transition"
+                                            x-text="row.is_resending_email ? 'Mengirim...' : 'Simpan & Kirim'"
+                                        ></button>
+                                    </template>
+                                </div>
+                            </template>
                         </div>
                     </template>
                 </div>
@@ -730,21 +807,37 @@
                 {{-- Footer Action Bar --}}
                 <div class="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/80 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                     <div class="text-xs text-gray-600 dark:text-gray-300 space-y-0.5">
-                        <div>
-                            <span class="font-bold text-gray-900 dark:text-white" x-text="readySelectedCount"></span> baris siap diproses
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span><span class="font-bold text-gray-900 dark:text-white" x-text="readySelectedCount"></span> baris siap diproses</span>
                             <span x-show="successCount > 0">
                                 • <span class="font-bold text-emerald-600 dark:text-emerald-400" x-text="successCount"></span> berhasil disimpan
+                            </span>
+                            <span x-show="emailSentCount > 0">
+                                • <span class="font-bold text-teal-600 dark:text-teal-400" x-text="emailSentCount"></span> email terkirim
+                            </span>
+                            <span x-show="emailRetryableCount > 0">
+                                • <span class="font-bold text-amber-600 dark:text-amber-400" x-text="emailRetryableCount"></span> email ditahan/gagal
                             </span>
                             <span x-show="errorCount > 0">
                                 • <span class="font-bold text-rose-600 dark:text-rose-400" x-text="errorCount"></span> gagal
                             </span>
                         </div>
                         <div class="text-[11px] text-gray-500 dark:text-gray-400">
-                            Setiap baris disimpan secara atomik. Baris yang gagal dapat diperbaiki dan dicoba ulang tanpa mengulang baris yang sudah berhasil.
+                            Setiap baris disimpan secara atomik. Baris yang emailnya ditahan dapat diisi alamat email vendor lalu dikirim ulang langsung di halaman ini.
                         </div>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            x-show="emailRetryableCount > 0 && !isCommitting"
+                            @click="resendAllSkippedEmails()"
+                            :disabled="isResendingBatch"
+                            class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold border border-amber-400 dark:border-amber-700 bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 transition"
+                        >
+                            <span x-text="isResendingBatch ? 'Mengirim Email...' : ('Kirim Email Tertahan (' + emailRetryableCount + ')')"></span>
+                        </button>
+
                         <button
                             type="button"
                             x-show="errorCount > 0 && !isCommitting"
@@ -782,6 +875,7 @@
                 isScanning: false,
                 isPrechecking: false,
                 isCommitting: false,
+                isResendingBatch: false,
                 progressPercent: 0,
                 activityMessage: '',
                 activeFilter: 'all',
@@ -800,6 +894,7 @@
                     { key: 'slip_only', label: 'Slip Saja' },
                     { key: 'verif_only', label: 'Verifikasi Saja' },
                     { key: 'attention', label: 'Perlu Perhatian' },
+                    { key: 'email_pending', label: 'Email Ditahan / Gagal' },
                 ],
 
                 init() {},
@@ -811,17 +906,28 @@
                 get filteredRows() {
                     if (this.activeFilter === 'all') return this.rows;
                     if (this.activeFilter === 'attention') {
-                        return this.rows.filter(r => r.precheck_status === 'blocked' || r.precheck_status === 'warning' || r.commit_status === 'error');
+                        return this.rows.filter(r => r.precheck_status === 'blocked' || r.precheck_status === 'warning' || r.commit_status === 'error' || r.email_status === 'skipped' || r.email_status === 'failed');
+                    }
+                    if (this.activeFilter === 'email_pending') {
+                        return this.rows.filter(r => r.commit_status === 'success' && (r.email_status === 'skipped' || r.email_status === 'failed'));
                     }
                     return this.rows.filter(r => r.mode === this.activeFilter);
                 },
 
                 get attentionCount() {
-                    return this.unknownFiles.length + this.rows.filter(r => r.precheck_status === 'blocked' || r.precheck_status === 'warning' || r.commit_status === 'error').length;
+                    return this.unknownFiles.length + this.rows.filter(r => r.precheck_status === 'blocked' || r.precheck_status === 'warning' || r.commit_status === 'error' || r.email_status === 'skipped' || r.email_status === 'failed').length;
                 },
 
                 get successCount() {
                     return this.rows.filter(r => r.commit_status === 'success').length;
+                },
+
+                get emailSentCount() {
+                    return this.rows.filter(r => r.commit_status === 'success' && r.email_status === 'sent').length;
+                },
+
+                get emailRetryableCount() {
+                    return this.rows.filter(r => r.commit_status === 'success' && (r.email_status === 'skipped' || r.email_status === 'failed')).length;
                 },
 
                 get errorCount() {
@@ -845,7 +951,10 @@
                 getFilterCount(key) {
                     if (key === 'all') return this.rows.length;
                     if (key === 'attention') {
-                        return this.rows.filter(r => r.precheck_status === 'blocked' || r.precheck_status === 'warning' || r.commit_status === 'error').length;
+                        return this.rows.filter(r => r.precheck_status === 'blocked' || r.precheck_status === 'warning' || r.commit_status === 'error' || r.email_status === 'skipped' || r.email_status === 'failed').length;
+                    }
+                    if (key === 'email_pending') {
+                        return this.rows.filter(r => r.commit_status === 'success' && (r.email_status === 'skipped' || r.email_status === 'failed')).length;
                     }
                     return this.rows.filter(r => r.mode === key).length;
                 },
@@ -1283,10 +1392,13 @@
                             precheck_status: 'pending',
                             precheck_message: 'Memeriksa kelayakan dokumen...',
                             target_receipt_id: null,
+                            saved_receipt_id: null,
                             will_auto_create_do: false,
                             auto_location_name: '',
                             vendor_name: '-',
                             vendor_emails: [],
+                            vendor_email_input: '',
+                            is_resending_email: false,
                             resolved_no_po: null,
                             resolved_no_do: null,
                             commit_status: 'idle',
@@ -1415,7 +1527,10 @@
                             precheck_status: st.precheck_status,
                             precheck_message: st.precheck_message,
                             target_receipt_id: st.target_receipt_id,
+                            saved_receipt_id: st.saved_receipt_id,
                             vendor_emails: st.vendor_emails,
+                            vendor_email_input: st.vendor_email_input || (st.vendor_emails?.length ? st.vendor_emails.join(', ') : ''),
+                            is_resending_email: Boolean(st.is_resending_email),
                             commit_status: st.commit_status,
                             commit_message: st.commit_message,
                             email_status: st.email_status,
@@ -1449,7 +1564,10 @@
                             precheck_status: st.precheck_status,
                             precheck_message: st.precheck_message,
                             target_receipt_id: st.target_receipt_id,
+                            saved_receipt_id: st.saved_receipt_id,
                             vendor_emails: st.vendor_emails,
+                            vendor_email_input: st.vendor_email_input || (st.vendor_emails?.length ? st.vendor_emails.join(', ') : ''),
+                            is_resending_email: Boolean(st.is_resending_email),
                             commit_status: st.commit_status,
                             commit_message: st.commit_message,
                             email_status: st.email_status,
@@ -1593,6 +1711,12 @@
                     if (row.slipFile) row.slipFile.lokasi_penerimaan = clean;
                     row.lokasi_penerimaan = clean;
                     this.schedulePrecheck();
+                },
+
+                updateRowVendorEmail(row, value) {
+                    const st = this.getOrCreateRowState(row.row_id);
+                    st.vendor_email_input = String(value || '');
+                    row.vendor_email_input = st.vendor_email_input;
                 },
 
                 toggleRowSelection(rowId, checked) {
@@ -1768,6 +1892,7 @@
                             if (row.lokasi_penerimaan) formData.append('lokasi_penerimaan', row.lokasi_penerimaan);
                             if (row.tanggal_penerimaan) formData.append('tanggal_penerimaan', row.tanggal_penerimaan);
                             if (row.vendor_name && row.vendor_name !== '-') formData.append('vendor_name', row.vendor_name);
+                            if (row.vendor_email_input && row.vendor_email_input.trim() !== '') formData.append('vendor_email', row.vendor_email_input.trim());
                             if (row.material_code) formData.append('material_code', row.material_code);
                             if (row.nama_barang) formData.append('nama_barang', row.nama_barang);
                             if (row.target_receipt_id) formData.append('target_receipt_id', String(row.target_receipt_id));
@@ -1789,6 +1914,7 @@
                                     st.commit_status = 'success';
                                     st.commit_message = json.message || 'Berhasil disimpan.';
                                     st.email_status = json.email_status || null;
+                                    st.saved_receipt_id = json.receipt_id || st.target_receipt_id || null;
                                     st.selected = false;
                                 } else {
                                     st.commit_status = 'error';
@@ -1804,12 +1930,64 @@
                             row.commit_status = st.commit_status;
                             row.commit_message = st.commit_message;
                             row.email_status = st.email_status;
+                            row.saved_receipt_id = st.saved_receipt_id;
                             row.selected = st.selected;
                         }
                     } finally {
                         this.progressPercent = 100;
                         this.activityMessage = 'Proses penyimpanan selesai.';
                         this.isCommitting = false;
+                    }
+                },
+
+                async resendRowEmail(row) {
+                    const receiptId = row.saved_receipt_id || row.target_receipt_id;
+                    if (!receiptId) return;
+                    const st = this.getOrCreateRowState(row.row_id);
+                    st.is_resending_email = true;
+                    row.is_resending_email = true;
+
+                    try {
+                        const res = await fetch(this.config.resendEmailUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': this.config.csrfToken,
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                receipt_id: receiptId,
+                                vendor_email: (row.vendor_email_input || '').trim(),
+                            }),
+                        });
+
+                        const json = await res.json();
+                        st.email_status = json.email_status || (res.ok && json.success ? 'sent' : 'failed');
+                        st.commit_message = json.message || (res.ok && json.success ? 'Email berhasil dikirim.' : 'Gagal mengirim ulang email.');
+                    } catch (err) {
+                        console.error('Resend email error:', err);
+                        st.email_status = 'failed';
+                        st.commit_message = 'Gagal menghubungi server saat mengirim ulang email.';
+                    } finally {
+                        st.is_resending_email = false;
+                        row.is_resending_email = false;
+                        row.email_status = st.email_status;
+                        row.commit_message = st.commit_message;
+                    }
+                },
+
+                async resendAllSkippedEmails() {
+                    if (this.isResendingBatch || this.isCommitting) return;
+                    const targets = this.rows.filter(r => r.commit_status === 'success' && (r.email_status === 'skipped' || r.email_status === 'failed') && (r.saved_receipt_id || r.target_receipt_id));
+                    if (targets.length === 0) return;
+
+                    this.isResendingBatch = true;
+                    try {
+                        for (const row of targets) {
+                            await this.resendRowEmail(row);
+                        }
+                    } finally {
+                        this.isResendingBatch = false;
                     }
                 },
 
