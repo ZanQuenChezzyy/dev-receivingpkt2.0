@@ -22,6 +22,7 @@ use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
+    Schema::dropIfExists('invoicing_email_logs');
     Schema::dropIfExists('invoicing_receipt_items');
     Schema::dropIfExists('invoicing_receipts');
     Schema::dropIfExists('cashier_transmittals');
@@ -143,6 +144,11 @@ beforeEach(function () {
         $createItemsMigration->up();
         $dropSubtotalsMigration = include database_path('migrations/2026_11_19_223946_drop_subtotals_from_invoicing_receipt_items_table.php');
         $dropSubtotalsMigration->up();
+    }
+
+    if (! Schema::hasTable('invoicing_email_logs')) {
+        $createEmailLogsMigration = include database_path('migrations/2026_11_23_012849_create_invoicing_email_logs_table.php');
+        $createEmailLogsMigration->up();
     }
 });
 
@@ -1731,4 +1737,43 @@ it('automatically opens Tugas Saya tab by default when accessed by Staff Invoice
         ->assertCanSeeTableRecords([$ownTask, $otherPicTask]);
 
     expect($adminComponent->instance()->activeTab)->toBe('all');
+});
+
+it('handles RFC 4180 trailing backslashes, CRLF multiline GRS matching, and Indonesian single-dot thousands cleanly', function () {
+    seedMonitoringPicUsers();
+
+    // Pre-existing record with Windows CRLF multiline no_grs
+    $existingMultiline = InvoicingReceipt::create([
+        'jenis' => 'GRS',
+        'no_po' => '5300065202',
+        'no_grs' => "5007737579\r\n5007737581",
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $csv = implode("\n", [
+        ' ,Tanggal Terima GRS,Jenis,No. GRS,No. RDTV,No. PO,,PIC,PADI,Vendor,Deskripsi,Email,Tanggal Info GRS,,Vendor,PO,No. Invoice, No. DO ,Faktur Pajak,Nama Barang,Quantity Penagihan,Quantity di PO,UOI, Sub Total (Exclude PPN), Sub Total (Include PPN),Tanggal terima & koreksi Invoice,Tanggal Kirim Kasir,Lama Pekerjaan,Keterangan',
+        '1,23 Mei 2026,Karung,5007284204,,5000008380,,RIZKI,,PT Perkebunan Nusantara I,"TUBE END FACER 5/8"" F751R-2\\",vendor@test.com,25 Mei 2026,,PT Perkebunan Nusantara I,5000008380,INV-920,DO-01,03002600203458032,"TUBE END FACER 5/8"" F751R-2\\",70.400,70.400,EA, Rp 920.000 , Rp 1.021.200 ,15 Juni 2026,17 Juni 2026,2,',
+        "2,17 November 2026,Sparepart,\"5007737579\n5007737581\",,5300065202,,EVA,,PT MULTI GRS,VALVE,eva@vendor.com,18 November 2026,,PT MULTI GRS,5300065202,INV-MULTI,DO-02,03002600999999999,VALVE,2.500,2.500,EA, Rp 570.000 , Rp 632.700 ,20 November 2026,21 November 2026,1,",
+    ]);
+
+    $summary = app(MonitoringBarangImportService::class)->importFromString($csv);
+
+    expect($summary['created'])->toBe(1)
+        ->and($summary['updated'])->toBe(1)
+        ->and(InvoicingReceipt::count())->toBe(2);
+
+    $row1 = InvoicingReceipt::where('no_grs', '5007284204')->firstOrFail();
+    expect($row1->no_po)->toBe('5000008380')
+        ->and($row1->kategori_barang)->toBe('Karung')
+        ->and((float) $row1->qty_penagihan)->toBe(70400.0)
+        ->and((float) $row1->qty_po)->toBe(70400.0)
+        ->and((float) $row1->subtotal_exclude_ppn)->toBe(920000.0)
+        ->and((float) $row1->subtotal_include_ppn)->toBe(1021200.0);
+
+    $existingMultiline->refresh();
+    expect($existingMultiline->no_invoice)->toBe('INV-MULTI')
+        ->and($existingMultiline->status)->toBe('Selesai')
+        ->and((float) $existingMultiline->qty_penagihan)->toBe(2500.0)
+        ->and((float) $existingMultiline->subtotal_exclude_ppn)->toBe(570000.0)
+        ->and((float) $existingMultiline->subtotal_include_ppn)->toBe(632700.0);
 });

@@ -920,7 +920,7 @@ class MonitoringBarangImportService
             $rows = [];
             $isFirstRow = true;
 
-            while (($data = fgetcsv($stream, 0, $delimiter, '"', '\\')) !== false) {
+            while (($data = fgetcsv($stream, 0, $delimiter, '"', '')) !== false) {
                 if ($isFirstRow) {
                     if (isset($data[0])) {
                         $data[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $data[0]) ?? (string) $data[0];
@@ -960,7 +960,7 @@ class MonitoringBarangImportService
         rewind($stream);
 
         $rows = [];
-        while (($data = fgetcsv($stream, 0, $delimiter, '"', '\\')) !== false) {
+        while (($data = fgetcsv($stream, 0, $delimiter, '"', '')) !== false) {
             $rows[] = array_map(fn (?string $val): string => trim((string) $val), $data);
             if ($maxRows !== null && count($rows) >= $maxRows) {
                 break;
@@ -1553,14 +1553,25 @@ class MonitoringBarangImportService
                 $existingByPo[$existing->no_po]->push($existing);
 
                 if (filled($existing->no_grs)) {
-                    $existingByGrs[$existing->no_grs] ??= collect();
-                    $existingByGrs[$existing->no_grs]->push($existing);
+                    $grsKey = $this->normalizeLineEndings((string) $existing->no_grs);
+                    $existingByGrs[$grsKey] ??= collect();
+                    $existingByGrs[$grsKey]->push($existing);
                 }
             }
         }
 
         $loadedReceiptIdList = array_keys($loadedReceiptIds);
-        foreach (array_chunk($grsNumbers, 250) as $grsChunk) {
+        $grsLookupVariants = [];
+        foreach ($grsNumbers as $grsVal) {
+            $normalized = $this->normalizeLineEndings($grsVal);
+            $grsLookupVariants[] = $normalized;
+            if (str_contains($normalized, "\n")) {
+                $grsLookupVariants[] = str_replace("\n", "\r\n", $normalized);
+            }
+        }
+        $grsLookupVariants = array_values(array_unique($grsLookupVariants));
+
+        foreach (array_chunk($grsLookupVariants, 250) as $grsChunk) {
             $grsQuery = InvoicingReceipt::query()->whereIn('no_grs', $grsChunk);
             if (! empty($loadedReceiptIdList)) {
                 $grsQuery->whereNotIn('id', $loadedReceiptIdList);
@@ -1568,8 +1579,9 @@ class MonitoringBarangImportService
 
             foreach ($grsQuery->get() as $existing) {
                 if (filled($existing->no_grs)) {
-                    $existingByGrs[$existing->no_grs] ??= collect();
-                    $existingByGrs[$existing->no_grs]->push($existing);
+                    $grsKey = $this->normalizeLineEndings((string) $existing->no_grs);
+                    $existingByGrs[$grsKey] ??= collect();
+                    $existingByGrs[$grsKey]->push($existing);
                 }
             }
         }
@@ -1734,9 +1746,10 @@ class MonitoringBarangImportService
             $saveStatus = $isExisting ? 'updated' : 'created';
 
             if (filled($receipt->no_grs)) {
-                $lookups['existing_by_grs'][$receipt->no_grs] ??= collect();
-                if (! $lookups['existing_by_grs'][$receipt->no_grs]->contains('id', $receipt->id)) {
-                    $lookups['existing_by_grs'][$receipt->no_grs]->push($receipt);
+                $grsKey = $this->normalizeLineEndings((string) $receipt->no_grs);
+                $lookups['existing_by_grs'][$grsKey] ??= collect();
+                if (! $lookups['existing_by_grs'][$grsKey]->contains('id', $receipt->id)) {
+                    $lookups['existing_by_grs'][$grsKey]->push($receipt);
                 }
             }
             if (! $isExisting && filled($receipt->no_po) && $receipt->no_po !== '-') {
@@ -1918,7 +1931,8 @@ class MonitoringBarangImportService
 
         // 1. Jika memiliki No. GRS: No. GRS selalu unik setiap terbit (Tahap 1 vs Tahap 2 berbeda)
         if ($noGrs !== null) {
-            $candidates = $lookups['existing_by_grs'][$noGrs] ?? collect();
+            $grsKey = $this->normalizeLineEndings($noGrs);
+            $candidates = $lookups['existing_by_grs'][$grsKey] ?? collect();
 
             if ($candidates->isNotEmpty()) {
                 if ($noInvoice !== null) {
@@ -2708,7 +2722,7 @@ class MonitoringBarangImportService
                 $normalized = str_replace(',', '.', $clean);
             }
         } elseif ($hasDot) {
-            if (substr_count($clean, '.') > 1) {
+            if (substr_count($clean, '.') > 1 || preg_match('/^-?[1-9]\d{0,2}\.\d{3}$/', $clean) === 1) {
                 $normalized = str_replace('.', '', $clean);
             } else {
                 $normalized = $clean;
@@ -2776,9 +2790,14 @@ class MonitoringBarangImportService
         return ltrim($alnum, '0') ?: $alnum;
     }
 
+    protected function normalizeLineEndings(string $value): string
+    {
+        return str_replace(["\r\n", "\r"], "\n", $value);
+    }
+
     protected function nullIfEmpty(?string $value): ?string
     {
-        $clean = trim((string) $value);
+        $clean = trim($this->normalizeLineEndings((string) $value));
 
         return ($clean === '' || $clean === '-') ? null : $clean;
     }
