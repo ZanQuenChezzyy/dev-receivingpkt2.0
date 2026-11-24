@@ -231,9 +231,9 @@ class GrsPdfParserService
         }
 
         // 6. Alasan Penolakan / Reason for Movement & Keterangan (khusus RDTV)
-        if (preg_match('/(?:Out\s*of\s*Scope|Return\s*to\s*Vendor)\s+([A-Za-z0-9\s\/\-_\.,:;]+?)\s*$/is', trim($text), $km)) {
+        if (preg_match('/(?:Out\s*of\s*Scope|Return\s*to\s*Vendor)\s+([A-Za-z0-9\s\/\-_\.,:;]{2,500}?)\s*$/is', trim($text), $km)) {
             $data['alasan_penolakan'] = trim(preg_replace('/\s+/', ' ', $km[1]));
-        } elseif (preg_match('/(?:Reason\s*for\s*Movement|Alasan\s*Penolakan)[\s\S]*?\b(?:Out of Scope|Return to Vendor|[A-Za-z\s]+)\s+([A-Za-z0-9\s\/\-_\.,:;]+)$/mi', $text, $km)) {
+        } elseif (preg_match('/(?:Reason\s*for\s*Movement|Alasan\s*Penolakan)\s*[:\s]+([A-Za-z0-9 \/\-_\.,:;]{2,300})/i', $text, $km)) {
             $data['alasan_penolakan'] = trim(preg_replace('/\s+/', ' ', $km[1]));
         }
 

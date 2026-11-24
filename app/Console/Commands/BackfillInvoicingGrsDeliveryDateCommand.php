@@ -46,9 +46,11 @@ class BackfillInvoicingGrsDeliveryDateCommand extends Command
         $updated = 0;
         $skippedMissingFile = 0;
         $skippedNoDate = 0;
+        $processed = 0;
 
-        $query->chunkById(100, function ($receipts) use ($dryRun, $force, &$updated, &$skippedMissingFile, &$skippedNoDate): void {
+        $query->chunkById(100, function ($receipts) use ($dryRun, $force, &$updated, &$skippedMissingFile, &$skippedNoDate, &$processed): void {
             foreach ($receipts as $receipt) {
+                $processed++;
                 $path = $receipt->grsRdtvItem?->file_path;
                 if (blank($path) || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'pdf' || ! Storage::disk('public')->exists($path)) {
                     $skippedMissingFile++;
@@ -56,8 +58,15 @@ class BackfillInvoicingGrsDeliveryDateCommand extends Command
                     continue;
                 }
 
+                $fullPath = Storage::disk('public')->path($path);
+                if (! is_file($fullPath) || filesize($fullPath) > 5 * 1024 * 1024) {
+                    $skippedNoDate++;
+
+                    continue;
+                }
+
                 try {
-                    $parsed = $this->parser->parse(Storage::disk('public')->path($path));
+                    $parsed = $this->parser->parse($fullPath);
                 } catch (\Throwable $e) {
                     report($e);
                     $skippedNoDate++;
@@ -90,6 +99,8 @@ class BackfillInvoicingGrsDeliveryDateCommand extends Command
                     $updated++;
                 }
             }
+
+            $this->line("  Progres: {$processed} diproses (diperbarui: {$updated}, tanpa tanggal: {$skippedNoDate}, hilang: {$skippedMissingFile})");
         });
 
         $modeLabel = $dryRun ? '[DRY-RUN] ' : '';
