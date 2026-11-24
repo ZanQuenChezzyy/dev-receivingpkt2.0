@@ -769,12 +769,10 @@ class GrsRdtvProcessingService
             $po?->id
         );
 
-        $vendor = null;
-        if ($po?->vendor_id || $po?->vendor_name) {
-            $vendor = Vendor::where('vendor_number', $po->vendor_id)
-                ->orWhere('name', $po->vendor_name)
-                ->first();
-        }
+        $vendor = Vendor::findBestMatch(
+            vendorNumber: $po?->vendor_id,
+            nameCandidates: [$po?->vendor_name, $parsedPdf['vendor_name'] ?? null],
+        );
 
         $qtyPenagihan = $details->isNotEmpty() ? (float) $details->sum('quantity') : (float) ($po?->qty_po ?? 0);
         $qtyPo = $details->map(fn ($d) => $d->purchaseOrderIssued)->filter()->unique('id')->sum('qty_po');

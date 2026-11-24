@@ -146,6 +146,7 @@ class CombinedGrsVerificationService
     {
         $results = [];
         $seenDocCodes = [];
+        $seenDocNumbers = [];
 
         foreach ($rows as $row) {
             $rowId = (string) ($row['row_id'] ?? '');
@@ -250,13 +251,22 @@ class CombinedGrsVerificationService
                 continue;
             }
 
-            $dupKey = strtolower($jenis.'|'.$documentCode.'|'.($jenis === 'RDTV' ? $noRdtv : $noGrs));
-            if (isset($seenDocCodes[$dupKey])) {
+            $batchDocNo = $jenis === 'RDTV'
+                ? ($noRdtv !== '' ? $noRdtv : $verifNoRdtv)
+                : ($noGrs !== '' ? $noGrs : $verifNoGrs);
+            $dupKey = strtolower($jenis.'|'.$documentCode.'|'.$batchDocNo);
+            $docNoKey = $batchDocNo !== '' ? strtolower($jenis.'|'.$batchDocNo) : null;
+
+            if (isset($seenDocCodes[$dupKey]) || ($docNoKey !== null && isset($seenDocNumbers[$docNoKey]))) {
+                $dupLabel = $docNoKey !== null && isset($seenDocNumbers[$docNoKey])
+                    ? "No. {$jenis} {$batchDocNo}"
+                    : "berkas {$documentCode}";
+
                 $results[] = [
                     'row_id' => $rowId,
                     'status' => 'blocked',
                     'reason_code' => 'duplicate_in_batch',
-                    'message' => "Duplikat berkas {$documentCode} terdeteksi di dalam antrean unggah yang sama.",
+                    'message' => "Duplikat {$dupLabel} terdeteksi di dalam antrean unggah yang sama.",
                     'target_receipt_id' => null,
                     'vendor_name' => '-',
                     'vendor_emails' => [],
@@ -268,6 +278,9 @@ class CombinedGrsVerificationService
                 continue;
             }
             $seenDocCodes[$dupKey] = true;
+            if ($docNoKey !== null) {
+                $seenDocNumbers[$docNoKey] = true;
+            }
 
             $eligibility = $this->processingService->inspectDocumentEligibility(
                 documentCode: $documentCode,
@@ -281,10 +294,10 @@ class CombinedGrsVerificationService
             $vendorEmails = [];
 
             if ($firstPo && ($firstPo->vendor_id || $firstPo->vendor_name)) {
-                $vendor = Vendor::query()
-                    ->where('vendor_number', $firstPo->vendor_id)
-                    ->orWhere('name', $firstPo->vendor_name)
-                    ->first();
+                $vendor = Vendor::findBestMatch(
+                    vendorNumber: $firstPo->vendor_id,
+                    nameCandidates: [$firstPo->vendor_name, $rowVendorName],
+                );
 
                 if ($vendor) {
                     $vendorName = $vendorName !== '-' ? $vendorName : ($vendor->name ?: '-');
@@ -1224,46 +1237,10 @@ class CombinedGrsVerificationService
 
     protected function findVendorByPoOrName(?PurchaseOrderIssued $po, string $vendorName = ''): ?Vendor
     {
-        $candidates = array_values(array_filter(array_unique([
-            trim((string) ($po?->vendor_name ?? '')),
-            trim($vendorName),
-        ])));
-
-        if ($po?->vendor_id) {
-            $byNumber = Vendor::query()->where('vendor_number', $po->vendor_id)->first();
-            if ($byNumber) {
-                return $byNumber;
-            }
-        }
-
-        foreach ($candidates as $name) {
-            $stripped = trim((string) preg_replace('/^(?:PT|CV)\.?\s+/i', '', $name));
-            $stripped = trim((string) preg_replace('/,?\s*(?:PT|CV)\.?$/i', '', $stripped));
-
-            $found = Vendor::query()
-                ->whereRaw('LOWER(name) = ?', [strtolower($name)])
-                ->orWhereRaw('LOWER(name) = ?', [strtolower($stripped)])
-                ->orWhere('name', 'like', "%{$stripped}%")
-                ->first();
-
-            if (! $found && strlen($stripped) >= 5) {
-                // Reverse-contain fallback jika nama vendor dari PDF memiliki kata tambahan di depan/belakang
-                $found = Vendor::query()
-                    ->whereRaw('LENGTH(name) >= 5')
-                    ->get()
-                    ->first(static function (Vendor $v) use ($stripped): bool {
-                        $vName = trim((string) $v->name);
-
-                        return $vName !== '' && stripos($stripped, $vName) !== false;
-                    });
-            }
-
-            if ($found) {
-                return $found;
-            }
-        }
-
-        return null;
+        return Vendor::findBestMatch(
+            vendorNumber: $po?->vendor_id,
+            nameCandidates: [$po?->vendor_name, $vendorName],
+        );
     }
 
     /**
@@ -1441,6 +1418,48 @@ class CombinedGrsVerificationService
 
                 if (empty($receipt->no_do) && $noDo !== '') {
                     $receipt->no_do = $noDo;
+                }
+
+                // Pastikan klasifikasi Karung (ZPM) tetap ter-upgrade bila Invoice lama masih tercatat Non Stock
+                $receipt->loadMissing(['purchaseOrderIssued', 'deliveryOrderReceipt.deliveryOrderReceiptDetails', 'vendor']);
+                $resolvedMatType = InvoicingReceipt::resolveMaterialType(
+                    $receipt->material_type,
+                    array_filter([
+                        $receipt->purchaseOrderIssued?->material_code,
+                        ...($receipt->deliveryOrderReceipt?->deliveryOrderReceiptDetails?->pluck('material_code')->all() ?? []),
+                    ]),
+                    array_filter([
+                        $receipt->nama_barang,
+                        $receipt->deskripsi,
+                        $receipt->purchaseOrderIssued?->description,
+                    ]),
+                    $receipt->no_po,
+                );
+                if ($resolvedMatType !== InvoicingReceipt::normalizeMaterialType($receipt->material_type)) {
+                    $receipt->material_type = $resolvedMatType;
+                }
+
+                // Lengkapi relasi Master Vendor & email otomatis jika masih kosong
+                if (! $receipt->vendor_id || blank($receipt->email_vendor)) {
+                    $matchedVendor = Vendor::findBestMatch(
+                        vendorNumber: $receipt->purchaseOrderIssued?->vendor_id,
+                        nameCandidates: [$receipt->vendor_name, $receipt->purchaseOrderIssued?->vendor_name],
+                    );
+
+                    if ($matchedVendor) {
+                        if (! $receipt->vendor_id) {
+                            $receipt->vendor_id = $matchedVendor->id;
+                        }
+                        if (blank($receipt->vendor_name)) {
+                            $receipt->vendor_name = $matchedVendor->name;
+                        }
+                        if (blank($receipt->email_vendor)) {
+                            $masterEmails = $this->parseValidEmails(implode(', ', Vendor::parseEmails($matchedVendor->email)));
+                            if ($masterEmails !== []) {
+                                $receipt->email_vendor = implode(', ', $masterEmails);
+                            }
+                        }
+                    }
                 }
 
                 if ($overrideVendorEmail !== '') {

@@ -6,6 +6,7 @@ use App\Models\InvoicingEmailLog;
 use App\Models\InvoicingReceipt;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -95,9 +96,24 @@ class InvoicingGrsEmailDispatcher
      */
     public function resolveVendorEmails(InvoicingReceipt $receipt): array
     {
-        $receipt->loadMissing('vendor');
+        if (Schema::hasTable('vendors')) {
+            $receipt->loadMissing('vendor');
+        }
+        $poRelation = Schema::hasTable('purchase_order_issueds') ? $receipt->purchaseOrderIssued : null;
 
-        $raw = filled($receipt->email_vendor) ? $receipt->email_vendor : $receipt->vendor?->email;
+        $raw = filled($receipt->email_vendor) ? $receipt->email_vendor : (Schema::hasTable('vendors') ? $receipt->vendor?->email : null);
+
+        if (blank($raw) && (filled($receipt->vendor_name) || filled($poRelation?->vendor_id))) {
+            $matchedVendor = Vendor::findBestMatch(
+                vendorNumber: $poRelation?->vendor_id,
+                nameCandidates: [$receipt->vendor_name, $poRelation?->vendor_name],
+            );
+
+            if ($matchedVendor) {
+                $raw = $matchedVendor->email;
+            }
+        }
+
         $parsed = Vendor::parseEmails($raw);
 
         return array_values(array_filter(

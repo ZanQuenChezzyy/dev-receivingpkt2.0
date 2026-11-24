@@ -1428,3 +1428,127 @@ test('Uploading renamed Slip whose No. GRS already exists reuses existing Invoic
         ->and($existingReceipt->fresh()->status)->toBe('Terverifikasi')
         ->and($existingReceipt->fresh()->dokumen_verifikasi_grs)->toStartWith('verifikasi-grs/');
 });
+
+test('Vendor::findBestMatch strictly prioritizes exact match, prevents short-name hijacking, and refuses ambiguous partials', function (): void {
+    Vendor::create(['name' => 'MANDIRI', 'vendor_number' => 'V-SHORT', 'email' => 'short@wrong.test']);
+    Vendor::create(['name' => 'MURNI MAPAN MAKMUR', 'vendor_number' => 'V-MAKMUR', 'email' => 'makmur@wrong.test']);
+    $mandiri = Vendor::create(['name' => 'MURNI MAPAN MANDIRI', 'vendor_number' => 'V-MANDIRI', 'email' => 'info@murnimapan.com']);
+
+    // 1. Exact normalized match menang atas vendor lebih awal di tabel
+    expect(Vendor::findBestMatch(null, ['MURNI MAPAN MANDIRI, PT.'])?->id)->toBe($mandiri->id)
+        ->and(Vendor::findBestMatch(null, ['PT. MURNI MAPAN MANDIRI'])?->id)->toBe($mandiri->id);
+
+    // 2. Reverse-contain dengan awalan nyasar tetap cocok ke nama terpanjang ("MURNI MAPAN MANDIRI"), BUKAN "MANDIRI"
+    expect(Vendor::findBestMatch(null, ['Kas MURNI MAPAN MANDIRI, PT.'])?->id)->toBe($mandiri->id);
+
+    // 3. Partial ambigu ("MURNI MAPAN" cocok 2 vendor berbeda) tidak boleh menebak vendor yang salah
+    expect(Vendor::findBestMatch(null, ['MURNI MAPAN']))->toBeNull();
+});
+
+test('Precheck blocks duplicate No. GRS inside the same upload batch even with different filenames', function (): void {
+    $user = User::create([
+        'name' => 'Staff Batch Dup',
+        'email' => 'batch_dup@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Staff Invoice');
+
+    $precheck = $this->actingAs($user)->postJson(route('filament.admin.grs-rdtv.combined_upload.precheck'), [
+        'transaction_date' => '2026-11-24',
+        'rows' => [
+            [
+                'row_id' => 'row_1',
+                'mode' => 'pair',
+                'jenis' => 'GRS',
+                'document_code' => '5000009305-01-TAHAP5SCI',
+                'no_grs' => '5007769999',
+                'no_po' => '5000009305',
+                'verif_no_grs' => '5007769999',
+                'verif_no_po' => '5000009305',
+            ],
+            [
+                'row_id' => 'row_2',
+                'mode' => 'pair',
+                'jenis' => 'GRS',
+                'document_code' => '5000009305-01-TAHAP5SCI_COPY',
+                'no_grs' => '5007769999',
+                'no_po' => '5000009305',
+                'verif_no_grs' => '5007769999',
+                'verif_no_po' => '5000009305',
+            ],
+        ],
+    ]);
+
+    $precheck->assertOk()
+        ->assertJsonPath('results.0.reason_code', 'auto_create_do')
+        ->assertJsonPath('results.1.status', 'blocked')
+        ->assertJsonPath('results.1.reason_code', 'duplicate_in_batch');
+});
+
+test('Verifying legacy Karung invoice auto-upgrades material_type to ZPM and backfills missing vendor & email', function (): void {
+    fakeCombinedZimbraSuccess();
+
+    $user = User::create([
+        'name' => 'Staff Upgrade ZPM',
+        'email' => 'upgrade_zpm@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->assignRole('Staff Invoice');
+
+    $vendor = Vendor::create([
+        'name' => 'MURNI MAPAN MANDIRI',
+        'vendor_number' => '1000003593',
+        'email' => 'info@murnimapan.com',
+    ]);
+
+    $batch = GrsRdtv::create([
+        'transaction_date' => '2026-11-24',
+        'category' => 'GRS',
+        'created_by' => $user->id,
+    ]);
+    $slipPath = 'grs-rdtv-docs/legacy-karung-slip.pdf';
+    Storage::disk('public')->put($slipPath, '%PDF-1.4 dummy slip');
+    $item = $batch->grsRdtvItems()->create([
+        'document_code' => 'LEGACY-KARUNG-01',
+        'file_path' => $slipPath,
+        'status' => 'Matched',
+    ]);
+
+    // Invoice lama: material_type masih Non Stock, vendor_id & email_vendor masih kosong, vendor_name pakai ", PT."
+    $legacyReceipt = InvoicingReceipt::create([
+        'grs_rdtv_item_id' => $item->id,
+        'jenis' => 'GRS',
+        'no_po' => '5000009407',
+        'no_grs' => '5007739999',
+        'material_type' => 'Non Stock',
+        'nama_barang' => 'SACK:UREA;PIHC;SUB;50KG',
+        'vendor_id' => null,
+        'vendor_name' => 'MURNI MAPAN MANDIRI, PT.',
+        'email_vendor' => null,
+        'status' => 'Menunggu Verifikasi',
+        'dokumen_verifikasi_grs' => $slipPath,
+    ]);
+
+    $verif = makeTextPdfUpload('Verif_Legacy_Karung.pdf', 'VERIFIKASI PENERIMAAN BARANG Nomor GR (101) 5007739999 Nomor PO 5000009407');
+
+    $res = $this->actingAs($user)->post(route('filament.admin.grs-rdtv.combined_upload.commit'), [
+        'mode' => 'verif_only',
+        'jenis' => 'GRS',
+        'transaction_date' => '2026-11-24',
+        'send_email' => '1',
+        'target_receipt_id' => $legacyReceipt->id,
+        'no_grs' => '5007739999',
+        'no_po' => '5000009407',
+        'verif_file' => $verif,
+    ]);
+
+    $res->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'Terverifikasi')
+        ->assertJsonPath('email_status', 'sent');
+
+    $fresh = $legacyReceipt->fresh();
+    expect($fresh->material_type)->toBe('ZPM')
+        ->and($fresh->vendor_id)->toBe($vendor->id)
+        ->and($fresh->email_vendor)->toBe('info@murnimapan.com');
+});

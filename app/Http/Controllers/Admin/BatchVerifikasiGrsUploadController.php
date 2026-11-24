@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\InvoicingReceipt;
+use App\Models\Vendor;
 use App\Services\GrsPdfParserService;
 use App\Services\InvoicingGrsEmailDispatcher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class BatchVerifikasiGrsUploadController extends Controller
 {
@@ -250,6 +252,67 @@ class BatchVerifikasiGrsUploadController extends Controller
 
             if (empty($receipt->no_do) && ! empty($noDo)) {
                 $receipt->no_do = $noDo;
+            }
+
+            $relationsToLoad = [];
+            if (Schema::hasTable('purchase_order_issueds')) {
+                $relationsToLoad[] = 'purchaseOrderIssued';
+            }
+            if (Schema::hasTable('delivery_order_receipts') && Schema::hasTable('delivery_order_receipt_details')) {
+                $relationsToLoad[] = 'deliveryOrderReceipt.deliveryOrderReceiptDetails';
+            }
+            if (Schema::hasTable('vendors')) {
+                $relationsToLoad[] = 'vendor';
+            }
+            if ($relationsToLoad !== []) {
+                $receipt->loadMissing($relationsToLoad);
+            }
+
+            $poRelation = Schema::hasTable('purchase_order_issueds') ? $receipt->purchaseOrderIssued : null;
+            $doDetails = (Schema::hasTable('delivery_order_receipts') && Schema::hasTable('delivery_order_receipt_details'))
+                ? ($receipt->deliveryOrderReceipt?->deliveryOrderReceiptDetails?->pluck('material_code')->all() ?? [])
+                : [];
+
+            $resolvedMatType = InvoicingReceipt::resolveMaterialType(
+                $receipt->material_type,
+                array_filter([
+                    $poRelation?->material_code,
+                    ...$doDetails,
+                ]),
+                array_filter([
+                    $receipt->nama_barang,
+                    $receipt->deskripsi,
+                    $poRelation?->description,
+                ]),
+                $receipt->no_po,
+            );
+            if ($resolvedMatType !== InvoicingReceipt::normalizeMaterialType($receipt->material_type)) {
+                $receipt->material_type = $resolvedMatType;
+            }
+
+            if (! $receipt->vendor_id || blank($receipt->email_vendor)) {
+                $matchedVendor = Vendor::findBestMatch(
+                    vendorNumber: $poRelation?->vendor_id,
+                    nameCandidates: [$receipt->vendor_name, $poRelation?->vendor_name],
+                );
+
+                if ($matchedVendor) {
+                    if (! $receipt->vendor_id) {
+                        $receipt->vendor_id = $matchedVendor->id;
+                    }
+                    if (blank($receipt->vendor_name)) {
+                        $receipt->vendor_name = $matchedVendor->name;
+                    }
+                    if (blank($receipt->email_vendor)) {
+                        $masterEmails = array_values(array_filter(
+                            Vendor::parseEmails($matchedVendor->email),
+                            static fn (string $e): bool => (bool) filter_var($e, FILTER_VALIDATE_EMAIL),
+                        ));
+                        if ($masterEmails !== []) {
+                            $receipt->email_vendor = implode(', ', $masterEmails);
+                        }
+                    }
+                }
             }
 
             $receipt->save();
