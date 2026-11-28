@@ -68,6 +68,7 @@ test('DashboardWelcomeBentoWidget and DashboardCalendarClockWidget render greeti
         'email' => 'bento@pupukkaltim.com',
         'password' => bcrypt('password'),
         'developer_badge_style' => User::DEVELOPER_BADGE_PKT_COMBO,
+        'left_rail_shortcuts' => ['calendar_notes', 'delivery_order_receipts', 'invoicing_receipts'],
         'is_active' => true,
     ]);
     $user->assignRole('Developer');
@@ -79,9 +80,9 @@ test('DashboardWelcomeBentoWidget and DashboardCalendarClockWidget render greeti
     Livewire::test(DashboardWelcomeBentoWidget::class)
         ->assertSee('Andereyan Bento')
         ->assertSee('Ringkasan Operasional')
-        ->assertSee('Penerimaan DO')
-        ->assertSee('GRS & RDTV')
-        ->assertSee('Invoice Barang')
+        ->assertSee('Aktivitas Terbaru Anda')
+        ->assertSee('Catatan Kalender')
+        ->assertSee('Agenda')
         ->assertSee('Pintasan Cepat')
         ->assertSee('Atur Pintasan')
         ->assertSee('Prakiraan Cuaca Area PKT')

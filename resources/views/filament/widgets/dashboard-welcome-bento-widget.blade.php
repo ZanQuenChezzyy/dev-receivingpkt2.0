@@ -1,5 +1,5 @@
 <x-filament-widgets::widget>
-    <div class="pkt-bento-card pkt-bento-welcome relative h-full rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-hidden p-4 sm:p-6 flex flex-col justify-between gap-4">
+    <div class="pkt-bento-card pkt-bento-welcome relative h-full rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-hidden p-4 sm:p-5 flex flex-col gap-4">
         {{-- Subtle PKT Corporate Ambient Glow & Pattern Watermark --}}
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(0,84,166,0.08),transparent_48%),radial-gradient(circle_at_100%_100%,rgba(244,121,32,0.09),transparent_48%)] dark:bg-[radial-gradient(circle_at_0%_0%,rgba(0,84,166,0.20),transparent_52%),radial-gradient(circle_at_100%_100%,rgba(244,121,32,0.16),transparent_50%)]"></div>
         <div class="pointer-events-none absolute -top-10 -right-10 w-48 h-48 select-none overflow-hidden">
@@ -15,9 +15,9 @@
             />
         </div>
 
-        {{-- Row 1: Clean Greeting (No Avatar / No Role Badge) + Live Weather Pill (Bontang / PKT) --}}
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3.5">
-            <div class="flex flex-col min-w-0 gap-1">
+        {{-- Row 1: Clean Greeting + Live Weather Pill (Bontang / PKT) --}}
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex flex-col min-w-0 gap-0.5">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0054A6] dark:text-[#83A2DB]">
                         <span class="w-1.5 h-1.5 rounded-full bg-[#F47920]"></span>
@@ -40,7 +40,7 @@
                 </h2>
 
                 <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Pantau ringkasan operasional harian dan akses modul penerimaan material dengan cepat.
+                    Pantau ringkasan operasional sesuai pintasan aktif dan aktivitas terbaru Anda hari ini.
                 </p>
             </div>
 
@@ -145,7 +145,7 @@
             </div>
         </div>
 
-        {{-- Row 2: Ringkasan Operasional (3 Bento Metric Tiles) --}}
+        {{-- Row 2: Ringkasan Operasional (Dynamic — mirrors the user's 3 selected shortcuts) --}}
         <div class="relative z-10 flex flex-col gap-2">
             <div class="flex items-center justify-between gap-2">
                 <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
@@ -170,7 +170,7 @@
                             'orange' => 'bg-[#F47920]/12 text-[#F47920] dark:bg-[#F47920]/20 dark:text-orange-300',
                             default => 'bg-[#0054A6]/12 text-[#0054A6] dark:bg-[#83A2DB]/15 dark:text-[#93C5FD]',
                         };
-                        $todayPillClasses = $metric['today_count'] > 0
+                        $subPillClasses = $metric['sub_highlight']
                             ? 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300'
                             : 'bg-slate-200/75 dark:bg-white/[0.07] text-slate-500 dark:text-slate-400';
                     @endphp
@@ -179,13 +179,13 @@
                         <a
                             href="{{ $metric['url'] }}"
                             wire:navigate
-                            class="group rounded-2xl p-3.5 bg-slate-50/90 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.07] hover:border-[#0054A6]/35 dark:hover:border-white/[0.16] hover:bg-white dark:hover:bg-white/[0.055] transition-all flex flex-col gap-2"
+                            class="group rounded-2xl p-3 bg-slate-50/90 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.07] hover:border-[#0054A6]/35 dark:hover:border-white/[0.16] hover:bg-white dark:hover:bg-white/[0.055] transition-all flex flex-col gap-2"
                         >
                     @else
-                        <div class="rounded-2xl p-3.5 bg-slate-50/90 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.07] flex flex-col gap-2">
+                        <div class="rounded-2xl p-3 bg-slate-50/90 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.07] flex flex-col gap-2">
                     @endif
                         <div class="flex items-center justify-between gap-2">
-                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 truncate">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 min-w-0">
                                 <span class="w-6 h-6 rounded-lg inline-flex items-center justify-center shrink-0 {{ $iconClasses }}">
                                     <x-filament::icon :icon="$metric['icon']" class="w-3.5 h-3.5" />
                                 </span>
@@ -199,15 +199,15 @@
                         <div class="flex items-baseline justify-between gap-2">
                             <div class="flex items-baseline gap-1.5 min-w-0">
                                 <span class="text-xl font-extrabold tracking-tight text-[#10141A] dark:text-white tabular-nums">
-                                    {{ number_format($metric['month_count'], 0, ',', '.') }}
+                                    {{ number_format($metric['main_count'], 0, ',', '.') }}
                                 </span>
-                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
                                     {{ $metric['unit'] }}
                                 </span>
                             </div>
 
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tabular-nums shrink-0 {{ $todayPillClasses }}">
-                                Hari ini: {{ number_format($metric['today_count'], 0, ',', '.') }}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tabular-nums shrink-0 {{ $subPillClasses }}">
+                                {{ $metric['sub_label'] }}
                             </span>
                         </div>
                     @if ($metric['url'])
@@ -219,8 +219,84 @@
             </div>
         </div>
 
-        {{-- Row 3: 3 Quick Shortcuts (1-col Mobile -> 3-col Tablet/Desktop) --}}
-        <div class="relative z-10 pt-3.5 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-col gap-2.5">
+        {{-- Row 3: Aktivitas Terbaru Anda (Fills Bento Card harmoniously with real user timeline) --}}
+        <div class="relative z-10 flex flex-col gap-2 flex-1">
+            <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                    Aktivitas Terbaru Anda
+                </span>
+                @if ($memberProfileUrl)
+                    <a
+                        href="{{ $memberProfileUrl }}"
+                        wire:navigate
+                        class="text-[11px] font-semibold text-[#0054A6] dark:text-[#83A2DB] hover:text-[#F47920] dark:hover:text-orange-300 transition-colors"
+                    >
+                        Lihat Semua &rarr;
+                    </a>
+                @endif
+            </div>
+
+            @if ($recentActivities !== [])
+                <div class="flex flex-col gap-1.5">
+                    @foreach ($recentActivities as $act)
+                        @php
+                            $actDot = match ($act['accent'] ?? 'blue') {
+                                'orange' => 'bg-[#F47920]/15 text-[#F47920] dark:text-orange-300',
+                                'emerald' => 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+                                'amber' => 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+                                'violet' => 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
+                                default => 'bg-[#0054A6]/12 text-[#0054A6] dark:bg-[#83A2DB]/15 dark:text-[#93C5FD]',
+                            };
+                            $actUrl = $act['url'] ?? null;
+                        @endphp
+
+                        @if ($actUrl)
+                            <a
+                                href="{{ $actUrl }}"
+                                wire:navigate
+                                class="group rounded-xl px-3 py-2 bg-slate-50/85 dark:bg-white/[0.025] border border-black/[0.05] dark:border-white/[0.06] hover:border-[#F47920]/35 hover:bg-white dark:hover:bg-white/[0.05] transition-all flex items-center justify-between gap-3"
+                            >
+                        @else
+                            <div class="rounded-xl px-3 py-2 bg-slate-50/85 dark:bg-white/[0.025] border border-black/[0.05] dark:border-white/[0.06] flex items-center justify-between gap-3">
+                        @endif
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <span class="w-7 h-7 rounded-lg inline-flex items-center justify-center shrink-0 {{ $actDot }}">
+                                    <x-filament::icon :icon="$act['icon'] ?? 'heroicon-o-clock'" class="w-3.5 h-3.5" />
+                                </span>
+                                <div class="flex flex-col min-w-0 leading-tight">
+                                    <span class="text-xs font-semibold text-[#10141A] dark:text-white truncate group-hover:text-[#F47920] dark:group-hover:text-orange-300 transition-colors">
+                                        {{ $act['title'] }}
+                                    </span>
+                                    <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                        {{ $act['category_label'] }}@if (! empty($act['subtitle'])) &bull; {{ $act['subtitle'] }}@endif
+                                    </span>
+                                </div>
+                            </div>
+
+                            <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500 shrink-0 tabular-nums">
+                                {{ $act['timestamp']->diffForHumans() }}
+                            </span>
+                        @if ($actUrl)
+                            </a>
+                        @else
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+            @else
+                <div class="rounded-xl px-3.5 py-3 bg-slate-50/80 dark:bg-white/[0.025] border border-dashed border-black/[0.08] dark:border-white/[0.08] text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+                    <span>Belum ada aktivitas operasional terbaru yang tercatat pada akun Anda.</span>
+                    @if ($memberProfileUrl)
+                        <a href="{{ $memberProfileUrl }}" wire:navigate class="text-[11px] font-semibold text-[#0054A6] dark:text-[#83A2DB] shrink-0">
+                            Profil &rarr;
+                        </a>
+                    @endif
+                </div>
+            @endif
+        </div>
+
+        {{-- Row 4: 3 Quick Shortcuts (1-col Mobile -> 3-col Tablet/Desktop, anchored cleanly) --}}
+        <div class="relative z-10 mt-auto pt-3 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-col gap-2">
             <div class="flex items-center justify-between gap-2">
                 <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                     Pintasan Cepat
@@ -242,12 +318,12 @@
                         <a
                             href="{{ $item['url'] }}"
                             wire:navigate
-                            class="pkt-bento-shortcut group flex items-center gap-2.5 p-2.5 sm:p-3 rounded-2xl bg-slate-50/90 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.07] hover:border-[#F47920]/45 hover:bg-white dark:hover:bg-white/[0.06] transition-all duration-200"
+                            class="pkt-bento-shortcut group flex items-center gap-2.5 p-2.5 rounded-2xl bg-slate-50/90 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.07] hover:border-[#F47920]/45 hover:bg-white dark:hover:bg-white/[0.06] transition-all duration-200"
                         >
-                            <span class="w-9 h-9 rounded-xl bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] group-hover:bg-[#F47920] group-hover:text-white inline-flex items-center justify-center shrink-0 transition-colors duration-200">
+                            <span class="w-8 h-8 rounded-xl bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] group-hover:bg-[#F47920] group-hover:text-white inline-flex items-center justify-center shrink-0 transition-colors duration-200">
                                 <x-filament::icon
                                     :icon="$item['icon']"
-                                    class="w-4.5 h-4.5"
+                                    class="w-4 h-4"
                                 />
                             </span>
                             <div class="flex flex-col min-w-0 flex-1 leading-tight">

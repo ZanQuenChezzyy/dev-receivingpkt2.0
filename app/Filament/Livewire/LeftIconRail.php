@@ -123,6 +123,7 @@ class LeftIconRail extends Component
 
         $this->selectedKeys = $sanitized;
         $this->showSettingsModal = false;
+        $this->dispatch('left-rail-shortcuts-updated');
 
         Notification::make()
             ->title('Navigasi Kiri Diperbarui')
