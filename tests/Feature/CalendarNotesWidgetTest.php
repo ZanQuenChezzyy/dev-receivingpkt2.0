@@ -1,5 +1,7 @@
 <?php
 
+use App\Filament\Resources\CalendarNotes\CalendarNoteResource;
+use App\Filament\Resources\CalendarNotes\Pages\ManageCalendarNotes;
 use App\Filament\Widgets\DashboardCalendarClockWidget;
 use App\Models\CalendarNote;
 use App\Models\User;
@@ -60,42 +62,50 @@ beforeEach(function (): void {
     Role::firstOrCreate(['name' => 'Staff Invoice', 'guard_name' => 'web']);
 
     Cache::forget('pkt_id_holidays_v1_2026');
+    Cache::forget('pkt_id_holidays_v1_2027');
 });
 
-test('IndonesianHolidayService parses primary API feed and falls back cleanly when APIs fail', function (): void {
+test('IndonesianHolidayService parses primary API, groups consecutive dates, and falls back when offline', function (): void {
     Http::fake([
         IndonesianHolidayService::PRIMARY_FEED_URL => Http::response([
-            '2026-12-25' => [
+            '2027-03-10' => [
                 'holiday' => true,
-                'summary' => ['Hari Raya Natal'],
+                'summary' => ['Hari Idul Fitri'],
                 'description' => ['Hari libur nasional'],
             ],
-            '2026-12-24' => [
+            '2027-03-11' => [
                 'holiday' => true,
-                'summary' => ['Cuti Bersama Natal'],
-                'description' => ['Cuti bersama'],
+                'summary' => ['Hari Idul Fitri'],
+                'description' => ['Hari libur nasional'],
+            ],
+            '2027-03-08' => [
+                'holiday' => true,
+                'summary' => ['Hari Suci Nyepi'],
+                'description' => ['Hari libur nasional'],
             ],
         ], 200),
     ]);
 
     $service = app(IndonesianHolidayService::class);
-    $decHolidays = $service->getHolidaysForMonth(2026, 12);
+    $marHolidays = $service->getHolidaysForMonth(2027, 3);
+    $grouped = $service->groupConsecutiveHolidays($marHolidays);
 
-    expect($decHolidays)->toHaveKeys(['2026-12-24', '2026-12-25'])
-        ->and($decHolidays['2026-12-25']['name'])->toBe('Hari Raya Natal')
-        ->and($decHolidays['2026-12-25']['is_joint_leave'])->toBeFalse()
-        ->and($decHolidays['2026-12-24']['is_joint_leave'])->toBeTrue();
+    expect($marHolidays)->toHaveKeys(['2027-03-08', '2027-03-10', '2027-03-11'])
+        ->and($grouped)->toHaveCount(2)
+        ->and($grouped[0]['range_label'])->toBe('8 Mar')
+        ->and($grouped[1]['range_label'])->toBe('10–11 Mar')
+        ->and($grouped[1]['name'])->toBe('Hari Idul Fitri');
 
     // Test offline fallback
-    Cache::forget('pkt_id_holidays_v1_2027');
+    Cache::forget('pkt_id_holidays_v1_2028');
     Http::fake(['*' => Http::response(null, 500)]);
 
-    $fallback2027 = $service->getHolidaysForMonth(2027, 8);
-    expect($fallback2027)->toHaveKey('2027-08-17')
-        ->and($fallback2027['2027-08-17']['name'])->toBe('Hari Kemerdekaan Republik Indonesia');
+    $fallback2028 = $service->getHolidaysForMonth(2028, 8);
+    expect($fallback2028)->toHaveKey('2028-08-17')
+        ->and($fallback2028['2028-08-17']['name'])->toBe('Hari Kemerdekaan Republik Indonesia');
 });
 
-test('Sekretaris can add, edit, and delete multi-day duty notes visible to all users while Operator is read-only', function (): void {
+test('Sekretaris manages calendar notes via native Filament modal actions and Data Master resource while Operator is read-only', function (): void {
     Http::fake([
         IndonesianHolidayService::PRIMARY_FEED_URL => Http::response([
             '2026-12-25' => [
@@ -135,19 +145,24 @@ test('Sekretaris can add, edit, and delete multi-day duty notes visible to all u
 
     Filament::setCurrentPanel(Filament::getPanel('admin'));
 
-    // 1. Sekretaris menambahkan catatan dinas 2-7 Desember 2026
+    // 1. Data Master navigation group & access rules
+    expect(CalendarNoteResource::getNavigationGroup())->toBe('Data Master');
+
     Auth::login($sekretaris);
+    expect(CalendarNoteResource::canAccess())->toBeTrue();
+
+    // 2. Sekretaris creates multi-day note via native Filament modal action on DashboardCalendarClockWidget
     Livewire::test(DashboardCalendarClockWidget::class)
-        ->assertSee('Catatan')
-        ->call('openNoteModal')
-        ->set('noteUserId', $targetUser->id)
-        ->set('noteCategory', CalendarNote::CATEGORY_DINAS)
-        ->set('noteTitle', 'Dinas mutasi bahan baku')
-        ->set('noteStartDate', '2026-12-02')
-        ->set('noteEndDate', '2026-12-07')
-        ->set('noteDescription', 'Kunjungan koordinasi mutasi bahan baku')
-        ->call('saveNote')
-        ->assertHasNoErrors()
+        ->assertActionVisible('createNote')
+        ->callAction('createNote', data: [
+            'user_id' => $targetUser->id,
+            'category' => CalendarNote::CATEGORY_DINAS,
+            'title' => 'Dinas mutasi bahan baku',
+            'start_date' => '2026-12-02',
+            'end_date' => '2026-12-07',
+            'notes' => 'Kunjungan koordinasi mutasi bahan baku',
+        ])
+        ->assertHasNoActionErrors()
         ->assertSee('2–7 Des')
         ->assertSee('Andereyan Muhammat:')
         ->assertSee('Dinas mutasi bahan baku')
@@ -159,35 +174,45 @@ test('Sekretaris can add, edit, and delete multi-day duty notes visible to all u
         ->and($saved->created_by)->toBe($sekretaris->id)
         ->and($saved->formattedDateRange())->toBe('2–7 Des');
 
-    // 2. Operator bisa melihat catatan & hari libur, tapi tidak boleh menambah atau menghapus catatan
+    // 3. Sekretaris can also open Data Master -> Catatan Kalender page
+    Livewire::test(ManageCalendarNotes::class)
+        ->assertSee('Dinas mutasi bahan baku')
+        ->assertSee('Andereyan Muhammat');
+
+    // 4. Operator is read-only on widget and denied access to Data Master CalendarNoteResource
     Auth::login($operator);
+    expect(CalendarNoteResource::canAccess())->toBeFalse();
+
     Livewire::test(DashboardCalendarClockWidget::class)
         ->set('viewYear', 2026)
         ->set('viewMonth', 12)
-        ->assertDontSeeHtml('wire:click="openNoteModal()"')
+        ->assertActionHidden('createNote')
         ->assertSee('Andereyan Muhammat:')
         ->assertSee('Dinas mutasi bahan baku')
         ->assertSee('Hari Raya Natal')
-        ->call('selectDate', '2026-12-04')
-        ->assertSee('Dinas mutasi bahan baku')
-        ->set('noteTitle', 'Coba curi akses')
-        ->set('noteStartDate', '2026-12-10')
-        ->set('noteEndDate', '2026-12-10')
-        ->call('saveNote')
-        ->call('deleteNote', $saved->id);
+        ->call('setAgendaTab', 'holidays')
+        ->assertDontSee('2–7 Des')
+        ->assertSee('25 Des')
+        ->call('setAgendaTab', 'notes')
+        ->assertSee('2–7 Des')
+        ->assertDontSee('25 Des');
 
-    expect(CalendarNote::query()->count())->toBe(1);
-
-    // 3. Sekretaris dapat mengubah dan menghapus catatan
+    // 5. Sekretaris edits and deletes note via native Filament modal actions
     Auth::login($sekretaris);
     Livewire::test(DashboardCalendarClockWidget::class)
         ->set('viewYear', 2026)
         ->set('viewMonth', 12)
-        ->call('editNote', $saved->id)
-        ->set('noteTitle', 'Dinas mutasi bahan baku (Diperbarui)')
-        ->call('saveNote')
-        ->assertSee('Dinas mutasi bahan baku (Diperbarui)')
-        ->call('deleteNote', $saved->id);
+        ->callAction('editNote', data: [
+            'user_id' => $targetUser->id,
+            'category' => CalendarNote::CATEGORY_DINAS,
+            'title' => 'Dinas mutasi bahan baku (Final)',
+            'start_date' => '2026-12-02',
+            'end_date' => '2026-12-07',
+            'notes' => 'Diperbarui',
+        ], arguments: ['noteId' => $saved->id])
+        ->assertHasNoActionErrors()
+        ->assertSee('Dinas mutasi bahan baku (Final)')
+        ->callAction('deleteNote', arguments: ['noteId' => $saved->id]);
 
     expect(CalendarNote::query()->count())->toBe(0);
 });

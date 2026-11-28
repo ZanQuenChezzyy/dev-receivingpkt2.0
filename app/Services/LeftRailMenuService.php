@@ -11,6 +11,7 @@ use App\Filament\Pages\LaporanMaterialDiambil;
 use App\Filament\Pages\MonitoringMaterial;
 use App\Filament\Pages\NonStockAgingMonitoring;
 use App\Filament\Pages\ScanWarehouseTransmittal;
+use App\Filament\Resources\CalendarNotes\CalendarNoteResource;
 use App\Filament\Resources\CashierTransmittals\CashierTransmittalResource;
 use App\Filament\Resources\DeliveryOrderReceiptDetails\DeliveryOrderReceiptDetailResource;
 use App\Filament\Resources\DeliveryOrderReceipts\DeliveryOrderReceiptResource;
@@ -312,6 +313,15 @@ class LeftRailMenuService
                 'locked' => false,
             ],
             [
+                'key' => 'calendar_notes',
+                'label' => __('Catatan Kalender'),
+                'group' => __('Data Master & Sistem'),
+                'class' => CalendarNoteResource::class,
+                'icon' => 'heroicon-o-calendar-days',
+                'exact' => false,
+                'locked' => false,
+            ],
+            [
                 'key' => 'pic_material_assignments',
                 'label' => __('Aturan PIC Material'),
                 'group' => __('Data Master & Sistem'),
@@ -520,6 +530,7 @@ class LeftRailMenuService
             'vendors' => __('Vendor'),
             'warehouse_destinations' => __('Gudang'),
             'location_receivings' => __('Lokasi'),
+            'calendar_notes' => __('Kalender'),
             'pic_material_assignments' => __('PIC'),
             'users' => __('User'),
             default => str($fallbackLabel)->before(' ')->limit(10, '')->toString(),

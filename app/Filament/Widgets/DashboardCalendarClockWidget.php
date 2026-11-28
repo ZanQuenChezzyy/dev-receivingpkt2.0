@@ -2,20 +2,33 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\CalendarNotes\CalendarNoteResource;
 use App\Models\CalendarNote;
 use App\Models\User;
 use App\Services\IndonesianHolidayService;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Notifications\Notification;
-use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Support\Enums\Size;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\Rule;
+use Livewire\Attributes\Reactive;
 
-class DashboardCalendarClockWidget extends Widget
+class DashboardCalendarClockWidget extends Widget implements HasActions, HasSchemas
 {
-    use InteractsWithPageFilters;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
+    /**
+     * @var array<string, mixed>|null
+     */
+    #[Reactive]
+    public ?array $pageFilters = null;
 
     protected string $view = 'filament.widgets.dashboard-calendar-clock-widget';
 
@@ -32,21 +45,7 @@ class DashboardCalendarClockWidget extends Widget
 
     public ?string $selectedDate = null;
 
-    public bool $showNoteModal = false;
-
-    public ?int $editingNoteId = null;
-
-    public ?int $noteUserId = null;
-
-    public string $noteTitle = '';
-
-    public string $noteCategory = CalendarNote::CATEGORY_DINAS;
-
-    public string $noteStartDate = '';
-
-    public string $noteEndDate = '';
-
-    public string $noteDescription = '';
+    public string $agendaTab = 'all';
 
     public function mount(): void
     {
@@ -102,139 +101,160 @@ class DashboardCalendarClockWidget extends Widget
         $this->selectedDate = null;
     }
 
-    public function openNoteModal(?string $prefillDate = null): void
+    public function setAgendaTab(string $tab): void
     {
-        if (! $this->canManageNotes()) {
-            return;
+        if (in_array($tab, ['all', 'notes', 'holidays'], true)) {
+            $this->agendaTab = $tab;
         }
-
-        $defaultDate = $prefillDate
-            ?: ($this->selectedDate ?: now()->timezone(config('app.timezone', 'Asia/Makassar'))->toDateString());
-
-        $this->editingNoteId = null;
-        $this->noteUserId = null;
-        $this->noteTitle = '';
-        $this->noteCategory = CalendarNote::CATEGORY_DINAS;
-        $this->noteStartDate = $defaultDate;
-        $this->noteEndDate = $defaultDate;
-        $this->noteDescription = '';
-        $this->resetValidation();
-        $this->showNoteModal = true;
     }
 
-    public function editNote(int $noteId): void
+    public function createNoteAction(): Action
     {
-        if (! $this->canManageNotes() || ! Schema::hasTable('calendar_notes')) {
-            return;
-        }
+        return Action::make('createNote')
+            ->label('Catatan')
+            ->icon('heroicon-m-plus')
+            ->size(Size::ExtraSmall)
+            ->color('primary')
+            ->extraAttributes(['class' => '!rounded-full !px-2.5 !py-0.5 !text-[10px] !font-bold'])
+            ->visible(fn (): bool => $this->canManageNotes())
+            ->modalHeading('Tambah Catatan Kalender')
+            ->modalDescription('Catatan akan tampil pada kalender Halaman Utama untuk seluruh pengguna.')
+            ->modalWidth('lg')
+            ->modalSubmitActionLabel('Simpan Catatan')
+            ->fillForm(function (): array {
+                $defaultDate = $this->selectedDate
+                    ?: now()->timezone(config('app.timezone', 'Asia/Makassar'))->toDateString();
 
-        $note = CalendarNote::query()->find($noteId);
-        if (! $note) {
-            return;
-        }
+                return [
+                    'category' => CalendarNote::CATEGORY_DINAS,
+                    'start_date' => $defaultDate,
+                    'end_date' => $defaultDate,
+                ];
+            })
+            ->schema(fn (): array => CalendarNoteResource::formComponents())
+            ->action(function (array $data): void {
+                if (! $this->canManageNotes() || ! Schema::hasTable('calendar_notes')) {
+                    Notification::make()
+                        ->title('Akses ditolak')
+                        ->body('Hanya Sekretaris yang berhak menambah catatan kalender.')
+                        ->warning()
+                        ->send();
 
-        $this->editingNoteId = $note->id;
-        $this->noteUserId = $note->user_id;
-        $this->noteTitle = $note->title;
-        $this->noteCategory = $note->category;
-        $this->noteStartDate = $note->start_date?->toDateString() ?? '';
-        $this->noteEndDate = $note->end_date?->toDateString() ?? $this->noteStartDate;
-        $this->noteDescription = (string) ($note->notes ?? '');
-        $this->resetValidation();
-        $this->showNoteModal = true;
+                    return;
+                }
+
+                CalendarNote::query()->create([
+                    'user_id' => $data['user_id'] ?: null,
+                    'title' => trim((string) $data['title']),
+                    'category' => (string) $data['category'],
+                    'start_date' => $data['start_date'],
+                    'end_date' => $data['end_date'],
+                    'notes' => filled($data['notes'] ?? null) ? trim((string) $data['notes']) : null,
+                    'created_by' => Auth::id(),
+                ]);
+
+                $startCarbon = Carbon::parse($data['start_date']);
+                $this->viewYear = (int) $startCarbon->year;
+                $this->viewMonth = (int) $startCarbon->month;
+                $this->selectedDate = null;
+
+                Notification::make()
+                    ->title('Catatan kalender ditambahkan')
+                    ->success()
+                    ->send();
+            });
     }
 
-    public function closeNoteModal(): void
+    public function editNoteAction(): Action
     {
-        $this->showNoteModal = false;
-        $this->resetValidation();
+        return Action::make('editNote')
+            ->label('Ubah Catatan')
+            ->icon('heroicon-m-pencil-square')
+            ->color('gray')
+            ->visible(fn (): bool => $this->canManageNotes())
+            ->modalHeading('Ubah Catatan Kalender')
+            ->modalWidth('lg')
+            ->modalSubmitActionLabel('Simpan Perubahan')
+            ->fillForm(function (array $arguments): array {
+                $noteId = (int) ($arguments['noteId'] ?? 0);
+                $note = ($noteId > 0 && Schema::hasTable('calendar_notes'))
+                    ? CalendarNote::query()->find($noteId)
+                    : null;
+
+                if (! $note) {
+                    return [];
+                }
+
+                return [
+                    'user_id' => $note->user_id,
+                    'category' => $note->category,
+                    'title' => $note->title,
+                    'start_date' => $note->start_date?->toDateString(),
+                    'end_date' => $note->end_date?->toDateString(),
+                    'notes' => $note->notes,
+                ];
+            })
+            ->schema(fn (): array => CalendarNoteResource::formComponents())
+            ->action(function (array $data, array $arguments): void {
+                if (! $this->canManageNotes() || ! Schema::hasTable('calendar_notes')) {
+                    return;
+                }
+
+                $noteId = (int) ($arguments['noteId'] ?? 0);
+                $note = CalendarNote::query()->find($noteId);
+                if (! $note) {
+                    return;
+                }
+
+                $note->update([
+                    'user_id' => $data['user_id'] ?: null,
+                    'title' => trim((string) $data['title']),
+                    'category' => (string) $data['category'],
+                    'start_date' => $data['start_date'],
+                    'end_date' => $data['end_date'],
+                    'notes' => filled($data['notes'] ?? null) ? trim((string) $data['notes']) : null,
+                ]);
+
+                $startCarbon = Carbon::parse($data['start_date']);
+                $this->viewYear = (int) $startCarbon->year;
+                $this->viewMonth = (int) $startCarbon->month;
+
+                Notification::make()
+                    ->title('Catatan kalender diperbarui')
+                    ->success()
+                    ->send();
+            });
     }
 
-    public function saveNote(): void
+    public function deleteNoteAction(): Action
     {
-        if (! $this->canManageNotes()) {
-            Notification::make()
-                ->title('Akses ditolak')
-                ->body('Hanya Sekretaris yang berhak menambah atau mengubah catatan kalender.')
-                ->warning()
-                ->send();
+        return Action::make('deleteNote')
+            ->label('Hapus')
+            ->icon('heroicon-m-trash')
+            ->color('danger')
+            ->visible(fn (): bool => $this->canManageNotes())
+            ->requiresConfirmation()
+            ->modalHeading('Hapus Catatan Kalender')
+            ->modalDescription('Apakah Anda yakin ingin menghapus catatan agenda ini?')
+            ->modalSubmitActionLabel('Ya, Hapus')
+            ->action(function (array $arguments): void {
+                if (! $this->canManageNotes() || ! Schema::hasTable('calendar_notes')) {
+                    return;
+                }
 
-            return;
-        }
+                $noteId = (int) ($arguments['noteId'] ?? 0);
+                $note = CalendarNote::query()->find($noteId);
+                if (! $note) {
+                    return;
+                }
 
-        if (! Schema::hasTable('calendar_notes')) {
-            return;
-        }
+                $note->delete();
 
-        if ($this->noteUserId === 0) {
-            $this->noteUserId = null;
-        }
-
-        $validated = $this->validate([
-            'noteUserId' => ['nullable', 'integer', 'exists:users,id'],
-            'noteTitle' => ['required', 'string', 'min:2', 'max:140'],
-            'noteCategory' => ['required', Rule::in(array_keys(CalendarNote::categoryOptions()))],
-            'noteStartDate' => ['required', 'date'],
-            'noteEndDate' => ['required', 'date', 'after_or_equal:noteStartDate'],
-            'noteDescription' => ['nullable', 'string', 'max:500'],
-        ], [
-            'noteTitle.required' => 'Judul catatan wajib diisi.',
-            'noteStartDate.required' => 'Tanggal mulai wajib diisi.',
-            'noteEndDate.required' => 'Tanggal selesai wajib diisi.',
-            'noteEndDate.after_or_equal' => 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.',
-        ]);
-
-        $payload = [
-            'user_id' => $validated['noteUserId'] ?: null,
-            'title' => trim($validated['noteTitle']),
-            'category' => $validated['noteCategory'],
-            'start_date' => $validated['noteStartDate'],
-            'end_date' => $validated['noteEndDate'],
-            'notes' => filled($validated['noteDescription'] ?? null) ? trim((string) $validated['noteDescription']) : null,
-        ];
-
-        if ($this->editingNoteId) {
-            $note = CalendarNote::query()->find($this->editingNoteId);
-            if ($note) {
-                $note->update($payload);
-            }
-            $toastTitle = 'Catatan kalender diperbarui';
-        } else {
-            $payload['created_by'] = Auth::id();
-            CalendarNote::query()->create($payload);
-            $toastTitle = 'Catatan kalender ditambahkan';
-        }
-
-        $startCarbon = Carbon::parse($validated['noteStartDate']);
-        $this->viewYear = (int) $startCarbon->year;
-        $this->viewMonth = (int) $startCarbon->month;
-        $this->selectedDate = null;
-        $this->showNoteModal = false;
-        $this->editingNoteId = null;
-
-        Notification::make()
-            ->title($toastTitle)
-            ->success()
-            ->send();
-    }
-
-    public function deleteNote(int $noteId): void
-    {
-        if (! $this->canManageNotes() || ! Schema::hasTable('calendar_notes')) {
-            return;
-        }
-
-        $note = CalendarNote::query()->find($noteId);
-        if (! $note) {
-            return;
-        }
-
-        $note->delete();
-
-        Notification::make()
-            ->title('Catatan kalender dihapus')
-            ->success()
-            ->send();
+                Notification::make()
+                    ->title('Catatan kalender dihapus')
+                    ->success()
+                    ->send();
+            });
     }
 
     protected function canManageNotes(): bool
@@ -278,7 +298,8 @@ class DashboardCalendarClockWidget extends Widget
         $monthEnd = (clone $monthStart)->endOfMonth();
 
         // 1. Hari Libur Nasional Indonesia untuk bulan yang sedang dilihat
-        $monthHolidays = app(IndonesianHolidayService::class)->getHolidaysForMonth($viewYear, $viewMonth);
+        $holidayService = app(IndonesianHolidayService::class);
+        $monthHolidays = $holidayService->getHolidaysForMonth($viewYear, $viewMonth);
 
         // 2. Catatan kalender dari DB yang beririsan dengan bulan yang sedang dilihat
         $monthNotes = collect();
@@ -296,7 +317,6 @@ class DashboardCalendarClockWidget extends Widget
             $monthNotes = collect();
         }
 
-        // Indeks catatan per tanggal untuk pewarnaan rentang di kalender
         /** @var array<string, list<CalendarNote>> $notesByDate */
         $notesByDate = [];
         foreach ($monthNotes as $note) {
@@ -382,14 +402,19 @@ class DashboardCalendarClockWidget extends Widget
             ];
         }
 
-        // 4. Filter daftar catatan & hari libur berdasarkan tanggal terpilih (atau tampilkan satu bulan penuh)
-        $visibleNotes = $this->selectedDate
+        // 4. Filter & kelompokkan catatan + libur berurutan agar daftar tetap ringkas dan stabil tingginya
+        $scopedNotes = $this->selectedDate
             ? collect($notesByDate[$this->selectedDate] ?? [])
             : $monthNotes;
 
-        $visibleHolidays = $this->selectedDate
+        $scopedHolidayMap = $this->selectedDate
             ? (isset($monthHolidays[$this->selectedDate]) ? [$this->selectedDate => $monthHolidays[$this->selectedDate]] : [])
             : $monthHolidays;
+
+        $groupedHolidays = $holidayService->groupConsecutiveHolidays($scopedHolidayMap, $shortMonths);
+
+        $visibleNotes = $this->agendaTab === 'holidays' ? collect() : $scopedNotes;
+        $visibleHolidays = $this->agendaTab === 'notes' ? [] : $groupedHolidays;
 
         $selectedDateLabel = null;
         if ($this->selectedDate) {
@@ -402,12 +427,17 @@ class DashboardCalendarClockWidget extends Widget
         }
 
         $canManage = $this->canManageNotes();
-        $assignableUsers = $canManage
-            ? User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'npk'])
-            : collect();
+        $manageUrl = null;
+        if ($canManage) {
+            try {
+                $manageUrl = CalendarNoteResource::getUrl('index');
+            } catch (\Throwable) {
+                $manageUrl = null;
+            }
+        }
 
-        $filterMonth = (int) ($this->filters['month'] ?? $now->month);
-        $filterYear = (int) ($this->filters['year'] ?? $now->year);
+        $filterMonth = (int) ($this->pageFilters['month'] ?? $now->month);
+        $filterYear = (int) ($this->pageFilters['year'] ?? $now->year);
         $filterPeriodLabel = ($monthNames[$filterMonth] ?? $monthNames[$now->month]).' '.$filterYear;
 
         return [
@@ -421,11 +451,11 @@ class DashboardCalendarClockWidget extends Widget
             'calendarCells' => $calendarCells,
             'visibleNotes' => $visibleNotes,
             'visibleHolidays' => $visibleHolidays,
+            'notesCount' => $scopedNotes->count(),
+            'holidaysCount' => count($groupedHolidays),
             'selectedDateLabel' => $selectedDateLabel,
             'canManageNotes' => $canManage,
-            'assignableUsers' => $assignableUsers,
-            'categoryOptions' => CalendarNote::categoryOptions(),
-            'shortMonths' => $shortMonths,
+            'manageUrl' => $manageUrl,
         ];
     }
 }

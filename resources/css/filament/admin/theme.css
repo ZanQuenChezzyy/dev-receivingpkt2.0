@@ -7849,6 +7849,41 @@ html.pkt-curtain-lock body {
     box-shadow: 0 12px 26px -14px rgba(0, 0, 0, 0.55);
 }
 
+/* Sleek Thin Scrollbar for Bento Calendar Agenda List */
+.pkt-thin-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 116, 139, 0.28) transparent;
+}
+
+.dark .pkt-thin-scroll {
+    scrollbar-color: rgba(148, 163, 184, 0.24) transparent;
+}
+
+.pkt-thin-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.pkt-thin-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.pkt-thin-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(100, 116, 139, 0.28);
+    border-radius: 9999px;
+}
+
+.pkt-thin-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(244, 121, 32, 0.65);
+}
+
+.dark .pkt-thin-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.22);
+}
+
+.dark .pkt-thin-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(244, 121, 32, 0.7);
+}
+
 @media (prefers-reduced-motion: reduce) {
     .pkt-dev-badge,
     .pkt-dev-badge-ring,
