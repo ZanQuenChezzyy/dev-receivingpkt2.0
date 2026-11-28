@@ -433,7 +433,7 @@ class EditProfile extends BaseEditProfile
                                             ],
                                             User::DEVELOPER_BADGE_PKT_COMBO => [
                                                 'title' => 'Solar Aurora',
-                                                'desc' => 'Tier tertinggi: aurora prismatik mengalir dengan kilau bintang & pendaran multi-spektrum.',
+                                                'desc' => 'Tier tertinggi: aliran aurora biru & oranye PKT dengan kilau bintang dan pendaran ganda.',
                                                 'tier_chip' => 'Tier Tertinggi',
                                                 'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
                                             ],
@@ -460,7 +460,7 @@ class EditProfile extends BaseEditProfile
 
                                             if ($isUnlocked) {
                                                 $chipColor = $isMythic
-                                                    ? 'bg-gradient-to-r from-[#0054A6] via-[#A855F7] to-[#F47920] text-white shadow-xs'
+                                                    ? 'bg-gradient-to-r from-[#0054A6] via-[#0B67C2] to-[#F47920] text-white shadow-xs'
                                                     : 'bg-[#F47920]/15 text-[#F47920] dark:text-orange-300';
                                                 $chipText = $hasFullAccess ? $meta['tier_chip'] : ($isMythic ? 'Tier Tertinggi • Terbuka' : 'Terbuka via Misi');
                                                 $statusChip = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold '.$chipColor.'">'.$chipText.'</span>';
@@ -535,7 +535,7 @@ class EditProfile extends BaseEditProfile
 
             if ($progress['can_claim_solar_aurora']) {
                 $buttons[] = '<button type="button" wire:click="claimBadgeGift(\''.User::DEVELOPER_BADGE_PKT_COMBO.'\')" wire:loading.attr="disabled" '
-                    .'class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-[#0054A6] via-[#A855F7] to-[#F47920] text-white shadow-md hover:opacity-95 transition-opacity cursor-pointer">'
+                    .'class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-[#0054A6] via-[#0B67C2] to-[#F47920] text-white shadow-md hover:opacity-95 transition-opacity cursor-pointer">'
                     .'<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5l2.35 6.15L20.5 10l-6.15 2.35L12 18.5l-2.35-6.15L3.5 10l6.15-2.35L12 1.5z" /></svg>'
                     .'Ambil Hadiah Solar Aurora'
                     .'</button>';

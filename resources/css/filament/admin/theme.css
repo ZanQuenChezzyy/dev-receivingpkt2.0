@@ -4697,28 +4697,22 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 @keyframes pkt-aurora-halo {
     0%, 100% {
         box-shadow:
-            0 0 12px -1px rgba(244, 121, 32, 0.55),
-            0 0 22px -2px rgba(56, 189, 248, 0.45),
-            0 0 32px -4px rgba(192, 132, 252, 0.35);
+            0 0 13px -1px rgba(244, 121, 32, 0.58),
+            0 0 24px -2px rgba(0, 84, 166, 0.52),
+            0 0 34px -4px rgba(56, 189, 248, 0.32);
     }
-    33% {
+    50% {
         box-shadow:
-            0 0 15px 0px rgba(253, 224, 71, 0.65),
-            0 0 26px -1px rgba(52, 211, 153, 0.52),
-            0 0 38px -3px rgba(0, 84, 166, 0.45);
-    }
-    66% {
-        box-shadow:
-            0 0 15px 0px rgba(192, 132, 252, 0.62),
-            0 0 26px -1px rgba(244, 121, 32, 0.55),
-            0 0 36px -3px rgba(56, 189, 248, 0.45);
+            0 0 16px 0px rgba(56, 189, 248, 0.62),
+            0 0 26px -1px rgba(244, 121, 32, 0.56),
+            0 0 38px -3px rgba(253, 186, 116, 0.38);
     }
 }
 
 @keyframes pkt-aurora-star-pulse {
     0%, 100% {
         transform: scale(0.92) rotate(0deg);
-        filter: drop-shadow(0 0 4px rgba(253, 224, 71, 0.85)) drop-shadow(0 0 8px rgba(244, 121, 32, 0.55));
+        filter: drop-shadow(0 0 5px rgba(253, 186, 116, 0.9)) drop-shadow(0 0 9px rgba(244, 121, 32, 0.65));
     }
     50% {
         transform: scale(1.16) rotate(18deg);
@@ -4761,35 +4755,36 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 .pkt-dev-badge--pkt_combo {
     padding: 2px;
-    animation: pkt-aurora-halo 3.6s ease-in-out infinite;
+    animation: pkt-aurora-halo 3.2s ease-in-out infinite;
 }
 
 .pkt-dev-badge--pkt_combo .pkt-dev-badge-ring {
     background: conic-gradient(
         from 0deg,
         #0054A6 0deg,
-        #38BDF8 45deg,
-        #34D399 95deg,
-        #FDE047 148deg,
+        #38BDF8 58deg,
+        #E0F2FE 95deg,
+        #0054A6 138deg,
         #F47920 198deg,
-        #EC4899 252deg,
-        #A855F7 302deg,
+        #FDBA74 252deg,
+        #FFF7ED 285deg,
+        #F47920 318deg,
         #0054A6 360deg
     );
-    animation-duration: 2.1s;
+    animation-duration: 2.2s;
 }
 
 .pkt-dev-badge--pkt_combo .pkt-dev-badge-core {
-    background: linear-gradient(125deg, #071428 0%, #0D3558 24%, #1A1F4B 48%, #4C1D4F 72%, #7C2D12 90%, #071428 100%);
+    background: linear-gradient(125deg, #06152C 0%, #00448A 28%, #0E2240 50%, #6A2B0A 76%, #A3420C 92%, #06152C 100%);
     background-size: 260% 260%;
-    animation: pkt-aurora-flow 5.5s ease-in-out infinite;
+    animation: pkt-aurora-flow 5.2s ease-in-out infinite;
     color: #FFFFFF;
-    text-shadow: 0 1px 8px rgba(253, 224, 71, 0.35), 0 0 14px rgba(56, 189, 248, 0.35);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(244, 121, 32, 0.3);
+    text-shadow: 0 1px 8px rgba(253, 186, 116, 0.38), 0 0 12px rgba(56, 189, 248, 0.35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(244, 121, 32, 0.32);
 }
 
 .pkt-dev-icon-aurora {
-    color: #FDE047;
+    color: #FDBA74;
     animation: pkt-aurora-star-pulse 2.4s ease-in-out infinite;
 }
 
@@ -4811,9 +4806,9 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     background: linear-gradient(
         90deg,
         transparent 0%,
-        rgba(56, 189, 248, 0.25) 28%,
+        rgba(56, 189, 248, 0.28) 28%,
         rgba(255, 255, 255, 0.72) 50%,
-        rgba(253, 224, 71, 0.4) 72%,
+        rgba(253, 186, 116, 0.42) 72%,
         transparent 100%
     );
     animation: pkt-aurora-beam 3.1s ease-in-out infinite;
@@ -4834,14 +4829,14 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     height: 4px;
     border-radius: 1px;
     background: #FFFFFF;
-    box-shadow: 0 0 6px 1.5px rgba(253, 224, 71, 0.95), 0 0 10px 2px rgba(56, 189, 248, 0.7);
+    box-shadow: 0 0 6px 1.5px rgba(253, 186, 116, 0.95), 0 0 10px 2px rgba(56, 189, 248, 0.72);
     animation: pkt-aurora-twinkle 2.4s ease-in-out infinite;
 }
 
-.pkt-aurora-stars i:nth-child(1) { top: 20%; left: 16%; animation-delay: 0s; }
-.pkt-aurora-stars i:nth-child(2) { top: 68%; left: 42%; animation-delay: 0.65s; background: #67E8F9; width: 3.5px; height: 3.5px; }
-.pkt-aurora-stars i:nth-child(3) { top: 24%; left: 74%; animation-delay: 1.25s; background: #FDE047; }
-.pkt-aurora-stars i:nth-child(4) { top: 64%; left: 88%; animation-delay: 1.85s; background: #F0ABFC; width: 3px; height: 3px; }
+.pkt-aurora-stars i:nth-child(1) { top: 20%; left: 16%; animation-delay: 0s; background: #FFFFFF; }
+.pkt-aurora-stars i:nth-child(2) { top: 68%; left: 42%; animation-delay: 0.65s; background: #7DD3FC; width: 3.5px; height: 3.5px; }
+.pkt-aurora-stars i:nth-child(3) { top: 24%; left: 74%; animation-delay: 1.25s; background: #FDBA74; }
+.pkt-aurora-stars i:nth-child(4) { top: 64%; left: 88%; animation-delay: 1.85s; background: #BAE6FD; width: 3px; height: 3px; }
 
 /* Variant 4: Standard (Static) */
 .pkt-dev-badge--none {
@@ -4909,22 +4904,23 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 .pkt-dev-avatar-ring--pkt_combo {
     padding: 3px;
-    animation: pkt-aurora-halo 3.6s ease-in-out infinite;
+    animation: pkt-aurora-halo 3.2s ease-in-out infinite;
 }
 
 .pkt-dev-avatar-ring--pkt_combo::before {
     background: conic-gradient(
         from 0deg,
         #0054A6 0deg,
-        #38BDF8 45deg,
-        #34D399 95deg,
-        #FDE047 148deg,
+        #38BDF8 58deg,
+        #E0F2FE 95deg,
+        #0054A6 138deg,
         #F47920 198deg,
-        #EC4899 252deg,
-        #A855F7 302deg,
+        #FDBA74 252deg,
+        #FFF7ED 285deg,
+        #F47920 318deg,
         #0054A6 360deg
     );
-    animation-duration: 2.1s;
+    animation-duration: 2.2s;
 }
 
 /* =========================================================
@@ -5134,31 +5130,32 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 .pkt-user-pill-embers i:nth-child(3) { left: 72%; animation-delay: 0.9s; }
 .pkt-user-pill-embers i:nth-child(4) { left: 88%; animation-delay: 1.25s; width: 3px; height: 3px; }
 
-/* Pill Style 3: MYTHIC TIER — Solar Aurora Table Pill */
+/* Pill Style 3: MYTHIC TIER — Solar Aurora Table Pill (Pure PKT Blue & Orange) */
 .pkt-user-pill--pkt_combo {
     padding: 2px;
-    animation: pkt-aurora-halo 3.6s ease-in-out infinite;
+    animation: pkt-aurora-halo 3.2s ease-in-out infinite;
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-border::before {
     background: conic-gradient(
         from 0deg,
         #0054A6 0deg,
-        #38BDF8 45deg,
-        #34D399 95deg,
-        #FDE047 148deg,
+        #38BDF8 58deg,
+        #E0F2FE 95deg,
+        #0054A6 138deg,
         #F47920 198deg,
-        #EC4899 252deg,
-        #A855F7 302deg,
+        #FDBA74 252deg,
+        #FFF7ED 285deg,
+        #F47920 318deg,
         #0054A6 360deg
     );
-    animation-duration: 2.1s;
+    animation-duration: 2.2s;
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-inner {
-    background: linear-gradient(125deg, #081830 0%, #0E345A 26%, #24194E 54%, #5A1E3E 78%, #7C2D12 100%);
+    background: linear-gradient(125deg, #06152C 0%, #00448A 30%, #0E2240 52%, #6A2B0A 78%, #A3420C 100%);
     background-size: 260% 260%;
-    animation: pkt-aurora-flow 5.5s ease-in-out infinite;
+    animation: pkt-aurora-flow 5.2s ease-in-out infinite;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
@@ -5168,7 +5165,7 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-sub {
-    color: #FDE047;
+    color: #FDBA74;
 }
 
 /* =========================================================
