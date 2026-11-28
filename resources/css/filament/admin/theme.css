@@ -4615,16 +4615,97 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 }
 
 .pkt-dev-badge--electric .pkt-dev-badge-core {
-    background: linear-gradient(135deg, #061D3A 0%, #004385 100%);
-    color: #E0F2FE;
+    background: linear-gradient(135deg, #004696 0%, #0284C7 58%, #0369A1 100%);
+    color: #F0F9FF;
+    text-shadow: 0 1px 6px rgba(0, 40, 90, 0.5);
 }
 
 .pkt-dev-icon-bolt {
-    color: #7DD3FC;
+    color: #BAE6FD;
     animation: pkt-dev-bolt-zap 2.2s ease-in-out infinite;
 }
 
-/* Variant 2: Flame (PKT Orange + Ember Sparks) */
+/* Signature FX 1: Crackling Jagged Lightning Arcs */
+@keyframes pkt-fx-bolt-flash {
+    0%, 74%, 81%, 86%, 100% {
+        opacity: 0;
+        transform: scaleX(0.84);
+    }
+    77%, 83% {
+        opacity: 1;
+        transform: scaleX(1.06);
+    }
+    79% {
+        opacity: 0.35;
+        transform: scaleX(0.95);
+    }
+}
+
+.pkt-fx-lightning {
+    position: absolute;
+    inset: 2px;
+    z-index: 4;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-fx-lightning i {
+    position: absolute;
+    height: 10px;
+    width: 55%;
+    background: linear-gradient(90deg, transparent 0%, #7DD3FC 35%, #FFFFFF 55%, #38BDF8 78%, transparent 100%);
+    clip-path: polygon(0% 58%, 18% 20%, 34% 72%, 52% 10%, 68% 68%, 86% 24%, 100% 52%, 86% 42%, 68% 88%, 52% 32%, 34% 92%, 18% 42%);
+    filter: drop-shadow(0 0 4px #38BDF8) drop-shadow(0 0 8px #FFFFFF);
+    animation: pkt-fx-bolt-flash 2.3s linear infinite;
+}
+
+.pkt-fx-lightning i:nth-child(1) { top: 12%; left: 10%; animation-delay: 0s; }
+.pkt-fx-lightning i:nth-child(2) { bottom: 8%; right: 8%; width: 48%; animation-delay: 1.15s; }
+.pkt-fx-lightning i:nth-child(3) { top: 40%; left: 32%; width: 38%; animation-delay: 0.55s; }
+
+/* Variant 2: Flame (PKT Orange + Flickering Flame Tongues & Rising Embers) */
+@keyframes pkt-fx-flame-lick {
+    0%, 100% {
+        transform: translateY(3px) scaleY(0.75) scaleX(0.92) skewX(-5deg);
+        opacity: 0.55;
+    }
+    40% {
+        transform: translateY(-2px) scaleY(1.22) scaleX(1.06) skewX(6deg);
+        opacity: 0.92;
+    }
+    70% {
+        transform: translateY(1px) scaleY(0.92) scaleX(0.96) skewX(-3deg);
+        opacity: 0.72;
+    }
+}
+
+.pkt-fx-flames {
+    position: absolute;
+    inset: 2px;
+    z-index: 3;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-fx-flames i {
+    position: absolute;
+    bottom: -6px;
+    width: 24px;
+    height: 18px;
+    border-radius: 50% 50% 35% 35%;
+    background: radial-gradient(ellipse at bottom, rgba(254, 240, 138, 0.92) 0%, rgba(249, 115, 22, 0.75) 52%, transparent 78%);
+    filter: blur(1.5px);
+    transform-origin: bottom center;
+    animation: pkt-fx-flame-lick 1.05s ease-in-out infinite;
+}
+
+.pkt-fx-flames i:nth-child(1) { left: 6%; animation-delay: 0s; }
+.pkt-fx-flames i:nth-child(2) { left: 30%; width: 28px; animation-delay: 0.25s; animation-duration: 0.9s; }
+.pkt-fx-flames i:nth-child(3) { left: 56%; animation-delay: 0.52s; animation-duration: 1.15s; }
+.pkt-fx-flames i:nth-child(4) { right: 6%; width: 22px; animation-delay: 0.78s; }
+
 .pkt-dev-badge--flame {
     overflow: visible;
     animation: pkt-dev-flame-glow 2s ease-in-out infinite;
@@ -4643,7 +4724,7 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 }
 
 .pkt-dev-badge--flame .pkt-dev-badge-core {
-    background: linear-gradient(135deg, #7C2D12 0%, #C2410C 52%, #EA580C 100%);
+    background: linear-gradient(135deg, #9A3412 0%, #EA580C 52%, #F97316 100%);
     color: #FFF7ED;
 }
 
@@ -4782,12 +4863,12 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 }
 
 .pkt-dev-badge--pkt_combo .pkt-dev-badge-core {
-    background: linear-gradient(125deg, #06152C 0%, #00448A 28%, #0E2240 50%, #6A2B0A 76%, #A3420C 92%, #06152C 100%);
+    background: linear-gradient(125deg, #00478F 0%, #0284C7 26%, #0054A6 50%, #EA580C 76%, #F47920 94%, #00478F 100%);
     background-size: 260% 260%;
     animation: pkt-aurora-flow 5.2s ease-in-out infinite;
     color: #FFFFFF;
-    text-shadow: 0 1px 8px rgba(253, 186, 116, 0.38), 0 0 12px rgba(56, 189, 248, 0.35);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(244, 121, 32, 0.32);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.32), 0 0 12px rgba(56, 189, 248, 0.35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), inset 0 -1px 0 rgba(244, 121, 32, 0.35);
 }
 
 .pkt-dev-icon-aurora {
@@ -4845,30 +4926,43 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 .pkt-aurora-stars i:nth-child(3) { top: 24%; left: 74%; animation-delay: 1.25s; background: #FDBA74; }
 .pkt-aurora-stars i:nth-child(4) { top: 64%; left: 88%; animation-delay: 1.85s; background: #BAE6FD; width: 3px; height: 3px; }
 
-/* Variant 4: MYTHIC TIER — Royal Obsidian (Obsidian Black & Liquid 24K Champagne Gold) */
+/* Variant 4: MYTHIC TIER — Royal Obsidian (Burnished Bronze & Liquid 24K Gold + 4-Point Diamond Glints) */
 @keyframes pkt-obsidian-halo {
     0%, 100% {
         box-shadow:
-            0 0 12px -1px rgba(245, 158, 11, 0.48),
-            0 0 24px -3px rgba(253, 230, 138, 0.3),
-            0 2px 10px rgba(0, 0, 0, 0.55);
+            0 0 12px -1px rgba(245, 158, 11, 0.55),
+            0 0 24px -3px rgba(253, 230, 138, 0.36);
     }
     50% {
         box-shadow:
-            0 0 16px 0px rgba(251, 191, 36, 0.62),
-            0 0 28px -2px rgba(217, 119, 6, 0.42),
-            0 2px 12px rgba(0, 0, 0, 0.65);
+            0 0 16px 0px rgba(251, 191, 36, 0.72),
+            0 0 28px -2px rgba(217, 119, 6, 0.48);
     }
 }
 
 @keyframes pkt-obsidian-crown-glow {
     0%, 100% {
         transform: scale(0.95);
-        filter: drop-shadow(0 0 4px rgba(253, 230, 138, 0.85)) drop-shadow(0 0 8px rgba(217, 119, 6, 0.55));
+        filter: drop-shadow(0 0 4px rgba(253, 230, 138, 0.9)) drop-shadow(0 0 8px rgba(217, 119, 6, 0.6));
     }
     50% {
-        transform: scale(1.1);
-        filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 12px rgba(245, 158, 11, 0.85));
+        transform: scale(1.12);
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 1)) drop-shadow(0 0 12px rgba(245, 158, 11, 0.9));
+    }
+}
+
+@keyframes pkt-fx-diamond-glint {
+    0%, 100% {
+        opacity: 0;
+        transform: scale(0.2) rotate(0deg);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1.35) rotate(45deg);
+    }
+    65% {
+        opacity: 0.7;
+        transform: scale(0.95) rotate(90deg);
     }
 }
 
@@ -4880,31 +4974,30 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 .pkt-dev-badge--obsidian_gold .pkt-dev-badge-ring {
     background: conic-gradient(
         from 0deg,
-        #0B0F17 0deg,
-        #334155 48deg,
-        #B45309 98deg,
-        #FDE68A 145deg,
-        #FFFFFF 166deg,
-        #D97706 205deg,
-        #111827 265deg,
-        #F59E0B 318deg,
-        #0B0F17 360deg
+        #78350F 0deg,
+        #B45309 55deg,
+        #FDE68A 118deg,
+        #FFFFFF 142deg,
+        #D97706 196deg,
+        #92400E 258deg,
+        #FBBF24 316deg,
+        #78350F 360deg
     );
     animation-duration: 2.5s;
 }
 
 .pkt-dev-badge--obsidian_gold .pkt-dev-badge-core {
-    background: linear-gradient(125deg, #07090F 0%, #14171F 28%, #2C2111 54%, #4D3511 76%, #11131A 100%);
+    background: linear-gradient(125deg, #5C2B08 0%, #92400E 28%, #D97706 54%, #B45309 78%, #6B320B 100%);
     background-size: 250% 250%;
-    animation: pkt-aurora-flow 5.8s ease-in-out infinite;
-    color: #FEF3C7;
-    text-shadow: 0 1px 7px rgba(245, 158, 11, 0.4);
-    box-shadow: inset 0 1px 0 rgba(253, 230, 138, 0.34), inset 0 -1px 0 rgba(180, 83, 9, 0.35);
+    animation: pkt-aurora-flow 5.6s ease-in-out infinite;
+    color: #FFFBEB;
+    text-shadow: 0 1px 6px rgba(69, 26, 3, 0.55);
+    box-shadow: inset 0 1px 0 rgba(254, 243, 199, 0.45), inset 0 -1px 0 rgba(120, 53, 15, 0.45);
 }
 
 .pkt-dev-icon-obsidian {
-    color: #FDE68A;
-    animation: pkt-obsidian-crown-glow 2.6s ease-in-out infinite;
+    color: #FEF3C7;
+    animation: pkt-obsidian-crown-glow 2.5s ease-in-out infinite;
 }
 
 .pkt-obsidian-sheen {
@@ -4921,16 +5014,16 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     position: absolute;
     top: -15%;
     bottom: -15%;
-    width: 34%;
+    width: 38%;
     background: linear-gradient(
         90deg,
         transparent 0%,
-        rgba(217, 119, 6, 0.25) 28%,
-        rgba(254, 243, 199, 0.72) 50%,
-        rgba(245, 158, 11, 0.35) 72%,
+        rgba(253, 230, 138, 0.28) 28%,
+        rgba(255, 255, 255, 0.82) 50%,
+        rgba(251, 191, 36, 0.4) 72%,
         transparent 100%
     );
-    animation: pkt-aurora-beam 3.3s ease-in-out infinite;
+    animation: pkt-aurora-beam 2.9s ease-in-out infinite;
 }
 
 .pkt-obsidian-stars {
@@ -4944,43 +5037,58 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 .pkt-obsidian-stars i {
     position: absolute;
-    width: 3.5px;
-    height: 3.5px;
-    border-radius: 1px;
-    background: #FEF3C7;
-    box-shadow: 0 0 6px 1.5px rgba(253, 230, 138, 0.95), 0 0 9px 1.5px rgba(217, 119, 6, 0.75);
-    animation: pkt-aurora-twinkle 2.6s ease-in-out infinite;
+    width: 9px;
+    height: 9px;
+    background: #FFFFFF;
+    clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+    filter: drop-shadow(0 0 4px #FDE68A) drop-shadow(0 0 6px #F59E0B);
+    animation: pkt-fx-diamond-glint 2.5s ease-in-out infinite;
 }
 
-.pkt-obsidian-stars i:nth-child(1) { top: 18%; left: 18%; animation-delay: 0s; background: #FFFFFF; }
-.pkt-obsidian-stars i:nth-child(2) { top: 72%; left: 46%; animation-delay: 0.7s; background: #FDE68A; width: 3px; height: 3px; }
-.pkt-obsidian-stars i:nth-child(3) { top: 20%; left: 76%; animation-delay: 1.4s; background: #FBBF24; }
-.pkt-obsidian-stars i:nth-child(4) { top: 70%; left: 88%; animation-delay: 2.05s; background: #FEF3C7; width: 2.5px; height: 2.5px; }
+.pkt-obsidian-stars i:nth-child(1) { top: 8%; left: 16%; animation-delay: 0s; }
+.pkt-obsidian-stars i:nth-child(2) { bottom: 6%; left: 46%; animation-delay: 0.7s; width: 7px; height: 7px; }
+.pkt-obsidian-stars i:nth-child(3) { top: 10%; left: 74%; animation-delay: 1.35s; background: #FEF3C7; }
+.pkt-obsidian-stars i:nth-child(4) { bottom: 8%; left: 86%; animation-delay: 1.95s; width: 7px; height: 7px; }
 
-/* Variant 5: MYTHIC TIER — Arctic Platinum (Deep Arctic Sapphire & Liquid Crystal Platinum) */
+/* Variant 5: MYTHIC TIER — Arctic Platinum (Bright Glacier Blue & Frosted Silver + Falling Snowflakes) */
 @keyframes pkt-arctic-halo {
     0%, 100% {
         box-shadow:
-            0 0 12px -1px rgba(148, 163, 184, 0.5),
-            0 0 24px -3px rgba(56, 189, 248, 0.38),
-            0 2px 10px rgba(2, 132, 199, 0.32);
+            0 0 12px -1px rgba(56, 189, 248, 0.55),
+            0 0 24px -3px rgba(224, 242, 254, 0.4);
     }
     50% {
         box-shadow:
-            0 0 16px 0px rgba(224, 242, 254, 0.62),
-            0 0 28px -2px rgba(14, 165, 233, 0.48),
-            0 2px 12px rgba(15, 23, 42, 0.45);
+            0 0 16px 0px rgba(186, 230, 253, 0.72),
+            0 0 28px -2px rgba(2, 132, 199, 0.5);
     }
 }
 
 @keyframes pkt-arctic-prism-pulse {
     0%, 100% {
         transform: scale(0.94);
-        filter: drop-shadow(0 0 5px rgba(224, 242, 254, 0.9)) drop-shadow(0 0 9px rgba(56, 189, 248, 0.6));
+        filter: drop-shadow(0 0 5px rgba(224, 242, 254, 0.95)) drop-shadow(0 0 9px rgba(56, 189, 248, 0.65));
     }
     50% {
         transform: scale(1.12);
-        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 1)) drop-shadow(0 0 13px rgba(125, 211, 252, 0.9));
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 1)) drop-shadow(0 0 13px rgba(125, 211, 252, 0.95));
+    }
+}
+
+@keyframes pkt-fx-snowfall {
+    0% {
+        transform: translate3d(0, -10px, 0) rotate(0deg) scale(0.7);
+        opacity: 0;
+    }
+    20% {
+        opacity: 0.95;
+    }
+    80% {
+        opacity: 0.85;
+    }
+    100% {
+        transform: translate3d(10px, 30px, 0) rotate(135deg) scale(1);
+        opacity: 0;
     }
 }
 
@@ -4992,30 +5100,29 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 .pkt-dev-badge--arctic_platinum .pkt-dev-badge-ring {
     background: conic-gradient(
         from 0deg,
-        #0C1F3D 0deg,
-        #0284C7 56deg,
-        #E0F2FE 108deg,
-        #FFFFFF 132deg,
-        #94A3B8 186deg,
-        #38BDF8 242deg,
-        #F8FAFC 288deg,
-        #0369A1 325deg,
-        #0C1F3D 360deg
+        #0284C7 0deg,
+        #7DD3FC 58deg,
+        #FFFFFF 115deg,
+        #CBD5E1 168deg,
+        #0369A1 226deg,
+        #38BDF8 282deg,
+        #F8FAFC 324deg,
+        #0284C7 360deg
     );
     animation-duration: 2.3s;
 }
 
 .pkt-dev-badge--arctic_platinum .pkt-dev-badge-core {
-    background: linear-gradient(125deg, #071326 0%, #0E294B 30%, #1E3A5F 52%, #334E6E 74%, #0A1D36 100%);
+    background: linear-gradient(125deg, #0369A1 0%, #0284C7 28%, #38BDF8 54%, #475569 80%, #0284C7 100%);
     background-size: 250% 250%;
     animation: pkt-aurora-flow 5.4s ease-in-out infinite;
-    color: #F8FAFC;
-    text-shadow: 0 1px 8px rgba(186, 230, 253, 0.45);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36), inset 0 -1px 0 rgba(56, 189, 248, 0.32);
+    color: #FFFFFF;
+    text-shadow: 0 1px 6px rgba(12, 74, 110, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52), inset 0 -1px 0 rgba(56, 189, 248, 0.4);
 }
 
 .pkt-dev-icon-arctic {
-    color: #E0F2FE;
+    color: #F0F9FF;
     animation: pkt-arctic-prism-pulse 2.5s ease-in-out infinite;
 }
 
@@ -5034,20 +5141,13 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     top: -15%;
     bottom: -15%;
     width: 34%;
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(148, 163, 184, 0.28) 28%,
-        rgba(255, 255, 255, 0.8) 50%,
-        rgba(125, 211, 252, 0.42) 72%,
-        transparent 100%
-    );
-    animation: pkt-aurora-beam 3.0s ease-in-out infinite;
+    background: linear-gradient(90deg, transparent 0%, rgba(224, 242, 254, 0.3) 28%, rgba(255, 255, 255, 0.85) 50%, rgba(186, 230, 253, 0.4) 72%, transparent 100%);
+    animation: pkt-aurora-beam 3.1s ease-in-out infinite;
 }
 
 .pkt-arctic-stars {
     position: absolute;
-    inset: 0;
+    inset: 2px;
     z-index: 4;
     pointer-events: none;
     overflow: hidden;
@@ -5056,62 +5156,85 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 .pkt-arctic-stars i {
     position: absolute;
-    width: 3.5px;
-    height: 3.5px;
-    border-radius: 1px;
+    top: 0;
+    width: 4.5px;
+    height: 4.5px;
     background: #FFFFFF;
-    box-shadow: 0 0 6px 1.5px rgba(224, 242, 254, 0.95), 0 0 9px 1.5px rgba(56, 189, 248, 0.78);
-    animation: pkt-aurora-twinkle 2.4s ease-in-out infinite;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    box-shadow: 0 0 5px 1px rgba(224, 242, 254, 0.95);
+    animation: pkt-fx-snowfall 2.6s linear infinite;
 }
 
-.pkt-arctic-stars i:nth-child(1) { top: 18%; left: 16%; animation-delay: 0.1s; background: #FFFFFF; }
-.pkt-arctic-stars i:nth-child(2) { top: 72%; left: 44%; animation-delay: 0.75s; background: #BAE6FD; width: 3px; height: 3px; }
-.pkt-arctic-stars i:nth-child(3) { top: 20%; left: 74%; animation-delay: 1.35s; background: #F1F5F9; }
-.pkt-arctic-stars i:nth-child(4) { top: 68%; left: 88%; animation-delay: 1.95s; background: #7DD3FC; width: 2.5px; height: 2.5px; }
+.pkt-arctic-stars i:nth-child(1) { left: 14%; animation-delay: 0s; }
+.pkt-arctic-stars i:nth-child(2) { left: 34%; animation-delay: 0.6s; width: 3.5px; height: 3.5px; animation-duration: 2.2s; }
+.pkt-arctic-stars i:nth-child(3) { left: 54%; animation-delay: 1.15s; background: #E0F2FE; }
+.pkt-arctic-stars i:nth-child(4) { left: 74%; animation-delay: 1.7s; width: 3.5px; height: 3.5px; animation-duration: 2.8s; }
+.pkt-arctic-stars i:nth-child(5) { left: 88%; animation-delay: 2.1s; width: 3px; height: 3px; }
 
-/* Variant 6: MYTHIC TIER — Emerald Sovereign (Deep Forest Emerald & Liquid Mint Jade) */
+/* Variant 6: MYTHIC TIER — Emerald Sovereign (Jewel Emerald & Teal + Expanding Sonar Pulse Waves) */
 @keyframes pkt-emerald-halo {
     0%, 100% {
-        box-shadow: 0 0 12px -1px rgba(16, 185, 129, 0.48), 0 0 24px -3px rgba(52, 211, 153, 0.32);
+        box-shadow: 0 0 12px -1px rgba(16, 185, 129, 0.55), 0 0 24px -3px rgba(52, 211, 153, 0.36);
     }
     50% {
-        box-shadow: 0 0 16px 0px rgba(52, 211, 153, 0.62), 0 0 28px -2px rgba(5, 150, 105, 0.44);
+        box-shadow: 0 0 16px 0px rgba(52, 211, 153, 0.72), 0 0 28px -2px rgba(13, 148, 136, 0.5);
+    }
+}
+
+@keyframes pkt-fx-sonar-expand {
+    0% {
+        transform: translate(-50%, -50%) scale(0.25);
+        opacity: 0.85;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2.8);
+        opacity: 0;
+    }
+}
+
+@keyframes pkt-fx-mote-bob {
+    0%, 100% {
+        transform: translateY(3px) scale(0.75);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translateY(-4px) scale(1.15);
+        opacity: 1;
     }
 }
 
 .pkt-dev-badge--emerald_sovereign {
     padding: 2px;
-    animation: pkt-emerald-halo 3.3s ease-in-out infinite;
+    animation: pkt-emerald-halo 3.2s ease-in-out infinite;
 }
 
 .pkt-dev-badge--emerald_sovereign .pkt-dev-badge-ring {
     background: conic-gradient(
         from 0deg,
-        #022C22 0deg,
-        #059669 58deg,
-        #A7F3D0 112deg,
-        #FFFFFF 136deg,
-        #047857 192deg,
-        #34D399 252deg,
-        #ECFDF5 292deg,
-        #065F46 330deg,
-        #022C22 360deg
+        #047857 0deg,
+        #10B981 62deg,
+        #A7F3D0 116deg,
+        #FFFFFF 138deg,
+        #0D9488 196deg,
+        #34D399 258deg,
+        #ECFDF5 302deg,
+        #047857 360deg
     );
     animation-duration: 2.4s;
 }
 
 .pkt-dev-badge--emerald_sovereign .pkt-dev-badge-core {
-    background: linear-gradient(125deg, #021F1A 0%, #064E3B 32%, #065F46 56%, #0D6B53 78%, #022C22 100%);
+    background: linear-gradient(125deg, #065F46 0%, #047857 28%, #0D9488 55%, #059669 80%, #065F46 100%);
     background-size: 250% 250%;
-    animation: pkt-aurora-flow 5.4s ease-in-out infinite;
-    color: #ECFDF5;
-    text-shadow: 0 1px 8px rgba(167, 243, 208, 0.4);
-    box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.34), inset 0 -1px 0 rgba(16, 185, 129, 0.3);
+    animation: pkt-aurora-flow 5.0s ease-in-out infinite;
+    color: #FFFFFF;
+    text-shadow: 0 1px 6px rgba(6, 78, 59, 0.55);
+    box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.45), inset 0 -1px 0 rgba(4, 120, 87, 0.4);
 }
 
 .pkt-dev-icon-emerald {
-    color: #6EE7B7;
-    animation: pkt-obsidian-crown-glow 2.5s ease-in-out infinite;
+    color: #A7F3D0;
+    animation: pkt-obsidian-crown-glow 2.4s ease-in-out infinite;
 }
 
 .pkt-emerald-sheen {
@@ -5123,14 +5246,21 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     pointer-events: none;
 }
 
-.pkt-emerald-sheen::after {
-    content: "";
+.pkt-emerald-sheen i {
     position: absolute;
-    top: -15%;
-    bottom: -15%;
-    width: 34%;
-    background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.25) 28%, rgba(236, 253, 245, 0.75) 50%, rgba(52, 211, 153, 0.38) 72%, transparent 100%);
-    animation: pkt-aurora-beam 3.1s ease-in-out infinite;
+    top: 50%;
+    left: 24%;
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    border: 1.5px solid rgba(167, 243, 208, 0.85);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.65);
+    animation: pkt-fx-sonar-expand 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.pkt-emerald-sheen i:nth-child(2) {
+    animation-delay: 1.1s;
+    left: 68%;
 }
 
 .pkt-emerald-stars {
@@ -5146,84 +5276,133 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     position: absolute;
     width: 3.5px;
     height: 3.5px;
-    border-radius: 1px;
-    background: #ECFDF5;
-    box-shadow: 0 0 6px 1.5px rgba(167, 243, 208, 0.92), 0 0 9px 1.5px rgba(16, 185, 129, 0.72);
-    animation: pkt-aurora-twinkle 2.5s ease-in-out infinite;
+    border-radius: 9999px;
+    background: #A7F3D0;
+    box-shadow: 0 0 6px 1.5px rgba(110, 231, 183, 0.95);
+    animation: pkt-fx-mote-bob 2.2s ease-in-out infinite;
 }
 
-.pkt-emerald-stars i:nth-child(1) { top: 18%; left: 18%; animation-delay: 0s; background: #FFFFFF; }
-.pkt-emerald-stars i:nth-child(2) { top: 72%; left: 46%; animation-delay: 0.7s; background: #6EE7B7; width: 3px; height: 3px; }
-.pkt-emerald-stars i:nth-child(3) { top: 20%; left: 76%; animation-delay: 1.35s; background: #A7F3D0; }
-.pkt-emerald-stars i:nth-child(4) { top: 70%; left: 88%; animation-delay: 2.0s; background: #34D399; width: 2.5px; height: 2.5px; }
+.pkt-emerald-stars i:nth-child(1) { top: 20%; left: 18%; animation-delay: 0s; background: #FFFFFF; }
+.pkt-emerald-stars i:nth-child(2) { top: 72%; left: 46%; animation-delay: 0.55s; width: 3px; height: 3px; }
+.pkt-emerald-stars i:nth-child(3) { top: 18%; left: 76%; animation-delay: 1.1s; background: #6EE7B7; }
+.pkt-emerald-stars i:nth-child(4) { top: 72%; left: 88%; animation-delay: 1.65s; width: 2.5px; height: 2.5px; }
 
-/* Variant 7: MYTHIC TIER — Crimson Eclipse (Volcanic Black & Molten Ruby Crimson) */
+/* Variant 7: MYTHIC TIER — Crimson Eclipse (Vivid Scarlet Ruby & Coral + Cyber Glitch & Chromatic Distortion) */
 @keyframes pkt-crimson-halo {
     0%, 100% {
-        box-shadow: 0 0 12px -1px rgba(225, 29, 72, 0.5), 0 0 24px -3px rgba(244, 63, 94, 0.32);
+        box-shadow: 0 0 12px -1px rgba(225, 29, 72, 0.58), 0 0 24px -3px rgba(244, 63, 94, 0.38);
     }
     50% {
-        box-shadow: 0 0 16px 0px rgba(244, 63, 94, 0.65), 0 0 28px -2px rgba(153, 27, 27, 0.48);
+        box-shadow: 0 0 16px 0px rgba(251, 113, 133, 0.72), 0 0 28px -2px rgba(220, 38, 38, 0.52);
+    }
+}
+
+@keyframes pkt-fx-glitch-jitter {
+    0%, 82%, 88%, 92%, 100% {
+        transform: translate3d(0, 0, 0) skewX(0deg);
+        text-shadow: 0 1px 6px rgba(127, 29, 29, 0.5);
+    }
+    83% {
+        transform: translate3d(-2px, 0, 0) skewX(-6deg);
+        text-shadow: -2.5px 0 #38BDF8, 2.5px 0 #FDE047;
+    }
+    85% {
+        transform: translate3d(2px, -0.5px, 0) skewX(5deg);
+        text-shadow: 2.5px 0 #7DD3FC, -2.5px 0 #FDBA74;
+    }
+    87% {
+        transform: translate3d(-1px, 0.5px, 0) skewX(-3deg);
+        text-shadow: -1.5px 0 #FFFFFF, 1.5px 0 #FB7185;
+    }
+    90% {
+        transform: translate3d(1.5px, 0, 0) skewX(4deg);
+        text-shadow: -2px 0 #38BDF8, 2px 0 #FDE047;
+    }
+}
+
+@keyframes pkt-fx-glitch-slice {
+    0%, 78%, 85%, 90%, 100% {
+        opacity: 0;
+        transform: translateX(-120%);
+    }
+    80% {
+        opacity: 0.95;
+        transform: translateX(0%);
+    }
+    83% {
+        opacity: 0.7;
+        transform: translateX(65%);
+    }
+    88% {
+        opacity: 0.9;
+        transform: translateX(-15%);
     }
 }
 
 .pkt-dev-badge--crimson_eclipse {
     padding: 2px;
-    animation: pkt-crimson-halo 3.1s ease-in-out infinite;
+    animation: pkt-crimson-halo 3.0s ease-in-out infinite;
 }
 
 .pkt-dev-badge--crimson_eclipse .pkt-dev-badge-ring {
     background: conic-gradient(
         from 0deg,
-        #140407 0deg,
-        #991B1B 58deg,
-        #FB7185 112deg,
-        #FFE4E6 138deg,
-        #BE123C 192deg,
-        #1F070C 248deg,
-        #F43F5E 306deg,
-        #140407 360deg
+        #991B1B 0deg,
+        #EF4444 58deg,
+        #FDA4AF 115deg,
+        #FFFFFF 136deg,
+        #E11D48 192deg,
+        #B91C1C 252deg,
+        #FB7185 308deg,
+        #991B1B 360deg
     );
-    animation-duration: 2.2s;
+    animation-duration: 2.0s;
 }
 
 .pkt-dev-badge--crimson_eclipse .pkt-dev-badge-core {
-    background: linear-gradient(125deg, #120407 0%, #3F0A14 32%, #7F1D1D 58%, #4C0519 80%, #140408 100%);
+    background: linear-gradient(125deg, #881337 0%, #BE123C 28%, #DC2626 56%, #E11D48 80%, #991B1B 100%);
     background-size: 250% 250%;
-    animation: pkt-aurora-flow 5.0s ease-in-out infinite;
-    color: #FFF1F2;
-    text-shadow: 0 1px 8px rgba(251, 113, 133, 0.45);
-    box-shadow: inset 0 1px 0 rgba(254, 205, 211, 0.3), inset 0 -1px 0 rgba(225, 29, 72, 0.35);
+    animation: pkt-aurora-flow 4.8s ease-in-out infinite;
+    color: #FFFFFF;
+    box-shadow: inset 0 1px 0 rgba(254, 205, 211, 0.42), inset 0 -1px 0 rgba(153, 27, 27, 0.45);
+}
+
+.pkt-dev-badge--crimson_eclipse .pkt-dev-badge-text,
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-name {
+    animation: pkt-fx-glitch-jitter 3.2s steps(1, end) infinite;
 }
 
 .pkt-dev-icon-crimson {
-    color: #FDA4AF;
-    animation: pkt-obsidian-crown-glow 2.3s ease-in-out infinite;
+    color: #FFE4E6;
+    animation: pkt-fx-glitch-jitter 3.2s steps(1, end) infinite;
 }
 
 .pkt-crimson-sheen {
     position: absolute;
     inset: 2px;
-    z-index: 3;
+    z-index: 4;
     border-radius: 9999px;
     overflow: hidden;
     pointer-events: none;
 }
 
-.pkt-crimson-sheen::after {
-    content: "";
+.pkt-crimson-sheen i {
     position: absolute;
-    top: -15%;
-    bottom: -15%;
-    width: 34%;
-    background: linear-gradient(90deg, transparent 0%, rgba(225, 29, 72, 0.28) 28%, rgba(255, 241, 242, 0.72) 50%, rgba(251, 113, 133, 0.4) 72%, transparent 100%);
-    animation: pkt-aurora-beam 3.0s ease-in-out infinite;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #38BDF8 22%, #FFFFFF 50%, #FDE047 78%, transparent 100%);
+    animation: pkt-fx-glitch-slice 3.2s steps(2, end) infinite;
 }
+
+.pkt-crimson-sheen i:nth-child(1) { top: 26%; animation-delay: 0s; }
+.pkt-crimson-sheen i:nth-child(2) { top: 54%; height: 2.5px; animation-delay: 0.12s; }
+.pkt-crimson-sheen i:nth-child(3) { top: 76%; height: 1.5px; animation-delay: 1.6s; }
 
 .pkt-crimson-stars {
     position: absolute;
     inset: 0;
-    z-index: 4;
+    z-index: 3;
     pointer-events: none;
     overflow: hidden;
     border-radius: 9999px;
@@ -5231,61 +5410,73 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 .pkt-crimson-stars i {
     position: absolute;
-    width: 3.5px;
-    height: 3.5px;
-    border-radius: 1px;
-    background: #FFF1F2;
-    box-shadow: 0 0 6px 1.5px rgba(253, 164, 175, 0.92), 0 0 9px 1.5px rgba(225, 29, 72, 0.75);
-    animation: pkt-aurora-twinkle 2.4s ease-in-out infinite;
+    width: 3px;
+    height: 3px;
+    background: #FFE4E6;
+    box-shadow: 0 0 6px 1px #FFFFFF;
+    animation: pkt-aurora-twinkle 2.1s ease-in-out infinite;
 }
 
-.pkt-crimson-stars i:nth-child(1) { top: 18%; left: 16%; animation-delay: 0.15s; background: #FFFFFF; }
-.pkt-crimson-stars i:nth-child(2) { top: 72%; left: 44%; animation-delay: 0.8s; background: #FDA4AF; width: 3px; height: 3px; }
-.pkt-crimson-stars i:nth-child(3) { top: 20%; left: 74%; animation-delay: 1.4s; background: #FB7185; }
-.pkt-crimson-stars i:nth-child(4) { top: 68%; left: 88%; animation-delay: 1.95s; background: #FFE4E6; width: 2.5px; height: 2.5px; }
+.pkt-crimson-stars i:nth-child(1) { top: 18%; left: 20%; }
+.pkt-crimson-stars i:nth-child(2) { bottom: 18%; right: 16%; animation-delay: 1.0s; }
 
-/* Variant 8: MYTHIC TIER — Amethyst Crown (Midnight Velvet & Imperial Amethyst Silver) */
+/* Variant 8: MYTHIC TIER — Amethyst Crown (Royal Indigo & Orchid Violet + Liquid Warp Wave Distortion) */
 @keyframes pkt-amethyst-halo {
     0%, 100% {
-        box-shadow: 0 0 12px -1px rgba(168, 85, 247, 0.48), 0 0 24px -3px rgba(216, 180, 254, 0.34);
+        box-shadow: 0 0 12px -1px rgba(139, 92, 246, 0.56), 0 0 24px -3px rgba(192, 132, 252, 0.38);
     }
     50% {
-        box-shadow: 0 0 16px 0px rgba(192, 132, 252, 0.64), 0 0 28px -2px rgba(126, 34, 206, 0.46);
+        box-shadow: 0 0 16px 0px rgba(168, 85, 247, 0.72), 0 0 28px -2px rgba(79, 70, 229, 0.52);
+    }
+}
+
+@keyframes pkt-fx-warp-ribbon {
+    0% {
+        transform: translateX(-60%) skewX(-28deg) scaleY(0.8);
+        opacity: 0.35;
+    }
+    50% {
+        transform: translateX(45%) skewX(24deg) scaleY(1.45);
+        opacity: 0.85;
+    }
+    100% {
+        transform: translateX(-60%) skewX(-28deg) scaleY(0.8);
+        opacity: 0.35;
     }
 }
 
 .pkt-dev-badge--amethyst_crown {
     padding: 2px;
-    animation: pkt-amethyst-halo 3.3s ease-in-out infinite;
+    animation: pkt-amethyst-halo 3.2s ease-in-out infinite;
 }
 
 .pkt-dev-badge--amethyst_crown .pkt-dev-badge-ring {
     background: conic-gradient(
         from 0deg,
-        #140826 0deg,
-        #7E22CE 58deg,
-        #E9D5FF 112deg,
-        #FFFFFF 136deg,
-        #9333EA 192deg,
-        #2E1065 250deg,
-        #C084FC 306deg,
-        #140826 360deg
+        #4338CA 0deg,
+        #7C3AED 60deg,
+        #E9D5FF 115deg,
+        #FFFFFF 138deg,
+        #A855F7 196deg,
+        #4F46E5 256deg,
+        #C084FC 310deg,
+        #4338CA 360deg
     );
-    animation-duration: 2.35s;
+    animation-duration: 2.3s;
 }
 
 .pkt-dev-badge--amethyst_crown .pkt-dev-badge-core {
-    background: linear-gradient(125deg, #110620 0%, #2E1065 32%, #4C1D95 58%, #3B0764 80%, #140826 100%);
+    background: linear-gradient(125deg, #3730A3 0%, #5B21B6 28%, #7C3AED 56%, #9333EA 82%, #4338CA 100%);
     background-size: 250% 250%;
-    animation: pkt-aurora-flow 5.3s ease-in-out infinite;
-    color: #FAF5FF;
-    text-shadow: 0 1px 8px rgba(233, 213, 255, 0.45);
-    box-shadow: inset 0 1px 0 rgba(233, 213, 255, 0.34), inset 0 -1px 0 rgba(168, 85, 247, 0.32);
+    animation: pkt-aurora-flow 4.9s ease-in-out infinite;
+    color: #FFFFFF;
+    text-shadow: 0 1px 6px rgba(49, 46, 129, 0.55);
+    box-shadow: inset 0 1px 0 rgba(233, 213, 255, 0.45), inset 0 -1px 0 rgba(109, 40, 217, 0.4);
 }
 
 .pkt-dev-icon-amethyst {
-    color: #E9D5FF;
-    animation: pkt-arctic-prism-pulse 2.5s ease-in-out infinite;
+    color: #F3E8FF;
+    animation: pkt-arctic-prism-pulse 2.4s ease-in-out infinite;
 }
 
 .pkt-amethyst-sheen {
@@ -5297,14 +5488,21 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     pointer-events: none;
 }
 
-.pkt-amethyst-sheen::after {
-    content: "";
+.pkt-amethyst-sheen i {
     position: absolute;
-    top: -15%;
-    bottom: -15%;
-    width: 34%;
-    background: linear-gradient(90deg, transparent 0%, rgba(168, 85, 247, 0.28) 28%, rgba(250, 245, 255, 0.78) 50%, rgba(216, 180, 254, 0.4) 72%, transparent 100%);
-    animation: pkt-aurora-beam 3.15s ease-in-out infinite;
+    top: 15%;
+    left: 0;
+    width: 75%;
+    height: 70%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(233, 213, 255, 0.52) 0%, rgba(168, 85, 247, 0.28) 45%, transparent 72%);
+    filter: blur(4px);
+    animation: pkt-fx-warp-ribbon 3.4s ease-in-out infinite;
+}
+
+.pkt-amethyst-sheen i:nth-child(2) {
+    animation-delay: 1.7s;
+    background: radial-gradient(ellipse at center, rgba(165, 180, 252, 0.48) 0%, rgba(124, 58, 237, 0.25) 45%, transparent 72%);
 }
 
 .pkt-amethyst-stars {
@@ -5322,57 +5520,89 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     height: 3.5px;
     border-radius: 1px;
     background: #FAF5FF;
-    box-shadow: 0 0 6px 1.5px rgba(233, 213, 255, 0.92), 0 0 9px 1.5px rgba(168, 85, 247, 0.75);
-    animation: pkt-aurora-twinkle 2.5s ease-in-out infinite;
+    box-shadow: 0 0 6px 1.5px rgba(233, 213, 255, 0.95), 0 0 9px 1.5px rgba(168, 85, 247, 0.8);
+    animation: pkt-aurora-twinkle 2.3s ease-in-out infinite;
 }
 
 .pkt-amethyst-stars i:nth-child(1) { top: 18%; left: 18%; animation-delay: 0.05s; background: #FFFFFF; }
-.pkt-amethyst-stars i:nth-child(2) { top: 72%; left: 46%; animation-delay: 0.75s; background: #E9D5FF; width: 3px; height: 3px; }
-.pkt-amethyst-stars i:nth-child(3) { top: 20%; left: 76%; animation-delay: 1.35s; background: #D8B4FE; }
-.pkt-amethyst-stars i:nth-child(4) { top: 70%; left: 88%; animation-delay: 2.0s; background: #C084FC; width: 2.5px; height: 2.5px; }
+.pkt-amethyst-stars i:nth-child(2) { top: 72%; left: 46%; animation-delay: 0.7s; background: #E9D5FF; width: 3px; height: 3px; }
+.pkt-amethyst-stars i:nth-child(3) { top: 18%; left: 76%; animation-delay: 1.3s; background: #D8B4FE; }
+.pkt-amethyst-stars i:nth-child(4) { top: 72%; left: 88%; animation-delay: 1.9s; background: #C4B5FD; width: 2.5px; height: 2.5px; }
 
-/* Variant 9: MYTHIC TIER — Rose Titanium (Dark Espresso Titanium & Satin Rose Gold) */
+/* Variant 9: MYTHIC TIER — Rose Titanium (Satin Berry Rose & Champagne Rose Gold + Silk Waves & Petals) */
 @keyframes pkt-rose-halo {
     0%, 100% {
-        box-shadow: 0 0 12px -1px rgba(244, 114, 182, 0.46), 0 0 24px -3px rgba(251, 207, 232, 0.3);
+        box-shadow: 0 0 12px -1px rgba(236, 72, 153, 0.52), 0 0 24px -3px rgba(251, 207, 232, 0.36);
     }
     50% {
-        box-shadow: 0 0 16px 0px rgba(249, 168, 212, 0.62), 0 0 28px -2px rgba(190, 24, 93, 0.42);
+        box-shadow: 0 0 16px 0px rgba(244, 114, 182, 0.68), 0 0 28px -2px rgba(253, 186, 116, 0.42);
+    }
+}
+
+@keyframes pkt-fx-silk-wave-a {
+    0% { transform: translateX(-140%) skewX(-30deg); opacity: 0; }
+    25% { opacity: 0.8; }
+    75% { opacity: 0.8; }
+    100% { transform: translateX(220%) skewX(-30deg); opacity: 0; }
+}
+
+@keyframes pkt-fx-silk-wave-b {
+    0% { transform: translateX(220%) skewX(28deg); opacity: 0; }
+    25% { opacity: 0.65; }
+    75% { opacity: 0.65; }
+    100% { transform: translateX(-140%) skewX(28deg); opacity: 0; }
+}
+
+@keyframes pkt-fx-petal-float {
+    0% {
+        transform: translate3d(0, 12px, 0) rotate(-25deg) scale(0.7);
+        opacity: 0;
+    }
+    25% {
+        opacity: 0.95;
+    }
+    70% {
+        transform: translate3d(7px, -4px, 0) rotate(22deg) scale(1);
+        opacity: 0.85;
+    }
+    100% {
+        transform: translate3d(-4px, -18px, 0) rotate(55deg) scale(0.5);
+        opacity: 0;
     }
 }
 
 .pkt-dev-badge--rose_titanium {
     padding: 2px;
-    animation: pkt-rose-halo 3.4s ease-in-out infinite;
+    animation: pkt-rose-halo 3.3s ease-in-out infinite;
 }
 
 .pkt-dev-badge--rose_titanium .pkt-dev-badge-ring {
     background: conic-gradient(
         from 0deg,
-        #1B1115 0deg,
-        #9D174D 58deg,
+        #9D174D 0deg,
+        #EC4899 58deg,
         #FBCFE8 112deg,
-        #FFF1F2 138deg,
-        #DB2777 192deg,
-        #26161C 248deg,
-        #F472B6 306deg,
-        #1B1115 360deg
+        #FFF7ED 138deg,
+        #FDBA74 192deg,
+        #BE185D 252deg,
+        #F472B6 308deg,
+        #9D174D 360deg
     );
     animation-duration: 2.45s;
 }
 
 .pkt-dev-badge--rose_titanium .pkt-dev-badge-core {
-    background: linear-gradient(125deg, #190E13 0%, #3B1826 32%, #6D2143 58%, #471A2E 80%, #1C1116 100%);
+    background: linear-gradient(125deg, #9D174D 0%, #BE185D 28%, #DB2777 54%, #E11D48 76%, #B45309 100%);
     background-size: 250% 250%;
-    animation: pkt-aurora-flow 5.5s ease-in-out infinite;
-    color: #FDF2F8;
-    text-shadow: 0 1px 8px rgba(251, 207, 232, 0.42);
-    box-shadow: inset 0 1px 0 rgba(251, 207, 232, 0.34), inset 0 -1px 0 rgba(236, 72, 153, 0.32);
+    animation: pkt-aurora-flow 5.4s ease-in-out infinite;
+    color: #FFFFFF;
+    text-shadow: 0 1px 6px rgba(131, 24, 67, 0.5);
+    box-shadow: inset 0 1px 0 rgba(253, 242, 248, 0.45), inset 0 -1px 0 rgba(236, 72, 153, 0.38);
 }
 
 .pkt-dev-icon-rose {
-    color: #FBCFE8;
-    animation: pkt-arctic-prism-pulse 2.6s ease-in-out infinite;
+    color: #FCE7F3;
+    animation: pkt-arctic-prism-pulse 2.5s ease-in-out infinite;
 }
 
 .pkt-rose-sheen {
@@ -5384,19 +5614,24 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     pointer-events: none;
 }
 
-.pkt-rose-sheen::after {
-    content: "";
+.pkt-rose-sheen i {
     position: absolute;
     top: -15%;
     bottom: -15%;
-    width: 34%;
-    background: linear-gradient(90deg, transparent 0%, rgba(236, 72, 153, 0.25) 28%, rgba(253, 242, 248, 0.78) 50%, rgba(249, 168, 212, 0.4) 72%, transparent 100%);
-    animation: pkt-aurora-beam 3.2s ease-in-out infinite;
+    width: 36%;
+    background: linear-gradient(90deg, transparent 0%, rgba(251, 207, 232, 0.3) 30%, rgba(255, 255, 255, 0.72) 50%, rgba(253, 186, 116, 0.35) 70%, transparent 100%);
+    animation: pkt-fx-silk-wave-a 3.4s ease-in-out infinite;
+}
+
+.pkt-rose-sheen i:nth-child(2) {
+    width: 28%;
+    animation: pkt-fx-silk-wave-b 4.2s ease-in-out infinite;
+    animation-delay: 1.4s;
 }
 
 .pkt-rose-stars {
     position: absolute;
-    inset: 0;
+    inset: 2px;
     z-index: 4;
     pointer-events: none;
     overflow: hidden;
@@ -5405,18 +5640,19 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 .pkt-rose-stars i {
     position: absolute;
-    width: 3.5px;
-    height: 3.5px;
-    border-radius: 1px;
-    background: #FDF2F8;
-    box-shadow: 0 0 6px 1.5px rgba(251, 207, 232, 0.92), 0 0 9px 1.5px rgba(236, 72, 153, 0.7);
-    animation: pkt-aurora-twinkle 2.55s ease-in-out infinite;
+    bottom: 2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 0 75% 75% 75%;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FBCFE8 55%, #FDBA74 100%);
+    box-shadow: 0 0 5px rgba(251, 207, 232, 0.9);
+    animation: pkt-fx-petal-float 2.8s ease-in-out infinite;
 }
 
-.pkt-rose-stars i:nth-child(1) { top: 18%; left: 16%; animation-delay: 0.1s; background: #FFFFFF; }
-.pkt-rose-stars i:nth-child(2) { top: 72%; left: 44%; animation-delay: 0.8s; background: #FBCFE8; width: 3px; height: 3px; }
-.pkt-rose-stars i:nth-child(3) { top: 20%; left: 74%; animation-delay: 1.4s; background: #F9A8D4; }
-.pkt-rose-stars i:nth-child(4) { top: 68%; left: 88%; animation-delay: 2.0s; background: #FCE7F3; width: 2.5px; height: 2.5px; }
+.pkt-rose-stars i:nth-child(1) { left: 16%; animation-delay: 0s; }
+.pkt-rose-stars i:nth-child(2) { left: 42%; animation-delay: 0.75s; width: 4px; height: 4px; }
+.pkt-rose-stars i:nth-child(3) { left: 68%; animation-delay: 1.45s; }
+.pkt-rose-stars i:nth-child(4) { left: 86%; animation-delay: 2.1s; width: 4px; height: 4px; }
 
 /* Variant 4: Standard (Static) */
 .pkt-dev-badge--none {
@@ -5509,18 +5745,7 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 }
 
 .pkt-dev-avatar-ring--obsidian_gold::before {
-    background: conic-gradient(
-        from 0deg,
-        #0B0F17 0deg,
-        #334155 48deg,
-        #B45309 98deg,
-        #FDE68A 145deg,
-        #FFFFFF 166deg,
-        #D97706 205deg,
-        #111827 265deg,
-        #F59E0B 318deg,
-        #0B0F17 360deg
-    );
+    background: conic-gradient(from 0deg, #78350F 0deg, #B45309 55deg, #FDE68A 118deg, #FFFFFF 142deg, #D97706 196deg, #92400E 258deg, #FBBF24 316deg, #78350F 360deg);
     animation-duration: 2.5s;
 }
 
@@ -5530,58 +5755,47 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 }
 
 .pkt-dev-avatar-ring--arctic_platinum::before {
-    background: conic-gradient(
-        from 0deg,
-        #0C1F3D 0deg,
-        #0284C7 56deg,
-        #E0F2FE 108deg,
-        #FFFFFF 132deg,
-        #94A3B8 186deg,
-        #38BDF8 242deg,
-        #F8FAFC 288deg,
-        #0369A1 325deg,
-        #0C1F3D 360deg
-    );
+    background: conic-gradient(from 0deg, #0284C7 0deg, #7DD3FC 58deg, #FFFFFF 115deg, #CBD5E1 168deg, #0369A1 226deg, #38BDF8 282deg, #F8FAFC 324deg, #0284C7 360deg);
     animation-duration: 2.3s;
 }
 
 .pkt-dev-avatar-ring--emerald_sovereign {
     padding: 3px;
-    animation: pkt-emerald-halo 3.3s ease-in-out infinite;
+    animation: pkt-emerald-halo 3.2s ease-in-out infinite;
 }
 
 .pkt-dev-avatar-ring--emerald_sovereign::before {
-    background: conic-gradient(from 0deg, #022C22 0deg, #059669 58deg, #A7F3D0 112deg, #FFFFFF 136deg, #047857 192deg, #34D399 252deg, #ECFDF5 292deg, #065F46 330deg, #022C22 360deg);
+    background: conic-gradient(from 0deg, #047857 0deg, #10B981 62deg, #A7F3D0 116deg, #FFFFFF 138deg, #0D9488 196deg, #34D399 258deg, #ECFDF5 302deg, #047857 360deg);
     animation-duration: 2.4s;
 }
 
 .pkt-dev-avatar-ring--crimson_eclipse {
     padding: 3px;
-    animation: pkt-crimson-halo 3.1s ease-in-out infinite;
+    animation: pkt-crimson-halo 3.0s ease-in-out infinite;
 }
 
 .pkt-dev-avatar-ring--crimson_eclipse::before {
-    background: conic-gradient(from 0deg, #140407 0deg, #991B1B 58deg, #FB7185 112deg, #FFE4E6 138deg, #BE123C 192deg, #1F070C 248deg, #F43F5E 306deg, #140407 360deg);
-    animation-duration: 2.2s;
+    background: conic-gradient(from 0deg, #991B1B 0deg, #EF4444 58deg, #FDA4AF 115deg, #FFFFFF 136deg, #E11D48 192deg, #B91C1C 252deg, #FB7185 308deg, #991B1B 360deg);
+    animation-duration: 2.0s;
 }
 
 .pkt-dev-avatar-ring--amethyst_crown {
     padding: 3px;
-    animation: pkt-amethyst-halo 3.3s ease-in-out infinite;
+    animation: pkt-amethyst-halo 3.2s ease-in-out infinite;
 }
 
 .pkt-dev-avatar-ring--amethyst_crown::before {
-    background: conic-gradient(from 0deg, #140826 0deg, #7E22CE 58deg, #E9D5FF 112deg, #FFFFFF 136deg, #9333EA 192deg, #2E1065 250deg, #C084FC 306deg, #140826 360deg);
-    animation-duration: 2.35s;
+    background: conic-gradient(from 0deg, #4338CA 0deg, #7C3AED 60deg, #E9D5FF 115deg, #FFFFFF 138deg, #A855F7 196deg, #4F46E5 256deg, #C084FC 310deg, #4338CA 360deg);
+    animation-duration: 2.3s;
 }
 
 .pkt-dev-avatar-ring--rose_titanium {
     padding: 3px;
-    animation: pkt-rose-halo 3.4s ease-in-out infinite;
+    animation: pkt-rose-halo 3.3s ease-in-out infinite;
 }
 
 .pkt-dev-avatar-ring--rose_titanium::before {
-    background: conic-gradient(from 0deg, #1B1115 0deg, #9D174D 58deg, #FBCFE8 112deg, #FFF1F2 138deg, #DB2777 192deg, #26161C 248deg, #F472B6 306deg, #1B1115 360deg);
+    background: conic-gradient(from 0deg, #9D174D 0deg, #EC4899 58deg, #FBCFE8 112deg, #FFF7ED 138deg, #FDBA74 192deg, #BE185D 252deg, #F472B6 308deg, #9D174D 360deg);
     animation-duration: 2.45s;
 }
 
@@ -5908,166 +6122,121 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-inner {
-    background: linear-gradient(125deg, #06152C 0%, #00448A 30%, #0E2240 52%, #6A2B0A 78%, #A3420C 100%);
+    background: linear-gradient(125deg, #00478F 0%, #0284C7 28%, #0054A6 52%, #EA580C 78%, #F47920 100%);
     background-size: 260% 260%;
     animation: pkt-aurora-flow 5.2s ease-in-out infinite;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-name {
     color: #FFFFFF;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-sub {
-    color: #FDBA74;
+    color: #FEF3C7;
 }
 
-/* Pill Style 4: MYTHIC TIER — Royal Obsidian Table Pill (Obsidian Black & 24K Gold) */
+/* Pill Style 4: MYTHIC TIER — Royal Obsidian Table Pill (Burnished Bronze & 24K Gold) */
 .pkt-user-pill--obsidian_gold {
     padding: 2px;
     animation: pkt-pill-obsidian-halo 3.4s ease-in-out infinite;
 }
 
 .pkt-user-pill--obsidian_gold .pkt-user-pill-border::before {
-    background: conic-gradient(
-        from 0deg,
-        #0B0F17 0deg,
-        #334155 48deg,
-        #B45309 98deg,
-        #FDE68A 145deg,
-        #FFFFFF 166deg,
-        #D97706 205deg,
-        #111827 265deg,
-        #F59E0B 318deg,
-        #0B0F17 360deg
-    );
+    background: conic-gradient(from 0deg, #78350F 0deg, #B45309 55deg, #FDE68A 118deg, #FFFFFF 142deg, #D97706 196deg, #92400E 258deg, #FBBF24 316deg, #78350F 360deg);
     animation-duration: 2.5s;
 }
 
 .pkt-user-pill--obsidian_gold .pkt-user-pill-inner {
-    background: linear-gradient(125deg, #07090F 0%, #14171F 28%, #2C2111 56%, #4D3511 80%, #11131A 100%);
+    background: linear-gradient(125deg, #5C2B08 0%, #92400E 28%, #D97706 56%, #B45309 80%, #6B320B 100%);
     background-size: 250% 250%;
-    animation: pkt-aurora-flow 5.8s ease-in-out infinite;
-    box-shadow: inset 0 1px 0 rgba(253, 230, 138, 0.28);
+    animation: pkt-aurora-flow 5.6s ease-in-out infinite;
+    box-shadow: inset 0 1px 0 rgba(254, 243, 199, 0.38);
 }
 
 .pkt-user-pill--obsidian_gold .pkt-user-pill-name {
     color: #FFFBEB;
-    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
+    text-shadow: 0 1px 5px rgba(69, 26, 3, 0.55);
 }
 
 .pkt-user-pill--obsidian_gold .pkt-user-pill-sub {
-    color: #FDE68A;
+    color: #FEF3C7;
 }
 
-.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i {
-    width: 2.5px;
-    height: 2.5px;
-    box-shadow: 0 0 4px 1px rgba(253, 230, 138, 0.9);
-}
+.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i { width: 6px; height: 6px; }
+.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(1) { top: 8%; left: 26%; }
+.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(2) { bottom: 6%; left: 54%; width: 5px; height: 5px; }
+.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(3) { top: 8%; left: 78%; }
+.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(4) { bottom: 6%; left: 90%; width: 5px; height: 5px; }
 
-.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(1) { top: 12%; left: 26%; }
-.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
-.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(3) { top: 12%; left: 78%; }
-.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
-
-/* Pill Style 5: MYTHIC TIER — Arctic Platinum Table Pill (Arctic Sapphire & Platinum Ice) */
+/* Pill Style 5: MYTHIC TIER — Arctic Platinum Table Pill (Glacier Blue & Frosted Silver) */
 .pkt-user-pill--arctic_platinum {
     padding: 2px;
     animation: pkt-pill-arctic-halo 3.3s ease-in-out infinite;
 }
 
 .pkt-user-pill--arctic_platinum .pkt-user-pill-border::before {
-    background: conic-gradient(
-        from 0deg,
-        #0C1F3D 0deg,
-        #0284C7 56deg,
-        #E0F2FE 108deg,
-        #FFFFFF 132deg,
-        #94A3B8 186deg,
-        #38BDF8 242deg,
-        #F8FAFC 288deg,
-        #0369A1 325deg,
-        #0C1F3D 360deg
-    );
+    background: conic-gradient(from 0deg, #0284C7 0deg, #7DD3FC 58deg, #FFFFFF 115deg, #CBD5E1 168deg, #0369A1 226deg, #38BDF8 282deg, #F8FAFC 324deg, #0284C7 360deg);
     animation-duration: 2.3s;
 }
 
 .pkt-user-pill--arctic_platinum .pkt-user-pill-inner {
-    background: linear-gradient(125deg, #071326 0%, #0E294B 30%, #1E3A5F 54%, #334E6E 78%, #0A1D36 100%);
+    background: linear-gradient(125deg, #0369A1 0%, #0284C7 28%, #38BDF8 54%, #475569 80%, #0284C7 100%);
     background-size: 250% 250%;
     animation: pkt-aurora-flow 5.4s ease-in-out infinite;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .pkt-user-pill--arctic_platinum .pkt-user-pill-name {
-    color: #F8FAFC;
-    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+    color: #FFFFFF;
+    text-shadow: 0 1px 5px rgba(12, 74, 110, 0.55);
 }
 
 .pkt-user-pill--arctic_platinum .pkt-user-pill-sub {
-    color: #BAE6FD;
+    color: #E0F2FE;
 }
 
-.pkt-user-pill--arctic_platinum .pkt-arctic-stars i {
-    width: 2.5px;
-    height: 2.5px;
-    box-shadow: 0 0 4px 1px rgba(224, 242, 254, 0.92), 0 0 6px 1px rgba(56, 189, 248, 0.65);
-}
+.pkt-user-pill--arctic_platinum .pkt-arctic-stars i { width: 3.5px; height: 3.5px; }
 
-.pkt-user-pill--arctic_platinum .pkt-arctic-stars i:nth-child(1) { top: 12%; left: 26%; }
-.pkt-user-pill--arctic_platinum .pkt-arctic-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
-.pkt-user-pill--arctic_platinum .pkt-arctic-stars i:nth-child(3) { top: 12%; left: 78%; }
-.pkt-user-pill--arctic_platinum .pkt-arctic-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
-
-/* Pill Style 6: MYTHIC TIER — Emerald Sovereign Table Pill */
-.pkt-user-pill--emerald_sovereign { padding: 2px; animation: pkt-pill-emerald-halo 3.3s ease-in-out infinite; }
-.pkt-user-pill--emerald_sovereign .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #022C22 0deg, #059669 58deg, #A7F3D0 112deg, #FFFFFF 136deg, #047857 192deg, #34D399 252deg, #ECFDF5 292deg, #065F46 330deg, #022C22 360deg); animation-duration: 2.4s; }
-.pkt-user-pill--emerald_sovereign .pkt-user-pill-inner { background: linear-gradient(125deg, #021F1A 0%, #064E3B 32%, #065F46 58%, #0D6B53 80%, #022C22 100%); background-size: 250% 250%; animation: pkt-aurora-flow 5.4s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.28); }
-.pkt-user-pill--emerald_sovereign .pkt-user-pill-name { color: #ECFDF5; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.45); }
-.pkt-user-pill--emerald_sovereign .pkt-user-pill-sub { color: #6EE7B7; }
-.pkt-user-pill--emerald_sovereign .pkt-emerald-stars i { width: 2.5px; height: 2.5px; box-shadow: 0 0 4px 1px rgba(167, 243, 208, 0.9); }
+/* Pill Style 6: MYTHIC TIER — Emerald Sovereign Table Pill (Jewel Emerald & Teal) */
+.pkt-user-pill--emerald_sovereign { padding: 2px; animation: pkt-pill-emerald-halo 3.2s ease-in-out infinite; }
+.pkt-user-pill--emerald_sovereign .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #047857 0deg, #10B981 62deg, #A7F3D0 116deg, #FFFFFF 138deg, #0D9488 196deg, #34D399 258deg, #ECFDF5 302deg, #047857 360deg); animation-duration: 2.4s; }
+.pkt-user-pill--emerald_sovereign .pkt-user-pill-inner { background: linear-gradient(125deg, #065F46 0%, #047857 28%, #0D9488 55%, #059669 80%, #065F46 100%); background-size: 250% 250%; animation: pkt-aurora-flow 5.0s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.4); }
+.pkt-user-pill--emerald_sovereign .pkt-user-pill-name { color: #FFFFFF; text-shadow: 0 1px 5px rgba(6, 78, 59, 0.55); }
+.pkt-user-pill--emerald_sovereign .pkt-user-pill-sub { color: #A7F3D0; }
+.pkt-user-pill--emerald_sovereign .pkt-emerald-stars i { width: 2.5px; height: 2.5px; }
 .pkt-user-pill--emerald_sovereign .pkt-emerald-stars i:nth-child(1) { top: 12%; left: 26%; }
 .pkt-user-pill--emerald_sovereign .pkt-emerald-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
 .pkt-user-pill--emerald_sovereign .pkt-emerald-stars i:nth-child(3) { top: 12%; left: 78%; }
 .pkt-user-pill--emerald_sovereign .pkt-emerald-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
 
-/* Pill Style 7: MYTHIC TIER — Crimson Eclipse Table Pill */
-.pkt-user-pill--crimson_eclipse { padding: 2px; animation: pkt-pill-crimson-halo 3.1s ease-in-out infinite; }
-.pkt-user-pill--crimson_eclipse .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #140407 0deg, #991B1B 58deg, #FB7185 112deg, #FFE4E6 138deg, #BE123C 192deg, #1F070C 248deg, #F43F5E 306deg, #140407 360deg); animation-duration: 2.2s; }
-.pkt-user-pill--crimson_eclipse .pkt-user-pill-inner { background: linear-gradient(125deg, #120407 0%, #3F0A14 32%, #7F1D1D 58%, #4C0519 80%, #140408 100%); background-size: 250% 250%; animation: pkt-aurora-flow 5.0s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(254, 205, 211, 0.25); }
-.pkt-user-pill--crimson_eclipse .pkt-user-pill-name { color: #FFF1F2; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5); }
-.pkt-user-pill--crimson_eclipse .pkt-user-pill-sub { color: #FDA4AF; }
-.pkt-user-pill--crimson_eclipse .pkt-crimson-stars i { width: 2.5px; height: 2.5px; box-shadow: 0 0 4px 1px rgba(253, 164, 175, 0.9); }
-.pkt-user-pill--crimson_eclipse .pkt-crimson-stars i:nth-child(1) { top: 12%; left: 26%; }
-.pkt-user-pill--crimson_eclipse .pkt-crimson-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
-.pkt-user-pill--crimson_eclipse .pkt-crimson-stars i:nth-child(3) { top: 12%; left: 78%; }
-.pkt-user-pill--crimson_eclipse .pkt-crimson-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
+/* Pill Style 7: MYTHIC TIER — Crimson Eclipse Table Pill (Vivid Ruby Scarlet & Coral + Glitch) */
+.pkt-user-pill--crimson_eclipse { padding: 2px; animation: pkt-pill-crimson-halo 3.0s ease-in-out infinite; }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #991B1B 0deg, #EF4444 58deg, #FDA4AF 115deg, #FFFFFF 136deg, #E11D48 192deg, #B91C1C 252deg, #FB7185 308deg, #991B1B 360deg); animation-duration: 2.0s; }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-inner { background: linear-gradient(125deg, #881337 0%, #BE123C 28%, #DC2626 56%, #E11D48 80%, #991B1B 100%); background-size: 250% 250%; animation: pkt-aurora-flow 4.8s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(254, 205, 211, 0.36); }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-name { color: #FFFFFF; text-shadow: 0 1px 5px rgba(127, 29, 29, 0.55); }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-sub { color: #FFE4E6; }
 
-/* Pill Style 8: MYTHIC TIER — Amethyst Crown Table Pill */
-.pkt-user-pill--amethyst_crown { padding: 2px; animation: pkt-pill-amethyst-halo 3.3s ease-in-out infinite; }
-.pkt-user-pill--amethyst_crown .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #140826 0deg, #7E22CE 58deg, #E9D5FF 112deg, #FFFFFF 136deg, #9333EA 192deg, #2E1065 250deg, #C084FC 306deg, #140826 360deg); animation-duration: 2.35s; }
-.pkt-user-pill--amethyst_crown .pkt-user-pill-inner { background: linear-gradient(125deg, #110620 0%, #2E1065 32%, #4C1D95 58%, #3B0764 80%, #140826 100%); background-size: 250% 250%; animation: pkt-aurora-flow 5.3s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(233, 213, 255, 0.28); }
-.pkt-user-pill--amethyst_crown .pkt-user-pill-name { color: #FAF5FF; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5); }
-.pkt-user-pill--amethyst_crown .pkt-user-pill-sub { color: #E9D5FF; }
-.pkt-user-pill--amethyst_crown .pkt-amethyst-stars i { width: 2.5px; height: 2.5px; box-shadow: 0 0 4px 1px rgba(233, 213, 255, 0.9); }
+/* Pill Style 8: MYTHIC TIER — Amethyst Crown Table Pill (Royal Indigo & Orchid Violet + Warp) */
+.pkt-user-pill--amethyst_crown { padding: 2px; animation: pkt-pill-amethyst-halo 3.2s ease-in-out infinite; }
+.pkt-user-pill--amethyst_crown .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #4338CA 0deg, #7C3AED 60deg, #E9D5FF 115deg, #FFFFFF 138deg, #A855F7 196deg, #4F46E5 256deg, #C084FC 310deg, #4338CA 360deg); animation-duration: 2.3s; }
+.pkt-user-pill--amethyst_crown .pkt-user-pill-inner { background: linear-gradient(125deg, #3730A3 0%, #5B21B6 28%, #7C3AED 56%, #9333EA 82%, #4338CA 100%); background-size: 250% 250%; animation: pkt-aurora-flow 4.9s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(233, 213, 255, 0.38); }
+.pkt-user-pill--amethyst_crown .pkt-user-pill-name { color: #FFFFFF; text-shadow: 0 1px 5px rgba(49, 46, 129, 0.55); }
+.pkt-user-pill--amethyst_crown .pkt-user-pill-sub { color: #F3E8FF; }
+.pkt-user-pill--amethyst_crown .pkt-amethyst-stars i { width: 2.5px; height: 2.5px; }
 .pkt-user-pill--amethyst_crown .pkt-amethyst-stars i:nth-child(1) { top: 12%; left: 26%; }
 .pkt-user-pill--amethyst_crown .pkt-amethyst-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
 .pkt-user-pill--amethyst_crown .pkt-amethyst-stars i:nth-child(3) { top: 12%; left: 78%; }
 .pkt-user-pill--amethyst_crown .pkt-amethyst-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
 
-/* Pill Style 9: MYTHIC TIER — Rose Titanium Table Pill */
-.pkt-user-pill--rose_titanium { padding: 2px; animation: pkt-pill-rose-halo 3.4s ease-in-out infinite; }
-.pkt-user-pill--rose_titanium .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #1B1115 0deg, #9D174D 58deg, #FBCFE8 112deg, #FFF1F2 138deg, #DB2777 192deg, #26161C 248deg, #F472B6 306deg, #1B1115 360deg); animation-duration: 2.45s; }
-.pkt-user-pill--rose_titanium .pkt-user-pill-inner { background: linear-gradient(125deg, #190E13 0%, #3B1826 32%, #6D2143 58%, #471A2E 80%, #1C1116 100%); background-size: 250% 250%; animation: pkt-aurora-flow 5.5s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(251, 207, 232, 0.28); }
-.pkt-user-pill--rose_titanium .pkt-user-pill-name { color: #FDF2F8; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5); }
-.pkt-user-pill--rose_titanium .pkt-user-pill-sub { color: #FBCFE8; }
-.pkt-user-pill--rose_titanium .pkt-rose-stars i { width: 2.5px; height: 2.5px; box-shadow: 0 0 4px 1px rgba(251, 207, 232, 0.9); }
-.pkt-user-pill--rose_titanium .pkt-rose-stars i:nth-child(1) { top: 12%; left: 26%; }
-.pkt-user-pill--rose_titanium .pkt-rose-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
-.pkt-user-pill--rose_titanium .pkt-rose-stars i:nth-child(3) { top: 12%; left: 78%; }
-.pkt-user-pill--rose_titanium .pkt-rose-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
+/* Pill Style 9: MYTHIC TIER — Rose Titanium Table Pill (Satin Rose Gold & Champagne + Silk & Petals) */
+.pkt-user-pill--rose_titanium { padding: 2px; animation: pkt-pill-rose-halo 3.3s ease-in-out infinite; }
+.pkt-user-pill--rose_titanium .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #9D174D 0deg, #EC4899 58deg, #FBCFE8 112deg, #FFF7ED 138deg, #FDBA74 192deg, #BE185D 252deg, #F472B6 308deg, #9D174D 360deg); animation-duration: 2.45s; }
+.pkt-user-pill--rose_titanium .pkt-user-pill-inner { background: linear-gradient(125deg, #9D174D 0%, #BE185D 28%, #DB2777 54%, #E11D48 76%, #B45309 100%); background-size: 250% 250%; animation: pkt-aurora-flow 5.4s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(253, 242, 248, 0.38); }
+.pkt-user-pill--rose_titanium .pkt-user-pill-name { color: #FFFFFF; text-shadow: 0 1px 5px rgba(131, 24, 67, 0.55); }
+.pkt-user-pill--rose_titanium .pkt-user-pill-sub { color: #FCE7F3; }
+.pkt-user-pill--rose_titanium .pkt-rose-stars i { width: 4px; height: 4px; }
 
 /* =========================================================
    H3. MODERN PROFILE PAGE LAYOUT & SELECTABLE BADGE CARDS
@@ -6223,7 +6392,15 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     .pkt-amethyst-sheen::after,
     .pkt-amethyst-stars i,
     .pkt-rose-sheen::after,
+    .pkt-rose-sheen i,
     .pkt-rose-stars i,
+    .pkt-fx-lightning i,
+    .pkt-fx-flames i,
+    .pkt-emerald-sheen i,
+    .pkt-crimson-sheen i,
+    .pkt-amethyst-sheen i,
+    .pkt-dev-badge--crimson_eclipse .pkt-dev-badge-text,
+    .pkt-user-pill--crimson_eclipse .pkt-user-pill-name,
     .pkt-dev-embers i,
     .pkt-dev-sheen::after,
     .pkt-dev-avatar-ring,

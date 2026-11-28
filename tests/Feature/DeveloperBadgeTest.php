@@ -400,8 +400,11 @@ test('regular user unlocks exclusive badges via 1000, 5000, and 50000 DO milesto
         ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_ROSE_TITANIUM))->toBeTrue()
         ->and($andre->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_ROSE_TITANIUM)
         ->and(UserBadgeRenderer::render($andre))->toContain('pkt-user-pill--rose_titanium')
-        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-rose-stars')
-        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_EMERALD_SOVEREIGN, 'Developer'))->toContain('pkt-dev-badge--emerald_sovereign')
-        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_CRIMSON_ECLIPSE, 'Developer'))->toContain('pkt-dev-badge--crimson_eclipse')
-        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_AMETHYST_CROWN, 'Developer'))->toContain('pkt-dev-badge--amethyst_crown');
+        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-fx-petals')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_ELECTRIC, 'Developer'))->toContain('pkt-fx-lightning')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_FLAME, 'Developer'))->toContain('pkt-fx-flames')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_ARCTIC_PLATINUM, 'Developer'))->toContain('pkt-fx-frost')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_EMERALD_SOVEREIGN, 'Developer'))->toContain('pkt-fx-sonar')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_CRIMSON_ECLIPSE, 'Developer'))->toContain('pkt-fx-glitch-bars')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_AMETHYST_CROWN, 'Developer'))->toContain('pkt-fx-warp');
 });

@@ -157,14 +157,15 @@ class UserBadgeRenderer
         };
 
         $fxLayer = match ($validStyle) {
-            User::DEVELOPER_BADGE_FLAME => '<span class="pkt-user-pill-embers" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_ELECTRIC => '<span class="pkt-user-pill-sheen" aria-hidden="true"></span><span class="pkt-fx-lightning" aria-hidden="true"><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_FLAME => '<span class="pkt-fx-flames" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="pkt-user-pill-embers" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_PKT_COMBO => '<span class="pkt-aurora-sheen" aria-hidden="true"></span><span class="pkt-aurora-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_OBSIDIAN_GOLD => '<span class="pkt-obsidian-sheen" aria-hidden="true"></span><span class="pkt-obsidian-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
-            User::DEVELOPER_BADGE_ARCTIC_PLATINUM => '<span class="pkt-arctic-sheen" aria-hidden="true"></span><span class="pkt-arctic-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
-            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => '<span class="pkt-emerald-sheen" aria-hidden="true"></span><span class="pkt-emerald-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
-            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-crimson-sheen" aria-hidden="true"></span><span class="pkt-crimson-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
-            User::DEVELOPER_BADGE_AMETHYST_CROWN => '<span class="pkt-amethyst-sheen" aria-hidden="true"></span><span class="pkt-amethyst-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
-            User::DEVELOPER_BADGE_ROSE_TITANIUM => '<span class="pkt-rose-sheen" aria-hidden="true"></span><span class="pkt-rose-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_ARCTIC_PLATINUM => '<span class="pkt-arctic-sheen" aria-hidden="true"></span><span class="pkt-arctic-stars pkt-fx-frost" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => '<span class="pkt-emerald-sheen pkt-fx-sonar" aria-hidden="true"><i></i><i></i></span><span class="pkt-emerald-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-crimson-sheen pkt-fx-glitch-bars" aria-hidden="true"><i></i><i></i><i></i></span><span class="pkt-crimson-stars" aria-hidden="true"><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_AMETHYST_CROWN => '<span class="pkt-amethyst-sheen pkt-fx-warp" aria-hidden="true"><i></i><i></i></span><span class="pkt-amethyst-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_ROSE_TITANIUM => '<span class="pkt-rose-sheen pkt-fx-silk" aria-hidden="true"><i></i><i></i></span><span class="pkt-rose-stars pkt-fx-petals" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             default => '<span class="pkt-user-pill-sheen" aria-hidden="true"></span>',
         };
 
