@@ -4261,6 +4261,13 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     border-color: rgba(131, 162, 219, 0.22);
 }
 
+.pkt-mega-nav[data-nav-motion-init="true"] .pkt-nav-pill:hover:not(.pkt-nav-pill-open):not(.pkt-nav-pill-active),
+.dark .pkt-mega-nav[data-nav-motion-init="true"] .pkt-nav-pill:hover:not(.pkt-nav-pill-open):not(.pkt-nav-pill-active) {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
 .pkt-nav-hover-indicator-visible {
     opacity: 1;
 }

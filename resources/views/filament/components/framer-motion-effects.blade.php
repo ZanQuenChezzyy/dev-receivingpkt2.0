@@ -355,27 +355,40 @@
                     megaNav.prepend(indicator);
                 }
 
-                const moveIndicatorTo = (pill) => {
-                    if (!pill || !megaNav.isConnected) return;
-                    const navRect = megaNav.getBoundingClientRect();
-                    const pillRect = pill.getBoundingClientRect();
-                    const left = pillRect.left - navRect.left;
-                    const top = pillRect.top - navRect.top;
-
-                    indicator.style.width = `${pillRect.width}px`;
-                    indicator.style.height = `${pillRect.height}px`;
-                    indicator.style.transform = `translate3d(${left}px, ${top}px, 0)`;
-                    indicator.classList.add('pkt-nav-hover-indicator-visible');
-                };
-
                 const hideIndicator = () => {
                     indicator.classList.remove('pkt-nav-hover-indicator-visible');
+                };
+
+                const moveIndicatorTo = (pill) => {
+                    if (!pill || !megaNav.isConnected) return;
+
+                    // Jangan tampilkan ghost indicator di belakang pill yang sudah aktif (oranye) atau sedang terbuka
+                    if (pill.classList.contains('pkt-nav-pill-active') || pill.classList.contains('pkt-nav-pill-open')) {
+                        hideIndicator();
+                        return;
+                    }
+
+                    // Hitung posisi relatif terhadap megaNav menggunakan offset agar kebal terhadap transform scale() saat klik
+                    let left = 0;
+                    let top = 0;
+                    let node = pill;
+                    while (node && node !== megaNav) {
+                        left += node.offsetLeft || 0;
+                        top += node.offsetTop || 0;
+                        node = node.offsetParent;
+                    }
+
+                    indicator.style.width = `${pill.offsetWidth}px`;
+                    indicator.style.height = `${pill.offsetHeight}px`;
+                    indicator.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+                    indicator.classList.add('pkt-nav-hover-indicator-visible');
                 };
 
                 if (isFinePointer) {
                     megaNav.querySelectorAll('.pkt-nav-pill').forEach((pill) => {
                         pill.addEventListener('mouseenter', () => moveIndicatorTo(pill));
                         pill.addEventListener('focus', () => moveIndicatorTo(pill));
+                        pill.addEventListener('click', hideIndicator);
                     });
 
                     megaNav.addEventListener('mouseleave', hideIndicator);
