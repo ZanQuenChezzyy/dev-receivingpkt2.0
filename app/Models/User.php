@@ -38,7 +38,17 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public const DEVELOPER_BADGE_NONE = 'none';
 
     /**
-     * Pilihan gaya animasi badge khusus pengguna dengan role Developer.
+     * Daftar role yang berhak memakai & mengatur animasi badge khusus.
+     *
+     * @var list<string>
+     */
+    public const ANIMATED_BADGE_ROLES = [
+        'Developer',
+        'AVP Receiving',
+    ];
+
+    /**
+     * Pilihan gaya animasi badge khusus pengguna dengan role Developer atau AVP Receiving.
      *
      * @return array<string, string>
      */
@@ -53,11 +63,33 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     }
 
     /**
-     * Mengembalikan gaya badge Developer aktif milik pengguna.
+     * Memeriksa apakah pengguna memiliki role yang berhak mengatur animasi badge.
+     */
+    public function canCustomizeAnimatedBadge(): bool
+    {
+        return $this->hasAnyRole(self::ANIMATED_BADGE_ROLES);
+    }
+
+    /**
+     * Mengembalikan nama role prioritas yang memakai animasi badge untuk pengguna ini.
+     */
+    public function primaryAnimatedBadgeRole(): ?string
+    {
+        foreach (self::ANIMATED_BADGE_ROLES as $roleName) {
+            if ($this->hasRole($roleName)) {
+                return $roleName;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Mengembalikan gaya badge animasi aktif milik pengguna.
      */
     public function resolvedDeveloperBadgeStyle(): string
     {
-        if (! $this->hasRole('Developer')) {
+        if (! $this->canCustomizeAnimatedBadge()) {
             return self::DEVELOPER_BADGE_NONE;
         }
 
@@ -72,7 +104,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
 
     public function isDeveloperBadgeAnimated(): bool
     {
-        return $this->hasRole('Developer')
+        return $this->canCustomizeAnimatedBadge()
             && $this->resolvedDeveloperBadgeStyle() !== self::DEVELOPER_BADGE_NONE;
     }
 

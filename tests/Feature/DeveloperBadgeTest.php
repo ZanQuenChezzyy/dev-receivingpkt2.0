@@ -35,10 +35,11 @@ beforeEach(function (): void {
     }
 
     Role::firstOrCreate(['name' => 'Developer', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'AVP Receiving', 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => 'Admin Sparepart', 'guard_name' => 'web']);
 });
 
-test('Developer user resolves selected animated badge style while non-developer always gets standard none', function (): void {
+test('Developer and AVP Receiving users resolve selected animated badge style while other roles get standard none', function (): void {
     $dev = User::query()->create([
         'name' => 'Dev User',
         'npk' => '2100100',
@@ -48,6 +49,16 @@ test('Developer user resolves selected animated badge style while non-developer 
         'is_active' => true,
     ]);
     $dev->assignRole('Developer');
+
+    $avp = User::query()->create([
+        'name' => 'AVP Receiving User',
+        'npk' => '2100109',
+        'email' => 'avp_badge@pupukkaltim.com',
+        'password' => bcrypt('password'),
+        'developer_badge_style' => User::DEVELOPER_BADGE_PKT_COMBO,
+        'is_active' => true,
+    ]);
+    $avp->assignRole('AVP Receiving');
 
     $staff = User::query()->create([
         'name' => 'Staff User',
@@ -61,61 +72,69 @@ test('Developer user resolves selected animated badge style while non-developer 
 
     expect($dev->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_FLAME)
         ->and($dev->isDeveloperBadgeAnimated())->toBeTrue()
+        ->and($avp->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_PKT_COMBO)
+        ->and($avp->isDeveloperBadgeAnimated())->toBeTrue()
         ->and($staff->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_NONE)
         ->and($staff->isDeveloperBadgeAnimated())->toBeFalse();
 
     $devHtml = DeveloperBadgeRenderer::renderUserRoles($dev)->toHtml();
+    $avpHtml = DeveloperBadgeRenderer::renderUserRoles($avp)->toHtml();
     $staffHtml = DeveloperBadgeRenderer::renderUserRoles($staff)->toHtml();
 
     expect($devHtml)->toContain('pkt-dev-badge--flame')
         ->and($devHtml)->toContain('pkt-dev-embers')
+        ->and($avpHtml)->toContain('pkt-dev-badge--pkt_combo')
+        ->and($avpHtml)->toContain('AVP Receiving')
         ->and($staffHtml)->not->toContain('pkt-dev-badge')
         ->and($staffHtml)->toContain('Admin Sparepart');
 
-    // UserBadgeRenderer (pill Avatar + Nama + NPK di tabel) juga menganimasikan khusus Developer
+    // UserBadgeRenderer (pill Avatar + Nama + NPK di tabel) juga menganimasikan Developer & AVP Receiving
     UserBadgeRenderer::flushCache();
     $devPillHtml = UserBadgeRenderer::render($dev);
+    $avpPillHtml = UserBadgeRenderer::render($avp);
     $staffPillHtml = UserBadgeRenderer::render($staff);
 
     expect($devPillHtml)->toContain('pkt-user-pill--flame')
         ->and($devPillHtml)->toContain('pkt-user-pill-embers')
         ->and($devPillHtml)->toContain('2100100')
+        ->and($avpPillHtml)->toContain('pkt-user-pill--pkt_combo')
+        ->and($avpPillHtml)->toContain('2100109')
         ->and($staffPillHtml)->not->toContain('pkt-user-pill--')
         ->and($staffPillHtml)->toContain('2100101');
 });
 
-test('Developer can choose and save animated badge style from EditProfile page', function (): void {
-    $dev = User::query()->create([
-        'name' => 'Andereyan Dev',
+test('Developer and AVP Receiving can choose and save animated badge style from EditProfile page', function (): void {
+    $avp = User::query()->create([
+        'name' => 'AVP PKT',
         'npk' => '2100102',
-        'email' => 'dev_profile_badge@pupukkaltim.com',
+        'email' => 'avp_profile_badge@pupukkaltim.com',
         'password' => bcrypt('password'),
         'developer_badge_style' => User::DEVELOPER_BADGE_ELECTRIC,
         'is_active' => true,
     ]);
-    $dev->assignRole('Developer');
-    Auth::login($dev);
+    $avp->assignRole('AVP Receiving');
+    Auth::login($avp);
 
     Filament::setCurrentPanel(Filament::getPanel('admin'));
 
     Livewire::test(EditProfile::class)
-        ->assertSee('Badge Developer')
+        ->assertSee('Gaya Badge')
         ->assertSee('Listrik (Energi Biru PKT)')
         ->assertSee('Api (Bara Oranye PKT)')
         ->assertSee('Kombinasi PKT (Biru & Oranye)')
         ->fillForm([
-            'name' => 'Andereyan Dev',
+            'name' => 'AVP PKT',
             'npk' => '2100102',
-            'email' => 'dev_profile_badge@pupukkaltim.com',
+            'email' => 'avp_profile_badge@pupukkaltim.com',
             'developer_badge_style' => User::DEVELOPER_BADGE_FLAME,
         ])
         ->call('save')
         ->assertHasNoFormErrors();
 
-    expect($dev->fresh()->developer_badge_style)->toBe(User::DEVELOPER_BADGE_FLAME);
+    expect($avp->fresh()->developer_badge_style)->toBe(User::DEVELOPER_BADGE_FLAME);
 });
 
-test('Non-developer user does not see Badge Developer tab on EditProfile page', function (): void {
+test('Regular staff user does not see Gaya Badge tab on EditProfile page', function (): void {
     $staff = User::query()->create([
         'name' => 'Staff Biasa',
         'npk' => '2100103',
@@ -129,5 +148,5 @@ test('Non-developer user does not see Badge Developer tab on EditProfile page', 
     Filament::setCurrentPanel(Filament::getPanel('admin'));
 
     Livewire::test(EditProfile::class)
-        ->assertDontSee('Badge Developer');
+        ->assertDontSee('Gaya Badge');
 });

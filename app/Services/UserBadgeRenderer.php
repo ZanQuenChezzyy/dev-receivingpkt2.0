@@ -91,7 +91,10 @@ class UserBadgeRenderer
             ? '<span class="pkt-user-pill-embers" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
             : '<span class="pkt-user-pill-sheen" aria-hidden="true"></span>';
 
-        $npkValue = ! empty($user->npk) ? e($user->npk) : 'Developer';
+        $fallbackRoleLabel = method_exists($user, 'primaryAnimatedBadgeRole')
+            ? ($user->primaryAnimatedBadgeRole() ?? 'Developer')
+            : 'Developer';
+        $npkValue = ! empty($user->npk) ? e($user->npk) : e($fallbackRoleLabel);
         $npkLine = '<span class="pkt-user-pill-sub" title="'.$npkValue.'">'
             .$miniIcon
             .'<span class="truncate">'.$npkValue.'</span>'

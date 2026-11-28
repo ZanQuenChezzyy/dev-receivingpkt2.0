@@ -68,10 +68,11 @@ class DeveloperBadgeRenderer
         }
 
         $badgeStyle = $user->resolvedDeveloperBadgeStyle();
+        $eligibleRoles = array_map('strtolower', User::ANIMATED_BADGE_ROLES);
         $chips = [];
 
         foreach ($roleNames as $roleName) {
-            if (strcasecmp($roleName, 'Developer') === 0) {
+            if (in_array(strtolower((string) $roleName), $eligibleRoles, true)) {
                 $chips[] = static::render($badgeStyle, $roleName, $size);
             } else {
                 $chips[] = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] ring-1 ring-inset ring-[#0054A6]/20 dark:ring-[#83A2DB]/25">'
