@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\BadgeMilestoneService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +23,10 @@ class WarehouseTransmittal extends Model
 
     protected static function booted(): void
     {
+        static::created(function (WarehouseTransmittal $transmittal): void {
+            app(BadgeMilestoneService::class)->syncMilestonesForUsers([$transmittal->created_by]);
+        });
+
         static::deleting(function (WarehouseTransmittal $transmittal) {
             foreach ($transmittal->items as $item) {
                 if ($item->batchItem) {

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\BadgeMilestoneService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,6 +36,13 @@ class WarehouseDeliveryBatch extends Model
             'total_items' => 'integer',
             'total_value' => 'decimal:2',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (WarehouseDeliveryBatch $batch): void {
+            app(BadgeMilestoneService::class)->syncMilestonesForUsers([$batch->uploaded_by]);
+        });
     }
 
     public function items(): HasMany

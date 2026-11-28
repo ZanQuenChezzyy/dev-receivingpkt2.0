@@ -7,6 +7,8 @@ use App\Models\DeliveryOrderReceipt;
 use App\Models\GrsRdtv;
 use App\Models\InvoicingReceipt;
 use App\Models\User;
+use App\Models\WarehouseDeliveryBatch;
+use App\Models\WarehouseTransmittal;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Schema;
@@ -24,6 +26,8 @@ class BadgeMilestoneService
     public const TRACK_ADMIN_DO_GRS = 'admin_do_grs';
 
     public const TRACK_STAFF_INVOICE = 'staff_invoice';
+
+    public const TRACK_SEKRETARIS_DO_WAREHOUSE = 'sekretaris_do_warehouse';
 
     /**
      * Daftar role dengan misi Penerimaan DO + Penerbitan GRS/RDTV.
@@ -92,7 +96,20 @@ class BadgeMilestoneService
             ];
         }
 
-        // 3. Operator & Role Umum Lainnya (Penerimaan DO)
+        // 3. Sekretaris (Penerimaan DO + Pengiriman Gudang)
+        if (array_key_exists('sekretaris', $lowerMap)) {
+            $displayRole = $lowerMap['sekretaris'];
+
+            return [
+                'track' => self::TRACK_SEKRETARIS_DO_WAREHOUSE,
+                'role_label' => $displayRole,
+                'mission_title' => "Misi {$displayRole} — Penerimaan DO & Pengiriman Gudang",
+                'mission_description' => 'Selesaikan penerimaan DO dan pengiriman gudang sebanyak-banyaknya untuk membuka hadiah badge eksklusif dan tier tertinggi.',
+                'unit_label' => 'DO & Pengiriman Gudang',
+            ];
+        }
+
+        // 4. Operator & Role Umum Lainnya (Penerimaan DO)
         $displayRole = $lowerMap['operator'] ?? ($roleNames[0] ?? 'Operator');
 
         return [
@@ -170,9 +187,40 @@ class BadgeMilestoneService
     }
 
     /**
+     * Menghitung total pengiriman gudang yang diproses pengguna (Transmittal Gudang dan Master Pengiriman MB51).
+     */
+    public function countUserWarehouseDeliveries(User $user): int
+    {
+        $userId = (int) $user->getKey();
+        if ($userId <= 0) {
+            return 0;
+        }
+
+        $total = 0;
+
+        try {
+            if (Schema::hasTable('warehouse_transmittals')) {
+                $total += WarehouseTransmittal::query()->where('created_by', $userId)->count();
+            }
+        } catch (\Throwable) {
+            // Abaikan jika tabel belum tersedia pada skema parsial.
+        }
+
+        try {
+            if (Schema::hasTable('warehouse_delivery_batches')) {
+                $total += WarehouseDeliveryBatch::query()->where('uploaded_by', $userId)->count();
+            }
+        } catch (\Throwable) {
+            // Abaikan jika tabel belum tersedia pada skema parsial.
+        }
+
+        return $total;
+    }
+
+    /**
      * Menghitung skor misi sesuai track role pengguna beserta rincian sumbernya.
      *
-     * @return array{total: int, do_count: int, grs_count: int, invoice_count: int, breakdown_text: ?string}
+     * @return array{total: int, do_count: int, grs_count: int, invoice_count: int, warehouse_count: int, breakdown_text: ?string}
      */
     public function calculateMissionCount(User $user, string $track): array
     {
@@ -184,6 +232,7 @@ class BadgeMilestoneService
                 'do_count' => 0,
                 'grs_count' => 0,
                 'invoice_count' => $invoiceCount,
+                'warehouse_count' => 0,
                 'breakdown_text' => null,
             ];
         }
@@ -198,7 +247,21 @@ class BadgeMilestoneService
                 'do_count' => $doCount,
                 'grs_count' => $grsCount,
                 'invoice_count' => 0,
+                'warehouse_count' => 0,
                 'breakdown_text' => number_format($doCount, 0, ',', '.').' DO • '.number_format($grsCount, 0, ',', '.').' GRS/RDTV',
+            ];
+        }
+
+        if ($track === self::TRACK_SEKRETARIS_DO_WAREHOUSE) {
+            $warehouseCount = $this->countUserWarehouseDeliveries($user);
+
+            return [
+                'total' => $doCount + $warehouseCount,
+                'do_count' => $doCount,
+                'grs_count' => 0,
+                'invoice_count' => 0,
+                'warehouse_count' => $warehouseCount,
+                'breakdown_text' => number_format($doCount, 0, ',', '.').' DO • '.number_format($warehouseCount, 0, ',', '.').' Pengiriman Gudang',
             ];
         }
 
@@ -207,6 +270,7 @@ class BadgeMilestoneService
             'do_count' => $doCount,
             'grs_count' => 0,
             'invoice_count' => 0,
+            'warehouse_count' => 0,
             'breakdown_text' => null,
         ];
     }
@@ -250,6 +314,7 @@ class BadgeMilestoneService
                 'do_count' => $doCountOverride,
                 'grs_count' => 0,
                 'invoice_count' => 0,
+                'warehouse_count' => 0,
                 'breakdown_text' => null,
             ]
             : $this->calculateMissionCount($user, $profile['track']);

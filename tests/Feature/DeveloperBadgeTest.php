@@ -59,6 +59,7 @@ beforeEach(function (): void {
     Role::firstOrCreate(['name' => 'Admin Chemical', 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => 'Admin Bahan Baku', 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'Sekretaris', 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => 'Staff Invoice', 'guard_name' => 'web']);
 });
 
@@ -428,6 +429,9 @@ test('BadgeMilestoneService resolves role-specific mission tracks accurately', f
     $staffInv = User::query()->create(['name' => 'Inv 1', 'email' => 'inv1@pkt.test', 'password' => bcrypt('password')]);
     $staffInv->assignRole('Staff Invoice');
 
+    $sekretaris = User::query()->create(['name' => 'Sekre 1', 'email' => 'sekre1@pkt.test', 'password' => bcrypt('password')]);
+    $sekretaris->assignRole('Sekretaris');
+
     expect($service->resolveMissionProfile($operator)['track'])->toBe(BadgeMilestoneService::TRACK_OPERATOR_DO)
         ->and($service->resolveMissionProfile($operator)['unit_label'])->toBe('Penerimaan DO')
         ->and($service->resolveMissionProfile($adminChem)['track'])->toBe(BadgeMilestoneService::TRACK_ADMIN_DO_GRS)
@@ -435,5 +439,8 @@ test('BadgeMilestoneService resolves role-specific mission tracks accurately', f
         ->and($service->resolveMissionProfile($adminSpare)['track'])->toBe(BadgeMilestoneService::TRACK_ADMIN_DO_GRS)
         ->and($service->resolveMissionProfile($adminBb)['track'])->toBe(BadgeMilestoneService::TRACK_ADMIN_DO_GRS)
         ->and($service->resolveMissionProfile($staffInv)['track'])->toBe(BadgeMilestoneService::TRACK_STAFF_INVOICE)
-        ->and($service->resolveMissionProfile($staffInv)['unit_label'])->toBe('Invoice Ditangani');
+        ->and($service->resolveMissionProfile($staffInv)['unit_label'])->toBe('Invoice Ditangani')
+        ->and($service->resolveMissionProfile($sekretaris)['track'])->toBe(BadgeMilestoneService::TRACK_SEKRETARIS_DO_WAREHOUSE)
+        ->and($service->resolveMissionProfile($sekretaris)['unit_label'])->toBe('DO & Pengiriman Gudang')
+        ->and($service->calculateMissionCount($sekretaris, BadgeMilestoneService::TRACK_SEKRETARIS_DO_WAREHOUSE)['breakdown_text'])->toBe('0 DO • 0 Pengiriman Gudang');
 });
