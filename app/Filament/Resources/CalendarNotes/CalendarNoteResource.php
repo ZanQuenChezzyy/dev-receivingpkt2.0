@@ -19,6 +19,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
@@ -135,13 +136,28 @@ class CalendarNoteResource extends Resource
                 ->schema([
                     DatePicker::make('start_date')
                         ->label('Tanggal Mulai')
+                        ->placeholder('Pilih tanggal mulai')
+                        ->displayFormat('d F Y')
+                        ->prefixIcon('heroicon-o-calendar-days')
                         ->native(false)
+                        ->closeOnDateSelection()
                         ->required()
-                        ->live(),
+                        ->live()
+                        ->afterStateUpdated(function (?string $state, Set $set, Get $get): void {
+                            $endDate = $get('end_date');
+
+                            if (filled($state) && (blank($endDate) || $endDate < $state)) {
+                                $set('end_date', $state);
+                            }
+                        }),
 
                     DatePicker::make('end_date')
                         ->label('Tanggal Selesai')
+                        ->placeholder('Pilih tanggal selesai')
+                        ->displayFormat('d F Y')
+                        ->prefixIcon('heroicon-o-calendar-days')
                         ->native(false)
+                        ->closeOnDateSelection()
                         ->required()
                         ->minDate(fn (Get $get) => $get('start_date'))
                         ->afterOrEqual('start_date'),

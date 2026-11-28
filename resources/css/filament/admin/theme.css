@@ -2447,6 +2447,249 @@ footer.fi-footer {
 }
 
 /* =========================================================
+   DatePicker / DateTimePicker Panel (Anti-Clipping & Refined UI)
+   ========================================================= */
+.fi-fo-date-time-picker-display-text-input {
+    cursor: pointer !important;
+    caret-color: transparent !important;
+}
+
+.fi-fo-date-time-picker-panel {
+    width: 19rem !important;
+    max-width: calc(100vw - 1.5rem) !important;
+    padding: 0.95rem 1rem 1rem !important;
+    border-radius: 1.25rem !important;
+    background: #FFFFFF !important;
+    border: 1px solid rgba(15, 23, 42, 0.1) !important;
+    box-shadow:
+        0 20px 50px -12px rgba(15, 23, 42, 0.22),
+        0 6px 16px -4px rgba(15, 23, 42, 0.08) !important;
+    z-index: 100050 !important;
+}
+
+.dark .fi-fo-date-time-picker-panel {
+    background: #131B27 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow:
+        0 24px 56px -12px rgba(0, 0, 0, 0.78),
+        0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+.fi-fo-date-time-picker-panel.fi-datepicker-viewport-fixed {
+    position: fixed !important;
+    z-index: 100050 !important;
+    margin: 0 !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-panel-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
+    padding-bottom: 0.7rem !important;
+    margin-bottom: 0.25rem !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.07) !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-panel-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-month-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    height: 2.25rem !important;
+    padding: 0 2rem 0 0.75rem !important;
+    border-radius: 0.65rem !important;
+    border: 1px solid rgba(15, 23, 42, 0.09) !important;
+    background-color: #F1F5F9 !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='m6 8 4 4 4-4'/%3E%3C/svg%3E") !important;
+    background-position: right 0.5rem center !important;
+    background-repeat: no-repeat !important;
+    background-size: 1.15rem 1.15rem !important;
+    color: #0F172A !important;
+    font-size: 0.875rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-month-select {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='m6 8 4 4 4-4'/%3E%3C/svg%3E") !important;
+    color: #F8FAFC !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-month-select option {
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-month-select option {
+    background-color: #131B27 !important;
+    color: #F8FAFC !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-year-input {
+    width: 5.5rem !important;
+    flex-shrink: 0 !important;
+    height: 2.25rem !important;
+    padding: 0 0.55rem !important;
+    border-radius: 0.65rem !important;
+    border: 1px solid rgba(15, 23, 42, 0.09) !important;
+    background-color: #F1F5F9 !important;
+    color: #0F172A !important;
+    text-align: center !important;
+    font-size: 0.875rem !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums !important;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-year-input {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #F8FAFC !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-month-select:focus,
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-year-input:focus {
+    outline: none !important;
+    border-color: #F47920 !important;
+    box-shadow: 0 0 0 2.5px rgba(244, 121, 32, 0.2) !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-header {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 0.25rem !important;
+    padding: 0.15rem 0 !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-header-day {
+    text-align: center !important;
+    font-size: 0.6875rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    color: #64748B !important;
+    padding: 0.15rem 0 !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-header-day {
+    color: #94A3B8 !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-header-day:last-child {
+    color: #E11D48 !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-header-day:last-child {
+    color: #FB7185 !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 0.25rem !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 2.15rem !important;
+    width: 100% !important;
+    border-radius: 0.625rem !important;
+    font-size: 0.8125rem !important;
+    font-weight: 600 !important;
+    font-variant-numeric: tabular-nums !important;
+    line-height: 1 !important;
+    color: #1E293B !important;
+    transition: background-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day {
+    color: #E2E8F0 !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day.fi-focused:not(.fi-selected):not(.fi-disabled),
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day:not(.fi-selected):not(.fi-disabled):hover {
+    background-color: #F1F5F9 !important;
+    color: #0F172A !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day.fi-focused:not(.fi-selected):not(.fi-disabled),
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day:not(.fi-selected):not(.fi-disabled):hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #FFFFFF !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day.fi-fo-date-time-picker-calendar-day-today:not(.fi-selected):not(.fi-disabled) {
+    background-color: rgba(244, 121, 32, 0.12) !important;
+    color: #EA580C !important;
+    font-weight: 800 !important;
+    box-shadow: inset 0 0 0 1px rgba(244, 121, 32, 0.42) !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day.fi-fo-date-time-picker-calendar-day-today:not(.fi-selected):not(.fi-disabled) {
+    background-color: rgba(244, 121, 32, 0.16) !important;
+    color: #FB923C !important;
+    box-shadow: inset 0 0 0 1px rgba(251, 146, 60, 0.45) !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day.fi-selected {
+    background-color: #F47920 !important;
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 12px -2px rgba(244, 121, 32, 0.5) !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day.fi-disabled {
+    opacity: 0.28 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-time-inputs {
+    padding-top: 0.65rem !important;
+    border-top: 1px solid rgba(15, 23, 42, 0.07) !important;
+    gap: 0.35rem !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-time-inputs {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.fi-fo-date-time-picker-panel .fi-fo-date-time-picker-time-inputs input {
+    height: 2rem !important;
+    width: 3rem !important;
+    margin: 0 !important;
+    border-radius: 0.55rem !important;
+    background-color: #F1F5F9 !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+.dark .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-time-inputs input {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+@media (max-width: 639px) {
+    .fi-fo-date-time-picker-panel {
+        width: min(19.5rem, calc(100vw - 1.5rem)) !important;
+        padding: 0.85rem !important;
+    }
+
+    .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-calendar-day {
+        height: 2.3rem !important;
+    }
+}
+
+/* =========================================================
    Prevent iOS Safari & Mobile Auto-Zoom on Form Inputs
    Enforcing 16px font-size on mobile viewports (< 768px) and WebKit touch
    devices prevents iOS Safari from automatically zooming into inputs.
@@ -3640,15 +3883,26 @@ html.dark body {
 }
 
 /* Unified Modals (matching header, content, and footer surfaces) */
-.fi-modal-window {
+.fi-modal-window,
+.fi-modal:not(.fi-modal-slide-over) .fi-modal-window,
+.fi-modal.fi-modal-slide-over .fi-modal-window {
     border-radius: 1.75rem !important;
     background: #FFFFFF !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     border: 1px solid rgba(16, 20, 26, 0.08) !important;
 }
 
+.fi-modal.fi-modal-slide-over .fi-modal-window {
+    border-radius: 1.5rem 0 0 1.5rem !important;
+}
+
 .dark .fi-modal-window,
+.dark .fi-modal:not(.fi-modal-slide-over) .fi-modal-window,
+.dark .fi-modal.fi-modal-slide-over .fi-modal-window,
 .dark .fi-modal-header,
 .dark .fi-modal-footer {
+    background: #151B24 !important;
     background-color: #151B24 !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
 }

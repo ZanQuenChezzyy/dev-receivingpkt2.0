@@ -14,9 +14,11 @@ it('keeps Filament admin theme protected against table dropdown clipping and ver
 
     $css = (string) file_get_contents($themeCssPath);
 
-    // 1. Dropdown tabel memakai viewport-fixed agar tidak pernah terpotong overflow-x:auto
+    // 1. Dropdown tabel & DatePicker memakai viewport-fixed agar tidak pernah terpotong overflow
     expect($css)
         ->toContain('.fi-dropdown-viewport-fixed')
+        ->toContain('.fi-datepicker-viewport-fixed')
+        ->toContain('.fi-fo-date-time-picker-panel')
         ->toContain('.fi-sc-tabs.fi-vertical')
         ->toContain('overflow-x:clip');
 
@@ -25,7 +27,13 @@ it('keeps Filament admin theme protected against table dropdown clipping and ver
     expect($sourceCss)
         ->not->toContain(".fi-ta-ctn,\n.fi-ta-main,\n.fi-ta-content {\n    overflow-y: hidden !important;\n}")
         ->toContain('.fi-sc-tabs:not(.fi-vertical) > .fi-sc-tabs-tab')
-        ->toContain('.fi-tabs:not(.fi-vertical)');
+        ->toContain('.fi-tabs:not(.fi-vertical)')
+        ->toContain('.fi-fo-date-time-picker-panel.fi-datepicker-viewport-fixed');
+
+    $effectsBlade = (string) file_get_contents(resource_path('views/filament/components/framer-motion-effects.blade.php'));
+    expect($effectsBlade)
+        ->toContain('fi-datepicker-viewport-fixed')
+        ->toContain('syncAllDatePickerPanels');
 });
 
 it('renders corporate email HTML with dark-mode contrast lock and mobile responsive header stacking', function (): void {

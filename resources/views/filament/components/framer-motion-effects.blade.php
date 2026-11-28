@@ -330,6 +330,185 @@
         }
 
         // =========================================================
+        // 4B. Anti-Clipping Viewport-Fixed Positioning for DatePicker Panels
+        //     Prevents .fi-fo-date-time-picker-panel inside modals or
+        //     scrollable containers from being sliced off by overflow
+        // =========================================================
+        const activeFixedDatePickers = new Set();
+        let isRepositioningDatePickers = false;
+
+        function resetDatePickerPanel(panel) {
+            if (!panel) return;
+            if (!panel.classList.contains('fi-datepicker-viewport-fixed') && !panel.dataset.pktDpPos) {
+                activeFixedDatePickers.delete(panel);
+                return;
+            }
+            isRepositioningDatePickers = true;
+            try {
+                panel.classList.remove('fi-datepicker-viewport-fixed');
+                panel.style.removeProperty('position');
+                panel.style.removeProperty('top');
+                panel.style.removeProperty('left');
+                panel.style.removeProperty('right');
+                panel.style.removeProperty('bottom');
+                panel.style.removeProperty('transform');
+                delete panel.dataset.pktDpPos;
+                activeFixedDatePickers.delete(panel);
+            } finally {
+                isRepositioningDatePickers = false;
+            }
+        }
+
+        function positionDatePickerPanel(panel) {
+            if (!panel || !panel.isConnected) {
+                activeFixedDatePickers.delete(panel);
+                return;
+            }
+
+            const isHidden = panel.style.display === 'none' || panel.hasAttribute('x-cloak') || window.getComputedStyle(panel).display === 'none';
+            if (isHidden) {
+                resetDatePickerPanel(panel);
+                return;
+            }
+
+            const picker = panel.closest('.fi-fo-date-time-picker');
+            const trigger = picker || panel.parentElement?.querySelector('.fi-fo-date-time-picker-trigger');
+            if (!trigger) return;
+
+            const triggerRect = trigger.getBoundingClientRect();
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const edgePad = 12;
+            const gap = 8;
+
+            if (triggerRect.bottom < 0 || triggerRect.top > vh || triggerRect.right < 0 || triggerRect.left > vw) {
+                resetDatePickerPanel(panel);
+                return;
+            }
+
+            isRepositioningDatePickers = true;
+            try {
+                if (!panel.classList.contains('fi-datepicker-viewport-fixed')) {
+                    panel.classList.add('fi-datepicker-viewport-fixed');
+                }
+                panel.style.setProperty('position', 'fixed', 'important');
+                panel.style.setProperty('right', 'auto', 'important');
+                panel.style.setProperty('bottom', 'auto', 'important');
+                panel.style.setProperty('transform', 'none', 'important');
+
+                const panelRect = panel.getBoundingClientRect();
+                const panelW = Math.min(Math.max(panelRect.width || 304, 260), vw - edgePad * 2);
+                const panelH = Math.min(Math.max(panelRect.height || 310, 240), vh - edgePad * 2);
+
+                const spaceBelow = vh - triggerRect.bottom - edgePad;
+                const spaceAbove = triggerRect.top - edgePad;
+
+                let top;
+                if (spaceBelow >= panelH + gap) {
+                    top = triggerRect.bottom + gap;
+                } else if (spaceAbove >= panelH + gap) {
+                    top = triggerRect.top - panelH - gap;
+                } else if (spaceBelow >= spaceAbove) {
+                    top = Math.max(edgePad, Math.min(triggerRect.bottom + gap, vh - panelH - edgePad));
+                } else {
+                    top = Math.max(edgePad, triggerRect.top - panelH - gap);
+                }
+
+                let left;
+                if (vw < 640) {
+                    left = Math.max(edgePad, Math.round((vw - panelW) / 2));
+                } else {
+                    left = triggerRect.left;
+                    if (left + panelW > vw - edgePad) {
+                        left = Math.max(edgePad, vw - panelW - edgePad);
+                    }
+                    if (left < edgePad) {
+                        left = edgePad;
+                    }
+                }
+
+                const rTop = Math.round(top);
+                const rLeft = Math.round(left);
+                const posKey = `${rTop},${rLeft}`;
+
+                if (
+                    panel.dataset.pktDpPos !== posKey ||
+                    panel.style.top !== `${rTop}px` ||
+                    panel.style.left !== `${rLeft}px`
+                ) {
+                    panel.style.setProperty('top', `${rTop}px`, 'important');
+                    panel.style.setProperty('left', `${rLeft}px`, 'important');
+                    panel.dataset.pktDpPos = posKey;
+                }
+
+                activeFixedDatePickers.add(panel);
+            } finally {
+                isRepositioningDatePickers = false;
+            }
+        }
+
+        function syncAllDatePickerPanels() {
+            if (isRepositioningDatePickers) return;
+            const panels = document.querySelectorAll('.fi-fo-date-time-picker-panel');
+            panels.forEach((panel) => {
+                const isVisible = panel.style.display !== 'none' && !panel.hasAttribute('x-cloak') && window.getComputedStyle(panel).display !== 'none';
+                if (isVisible) {
+                    positionDatePickerPanel(panel);
+                } else {
+                    resetDatePickerPanel(panel);
+                }
+            });
+        }
+
+        if (!window.__pktDatePickerWatcherInit) {
+            window.__pktDatePickerWatcherInit = true;
+
+            const datePickerObserver = new MutationObserver((mutations) => {
+                if (isRepositioningDatePickers) return;
+                const mutatedPanels = new Set();
+                for (const m of mutations) {
+                    if (m.target instanceof Element && m.target.classList.contains('fi-fo-date-time-picker-panel')) {
+                        mutatedPanels.add(m.target);
+                    }
+                }
+                if (mutatedPanels.size > 0) {
+                    mutatedPanels.forEach((panel) => positionDatePickerPanel(panel));
+                    requestAnimationFrame(syncAllDatePickerPanels);
+                }
+            });
+
+            if (document.body) {
+                datePickerObserver.observe(document.body, {
+                    subtree: true,
+                    attributes: true,
+                    attributeFilter: ['style', 'class', 'x-cloak'],
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (e.target instanceof Element && e.target.closest('.fi-fo-date-time-picker-trigger')) {
+                    requestAnimationFrame(() => {
+                        syncAllDatePickerPanels();
+                        setTimeout(syncAllDatePickerPanels, 50);
+                    });
+                }
+            }, true);
+
+            document.addEventListener('livewire:navigated', () => {
+                Array.from(activeFixedDatePickers).forEach((panel) => resetDatePickerPanel(panel));
+                activeFixedDatePickers.clear();
+            });
+
+            const repositionActiveDatePickers = () => {
+                if (activeFixedDatePickers.size === 0 || isRepositioningDatePickers) return;
+                activeFixedDatePickers.forEach((panel) => positionDatePickerPanel(panel));
+            };
+
+            window.addEventListener('scroll', repositionActiveDatePickers, { passive: true, capture: true });
+            window.addEventListener('resize', repositionActiveDatePickers, { passive: true });
+        }
+
+        // =========================================================
         // 5. Framer-Motion-Style Interactive Navigation Physics
         //    - Shared-layout sliding hover pill (layoutId) on Topbar
         //    - Magnetic spring pull on Left Icon Rail
