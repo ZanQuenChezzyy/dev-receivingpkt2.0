@@ -21,6 +21,7 @@ beforeEach(function (): void {
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('avatar_url')->nullable();
+            $table->string('cover_photo_url')->nullable();
             $table->json('left_rail_shortcuts')->nullable();
             $table->string('developer_badge_style', 30)->nullable()->default('electric');
             $table->boolean('is_active')->default(true);
@@ -119,6 +120,7 @@ test('Developer and AVP Receiving can choose and save animated badge style from 
 
     Livewire::test(EditProfile::class)
         ->assertSee('Gaya Badge')
+        ->assertSee('Foto Sampul (Cover Photo)')
         ->assertSee('Sparkling Lightning')
         ->assertSee('Blazing Ember')
         ->assertSee('Solar Aurora')

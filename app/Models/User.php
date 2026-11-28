@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'avatar_url', 'npk', 'is_active', 'left_rail_shortcuts', 'developer_badge_style'])]
+#[Fillable(['name', 'email', 'password', 'avatar_url', 'cover_photo_url', 'npk', 'is_active', 'left_rail_shortcuts', 'developer_badge_style'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasAvatar
 {
@@ -126,6 +126,11 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public function getFilamentAvatarUrl(): ?string
     {
         return $this->avatar_url ? Storage::url($this->avatar_url) : null;
+    }
+
+    public function getCoverPhotoUrl(): ?string
+    {
+        return $this->cover_photo_url ? Storage::url($this->cover_photo_url) : null;
     }
 
     public function isOnline(int $minutes = 5): bool

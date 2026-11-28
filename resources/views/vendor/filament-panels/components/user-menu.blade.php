@@ -192,34 +192,53 @@
     </x-slot>
 
     @if ($position === UserMenuPosition::Topbar && $user)
-        <div class="px-3.5 py-3 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center gap-3 min-w-[230px]">
+        @php
+            $userCoverUrl = method_exists($user, 'getCoverPhotoUrl') ? $user->getCoverPhotoUrl() : null;
+        @endphp
+        <div class="border-b border-black/[0.06] dark:border-white/[0.08] min-w-[240px] overflow-hidden rounded-t-xl">
+            @if ($userCoverUrl)
+                <div class="relative h-14 w-full overflow-hidden bg-slate-900">
+                    <img src="{{ $userCoverUrl }}" alt="Cover" class="w-full h-full object-cover" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent"></div>
+                </div>
+            @endif
             <div @class([
-                'relative shrink-0 inline-flex items-center justify-center',
-                "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$developerBadgeStyle}" => $hasAnimatedDevRing,
+                'px-3.5 pb-3 flex items-center gap-3',
+                'pt-3' => ! $userCoverUrl,
+                '-mt-5 relative z-10' => (bool) $userCoverUrl,
             ])>
-                <img
-                    src="{{ $avatarUrl }}"
-                    alt="{{ e($user->name) }}"
-                    class="w-10 h-10 rounded-full object-cover relative z-10"
-                />
-            </div>
-            <div class="flex flex-col min-w-0 flex-1 gap-0.5">
-                <span class="text-xs font-bold text-slate-900 dark:text-white truncate">
-                    {{ $user->name }}
-                </span>
-                @if (filled($user->npk))
-                    <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
-                        NPK {{ $user->npk }}
+                <div @class([
+                    'relative shrink-0 inline-flex items-center justify-center',
+                    "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$developerBadgeStyle}" => $hasAnimatedDevRing,
+                    'ring-2 ring-white dark:ring-[#151B24] rounded-full' => ! $hasAnimatedDevRing && $userCoverUrl,
+                ])>
+                    <img
+                        src="{{ $avatarUrl }}"
+                        alt="{{ e($user->name) }}"
+                        class="w-10 h-10 rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]"
+                    />
+                </div>
+                <div @class([
+                    'flex flex-col min-w-0 flex-1 gap-0.5',
+                    'pt-5' => (bool) $userCoverUrl,
+                ])>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {{ $user->name }}
                     </span>
-                @endif
-                <div class="mt-0.5">
-                    @if ($hasCustomAnimatedRole)
-                        {!! \App\Support\DeveloperBadgeRenderer::render($developerBadgeStyle, $animatedRoleLabel, 'sm') !!}
-                    @else
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD]">
-                            {{ $roleName }}
+                    @if (filled($user->npk))
+                        <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                            NPK {{ $user->npk }}
                         </span>
                     @endif
+                    <div class="mt-0.5">
+                        @if ($hasCustomAnimatedRole)
+                            {!! \App\Support\DeveloperBadgeRenderer::render($developerBadgeStyle, $animatedRoleLabel, 'sm') !!}
+                        @else
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD]">
+                                {{ $roleName }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
