@@ -64,7 +64,7 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login(Login::class)
-            ->profile(EditProfile::class)
+            ->profile(EditProfile::class, isSimple: false)
             ->brandLogo('/images/logo/receiving_dark.png')
             ->darkModeBrandLogo('/images/logo/receiving_white.png')
             ->brandLogoHeight('2.25rem')
