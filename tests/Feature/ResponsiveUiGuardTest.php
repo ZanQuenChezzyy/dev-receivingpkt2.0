@@ -33,7 +33,9 @@ it('keeps Filament admin theme protected against table dropdown clipping and ver
     $effectsBlade = (string) file_get_contents(resource_path('views/filament/components/framer-motion-effects.blade.php'));
     expect($effectsBlade)
         ->toContain('fi-datepicker-viewport-fixed')
-        ->toContain('syncAllDatePickerPanels');
+        ->toContain('syncAllDatePickerPanels')
+        ->toContain("panel.setAttribute('popover', 'manual')")
+        ->toContain('panel.showPopover()');
 });
 
 it('renders corporate email HTML with dark-mode contrast lock and mobile responsive header stacking', function (): void {

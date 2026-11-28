@@ -2452,6 +2452,8 @@ footer.fi-footer {
 .fi-fo-date-time-picker-display-text-input {
     cursor: pointer !important;
     caret-color: transparent !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 .fi-fo-date-time-picker-panel {
@@ -2475,10 +2477,35 @@ footer.fi-footer {
         0 0 0 1px rgba(255, 255, 255, 0.05) !important;
 }
 
-.fi-fo-date-time-picker-panel.fi-datepicker-viewport-fixed {
+.fi-fo-date-time-picker-panel.fi-datepicker-viewport-fixed,
+.fi-fo-date-time-picker-panel[popover],
+.fi-fo-date-time-picker-panel:popover-open {
     position: fixed !important;
+    inset: auto !important;
     z-index: 100050 !important;
     margin: 0 !important;
+    overflow: visible !important;
+}
+
+/* Stacking-context fallback lift when Popover Top-Layer is unavailable */
+.fi-modal-content:has(.fi-datepicker-viewport-fixed),
+.fi-modal-content:has(.fi-fo-date-time-picker-panel:not([style*="display: none"]):not([x-cloak])) {
+    position: relative !important;
+    z-index: 100040 !important;
+}
+
+.fi-sc-component:has(.fi-datepicker-viewport-fixed),
+.fi-grid:has(.fi-datepicker-viewport-fixed),
+.fi-grid-col:has(.fi-datepicker-viewport-fixed),
+.fi-fo-field:has(.fi-datepicker-viewport-fixed),
+.fi-input-wrp:has(.fi-datepicker-viewport-fixed),
+.fi-sc-component:has(.fi-fo-date-time-picker-panel:not([style*="display: none"]):not([x-cloak])),
+.fi-grid:has(.fi-fo-date-time-picker-panel:not([style*="display: none"]):not([x-cloak])),
+.fi-grid-col:has(.fi-fo-date-time-picker-panel:not([style*="display: none"]):not([x-cloak])),
+.fi-fo-field:has(.fi-fo-date-time-picker-panel:not([style*="display: none"]):not([x-cloak])),
+.fi-input-wrp:has(.fi-fo-date-time-picker-panel:not([style*="display: none"]):not([x-cloak])) {
+    position: relative !important;
+    z-index: 100045 !important;
 }
 
 .fi-fo-date-time-picker-panel .fi-fo-date-time-picker-panel-header {

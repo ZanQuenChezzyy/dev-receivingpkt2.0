@@ -330,23 +330,42 @@
         }
 
         // =========================================================
-        // 4B. Anti-Clipping Viewport-Fixed Positioning for DatePicker Panels
-        //     Prevents .fi-fo-date-time-picker-panel inside modals or
-        //     scrollable containers from being sliced off by overflow
+        // 4B. Anti-Clipping Top-Layer & Viewport-Fixed Positioning for DatePicker Panels
+        //     Promotes open .fi-fo-date-time-picker-panel into the browser Top Layer
+        //     (popover="manual") so sibling fields, textareas, modal footers, and
+        //     overflow containers can never clip or cover the calendar picker.
         // =========================================================
         const activeFixedDatePickers = new Set();
         let isRepositioningDatePickers = false;
 
+        function hideDatePickerPopover(panel) {
+            if (!panel) return;
+            try {
+                if (typeof panel.hidePopover === 'function' && panel.matches(':popover-open')) {
+                    panel.hidePopover();
+                }
+            } catch (_) {
+                // Ignore if element is detached or Popover API is unsupported
+            }
+            if (panel.hasAttribute('popover')) {
+                panel.removeAttribute('popover');
+            }
+        }
+
         function resetDatePickerPanel(panel) {
             if (!panel) return;
-            if (!panel.classList.contains('fi-datepicker-viewport-fixed') && !panel.dataset.pktDpPos) {
+            const hasPopover = panel.hasAttribute('popover');
+            if (!panel.classList.contains('fi-datepicker-viewport-fixed') && !panel.dataset.pktDpPos && !hasPopover) {
                 activeFixedDatePickers.delete(panel);
                 return;
             }
             isRepositioningDatePickers = true;
             try {
+                hideDatePickerPopover(panel);
                 panel.classList.remove('fi-datepicker-viewport-fixed');
                 panel.style.removeProperty('position');
+                panel.style.removeProperty('inset');
+                panel.style.removeProperty('margin');
                 panel.style.removeProperty('top');
                 panel.style.removeProperty('left');
                 panel.style.removeProperty('right');
@@ -361,6 +380,7 @@
 
         function positionDatePickerPanel(panel) {
             if (!panel || !panel.isConnected) {
+                hideDatePickerPopover(panel);
                 activeFixedDatePickers.delete(panel);
                 return;
             }
@@ -381,7 +401,13 @@
             const edgePad = 12;
             const gap = 8;
 
-            if (triggerRect.bottom < 0 || triggerRect.top > vh || triggerRect.right < 0 || triggerRect.left > vw) {
+            if (
+                (triggerRect.width === 0 && triggerRect.height === 0) ||
+                triggerRect.bottom < 0 ||
+                triggerRect.top > vh ||
+                triggerRect.right < 0 ||
+                triggerRect.left > vw
+            ) {
                 resetDatePickerPanel(panel);
                 return;
             }
@@ -391,7 +417,23 @@
                 if (!panel.classList.contains('fi-datepicker-viewport-fixed')) {
                     panel.classList.add('fi-datepicker-viewport-fixed');
                 }
+
+                if (typeof panel.showPopover === 'function') {
+                    if (panel.getAttribute('popover') !== 'manual') {
+                        panel.setAttribute('popover', 'manual');
+                    }
+                    try {
+                        if (!panel.matches(':popover-open')) {
+                            panel.showPopover();
+                        }
+                    } catch (_) {
+                        // Fallback to fixed z-index + ancestor stacking lift
+                    }
+                }
+
                 panel.style.setProperty('position', 'fixed', 'important');
+                panel.style.setProperty('inset', 'auto', 'important');
+                panel.style.setProperty('margin', '0', 'important');
                 panel.style.setProperty('right', 'auto', 'important');
                 panel.style.setProperty('bottom', 'auto', 'important');
                 panel.style.setProperty('transform', 'none', 'important');
@@ -447,6 +489,11 @@
             }
         }
 
+        function resetAllDatePickerPanels() {
+            Array.from(activeFixedDatePickers).forEach((panel) => resetDatePickerPanel(panel));
+            activeFixedDatePickers.clear();
+        }
+
         function syncAllDatePickerPanels() {
             if (isRepositioningDatePickers) return;
             const panels = document.querySelectorAll('.fi-fo-date-time-picker-panel');
@@ -494,10 +541,10 @@
                 }
             }, true);
 
-            document.addEventListener('livewire:navigated', () => {
-                Array.from(activeFixedDatePickers).forEach((panel) => resetDatePickerPanel(panel));
-                activeFixedDatePickers.clear();
-            });
+            window.addEventListener('close-modal', resetAllDatePickerPanels);
+            window.addEventListener('close-modal-quietly', resetAllDatePickerPanels);
+
+            document.addEventListener('livewire:navigated', resetAllDatePickerPanels);
 
             const repositionActiveDatePickers = () => {
                 if (activeFixedDatePickers.size === 0 || isRepositioningDatePickers) return;
