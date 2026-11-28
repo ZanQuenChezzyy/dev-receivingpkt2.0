@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\BadgeMilestoneService;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 // use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,6 +32,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class MonitoringNpk extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::created(function (MonitoringNpk $monitoringNpk): void {
+            app(BadgeMilestoneService::class)->syncMilestonesForUsers([$monitoringNpk->created_by]);
+        });
+    }
 
     /**
      * Get the attributes that should be cast.

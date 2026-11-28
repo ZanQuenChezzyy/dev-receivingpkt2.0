@@ -191,8 +191,8 @@ test('Regular staff user can customize Classic Clean badge while exclusive anima
         ->assertSee('Blazing Ember')
         ->assertSee('Solar Aurora')
         ->assertSee('Terkunci')
-        ->assertSee('Misi kelipatan 5.000 DO & GRS/RDTV (1 badge per 5.000) atau hak eksklusif Developer')
-        ->assertSee('Misi 50.000 DO & GRS/RDTV atau hak eksklusif Developer')
+        ->assertSee('Misi 1.000 lalu kelipatan 5.000 DO, GRS/RDTV & Gudang (1 badge/tahap) atau hak eksklusif Developer')
+        ->assertSee('Misi 50.000 DO, GRS/RDTV & Gudang atau hak eksklusif Developer')
         ->fillForm([
             'name' => 'Staff Biasa',
             'npk' => '2100103',
@@ -321,7 +321,7 @@ test('Developer can grant and revoke exclusive animated badge access for any use
         ->and(UserBadgeRenderer::render($staff))->not->toContain('pkt-user-pill--');
 });
 
-test('regular user unlocks 1 exclusive badge per 5000 mission milestone up to 30000 and 3 mythic badges at 50000', function (): void {
+test('regular user unlocks first exclusive badge at 1000, then 1 per 5000 up to 25000, and 3 mythic badges at 50000', function (): void {
     $andre = User::query()->create([
         'name' => 'Andre Receiving',
         'npk' => '2100401',
@@ -334,50 +334,51 @@ test('regular user unlocks 1 exclusive badge per 5000 mission milestone up to 30
 
     $service = app(BadgeMilestoneService::class);
 
-    // 1. Di bawah 5.000: belum ada hadiah dan klaim ditolak
-    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 4999))->toBe([])
-        ->and($service->claimGiftBadge($andre, User::DEVELOPER_BADGE_ELECTRIC, doCountOverride: 4999))->toBeFalse()
+    // 1. Di bawah 1.000: belum ada hadiah dan klaim ditolak
+    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 999))->toBe([])
+        ->and($service->claimGiftBadge($andre, User::DEVELOPER_BADGE_ELECTRIC, doCountOverride: 999))->toBeFalse()
         ->and(DB::table('notifications')->where('notifiable_id', $andre->id)->count())->toBe(0);
 
-    // 2. Mencapai 5.000: dapat 1 notifikasi hadiah (tidak duplikat) & tepat 1 slot pilihan dari 6 badge Eksklusif
-    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 5000))->toBe(['5000'])
-        ->and($service->syncMilestonesAndNotify($andre->fresh(), doCountOverride: 5000))->toBe([])
+    // 2. Mencapai 1.000: dapat 1 notifikasi hadiah (tidak duplikat) & tepat 1 slot pilihan pertama dari 6 badge Eksklusif
+    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 1000))->toBe(['1000'])
+        ->and($service->syncMilestonesAndNotify($andre->fresh(), doCountOverride: 1000))->toBe([])
         ->and(DB::table('notifications')->where('notifiable_id', $andre->id)->count())->toBe(1);
 
-    $progress5k = $service->getProgress($andre->fresh(), doCountOverride: 5000);
-    expect($progress5k['earned_standard_slots'])->toBe(1)
-        ->and($progress5k['pending_choice_slots'])->toBe(1)
-        ->and($progress5k['claimable_choice_badges'])->toBe(array_keys(User::standardExclusiveBadgeOptions()))
-        ->and($progress5k['claimable_mythic_badges'])->toBe([])
-        ->and($progress5k['can_claim_solar_aurora'])->toBeFalse();
+    $progress1k = $service->getProgress($andre->fresh(), doCountOverride: 1000);
+    expect($progress1k['earned_standard_slots'])->toBe(1)
+        ->and($progress1k['pending_choice_slots'])->toBe(1)
+        ->and($progress1k['claimable_choice_badges'])->toBe(array_keys(User::standardExclusiveBadgeOptions()))
+        ->and($progress1k['claimable_mythic_badges'])->toBe([])
+        ->and($progress1k['can_claim_solar_aurora'])->toBeFalse();
 
-    // Andre memilih Royal Obsidian (slot 1/6) -> tidak bisa klaim badge ke-2 pada 5.000 maupun 9.999
-    expect($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_OBSIDIAN_GOLD, doCountOverride: 5000))->toBeTrue();
+    // Andre memilih Royal Obsidian (slot 1/6) -> tidak bisa klaim badge ke-2 pada 1.000 maupun 4.999
+    expect($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_OBSIDIAN_GOLD, doCountOverride: 1000))->toBeTrue();
     $andre->refresh();
 
     expect($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_OBSIDIAN_GOLD))->toBeTrue()
         ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_FLAME))->toBeFalse()
         ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_PKT_COMBO))->toBeFalse()
         ->and($andre->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_OBSIDIAN_GOLD)
-        ->and($service->claimGiftBadge($andre, User::DEVELOPER_BADGE_FLAME, doCountOverride: 5000))->toBeFalse()
-        ->and($service->claimGiftBadge($andre, User::DEVELOPER_BADGE_FLAME, doCountOverride: 9999))->toBeFalse();
+        ->and($service->claimGiftBadge($andre, User::DEVELOPER_BADGE_FLAME, doCountOverride: 1000))->toBeFalse()
+        ->and($service->claimGiftBadge($andre, User::DEVELOPER_BADGE_FLAME, doCountOverride: 4999))->toBeFalse();
 
-    // 3. Mencapai 10.000: membuka tepat 1 slot baru lagi (slot 2/6)
-    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 10000))->toBe(['10000'])
+    // 3. Mencapai 5.000: membuka tepat 1 slot baru lagi (slot 2/6)
+    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 5000))->toBe(['5000'])
         ->and(DB::table('notifications')->where('notifiable_id', $andre->id)->count())->toBe(2);
 
-    $progress10k = $service->getProgress($andre->fresh(), doCountOverride: 10000);
-    expect($progress10k['earned_standard_slots'])->toBe(2)
-        ->and($progress10k['pending_choice_slots'])->toBe(1)
-        ->and($progress10k['claimable_choice_badges'])->toBe([
+    $progress5k = $service->getProgress($andre->fresh(), doCountOverride: 5000);
+    expect($progress5k['earned_standard_slots'])->toBe(2)
+        ->and($progress5k['pending_choice_slots'])->toBe(1)
+        ->and($progress5k['claimable_choice_badges'])->toBe([
             User::DEVELOPER_BADGE_ELECTRIC,
             User::DEVELOPER_BADGE_FLAME,
             User::DEVELOPER_BADGE_ARCTIC_PLATINUM,
             User::DEVELOPER_BADGE_AMETHYST_CROWN,
             User::DEVELOPER_BADGE_ROSE_TITANIUM,
         ])
-        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_ROSE_TITANIUM, doCountOverride: 10000))->toBeTrue()
-        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_FLAME, doCountOverride: 10000))->toBeFalse();
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_ROSE_TITANIUM, doCountOverride: 5000))->toBeTrue()
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_FLAME, doCountOverride: 5000))->toBeFalse()
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_FLAME, doCountOverride: 9999))->toBeFalse();
 
     $andre->refresh();
     expect($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_OBSIDIAN_GOLD))->toBeTrue()
@@ -385,12 +386,12 @@ test('regular user unlocks 1 exclusive badge per 5000 mission milestone up to 30
         ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_FLAME))->toBeFalse()
         ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_PKT_COMBO))->toBeFalse();
 
-    // 4. Mencapai 30.000: membuka seluruh 6 slot badge Eksklusif (4 slot tersisa), tapi Tier Tertinggi tetap terkunci
-    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 30000))->toBe(['15000', '20000', '25000', '30000']);
-    $progress30k = $service->getProgress($andre->fresh(), doCountOverride: 30000);
-    expect($progress30k['earned_standard_slots'])->toBe(6)
-        ->and($progress30k['pending_choice_slots'])->toBe(4)
-        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_PKT_COMBO, doCountOverride: 30000))->toBeFalse();
+    // 4. Mencapai 25.000: membuka seluruh 6 slot badge Eksklusif (4 slot tersisa di 10k, 15k, 20k, 25k), Tier Tertinggi tetap terkunci
+    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 25000))->toBe(['10000', '15000', '20000', '25000']);
+    $progress25k = $service->getProgress($andre->fresh(), doCountOverride: 25000);
+    expect($progress25k['earned_standard_slots'])->toBe(6)
+        ->and($progress25k['pending_choice_slots'])->toBe(4)
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_PKT_COMBO, doCountOverride: 25000))->toBeFalse();
 
     // 5. Mencapai 50.000: membuka tepat 3 badge Tier Tertinggi (Solar Aurora, Emerald Sovereign, Crimson Eclipse)
     expect($service->syncMilestonesAndNotify($andre->fresh(), doCountOverride: 50000))->toBe(['50000']);
@@ -464,7 +465,7 @@ test('EditUser page renders full profile editor with hero preview, cover photo, 
     Livewire::test(EditUser::class, ['record' => $target->getRouteKey()])
         ->assertSee('Tampilan di Tabel Sistem')
         ->assertSee('Foto Sampul (Cover Photo / GIF)')
-        ->assertSee('Misi Sekretaris — Penerimaan DO & Pengiriman Gudang')
+        ->assertSee('Misi Sekretaris — Penerimaan DO, GRS/RDTV & Pengiriman Gudang')
         ->assertSee('Gaya Badge')
         ->fillForm([
             'name' => 'Target Sekretaris Baru',
@@ -509,11 +510,15 @@ test('BadgeMilestoneService resolves role-specific mission tracks accurately', f
         ->and($service->resolveMissionProfile($operator)['unit_label'])->toBe('Penerimaan DO')
         ->and($service->resolveMissionProfile($adminChem)['track'])->toBe(BadgeMilestoneService::TRACK_ADMIN_DO_GRS)
         ->and($service->resolveMissionProfile($adminChem)['unit_label'])->toBe('DO & GRS/RDTV')
-        ->and($service->resolveMissionProfile($adminSpare)['track'])->toBe(BadgeMilestoneService::TRACK_ADMIN_DO_GRS)
-        ->and($service->resolveMissionProfile($adminBb)['track'])->toBe(BadgeMilestoneService::TRACK_ADMIN_DO_GRS)
+        ->and($service->resolveMissionProfile($adminBb)['track'])->toBe(BadgeMilestoneService::TRACK_ADMIN_BAHAN_BAKU)
+        ->and($service->resolveMissionProfile($adminBb)['unit_label'])->toBe('DO, GRS/RDTV & NPK')
+        ->and($service->calculateMissionCount($adminBb, BadgeMilestoneService::TRACK_ADMIN_BAHAN_BAKU)['breakdown_text'])->toBe('0 DO • 0 GRS/RDTV • 0 Monitoring NPK')
+        ->and($service->resolveMissionProfile($adminSpare)['track'])->toBe(BadgeMilestoneService::TRACK_ADMIN_SPAREPART_WAREHOUSE)
+        ->and($service->resolveMissionProfile($adminSpare)['unit_label'])->toBe('DO, GRS/RDTV & Gudang')
+        ->and($service->calculateMissionCount($adminSpare, BadgeMilestoneService::TRACK_ADMIN_SPAREPART_WAREHOUSE)['breakdown_text'])->toBe('0 DO • 0 GRS/RDTV • 0 Pengiriman Gudang')
+        ->and($service->resolveMissionProfile($sekretaris)['track'])->toBe(BadgeMilestoneService::TRACK_ADMIN_SPAREPART_WAREHOUSE)
+        ->and($service->resolveMissionProfile($sekretaris)['unit_label'])->toBe('DO, GRS/RDTV & Gudang')
+        ->and($service->calculateMissionCount($sekretaris, BadgeMilestoneService::TRACK_ADMIN_SPAREPART_WAREHOUSE)['breakdown_text'])->toBe('0 DO • 0 GRS/RDTV • 0 Pengiriman Gudang')
         ->and($service->resolveMissionProfile($staffInv)['track'])->toBe(BadgeMilestoneService::TRACK_STAFF_INVOICE)
-        ->and($service->resolveMissionProfile($staffInv)['unit_label'])->toBe('Invoice Ditangani')
-        ->and($service->resolveMissionProfile($sekretaris)['track'])->toBe(BadgeMilestoneService::TRACK_SEKRETARIS_DO_WAREHOUSE)
-        ->and($service->resolveMissionProfile($sekretaris)['unit_label'])->toBe('DO & Pengiriman Gudang')
-        ->and($service->calculateMissionCount($sekretaris, BadgeMilestoneService::TRACK_SEKRETARIS_DO_WAREHOUSE)['breakdown_text'])->toBe('0 DO • 0 Pengiriman Gudang');
+        ->and($service->resolveMissionProfile($staffInv)['unit_label'])->toBe('Invoice Ditangani');
 });

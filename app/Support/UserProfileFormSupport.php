@@ -168,7 +168,7 @@ class UserProfileFormSupport
 
             $slotRemaining = $progress['pending_choice_slots'];
             $giftSubtitle = $slotRemaining > 0 && $progress['claimable_mythic_badges'] === []
-                ? "Anda memiliki {$slotRemaining} slot hadiah badge Eksklusif dari misi kelipatan 5.000 {$progress['unit_label']}. Pilih badge yang ingin dibuka:"
+                ? "Anda memiliki {$slotRemaining} slot hadiah badge Eksklusif (misi 1.000 lalu kelipatan 5.000 {$progress['unit_label']}). Pilih badge yang ingin dibuka:"
                 : "Target misi {$progress['unit_label']} telah tercapai. Klik tombol di bawah untuk mengklaim hadiah badge Anda:";
 
             $giftBanner = '<div class="mb-4 rounded-2xl p-4 bg-gradient-to-r from-[#F47920]/12 via-amber-500/8 to-[#0054A6]/10 border border-[#F47920]/35 dark:border-[#F47920]/40">'
@@ -285,7 +285,7 @@ class UserProfileFormSupport
         $unitLabel = $user
             ? app(BadgeMilestoneService::class)->resolveMissionProfile($user)['unit_label']
             : 'Penerimaan DO';
-        $exclusiveHint = "Misi kelipatan 5.000 {$unitLabel} (1 badge per 5.000) atau hak eksklusif Developer";
+        $exclusiveHint = "Misi 1.000 lalu kelipatan 5.000 {$unitLabel} (1 badge/tahap) atau hak eksklusif Developer";
         $mythicHint = "Misi 50.000 {$unitLabel} atau hak eksklusif Developer";
 
         $exclusiveDefinitions = [

@@ -6,6 +6,7 @@ use App\Filament\Pages\EditProfile;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\GrsRdtv;
 use App\Models\InvoicingReceipt;
+use App\Models\MonitoringNpk;
 use App\Models\User;
 use App\Models\WarehouseDeliveryBatch;
 use App\Models\WarehouseTransmittal;
@@ -17,9 +18,9 @@ class BadgeMilestoneService
 {
     public const MILESTONE_EXCLUSIVE_STEP = 5000;
 
-    public const MILESTONE_TIER_1 = 5000;
+    public const MILESTONE_TIER_1 = 1000;
 
-    public const MILESTONE_TIER_2 = 30000;
+    public const MILESTONE_TIER_2 = 25000;
 
     public const MILESTONE_TIER_3 = 50000;
 
@@ -27,9 +28,34 @@ class BadgeMilestoneService
 
     public const TRACK_ADMIN_DO_GRS = 'admin_do_grs';
 
+    public const TRACK_ADMIN_BAHAN_BAKU = 'admin_bahan_baku';
+
+    public const TRACK_ADMIN_SPAREPART_WAREHOUSE = 'admin_sparepart_warehouse';
+
+    public const TRACK_SEKRETARIS_DO_WAREHOUSE = self::TRACK_ADMIN_SPAREPART_WAREHOUSE;
+
     public const TRACK_STAFF_INVOICE = 'staff_invoice';
 
-    public const TRACK_SEKRETARIS_DO_WAREHOUSE = 'sekretaris_do_warehouse';
+    /**
+     * Daftar role dengan misi Penerimaan DO + GRS/RDTV + Monitoring NPK.
+     *
+     * @var list<string>
+     */
+    public const ADMIN_BAHAN_BAKU_ROLES = [
+        'Admin Bahan Baku',
+        'Staff Bahan Baku',
+    ];
+
+    /**
+     * Daftar role dengan misi Penerimaan DO + GRS/RDTV + Pengiriman Gudang.
+     *
+     * @var list<string>
+     */
+    public const ADMIN_SPAREPART_WAREHOUSE_ROLES = [
+        'Admin Sparepart',
+        'Staff Sparepart',
+        'Sekretaris',
+    ];
 
     /**
      * Daftar role dengan misi Penerimaan DO + Penerbitan GRS/RDTV.
@@ -38,11 +64,7 @@ class BadgeMilestoneService
      */
     public const ADMIN_DO_GRS_ROLES = [
         'Admin Chemical',
-        'Admin Sparepart',
-        'Admin Bahan Baku',
         'Staff Chemical',
-        'Staff Sparepart',
-        'Staff Bahan Baku',
     ];
 
     /**
@@ -71,7 +93,39 @@ class BadgeMilestoneService
             $lowerMap[strtolower($roleName)] = $roleName;
         }
 
-        // 1. Admin Chemical / Admin Sparepart / Admin Bahan Baku (DO + GRS/RDTV)
+        // 1. Admin Bahan Baku / Staff Bahan Baku (DO + GRS/RDTV + Monitoring NPK)
+        foreach (self::ADMIN_BAHAN_BAKU_ROLES as $candidate) {
+            $key = strtolower($candidate);
+            if (array_key_exists($key, $lowerMap)) {
+                $displayRole = $lowerMap[$key];
+
+                return [
+                    'track' => self::TRACK_ADMIN_BAHAN_BAKU,
+                    'role_label' => $displayRole,
+                    'mission_title' => "Misi {$displayRole} — Penerimaan DO, GRS/RDTV & Monitoring NPK",
+                    'mission_description' => 'Selesaikan penerimaan DO, penerbitan GRS/RDTV, dan pencatatan Monitoring NPK sebanyak-banyaknya untuk membuka hadiah badge eksklusif dan tier tertinggi.',
+                    'unit_label' => 'DO, GRS/RDTV & NPK',
+                ];
+            }
+        }
+
+        // 2. Admin Sparepart / Staff Sparepart / Sekretaris (DO + GRS/RDTV + Pengiriman Gudang)
+        foreach (self::ADMIN_SPAREPART_WAREHOUSE_ROLES as $candidate) {
+            $key = strtolower($candidate);
+            if (array_key_exists($key, $lowerMap)) {
+                $displayRole = $lowerMap[$key];
+
+                return [
+                    'track' => self::TRACK_ADMIN_SPAREPART_WAREHOUSE,
+                    'role_label' => $displayRole,
+                    'mission_title' => "Misi {$displayRole} — Penerimaan DO, GRS/RDTV & Pengiriman Gudang",
+                    'mission_description' => 'Selesaikan penerimaan DO, penerbitan GRS/RDTV, dan pengiriman gudang sebanyak-banyaknya untuk membuka hadiah badge eksklusif dan tier tertinggi.',
+                    'unit_label' => 'DO, GRS/RDTV & Gudang',
+                ];
+            }
+        }
+
+        // 3. Admin Chemical / Staff Chemical (DO + GRS/RDTV)
         foreach (self::ADMIN_DO_GRS_ROLES as $candidate) {
             $key = strtolower($candidate);
             if (array_key_exists($key, $lowerMap)) {
@@ -87,7 +141,7 @@ class BadgeMilestoneService
             }
         }
 
-        // 2. Staff Invoice (Penanganan Invoice)
+        // 4. Staff Invoice (Penanganan Invoice)
         if (array_key_exists('staff invoice', $lowerMap)) {
             return [
                 'track' => self::TRACK_STAFF_INVOICE,
@@ -98,20 +152,7 @@ class BadgeMilestoneService
             ];
         }
 
-        // 3. Sekretaris (Penerimaan DO + Pengiriman Gudang)
-        if (array_key_exists('sekretaris', $lowerMap)) {
-            $displayRole = $lowerMap['sekretaris'];
-
-            return [
-                'track' => self::TRACK_SEKRETARIS_DO_WAREHOUSE,
-                'role_label' => $displayRole,
-                'mission_title' => "Misi {$displayRole} — Penerimaan DO & Pengiriman Gudang",
-                'mission_description' => 'Selesaikan penerimaan DO dan pengiriman gudang sebanyak-banyaknya untuk membuka hadiah badge eksklusif dan tier tertinggi.',
-                'unit_label' => 'DO & Pengiriman Gudang',
-            ];
-        }
-
-        // 4. Operator & Role Umum Lainnya (Penerimaan DO)
+        // 5. Operator & Role Umum Lainnya (Penerimaan DO)
         $displayRole = $lowerMap['operator'] ?? ($roleNames[0] ?? 'Operator');
 
         return [
@@ -220,9 +261,30 @@ class BadgeMilestoneService
     }
 
     /**
+     * Menghitung total catatan Monitoring NPK yang dibuat oleh seorang pengguna.
+     */
+    public function countUserMonitoringNpks(User $user): int
+    {
+        $userId = (int) $user->getKey();
+        if ($userId <= 0) {
+            return 0;
+        }
+
+        try {
+            if (! Schema::hasTable('monitoring_npks')) {
+                return 0;
+            }
+
+            return MonitoringNpk::query()->where('created_by', $userId)->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
      * Menghitung skor misi sesuai track role pengguna beserta rincian sumbernya.
      *
-     * @return array{total: int, do_count: int, grs_count: int, invoice_count: int, warehouse_count: int, breakdown_text: ?string}
+     * @return array{total: int, do_count: int, grs_count: int, invoice_count: int, warehouse_count: int, npk_count: int, breakdown_text: ?string}
      */
     public function calculateMissionCount(User $user, string $track): array
     {
@@ -235,11 +297,46 @@ class BadgeMilestoneService
                 'grs_count' => 0,
                 'invoice_count' => $invoiceCount,
                 'warehouse_count' => 0,
+                'npk_count' => 0,
                 'breakdown_text' => null,
             ];
         }
 
         $doCount = $this->countUserDeliveryOrderReceipts($user);
+
+        if ($track === self::TRACK_ADMIN_BAHAN_BAKU) {
+            $grsCount = $this->countUserGrsRdtvs($user);
+            $npkCount = $this->countUserMonitoringNpks($user);
+
+            return [
+                'total' => $doCount + $grsCount + $npkCount,
+                'do_count' => $doCount,
+                'grs_count' => $grsCount,
+                'invoice_count' => 0,
+                'warehouse_count' => 0,
+                'npk_count' => $npkCount,
+                'breakdown_text' => number_format($doCount, 0, ',', '.').' DO • '
+                    .number_format($grsCount, 0, ',', '.').' GRS/RDTV • '
+                    .number_format($npkCount, 0, ',', '.').' Monitoring NPK',
+            ];
+        }
+
+        if ($track === self::TRACK_ADMIN_SPAREPART_WAREHOUSE) {
+            $grsCount = $this->countUserGrsRdtvs($user);
+            $warehouseCount = $this->countUserWarehouseDeliveries($user);
+
+            return [
+                'total' => $doCount + $grsCount + $warehouseCount,
+                'do_count' => $doCount,
+                'grs_count' => $grsCount,
+                'invoice_count' => 0,
+                'warehouse_count' => $warehouseCount,
+                'npk_count' => 0,
+                'breakdown_text' => number_format($doCount, 0, ',', '.').' DO • '
+                    .number_format($grsCount, 0, ',', '.').' GRS/RDTV • '
+                    .number_format($warehouseCount, 0, ',', '.').' Pengiriman Gudang',
+            ];
+        }
 
         if ($track === self::TRACK_ADMIN_DO_GRS) {
             $grsCount = $this->countUserGrsRdtvs($user);
@@ -250,20 +347,8 @@ class BadgeMilestoneService
                 'grs_count' => $grsCount,
                 'invoice_count' => 0,
                 'warehouse_count' => 0,
+                'npk_count' => 0,
                 'breakdown_text' => number_format($doCount, 0, ',', '.').' DO • '.number_format($grsCount, 0, ',', '.').' GRS/RDTV',
-            ];
-        }
-
-        if ($track === self::TRACK_SEKRETARIS_DO_WAREHOUSE) {
-            $warehouseCount = $this->countUserWarehouseDeliveries($user);
-
-            return [
-                'total' => $doCount + $warehouseCount,
-                'do_count' => $doCount,
-                'grs_count' => 0,
-                'invoice_count' => 0,
-                'warehouse_count' => $warehouseCount,
-                'breakdown_text' => number_format($doCount, 0, ',', '.').' DO • '.number_format($warehouseCount, 0, ',', '.').' Pengiriman Gudang',
             ];
         }
 
@@ -273,21 +358,27 @@ class BadgeMilestoneService
             'grs_count' => 0,
             'invoice_count' => 0,
             'warehouse_count' => 0,
+            'npk_count' => 0,
             'breakdown_text' => null,
         ];
     }
 
     /**
-     * Daftar target milestone kelipatan 5.000 untuk seluruh badge Eksklusif (1 badge setiap 5.000).
+     * Daftar target milestone untuk seluruh 6 badge Eksklusif:
+     * Slot 1 pada 1.000, lalu slot 2..6 pada setiap kelipatan 5.000 (5.000, 10.000, 15.000, 20.000, 25.000).
      *
      * @return list<int>
      */
     public function exclusiveMilestoneTargets(): array
     {
         $count = count(User::standardExclusiveBadgeOptions());
-        $targets = [];
+        if ($count <= 0) {
+            return [];
+        }
 
-        for ($i = 1; $i <= $count; $i++) {
+        $targets = [self::MILESTONE_TIER_1];
+
+        for ($i = 1; $i < $count; $i++) {
             $targets[] = $i * self::MILESTONE_EXCLUSIVE_STEP;
         }
 
@@ -337,6 +428,7 @@ class BadgeMilestoneService
                 'grs_count' => 0,
                 'invoice_count' => 0,
                 'warehouse_count' => 0,
+                'npk_count' => 0,
                 'breakdown_text' => null,
             ]
             : $this->calculateMissionCount($user, $profile['track']);
@@ -346,11 +438,17 @@ class BadgeMilestoneService
         $claimedBadges = $user->claimedExclusiveBadges();
 
         $standardExclusiveKeys = array_keys(User::standardExclusiveBadgeOptions());
+        $exclusiveTargets = $this->exclusiveMilestoneTargets();
         $totalStandardCount = count($standardExclusiveKeys);
         $claimedStandardBadges = array_values(array_intersect($claimedBadges, $standardExclusiveKeys));
 
-        // Setiap kelipatan 5.000 membuka tepat 1 pilihan badge Eksklusif (maksimal 6 badge pada 30.000)
-        $earnedStandardSlots = min($totalStandardCount, intdiv(max(0, $missionCount), self::MILESTONE_EXCLUSIVE_STEP));
+        // Slot 1 terbuka di 1.000, lalu slot 2..6 masing-masing di 5.000, 10.000, 15.000, 20.000, 25.000
+        $earnedStandardSlots = 0;
+        foreach ($exclusiveTargets as $target) {
+            if ($missionCount >= $target) {
+                $earnedStandardSlots++;
+            }
+        }
 
         $pendingChoiceSlots = $hasFullAccess
             ? 0
@@ -370,12 +468,13 @@ class BadgeMilestoneService
 
         $unit = $profile['unit_label'];
         $mythicNames = implode(', ', User::mythicBadgeOptions());
-        $maxExclusiveTarget = $totalStandardCount * self::MILESTONE_EXCLUSIVE_STEP;
+        $maxExclusiveTarget = $exclusiveTargets !== [] ? end($exclusiveTargets) : self::MILESTONE_TIER_2;
 
-        // Kartu 1 menampilkan target kelipatan 5.000 aktif/berikutnya
+        // Kartu 1 menampilkan target slot Eksklusif aktif/berikutnya (1.000 -> 5.000 -> 10.000 -> ... -> 25.000)
         $claimedStandardCount = count($claimedStandardBadges);
+        $nextSlotIndex = min($totalStandardCount - 1, $claimedStandardCount);
         $nextSlotNumber = min($totalStandardCount, $claimedStandardCount + 1);
-        $nextStepTarget = $nextSlotNumber * self::MILESTONE_EXCLUSIVE_STEP;
+        $nextStepTarget = $exclusiveTargets[$nextSlotIndex] ?? self::MILESTONE_TIER_1;
         $nextStepReached = $hasFullAccess || $missionCount >= $nextStepTarget;
         $nextStepCompleted = $hasFullAccess || $claimedStandardCount >= $totalStandardCount;
 
@@ -385,8 +484,8 @@ class BadgeMilestoneService
                 'target' => $nextStepTarget,
                 'title' => 'Misi '.number_format($nextStepTarget, 0, ',', '.').' '.$unit,
                 'reward_label' => $nextStepCompleted
-                    ? "Seluruh {$totalStandardCount} slot badge Eksklusif (1 badge per 5.000 {$unit}) telah diklaim."
-                    : "Hadiah Pilih 1 badge Eksklusif (Slot {$nextSlotNumber} dari {$totalStandardCount} — setiap kelipatan 5.000 {$unit} membuka 1 badge).",
+                    ? "Seluruh {$totalStandardCount} slot badge Eksklusif (1.000 lalu kelipatan 5.000 {$unit}) telah diklaim."
+                    : "Hadiah Pilih 1 badge Eksklusif (Slot {$nextSlotNumber} dari {$totalStandardCount} — pertama di 1.000, lalu setiap kelipatan 5.000 {$unit}).",
                 'reached' => $nextStepReached,
                 'completed' => $nextStepCompleted,
                 'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($missionCount / $nextStepTarget) * 100, 1)),
@@ -395,7 +494,7 @@ class BadgeMilestoneService
                 'key' => (string) $maxExclusiveTarget,
                 'target' => $maxExclusiveTarget,
                 'title' => 'Koleksi '.number_format($maxExclusiveTarget, 0, ',', '.').' '.$unit,
-                'reward_label' => "Membuka seluruh {$totalStandardCount} badge Eksklusif ({$claimedStandardCount}/{$totalStandardCount} terbuka, 1 badge setiap 5.000 {$unit}).",
+                'reward_label' => "Membuka seluruh {$totalStandardCount} badge Eksklusif ({$claimedStandardCount}/{$totalStandardCount} terbuka: 1.000, lalu 5.000–25.000 {$unit}).",
                 'reached' => $hasFullAccess || $missionCount >= $maxExclusiveTarget,
                 'completed' => $hasFullAccess || $claimedStandardCount >= $totalStandardCount,
                 'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($missionCount / $maxExclusiveTarget) * 100, 1)),

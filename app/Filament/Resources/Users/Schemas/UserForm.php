@@ -288,7 +288,7 @@ class UserForm
 
                                         $unit = $record ? app(BadgeMilestoneService::class)->resolveMissionProfile($record)['unit_label'] : 'Penerimaan DO';
 
-                                        return "Pilih tema Classic Clean atau badge yang sudah terbuka melalui misi kelipatan 5.000 {$unit} / 50.000 {$unit}.";
+                                        return "Pilih tema Classic Clean atau badge yang sudah terbuka melalui misi 1.000 / kelipatan 5.000 {$unit} dan 50.000 {$unit}.";
                                     })
                                     ->default(fn (?User $record): string => $record?->resolvedDeveloperBadgeStyle() ?? User::DEVELOPER_BADGE_NONE)
                                     ->live()

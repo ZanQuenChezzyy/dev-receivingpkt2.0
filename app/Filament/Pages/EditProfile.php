@@ -285,7 +285,7 @@ class EditProfile extends BaseEditProfile
 
                                         $unit = $user ? app(BadgeMilestoneService::class)->resolveMissionProfile($user)['unit_label'] : 'Penerimaan DO';
 
-                                        return "Pilih tema warna Classic Clean kapan saja. Setiap kelipatan 5.000 {$unit} membuka 1 dari 6 badge Eksklusif (hingga 30.000), sedangkan 3 badge Tier Tertinggi terbuka di misi 50.000 {$unit} atau melalui hak eksklusif Developer.";
+                                        return "Pilih tema warna Classic Clean kapan saja. Badge Eksklusif pertama terbuka di misi 1.000 {$unit}, lalu 1 badge lagi setiap kelipatan 5.000 {$unit} (hingga 25.000), sedangkan 3 badge Tier Tertinggi terbuka di misi 50.000 {$unit} atau melalui hak eksklusif Developer.";
                                     })
                                     ->default(function (): string {
                                         /** @var ?User $user */
