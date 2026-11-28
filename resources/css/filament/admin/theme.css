@@ -4032,7 +4032,7 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     .pkt-topbar-ctn.pkt-mobile-search-open .pkt-global-search-wrap {
         display: block;
         position: fixed;
-        top: 4rem;
+        top: calc(4rem + env(safe-area-inset-top));
         left: 0;
         right: 0;
         padding: 0.625rem 0.75rem;
@@ -4089,8 +4089,53 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     }
 }
 
-/* Mobile & Tablet Clearance for Floating Bottom Dock (< 1024px) */
+/* Mobile & Tablet Flush Fixed Topbar + Clearance for Floating Bottom Dock (< 1024px) */
 @media (max-width: 1023px) {
+    /* Prevent iOS Safari compositor scroll jitter caused by background-attachment: fixed */
+    body,
+    html.dark body {
+        background-attachment: scroll !important;
+    }
+
+    /* Lock topbar flush to viewport y=0 on iOS/Android so scrolled text never peeks above header */
+    .pkt-topbar-ctn {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        margin-top: 0 !important;
+        overflow: visible !important;
+    }
+
+    /* Overscroll shield above topbar for iOS elastic bounce */
+    .pkt-topbar-ctn::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 100%;
+        height: 4rem;
+        background: rgba(230, 234, 239, 0.96);
+        pointer-events: none;
+    }
+
+    .dark .pkt-topbar-ctn::before {
+        background: rgba(13, 17, 23, 0.96);
+    }
+
+    .pkt-topbar {
+        padding-top: env(safe-area-inset-top) !important;
+        background: rgba(230, 234, 239, 0.94) !important;
+    }
+
+    .dark .pkt-topbar {
+        background: rgba(13, 17, 23, 0.94) !important;
+    }
+
+    .fi-layout {
+        padding-top: calc(4rem + env(safe-area-inset-top)) !important;
+    }
+
     .fi-main {
         padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
     }
@@ -4107,6 +4152,10 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 /* Tablet Breakpoint (640px - 1023px) */
 @media (min-width: 640px) and (max-width: 1023px) {
+    .fi-layout {
+        padding-top: calc(4.5rem + env(safe-area-inset-top)) !important;
+    }
+
     .pkt-topbar {
         padding-inline: 1.125rem !important;
         gap: 0.75rem !important;
