@@ -444,3 +444,100 @@ test('antrean pengiriman query ignores null delivery_order_receipt_detail_id wit
         ->toContain('not in')
         ->toContain('is not null');
 });
+
+test('parseScannedCodes splits multiline, comma, and space separated codes and deduplicates them', function () {
+    $raw = "5007761422\n50077614202026\r\n5007761419, 5007761422; 6047678";
+    $parsed = ScanWarehouseTransmittal::parseScannedCodes($raw);
+
+    expect(array_column($parsed, 'parsed'))->toBe([
+        '5007761422',
+        '5007761420',
+        '5007761419',
+        '6047678',
+    ]);
+});
+
+test('submitting multiline GRS 105 and material codes processes all matching items and reports summary', function () {
+    $user = User::create([
+        'name' => 'Operator Multi Scan',
+        'email' => 'multiscan@pupuk-kaltim.com',
+        'password' => bcrypt('secret'),
+    ]);
+    Auth::login($user);
+
+    $destination = WarehouseDestination::create(['name' => 'Gudang Pusat']);
+
+    $batch = WarehouseDeliveryBatch::create([
+        'batch_title' => 'Batch Multi Paste',
+        'start_date' => '2026-11-28',
+        'end_date' => '2026-11-28',
+        'total_items' => 4,
+    ]);
+
+    $itemA = WarehouseDeliveryBatchItem::create([
+        'warehouse_delivery_batch_id' => $batch->id,
+        'mat_doc_105' => '5007761422',
+        'item_no' => '10',
+        'material_code' => '6041111',
+        'description' => 'MATERIAL A',
+        'quantity' => 2,
+        'status' => 'pending',
+    ]);
+
+    $itemB = WarehouseDeliveryBatchItem::create([
+        'warehouse_delivery_batch_id' => $batch->id,
+        'mat_doc_105' => '5007761420',
+        'item_no' => '10',
+        'material_code' => '6042222',
+        'description' => 'MATERIAL B',
+        'quantity' => 3,
+        'status' => 'pending',
+    ]);
+
+    // Item dengan Kode Material yang akan dicari lewat fallback material_code
+    $itemC = WarehouseDeliveryBatchItem::create([
+        'warehouse_delivery_batch_id' => $batch->id,
+        'mat_doc_105' => '5007761499',
+        'item_no' => '10',
+        'material_code' => '6043333',
+        'description' => 'MATERIAL C',
+        'quantity' => 5,
+        'status' => 'pending',
+    ]);
+
+    // Paste 4 kode: 2 kode GRS 105 (1 format 14 digit), 1 kode material, 1 kode tidak ada di MB51
+    $pasted = implode("\n", [
+        '5007761422',
+        '50077614202026',
+        '6043333',
+        '5007799999',
+    ]);
+
+    $component = Livewire::test(ScanWarehouseTransmittal::class)
+        ->set('data.warehouse_destination_id', $destination->id)
+        ->set('manual_input', $pasted)
+        ->call('submitManualScan')
+        ->assertDispatched('play-success-sound');
+
+    expect($itemA->fresh()->status)->toBe('delivered')
+        ->and($itemB->fresh()->status)->toBe('delivered')
+        ->and($itemC->fresh()->status)->toBe('delivered')
+        ->and(WarehouseTransmittalItem::count())->toBe(3)
+        ->and($component->get('manual_input'))->toBe('');
+
+    $summary = $component->get('lastBatchSummary');
+    expect($summary['total_codes'])->toBe(4)
+        ->and($summary['added_items'])->toBe(3)
+        ->and($summary['matched_codes'])->toBe(['5007761422', '5007761420', '6043333'])
+        ->and($summary['not_found_codes'])->toBe(['5007799999'])
+        ->and($summary['already_exists_codes'])->toBe([]);
+
+    // Tempel ulang 2 kode yang sudah masuk -> harus terdeteksi already_exists tanpa duplikat item
+    $component
+        ->set('manual_input', "5007761422\n6043333")
+        ->call('submitManualScan')
+        ->assertDispatched('play-error-sound');
+
+    expect(WarehouseTransmittalItem::count())->toBe(3)
+        ->and($component->get('lastBatchSummary')['already_exists_codes'])->toBe(['5007761422', '6043333']);
+});

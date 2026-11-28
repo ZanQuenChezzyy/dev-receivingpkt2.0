@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Clusters\PengirimanGudang\PengirimanGudangCluster;
+use App\Models\WarehouseDeliveryBatch;
 use App\Models\WarehouseDeliveryBatchItem;
 use App\Models\WarehouseDestination;
 use App\Models\WarehouseTransmittal;
@@ -44,6 +45,17 @@ class ScanWarehouseTransmittal extends Page implements HasForms
     public string $manual_input = '';
 
     public bool $forceNewTransmittal = false;
+
+    /**
+     * @var ?array{
+     *     total_codes: int,
+     *     added_items: int,
+     *     matched_codes: list<string>,
+     *     already_exists_codes: list<string>,
+     *     not_found_codes: list<string>
+     * }
+     */
+    public ?array $lastBatchSummary = null;
 
     public static function getNavigationLabel(): string
     {
@@ -205,6 +217,54 @@ class ScanWarehouseTransmittal extends Page implements HasForms
         return $clean;
     }
 
+    /**
+     * Memecah input multi-kode (dipisahkan baris baru, spasi, tab, koma, atau titik koma)
+     * menjadi daftar kode unik yang siap diproses sekaligus.
+     *
+     * @return list<array{raw: string, parsed: string}>
+     */
+    public static function parseScannedCodes(string $raw): array
+    {
+        $trimmed = trim($raw);
+        if ($trimmed === '') {
+            return [];
+        }
+
+        $tokens = preg_split('/[\r\n,;\t\s]+/', $trimmed) ?: [];
+        $results = [];
+        $seen = [];
+
+        foreach ($tokens as $token) {
+            $cleanToken = trim($token);
+            if ($cleanToken === '') {
+                continue;
+            }
+
+            $parsed = static::parseScannedCode($cleanToken);
+            if (! $parsed) {
+                continue;
+            }
+
+            $dedupKey = strtoupper($parsed);
+            if (isset($seen[$dedupKey])) {
+                continue;
+            }
+
+            $seen[$dedupKey] = true;
+            $results[] = [
+                'raw' => $cleanToken,
+                'parsed' => $parsed,
+            ];
+        }
+
+        return $results;
+    }
+
+    public function clearBatchSummary(): void
+    {
+        $this->lastBatchSummary = null;
+    }
+
     public function submitManualScan(): void
     {
         if (empty(trim($this->manual_input))) {
@@ -234,40 +294,215 @@ class ScanWarehouseTransmittal extends Page implements HasForms
             return;
         }
 
-        $matDoc105 = static::parseScannedCode($cleanInput);
-        if (! $matDoc105) {
+        $parsedEntries = static::parseScannedCodes($cleanInput);
+        if ($parsedEntries === []) {
             $this->dispatch('play-error-sound');
             Notification::make()
                 ->title('Kode Barcode Tidak Valid')
-                ->body("Hasil scan '{$cleanInput}' tidak dapat dikenali sebagai kode Material Document 105.")
+                ->body("Hasil scan '{$cleanInput}' tidak dapat dikenali sebagai kode Material Document 105 atau Kode Material.")
                 ->danger()
                 ->send();
 
             return;
         }
 
-        // Search items in WarehouseDeliveryBatchItem by mat_doc_105
-        $batchItems = WarehouseDeliveryBatchItem::where('mat_doc_105', $matDoc105)->get();
+        // Mode tunggal (1 kode dari scanner tembak / kamera / input manual 1 baris)
+        if (count($parsedEntries) === 1) {
+            $this->lastBatchSummary = null;
+            $entry = $parsedEntries[0];
+            $transmittal = null;
+            $affectedBatches = [];
 
-        if ($batchItems->isEmpty()) {
-            $this->dispatch('play-error-sound');
-            Notification::make()
-                ->title('Data Tidak Ditemukan di Master MB51!')
-                ->body("Material Document 105 [{$matDoc105}] belum diunggah di menu Master MB51.")
-                ->warning()
-                ->send();
+            $outcome = $this->processSingleScannedCode(
+                rawToken: $entry['raw'],
+                parsedCode: $entry['parsed'],
+                transmittal: $transmittal,
+                affectedBatches: $affectedBatches,
+            );
+
+            foreach ($affectedBatches as $batch) {
+                $batch->updateProgressStatus();
+            }
+
+            if ($outcome['status'] === 'added' && $transmittal) {
+                $label = $outcome['matched_by'] === 'material_code'
+                    ? "Kode Material [{$entry['raw']}]"
+                    : "GRS 105 [{$entry['parsed']}]";
+
+                $this->dispatch('play-success-sound');
+                Notification::make()
+                    ->title("{$label} Berhasil Discan!")
+                    ->body("{$outcome['added_count']} item material dimasukkan ke Transmittal {$transmittal->transmittal_no}.")
+                    ->success()
+                    ->send();
+            } elseif ($outcome['status'] === 'already_exists') {
+                $label = $outcome['matched_by'] === 'material_code'
+                    ? "Kode Material [{$entry['raw']}]"
+                    : "Dokumen 105 [{$entry['parsed']}]";
+
+                $this->dispatch('play-error-sound');
+                Notification::make()
+                    ->title('Data Sudah Ada di Transmittal')
+                    ->body("{$label} sudah ada di daftar transmittal ini.")
+                    ->info()
+                    ->send();
+            } else {
+                $this->dispatch('play-error-sound');
+                Notification::make()
+                    ->title('Data Tidak Ditemukan di Master MB51!')
+                    ->body("Kode [{$entry['parsed']}] belum ditemukan pada Master MB51 (baik sebagai MatDoc 105 maupun Kode Material berstatus pending).")
+                    ->warning()
+                    ->send();
+            }
+
+            $this->manual_input = '';
+            $this->dispatch('focus-scanner-input');
 
             return;
         }
 
-        // Ensure transmittal exists
-        $transmittal = $this->ensureActiveTransmittal();
+        // Mode banyak kode sekaligus (hasil salin-tempel dari Excel / daftar GRS 105 atau Kode Material)
+        $transmittal = null;
+        $affectedBatches = [];
+        $matchedCodes = [];
+        $alreadyExistsCodes = [];
+        $notFoundCodes = [];
+        $totalAddedItems = 0;
+
+        foreach ($parsedEntries as $entry) {
+            $outcome = $this->processSingleScannedCode(
+                rawToken: $entry['raw'],
+                parsedCode: $entry['parsed'],
+                transmittal: $transmittal,
+                affectedBatches: $affectedBatches,
+            );
+
+            $displayCode = $outcome['matched_by'] === 'material_code' ? $entry['raw'] : $entry['parsed'];
+
+            if ($outcome['status'] === 'added') {
+                $matchedCodes[] = $displayCode;
+                $totalAddedItems += $outcome['added_count'];
+            } elseif ($outcome['status'] === 'already_exists') {
+                $alreadyExistsCodes[] = $displayCode;
+            } else {
+                $notFoundCodes[] = $entry['parsed'];
+            }
+        }
+
+        foreach ($affectedBatches as $batch) {
+            $batch->updateProgressStatus();
+        }
+
+        $this->lastBatchSummary = [
+            'total_codes' => count($parsedEntries),
+            'added_items' => $totalAddedItems,
+            'matched_codes' => $matchedCodes,
+            'already_exists_codes' => $alreadyExistsCodes,
+            'not_found_codes' => $notFoundCodes,
+        ];
+
+        $parts = [];
+        if ($totalAddedItems > 0) {
+            $parts[] = count($matchedCodes)." kode berhasil ({$totalAddedItems} item masuk)";
+        }
+        if ($alreadyExistsCodes !== []) {
+            $parts[] = count($alreadyExistsCodes).' kode sudah ada di transmittal';
+        }
+        if ($notFoundCodes !== []) {
+            $parts[] = count($notFoundCodes).' kode tidak ditemukan di Master MB51';
+        }
+
+        $summaryText = implode(' • ', $parts);
+
+        if ($totalAddedItems > 0 && $notFoundCodes === []) {
+            $this->dispatch('play-success-sound');
+            Notification::make()
+                ->title('Proses Multi-Kode Selesai')
+                ->body($summaryText.($transmittal ? " ke {$transmittal->transmittal_no}." : '.'))
+                ->success()
+                ->send();
+        } elseif ($totalAddedItems > 0) {
+            $this->dispatch('play-success-sound');
+            Notification::make()
+                ->title('Proses Multi-Kode Selesai Sebagian')
+                ->body($summaryText.'. Periksa rincian kode yang belum ditemukan di bawah kotak input.')
+                ->warning()
+                ->send();
+        } elseif ($alreadyExistsCodes !== [] && $notFoundCodes === []) {
+            $this->dispatch('play-error-sound');
+            Notification::make()
+                ->title('Seluruh Kode Sudah Ada di Transmittal')
+                ->body($summaryText.'.')
+                ->info()
+                ->send();
+        } else {
+            $this->dispatch('play-error-sound');
+            Notification::make()
+                ->title('Tidak Ada Kode yang Berhasil Dimasukkan')
+                ->body($summaryText.'.')
+                ->warning()
+                ->send();
+        }
+
+        $this->manual_input = '';
+        $this->dispatch('focus-scanner-input');
+    }
+
+    /**
+     * Memproses 1 kode (MatDoc 105 terlebih dahulu, lalu fallback ke Kode Material berstatus pending).
+     *
+     * @param  array<int, WarehouseDeliveryBatch>  $affectedBatches
+     * @return array{status: 'added'|'already_exists'|'not_found', added_count: int, matched_by: 'mat_doc_105'|'material_code'|null}
+     */
+    protected function processSingleScannedCode(
+        string $rawToken,
+        string $parsedCode,
+        ?WarehouseTransmittal &$transmittal,
+        array &$affectedBatches,
+    ): array {
+        $matchedBy = 'mat_doc_105';
+        $batchItems = WarehouseDeliveryBatchItem::with(['batch', 'deliveryOrderReceiptDetail'])
+            ->where('mat_doc_105', $parsedCode)
+            ->get();
+
+        // Fallback ke Kode Material bila tidak cocok dengan MatDoc 105 (hanya ambil item pending agar tidak menarik batch lama yang sudah terkirim)
+        if ($batchItems->isEmpty()) {
+            $matchedBy = 'material_code';
+            $batchItems = WarehouseDeliveryBatchItem::with(['batch', 'deliveryOrderReceiptDetail'])
+                ->where('material_code', $rawToken)
+                ->where('status', 'pending')
+                ->get();
+
+            if ($batchItems->isEmpty() && $this->transmittalId) {
+                $alreadyInActive = WarehouseDeliveryBatchItem::query()
+                    ->where('material_code', $rawToken)
+                    ->where('warehouse_transmittal_id', $this->transmittalId)
+                    ->exists();
+
+                if ($alreadyInActive) {
+                    return [
+                        'status' => 'already_exists',
+                        'added_count' => 0,
+                        'matched_by' => 'material_code',
+                    ];
+                }
+            }
+        }
+
+        if ($batchItems->isEmpty()) {
+            return [
+                'status' => 'not_found',
+                'added_count' => 0,
+                'matched_by' => null,
+            ];
+        }
+
+        $transmittal ??= $this->ensureActiveTransmittal();
 
         $newlyAddedCount = 0;
         $alreadyInThisCount = 0;
 
         foreach ($batchItems as $batchItem) {
-            // Check if already in this transmittal (per batch item; hanya cek detail_id untuk item legacy tanpa batch_item_id)
             $existsInCurrent = WarehouseTransmittalItem::where('warehouse_transmittal_id', $transmittal->id)
                 ->where(function ($q) use ($batchItem): void {
                     $q->where('warehouse_delivery_batch_item_id', $batchItem->id);
@@ -297,35 +532,40 @@ class ScanWarehouseTransmittal extends Page implements HasForms
                 'status' => 'delivered',
             ]);
 
-            // Sinkronkan lokasi gudang tujuan ke detail penerimaan DO agar langsung tampil di Monitoring Material
             if ($batchItem->deliveryOrderReceiptDetail) {
                 $batchItem->deliveryOrderReceiptDetail->update([
                     'warehouse_destination_id' => $transmittal->warehouse_destination_id,
                 ]);
             }
 
-            $batchItem->batch?->updateProgressStatus();
+            if ($batchItem->batch) {
+                $affectedBatches[$batchItem->batch->id] = $batchItem->batch;
+            }
+
             $newlyAddedCount++;
         }
 
         if ($newlyAddedCount > 0) {
-            $this->dispatch('play-success-sound');
-            Notification::make()
-                ->title("GRS 105 [{$matDoc105}] Berhasil Discan!")
-                ->body("{$newlyAddedCount} item material dimasukkan ke Transmittal {$transmittal->transmittal_no}.")
-                ->success()
-                ->send();
-        } elseif ($alreadyInThisCount > 0) {
-            $this->dispatch('play-error-sound');
-            Notification::make()
-                ->title('GRS Sudah Ada di Transmittal')
-                ->body("Dokumen 105 [{$matDoc105}] sudah ada di daftar transmittal ini.")
-                ->info()
-                ->send();
+            return [
+                'status' => 'added',
+                'added_count' => $newlyAddedCount,
+                'matched_by' => $matchedBy,
+            ];
         }
 
-        $this->manual_input = '';
-        $this->dispatch('focus-scanner-input');
+        if ($alreadyInThisCount > 0) {
+            return [
+                'status' => 'already_exists',
+                'added_count' => 0,
+                'matched_by' => $matchedBy,
+            ];
+        }
+
+        return [
+            'status' => 'not_found',
+            'added_count' => 0,
+            'matched_by' => null,
+        ];
     }
 
     protected function ensureActiveTransmittal(): WarehouseTransmittal

@@ -362,44 +362,101 @@
                         </div>
                     </div>
 
-                    <div class="space-y-4">
+                    <div class="space-y-4" x-data="{
+                        detectedCount: 0,
+                        countCodes(val) {
+                            const tokens = String(val || '').trim().split(/[\r\n,;\t\s]+/).filter(Boolean);
+                            this.detectedCount = new Set(tokens.map(t => t.toUpperCase())).size;
+                        }
+                    }" x-init="countCodes($wire.manual_input)">
                         <div>
-                            <label for="manual-barcode-input" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                                Arahkan Scanner Tembak atau Ketik Kode 105:
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                                    <x-heroicon-o-bars-3-bottom-left class="w-5 h-5" />
-                                </div>
-                                <input
-                                    type="text"
+                            <div class="flex items-center justify-between gap-2 mb-1.5">
+                                <label for="manual-barcode-input" class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                    Arahkan Scanner Tembak atau Tempel / Ketik Kode 105 / Kode Material:
+                                </label>
+                                <span
+                                    x-show="detectedCount > 1"
+                                    style="display: none;"
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800"
+                                    x-text="detectedCount + ' kode siap diproses'"
+                                ></span>
+                            </div>
+                            <div class="space-y-2">
+                                <textarea
                                     id="manual-barcode-input"
+                                    rows="4"
                                     wire:model="manual_input"
-                                    wire:keydown.enter="submitManualScan"
-                                    placeholder="Contoh: 50074772742026 atau 5007477274..."
-                                    class="w-full pl-10 pr-24 py-2.5 text-sm font-mono font-medium rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all uppercase placeholder:normal-case placeholder:text-gray-400"
+                                    x-on:input="countCodes($event.target.value)"
+                                    x-on:keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); detectedCount = 0; $wire.submitManualScan(); }"
+                                    placeholder="Scan 1 kode atau tempel banyak kode sekaligus (1 kode per baris, spasi, atau koma)&#10;Contoh:&#10;5007761422&#10;5007761420&#10;5007761419"
+                                    class="w-full px-3.5 py-2.5 text-sm font-mono font-medium rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all placeholder:text-gray-400 placeholder:font-sans placeholder:text-xs resize-y leading-relaxed"
                                     autofocus
-                                />
-                                <div class="absolute inset-y-1 right-1 flex items-center">
+                                ></textarea>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-[11px] text-gray-500 dark:text-gray-400">
+                                        <kbd class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300 font-mono text-[10px]">Enter</kbd> proses &bull;
+                                        <kbd class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300 font-mono text-[10px]">Shift+Enter</kbd> baris baru
+                                    </span>
                                     <button
                                         type="button"
                                         wire:click="submitManualScan"
-                                        class="px-3 py-1.5 text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-xs transition-colors">
-                                        Scan / OK
+                                        x-on:click="detectedCount = 0"
+                                        wire:loading.attr="disabled"
+                                        wire:target="submitManualScan,processScan"
+                                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-xs transition-colors disabled:opacity-60">
+                                        <span wire:loading.remove wire:target="submitManualScan,processScan" x-text="detectedCount > 1 ? 'Proses ' + detectedCount + ' Kode' : 'Scan / OK'"></span>
+                                        <span wire:loading wire:target="submitManualScan,processScan">Memproses...</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
 
+                        @if($lastBatchSummary)
+                            <div class="p-3.5 rounded-xl border text-xs space-y-2 {{ ! empty($lastBatchSummary['not_found_codes']) ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60' : 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60' }}">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="font-bold {{ ! empty($lastBatchSummary['not_found_codes']) ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300' }}">
+                                        Ringkasan Input Multi-Kode ({{ $lastBatchSummary['total_codes'] }} kode)
+                                    </div>
+                                    <button
+                                        type="button"
+                                        wire:click="clearBatchSummary"
+                                        class="text-[11px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline">
+                                        Tutup
+                                    </button>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5 text-[11px]">
+                                    <span class="px-2 py-0.5 rounded-md font-semibold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200">
+                                        Berhasil: {{ count($lastBatchSummary['matched_codes']) }} kode ({{ $lastBatchSummary['added_items'] }} item)
+                                    </span>
+                                    @if(! empty($lastBatchSummary['already_exists_codes']))
+                                        <span class="px-2 py-0.5 rounded-md font-semibold bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200">
+                                            Sudah ada: {{ count($lastBatchSummary['already_exists_codes']) }} kode
+                                        </span>
+                                    @endif
+                                    @if(! empty($lastBatchSummary['not_found_codes']))
+                                        <span class="px-2 py-0.5 rounded-md font-semibold bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200">
+                                            Tidak ditemukan: {{ count($lastBatchSummary['not_found_codes']) }} kode
+                                        </span>
+                                    @endif
+                                </div>
+                                @if(! empty($lastBatchSummary['not_found_codes']))
+                                    <div class="text-[11px] text-rose-700 dark:text-rose-300">
+                                        <span class="font-semibold">Belum ada di Master MB51:</span>
+                                        <span class="font-mono break-all">{{ implode(', ', $lastBatchSummary['not_found_codes']) }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+
                         <!-- Guide Banner -->
                         <div class="p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-200/70 dark:border-gray-700/60 text-xs space-y-1.5">
                             <div class="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                                 <x-heroicon-m-information-circle class="w-4 h-4 text-primary-500" />
-                                Informasi Format Barcode GRS
+                                Informasi Format Barcode &amp; Multi-Kode
                             </div>
                             <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1 pl-1 text-[11px]">
-                                <li>Barcode 1D pada kertas GRS biasanya berformat 14 digit: <code class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-primary-600 dark:text-primary-400 font-mono">50074772742026</code>.</li>
-                                <li>Sistem secara otomatis mengekstrak 10 digit pertama (<code class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-primary-600 dark:text-primary-400 font-mono">5007477274</code>).</li>
+                                <li>Mendukung <strong>Kode GRS 105</strong> (10 digit atau 14 digit seperti <code class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-primary-600 dark:text-primary-400 font-mono">50074772742026</code>) maupun <strong>Kode Material</strong>.</li>
+                                <li>Anda dapat menyalin dan menempel <strong>banyak kode sekaligus</strong> dari Excel (1 kode per baris, koma, atau spasi) lalu tekan <strong>Proses</strong> atau <strong>Enter</strong>.</li>
                                 <li>Jika satu nomor 105 berisi lebih dari 1 item, seluruh item akan <strong>masuk otomatis sekaligus</strong>.</li>
                             </ul>
                         </div>
@@ -407,7 +464,7 @@
                 </div>
 
                 <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/80 text-[11px] text-gray-500 dark:text-gray-400 flex items-center justify-between">
-                    <span>Tekan <kbd class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300 font-mono text-[10px]">Enter</kbd> untuk memproses</span>
+                    <span>Mendukung scanner gun 1 kode maupun tempel banyak kode</span>
                     <button
                         type="button"
                         x-on:click="document.getElementById('manual-barcode-input')?.focus()"
