@@ -178,10 +178,18 @@ class UserBadgeRenderer
             .'<span class="truncate">'.$npkValue.'</span>'
             .'</span>';
 
+        $mythicAura = match ($validStyle) {
+            User::DEVELOPER_BADGE_PKT_COMBO,
+            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN,
+            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-mythic-aura pkt-mythic-aura--'.$validStyle.'" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>',
+            default => '',
+        };
+
         return '
             <div class="pkt-user-pill pkt-user-pill--'.$validStyle.' w-36 sm:w-44 max-w-full h-9 shrink-0">
                 <span class="pkt-user-pill-border" aria-hidden="true"></span>
                 '.$fxLayer.'
+                '.$mythicAura.'
                 <div class="pkt-user-pill-inner">
                     <div class="relative shrink-0">
                         <img

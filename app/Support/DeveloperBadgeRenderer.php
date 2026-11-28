@@ -66,9 +66,17 @@ class DeveloperBadgeRenderer
             default => '<span class="pkt-dev-sheen" aria-hidden="true"></span>',
         };
 
+        $mythicAura = match ($resolvedStyle) {
+            User::DEVELOPER_BADGE_PKT_COMBO,
+            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN,
+            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-mythic-aura pkt-mythic-aura--'.$resolvedStyle.'" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>',
+            default => '',
+        };
+
         return '<span class="pkt-dev-badge pkt-dev-badge--'.$resolvedStyle.' '.$sizeClass.'">'
-            .'<span class="pkt-dev-badge-ring" aria-hidden="true"></span>'
+            .'<span class="pkt-dev-badge-border" aria-hidden="true"><span class="pkt-dev-badge-ring"></span></span>'
             .$particles
+            .$mythicAura
             .'<span class="pkt-dev-badge-core">'
             .$iconSvg
             .'<span class="pkt-dev-badge-text">'.$escapedLabel.'</span>'

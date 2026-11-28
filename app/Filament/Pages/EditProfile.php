@@ -466,19 +466,19 @@ class EditProfile extends BaseEditProfile
                                             ],
                                             User::DEVELOPER_BADGE_PKT_COMBO => [
                                                 'title' => 'Solar Aurora',
-                                                'desc' => 'Aliran aurora biru & oranye PKT dengan sapuan cahaya dan kilau bintang.',
+                                                'desc' => 'Aurora biru & oranye PKT dengan jilatan korona surya dan bintang pijar yang memancar keluar badge.',
                                                 'tier_chip' => 'Tier Tertinggi',
                                                 'unlock_hint' => $mythicHint,
                                             ],
                                             User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => [
                                                 'title' => 'Emerald Sovereign',
-                                                'desc' => 'Gradasi zamrud & giok teal dengan gelombang pulsa perisai mengembang.',
+                                                'desc' => 'Zamrud & giok teal dengan gelombang perisai energi mengembang dan kristal melayang di luar badge.',
                                                 'tier_chip' => 'Tier Tertinggi',
                                                 'unlock_hint' => $mythicHint,
                                             ],
                                             User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => [
                                                 'title' => 'Crimson Eclipse',
-                                                'desc' => 'Gradasi merah rubi & koral gerhana dengan efek glitch dan distorsi kromatik.',
+                                                'desc' => 'Merah rubi gerhana dengan pecahan distorsi glitch dan korona kromatik yang menembus tepi badge.',
                                                 'tier_chip' => 'Tier Tertinggi',
                                                 'unlock_hint' => $mythicHint,
                                             ],
@@ -527,7 +527,7 @@ class EditProfile extends BaseEditProfile
                                                 .$statusChip
                                                 .'</div>'
                                                 .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">'.e($meta['desc']).'</span>'
-                                                .'<div class="pt-1 flex items-center gap-2">'.DeveloperBadgeRenderer::render($key, $previewLabel).'</div>'
+                                                .'<div class="'.($isMythic ? 'py-2.5 px-2' : 'pt-1').' flex items-center gap-2 overflow-visible">'.DeveloperBadgeRenderer::render($key, $previewLabel).'</div>'
                                                 .$lockedNote
                                                 .'</div>'
                                             );
