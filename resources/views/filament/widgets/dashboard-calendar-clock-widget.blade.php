@@ -121,7 +121,7 @@
                 return cells;
             }
         }"
-        class="pkt-bento-card pkt-bento-calendar relative h-full rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-hidden p-5 flex flex-col justify-between gap-4"
+        class="pkt-bento-card pkt-bento-calendar relative h-full rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-hidden p-4 sm:p-5 flex flex-col justify-between gap-3.5"
     >
         {{-- Top PKT Corporate Accent Strip --}}
         <div class="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#0054A6] via-[#0B67C2] to-[#F47920]"></div>

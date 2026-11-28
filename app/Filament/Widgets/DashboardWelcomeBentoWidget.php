@@ -3,15 +3,24 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Pages\EditProfile;
-use App\Filament\Pages\MemberProfile;
+use App\Filament\Resources\DeliveryOrderReceipts\DeliveryOrderReceiptResource;
+use App\Filament\Resources\GrsRdtvs\GrsRdtvResource;
+use App\Filament\Resources\InvoicingReceipts\InvoicingReceiptResource;
+use App\Models\DeliveryOrderReceipt;
+use App\Models\GrsRdtv;
+use App\Models\InvoicingReceipt;
 use App\Models\User;
 use App\Services\BadgeMilestoneService;
 use App\Services\LeftRailMenuService;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardWelcomeBentoWidget extends Widget
 {
+    use InteractsWithPageFilters;
+
     protected string $view = 'filament.widgets.dashboard-welcome-bento-widget';
 
     protected static ?int $sort = -2;
@@ -39,13 +48,18 @@ class DashboardWelcomeBentoWidget extends Widget
             default => 'Selamat Malam',
         };
 
-        $badgeStyle = $user ? $user->resolvedDeveloperBadgeStyle() : User::DEVELOPER_BADGE_NONE;
-        $roleLabel = $user
-            ? ($user->primaryAnimatedBadgeRole() ?? ($user->roles->first()?->name ?? 'Pengguna'))
-            : 'Pengguna';
-        $avatarUrl = $user?->getFilamentAvatarUrl()
-            ?? 'https://ui-avatars.com/api/?name='.urlencode($user?->name ?? 'User').'&color=FFFFFF&background=F47920';
+        $month = (int) ($this->filters['month'] ?? $now->month);
+        $year = (int) ($this->filters['year'] ?? $now->year);
+        $todayDate = $now->toDateString();
 
+        $monthNames = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
+            5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu',
+            9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
+        ];
+        $periodShort = ($monthNames[$month] ?? $monthNames[$now->month]).' '.$year;
+
+        // 3 Pintasan Cepat sesuai hak akses & pilihan pribadi pengguna
         $shortcuts = [];
         try {
             $menuService = app(LeftRailMenuService::class);
@@ -56,7 +70,7 @@ class DashboardWelcomeBentoWidget extends Widget
                 static fn (array $item): bool => ($item['key'] ?? '') !== LeftRailMenuService::DASHBOARD_KEY,
             ));
 
-            foreach (array_slice($filtered, 0, 6) as $item) {
+            foreach (array_slice($filtered, 0, 3) as $item) {
                 $key = (string) ($item['key'] ?? '');
                 $item['group'] = (string) ($catalog[$key]['group'] ?? 'Pintasan');
                 $shortcuts[] = $item;
@@ -64,6 +78,9 @@ class DashboardWelcomeBentoWidget extends Widget
         } catch (\Throwable) {
             $shortcuts = [];
         }
+
+        // Ringkasan Operasional (DO, GRS/RDTV, Invoice) untuk periode aktif & hari ini
+        $operationalPulse = $this->buildOperationalPulse($month, $year, $todayDate, $periodShort);
 
         $missionSummary = null;
         if ($user) {
@@ -80,29 +97,136 @@ class DashboardWelcomeBentoWidget extends Widget
             }
         }
 
-        $memberProfileUrl = null;
         $badgeTabUrl = null;
         try {
-            if ($user) {
-                $memberProfileUrl = MemberProfile::getUrl(['user' => $user->getKey()]);
-            }
             $baseProfile = filament()->getProfileUrl() ?? EditProfile::getUrl();
             $badgeTabUrl = $baseProfile.(str_contains($baseProfile, '?') ? '&' : '?').'tab=gaya-badge';
         } catch (\Throwable) {
-            $memberProfileUrl = null;
             $badgeTabUrl = null;
         }
 
         return [
             'user' => $user,
             'greeting' => $greeting,
-            'badgeStyle' => $badgeStyle,
-            'roleLabel' => $roleLabel,
-            'avatarUrl' => $avatarUrl,
             'shortcuts' => $shortcuts,
+            'operationalPulse' => $operationalPulse,
             'missionSummary' => $missionSummary,
-            'memberProfileUrl' => $memberProfileUrl,
             'badgeTabUrl' => $badgeTabUrl,
         ];
+    }
+
+    /**
+     * @return list<array{
+     *     label: string,
+     *     month_count: int,
+     *     today_count: int,
+     *     unit: string,
+     *     period_label: string,
+     *     icon: string,
+     *     accent: string,
+     *     url: ?string
+     * }>
+     */
+    protected function buildOperationalPulse(int $month, int $year, string $todayDate, string $periodShort): array
+    {
+        $doMonth = 0;
+        $doToday = 0;
+        try {
+            if (Schema::hasTable('delivery_order_receipts')) {
+                $doMonth = DeliveryOrderReceipt::query()
+                    ->whereMonth('received_date', $month)
+                    ->whereYear('received_date', $year)
+                    ->count();
+                $doToday = DeliveryOrderReceipt::query()
+                    ->whereDate('received_date', $todayDate)
+                    ->count();
+            }
+        } catch (\Throwable) {
+            $doMonth = 0;
+            $doToday = 0;
+        }
+
+        $grsMonth = 0;
+        $grsToday = 0;
+        try {
+            if (Schema::hasTable('grs_rdtvs')) {
+                $grsMonth = GrsRdtv::query()
+                    ->whereMonth('transaction_date', $month)
+                    ->whereYear('transaction_date', $year)
+                    ->count();
+                $grsToday = GrsRdtv::query()
+                    ->whereDate('transaction_date', $todayDate)
+                    ->count();
+            }
+        } catch (\Throwable) {
+            $grsMonth = 0;
+            $grsToday = 0;
+        }
+
+        $invMonth = 0;
+        $invToday = 0;
+        try {
+            if (Schema::hasTable('invoicing_receipts')) {
+                $invMonth = InvoicingReceipt::query()
+                    ->whereMonth('created_at', $month)
+                    ->whereYear('created_at', $year)
+                    ->count();
+                $invToday = InvoicingReceipt::query()
+                    ->whereDate('created_at', $todayDate)
+                    ->count();
+            }
+        } catch (\Throwable) {
+            $invMonth = 0;
+            $invToday = 0;
+        }
+
+        return [
+            [
+                'label' => 'Penerimaan DO',
+                'month_count' => $doMonth,
+                'today_count' => $doToday,
+                'unit' => 'DO',
+                'period_label' => $periodShort,
+                'icon' => 'heroicon-o-truck',
+                'accent' => 'blue',
+                'url' => $this->resolveResourceUrl(DeliveryOrderReceiptResource::class),
+            ],
+            [
+                'label' => 'GRS & RDTV',
+                'month_count' => $grsMonth,
+                'today_count' => $grsToday,
+                'unit' => 'Dokumen',
+                'period_label' => $periodShort,
+                'icon' => 'heroicon-o-document-check',
+                'accent' => 'emerald',
+                'url' => $this->resolveResourceUrl(GrsRdtvResource::class),
+            ],
+            [
+                'label' => 'Invoice Barang',
+                'month_count' => $invMonth,
+                'today_count' => $invToday,
+                'unit' => 'Invoice',
+                'period_label' => $periodShort,
+                'icon' => 'heroicon-o-receipt-percent',
+                'accent' => 'orange',
+                'url' => $this->resolveResourceUrl(InvoicingReceiptResource::class),
+            ],
+        ];
+    }
+
+    /**
+     * @param  class-string  $resourceClass
+     */
+    protected function resolveResourceUrl(string $resourceClass): ?string
+    {
+        try {
+            if (class_exists($resourceClass) && $resourceClass::canAccess()) {
+                return (string) $resourceClass::getUrl();
+            }
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return null;
     }
 }

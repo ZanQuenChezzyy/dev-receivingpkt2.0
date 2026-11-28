@@ -1,8 +1,8 @@
 <x-filament-widgets::widget>
-    <div class="pkt-bento-card pkt-bento-welcome relative h-full rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-hidden p-5 sm:p-6 flex flex-col justify-between gap-5">
+    <div class="pkt-bento-card pkt-bento-welcome relative h-full rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-hidden p-4 sm:p-6 flex flex-col justify-between gap-4">
         {{-- Subtle PKT Corporate Ambient Glow & Pattern Watermark --}}
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(0,84,166,0.08),transparent_48%),radial-gradient(circle_at_100%_100%,rgba(244,121,32,0.09),transparent_48%)] dark:bg-[radial-gradient(circle_at_0%_0%,rgba(0,84,166,0.20),transparent_52%),radial-gradient(circle_at_100%_100%,rgba(244,121,32,0.16),transparent_50%)]"></div>
-        <div class="pointer-events-none absolute -top-10 -right-10 w-52 h-52 select-none overflow-hidden">
+        <div class="pointer-events-none absolute -top-10 -right-10 w-48 h-48 select-none overflow-hidden">
             <img
                 src="{{ asset('images/pattern/pkt-pattern-dark.png') }}"
                 alt=""
@@ -15,68 +15,33 @@
             />
         </div>
 
-        {{-- Row 1: Greeting + User Identity + Live Weather Pill (Bontang / PKT) --}}
-        <div class="relative z-10 flex flex-col xl:flex-row xl:items-start justify-between gap-4">
-            {{-- Left: Avatar + Greeting + Role Badge --}}
-            <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0">
-                @if ($memberProfileUrl)
-                    <a
-                        href="{{ $memberProfileUrl }}"
-                        wire:navigate
-                        class="shrink-0 group focus:outline-none"
-                        title="Buka profil & log aktivitas Anda"
-                    >
-                        {!! \App\Support\DeveloperBadgeRenderer::renderAvatar(
-                            avatarUrl: $avatarUrl,
-                            alt: (string) ($user?->name ?? 'Pengguna'),
-                            style: $badgeStyle,
-                            imgClasses: 'w-14 h-14',
-                            size: 'md',
-                            fallbackRingClasses: 'ring-2 ring-slate-200 dark:ring-white/15 rounded-full shadow-sm',
-                        ) !!}
-                    </a>
-                @else
-                    <div class="shrink-0">
-                        {!! \App\Support\DeveloperBadgeRenderer::renderAvatar(
-                            avatarUrl: $avatarUrl,
-                            alt: (string) ($user?->name ?? 'Pengguna'),
-                            style: $badgeStyle,
-                            imgClasses: 'w-14 h-14',
-                            size: 'md',
-                            fallbackRingClasses: 'ring-2 ring-slate-200 dark:ring-white/15 rounded-full shadow-sm',
-                        ) !!}
-                    </div>
-                @endif
-
-                <div class="flex flex-col min-w-0 gap-1">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0054A6] dark:text-[#83A2DB]">
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#F47920]"></span>
-                            {{ $greeting }}
-                        </span>
-                        @if ($missionSummary && $missionSummary['has_pending_gift'] && $badgeTabUrl)
-                            <a
-                                href="{{ $badgeTabUrl }}"
-                                wire:navigate
-                                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F47920]/15 text-[#F47920] dark:text-orange-300 border border-[#F47920]/30 hover:bg-[#F47920] hover:text-white transition-colors"
-                            >
-                                <x-heroicon-m-gift class="w-3 h-3" />
-                                Hadiah Badge Tersedia
-                            </a>
-                        @endif
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="text-lg sm:text-xl font-extrabold tracking-tight text-[#10141A] dark:text-white leading-tight truncate">
-                            {{ $user?->name ?? 'Pengguna Receiving PKT' }}
-                        </h2>
-                        {!! \App\Support\DeveloperBadgeRenderer::render($badgeStyle, $roleLabel, 'sm') !!}
-                    </div>
-
-                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                        Selamat datang di panel Receiving PKT. Akses modul harian dan pantau kinerja penerimaan material dari satu tempat.
-                    </p>
+        {{-- Row 1: Clean Greeting (No Avatar / No Role Badge) + Live Weather Pill (Bontang / PKT) --}}
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+            <div class="flex flex-col min-w-0 gap-1">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0054A6] dark:text-[#83A2DB]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#F47920]"></span>
+                        Receiving PKT
+                    </span>
+                    @if ($missionSummary && $missionSummary['has_pending_gift'] && $badgeTabUrl)
+                        <a
+                            href="{{ $badgeTabUrl }}"
+                            wire:navigate
+                            class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F47920]/15 text-[#F47920] dark:text-orange-300 border border-[#F47920]/30 hover:bg-[#F47920] hover:text-white transition-colors"
+                        >
+                            <x-heroicon-m-gift class="w-3 h-3" />
+                            Hadiah Badge Tersedia
+                        </a>
+                    @endif
                 </div>
+
+                <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight text-[#10141A] dark:text-white leading-snug">
+                    {{ $greeting }}, {{ $user?->name ?? 'Pengguna' }}
+                </h2>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Pantau ringkasan operasional harian dan akses modul penerimaan material dengan cepat.
+                </p>
             </div>
 
             {{-- Right: Live Prakiraan Cuaca Bontang (PKT) --}}
@@ -145,7 +110,7 @@
                         }
                     }
                 }"
-                class="shrink-0 xl:min-w-[235px] rounded-2xl px-3.5 py-2.5 bg-slate-50/95 dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08] flex items-center gap-3"
+                class="w-full md:w-auto md:min-w-[230px] shrink-0 rounded-2xl px-3.5 py-2.5 bg-slate-50/95 dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08] flex items-center gap-3"
             >
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0054A6]/12 to-[#F47920]/14 dark:from-[#0054A6]/25 dark:to-[#F47920]/20 flex items-center justify-center shrink-0 text-[#F47920]">
                     <template x-if="icon === 'sun'">
@@ -180,23 +145,86 @@
             </div>
         </div>
 
-        {{-- Row 2: Quick Shortcuts Bento Grid --}}
-        <div class="relative z-10 pt-4 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-col gap-3">
+        {{-- Row 2: Ringkasan Operasional (3 Bento Metric Tiles) --}}
+        <div class="relative z-10 flex flex-col gap-2">
             <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
-                    <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                        Pintasan Cepat
-                    </span>
-                    @if ($missionSummary && ! $missionSummary['has_full_access'] && $badgeTabUrl)
+                <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                    Ringkasan Operasional
+                </span>
+                @if ($missionSummary && ! $missionSummary['has_full_access'] && $badgeTabUrl)
+                    <a
+                        href="{{ $badgeTabUrl }}"
+                        wire:navigate
+                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] tabular-nums hover:opacity-85 transition-opacity"
+                    >
+                        Misi Anda: {{ number_format($missionSummary['mission_count'], 0, ',', '.') }} {{ $missionSummary['unit_label'] }}
+                    </a>
+                @endif
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                @foreach ($operationalPulse as $metric)
+                    @php
+                        $iconClasses = match ($metric['accent']) {
+                            'emerald' => 'bg-emerald-500/12 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300',
+                            'orange' => 'bg-[#F47920]/12 text-[#F47920] dark:bg-[#F47920]/20 dark:text-orange-300',
+                            default => 'bg-[#0054A6]/12 text-[#0054A6] dark:bg-[#83A2DB]/15 dark:text-[#93C5FD]',
+                        };
+                        $todayPillClasses = $metric['today_count'] > 0
+                            ? 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300'
+                            : 'bg-slate-200/75 dark:bg-white/[0.07] text-slate-500 dark:text-slate-400';
+                    @endphp
+
+                    @if ($metric['url'])
                         <a
-                            href="{{ $badgeTabUrl }}"
+                            href="{{ $metric['url'] }}"
                             wire:navigate
-                            class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] tabular-nums hover:opacity-85 transition-opacity"
+                            class="group rounded-2xl p-3.5 bg-slate-50/90 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.07] hover:border-[#0054A6]/35 dark:hover:border-white/[0.16] hover:bg-white dark:hover:bg-white/[0.055] transition-all flex flex-col gap-2"
                         >
-                            Misi: {{ number_format($missionSummary['mission_count'], 0, ',', '.') }} {{ $missionSummary['unit_label'] }}
-                        </a>
+                    @else
+                        <div class="rounded-2xl p-3.5 bg-slate-50/90 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.07] flex flex-col gap-2">
                     @endif
-                </div>
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 truncate">
+                                <span class="w-6 h-6 rounded-lg inline-flex items-center justify-center shrink-0 {{ $iconClasses }}">
+                                    <x-filament::icon :icon="$metric['icon']" class="w-3.5 h-3.5" />
+                                </span>
+                                <span class="truncate">{{ $metric['label'] }}</span>
+                            </span>
+                            <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-500 shrink-0">
+                                {{ $metric['period_label'] }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-baseline justify-between gap-2">
+                            <div class="flex items-baseline gap-1.5 min-w-0">
+                                <span class="text-xl font-extrabold tracking-tight text-[#10141A] dark:text-white tabular-nums">
+                                    {{ number_format($metric['month_count'], 0, ',', '.') }}
+                                </span>
+                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                    {{ $metric['unit'] }}
+                                </span>
+                            </div>
+
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tabular-nums shrink-0 {{ $todayPillClasses }}">
+                                Hari ini: {{ number_format($metric['today_count'], 0, ',', '.') }}
+                            </span>
+                        </div>
+                    @if ($metric['url'])
+                        </a>
+                    @else
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Row 3: 3 Quick Shortcuts (1-col Mobile -> 3-col Tablet/Desktop) --}}
+        <div class="relative z-10 pt-3.5 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-col gap-2.5">
+            <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                    Pintasan Cepat
+                </span>
 
                 <button
                     type="button"
@@ -209,7 +237,7 @@
             </div>
 
             @if ($shortcuts !== [])
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     @foreach ($shortcuts as $item)
                         <a
                             href="{{ $item['url'] }}"

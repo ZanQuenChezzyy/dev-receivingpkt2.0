@@ -76,11 +76,15 @@ test('DashboardWelcomeBentoWidget and DashboardCalendarClockWidget render greeti
 
     Livewire::test(DashboardWelcomeBentoWidget::class)
         ->assertSee('Andereyan Bento')
-        ->assertSee('Selamat datang di panel Receiving PKT')
+        ->assertSee('Ringkasan Operasional')
+        ->assertSee('Penerimaan DO')
+        ->assertSee('GRS & RDTV')
+        ->assertSee('Invoice Barang')
         ->assertSee('Pintasan Cepat')
         ->assertSee('Atur Pintasan')
         ->assertSee('Prakiraan Cuaca Area PKT')
-        ->assertSeeHtml('pkt-mythic-avatar--pkt_combo');
+        ->assertDontSeeHtml('pkt-mythic-avatar--pkt_combo')
+        ->assertDontSeeHtml('pkt-dev-badge--pkt_combo');
 
     Livewire::test(DashboardCalendarClockWidget::class)
         ->assertSee('Kalender & Waktu')
