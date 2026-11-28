@@ -4146,5 +4146,223 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     }
 }
 
+/* =========================================================
+   G. FRAMER-MOTION-STYLE SPRING NAVIGATION INTERACTIONS
+      Shared-layout hover pill, magnetic rail pull, spring tap
+      & staggered pop-in for Mega Menu and Mobile Bottom Nav
+   ========================================================= */
+@keyframes pkt-spring-tap-rebound {
+    0% {
+        transform: scale(0.9);
+    }
+    55% {
+        transform: scale(1.06);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes pkt-dock-icon-pop {
+    0% {
+        transform: translateY(0) scale(0.86);
+    }
+    55% {
+        transform: translateY(-4px) scale(1.14);
+    }
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes pkt-nav-item-stagger-in {
+    0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 1. Shared-Layout Sliding Hover Indicator on Topbar (.pkt-mega-nav) */
+.pkt-nav-hover-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 9999px;
+    background: rgba(0, 84, 166, 0.085);
+    border: 1px solid rgba(0, 84, 166, 0.14);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 0;
+    will-change: transform, width, opacity;
+    transition:
+        transform 0.36s cubic-bezier(0.34, 1.56, 0.64, 1),
+        width 0.34s cubic-bezier(0.34, 1.56, 0.64, 1),
+        height 0.24s ease,
+        opacity 0.2s ease;
+}
+
+.dark .pkt-nav-hover-indicator {
+    background: rgba(131, 162, 219, 0.14);
+    border-color: rgba(131, 162, 219, 0.22);
+}
+
+.pkt-nav-hover-indicator-visible {
+    opacity: 1;
+}
+
+.pkt-mega-nav .pkt-nav-pill {
+    position: relative;
+    z-index: 1;
+    transition:
+        color 0.2s ease,
+        background-color 0.22s ease,
+        box-shadow 0.24s ease,
+        transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Staggered spring entrance for items inside Mega Menu panels */
+.pkt-mega-panel:not([style*="display: none"]) .pkt-mega-item {
+    animation: pkt-nav-item-stagger-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: calc(var(--pkt-stagger, 0) * 20ms);
+}
+
+.pkt-mega-item {
+    transition:
+        background-color 0.18s ease,
+        color 0.18s ease,
+        transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.pkt-mega-item:hover {
+    transform: translateX(4px);
+}
+
+.pkt-mega-item:hover .pkt-mega-item-icon {
+    transform: scale(1.1) rotate(-3deg);
+    transition: transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.18s ease, color 0.18s ease;
+}
+
+/* 2. Magnetic Spring Pull on Left Icon Rail */
+.pkt-rail-btn {
+    --pkt-mag-x: 0px;
+    --pkt-mag-y: 0px;
+    transform: translate3d(var(--pkt-mag-x), var(--pkt-mag-y), 0);
+    transition:
+        transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background-color 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.24s ease !important;
+}
+
+.pkt-rail-btn:hover {
+    transform: translate3d(var(--pkt-mag-x), calc(var(--pkt-mag-y) - 1px), 0) scale(1.07);
+}
+
+.pkt-rail-btn svg {
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pkt-rail-btn:hover svg {
+    transform: scale(1.1);
+}
+
+.pkt-rail-tooltip {
+    transition:
+        opacity 0.2s ease,
+        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* 3. Mobile 5-Slot Dock & Saved-Shortcuts Sheet Spring Motion */
+.pkt-dock-slot svg {
+    transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pkt-dock-slot-active svg {
+    transform: translateY(-2px) scale(1.1);
+}
+
+.pkt-dock-slot.pkt-spring-pressed {
+    transform: scale(0.88);
+}
+
+.pkt-dock-slot.pkt-spring-bounce svg {
+    animation: pkt-dock-icon-pop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pkt-dock-center-fab {
+    transition:
+        transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.22s ease,
+        box-shadow 0.24s ease !important;
+}
+
+.pkt-dock-center-fab.pkt-spring-pressed {
+    transform: scale(0.86) !important;
+}
+
+.pkt-dock-center-fab-open {
+    transform: scale(1.06) rotate(90deg) !important;
+}
+
+/* Staggered spring entrance for saved shortcut tiles when center sheet opens */
+.pkt-mobile-shortcuts-sheet:not([style*="display: none"]) .pkt-shortcut-tile {
+    animation: pkt-nav-item-stagger-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: calc(var(--pkt-stagger, 0) * 26ms);
+}
+
+.pkt-shortcut-tile {
+    transition:
+        transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background-color 0.18s ease,
+        border-color 0.18s ease !important;
+}
+
+.pkt-shortcut-tile:hover {
+    transform: translateY(-2px) scale(1.02);
+}
+
+/* 4. Universal Spring Tap States (Pressed & Bounce Rebound) */
+.pkt-nav-pill.pkt-spring-pressed,
+.pkt-mega-item.pkt-spring-pressed,
+.pkt-shortcut-tile.pkt-spring-pressed,
+.pkt-mobile-search-toggle.pkt-spring-pressed {
+    transform: scale(0.93) !important;
+}
+
+.pkt-rail-btn.pkt-spring-pressed {
+    transform: translate3d(var(--pkt-mag-x), var(--pkt-mag-y), 0) scale(0.88) !important;
+}
+
+.pkt-nav-pill.pkt-spring-bounce,
+.pkt-shortcut-tile.pkt-spring-bounce,
+.pkt-mobile-search-toggle.pkt-spring-bounce {
+    animation: pkt-spring-tap-rebound 0.34s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Respect Reduced Motion Accessibility Preference */
+@media (prefers-reduced-motion: reduce) {
+    .pkt-nav-hover-indicator,
+    .pkt-mega-panel .pkt-mega-item,
+    .pkt-mobile-shortcuts-sheet .pkt-shortcut-tile,
+    .pkt-dock-slot.pkt-spring-bounce svg,
+    .pkt-nav-pill.pkt-spring-bounce,
+    .pkt-shortcut-tile.pkt-spring-bounce,
+    .pkt-mobile-search-toggle.pkt-spring-bounce {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .pkt-rail-btn,
+    .pkt-rail-btn:hover,
+    .pkt-mega-item:hover,
+    .pkt-dock-center-fab-open {
+        transform: none !important;
+    }
+}
+
 
 

@@ -329,10 +329,124 @@
             window.addEventListener('resize', repositionActive, { passive: true });
         }
 
+        // =========================================================
+        // 5. Framer-Motion-Style Interactive Navigation Physics
+        //    - Shared-layout sliding hover pill (layoutId) on Topbar
+        //    - Magnetic spring pull on Left Icon Rail
+        //    - Tactile spring tap & staggered pop-in on Mobile Bottom Nav & Mega Menu
+        // =========================================================
+        function initNavigationMotion() {
+            const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (prefersReducedMotion) return;
+
+            const isFinePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+
+            // 5A. Topbar Mega Menu: Shared-Layout Sliding Hover Pill (layoutId)
+            const megaNav = document.querySelector('.pkt-mega-nav');
+            if (megaNav && !megaNav.dataset.navMotionInit) {
+                megaNav.dataset.navMotionInit = 'true';
+                megaNav.style.position = 'relative';
+
+                let indicator = megaNav.querySelector('.pkt-nav-hover-indicator');
+                if (!indicator) {
+                    indicator = document.createElement('span');
+                    indicator.className = 'pkt-nav-hover-indicator';
+                    indicator.setAttribute('aria-hidden', 'true');
+                    megaNav.prepend(indicator);
+                }
+
+                const moveIndicatorTo = (pill) => {
+                    if (!pill || !megaNav.isConnected) return;
+                    const navRect = megaNav.getBoundingClientRect();
+                    const pillRect = pill.getBoundingClientRect();
+                    const left = pillRect.left - navRect.left;
+                    const top = pillRect.top - navRect.top;
+
+                    indicator.style.width = `${pillRect.width}px`;
+                    indicator.style.height = `${pillRect.height}px`;
+                    indicator.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+                    indicator.classList.add('pkt-nav-hover-indicator-visible');
+                };
+
+                const hideIndicator = () => {
+                    indicator.classList.remove('pkt-nav-hover-indicator-visible');
+                };
+
+                if (isFinePointer) {
+                    megaNav.querySelectorAll('.pkt-nav-pill').forEach((pill) => {
+                        pill.addEventListener('mouseenter', () => moveIndicatorTo(pill));
+                        pill.addEventListener('focus', () => moveIndicatorTo(pill));
+                    });
+
+                    megaNav.addEventListener('mouseleave', hideIndicator);
+                }
+            }
+
+            // 5B. Stagger Indices for Mega Menu Items & Mobile Shortcut Tiles
+            document.querySelectorAll('.pkt-mega-panel').forEach((panel) => {
+                panel.querySelectorAll('.pkt-mega-item').forEach((item, idx) => {
+                    item.style.setProperty('--pkt-stagger', String(Math.min(idx, 10)));
+                });
+            });
+
+            document.querySelectorAll('.pkt-mobile-shortcuts-sheet .pkt-shortcut-tile').forEach((tile, idx) => {
+                tile.style.setProperty('--pkt-stagger', String(Math.min(idx, 12)));
+            });
+
+            // 5C. Magnetic Spring Pull on Left Icon Rail Buttons (Desktop Fine Pointer)
+            if (isFinePointer) {
+                document.querySelectorAll('.pkt-rail-btn').forEach((btn) => {
+                    if (btn.dataset.magneticInit) return;
+                    btn.dataset.magneticInit = 'true';
+
+                    btn.addEventListener('mousemove', (e) => {
+                        const rect = btn.getBoundingClientRect();
+                        const dx = ((e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)) * 3.5;
+                        const dy = ((e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)) * 3.5;
+                        btn.style.setProperty('--pkt-mag-x', `${dx.toFixed(2)}px`);
+                        btn.style.setProperty('--pkt-mag-y', `${dy.toFixed(2)}px`);
+                    });
+
+                    btn.addEventListener('mouseleave', () => {
+                        btn.style.setProperty('--pkt-mag-x', '0px');
+                        btn.style.setProperty('--pkt-mag-y', '0px');
+                    });
+                });
+            }
+
+            // 5D. Universal Spring Tap Feedback (Desktop & Touch Mobile)
+            if (!window.__pktNavTapSpringInit) {
+                window.__pktNavTapSpringInit = true;
+
+                const springSelector = '.pkt-nav-pill, .pkt-rail-btn, .pkt-dock-slot, .pkt-dock-center-fab, .pkt-shortcut-tile, .pkt-mega-item, .pkt-mobile-search-toggle';
+
+                document.addEventListener('pointerdown', (e) => {
+                    if (!(e.target instanceof Element)) return;
+                    const target = e.target.closest(springSelector);
+                    if (!target) return;
+
+                    target.classList.remove('pkt-spring-bounce');
+                    target.classList.add('pkt-spring-pressed');
+                }, { passive: true });
+
+                const releaseSpring = (e) => {
+                    document.querySelectorAll('.pkt-spring-pressed').forEach((el) => {
+                        el.classList.remove('pkt-spring-pressed');
+                        el.classList.add('pkt-spring-bounce');
+                        window.setTimeout(() => el.classList.remove('pkt-spring-bounce'), 360);
+                    });
+                };
+
+                document.addEventListener('pointerup', releaseSpring, { passive: true });
+                document.addEventListener('pointercancel', releaseSpring, { passive: true });
+            }
+        }
+
         function runAll() {
             initStatsSpringPhysics();
             initStatsCounter();
             updateModalActiveState();
+            initNavigationMotion();
             markPageLoaded();
         }
 
