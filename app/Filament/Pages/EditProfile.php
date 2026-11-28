@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\User;
+use App\Services\UserBadgeRenderer;
 use App\Support\DeveloperBadgeRenderer;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
 use Filament\Forms\Components\FileUpload;
@@ -114,15 +115,24 @@ class EditProfile extends BaseEditProfile
                                             ? "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$selected}"
                                             : '';
                                         $badgeHtml = DeveloperBadgeRenderer::render($selected, 'Developer', 'md');
+                                        $userPillHtml = $user
+                                            ? UserBadgeRenderer::render($user, 'Developer', $selected)
+                                            : '';
 
                                         return new HtmlString(
-                                            '<div class="flex flex-wrap items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08]">'
+                                            '<div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08]">'
+                                            .'<div class="flex items-center gap-3.5 min-w-0">'
                                             .'<div class="relative inline-flex items-center justify-center '.$ringClass.'">'
                                             .'<img src="'.e($avatarUrl).'" alt="'.e($user?->name ?? 'Developer').'" class="w-12 h-12 rounded-full object-cover relative z-10" />'
                                             .'</div>'
                                             .'<div class="flex flex-col gap-1.5 min-w-0">'
                                             .'<div class="text-sm font-bold text-slate-900 dark:text-white truncate">'.e($user?->name ?? 'Developer').'</div>'
                                             .'<div>'.$badgeHtml.'</div>'
+                                            .'</div>'
+                                            .'</div>'
+                                            .'<div class="flex flex-col items-start sm:items-end gap-1.5">'
+                                            .'<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tampilan di Tabel</span>'
+                                            .$userPillHtml
                                             .'</div>'
                                             .'</div>'
                                         );

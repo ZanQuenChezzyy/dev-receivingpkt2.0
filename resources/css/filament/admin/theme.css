@@ -4780,6 +4780,255 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     animation-duration: 2.8s;
 }
 
+/* =========================================================
+   H2. ANIMATED DEVELOPER USER PILL (Avatar + Name + NPK Capsule)
+       Used across DO, Invoice, GRS, Transmittal, Monitoring Tables
+   ========================================================= */
+.pkt-user-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    padding: 1.75px;
+    border-radius: 9999px;
+    isolation: isolate;
+    vertical-align: middle;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pkt-user-pill:hover {
+    transform: scale(1.025);
+}
+
+.pkt-user-pill-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+    height: 100%;
+    padding: 0 0.65rem 0 0.28rem;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.pkt-user-pill-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.pkt-user-pill-border::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 240%;
+    aspect-ratio: 1 / 1;
+    animation: pkt-dev-ring-spin 2.2s linear infinite;
+}
+
+.pkt-user-pill-name {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    display: block;
+}
+
+.pkt-user-pill-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-top: 2px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    max-width: 100%;
+}
+
+.pkt-user-pill-icon {
+    width: 0.68rem;
+    height: 0.68rem;
+    flex-shrink: 0;
+}
+
+.pkt-user-pill-sheen {
+    position: absolute;
+    inset: 1.75px;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.pkt-user-pill-sheen::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 38%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+    animation: pkt-dev-sheen-sweep 3.2s ease-in-out infinite;
+}
+
+/* Pill Style 1: Electric (PKT Blue + Cyan Lightning Arc) */
+.pkt-user-pill--electric {
+    animation: pkt-dev-electric-glow 2.4s ease-in-out infinite;
+}
+
+.pkt-user-pill--electric .pkt-user-pill-border::before {
+    background: conic-gradient(
+        from 0deg,
+        #0054A6 0deg,
+        #38BDF8 55deg,
+        #FFFFFF 76deg,
+        #0284C7 105deg,
+        #003B75 180deg,
+        #38BDF8 245deg,
+        #E0F2FE 266deg,
+        #0054A6 310deg,
+        #0054A6 360deg
+    );
+    animation-duration: 1.9s;
+}
+
+.pkt-user-pill--electric .pkt-user-pill-inner {
+    background: linear-gradient(135deg, #EFF8FF 0%, #DBEAFE 100%);
+}
+
+.dark .pkt-user-pill--electric .pkt-user-pill-inner {
+    background: linear-gradient(135deg, #081C36 0%, #0C2E59 100%);
+}
+
+.pkt-user-pill--electric .pkt-user-pill-name {
+    color: #082F49;
+}
+
+.dark .pkt-user-pill--electric .pkt-user-pill-name {
+    color: #F0F9FF;
+}
+
+.pkt-user-pill--electric .pkt-user-pill-sub {
+    color: #0054A6;
+}
+
+.dark .pkt-user-pill--electric .pkt-user-pill-sub {
+    color: #7DD3FC;
+}
+
+/* Pill Style 2: Flame (PKT Orange + Glowing Fire & Rising Embers) */
+.pkt-user-pill--flame {
+    animation: pkt-dev-flame-glow 1.95s ease-in-out infinite;
+}
+
+.pkt-user-pill--flame .pkt-user-pill-border::before {
+    background: conic-gradient(
+        from 0deg,
+        #F47920 0deg,
+        #FDE047 65deg,
+        #EA580C 120deg,
+        #DC2626 190deg,
+        #FDBA74 265deg,
+        #F47920 360deg
+    );
+    animation-duration: 2.3s;
+}
+
+.pkt-user-pill--flame .pkt-user-pill-inner {
+    background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+}
+
+.dark .pkt-user-pill--flame .pkt-user-pill-inner {
+    background: linear-gradient(135deg, #2D1206 0%, #561E09 100%);
+}
+
+.pkt-user-pill--flame .pkt-user-pill-name {
+    color: #431407;
+}
+
+.dark .pkt-user-pill--flame .pkt-user-pill-name {
+    color: #FFF7ED;
+}
+
+.pkt-user-pill--flame .pkt-user-pill-sub {
+    color: #C2410C;
+}
+
+.dark .pkt-user-pill--flame .pkt-user-pill-sub {
+    color: #FDBA74;
+}
+
+.pkt-user-pill-embers {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+}
+
+.pkt-user-pill-embers i {
+    position: absolute;
+    bottom: 2px;
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 9999px;
+    background: #FDE047;
+    box-shadow: 0 0 6px 1px rgba(244, 121, 32, 0.95);
+    animation: pkt-dev-ember-rise 1.65s ease-out infinite;
+}
+
+.pkt-user-pill-embers i:nth-child(1) { left: 22%; animation-delay: 0s; }
+.pkt-user-pill-embers i:nth-child(2) { left: 48%; animation-delay: 0.45s; background: #FDBA74; }
+.pkt-user-pill-embers i:nth-child(3) { left: 72%; animation-delay: 0.9s; }
+.pkt-user-pill-embers i:nth-child(4) { left: 88%; animation-delay: 1.25s; width: 3px; height: 3px; }
+
+/* Pill Style 3: PKT Combo (PKT Blue + Orange Dual-Brand Rotating Border) */
+.pkt-user-pill--pkt_combo {
+    box-shadow: 0 0 12px -2px rgba(244, 121, 32, 0.38), 0 0 14px -3px rgba(0, 84, 166, 0.4);
+}
+
+.pkt-user-pill--pkt_combo .pkt-user-pill-border::before {
+    background: conic-gradient(
+        from 0deg,
+        #0054A6 0deg,
+        #38BDF8 80deg,
+        #F47920 170deg,
+        #FDBA74 235deg,
+        #0054A6 325deg,
+        #0054A6 360deg
+    );
+    animation-duration: 2.6s;
+}
+
+.pkt-user-pill--pkt_combo .pkt-user-pill-inner {
+    background: linear-gradient(135deg, #F0F6FF 0%, #FFF5EC 100%);
+}
+
+.dark .pkt-user-pill--pkt_combo .pkt-user-pill-inner {
+    background: linear-gradient(135deg, #0D1E38 0%, #2C180A 100%);
+}
+
+.pkt-user-pill--pkt_combo .pkt-user-pill-name {
+    color: #0F172A;
+}
+
+.dark .pkt-user-pill--pkt_combo .pkt-user-pill-name {
+    color: #FFFFFF;
+}
+
+.pkt-user-pill--pkt_combo .pkt-user-pill-sub {
+    color: #0054A6;
+}
+
+.dark .pkt-user-pill--pkt_combo .pkt-user-pill-sub {
+    color: #FDBA74;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .pkt-dev-badge,
     .pkt-dev-badge-ring,
@@ -4789,7 +5038,11 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     .pkt-dev-embers i,
     .pkt-dev-sheen::after,
     .pkt-dev-avatar-ring,
-    .pkt-dev-avatar-ring::before {
+    .pkt-dev-avatar-ring::before,
+    .pkt-user-pill,
+    .pkt-user-pill-border::before,
+    .pkt-user-pill-sheen::after,
+    .pkt-user-pill-embers i {
         animation: none !important;
     }
 }

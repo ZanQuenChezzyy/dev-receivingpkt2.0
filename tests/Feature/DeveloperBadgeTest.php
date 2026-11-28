@@ -2,6 +2,7 @@
 
 use App\Filament\Pages\EditProfile;
 use App\Models\User;
+use App\Services\UserBadgeRenderer;
 use App\Support\DeveloperBadgeRenderer;
 use Filament\Facades\Filament;
 use Illuminate\Database\Schema\Blueprint;
@@ -70,6 +71,17 @@ test('Developer user resolves selected animated badge style while non-developer 
         ->and($devHtml)->toContain('pkt-dev-embers')
         ->and($staffHtml)->not->toContain('pkt-dev-badge')
         ->and($staffHtml)->toContain('Admin Sparepart');
+
+    // UserBadgeRenderer (pill Avatar + Nama + NPK di tabel) juga menganimasikan khusus Developer
+    UserBadgeRenderer::flushCache();
+    $devPillHtml = UserBadgeRenderer::render($dev);
+    $staffPillHtml = UserBadgeRenderer::render($staff);
+
+    expect($devPillHtml)->toContain('pkt-user-pill--flame')
+        ->and($devPillHtml)->toContain('pkt-user-pill-embers')
+        ->and($devPillHtml)->toContain('2100100')
+        ->and($staffPillHtml)->not->toContain('pkt-user-pill--')
+        ->and($staffPillHtml)->toContain('2100101');
 });
 
 test('Developer can choose and save animated badge style from EditProfile page', function (): void {
