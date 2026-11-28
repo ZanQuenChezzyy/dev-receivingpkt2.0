@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Tables;
 
 use App\Models\User;
+use App\Support\DeveloperBadgeRenderer;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -63,11 +64,9 @@ class UsersTable
 
                 TextColumn::make('roles.name')
                     ->label(__('user.role'))
-                    ->badge()
-                    ->separator(', ')
-                    ->limitList(3)
-                    ->wrap()
-                    ->color('info'),
+                    ->state(fn (User $record) => DeveloperBadgeRenderer::renderUserRoles($record))
+                    ->html()
+                    ->wrap(),
 
                 ToggleColumn::make('is_active')
                     ->label('Status Aktif')

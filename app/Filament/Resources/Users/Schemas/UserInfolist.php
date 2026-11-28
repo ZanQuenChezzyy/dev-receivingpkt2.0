@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Models\User;
+use App\Support\DeveloperBadgeRenderer;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
@@ -72,9 +74,8 @@ class UserInfolist
                                 ->schema([
                                     TextEntry::make('roles.name')
                                         ->label(__('user.role'))
-                                        ->badge()
-                                        ->separator(', ')
-                                        ->color('info'),
+                                        ->state(fn (User $record) => DeveloperBadgeRenderer::renderUserRoles($record))
+                                        ->html(),
 
                                     TextEntry::make('is_active')
                                         ->label('Status Akun')

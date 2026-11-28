@@ -22,12 +22,59 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'avatar_url', 'npk', 'is_active', 'left_rail_shortcuts'])]
+#[Fillable(['name', 'email', 'password', 'avatar_url', 'npk', 'is_active', 'left_rail_shortcuts', 'developer_badge_style'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable;
+
+    public const DEVELOPER_BADGE_FLAME = 'flame';
+
+    public const DEVELOPER_BADGE_ELECTRIC = 'electric';
+
+    public const DEVELOPER_BADGE_PKT_COMBO = 'pkt_combo';
+
+    public const DEVELOPER_BADGE_NONE = 'none';
+
+    /**
+     * Pilihan gaya animasi badge khusus pengguna dengan role Developer.
+     *
+     * @return array<string, string>
+     */
+    public static function developerBadgeOptions(): array
+    {
+        return [
+            self::DEVELOPER_BADGE_ELECTRIC => 'Listrik (Energi Biru PKT)',
+            self::DEVELOPER_BADGE_FLAME => 'Api (Bara Oranye PKT)',
+            self::DEVELOPER_BADGE_PKT_COMBO => 'Kombinasi PKT (Biru & Oranye)',
+            self::DEVELOPER_BADGE_NONE => 'Standar (Tanpa Animasi)',
+        ];
+    }
+
+    /**
+     * Mengembalikan gaya badge Developer aktif milik pengguna.
+     */
+    public function resolvedDeveloperBadgeStyle(): string
+    {
+        if (! $this->hasRole('Developer')) {
+            return self::DEVELOPER_BADGE_NONE;
+        }
+
+        $style = trim((string) ($this->developer_badge_style ?? ''));
+
+        if ($style !== '' && array_key_exists($style, self::developerBadgeOptions())) {
+            return $style;
+        }
+
+        return self::DEVELOPER_BADGE_ELECTRIC;
+    }
+
+    public function isDeveloperBadgeAnimated(): bool
+    {
+        return $this->hasRole('Developer')
+            && $this->resolvedDeveloperBadgeStyle() !== self::DEVELOPER_BADGE_NONE;
+    }
 
     /**
      * Get the attributes that should be cast.

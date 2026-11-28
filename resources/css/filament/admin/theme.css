@@ -4413,5 +4413,386 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     }
 }
 
+/* =========================================================
+   H. ANIMATED DEVELOPER ROLE BADGES & AVATAR RINGS
+      Selectable in Profile: Electric | Flame | PKT Combo | Standard
+   ========================================================= */
+@keyframes pkt-dev-ring-spin {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes pkt-dev-flame-glow {
+    0%, 100% {
+        box-shadow: 0 0 8px -1px rgba(244, 121, 32, 0.55), 0 0 16px -4px rgba(220, 38, 38, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 14px 1px rgba(249, 115, 22, 0.8), 0 0 22px -2px rgba(239, 68, 68, 0.55);
+    }
+}
+
+@keyframes pkt-dev-flame-flicker {
+    0%, 100% {
+        transform: scale(1) rotate(-4deg);
+        filter: drop-shadow(0 0 3px rgba(254, 215, 170, 0.85));
+    }
+    33% {
+        transform: scale(1.14, 0.94) rotate(5deg) translateY(-0.5px);
+        filter: drop-shadow(0 0 6px rgba(253, 186, 116, 1));
+    }
+    66% {
+        transform: scale(0.95, 1.12) rotate(-2deg) translateY(-1px);
+        filter: drop-shadow(0 0 4px rgba(254, 240, 138, 0.95));
+    }
+}
+
+@keyframes pkt-dev-ember-rise {
+    0% {
+        opacity: 0;
+        transform: translateY(6px) scale(0.5);
+    }
+    30% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-14px) translateX(4px) scale(1.1);
+    }
+}
+
+@keyframes pkt-dev-electric-glow {
+    0%, 100% {
+        box-shadow: 0 0 8px -1px rgba(0, 84, 166, 0.5), 0 0 16px -4px rgba(56, 189, 248, 0.45);
+    }
+    45% {
+        box-shadow: 0 0 14px 1px rgba(56, 189, 248, 0.82), 0 0 22px -2px rgba(0, 84, 166, 0.65);
+    }
+    50% {
+        box-shadow: 0 0 6px 0px rgba(14, 165, 233, 0.45);
+    }
+    56% {
+        box-shadow: 0 0 16px 2px rgba(125, 211, 252, 0.92), 0 0 24px -2px rgba(0, 84, 166, 0.7);
+    }
+}
+
+@keyframes pkt-dev-bolt-zap {
+    0%, 72%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 2px rgba(125, 211, 252, 0.7));
+    }
+    76% {
+        transform: scale(1.22) rotate(-6deg);
+        filter: drop-shadow(0 0 7px rgba(255, 255, 255, 1));
+    }
+    82% {
+        transform: scale(0.96) rotate(3deg);
+        filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.8));
+    }
+    88% {
+        transform: scale(1.16) rotate(-3deg);
+        filter: drop-shadow(0 0 8px rgba(186, 230, 253, 1));
+    }
+}
+
+@keyframes pkt-dev-sheen-sweep {
+    0% {
+        transform: translateX(-140%) skewX(-24deg);
+    }
+    45%, 100% {
+        transform: translateX(260%) skewX(-24deg);
+    }
+}
+
+/* Base Developer Badge Pill */
+.pkt-dev-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5px;
+    border-radius: 9999px;
+    overflow: hidden;
+    vertical-align: middle;
+    isolation: isolate;
+    line-height: 1;
+}
+
+.pkt-dev-badge-core {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.pkt-dev-badge--sm .pkt-dev-badge-core {
+    padding: 0.24rem 0.62rem;
+    font-size: 0.6875rem;
+}
+
+.pkt-dev-badge--md .pkt-dev-badge-core {
+    padding: 0.34rem 0.82rem;
+    font-size: 0.75rem;
+}
+
+.pkt-dev-badge-icon {
+    width: 0.85rem;
+    height: 0.85rem;
+    flex-shrink: 0;
+}
+
+.pkt-dev-badge--md .pkt-dev-badge-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+}
+
+.pkt-dev-badge-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 240%;
+    aspect-ratio: 1 / 1;
+    z-index: 0;
+    pointer-events: none;
+    animation: pkt-dev-ring-spin 2.4s linear infinite;
+}
+
+.pkt-dev-sheen {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.pkt-dev-sheen::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 45%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.38), transparent);
+    animation: pkt-dev-sheen-sweep 3s ease-in-out infinite;
+}
+
+/* Variant 1: Electric (PKT Blue + Cyan Arc) */
+.pkt-dev-badge--electric {
+    animation: pkt-dev-electric-glow 2.4s ease-in-out infinite;
+}
+
+.pkt-dev-badge--electric .pkt-dev-badge-ring {
+    background: conic-gradient(
+        from 0deg,
+        #0054A6 0deg,
+        #38BDF8 55deg,
+        #E0F2FE 78deg,
+        #0284C7 105deg,
+        #003B75 180deg,
+        #38BDF8 245deg,
+        #FFFFFF 268deg,
+        #0054A6 300deg,
+        #0054A6 360deg
+    );
+    animation-duration: 1.8s;
+}
+
+.pkt-dev-badge--electric .pkt-dev-badge-core {
+    background: linear-gradient(135deg, #061D3A 0%, #004385 100%);
+    color: #E0F2FE;
+}
+
+.pkt-dev-icon-bolt {
+    color: #7DD3FC;
+    animation: pkt-dev-bolt-zap 2.2s ease-in-out infinite;
+}
+
+/* Variant 2: Flame (PKT Orange + Ember Sparks) */
+.pkt-dev-badge--flame {
+    overflow: visible;
+    animation: pkt-dev-flame-glow 2s ease-in-out infinite;
+}
+
+.pkt-dev-badge--flame .pkt-dev-badge-ring {
+    inset: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: 9999px;
+    background: linear-gradient(115deg, #FDBA74 0%, #F47920 40%, #DC2626 75%, #FDE047 100%);
+    animation: none;
+}
+
+.pkt-dev-badge--flame .pkt-dev-badge-core {
+    background: linear-gradient(135deg, #7C2D12 0%, #C2410C 52%, #EA580C 100%);
+    color: #FFF7ED;
+}
+
+.pkt-dev-icon-flame {
+    color: #FDE047;
+    animation: pkt-dev-flame-flicker 1.15s ease-in-out infinite;
+}
+
+.pkt-dev-embers {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+}
+
+.pkt-dev-embers i {
+    position: absolute;
+    bottom: 2px;
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 9999px;
+    background: #FDE047;
+    box-shadow: 0 0 6px 1px rgba(249, 115, 22, 0.95);
+    animation: pkt-dev-ember-rise 1.6s ease-out infinite;
+}
+
+.pkt-dev-embers i:nth-child(1) {
+    left: 18%;
+    animation-delay: 0s;
+}
+
+.pkt-dev-embers i:nth-child(2) {
+    left: 54%;
+    animation-delay: 0.55s;
+    background: #FDBA74;
+}
+
+.pkt-dev-embers i:nth-child(3) {
+    left: 82%;
+    animation-delay: 1.05s;
+    width: 3px;
+    height: 3px;
+}
+
+/* Variant 3: PKT Combo (Blue & Orange Dual-Brand Rotating Border) */
+.pkt-dev-badge--pkt_combo {
+    box-shadow: 0 0 12px -2px rgba(244, 121, 32, 0.42), 0 0 14px -3px rgba(0, 84, 166, 0.45);
+}
+
+.pkt-dev-badge--pkt_combo .pkt-dev-badge-ring {
+    background: conic-gradient(
+        from 0deg,
+        #0054A6 0deg,
+        #38BDF8 75deg,
+        #F47920 165deg,
+        #FDBA74 225deg,
+        #0054A6 320deg,
+        #0054A6 360deg
+    );
+    animation-duration: 2.6s;
+}
+
+.pkt-dev-badge--pkt_combo .pkt-dev-badge-core {
+    background: linear-gradient(135deg, #0D1B2E 0%, #102A4C 60%, #3D1F0D 100%);
+    color: #FFFFFF;
+}
+
+.pkt-dev-icon-combo {
+    color: #F47920;
+    animation: pkt-dev-bolt-zap 2.6s ease-in-out infinite;
+}
+
+/* Variant 4: Standard (Static) */
+.pkt-dev-badge--none {
+    padding: 0;
+    background: rgba(0, 84, 166, 0.12);
+    border: 1px solid rgba(0, 84, 166, 0.25);
+}
+
+.dark .pkt-dev-badge--none {
+    background: rgba(131, 162, 219, 0.18);
+    border-color: rgba(131, 162, 219, 0.3);
+}
+
+.pkt-dev-badge--none .pkt-dev-badge-core {
+    color: #0054A6;
+}
+
+.dark .pkt-dev-badge--none .pkt-dev-badge-core {
+    color: #93C5FD;
+}
+
+/* Animated Avatar Ring for Developer Topbar & Profile Preview */
+.pkt-dev-avatar-trigger {
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.pkt-dev-avatar-ring {
+    padding: 2.5px;
+    border-radius: 9999px;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.pkt-dev-avatar-ring::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 180%;
+    aspect-ratio: 1 / 1;
+    z-index: 0;
+    pointer-events: none;
+    animation: pkt-dev-ring-spin 2.2s linear infinite;
+}
+
+.pkt-dev-avatar-ring--electric {
+    animation: pkt-dev-electric-glow 2.4s ease-in-out infinite;
+}
+
+.pkt-dev-avatar-ring--electric::before {
+    background: conic-gradient(from 0deg, #0054A6, #38BDF8, #FFFFFF, #0284C7, #0054A6);
+}
+
+.pkt-dev-avatar-ring--flame {
+    animation: pkt-dev-flame-glow 1.9s ease-in-out infinite;
+}
+
+.pkt-dev-avatar-ring--flame::before {
+    background: conic-gradient(from 0deg, #F47920, #FDE047, #DC2626, #FDBA74, #F47920);
+}
+
+.pkt-dev-avatar-ring--pkt_combo {
+    box-shadow: 0 0 12px -2px rgba(244, 121, 32, 0.45), 0 0 12px -2px rgba(0, 84, 166, 0.45);
+}
+
+.pkt-dev-avatar-ring--pkt_combo::before {
+    background: conic-gradient(from 0deg, #0054A6, #38BDF8, #F47920, #FDBA74, #0054A6);
+    animation-duration: 2.8s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pkt-dev-badge,
+    .pkt-dev-badge-ring,
+    .pkt-dev-icon-flame,
+    .pkt-dev-icon-bolt,
+    .pkt-dev-icon-combo,
+    .pkt-dev-embers i,
+    .pkt-dev-sheen::after,
+    .pkt-dev-avatar-ring,
+    .pkt-dev-avatar-ring::before {
+        animation: none !important;
+    }
+}
+
 
 
