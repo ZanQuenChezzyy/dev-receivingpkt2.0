@@ -156,13 +156,13 @@ class EditProfile extends BaseEditProfile
                             }),
                     ]),
 
-                // 2. Clean Full-Width Tabbed Settings Panel (No Inline-Label Gaps)
+                // 2. Clean Full-Width Tabbed Settings Panel (Profil & Keamanan in 1 View + Gaya Badge)
                 Tabs::make('EditProfile')
                     ->contained()
                     ->extraAttributes(['class' => 'pkt-profile-tabs'])
                     ->tabs([
-                        Tab::make('Informasi Pribadi')
-                            ->icon('heroicon-o-user')
+                        Tab::make('Profil & Keamanan')
+                            ->icon('heroicon-o-user-circle')
                             ->schema([
                                 Grid::make(['default' => 1, 'md' => 12])
                                     ->extraAttributes(['class' => 'gap-6 items-start'])
@@ -207,7 +207,7 @@ class EditProfile extends BaseEditProfile
                                     ]),
 
                                 Grid::make(['default' => 1, 'md' => 3])
-                                    ->extraAttributes(['class' => 'gap-5 pt-4 border-t border-black/[0.06] dark:border-white/[0.08]'])
+                                    ->extraAttributes(['class' => 'gap-5 pt-5 border-t border-black/[0.06] dark:border-white/[0.08]'])
                                     ->schema([
                                         TextInput::make('name')
                                             ->label(__('filament-panels::pages/auth/edit-profile.form.name.label'))
@@ -235,17 +235,18 @@ class EditProfile extends BaseEditProfile
                                             ->unique(ignoreRecord: true)
                                             ->live(onBlur: true),
                                     ]),
-                            ]),
 
-                        Tab::make('Kata Sandi')
-                            ->icon('heroicon-o-lock-closed')
-                            ->schema([
-                                TextEntry::make('password_notice')
+                                TextEntry::make('password_section_header')
                                     ->hiddenLabel()
                                     ->state(new HtmlString(
-                                        '<div class="flex items-start gap-3 p-3.5 rounded-2xl bg-[#0054A6]/[0.06] dark:bg-[#83A2DB]/[0.08] border border-[#0054A6]/15 dark:border-[#83A2DB]/20 text-xs text-slate-600 dark:text-slate-300">'
-                                        .'<svg class="w-4 h-4 text-[#0054A6] dark:text-[#83A2DB] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
-                                        .'<span>Kosongkan kolom kata sandi jika Anda tidak ingin mengubah kata sandi akun saat ini.</span>'
+                                        '<div class="pt-5 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-2">'
+                                        .'<div class="flex items-center gap-2">'
+                                        .'<span class="w-7 h-7 rounded-xl bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#83A2DB] inline-flex items-center justify-center shrink-0">'
+                                        .'<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>'
+                                        .'</span>'
+                                        .'<span class="text-sm font-bold text-[#10141A] dark:text-white">Ubah Kata Sandi</span>'
+                                        .'</div>'
+                                        .'<span class="text-xs text-slate-500 dark:text-slate-400">Kosongkan jika tidak ingin mengubah kata sandi saat ini.</span>'
                                         .'</div>'
                                     )),
 
