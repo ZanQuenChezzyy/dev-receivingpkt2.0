@@ -452,6 +452,7 @@ class LeftRailMenuService
         $links[] = [
             'key' => self::DASHBOARD_KEY,
             'label' => $dashboardItem['label'],
+            'short_label' => __('Dashboard'),
             'url' => $dashboardItem['url'],
             'icon' => $dashboardItem['icon'],
             'active' => $normCurrent === $dashNorm,
@@ -476,6 +477,7 @@ class LeftRailMenuService
             $links[] = [
                 'key' => $item['key'],
                 'label' => $item['label'],
+                'short_label' => $this->shortLabelFor($item['key'], $item['label']),
                 'url' => $item['url'],
                 'icon' => $item['icon'],
                 'active' => $isActive,
@@ -484,6 +486,44 @@ class LeftRailMenuService
         }
 
         return $links;
+    }
+
+    /**
+     * Mengembalikan label ringkas untuk slot bottom navigation mobile agar tidak terpotong di layar sempit.
+     */
+    public function shortLabelFor(string $key, string $fallbackLabel): string
+    {
+        return match ($key) {
+            self::DASHBOARD_KEY => __('Dashboard'),
+            'delivery_order_receipts' => __('DO'),
+            'delivery_order_receipt_details' => __('Detail DO'),
+            'monitoring_material' => __('Material'),
+            'monitoring_chemical' => __('Chemical'),
+            'monitoring_npk' => __('NPK'),
+            'grs_rdtvs' => __('GRS'),
+            'transmittals' => __('QC'),
+            'invoicing_receipts' => __('Invoice'),
+            'combined_grs_upload' => __('Upload'),
+            'cashier_transmittals' => __('Kasir'),
+            'monitoring_karung' => __('Karung'),
+            'email_grs_settings' => __('Email'),
+            'scan_warehouse_transmittal' => __('Scan'),
+            'warehouse_transmittals' => __('Transmittal'),
+            'warehouse_delivery_batches' => __('MB51'),
+            'antrean_pengiriman' => __('Antrean'),
+            'material_issues' => __('MIR'),
+            'non_stock_aging' => __('Aging'),
+            'requesting_units' => __('Unit'),
+            'laporan_bulanan' => __('Bulanan'),
+            'laporan_material_diambil' => __('Diambil'),
+            'purchase_order_issueds' => __('PO'),
+            'vendors' => __('Vendor'),
+            'warehouse_destinations' => __('Gudang'),
+            'location_receivings' => __('Lokasi'),
+            'pic_material_assignments' => __('PIC'),
+            'users' => __('User'),
+            default => str($fallbackLabel)->before(' ')->limit(10, '')->toString(),
+        };
     }
 
     /**

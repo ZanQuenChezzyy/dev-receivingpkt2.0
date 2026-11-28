@@ -97,54 +97,177 @@
             </div>
         </aside>
 
-        <!-- Mobile & Tablet Floating Bottom Capsule Dock (< lg) -->
+        <!-- Mobile & Tablet Floating Bottom Navigation (MedTech 5-Slot Style + Center Saved-Shortcuts Sheet) -->
         @php
-            $mobileDockLinks = array_slice($railLinks, 0, 5);
+            $slotDashboard = $railLinks[0] ?? null;
+            $slotSecond = $railLinks[1] ?? null;
+            $slotFourth = $railLinks[2] ?? null;
         @endphp
-        <nav
-            aria-label="Navigasi Bawah Mobile"
-            class="pkt-mobile-dock lg:hidden"
+        <div
+            x-data="{ mobileShortcutsOpen: false }"
+            @keydown.escape.window="mobileShortcutsOpen = false"
+            class="lg:hidden"
         >
-            <div class="pkt-mobile-dock-pill">
-                @foreach ($mobileDockLinks as $idx => $link)
-                    <a
-                        {{ \Filament\Support\generate_href_html($link['url']) }}
-                        title="{{ $link['label'] }}"
-                        aria-label="{{ $link['label'] }}"
-                        @class([
-                            'pkt-dock-btn',
-                            'pkt-dock-btn-active' => $link['active'],
-                            'hidden sm:inline-flex' => $idx >= 4,
-                        ])
+            <!-- Backdrop when Center Saved-Shortcuts Popup is Open -->
+            <div
+                x-cloak
+                x-show="mobileShortcutsOpen"
+                x-transition.opacity.duration.200ms
+                @click="mobileShortcutsOpen = false"
+                class="fixed inset-0 z-[37] bg-slate-950/45 backdrop-blur-[2px]"
+            ></div>
+
+            <!-- Floating Popup Sheet Showing User's Saved Left Navigation Menus -->
+            <div
+                x-cloak
+                x-show="mobileShortcutsOpen"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                x-transition:leave-end="opacity-0 translate-y-3 scale-95"
+                class="pkt-mobile-shortcuts-sheet"
+                role="dialog"
+                aria-label="Menu Navigasi Tersimpan"
+            >
+                <div class="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-black/[0.06] dark:border-white/[0.08]">
+                    <div>
+                        <div class="text-xs font-bold text-[#10141A] dark:text-white">
+                            Menu Pintasan Anda
+                        </div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Sesuai pengaturan navigasi kiri akun Anda
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        @click="mobileShortcutsOpen = false; $wire.openSettings()"
+                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#83A2DB] hover:bg-[#F47920]/15 hover:text-[#F47920] transition-colors shrink-0"
                     >
-                        <x-filament::icon :icon="$link['icon']" class="w-5 h-5" />
-                    </a>
-                @endforeach
+                        <x-heroicon-o-cog-6-tooth class="w-3.5 h-3.5" />
+                        Atur
+                    </button>
+                </div>
 
-                <!-- Prominent Center/Right Menu Drawer Trigger -->
-                <button
-                    type="button"
-                    x-data="{}"
-                    x-on:click="$store.sidebar.isOpen ? $store.sidebar.close() : $store.sidebar.open()"
-                    title="Semua Menu"
-                    aria-label="Buka Semua Menu"
-                    class="pkt-dock-menu-btn"
-                >
-                    <x-heroicon-o-squares-plus class="w-5 h-5" />
-                </button>
-
-                <!-- Customize Rail Shortcuts Button -->
-                <button
-                    type="button"
-                    wire:click="openSettings"
-                    title="Atur Menu Pintasan"
-                    aria-label="Atur Menu Pintasan"
-                    class="pkt-dock-btn"
-                >
-                    <x-heroicon-o-cog-6-tooth class="w-5 h-5" />
-                </button>
+                <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[48dvh] overflow-y-auto pr-0.5">
+                    @foreach ($railLinks as $link)
+                        <a
+                            {{ \Filament\Support\generate_href_html($link['url']) }}
+                            @click="mobileShortcutsOpen = false"
+                            @class([
+                                'pkt-shortcut-tile',
+                                'pkt-shortcut-tile-active' => $link['active'],
+                            ])
+                        >
+                            <span class="pkt-shortcut-tile-icon">
+                                <x-filament::icon :icon="$link['icon']" class="w-5 h-5" />
+                            </span>
+                            <span class="pkt-shortcut-tile-label">{{ $link['label'] }}</span>
+                        </a>
+                    @endforeach
+                </div>
             </div>
-        </nav>
+
+            <!-- 5-Slot Floating Bottom Navigation Bar -->
+            <nav
+                aria-label="Navigasi Bawah Mobile"
+                class="pkt-mobile-dock"
+            >
+                <div class="pkt-mobile-dock-bar">
+                    <!-- Slot 1: Locked Dashboard -->
+                    @if ($slotDashboard)
+                        <a
+                            {{ \Filament\Support\generate_href_html($slotDashboard['url']) }}
+                            @click="mobileShortcutsOpen = false"
+                            @class([
+                                'pkt-dock-slot',
+                                'pkt-dock-slot-active' => $slotDashboard['active'],
+                            ])
+                        >
+                            <x-filament::icon :icon="$slotDashboard['icon']" class="w-5 h-5" />
+                            <span class="pkt-dock-label">{{ $slotDashboard['short_label'] }}</span>
+                        </a>
+                    @endif
+
+                    <!-- Slot 2: User's 1st Saved Shortcut -->
+                    @if ($slotSecond)
+                        <a
+                            {{ \Filament\Support\generate_href_html($slotSecond['url']) }}
+                            @click="mobileShortcutsOpen = false"
+                            @class([
+                                'pkt-dock-slot',
+                                'pkt-dock-slot-active' => $slotSecond['active'],
+                            ])
+                        >
+                            <x-filament::icon :icon="$slotSecond['icon']" class="w-5 h-5" />
+                            <span class="pkt-dock-label">{{ $slotSecond['short_label'] }}</span>
+                        </a>
+                    @else
+                        <button
+                            type="button"
+                            @click="mobileShortcutsOpen = false; $wire.openSettings()"
+                            class="pkt-dock-slot"
+                        >
+                            <x-heroicon-o-plus-circle class="w-5 h-5" />
+                            <span class="pkt-dock-label">Tambah</span>
+                        </button>
+                    @endif
+
+                    <!-- Slot 3 (Center): Elevated Circular Button -> Opens User's Saved Left Nav Menu -->
+                    <div class="pkt-dock-center-wrap">
+                        <button
+                            type="button"
+                            @click="mobileShortcutsOpen = !mobileShortcutsOpen"
+                            :aria-expanded="mobileShortcutsOpen ? 'true' : 'false'"
+                            title="Menu Pintasan Saya"
+                            aria-label="Buka Menu Pintasan Saya"
+                            class="pkt-dock-center-fab"
+                            :class="mobileShortcutsOpen ? 'pkt-dock-center-fab-open' : ''"
+                        >
+                            <x-heroicon-o-squares-plus x-show="!mobileShortcutsOpen" class="w-6 h-6" />
+                            <x-heroicon-m-x-mark x-show="mobileShortcutsOpen" x-cloak class="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    <!-- Slot 4: User's 2nd Saved Shortcut -->
+                    @if ($slotFourth)
+                        <a
+                            {{ \Filament\Support\generate_href_html($slotFourth['url']) }}
+                            @click="mobileShortcutsOpen = false"
+                            @class([
+                                'pkt-dock-slot',
+                                'pkt-dock-slot-active' => $slotFourth['active'],
+                            ])
+                        >
+                            <x-filament::icon :icon="$slotFourth['icon']" class="w-5 h-5" />
+                            <span class="pkt-dock-label">{{ $slotFourth['short_label'] }}</span>
+                        </a>
+                    @else
+                        <button
+                            type="button"
+                            @click="mobileShortcutsOpen = false; $wire.openSettings()"
+                            class="pkt-dock-slot"
+                        >
+                            <x-heroicon-o-cog-6-tooth class="w-5 h-5" />
+                            <span class="pkt-dock-label">Atur</span>
+                        </button>
+                    @endif
+
+                    <!-- Slot 5: Full Menu Drawer -->
+                    <button
+                        type="button"
+                        @click="mobileShortcutsOpen = false; $store.sidebar.isOpen ? $store.sidebar.close() : $store.sidebar.open()"
+                        title="Semua Menu"
+                        aria-label="Buka Semua Menu"
+                        class="pkt-dock-slot"
+                    >
+                        <x-heroicon-o-bars-3-bottom-right class="w-5 h-5" />
+                        <span class="pkt-dock-label">Menu</span>
+                    </button>
+                </div>
+            </nav>
+        </div>
 
         <!-- Per-User Left Rail Customization Modal (Responsive Bottom-Sheet on Mobile, Centered Card on Desktop) -->
         @if ($showSettingsModal)

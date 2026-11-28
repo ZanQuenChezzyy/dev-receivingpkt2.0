@@ -141,8 +141,10 @@ test('LeftIconRail locks Dashboard at top, moves Beranda to user menu, and saves
         ->assertSeeHtml('pkt-rail-btn')
         ->assertSeeHtml('pkt-rail-theme-pill')
         ->assertSeeHtml('pkt-mobile-dock')
-        ->assertSeeHtml('pkt-mobile-dock-pill')
-        ->assertSeeHtml('pkt-dock-menu-btn')
+        ->assertSeeHtml('pkt-mobile-dock-bar')
+        ->assertSeeHtml('pkt-dock-center-fab')
+        ->assertSeeHtml('pkt-mobile-shortcuts-sheet')
+        ->assertSee('Menu Pintasan Anda')
         ->assertSee('Mode Gelap')
         ->assertSee('Mode Terang')
         ->assertDontSee('Beranda');
