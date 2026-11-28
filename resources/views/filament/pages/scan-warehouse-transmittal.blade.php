@@ -474,9 +474,10 @@
                                         x-show="hasInput"
                                         style="display: none;"
                                         x-on:click="clearInput()"
-                                        class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
-                                        <x-heroicon-m-x-mark class="w-3.5 h-3.5" />
-                                        Bersihkan
+                                        title="Bersihkan input"
+                                        aria-label="Bersihkan input"
+                                        class="inline-flex items-center justify-center p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
+                                        <x-heroicon-o-trash class="w-4 h-4" />
                                     </button>
                                 </div>
 
@@ -486,13 +487,13 @@
                                     x-on:click="detectedCount = 0; hasInput = false"
                                     wire:loading.attr="disabled"
                                     wire:target="submitManualScan,processScan"
-                                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-500 active:scale-[0.98] rounded-xl shadow-xs transition-all disabled:opacity-60">
-                                    <svg wire:loading wire:target="submitManualScan,processScan" class="animate-spin w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-500 active:scale-[0.98] rounded-xl shadow-xs transition-all whitespace-nowrap shrink-0 disabled:opacity-60">
+                                    <svg wire:loading wire:target="submitManualScan,processScan" class="animate-spin w-3.5 h-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                     </svg>
-                                    <x-heroicon-m-arrow-right-circle wire:loading.remove wire:target="submitManualScan,processScan" class="w-4 h-4" />
-                                    <span wire:loading.remove wire:target="submitManualScan,processScan" x-text="detectedCount > 1 ? 'Proses ' + detectedCount + ' Kode' : 'Proses'"></span>
+                                    <x-heroicon-m-arrow-right-circle wire:loading.remove wire:target="submitManualScan,processScan" class="w-4 h-4 shrink-0" />
+                                    <span wire:loading.remove wire:target="submitManualScan,processScan">Proses</span>
                                     <span wire:loading wire:target="submitManualScan,processScan">Memproses...</span>
                                 </button>
                             </div>
