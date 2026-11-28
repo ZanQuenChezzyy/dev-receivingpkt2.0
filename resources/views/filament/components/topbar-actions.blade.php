@@ -10,7 +10,7 @@
     </div>
 
     <div
-        class="shrink-0 flex items-center"
+        class="shrink-0 flex lg:hidden items-center"
         x-data="{
             isDark: document.documentElement.classList.contains('dark'),
             observer: null,

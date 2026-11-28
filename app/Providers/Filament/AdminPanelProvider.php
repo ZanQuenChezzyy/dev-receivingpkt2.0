@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Livewire\MegaMenuTopbar;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\EditProfile;
 use App\Filament\Pages\Login;
@@ -23,7 +24,9 @@ use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -49,23 +52,31 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->id('admin')
             ->path('admin')
+            ->font('Plus Jakarta Sans')
+            ->topNavigation()
+            ->topbarLivewireComponent(MegaMenuTopbar::class)
+            ->maxContentWidth(Width::Full)
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login(Login::class)
             ->profile(EditProfile::class)
             ->brandLogo('/images/logo/receiving_dark.png')
             ->darkModeBrandLogo('/images/logo/receiving_white.png')
-            ->brandLogoHeight('2.5rem')
+            ->brandLogoHeight('2.25rem')
             ->defaultThemeMode(ThemeMode::System)
             ->colors([
-                'danger' => Color::Red,
+                'danger' => Color::hex('#CE6969'),
                 'gray' => Color::Slate,
-                'info' => Color::Sky,
+                'info' => Color::hex('#0054A6'),
                 'primary' => Color::hex('#F47920'),
                 'success' => Color::Emerald,
                 'warning' => Color::Amber,
             ])
             ->databaseNotifications()
-            ->userMenu(position: UserMenuPosition::Sidebar)
+            ->userMenu(position: UserMenuPosition::Topbar)
+            ->renderHook(
+                PanelsRenderHook::LAYOUT_START,
+                fn (): string => view('filament.components.left-icon-rail')->render()
+            )
             ->renderHook(
                 'panels::global-search.after',
                 fn (): string => view('filament.components.topbar-actions')->render()
