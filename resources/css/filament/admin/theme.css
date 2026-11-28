@@ -3004,6 +3004,17 @@ html.dark body {
     z-index: 60;
 }
 
+/* Invisible hover bridge between topbar pill and floating mega panel */
+.pkt-mega-panel::before {
+    content: "";
+    position: absolute;
+    top: -0.85rem;
+    left: 0;
+    right: 0;
+    height: 0.85rem;
+    background: transparent;
+}
+
 .pkt-mega-panel-wide {
     min-width: 540px;
     max-width: min(680px, calc(100vw - 2rem));

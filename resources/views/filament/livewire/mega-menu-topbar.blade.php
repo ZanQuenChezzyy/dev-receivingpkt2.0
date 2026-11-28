@@ -2,10 +2,35 @@
     class="fi-topbar-ctn pkt-topbar-ctn"
     x-data="{
         openMenu: null,
+        closeTimer: null,
+        openOnHover(key) {
+            if (this.closeTimer) {
+                clearTimeout(this.closeTimer);
+                this.closeTimer = null;
+            }
+            this.openMenu = key;
+        },
+        scheduleClose() {
+            if (this.closeTimer) {
+                clearTimeout(this.closeTimer);
+            }
+            this.closeTimer = setTimeout(() => {
+                this.openMenu = null;
+                this.closeTimer = null;
+            }, 160);
+        },
+        cancelClose() {
+            if (this.closeTimer) {
+                clearTimeout(this.closeTimer);
+                this.closeTimer = null;
+            }
+        },
         toggleMenu(key) {
+            this.cancelClose();
             this.openMenu = this.openMenu === key ? null : key;
         },
         closeMenu() {
+            this.cancelClose();
             this.openMenu = null;
         }
     }"
@@ -73,6 +98,7 @@
                     @if ($entry['type'] === 'link')
                         <a
                             {{ \Filament\Support\generate_href_html($entry['url'], $entry['open_in_new_tab'] ?? false) }}
+                            @mouseenter="closeMenu()"
                             @click="closeMenu()"
                             @class([
                                 'pkt-nav-pill',
@@ -82,7 +108,11 @@
                             <span>{{ $entry['label'] }}</span>
                         </a>
                     @else
-                        <div class="relative">
+                        <div
+                            class="relative"
+                            @mouseenter="openOnHover('{{ $entry['key'] }}')"
+                            @mouseleave="scheduleClose()"
+                        >
                             <button
                                 type="button"
                                 @click="toggleMenu('{{ $entry['key'] }}')"
@@ -104,6 +134,8 @@
                             <div
                                 x-cloak
                                 x-show="openMenu === '{{ $entry['key'] }}'"
+                                @mouseenter="cancelClose()"
+                                @mouseleave="scheduleClose()"
                                 x-transition:enter="transition ease-out duration-200"
                                 x-transition:enter-start="opacity-0 translate-y-2 scale-[0.98]"
                                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
