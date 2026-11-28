@@ -541,3 +541,138 @@ test('submitting multiline GRS 105 and material codes processes all matching ite
     expect(WarehouseTransmittalItem::count())->toBe(3)
         ->and($component->get('lastBatchSummary')['already_exists_codes'])->toBe(['5007761422', '6043333']);
 });
+
+test('scanning 105 code deduplicates overlapping MB51 batches, picks richest item, and reverts all siblings on delete', function () {
+    $user = User::create([
+        'name' => 'Operator Anti Duplikat',
+        'email' => 'antidup@pupuk-kaltim.com',
+        'password' => bcrypt('secret'),
+    ]);
+    Auth::login($user);
+
+    $destination = WarehouseDestination::create(['name' => 'Gudang Sparepart']);
+
+    $batchOld = WarehouseDeliveryBatch::create([
+        'batch_title' => 'Batch Lama Parsial',
+        'start_date' => '2026-11-01',
+        'end_date' => '2026-11-24',
+        'total_items' => 1,
+    ]);
+
+    $batchMid = WarehouseDeliveryBatch::create([
+        'batch_title' => 'Batch Mingguan',
+        'start_date' => '2026-11-23',
+        'end_date' => '2026-11-29',
+        'total_items' => 2,
+    ]);
+
+    $batchNew = WarehouseDeliveryBatch::create([
+        'batch_title' => 'Batch Tahunan Full',
+        'start_date' => '2026-01-01',
+        'end_date' => '2026-11-27',
+        'total_items' => 2,
+    ]);
+
+    // Item 50 muncul di 3 batch berbeda (1 batch lama tidak lengkap + 2 batch baru lengkap), Item 60 muncul di 2 batch
+    $oldItem50 = WarehouseDeliveryBatchItem::create([
+        'warehouse_delivery_batch_id' => $batchOld->id,
+        'mat_doc_105' => '5007761453',
+        'doc_year' => '2026',
+        'po_number' => '5300067194',
+        'item_no' => '50',
+        'material_code' => '6008854',
+        'description' => 'GASKET SW',
+        'quantity' => 1,
+        'ref_doc_103' => null,
+        'storage_location' => null,
+        'status' => 'pending',
+    ]);
+
+    $midItem50 = WarehouseDeliveryBatchItem::create([
+        'warehouse_delivery_batch_id' => $batchMid->id,
+        'mat_doc_105' => '5007761453',
+        'doc_year' => '2026',
+        'po_number' => '5300067194',
+        'item_no' => '50',
+        'material_code' => '6008854',
+        'description' => 'GASKET SW',
+        'quantity' => 23,
+        'ref_doc_103' => '5007730001',
+        'storage_location' => '3P01',
+        'status' => 'pending',
+    ]);
+
+    $newItem50 = WarehouseDeliveryBatchItem::create([
+        'warehouse_delivery_batch_id' => $batchNew->id,
+        'mat_doc_105' => '5007761453',
+        'doc_year' => '2026',
+        'po_number' => '5300067194',
+        'item_no' => '50',
+        'material_code' => '6008854',
+        'description' => 'GASKET SW',
+        'quantity' => 23,
+        'ref_doc_103' => '5007730001',
+        'storage_location' => '3P01',
+        'status' => 'pending',
+    ]);
+
+    $midItem60 = WarehouseDeliveryBatchItem::create([
+        'warehouse_delivery_batch_id' => $batchMid->id,
+        'mat_doc_105' => '5007761453',
+        'doc_year' => '2026',
+        'po_number' => '5300067194',
+        'item_no' => '60',
+        'material_code' => '6079965',
+        'description' => 'GASKET SPW',
+        'quantity' => 4,
+        'ref_doc_103' => '5007730001',
+        'storage_location' => '3P01',
+        'status' => 'pending',
+    ]);
+
+    $newItem60 = WarehouseDeliveryBatchItem::create([
+        'warehouse_delivery_batch_id' => $batchNew->id,
+        'mat_doc_105' => '5007761453',
+        'doc_year' => '2026',
+        'po_number' => '5300067194',
+        'item_no' => '60',
+        'material_code' => '6079965',
+        'description' => 'GASKET SPW',
+        'quantity' => 4,
+        'ref_doc_103' => '5007730001',
+        'storage_location' => '3P01',
+        'status' => 'pending',
+    ]);
+
+    $component = Livewire::test(ScanWarehouseTransmittal::class)
+        ->set('data.warehouse_destination_id', $destination->id)
+        ->call('processScan', '5007761453')
+        ->assertDispatched('play-success-sound');
+
+    // Harus hanya masuk 2 baris unik (item 50 & item 60), BUKAN 5 baris duplikat
+    $transmittalItems = WarehouseTransmittalItem::with('batchItem')->get();
+    expect($transmittalItems)->toHaveCount(2)
+        ->and($transmittalItems->pluck('warehouse_delivery_batch_item_id')->sort()->values()->all())
+        ->toBe([$newItem50->id, $newItem60->id]);
+
+    // Seluruh salinan lintas batch ikut tersinkron ke status delivered
+    expect($oldItem50->fresh()->status)->toBe('delivered')
+        ->and($midItem50->fresh()->status)->toBe('delivered')
+        ->and($newItem50->fresh()->status)->toBe('delivered')
+        ->and($midItem60->fresh()->status)->toBe('delivered')
+        ->and($newItem60->fresh()->status)->toBe('delivered');
+
+    // Scan ulang kode yang sama -> harus ditolak sebagai already_exists tanpa menambah duplikat
+    $component->call('processScan', '5007761453')->assertDispatched('play-error-sound');
+    expect(WarehouseTransmittalItem::count())->toBe(2);
+
+    // Hapus item 50 dari transmittal -> seluruh salinan item 50 di 3 batch kembali ke pending, item 60 tetap delivered
+    $item50Row = $transmittalItems->firstWhere('warehouse_delivery_batch_item_id', $newItem50->id);
+    $component->call('deleteItem', $item50Row->id);
+
+    expect(WarehouseTransmittalItem::count())->toBe(1)
+        ->and($oldItem50->fresh()->status)->toBe('pending')
+        ->and($midItem50->fresh()->status)->toBe('pending')
+        ->and($newItem50->fresh()->status)->toBe('pending')
+        ->and($newItem60->fresh()->status)->toBe('delivered');
+});

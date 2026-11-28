@@ -266,3 +266,73 @@ test('sap mb51 service scales efficiently for large datasets with bulk lookup', 
 
     expect($matchedCount)->toBe(500);
 });
+
+test('sap mb51 service skips duplicate items across overlapping batch uploads and enriches incomplete records', function () {
+    $user = User::create([
+        'name' => 'Tester Overlap',
+        'email' => 'overlap@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    // Batch 1: mengimpor 2 item (item pertama belum punya ref_doc_103 dan qty=1)
+    $csv1 = <<<'CSV'
+Posting Date,Material,Material Description,Item,Purchase Order,Reference Document,Material Document,Qty in Un. of Entry,Unit of Entry,Amount in LC,Storage Location
+2026-11-20,6008854,GASKET SW,50,5300067194,,5007761453,1,EA,0,
+2026-11-20,6079965,GASKET SPW,60,5300067194,5007730001,5007761453,4,EA,500000,3P01
+CSV;
+
+    $path1 = tempnam(sys_get_temp_dir(), 'mb51_ov1_').'.csv';
+    file_put_contents($path1, $csv1);
+
+    $service = new SapMb51ImportService;
+    $batch1 = $service->import([
+        'file_path' => $path1,
+        'file_name' => 'batch1.csv',
+        'start_date' => '2026-11-01',
+        'end_date' => '2026-11-24',
+        'uploaded_by' => $user->id,
+    ]);
+    @unlink($path1);
+
+    expect($batch1->total_items)->toBe(2);
+
+    // Tandai item 60 sudah delivered untuk memastikan status tidak ter-reset saat overlap upload
+    $existingItem60 = WarehouseDeliveryBatchItem::where('item_no', '60')->firstOrFail();
+    $existingItem60->update(['status' => 'delivered', 'warehouse_transmittal_id' => 99]);
+
+    // Batch 2: rentang tumpang tindih berisi 2 item lama (item 50 kini lengkap) + 1 item baru
+    $csv2 = <<<'CSV'
+Posting Date,Material,Material Description,Item,Purchase Order,Reference Document,Material Document,Qty in Un. of Entry,Unit of Entry,Amount in LC,Storage Location
+2026-11-20,6008854,GASKET SW,50,5300067194,5007730001,5007761453,23,EA,1200000,3P01
+2026-11-20,6079965,GASKET SPW,60,5300067194,5007730001,5007761453,4,EA,500000,3P01
+2026-11-25,6047754,PACKING PTFE,10,5300066845,5007730002,5007756035,60,EA,900000,3P01
+CSV;
+
+    $path2 = tempnam(sys_get_temp_dir(), 'mb51_ov2_').'.csv';
+    file_put_contents($path2, $csv2);
+
+    $batch2 = $service->import([
+        'file_path' => $path2,
+        'file_name' => 'batch2.csv',
+        'start_date' => '2026-11-01',
+        'end_date' => '2026-11-27',
+        'uploaded_by' => $user->id,
+    ]);
+    @unlink($path2);
+
+    // Hanya 1 item baru yang diimpor ke Batch 2; 2 item duplikat dilewati otomatis
+    expect($batch2->total_items)->toBe(1)
+        ->and($batch2->items()->count())->toBe(1)
+        ->and(WarehouseDeliveryBatchItem::count())->toBe(3)
+        ->and($batch2->notes)->toContain('2 baris duplikat');
+
+    // Item 50 lama otomatis diperkaya dengan ref_doc_103, storage_location, dan qty=23
+    $enrichedItem50 = WarehouseDeliveryBatchItem::where('item_no', '50')->firstOrFail();
+    expect($enrichedItem50->ref_doc_103)->toBe('5007730001')
+        ->and($enrichedItem50->storage_location)->toBe('3P01')
+        ->and((float) $enrichedItem50->quantity)->toBe(23.0);
+
+    // Item 60 tetap berstatus delivered & tidak berubah transmittal_id
+    expect($existingItem60->fresh()->status)->toBe('delivered')
+        ->and($existingItem60->fresh()->warehouse_transmittal_id)->toBe(99);
+});

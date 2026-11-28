@@ -465,6 +465,8 @@ class ScanWarehouseTransmittal extends Page implements HasForms
         $matchedBy = 'mat_doc_105';
         $batchItems = WarehouseDeliveryBatchItem::with(['batch', 'deliveryOrderReceiptDetail'])
             ->where('mat_doc_105', $parsedCode)
+            ->orderByDesc('warehouse_delivery_batch_id')
+            ->orderByDesc('id')
             ->get();
 
         // Fallback ke Kode Material bila tidak cocok dengan MatDoc 105 (hanya ambil item pending agar tidak menarik batch lama yang sudah terkirim)
@@ -473,6 +475,8 @@ class ScanWarehouseTransmittal extends Page implements HasForms
             $batchItems = WarehouseDeliveryBatchItem::with(['batch', 'deliveryOrderReceiptDetail'])
                 ->where('material_code', $rawToken)
                 ->where('status', 'pending')
+                ->orderByDesc('warehouse_delivery_batch_id')
+                ->orderByDesc('id')
                 ->get();
 
             if ($batchItems->isEmpty() && $this->transmittalId) {
@@ -501,49 +505,102 @@ class ScanWarehouseTransmittal extends Page implements HasForms
 
         $transmittal ??= $this->ensureActiveTransmittal();
 
+        // Kumpulkan kunci logis & ID yang sudah masuk ke transmittal aktif untuk mencegah duplikasi lintas batch MB51
+        $existingTransmittalItems = WarehouseTransmittalItem::where('warehouse_transmittal_id', $transmittal->id)
+            ->with('batchItem')
+            ->get();
+
+        $existingLogicalKeys = [];
+        $existingBatchItemIds = [];
+        $existingLegacyDetailIds = [];
+
+        foreach ($existingTransmittalItems as $existingItem) {
+            if ($existingItem->warehouse_delivery_batch_item_id) {
+                $existingBatchItemIds[$existingItem->warehouse_delivery_batch_item_id] = true;
+            }
+            if ($existingItem->batchItem) {
+                $existingLogicalKeys[$existingItem->batchItem->logicalKey()] = true;
+            } elseif ($existingItem->delivery_order_receipt_detail_id) {
+                $existingLegacyDetailIds[$existingItem->delivery_order_receipt_detail_id] = true;
+            }
+        }
+
+        // Kelompokkan kandidat berdasarkan kunci logis SAP (MatDoc 105 + Tahun + PO + Item + Kode Material)
+        // sehingga item yang terimpor berulang di beberapa batch MB51 hanya masuk 1 kali ke transmittal.
+        $groupedItems = $batchItems->groupBy(fn (WarehouseDeliveryBatchItem $item): string => $item->logicalKey());
+
         $newlyAddedCount = 0;
         $alreadyInThisCount = 0;
 
-        foreach ($batchItems as $batchItem) {
-            $existsInCurrent = WarehouseTransmittalItem::where('warehouse_transmittal_id', $transmittal->id)
-                ->where(function ($q) use ($batchItem): void {
-                    $q->where('warehouse_delivery_batch_item_id', $batchItem->id);
-                    if ($batchItem->delivery_order_receipt_detail_id) {
-                        $q->orWhere(function ($legacy) use ($batchItem): void {
-                            $legacy->whereNull('warehouse_delivery_batch_item_id')
-                                ->where('delivery_order_receipt_detail_id', $batchItem->delivery_order_receipt_detail_id);
-                        });
+        foreach ($groupedItems as $logicalKey => $siblings) {
+            /** @var WarehouseDeliveryBatchItem $canonicalItem */
+            $canonicalItem = $siblings
+                ->sort(function (WarehouseDeliveryBatchItem $a, WarehouseDeliveryBatchItem $b): int {
+                    $scoreCmp = $b->richnessScore() <=> $a->richnessScore();
+                    if ($scoreCmp !== 0) {
+                        return $scoreCmp;
                     }
+
+                    $batchCmp = $b->warehouse_delivery_batch_id <=> $a->warehouse_delivery_batch_id;
+                    if ($batchCmp !== 0) {
+                        return $batchCmp;
+                    }
+
+                    return $b->id <=> $a->id;
                 })
-                ->exists();
+                ->first();
+
+            $existsInCurrent = isset($existingLogicalKeys[$logicalKey])
+                || $siblings->contains(fn (WarehouseDeliveryBatchItem $sib): bool => isset($existingBatchItemIds[$sib->id]))
+                || ($canonicalItem->delivery_order_receipt_detail_id && isset($existingLegacyDetailIds[$canonicalItem->delivery_order_receipt_detail_id]));
 
             if ($existsInCurrent) {
+                // Sinkronkan salinan batch lain yang masih pending agar status batch tetap konsisten
+                foreach ($siblings as $sibling) {
+                    if ($sibling->status !== 'delivered' || $sibling->warehouse_transmittal_id !== $transmittal->id) {
+                        $sibling->update([
+                            'warehouse_transmittal_id' => $transmittal->id,
+                            'status' => 'delivered',
+                        ]);
+                        if ($sibling->batch) {
+                            $affectedBatches[$sibling->batch->id] = $sibling->batch;
+                        }
+                    }
+                }
+
                 $alreadyInThisCount++;
 
                 continue;
             }
 
+            $resolvedDetail = $canonicalItem->deliveryOrderReceiptDetail
+                ?? $siblings->first(fn (WarehouseDeliveryBatchItem $sib): bool => $sib->deliveryOrderReceiptDetail !== null)?->deliveryOrderReceiptDetail;
+
             WarehouseTransmittalItem::create([
                 'warehouse_transmittal_id' => $transmittal->id,
-                'warehouse_delivery_batch_item_id' => $batchItem->id,
-                'delivery_order_receipt_detail_id' => $batchItem->delivery_order_receipt_detail_id,
+                'warehouse_delivery_batch_item_id' => $canonicalItem->id,
+                'delivery_order_receipt_detail_id' => $resolvedDetail?->id ?? $canonicalItem->delivery_order_receipt_detail_id,
             ]);
 
-            $batchItem->update([
-                'warehouse_transmittal_id' => $transmittal->id,
-                'status' => 'delivered',
-            ]);
+            foreach ($siblings as $sibling) {
+                $sibling->update([
+                    'warehouse_transmittal_id' => $transmittal->id,
+                    'status' => 'delivered',
+                ]);
 
-            if ($batchItem->deliveryOrderReceiptDetail) {
-                $batchItem->deliveryOrderReceiptDetail->update([
+                if ($sibling->batch) {
+                    $affectedBatches[$sibling->batch->id] = $sibling->batch;
+                }
+            }
+
+            if ($resolvedDetail) {
+                $resolvedDetail->update([
                     'warehouse_destination_id' => $transmittal->warehouse_destination_id,
                 ]);
             }
 
-            if ($batchItem->batch) {
-                $affectedBatches[$batchItem->batch->id] = $batchItem->batch;
-            }
-
+            $existingLogicalKeys[$logicalKey] = true;
+            $existingBatchItemIds[$canonicalItem->id] = true;
             $newlyAddedCount++;
         }
 
@@ -614,23 +671,43 @@ class ScanWarehouseTransmittal extends Page implements HasForms
 
     public function deleteItem(int $itemId): void
     {
-        $item = WarehouseTransmittalItem::find($itemId);
+        $item = WarehouseTransmittalItem::with(['batchItem.batch', 'batchItem.deliveryOrderReceiptDetail', 'detail'])->find($itemId);
         if (! $item) {
             return;
         }
 
-        if ($item->batchItem) {
-            $batch = $item->batchItem->batch;
-            $item->batchItem->update([
-                'warehouse_transmittal_id' => null,
-                'status' => 'pending',
-            ]);
-            $batch?->updateProgressStatus();
+        $transmittalId = $item->warehouse_transmittal_id;
+        $affectedBatches = [];
 
-            if ($item->batchItem->deliveryOrderReceiptDetail) {
-                $item->batchItem->deliveryOrderReceiptDetail->update([
-                    'warehouse_destination_id' => null,
+        if ($item->batchItem) {
+            $logicalKey = $item->batchItem->logicalKey();
+
+            // Kembalikan item utama beserta seluruh salinan lintas batch yang terkait ke status pending
+            $siblings = WarehouseDeliveryBatchItem::with(['batch', 'deliveryOrderReceiptDetail'])
+                ->where('mat_doc_105', $item->batchItem->mat_doc_105)
+                ->where('warehouse_transmittal_id', $transmittalId)
+                ->get()
+                ->filter(fn (WarehouseDeliveryBatchItem $sib): bool => $sib->id === $item->batchItem->id || $sib->logicalKey() === $logicalKey);
+
+            if ($siblings->isEmpty()) {
+                $siblings = collect([$item->batchItem]);
+            }
+
+            foreach ($siblings as $sibling) {
+                $sibling->update([
+                    'warehouse_transmittal_id' => null,
+                    'status' => 'pending',
                 ]);
+
+                if ($sibling->batch) {
+                    $affectedBatches[$sibling->batch->id] = $sibling->batch;
+                }
+
+                if ($sibling->deliveryOrderReceiptDetail) {
+                    $sibling->deliveryOrderReceiptDetail->update([
+                        'warehouse_destination_id' => null,
+                    ]);
+                }
             }
         }
 
@@ -641,6 +718,10 @@ class ScanWarehouseTransmittal extends Page implements HasForms
         }
 
         $item->delete();
+
+        foreach ($affectedBatches as $batch) {
+            $batch->updateProgressStatus();
+        }
 
         Notification::make()
             ->title('Item Dihapus')

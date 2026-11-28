@@ -63,17 +63,30 @@ class SapMb51ImportService
             throw new \RuntimeException('Format kolom SAP MB51 tidak valid. Pastikan kolom Purchase Order dan Material Document tersedia.');
         }
 
-        // Parse baris data
+        // Parse baris data dan cegah duplikasi baris identik di dalam file yang sama
         $parsedItems = [];
-        $totalValue = 0.0;
+        $seenInFile = [];
 
         for ($i = $headerIndex + 1; $i < count($rawRows); $i++) {
             $row = $rawRows[$i];
 
             $item = $this->parseRow($row, $headerMap);
             if ($item !== null) {
+                $logicalKey = WarehouseDeliveryBatchItem::makeLogicalKey(
+                    matDoc105: $item['mat_doc_105'] ?? null,
+                    poNumber: $item['po_number'] ?? null,
+                    itemNo: $item['item_no'] ?? null,
+                    materialCode: $item['material_code'] ?? null,
+                    docYear: $item['doc_year'] ?? null,
+                );
+
+                if (isset($seenInFile[$logicalKey])) {
+                    continue;
+                }
+
+                $seenInFile[$logicalKey] = true;
+                $item['_logical_key'] = $logicalKey;
                 $parsedItems[] = $item;
-                $totalValue += (float) ($item['amount'] ?? 0);
             }
         }
 
@@ -81,20 +94,82 @@ class SapMb51ImportService
             throw new \RuntimeException('Tidak ada data material valid yang dapat diimpor dari file tersebut.');
         }
 
+        // Preload item MB51 yang sudah ada di database agar unggahan rentang tanggal tumpang tindih tidak menduplikasi data
+        $existingByKey = [];
+        $uploadedMatDocs = array_values(array_unique(array_filter(array_column($parsedItems, 'mat_doc_105'))));
+
+        foreach (array_chunk($uploadedMatDocs, 500) as $docChunk) {
+            $existingRows = WarehouseDeliveryBatchItem::query()
+                ->whereIn('mat_doc_105', $docChunk)
+                ->orderByDesc('warehouse_delivery_batch_id')
+                ->orderByDesc('id')
+                ->get();
+
+            foreach ($existingRows as $existingRow) {
+                $key = $existingRow->logicalKey();
+                if (! isset($existingByKey[$key])) {
+                    $existingByKey[$key] = $existingRow;
+                }
+            }
+        }
+
         // Preload relasi Delivery Order secara bulk untuk performa tinggi & pencegahan N+1 query
         $lookups = $this->buildDeliveryOrderLookup($parsedItems);
 
-        return DB::transaction(function () use ($batchTitle, $startDate, $endDate, $fileName, $filePath, $uploadedBy, $parsedItems, $totalValue, $lookups) {
+        $newRows = [];
+        $newTotalValue = 0.0;
+        $skippedDuplicates = 0;
+        $toEnrich = [];
+
+        foreach ($parsedItems as $itemData) {
+            $logicalKey = $itemData['_logical_key'];
+            unset($itemData['_logical_key']);
+
+            $match = $this->matchFast($itemData, $lookups);
+            $itemData['delivery_order_receipt_id'] = $match['delivery_order_receipt_id'] ?? null;
+            $itemData['delivery_order_receipt_detail_id'] = $match['delivery_order_receipt_detail_id'] ?? null;
+
+            if (isset($existingByKey[$logicalKey])) {
+                $toEnrich[] = [$existingByKey[$logicalKey], $itemData];
+                $skippedDuplicates++;
+
+                continue;
+            }
+
+            $newRows[] = $itemData;
+            $newTotalValue += (float) ($itemData['amount'] ?? 0);
+        }
+
+        if ($toEnrich !== []) {
+            DB::transaction(function () use ($toEnrich): void {
+                foreach ($toEnrich as [$existing, $incoming]) {
+                    $this->enrichExistingBatchItemIfIncomplete($existing, $incoming);
+                }
+            });
+        }
+
+        if ($newRows === []) {
+            throw new \RuntimeException("Seluruh {$skippedDuplicates} baris data pada file ini sudah terdaftar di Master MB51 sebelumnya (tidak ada data baru untuk diimpor).");
+        }
+
+        return DB::transaction(function () use ($batchTitle, $startDate, $endDate, $fileName, $filePath, $uploadedBy, $newRows, $newTotalValue, $skippedDuplicates, $params) {
+            $notes = trim((string) ($params['notes'] ?? ''));
+            if ($skippedDuplicates > 0) {
+                $dupNote = "{$skippedDuplicates} baris duplikat dari batch sebelumnya dilewati otomatis.";
+                $notes = $notes !== '' ? "{$notes}\n{$dupNote}" : $dupNote;
+            }
+
             $batch = WarehouseDeliveryBatch::create([
                 'batch_title' => $batchTitle,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
-                'total_items' => count($parsedItems),
-                'total_value' => $totalValue,
+                'total_items' => count($newRows),
+                'total_value' => $newTotalValue,
                 'file_name' => $fileName,
                 'file_path' => $filePath,
                 'status' => 'active',
                 'uploaded_by' => $uploadedBy,
+                'notes' => $notes !== '' ? $notes : null,
             ]);
 
             $template = [
@@ -124,10 +199,7 @@ class SapMb51ImportService
             ];
 
             $cleanChunk = [];
-            foreach ($parsedItems as $itemData) {
-                $match = $this->matchFast($itemData, $lookups);
-                $itemData['delivery_order_receipt_id'] = $match['delivery_order_receipt_id'] ?? null;
-                $itemData['delivery_order_receipt_detail_id'] = $match['delivery_order_receipt_detail_id'] ?? null;
+            foreach ($newRows as $itemData) {
                 $itemData['warehouse_delivery_batch_id'] = $batch->id;
                 $itemData['warehouse_transmittal_id'] = null;
                 $itemData['created_at'] = now();
@@ -148,6 +220,48 @@ class SapMb51ImportService
 
             return $batch;
         });
+    }
+
+    /**
+     * Melengkapi metadata SAP pada item MB51 lama yang belum lengkap tanpa membuat baris duplikat
+     * dan tanpa mengubah status pengiriman/transmittal yang sudah ada.
+     *
+     * @param  array<string, mixed>  $incoming
+     */
+    protected function enrichExistingBatchItemIfIncomplete(WarehouseDeliveryBatchItem $existing, array $incoming): void
+    {
+        $updates = [];
+
+        if (blank($existing->ref_doc_103) && filled($incoming['ref_doc_103'] ?? null)) {
+            $updates['ref_doc_103'] = $incoming['ref_doc_103'];
+            // Batch lama tanpa ref_doc_103 sering memakai qty default 1; perbarui qty & nilai jika data SAP baru lebih lengkap
+            if ((float) ($incoming['quantity'] ?? 0) > 0 && (float) $existing->quantity !== (float) $incoming['quantity']) {
+                $updates['quantity'] = $incoming['quantity'];
+            }
+            if ((float) ($incoming['amount'] ?? 0) > 0 && (float) $existing->amount === 0.0) {
+                $updates['amount'] = $incoming['amount'];
+            }
+        }
+
+        if (blank($existing->storage_location) && filled($incoming['storage_location'] ?? null)) {
+            $updates['storage_location'] = $incoming['storage_location'];
+        }
+
+        if (blank($existing->reference_do_no) && filled($incoming['reference_do_no'] ?? null)) {
+            $updates['reference_do_no'] = $incoming['reference_do_no'];
+        }
+
+        if (blank($existing->delivery_order_receipt_id) && filled($incoming['delivery_order_receipt_id'] ?? null)) {
+            $updates['delivery_order_receipt_id'] = $incoming['delivery_order_receipt_id'];
+        }
+
+        if (blank($existing->delivery_order_receipt_detail_id) && filled($incoming['delivery_order_receipt_detail_id'] ?? null)) {
+            $updates['delivery_order_receipt_detail_id'] = $incoming['delivery_order_receipt_detail_id'];
+        }
+
+        if ($updates !== []) {
+            $existing->update($updates);
+        }
     }
 
     /**

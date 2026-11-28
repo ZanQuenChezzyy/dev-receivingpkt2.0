@@ -65,4 +65,69 @@ class WarehouseDeliveryBatchItem extends Model
     {
         return $this->belongsTo(WarehouseTransmittal::class);
     }
+
+    /**
+     * Membuat kunci logis unik satu baris transaksi SAP MB51 (MatDoc 105 + Tahun + PO + Item + Kode Material).
+     */
+    public static function makeLogicalKey(
+        ?string $matDoc105,
+        ?string $poNumber,
+        string|int|null $itemNo,
+        ?string $materialCode,
+        ?string $docYear = null,
+    ): string {
+        $doc = strtoupper(trim((string) $matDoc105));
+        $year = trim((string) $docYear);
+        $po = strtoupper(trim((string) $poNumber));
+        $rawItem = trim((string) $itemNo);
+        $item = $rawItem !== '' ? (ltrim($rawItem, '0') ?: '0') : '';
+        $mat = strtoupper(trim((string) $materialCode));
+
+        return "{$doc}|{$year}|{$po}|{$item}|{$mat}";
+    }
+
+    /**
+     * Mengembalikan kunci logis unik untuk record item MB51 ini.
+     */
+    public function logicalKey(): string
+    {
+        $year = trim((string) $this->doc_year);
+        if ($year === '' && $this->posting_date) {
+            $year = $this->posting_date->format('Y');
+        }
+
+        return static::makeLogicalKey(
+            matDoc105: $this->mat_doc_105,
+            poNumber: $this->po_number,
+            itemNo: $this->item_no,
+            materialCode: $this->material_code,
+            docYear: $year,
+        );
+    }
+
+    /**
+     * Skor kelengkapan data SAP untuk memilih 1 record kanonik saat terdapat duplikat lintas batch.
+     */
+    public function richnessScore(): int
+    {
+        $score = 0;
+
+        if (filled($this->ref_doc_103)) {
+            $score += 4;
+        }
+        if (filled($this->delivery_order_receipt_detail_id)) {
+            $score += 3;
+        }
+        if (filled($this->storage_location)) {
+            $score += 2;
+        }
+        if (filled($this->delivery_order_receipt_id)) {
+            $score += 2;
+        }
+        if (filled($this->reference_do_no)) {
+            $score += 1;
+        }
+
+        return $score;
+    }
 }

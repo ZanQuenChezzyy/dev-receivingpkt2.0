@@ -95,12 +95,18 @@ class ListWarehouseDeliveryBatches extends ListRecords
                             'start_date' => $data['start_date'],
                             'end_date' => $data['end_date'],
                             'batch_title' => $data['batch_title'],
+                            'notes' => $data['notes'] ?? null,
                             'uploaded_by' => Auth::id() ?? 1,
                         ]);
 
+                        $body = "Berhasil mengimpor {$batch->total_items} data material baru ke dalam batch '{$batch->batch_title}'.";
+                        if (filled($batch->notes) && str_contains($batch->notes, 'duplikat')) {
+                            $body .= ' '.$batch->notes;
+                        }
+
                         Notification::make()
                             ->title('Upload MB51 Berhasil!')
-                            ->body("Berhasil mengimpor {$batch->total_items} data material ke dalam batch '{$batch->batch_title}'.")
+                            ->body($body)
                             ->success()
                             ->send();
                     } catch (\Throwable $e) {
