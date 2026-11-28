@@ -30,14 +30,16 @@ class DeveloperBadgeRenderer
             User::DEVELOPER_BADGE_ELECTRIC => '<svg class="pkt-dev-badge-icon pkt-dev-icon-bolt" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">'
                 .'<path d="M11.983 1.907a.75.75 0 0 0-1.292-.657l-8.5 9.5A.75.75 0 0 0 2.75 12h6.572l-1.305 6.093a.75.75 0 0 0 1.292.657l8.5-9.5A.75.75 0 0 0 17.25 8h-6.572l1.305-6.093Z" />'
                 .'</svg>',
-            default => '<svg class="pkt-dev-badge-icon pkt-dev-icon-combo" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">'
-                .'<path d="M11.983 1.907a.75.75 0 0 0-1.292-.657l-8.5 9.5A.75.75 0 0 0 2.75 12h6.572l-1.305 6.093a.75.75 0 0 0 1.292.657l8.5-9.5A.75.75 0 0 0 17.25 8h-6.572l1.305-6.093Z" />'
+            default => '<svg class="pkt-dev-badge-icon pkt-dev-icon-aurora" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+                .'<path d="M12 1.5l2.35 6.15L20.5 10l-6.15 2.35L12 18.5l-2.35-6.15L3.5 10l6.15-2.35L12 1.5zm7 13.5l1.05 2.45L22.5 18.5l-2.45 1.05L19 22l-1.05-2.45L15.5 18.5l2.45-1.05L19 15zM5.5 2l.75 1.75L8 4.5l-1.75.75L5.5 7l-.75-1.75L3 4.5l1.75-.75L5.5 2z" />'
                 .'</svg>',
         };
 
-        $particles = $resolvedStyle === User::DEVELOPER_BADGE_FLAME
-            ? '<span class="pkt-dev-embers" aria-hidden="true"><i></i><i></i><i></i></span>'
-            : '<span class="pkt-dev-sheen" aria-hidden="true"></span>';
+        $particles = match ($resolvedStyle) {
+            User::DEVELOPER_BADGE_FLAME => '<span class="pkt-dev-embers" aria-hidden="true"><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_PKT_COMBO => '<span class="pkt-aurora-sheen" aria-hidden="true"></span><span class="pkt-aurora-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            default => '<span class="pkt-dev-sheen" aria-hidden="true"></span>',
+        };
 
         return '<span class="pkt-dev-badge pkt-dev-badge--'.$resolvedStyle.' '.$sizeClass.'">'
             .'<span class="pkt-dev-badge-ring" aria-hidden="true"></span>'

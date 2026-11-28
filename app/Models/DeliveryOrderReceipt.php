@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\BadgeMilestoneService;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 // use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -147,6 +148,13 @@ class DeliveryOrderReceipt extends Model
 
     protected static function booted()
     {
+        static::created(function (self $record): void {
+            app(BadgeMilestoneService::class)->syncMilestonesForUsers([
+                $record->created_by,
+                $record->received_by,
+            ]);
+        });
+
         static::updating(function ($record) {
             // Auto-fill delay_notes if it's empty when delay_reason is set
             if ($record->isDirty('delay_reason') && ! empty($record->delay_reason) && empty($record->delay_notes)) {

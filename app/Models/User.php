@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'avatar_url', 'cover_photo_url', 'npk', 'is_active', 'left_rail_shortcuts', 'developer_badge_style', 'has_exclusive_badge'])]
+#[Fillable(['name', 'email', 'password', 'avatar_url', 'cover_photo_url', 'npk', 'is_active', 'left_rail_shortcuts', 'developer_badge_style', 'has_exclusive_badge', 'unlocked_exclusive_badges', 'badge_milestone_notified'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasAvatar
 {
@@ -110,12 +110,12 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     }
 
     /**
-     * Memeriksa apakah pengguna berhak memakai gaya animasi badge eksklusif.
-     * - Role Developer selalu memiliki hak eksklusif.
+     * Memeriksa apakah pengguna memiliki hak eksklusif penuh (tanpa perlu menyelesaikan misi DO).
+     * - Role Developer selalu memiliki hak eksklusif penuh.
      * - Jika kolom has_exclusive_badge diatur secara eksplisit oleh Developer (true/false), nilai tersebut yang berlaku.
      * - Jika masih null, mengikuti daftar role bawaan (ANIMATED_BADGE_ROLES).
      */
-    public function canCustomizeAnimatedBadge(): bool
+    public function hasFullExclusiveBadgeAccess(): bool
     {
         try {
             if ($this->hasRole('Developer')) {
@@ -133,15 +133,83 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     }
 
     /**
+     * Alias kompatibilitas untuk pemeriksaan hak eksklusif penuh dari Developer/role khusus.
+     */
+    public function canCustomizeAnimatedBadge(): bool
+    {
+        return $this->hasFullExclusiveBadgeAccess();
+    }
+
+    /**
+     * Daftar badge eksklusif yang sudah diklaim pengguna melalui hadiah misi DO.
+     *
+     * @return list<string>
+     */
+    public function claimedExclusiveBadges(): array
+    {
+        $raw = $this->unlocked_exclusive_badges;
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $validKeys = array_keys(self::exclusiveAnimatedBadgeOptions());
+
+        return array_values(array_unique(array_filter(
+            array_map('strval', $raw),
+            fn (string $key): bool => in_array($key, $validKeys, true)
+        )));
+    }
+
+    /**
+     * Seluruh badge eksklusif yang berhak dipakai pengguna (baik via hak Developer maupun hasil klaim misi DO).
+     *
+     * @return list<string>
+     */
+    public function unlockedExclusiveBadges(): array
+    {
+        if ($this->hasFullExclusiveBadgeAccess()) {
+            return array_keys(self::exclusiveAnimatedBadgeOptions());
+        }
+
+        return $this->claimedExclusiveBadges();
+    }
+
+    /**
+     * Memeriksa apakah sebuah gaya badge (Classic Clean atau Eksklusif tertentu) boleh dipakai pengguna ini.
+     */
+    public function canUseBadgeStyle(string $style): bool
+    {
+        if (! array_key_exists($style, self::developerBadgeOptions())) {
+            return false;
+        }
+
+        if (! self::isExclusiveBadgeStyle($style)) {
+            return true;
+        }
+
+        if ($this->hasFullExclusiveBadgeAccess()) {
+            return true;
+        }
+
+        return in_array($style, $this->claimedExclusiveBadges(), true);
+    }
+
+    /**
      * Daftar opsi gaya badge yang boleh dipilih & disimpan oleh pengguna ini.
      *
      * @return array<string, string>
      */
     public function allowedBadgeOptions(): array
     {
-        return $this->canCustomizeAnimatedBadge()
-            ? self::developerBadgeOptions()
-            : self::classicCleanBadgeOptions();
+        $options = self::classicCleanBadgeOptions();
+
+        foreach (self::exclusiveAnimatedBadgeOptions() as $key => $label) {
+            if ($this->canUseBadgeStyle($key)) {
+                $options[$key] = $label;
+            }
+        }
+
+        return $options;
     }
 
     /**
@@ -163,23 +231,19 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     }
 
     /**
-     * Mengembalikan gaya badge aktif milik pengguna (mendukung Classic Clean untuk semua user
-     * dan animasi eksklusif khusus Developer & AVP Receiving).
+     * Mengembalikan gaya badge aktif milik pengguna (mendukung Classic Clean untuk semua user,
+     * badge eksklusif hasil klaim misi DO, serta hak eksklusif penuh dari Developer).
      */
     public function resolvedDeveloperBadgeStyle(): string
     {
         $style = trim((string) ($this->developer_badge_style ?? ''));
 
-        if ($this->canCustomizeAnimatedBadge()) {
-            if ($style !== '' && array_key_exists($style, self::developerBadgeOptions())) {
-                return $style;
-            }
-
-            return self::DEVELOPER_BADGE_ELECTRIC;
+        if ($style !== '' && $this->canUseBadgeStyle($style)) {
+            return $style;
         }
 
-        if ($style !== '' && array_key_exists($style, self::classicCleanBadgeOptions())) {
-            return $style;
+        if ($this->hasFullExclusiveBadgeAccess()) {
+            return self::DEVELOPER_BADGE_ELECTRIC;
         }
 
         return self::DEVELOPER_BADGE_NONE;
@@ -187,8 +251,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
 
     public function isDeveloperBadgeAnimated(): bool
     {
-        return $this->canCustomizeAnimatedBadge()
-            && self::isExclusiveBadgeStyle($this->resolvedDeveloperBadgeStyle());
+        return self::isExclusiveBadgeStyle($this->resolvedDeveloperBadgeStyle());
     }
 
     /**
@@ -203,6 +266,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             'password' => 'hashed',
             'is_active' => 'boolean',
             'has_exclusive_badge' => 'boolean',
+            'unlocked_exclusive_badges' => 'array',
+            'badge_milestone_notified' => 'array',
             'left_rail_shortcuts' => 'array',
         ];
     }

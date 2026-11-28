@@ -151,12 +151,14 @@ class UserBadgeRenderer
         $miniIcon = match ($validStyle) {
             User::DEVELOPER_BADGE_FLAME => '<svg class="pkt-user-pill-icon pkt-dev-icon-flame" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M13.5 4.938a7 7 0 1 1-9.006 1.737c.202-.257.59-.218.793.039.278.352.594.672.943.954.332.269.786-.049.773-.476a5.977 5.977 0 0 1 .572-2.759 6.026 6.026 0 0 1 2.486-2.665c.247-.14.55-.016.677.238A6.967 6.967 0 0 0 13.5 4.938ZM14 12a4 4 0 0 1-4 4c-1.913 0-3.52-1.398-3.91-3.182-.093-.429.44-.643.814-.413a4.043 4.043 0 0 0 1.601.564c.303.038.531-.24.51-.544a5.975 5.975 0 0 1 1.315-4.192.447.447 0 0 1 .431-.16A4.001 4.001 0 0 1 14 12Z" clip-rule="evenodd" /></svg>',
             User::DEVELOPER_BADGE_ELECTRIC => '<svg class="pkt-user-pill-icon pkt-dev-icon-bolt" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M11.983 1.907a.75.75 0 0 0-1.292-.657l-8.5 9.5A.75.75 0 0 0 2.75 12h6.572l-1.305 6.093a.75.75 0 0 0 1.292.657l8.5-9.5A.75.75 0 0 0 17.25 8h-6.572l1.305-6.093Z" /></svg>',
-            default => '<svg class="pkt-user-pill-icon pkt-dev-icon-combo" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M11.983 1.907a.75.75 0 0 0-1.292-.657l-8.5 9.5A.75.75 0 0 0 2.75 12h6.572l-1.305 6.093a.75.75 0 0 0 1.292.657l8.5-9.5A.75.75 0 0 0 17.25 8h-6.572l1.305-6.093Z" /></svg>',
+            default => '<svg class="pkt-user-pill-icon pkt-dev-icon-aurora" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5l2.35 6.15L20.5 10l-6.15 2.35L12 18.5l-2.35-6.15L3.5 10l6.15-2.35L12 1.5zm7 13.5l1.05 2.45L22.5 18.5l-2.45 1.05L19 22l-1.05-2.45L15.5 18.5l2.45-1.05L19 15z" /></svg>',
         };
 
-        $fxLayer = $validStyle === User::DEVELOPER_BADGE_FLAME
-            ? '<span class="pkt-user-pill-embers" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
-            : '<span class="pkt-user-pill-sheen" aria-hidden="true"></span>';
+        $fxLayer = match ($validStyle) {
+            User::DEVELOPER_BADGE_FLAME => '<span class="pkt-user-pill-embers" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_PKT_COMBO => '<span class="pkt-aurora-sheen" aria-hidden="true"></span><span class="pkt-aurora-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            default => '<span class="pkt-user-pill-sheen" aria-hidden="true"></span>',
+        };
 
         $fallbackRoleLabel = method_exists($user, 'primaryAnimatedBadgeRole')
             ? ($user->primaryAnimatedBadgeRole() ?? 'Developer')
@@ -201,7 +203,8 @@ class UserBadgeRenderer
         $rawExclusive = array_key_exists('has_exclusive_badge', $user->getAttributes())
             ? var_export($user->getAttributes()['has_exclusive_badge'], true)
             : 'unset';
-        $cacheKey = "{$userId}|{$rawStyle}|{$rawExclusive}";
+        $rawUnlocked = (string) ($user->getAttributes()['unlocked_exclusive_badges'] ?? '');
+        $cacheKey = "{$userId}|{$rawStyle}|{$rawExclusive}|{$rawUnlocked}";
 
         if ($userId > 0 && array_key_exists($cacheKey, static::$developerStyleCache)) {
             return static::$developerStyleCache[$cacheKey];

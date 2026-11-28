@@ -41,7 +41,7 @@
     $developerBadgeStyle = $user && method_exists($user, 'resolvedDeveloperBadgeStyle')
         ? $user->resolvedDeveloperBadgeStyle()
         : \App\Models\User::DEVELOPER_BADGE_NONE;
-    $hasAnimatedDevRing = $hasCustomAnimatedRole && \App\Models\User::isExclusiveBadgeStyle($developerBadgeStyle);
+    $hasAnimatedDevRing = \App\Models\User::isExclusiveBadgeStyle($developerBadgeStyle);
 @endphp
 
 {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::USER_MENU_BEFORE) }}

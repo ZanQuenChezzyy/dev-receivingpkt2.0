@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\User;
+use App\Services\BadgeMilestoneService;
 use App\Services\UserBadgeRenderer;
 use App\Support\DeveloperBadgeRenderer;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
@@ -10,6 +11,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -28,6 +30,47 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 class EditProfile extends BaseEditProfile
 {
     protected Width|string|null $maxWidth = Width::FiveExtraLarge;
+
+    public function mount(): void
+    {
+        parent::mount();
+
+        /** @var ?User $user */
+        $user = filament()->auth()->user();
+        if ($user) {
+            app(BadgeMilestoneService::class)->syncMilestonesAndNotify($user);
+        }
+    }
+
+    public function claimBadgeGift(string $badgeStyle): void
+    {
+        /** @var ?User $user */
+        $user = filament()->auth()->user();
+        if (! $user) {
+            return;
+        }
+
+        $claimed = app(BadgeMilestoneService::class)->claimGiftBadge($user, $badgeStyle);
+
+        if (! $claimed) {
+            Notification::make()
+                ->title('Hadiah belum dapat diklaim')
+                ->body('Selesaikan target misi penerimaan DO terlebih dahulu atau hadiah tersebut sudah pernah diklaim.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $this->data['developer_badge_style'] = $badgeStyle;
+        $badgeName = User::exclusiveAnimatedBadgeOptions()[$badgeStyle] ?? $badgeStyle;
+
+        Notification::make()
+            ->title('Hadiah Badge Berhasil Diambil')
+            ->body("Badge eksklusif {$badgeName} kini terbuka dan langsung aktif pada profil Anda.")
+            ->success()
+            ->send();
+    }
 
     public function getTitle(): string|Htmlable
     {
@@ -68,15 +111,14 @@ class EditProfile extends BaseEditProfile
                             ->state(function (Get $get): HtmlString {
                                 /** @var ?User $user */
                                 $user = filament()->auth()->user();
-                                $canCustomize = (bool) $user?->canCustomizeAnimatedBadge();
                                 $roleLabel = $user?->primaryAnimatedBadgeRole()
                                     ?? ($user?->roles->first()?->name ?? 'User');
                                 $rawSelected = (string) ($get('developer_badge_style') ?: ($user?->resolvedDeveloperBadgeStyle() ?? User::DEVELOPER_BADGE_NONE));
-                                $selected = (! $canCustomize && User::isExclusiveBadgeStyle($rawSelected))
-                                    ? User::DEVELOPER_BADGE_NONE
-                                    : (array_key_exists($rawSelected, User::developerBadgeOptions()) ? $rawSelected : User::DEVELOPER_BADGE_NONE);
+                                $selected = ($user && $user->canUseBadgeStyle($rawSelected))
+                                    ? $rawSelected
+                                    : ($user?->resolvedDeveloperBadgeStyle() ?? User::DEVELOPER_BADGE_NONE);
 
-                                $isExclusiveSelected = $canCustomize && User::isExclusiveBadgeStyle($selected);
+                                $isExclusiveSelected = User::isExclusiveBadgeStyle($selected);
 
                                 $displayName = trim((string) ($get('name') ?: ($user?->name ?? 'Pengguna')));
                                 $displayNpk = trim((string) ($get('npk') ?: ($user?->npk ?? '-')));
@@ -160,9 +202,11 @@ class EditProfile extends BaseEditProfile
                 // 2. Clean Full-Width Tabbed Settings Panel (Profil & Keamanan in 1 View + Gaya Badge)
                 Tabs::make('EditProfile')
                     ->contained()
+                    ->persistTabInQueryString('tab')
                     ->extraAttributes(['class' => 'pkt-profile-tabs'])
                     ->tabs([
                         Tab::make('Profil & Keamanan')
+                            ->id('profil-keamanan')
                             ->icon('heroicon-o-user-circle')
                             ->schema([
                                 Grid::make(['default' => 1, 'md' => 12])
@@ -283,17 +327,43 @@ class EditProfile extends BaseEditProfile
                             ]),
 
                         Tab::make('Gaya Badge')
+                            ->id('gaya-badge')
                             ->icon('heroicon-o-swatch')
+                            ->badge(function (): ?string {
+                                /** @var ?User $user */
+                                $user = filament()->auth()->user();
+                                if (! $user || $user->hasFullExclusiveBadgeAccess()) {
+                                    return null;
+                                }
+
+                                $progress = app(BadgeMilestoneService::class)->getProgress($user);
+
+                                return $progress['has_any_pending_gift'] ? 'Hadiah' : null;
+                            })
+                            ->badgeColor('warning')
                             ->schema([
+                                TextEntry::make('badge_mission_progress')
+                                    ->hiddenLabel()
+                                    ->columnSpanFull()
+                                    ->state(function (): HtmlString {
+                                        /** @var ?User $user */
+                                        $user = filament()->auth()->user();
+                                        if (! $user) {
+                                            return new HtmlString('');
+                                        }
+
+                                        return $this->renderMissionProgressHtml($user);
+                                    }),
+
                                 Radio::make('developer_badge_style')
                                     ->label('Pilih Gaya Badge Profil & Tabel')
                                     ->helperText(function (): string {
                                         /** @var ?User $user */
                                         $user = filament()->auth()->user();
 
-                                        return $user?->canCustomizeAnimatedBadge()
-                                            ? 'Anda dapat memilih seluruh tema Classic Clean maupun gaya animasi eksklusif. Perubahan langsung terlihat pada pratinjau di atas.'
-                                            : 'Pilih tema warna Classic Clean untuk badge Anda di seluruh tabel dan profil. Gaya animasi bertanda gembok hanya dapat dibuka dengan hak eksklusif dari Developer.';
+                                        return $user?->hasFullExclusiveBadgeAccess()
+                                            ? 'Anda memiliki hak eksklusif penuh untuk seluruh tema Classic Clean dan animasi eksklusif. Perubahan langsung terlihat pada pratinjau di atas.'
+                                            : 'Pilih tema warna Classic Clean kapan saja. Badge eksklusif bertanda gembok dapat dibuka dengan menyelesaikan misi penerimaan DO (1.000, 5.000, dan 50.000 DO) atau melalui hak eksklusif dari Developer.';
                                     })
                                     ->default(function (): string {
                                         /** @var ?User $user */
@@ -308,13 +378,12 @@ class EditProfile extends BaseEditProfile
                                         /** @var ?User $user */
                                         $user = filament()->auth()->user();
 
-                                        return ! (bool) $user?->canCustomizeAnimatedBadge()
-                                            && User::isExclusiveBadgeStyle($value);
+                                        return ! (bool) $user?->canUseBadgeStyle($value);
                                     })
                                     ->options(function (): array {
                                         /** @var ?User $user */
                                         $user = filament()->auth()->user();
-                                        $canCustomize = (bool) $user?->canCustomizeAnimatedBadge();
+                                        $hasFullAccess = (bool) $user?->hasFullExclusiveBadgeAccess();
                                         $roleLabel = $user?->primaryAnimatedBadgeRole()
                                             ?? ($user?->roles->first()?->name ?? 'User');
 
@@ -353,14 +422,20 @@ class EditProfile extends BaseEditProfile
                                             User::DEVELOPER_BADGE_ELECTRIC => [
                                                 'title' => 'Sparkling Lightning',
                                                 'desc' => 'Arus energi biru-cyan berputar dengan kilatan petir.',
+                                                'tier_chip' => 'Eksklusif',
+                                                'unlock_hint' => 'Misi 1.000 / 5.000 DO atau hak eksklusif Developer',
                                             ],
                                             User::DEVELOPER_BADGE_FLAME => [
                                                 'title' => 'Blazing Ember',
                                                 'desc' => 'Bara api oranye menyala dengan percikan cahaya.',
+                                                'tier_chip' => 'Eksklusif',
+                                                'unlock_hint' => 'Misi 1.000 / 5.000 DO atau hak eksklusif Developer',
                                             ],
                                             User::DEVELOPER_BADGE_PKT_COMBO => [
                                                 'title' => 'Solar Aurora',
-                                                'desc' => 'Cincin gradasi biru-oranye berputar dengan kilau.',
+                                                'desc' => 'Tier tertinggi: aurora prismatik mengalir dengan kilau bintang & pendaran multi-spektrum.',
+                                                'tier_chip' => 'Tier Tertinggi',
+                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
                                             ],
                                         ];
 
@@ -380,15 +455,22 @@ class EditProfile extends BaseEditProfile
                                         }
 
                                         foreach ($exclusiveDefinitions as $key => $meta) {
-                                            $statusChip = $canCustomize
-                                                ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F47920]/15 text-[#F47920] dark:text-orange-300">Eksklusif</span>'
-                                                : '<span class="pkt-badge-locked-chip inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/90 dark:bg-white/[0.1] text-slate-600 dark:text-slate-300" title="Memerlukan hak eksklusif dari Developer">'.$lockIcon.'Terkunci</span>';
+                                            $isUnlocked = (bool) $user?->canUseBadgeStyle($key);
+                                            $isMythic = $key === User::DEVELOPER_BADGE_PKT_COMBO;
 
-                                            $lockedNote = $canCustomize
-                                                ? ''
-                                                : '<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">'.$lockIcon.'Memerlukan hak eksklusif dari Developer</span>';
+                                            if ($isUnlocked) {
+                                                $chipColor = $isMythic
+                                                    ? 'bg-gradient-to-r from-[#0054A6] via-[#A855F7] to-[#F47920] text-white shadow-xs'
+                                                    : 'bg-[#F47920]/15 text-[#F47920] dark:text-orange-300';
+                                                $chipText = $hasFullAccess ? $meta['tier_chip'] : ($isMythic ? 'Tier Tertinggi • Terbuka' : 'Terbuka via Misi');
+                                                $statusChip = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold '.$chipColor.'">'.$chipText.'</span>';
+                                                $lockedNote = '';
+                                            } else {
+                                                $statusChip = '<span class="pkt-badge-locked-chip inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/90 dark:bg-white/[0.1] text-slate-600 dark:text-slate-300" title="'.e($meta['unlock_hint']).'">'.$lockIcon.'Terkunci</span>';
+                                                $lockedNote = '<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">'.$lockIcon.e($meta['unlock_hint']).'</span>';
+                                            }
 
-                                            $previewLabel = $canCustomize ? $roleLabel : 'Eksklusif';
+                                            $previewLabel = $isUnlocked ? $roleLabel : ($isMythic ? 'Tier Tertinggi' : 'Eksklusif');
 
                                             $options[$key] = new HtmlString(
                                                 '<div class="flex flex-col gap-2 py-0.5">'
@@ -416,6 +498,112 @@ class EditProfile extends BaseEditProfile
             ]);
     }
 
+    protected function renderMissionProgressHtml(User $user): HtmlString
+    {
+        $progress = app(BadgeMilestoneService::class)->getProgress($user);
+
+        if ($progress['has_full_access']) {
+            return new HtmlString(
+                '<div class="rounded-2xl px-4 py-3 bg-[#0054A6]/8 dark:bg-[#83A2DB]/10 border border-[#0054A6]/20 dark:border-[#83A2DB]/20 flex flex-wrap items-center justify-between gap-2">'
+                .'<div class="flex items-center gap-2.5">'
+                .'<span class="w-8 h-8 rounded-xl bg-[#F47920]/15 text-[#F47920] inline-flex items-center justify-center shrink-0">'
+                .'<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5l2.35 6.15L20.5 10l-6.15 2.35L12 18.5l-2.35-6.15L3.5 10l6.15-2.35L12 1.5z" /></svg>'
+                .'</span>'
+                .'<div>'
+                .'<div class="text-xs font-bold text-[#10141A] dark:text-white">Hak Badge Eksklusif Aktif</div>'
+                .'<div class="text-[11px] text-slate-500 dark:text-slate-400">Seluruh badge animasi eksklusif termasuk tier tertinggi Solar Aurora terbuka penuh tanpa syarat misi DO.</div>'
+                .'</div>'
+                .'</div>'
+                .'<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">Akses Penuh</span>'
+                .'</div>'
+            );
+        }
+
+        $giftBanner = '';
+
+        if ($progress['has_any_pending_gift']) {
+            $buttons = [];
+
+            foreach ($progress['claimable_choice_badges'] as $badgeKey) {
+                $label = User::exclusiveAnimatedBadgeOptions()[$badgeKey] ?? $badgeKey;
+                $buttons[] = '<button type="button" wire:click="claimBadgeGift(\''.$badgeKey.'\')" wire:loading.attr="disabled" '
+                    .'class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#F47920] hover:bg-[#e06512] text-white shadow-sm transition-colors cursor-pointer">'
+                    .'<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a2.5 2.5 0 0 0-2.45 2H4.75A1.75 1.75 0 0 0 3 5.75v2.5C3 9.216 3.784 10 4.75 10H9.25V5.5h1.5V10h4.5A1.75 1.75 0 0 0 17 8.25v-2.5A1.75 1.75 0 0 0 15.25 4h-2.8A2.5 2.5 0 0 0 10 2ZM4 11.5v4.75C4 17.216 4.784 18 5.75 18H9.25v-6.5H4Zm6.75 6.5h3.5A1.75 1.75 0 0 0 16 16.25V11.5h-5.25V18Z" /></svg>'
+                    .'Ambil '.e($label)
+                    .'</button>';
+            }
+
+            if ($progress['can_claim_solar_aurora']) {
+                $buttons[] = '<button type="button" wire:click="claimBadgeGift(\''.User::DEVELOPER_BADGE_PKT_COMBO.'\')" wire:loading.attr="disabled" '
+                    .'class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-[#0054A6] via-[#A855F7] to-[#F47920] text-white shadow-md hover:opacity-95 transition-opacity cursor-pointer">'
+                    .'<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5l2.35 6.15L20.5 10l-6.15 2.35L12 18.5l-2.35-6.15L3.5 10l6.15-2.35L12 1.5z" /></svg>'
+                    .'Ambil Hadiah Solar Aurora'
+                    .'</button>';
+            }
+
+            $giftSubtitle = count($progress['claimable_choice_badges']) === 2 && ! $progress['can_claim_solar_aurora'] && $progress['pending_choice_slots'] === 1
+                ? 'Anda menyelesaikan Misi 1.000 Penerimaan DO. Pilih salah satu badge eksklusif di bawah ini untuk langsung dibuka:'
+                : 'Target misi penerimaan DO telah tercapai. Klik tombol di bawah untuk mengklaim hadiah badge eksklusif Anda:';
+
+            $giftBanner = '<div class="mb-4 rounded-2xl p-4 bg-gradient-to-r from-[#F47920]/12 via-amber-500/8 to-[#0054A6]/10 border border-[#F47920]/35 dark:border-[#F47920]/40">'
+                .'<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">'
+                .'<div class="flex items-start gap-3">'
+                .'<span class="w-9 h-9 rounded-2xl bg-[#F47920] text-white inline-flex items-center justify-center shrink-0 shadow-sm">'
+                .'<svg class="w-4.5 h-4.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a2.5 2.5 0 0 0-2.45 2H4.75A1.75 1.75 0 0 0 3 5.75v2.5C3 9.216 3.784 10 4.75 10H9.25V5.5h1.5V10h4.5A1.75 1.75 0 0 0 17 8.25v-2.5A1.75 1.75 0 0 0 15.25 4h-2.8A2.5 2.5 0 0 0 10 2ZM4 11.5v4.75C4 17.216 4.784 18 5.75 18H9.25v-6.5H4Zm6.75 6.5h3.5A1.75 1.75 0 0 0 16 16.25V11.5h-5.25V18Z" /></svg>'
+                .'</span>'
+                .'<div>'
+                .'<div class="text-sm font-bold text-[#10141A] dark:text-white">Hadiah Misi Badge Siap Diambil</div>'
+                .'<div class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">'.e($giftSubtitle).'</div>'
+                .'</div>'
+                .'</div>'
+                .'<div class="flex flex-wrap items-center gap-2 shrink-0">'.implode('', $buttons).'</div>'
+                .'</div>'
+                .'</div>';
+        }
+
+        $cards = [];
+        foreach ($progress['milestones'] as $milestone) {
+            $statusPill = match (true) {
+                $milestone['completed'] => '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">Diklaim</span>',
+                $milestone['reached'] => '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F47920]/15 text-[#F47920] dark:text-orange-300">Siap Diambil</span>',
+                default => '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/75 dark:bg-white/[0.08] text-slate-600 dark:text-slate-300 tabular-nums">'.number_format(min($progress['do_count'], $milestone['target']), 0, ',', '.').' / '.number_format($milestone['target'], 0, ',', '.').'</span>',
+            };
+
+            $barColor = match (true) {
+                $milestone['completed'] => 'bg-emerald-500',
+                $milestone['reached'] => 'bg-[#F47920]',
+                default => 'bg-[#0054A6] dark:bg-[#60A5FA]',
+            };
+
+            $cards[] = '<div class="rounded-2xl p-3.5 bg-slate-50/90 dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.08] flex flex-col gap-2">'
+                .'<div class="flex items-center justify-between gap-2">'
+                .'<span class="text-xs font-bold text-[#10141A] dark:text-white">'.e($milestone['title']).'</span>'
+                .$statusPill
+                .'</div>'
+                .'<div class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">'.e($milestone['reward_label']).'</div>'
+                .'<div class="w-full h-1.5 rounded-full bg-slate-200/80 dark:bg-white/[0.08] overflow-hidden mt-auto">'
+                .'<div class="h-full rounded-full '.$barColor.' transition-all duration-300" style="width: '.$milestone['percent'].'%"></div>'
+                .'</div>'
+                .'</div>';
+        }
+
+        return new HtmlString(
+            '<div class="space-y-3">'
+            .$giftBanner
+            .'<div class="rounded-2xl p-4 bg-white dark:bg-[#111722] border border-black/[0.06] dark:border-white/[0.08]">'
+            .'<div class="flex flex-wrap items-center justify-between gap-2 mb-3">'
+            .'<div>'
+            .'<div class="text-xs font-bold text-[#10141A] dark:text-white">Misi Pembukaan Badge Eksklusif</div>'
+            .'<div class="text-[11px] text-slate-500 dark:text-slate-400">Selesaikan target penerimaan DO untuk mendapatkan hadiah badge animasi secara bertahap.</div>'
+            .'</div>'
+            .'<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] tabular-nums">Total DO Anda: '.number_format($progress['do_count'], 0, ',', '.').'</span>'
+            .'</div>'
+            .'<div class="grid grid-cols-1 md:grid-cols-3 gap-3">'.implode('', $cards).'</div>'
+            .'</div>'
+            .'</div>'
+        );
+    }
+
     /**
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
@@ -439,9 +627,9 @@ class EditProfile extends BaseEditProfile
     {
         /** @var ?User $user */
         $user = $this->getUser();
-        if ($user && ! $user->canCustomizeAnimatedBadge()) {
+        if ($user) {
             $chosen = (string) ($data['developer_badge_style'] ?? User::DEVELOPER_BADGE_NONE);
-            if (! array_key_exists($chosen, User::classicCleanBadgeOptions())) {
+            if (! $user->canUseBadgeStyle($chosen)) {
                 $data['developer_badge_style'] = User::DEVELOPER_BADGE_NONE;
             }
         }

@@ -4681,33 +4681,167 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     height: 3px;
 }
 
-/* Variant 3: PKT Combo (Blue & Orange Dual-Brand Rotating Border) */
+/* Variant 3: MYTHIC TIER — Solar Aurora (Prismatic Celestial Aurora Flow + Starlight + Solar Halo) */
+@keyframes pkt-aurora-flow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes pkt-aurora-halo {
+    0%, 100% {
+        box-shadow:
+            0 0 12px -1px rgba(244, 121, 32, 0.55),
+            0 0 22px -2px rgba(56, 189, 248, 0.45),
+            0 0 32px -4px rgba(192, 132, 252, 0.35);
+    }
+    33% {
+        box-shadow:
+            0 0 15px 0px rgba(253, 224, 71, 0.65),
+            0 0 26px -1px rgba(52, 211, 153, 0.52),
+            0 0 38px -3px rgba(0, 84, 166, 0.45);
+    }
+    66% {
+        box-shadow:
+            0 0 15px 0px rgba(192, 132, 252, 0.62),
+            0 0 26px -1px rgba(244, 121, 32, 0.55),
+            0 0 36px -3px rgba(56, 189, 248, 0.45);
+    }
+}
+
+@keyframes pkt-aurora-star-pulse {
+    0%, 100% {
+        transform: scale(0.92) rotate(0deg);
+        filter: drop-shadow(0 0 4px rgba(253, 224, 71, 0.85)) drop-shadow(0 0 8px rgba(244, 121, 32, 0.55));
+    }
+    50% {
+        transform: scale(1.16) rotate(18deg);
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 1)) drop-shadow(0 0 12px rgba(56, 189, 248, 0.9));
+    }
+}
+
+@keyframes pkt-aurora-twinkle {
+    0%, 100% {
+        opacity: 0;
+        transform: scale(0.35) rotate(0deg);
+    }
+    45% {
+        opacity: 1;
+        transform: scale(1.25) rotate(45deg);
+    }
+    70% {
+        opacity: 0.7;
+        transform: scale(0.9) rotate(90deg);
+    }
+}
+
+@keyframes pkt-aurora-beam {
+    0% {
+        transform: translateX(-160%) skewX(-24deg);
+        opacity: 0;
+    }
+    18% {
+        opacity: 0.95;
+    }
+    52% {
+        transform: translateX(260%) skewX(-24deg);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(260%) skewX(-24deg);
+        opacity: 0;
+    }
+}
+
 .pkt-dev-badge--pkt_combo {
-    box-shadow: 0 0 12px -2px rgba(244, 121, 32, 0.42), 0 0 14px -3px rgba(0, 84, 166, 0.45);
+    padding: 2px;
+    animation: pkt-aurora-halo 3.6s ease-in-out infinite;
 }
 
 .pkt-dev-badge--pkt_combo .pkt-dev-badge-ring {
     background: conic-gradient(
         from 0deg,
         #0054A6 0deg,
-        #38BDF8 75deg,
-        #F47920 165deg,
-        #FDBA74 225deg,
-        #0054A6 320deg,
+        #38BDF8 45deg,
+        #34D399 95deg,
+        #FDE047 148deg,
+        #F47920 198deg,
+        #EC4899 252deg,
+        #A855F7 302deg,
         #0054A6 360deg
     );
-    animation-duration: 2.6s;
+    animation-duration: 2.1s;
 }
 
 .pkt-dev-badge--pkt_combo .pkt-dev-badge-core {
-    background: linear-gradient(135deg, #0D1B2E 0%, #102A4C 60%, #3D1F0D 100%);
+    background: linear-gradient(125deg, #071428 0%, #0D3558 24%, #1A1F4B 48%, #4C1D4F 72%, #7C2D12 90%, #071428 100%);
+    background-size: 260% 260%;
+    animation: pkt-aurora-flow 5.5s ease-in-out infinite;
     color: #FFFFFF;
+    text-shadow: 0 1px 8px rgba(253, 224, 71, 0.35), 0 0 14px rgba(56, 189, 248, 0.35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(244, 121, 32, 0.3);
 }
 
-.pkt-dev-icon-combo {
-    color: #F47920;
-    animation: pkt-dev-bolt-zap 2.6s ease-in-out infinite;
+.pkt-dev-icon-aurora {
+    color: #FDE047;
+    animation: pkt-aurora-star-pulse 2.4s ease-in-out infinite;
 }
+
+.pkt-aurora-sheen {
+    position: absolute;
+    inset: 2px;
+    z-index: 3;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-aurora-sheen::after {
+    content: "";
+    position: absolute;
+    top: -15%;
+    bottom: -15%;
+    width: 34%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(56, 189, 248, 0.25) 28%,
+        rgba(255, 255, 255, 0.72) 50%,
+        rgba(253, 224, 71, 0.4) 72%,
+        transparent 100%
+    );
+    animation: pkt-aurora-beam 3.1s ease-in-out infinite;
+}
+
+.pkt-aurora-stars {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.pkt-aurora-stars i {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 1px;
+    background: #FFFFFF;
+    box-shadow: 0 0 6px 1.5px rgba(253, 224, 71, 0.95), 0 0 10px 2px rgba(56, 189, 248, 0.7);
+    animation: pkt-aurora-twinkle 2.4s ease-in-out infinite;
+}
+
+.pkt-aurora-stars i:nth-child(1) { top: 20%; left: 16%; animation-delay: 0s; }
+.pkt-aurora-stars i:nth-child(2) { top: 68%; left: 42%; animation-delay: 0.65s; background: #67E8F9; width: 3.5px; height: 3.5px; }
+.pkt-aurora-stars i:nth-child(3) { top: 24%; left: 74%; animation-delay: 1.25s; background: #FDE047; }
+.pkt-aurora-stars i:nth-child(4) { top: 64%; left: 88%; animation-delay: 1.85s; background: #F0ABFC; width: 3px; height: 3px; }
 
 /* Variant 4: Standard (Static) */
 .pkt-dev-badge--none {
@@ -4774,12 +4908,23 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 }
 
 .pkt-dev-avatar-ring--pkt_combo {
-    box-shadow: 0 0 12px -2px rgba(244, 121, 32, 0.45), 0 0 12px -2px rgba(0, 84, 166, 0.45);
+    padding: 3px;
+    animation: pkt-aurora-halo 3.6s ease-in-out infinite;
 }
 
 .pkt-dev-avatar-ring--pkt_combo::before {
-    background: conic-gradient(from 0deg, #0054A6, #38BDF8, #F47920, #FDBA74, #0054A6);
-    animation-duration: 2.8s;
+    background: conic-gradient(
+        from 0deg,
+        #0054A6 0deg,
+        #38BDF8 45deg,
+        #34D399 95deg,
+        #FDE047 148deg,
+        #F47920 198deg,
+        #EC4899 252deg,
+        #A855F7 302deg,
+        #0054A6 360deg
+    );
+    animation-duration: 2.1s;
 }
 
 /* =========================================================
@@ -4989,46 +5134,41 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 .pkt-user-pill-embers i:nth-child(3) { left: 72%; animation-delay: 0.9s; }
 .pkt-user-pill-embers i:nth-child(4) { left: 88%; animation-delay: 1.25s; width: 3px; height: 3px; }
 
-/* Pill Style 3: PKT Combo (PKT Blue + Orange Dual-Brand Rotating Border) */
+/* Pill Style 3: MYTHIC TIER — Solar Aurora Table Pill */
 .pkt-user-pill--pkt_combo {
-    box-shadow: 0 0 12px -2px rgba(244, 121, 32, 0.38), 0 0 14px -3px rgba(0, 84, 166, 0.4);
+    padding: 2px;
+    animation: pkt-aurora-halo 3.6s ease-in-out infinite;
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-border::before {
     background: conic-gradient(
         from 0deg,
         #0054A6 0deg,
-        #38BDF8 80deg,
-        #F47920 170deg,
-        #FDBA74 235deg,
-        #0054A6 325deg,
+        #38BDF8 45deg,
+        #34D399 95deg,
+        #FDE047 148deg,
+        #F47920 198deg,
+        #EC4899 252deg,
+        #A855F7 302deg,
         #0054A6 360deg
     );
-    animation-duration: 2.6s;
+    animation-duration: 2.1s;
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-inner {
-    background: linear-gradient(135deg, #F0F6FF 0%, #FFF5EC 100%);
-}
-
-.dark .pkt-user-pill--pkt_combo .pkt-user-pill-inner {
-    background: linear-gradient(135deg, #0D1E38 0%, #2C180A 100%);
+    background: linear-gradient(125deg, #081830 0%, #0E345A 26%, #24194E 54%, #5A1E3E 78%, #7C2D12 100%);
+    background-size: 260% 260%;
+    animation: pkt-aurora-flow 5.5s ease-in-out infinite;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-name {
-    color: #0F172A;
-}
-
-.dark .pkt-user-pill--pkt_combo .pkt-user-pill-name {
     color: #FFFFFF;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-sub {
-    color: #0054A6;
-}
-
-.dark .pkt-user-pill--pkt_combo .pkt-user-pill-sub {
-    color: #FDBA74;
+    color: #FDE047;
 }
 
 /* =========================================================
@@ -5151,6 +5291,11 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     .pkt-dev-icon-flame,
     .pkt-dev-icon-bolt,
     .pkt-dev-icon-combo,
+    .pkt-dev-icon-aurora,
+    .pkt-dev-badge--pkt_combo .pkt-dev-badge-core,
+    .pkt-user-pill--pkt_combo .pkt-user-pill-inner,
+    .pkt-aurora-sheen::after,
+    .pkt-aurora-stars i,
     .pkt-dev-embers i,
     .pkt-dev-sheen::after,
     .pkt-dev-avatar-ring,

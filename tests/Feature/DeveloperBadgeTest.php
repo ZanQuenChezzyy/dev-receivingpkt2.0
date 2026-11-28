@@ -2,12 +2,14 @@
 
 use App\Filament\Pages\EditProfile;
 use App\Models\User;
+use App\Services\BadgeMilestoneService;
 use App\Services\UserBadgeRenderer;
 use App\Support\DeveloperBadgeRenderer;
 use Filament\Facades\Filament;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -27,8 +29,21 @@ beforeEach(function (): void {
             $table->json('left_rail_shortcuts')->nullable();
             $table->string('developer_badge_style', 30)->nullable()->default('electric');
             $table->boolean('has_exclusive_badge')->nullable()->default(null);
+            $table->json('unlocked_exclusive_badges')->nullable();
+            $table->json('badge_milestone_notified')->nullable();
             $table->boolean('is_active')->default(true);
             $table->rememberToken();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('notifications')) {
+        Schema::create('notifications', function (Blueprint $table): void {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->text('data');
+            $table->timestamp('read_at')->nullable();
             $table->timestamps();
         });
     }
@@ -91,6 +106,9 @@ test('Developer and AVP Receiving users resolve selected animated badge style wh
         ->and($devHtml)->toContain('Staff Invoice')
         ->and(substr_count($devHtml, 'pkt-dev-badge--flame'))->toBe(2)
         ->and($avpHtml)->toContain('pkt-dev-badge--pkt_combo')
+        ->and($avpHtml)->toContain('pkt-dev-icon-aurora')
+        ->and($avpHtml)->toContain('pkt-aurora-sheen')
+        ->and($avpHtml)->toContain('pkt-aurora-stars')
         ->and($avpHtml)->toContain('AVP Receiving')
         ->and($staffHtml)->not->toContain('pkt-dev-badge')
         ->and($staffHtml)->toContain('Admin Sparepart');
@@ -166,7 +184,8 @@ test('Regular staff user can customize Classic Clean badge while exclusive anima
         ->assertSee('Blazing Ember')
         ->assertSee('Solar Aurora')
         ->assertSee('Terkunci')
-        ->assertSee('Memerlukan hak eksklusif dari Developer')
+        ->assertSee('Misi 1.000 / 5.000 DO atau hak eksklusif Developer')
+        ->assertSee('Misi 50.000 DO atau hak eksklusif Developer')
         ->fillForm([
             'name' => 'Staff Biasa',
             'npk' => '2100103',
@@ -267,7 +286,7 @@ test('Developer can grant and revoke exclusive animated badge access for any use
     Filament::setCurrentPanel(Filament::getPanel('admin'));
 
     Livewire::test(EditProfile::class)
-        ->assertDontSee('Memerlukan hak eksklusif dari Developer')
+        ->assertSee('Hak Badge Eksklusif Aktif')
         ->fillForm([
             'name' => 'Staf Pilihan',
             'npk' => '2100301',
@@ -293,4 +312,72 @@ test('Developer can grant and revoke exclusive animated badge access for any use
         ->and($staff->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_NONE)
         ->and($staff->isDeveloperBadgeAnimated())->toBeFalse()
         ->and(UserBadgeRenderer::render($staff))->not->toContain('pkt-user-pill--');
+});
+
+test('regular user unlocks exclusive badges via 1000, 5000, and 50000 DO milestones with gift notifications', function (): void {
+    $andre = User::query()->create([
+        'name' => 'Andre Receiving',
+        'npk' => '2100401',
+        'email' => 'andre.do@pupukkaltim.com',
+        'password' => bcrypt('password'),
+        'developer_badge_style' => User::DEVELOPER_BADGE_NONE,
+        'is_active' => true,
+    ]);
+    $andre->assignRole('Staff Invoice');
+
+    $service = app(BadgeMilestoneService::class);
+
+    // 1. Di bawah 1.000 DO: belum ada hadiah dan klaim ditolak
+    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 500))->toBe([])
+        ->and($service->claimGiftBadge($andre, User::DEVELOPER_BADGE_ELECTRIC, doCountOverride: 500))->toBeFalse()
+        ->and(DB::table('notifications')->where('notifiable_id', $andre->id)->count())->toBe(0);
+
+    // 2. Mencapai 1.000 DO: dapat 1 notifikasi hadiah (tidak duplikat) & bebas pilih Sparkling Lightning atau Blazing Ember
+    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 1000))->toBe(['1000'])
+        ->and($service->syncMilestonesAndNotify($andre->fresh(), doCountOverride: 1000))->toBe([])
+        ->and(DB::table('notifications')->where('notifiable_id', $andre->id)->count())->toBe(1);
+
+    $progress1k = $service->getProgress($andre->fresh(), doCountOverride: 1000);
+    expect($progress1k['pending_choice_slots'])->toBe(1)
+        ->and($progress1k['claimable_choice_badges'])->toBe([User::DEVELOPER_BADGE_ELECTRIC, User::DEVELOPER_BADGE_FLAME])
+        ->and($progress1k['can_claim_solar_aurora'])->toBeFalse();
+
+    // Andre memilih Sparkling Lightning sebagai hadiah 1.000 DO
+    expect($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_ELECTRIC, doCountOverride: 1000))->toBeTrue();
+    $andre->refresh();
+
+    expect($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_ELECTRIC))->toBeTrue()
+        ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_FLAME))->toBeFalse()
+        ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_PKT_COMBO))->toBeFalse()
+        ->and($andre->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_ELECTRIC)
+        ->and($service->claimGiftBadge($andre, User::DEVELOPER_BADGE_FLAME, doCountOverride: 1000))->toBeFalse();
+
+    // 3. Mencapai 5.000 DO: dapat notifikasi hadiah sisa (Blazing Ember)
+    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 5000))->toBe(['5000'])
+        ->and(DB::table('notifications')->where('notifiable_id', $andre->id)->count())->toBe(2);
+
+    $progress5k = $service->getProgress($andre->fresh(), doCountOverride: 5000);
+    expect($progress5k['claimable_choice_badges'])->toBe([User::DEVELOPER_BADGE_FLAME])
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_FLAME, doCountOverride: 5000))->toBeTrue();
+
+    $andre->refresh();
+    expect($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_ELECTRIC))->toBeTrue()
+        ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_FLAME))->toBeTrue()
+        ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_PKT_COMBO))->toBeFalse()
+        ->and($service->claimGiftBadge($andre, User::DEVELOPER_BADGE_PKT_COMBO, doCountOverride: 5000))->toBeFalse();
+
+    // 4. Mencapai 50.000 DO: dapat notifikasi hadiah tier tertinggi Solar Aurora
+    expect($service->syncMilestonesAndNotify($andre, doCountOverride: 50000))->toBe(['50000'])
+        ->and(DB::table('notifications')->where('notifiable_id', $andre->id)->count())->toBe(3);
+
+    $progress50k = $service->getProgress($andre->fresh(), doCountOverride: 50000);
+    expect($progress50k['can_claim_solar_aurora'])->toBeTrue()
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_PKT_COMBO, doCountOverride: 50000))->toBeTrue();
+
+    $andre->refresh();
+    UserBadgeRenderer::flushCache();
+    expect($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_PKT_COMBO))->toBeTrue()
+        ->and($andre->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_PKT_COMBO)
+        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-user-pill--pkt_combo')
+        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-aurora-stars');
 });
