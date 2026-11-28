@@ -17,6 +17,8 @@ class MaterialValueOverview extends BaseWidget
 
     protected ?string $pollingInterval = '5s';
 
+    protected int|string|array $columnSpan = 'full';
+
     protected int|array|null $columns = [
         'default' => 1,
         'sm' => 1,
@@ -24,6 +26,11 @@ class MaterialValueOverview extends BaseWidget
         'xl' => 2,
         '2xl' => 4,
     ];
+
+    protected function getHeading(): ?string
+    {
+        return 'Nilai Penerimaan Material (GRS)';
+    }
 
     protected function getStats(): array
     {

@@ -7832,6 +7832,23 @@ html.pkt-curtain-lock body {
     }
 }
 
+/* =========================================================
+   H5. DASHBOARD BENTO GRID COHESION & EQUAL-HEIGHT CARDS
+   ========================================================= */
+.fi-wi-widget:has(.pkt-bento-card),
+.fi-wi-widget:has(.pkt-bento-card) > div {
+    height: 100%;
+}
+
+.pkt-bento-shortcut:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -14px rgba(15, 23, 42, 0.22);
+}
+
+.dark .pkt-bento-shortcut:hover {
+    box-shadow: 0 12px 26px -14px rgba(0, 0, 0, 0.55);
+}
+
 @media (prefers-reduced-motion: reduce) {
     .pkt-dev-badge,
     .pkt-dev-badge-ring,

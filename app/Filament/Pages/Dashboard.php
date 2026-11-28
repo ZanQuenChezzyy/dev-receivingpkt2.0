@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\DashboardCalendarClockWidget;
 use App\Filament\Widgets\DashboardNonStockAgingWidget;
+use App\Filament\Widgets\DashboardWelcomeBentoWidget;
 use App\Filament\Widgets\MaterialItemOverview;
 use App\Filament\Widgets\MaterialValueOverview;
 use BackedEnum;
@@ -92,9 +94,19 @@ class Dashboard extends BaseDashboard
         ];
     }
 
+    public function getColumns(): int|array
+    {
+        return [
+            'default' => 1,
+            'lg' => 12,
+        ];
+    }
+
     public function getWidgets(): array
     {
         return [
+            DashboardWelcomeBentoWidget::class,
+            DashboardCalendarClockWidget::class,
             MaterialValueOverview::class,
             MaterialItemOverview::class,
             DashboardNonStockAgingWidget::class,

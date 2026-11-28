@@ -1,0 +1,244 @@
+<x-filament-widgets::widget>
+    <div class="pkt-bento-card pkt-bento-welcome relative h-full rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-hidden p-5 sm:p-6 flex flex-col justify-between gap-5">
+        {{-- Subtle PKT Corporate Ambient Glow & Pattern Watermark --}}
+        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(0,84,166,0.08),transparent_48%),radial-gradient(circle_at_100%_100%,rgba(244,121,32,0.09),transparent_48%)] dark:bg-[radial-gradient(circle_at_0%_0%,rgba(0,84,166,0.20),transparent_52%),radial-gradient(circle_at_100%_100%,rgba(244,121,32,0.16),transparent_50%)]"></div>
+        <div class="pointer-events-none absolute -top-10 -right-10 w-52 h-52 select-none overflow-hidden">
+            <img
+                src="{{ asset('images/pattern/pkt-pattern-dark.png') }}"
+                alt=""
+                class="w-full h-full object-contain dark:hidden opacity-[0.065]"
+            />
+            <img
+                src="{{ asset('images/pattern/pkt-pattern-white.png') }}"
+                alt=""
+                class="w-full h-full object-contain hidden dark:block opacity-[0.055]"
+            />
+        </div>
+
+        {{-- Row 1: Greeting + User Identity + Live Weather Pill (Bontang / PKT) --}}
+        <div class="relative z-10 flex flex-col xl:flex-row xl:items-start justify-between gap-4">
+            {{-- Left: Avatar + Greeting + Role Badge --}}
+            <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0">
+                @if ($memberProfileUrl)
+                    <a
+                        href="{{ $memberProfileUrl }}"
+                        wire:navigate
+                        class="shrink-0 group focus:outline-none"
+                        title="Buka profil & log aktivitas Anda"
+                    >
+                        {!! \App\Support\DeveloperBadgeRenderer::renderAvatar(
+                            avatarUrl: $avatarUrl,
+                            alt: (string) ($user?->name ?? 'Pengguna'),
+                            style: $badgeStyle,
+                            imgClasses: 'w-14 h-14',
+                            size: 'md',
+                            fallbackRingClasses: 'ring-2 ring-slate-200 dark:ring-white/15 rounded-full shadow-sm',
+                        ) !!}
+                    </a>
+                @else
+                    <div class="shrink-0">
+                        {!! \App\Support\DeveloperBadgeRenderer::renderAvatar(
+                            avatarUrl: $avatarUrl,
+                            alt: (string) ($user?->name ?? 'Pengguna'),
+                            style: $badgeStyle,
+                            imgClasses: 'w-14 h-14',
+                            size: 'md',
+                            fallbackRingClasses: 'ring-2 ring-slate-200 dark:ring-white/15 rounded-full shadow-sm',
+                        ) !!}
+                    </div>
+                @endif
+
+                <div class="flex flex-col min-w-0 gap-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0054A6] dark:text-[#83A2DB]">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#F47920]"></span>
+                            {{ $greeting }}
+                        </span>
+                        @if ($missionSummary && $missionSummary['has_pending_gift'] && $badgeTabUrl)
+                            <a
+                                href="{{ $badgeTabUrl }}"
+                                wire:navigate
+                                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F47920]/15 text-[#F47920] dark:text-orange-300 border border-[#F47920]/30 hover:bg-[#F47920] hover:text-white transition-colors"
+                            >
+                                <x-heroicon-m-gift class="w-3 h-3" />
+                                Hadiah Badge Tersedia
+                            </a>
+                        @endif
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="text-lg sm:text-xl font-extrabold tracking-tight text-[#10141A] dark:text-white leading-tight truncate">
+                            {{ $user?->name ?? 'Pengguna Receiving PKT' }}
+                        </h2>
+                        {!! \App\Support\DeveloperBadgeRenderer::render($badgeStyle, $roleLabel, 'sm') !!}
+                    </div>
+
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Selamat datang di panel Receiving PKT. Akses modul harian dan pantau kinerja penerimaan material dari satu tempat.
+                    </p>
+                </div>
+            </div>
+
+            {{-- Right: Live Prakiraan Cuaca Bontang (PKT) --}}
+            <div
+                x-data="{
+                    temp: null,
+                    humidity: null,
+                    wind: null,
+                    label: 'Bontang, Kaltim',
+                    icon: 'partly-cloudy',
+                    loaded: false,
+                    init() {
+                        const cacheKey = 'pkt_weather_bontang_v1';
+                        try {
+                            const raw = localStorage.getItem(cacheKey);
+                            if (raw) {
+                                const parsed = JSON.parse(raw);
+                                if (parsed && parsed.ts && (Date.now() - parsed.ts) < 1800000) {
+                                    this.apply(parsed.data);
+                                    return;
+                                }
+                            }
+                        } catch (e) {}
+
+                        fetch('https://api.open-meteo.com/v1/forecast?latitude=0.1333&longitude=117.5000&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Asia%2FMakassar')
+                            .then((res) => res.ok ? res.json() : null)
+                            .then((json) => {
+                                if (!json || !json.current) return;
+                                const data = {
+                                    temp: Math.round(json.current.temperature_2m),
+                                    humidity: Math.round(json.current.relative_humidity_2m),
+                                    wind: Math.round(json.current.wind_speed_10m),
+                                    code: Number(json.current.weather_code),
+                                };
+                                this.apply(data);
+                                try {
+                                    localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+                                } catch (e) {}
+                            })
+                            .catch(() => {});
+                    },
+                    apply(data) {
+                        this.temp = data.temp;
+                        this.humidity = data.humidity;
+                        this.wind = data.wind;
+                        this.loaded = true;
+                        const code = data.code;
+                        if (code === 0) {
+                            this.label = 'Cerah';
+                            this.icon = 'sun';
+                        } else if (code >= 1 && code <= 2) {
+                            this.label = 'Cerah Berawan';
+                            this.icon = 'partly-cloudy';
+                        } else if (code === 3 || (code >= 45 && code <= 48)) {
+                            this.label = 'Berawan';
+                            this.icon = 'cloud';
+                        } else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+                            this.label = code >= 63 ? 'Hujan' : 'Hujan Ringan';
+                            this.icon = 'rain';
+                        } else if (code >= 95) {
+                            this.label = 'Hujan Petir';
+                            this.icon = 'storm';
+                        } else {
+                            this.label = 'Berawan';
+                            this.icon = 'partly-cloudy';
+                        }
+                    }
+                }"
+                class="shrink-0 xl:min-w-[235px] rounded-2xl px-3.5 py-2.5 bg-slate-50/95 dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.08] flex items-center gap-3"
+            >
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0054A6]/12 to-[#F47920]/14 dark:from-[#0054A6]/25 dark:to-[#F47920]/20 flex items-center justify-center shrink-0 text-[#F47920]">
+                    <template x-if="icon === 'sun'">
+                        <svg class="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                    </template>
+                    <template x-if="icon === 'partly-cloudy'">
+                        <svg class="w-6 h-6 text-[#F47920]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41M15.95 10A4 4 0 0 0 8.5 8.1"/><path d="M17 19H7a4 4 0 0 1-.5-7.97A5.5 5.5 0 0 1 17.2 12H17a3.5 3.5 0 0 1 0 7Z" class="text-[#0054A6] dark:text-sky-300"/></svg>
+                    </template>
+                    <template x-if="icon === 'cloud'">
+                        <svg class="w-6 h-6 text-slate-500 dark:text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                    </template>
+                    <template x-if="icon === 'rain'">
+                        <svg class="w-6 h-6 text-sky-500 dark:text-sky-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M8 19v2M12 19v2M16 19v2"/></svg>
+                    </template>
+                    <template x-if="icon === 'storm'">
+                        <svg class="w-6 h-6 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973"/><path d="m13 12-3 5h4l-3 5"/></svg>
+                    </template>
+                </div>
+
+                <div class="flex flex-col min-w-0 leading-tight">
+                    <div class="flex items-baseline gap-1.5">
+                        <span class="text-lg font-extrabold tracking-tight text-[#10141A] dark:text-white tabular-nums" x-text="loaded ? (temp + '°C') : 'Bontang'">Bontang</span>
+                        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 truncate" x-text="loaded ? label : 'WITA (UTC+8)'">WITA (UTC+8)</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate" x-show="loaded" x-cloak>
+                        Bontang • Lembap <span class="font-semibold tabular-nums" x-text="humidity + '%'"></span> • <span class="tabular-nums" x-text="wind + ' km/j'"></span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate" x-show="!loaded">
+                        Prakiraan Cuaca Area PKT
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Row 2: Quick Shortcuts Bento Grid --}}
+        <div class="relative z-10 pt-4 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-col gap-3">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                        Pintasan Cepat
+                    </span>
+                    @if ($missionSummary && ! $missionSummary['has_full_access'] && $badgeTabUrl)
+                        <a
+                            href="{{ $badgeTabUrl }}"
+                            wire:navigate
+                            class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] tabular-nums hover:opacity-85 transition-opacity"
+                        >
+                            Misi: {{ number_format($missionSummary['mission_count'], 0, ',', '.') }} {{ $missionSummary['unit_label'] }}
+                        </a>
+                    @endif
+                </div>
+
+                <button
+                    type="button"
+                    x-on:click="$dispatch('open-left-rail-settings')"
+                    class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-[#F47920] dark:text-slate-400 dark:hover:text-orange-300 transition-colors cursor-pointer"
+                >
+                    <x-heroicon-m-adjustments-horizontal class="w-3.5 h-3.5" />
+                    Atur Pintasan
+                </button>
+            </div>
+
+            @if ($shortcuts !== [])
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    @foreach ($shortcuts as $item)
+                        <a
+                            href="{{ $item['url'] }}"
+                            wire:navigate
+                            class="pkt-bento-shortcut group flex items-center gap-2.5 p-2.5 sm:p-3 rounded-2xl bg-slate-50/90 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.07] hover:border-[#F47920]/45 hover:bg-white dark:hover:bg-white/[0.06] transition-all duration-200"
+                        >
+                            <span class="w-9 h-9 rounded-xl bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] group-hover:bg-[#F47920] group-hover:text-white inline-flex items-center justify-center shrink-0 transition-colors duration-200">
+                                <x-filament::icon
+                                    :icon="$item['icon']"
+                                    class="w-4.5 h-4.5"
+                                />
+                            </span>
+                            <div class="flex flex-col min-w-0 flex-1 leading-tight">
+                                <span class="text-xs font-bold text-[#10141A] dark:text-white truncate group-hover:text-[#F47920] dark:group-hover:text-orange-300 transition-colors">
+                                    {{ $item['label'] }}
+                                </span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                    {{ $item['group'] ?? 'Pintasan' }}
+                                </span>
+                            </div>
+                            <x-heroicon-m-chevron-right class="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-[#F47920] group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </a>
+                    @endforeach
+                </div>
+            @else
+                <div class="rounded-2xl p-3 bg-slate-50/80 dark:bg-white/[0.03] border border-dashed border-black/10 dark:border-white/10 text-xs text-slate-500 dark:text-slate-400">
+                    Belum ada pintasan yang diatur. Klik tombol <strong>Atur Pintasan</strong> untuk memilih menu favorit Anda.
+                </div>
+            @endif
+        </div>
+    </div>
+</x-filament-widgets::widget>

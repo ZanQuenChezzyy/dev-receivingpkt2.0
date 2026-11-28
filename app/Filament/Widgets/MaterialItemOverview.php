@@ -27,6 +27,11 @@ class MaterialItemOverview extends BaseWidget
         '2xl' => 4,
     ];
 
+    protected function getHeading(): ?string
+    {
+        return 'Jumlah Item Material (GRS)';
+    }
+
     protected function getStats(): array
     {
         $month = $this->filters['month'] ?? now()->month;
