@@ -34,9 +34,10 @@ class ItemsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('do_no')
                     ->label('DO No')
-                    ->getStateUsing(fn ($record) => $record->detail?->deliveryOrderReceipt?->delivery_order_no
-                        ?? $record->batchItem?->deliveryOrderReceipt?->delivery_order_no
-                        ?? ($record->batchItem?->reference_do_no ?: '-')
+                    ->getStateUsing(fn ($record) => $record->batchItem?->deliveryOrderReceipt?->delivery_order_no
+                        ?? ($record->batchItem?->reference_do_no ?: null)
+                        ?? $record->detail?->deliveryOrderReceipt?->delivery_order_no
+                        ?? '-'
                     )
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->where(function (Builder $q) use ($search): void {
@@ -50,9 +51,8 @@ class ItemsRelationManager extends RelationManager
 
                 TextColumn::make('po_no')
                     ->label('PO No')
-                    ->getStateUsing(fn ($record) => $record->detail?->purchaseOrderIssued?->purchase_order_no
-                        ?? $record->batchItem?->po_number
-                        ?? '-'
+                    ->getStateUsing(fn ($record) => $record->batchItem?->po_number
+                        ?: ($record->detail?->purchaseOrderIssued?->purchase_order_no ?? '-')
                     )
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->where(function (Builder $q) use ($search): void {
@@ -73,7 +73,7 @@ class ItemsRelationManager extends RelationManager
 
                 TextColumn::make('material_code')
                     ->label('Material No')
-                    ->getStateUsing(fn ($record) => $record->detail?->material_code ?? $record->batchItem?->material_code ?? '-')
+                    ->getStateUsing(fn ($record) => $record->batchItem?->material_code ?: ($record->detail?->material_code ?? '-'))
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->where(function (Builder $q) use ($search): void {
                             $q->whereHas('detail', fn (Builder $sub) => $sub->where('material_code', 'like', "%{$search}%"))
@@ -83,7 +83,7 @@ class ItemsRelationManager extends RelationManager
 
                 TextColumn::make('description')
                     ->label('Description')
-                    ->getStateUsing(fn ($record) => $record->detail?->description ?? $record->batchItem?->description ?? '-')
+                    ->getStateUsing(fn ($record) => $record->batchItem?->description ?: ($record->detail?->description ?? '-'))
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->where(function (Builder $q) use ($search): void {
                             $q->whereHas('detail', fn (Builder $sub) => $sub->where('description', 'like', "%{$search}%"))
@@ -94,7 +94,7 @@ class ItemsRelationManager extends RelationManager
 
                 TextColumn::make('quantity')
                     ->label('Qty')
-                    ->getStateUsing(fn ($record) => $record->detail?->quantity ?? $record->batchItem?->quantity ?? 0)
+                    ->getStateUsing(fn ($record) => $record->batchItem?->quantity ?? $record->detail?->quantity ?? 0)
                     ->numeric(decimalPlaces: 3),
 
                 TextColumn::make('qty_mir')
@@ -111,13 +111,14 @@ class ItemsRelationManager extends RelationManager
                 TextColumn::make('qty_sisa')
                     ->label('Sisa Dikirim')
                     ->getStateUsing(function ($record) {
+                        $baseQty = (float) ($record->batchItem?->quantity ?? $record->detail?->quantity ?? 0);
                         if (! $record->detail) {
-                            return 0;
+                            return $baseQty;
                         }
 
-                        $mirQty = $record->detail->materialIssueDetails()->sum('diserahkan');
+                        $mirQty = (float) $record->detail->materialIssueDetails()->sum('diserahkan');
 
-                        return max(0, $record->detail->quantity - $mirQty);
+                        return max(0, $baseQty - $mirQty);
                     })
                     ->numeric(decimalPlaces: 3)
                     ->color(fn ($state) => $state > 0 ? 'success' : 'gray'),

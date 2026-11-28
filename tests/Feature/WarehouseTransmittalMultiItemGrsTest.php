@@ -332,3 +332,107 @@ test('WarehouseTransmittal ItemsRelationManager searches across DO, PO, MatDoc 1
         ->assertCanSeeTableRecords([$item2])
         ->assertCanNotSeeTableRecords([$item1]);
 });
+
+test('SapMb51ImportService disambiguates partial deliveries on same PO and item by DO number and quantity, and PDF uses batchItem quantity first', function (): void {
+    $poItem20 = PurchaseOrderIssued::query()->create([
+        'purchase_order_no' => '5300063515',
+        'item_no' => 20,
+        'qty_po' => 65,
+    ]);
+
+    $doFirst = DeliveryOrderReceipt::query()->create(['delivery_order_no' => '234', 'status' => 'GRS']);
+    $detailFirst = DeliveryOrderReceiptDetail::query()->create([
+        'delivery_order_receipt_id' => $doFirst->id,
+        'purchase_order_issued_id' => $poItem20->id,
+        'item_no' => 20,
+        'material_code' => '6049965',
+        'description' => 'FILTER-REGULATOR',
+        'quantity' => 39,
+    ]);
+
+    $doSecond = DeliveryOrderReceipt::query()->create(['delivery_order_no' => '63515', 'status' => 'GRS']);
+    $detailSecond = DeliveryOrderReceiptDetail::query()->create([
+        'delivery_order_receipt_id' => $doSecond->id,
+        'purchase_order_issued_id' => $poItem20->id,
+        'item_no' => 20,
+        'material_code' => '6049965',
+        'description' => 'FILTER-REGULATOR',
+        'quantity' => 26,
+    ]);
+
+    $parsed = [
+        [
+            'mat_doc_105' => '5007440171',
+            'po_number' => '5300063515',
+            'item_no' => '20',
+            'reference_do_no' => '234',
+            'quantity' => 39.0,
+        ],
+        [
+            'mat_doc_105' => '5007739484',
+            'po_number' => '5300063515',
+            'item_no' => '20',
+            'reference_do_no' => '63515',
+            'quantity' => 26.0,
+        ],
+    ];
+
+    $service = app(SapMb51ImportService::class);
+    $lookups = $service->buildDeliveryOrderLookup($parsed);
+
+    $match1 = $service->matchFast($parsed[0], $lookups);
+    $match2 = $service->matchFast($parsed[1], $lookups);
+
+    expect($match1['delivery_order_receipt_detail_id'])->toBe($detailFirst->id)
+        ->and($match2['delivery_order_receipt_detail_id'])->toBe($detailSecond->id);
+
+    // Pastikan PDF transmittal tetap menampilkan qty aktual batchItem (26), meskipun detail terkait punya qty berbeda (39)
+    $warehouse = WarehouseDestination::query()->create(['name' => 'Gudang Sparepart']);
+    $user = User::query()->create([
+        'name' => 'Admin PDF Test',
+        'npk' => '2100099',
+        'email' => 'pdf_qty_test@pupukkaltim.com',
+        'password' => bcrypt('password'),
+        'is_active' => true,
+    ]);
+    $transmittal = WarehouseTransmittal::query()->create([
+        'transmittal_no' => 'TR-WH/2026/11/9090',
+        'warehouse_destination_id' => $warehouse->id,
+        'tanggal' => '2026-11-28',
+        'created_by' => $user->id,
+    ]);
+    $batch = WarehouseDeliveryBatch::query()->create([
+        'batch_title' => 'Batch Partial',
+        'start_date' => '2026-11-28',
+        'end_date' => '2026-11-28',
+        'total_items' => 1,
+        'uploaded_by' => $user->id,
+    ]);
+    $batchItem26 = WarehouseDeliveryBatchItem::query()->create([
+        'warehouse_delivery_batch_id' => $batch->id,
+        'mat_doc_105' => '5007739484',
+        'po_number' => '5300063515',
+        'item_no' => '20',
+        'material_code' => '6049965',
+        'description' => 'FILTER-REGULATOR',
+        'quantity' => 26,
+        'uom' => 'EA',
+        'reference_do_no' => '63515',
+        'status' => 'delivered',
+        'delivery_order_receipt_id' => $doFirst->id,
+        'delivery_order_receipt_detail_id' => $detailFirst->id, // Sengaja tertaut ke detail qty 39
+        'warehouse_transmittal_id' => $transmittal->id,
+    ]);
+    WarehouseTransmittalItem::query()->create([
+        'warehouse_transmittal_id' => $transmittal->id,
+        'warehouse_delivery_batch_item_id' => $batchItem26->id,
+        'delivery_order_receipt_detail_id' => $detailFirst->id,
+    ]);
+
+    $transmittal->load(['items.detail.purchaseOrderIssued', 'items.batchItem', 'destination.pic']);
+    $htmlSingle = view('pdf.transmittal', ['transmittal' => $transmittal])->render();
+    $htmlBulk = view('pdf.transmittal_bulk', ['transmittals' => collect([$transmittal])])->render();
+
+    expect($htmlSingle)->toContain('>26<')->not->toContain('>39<')
+        ->and($htmlBulk)->toContain('>26<')->not->toContain('>39<');
+});

@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Models\DeliveryOrderReceipt;
 use App\Models\DeliveryOrderReceiptDetail;
+use App\Models\GrsRdtvItem;
 use App\Models\PurchaseOrderIssued;
 use App\Models\WarehouseDeliveryBatch;
 use App\Models\WarehouseDeliveryBatchItem;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SapMb51ImportService
 {
@@ -266,14 +268,16 @@ class SapMb51ImportService
 
     /**
      * Melakukan batch preloading dan indexing untuk mencocokkan ribuan data MB51
-     * ke Delivery Order hanya dalam 3-4 query efisien (mencegah bottleneck N+1 query).
+     * ke Delivery Order hanya dalam 3-5 query efisien (mencegah bottleneck N+1 query),
+     * termasuk disambiguasi pengiriman parsial (multi-DO dalam satu PO & item yang sama).
      *
      * @param  array<int, array<string, mixed>>  $parsedItems
      * @return array{
-     *     poi_exact: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: int}>,
-     *     poi_po: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: int}>,
-     *     ref_103: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int}>,
-     *     ref_do: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int}>
+     *     grs_105: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int, details_by_item: array<int, int>}>,
+     *     poi_exact: array<string, list<array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: int, delivery_order_no: string, quantity: ?float}>>,
+     *     poi_po: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int}>,
+     *     ref_103: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int, details_by_item: array<int, int>}>,
+     *     ref_do: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int, details_by_item: array<int, int>}>
      * }
      */
     public function buildDeliveryOrderLookup(array $parsedItems): array
@@ -281,6 +285,7 @@ class SapMb51ImportService
         $poNumbers = [];
         $refDocs103 = [];
         $referenceDoNos = [];
+        $matDocs105 = [];
 
         foreach ($parsedItems as $item) {
             if (! empty($item['po_number'])) {
@@ -292,13 +297,51 @@ class SapMb51ImportService
             if (! empty($item['reference_do_no'])) {
                 $referenceDoNos[] = (string) $item['reference_do_no'];
             }
+            if (! empty($item['mat_doc_105'])) {
+                $matDocs105[] = (string) $item['mat_doc_105'];
+            }
         }
 
         $poNumbers = array_values(array_unique($poNumbers));
         $refDocs103 = array_values(array_unique($refDocs103));
         $referenceDoNos = array_values(array_unique($referenceDoNos));
+        $matDocs105 = array_values(array_unique($matDocs105));
 
-        // 1. Preload PurchaseOrderIssued & DeliveryOrderReceiptDetail berdasarkan PO & Item No
+        // 0. Preload kecocokan langsung lewat nomor dokumen GRS (MatDoc 105 -> GrsRdtvItem -> DeliveryOrderReceipt)
+        $grs105Map = [];
+        if (! empty($matDocs105) && Schema::hasTable('grs_rdtv_items')) {
+            $grsItems = GrsRdtvItem::query()
+                ->whereIn('document_code', $matDocs105)
+                ->whereNotNull('delivery_order_receipt_id')
+                ->with(['deliveryOrderReceipt.deliveryOrderReceiptDetails'])
+                ->get();
+
+            foreach ($grsItems as $grsItem) {
+                $do = $grsItem->deliveryOrderReceipt;
+                if (! $do) {
+                    continue;
+                }
+
+                $detailsByItem = [];
+                foreach ($do->deliveryOrderReceiptDetails as $d) {
+                    $dItemNo = (int) ($d->item_no ?? 0);
+                    if ($dItemNo > 0 && ! isset($detailsByItem[$dItemNo])) {
+                        $detailsByItem[$dItemNo] = $d->id;
+                    }
+                }
+
+                $grsKey = strtoupper(trim((string) $grsItem->document_code));
+                if ($grsKey !== '' && ! isset($grs105Map[$grsKey])) {
+                    $grs105Map[$grsKey] = [
+                        'delivery_order_receipt_id' => $do->id,
+                        'delivery_order_receipt_detail_id' => null,
+                        'details_by_item' => $detailsByItem,
+                    ];
+                }
+            }
+        }
+
+        // 1. Preload PurchaseOrderIssued & SEMUA kandidat DeliveryOrderReceiptDetail per PO & Item No (mendukung pengiriman parsial)
         $poiExactMap = [];
         $poiPoMap = [];
 
@@ -310,7 +353,7 @@ class SapMb51ImportService
             if ($pois->isNotEmpty()) {
                 $poiIds = $pois->pluck('id')->toArray();
                 $detailsByPoi = DeliveryOrderReceiptDetail::whereIn('purchase_order_issued_id', $poiIds)
-                    ->select('id', 'delivery_order_receipt_id', 'purchase_order_issued_id', 'item_no')
+                    ->with('deliveryOrderReceipt:id,delivery_order_no')
                     ->get()
                     ->groupBy('purchase_order_issued_id');
 
@@ -321,17 +364,17 @@ class SapMb51ImportService
                     }
 
                     foreach ($matchedDetails as $detail) {
-                        $matchData = [
+                        $candidate = [
                             'delivery_order_receipt_id' => $detail->delivery_order_receipt_id,
                             'delivery_order_receipt_detail_id' => $detail->id,
+                            'delivery_order_no' => strtoupper(trim((string) ($detail->deliveryOrderReceipt?->delivery_order_no ?? ''))),
+                            'quantity' => $detail->quantity !== null ? (float) $detail->quantity : null,
                         ];
 
-                        $detailItemNo = (int) ($detail->item_no ?: $poi->item_no);
+                        $detailItemNo = (int) (($detail->item_no ?? null) ?: $poi->item_no);
                         if ($detailItemNo > 0) {
                             $itemKey = $poi->purchase_order_no.'_'.$detailItemNo;
-                            if (! isset($poiExactMap[$itemKey])) {
-                                $poiExactMap[$itemKey] = $matchData;
-                            }
+                            $poiExactMap[$itemKey][] = $candidate;
                         }
 
                         if (! isset($poiPoMap[$poi->purchase_order_no])) {
@@ -349,14 +392,15 @@ class SapMb51ImportService
         $refDoc103Map = [];
         if (! empty($refDocs103)) {
             $doReceipts103 = DeliveryOrderReceipt::whereIn('post_103', $refDocs103)
-                ->with(['deliveryOrderReceiptDetails' => fn ($q) => $q->select('id', 'delivery_order_receipt_id', 'item_no')])
+                ->with('deliveryOrderReceiptDetails')
                 ->get();
 
             foreach ($doReceipts103 as $do) {
                 $itemDetails = [];
                 foreach ($do->deliveryOrderReceiptDetails as $d) {
-                    if ((int) $d->item_no > 0 && ! isset($itemDetails[(int) $d->item_no])) {
-                        $itemDetails[(int) $d->item_no] = $d->id;
+                    $dItemNo = (int) ($d->item_no ?? 0);
+                    if ($dItemNo > 0 && ! isset($itemDetails[$dItemNo])) {
+                        $itemDetails[$dItemNo] = $d->id;
                     }
                 }
 
@@ -368,30 +412,35 @@ class SapMb51ImportService
             }
         }
 
-        // 3. Preload DeliveryOrderReceipt berdasarkan delivery_order_no
+        // 3. Preload DeliveryOrderReceipt berdasarkan delivery_order_no (case-insensitive)
         $referenceDoMap = [];
         if (! empty($referenceDoNos)) {
             $doReceiptsRef = DeliveryOrderReceipt::whereIn('delivery_order_no', $referenceDoNos)
-                ->with(['deliveryOrderReceiptDetails' => fn ($q) => $q->select('id', 'delivery_order_receipt_id', 'item_no')])
+                ->with('deliveryOrderReceiptDetails')
                 ->get();
 
             foreach ($doReceiptsRef as $do) {
                 $itemDetails = [];
                 foreach ($do->deliveryOrderReceiptDetails as $d) {
-                    if ((int) $d->item_no > 0 && ! isset($itemDetails[(int) $d->item_no])) {
-                        $itemDetails[(int) $d->item_no] = $d->id;
+                    $dItemNo = (int) ($d->item_no ?? 0);
+                    if ($dItemNo > 0 && ! isset($itemDetails[$dItemNo])) {
+                        $itemDetails[$dItemNo] = $d->id;
                     }
                 }
 
-                $referenceDoMap[$do->delivery_order_no] = [
-                    'delivery_order_receipt_id' => $do->id,
-                    'delivery_order_receipt_detail_id' => null,
-                    'details_by_item' => $itemDetails,
-                ];
+                $normDo = strtoupper(trim((string) $do->delivery_order_no));
+                if ($normDo !== '' && ! isset($referenceDoMap[$normDo])) {
+                    $referenceDoMap[$normDo] = [
+                        'delivery_order_receipt_id' => $do->id,
+                        'delivery_order_receipt_detail_id' => null,
+                        'details_by_item' => $itemDetails,
+                    ];
+                }
             }
         }
 
         return [
+            'grs_105' => $grs105Map,
             'poi_exact' => $poiExactMap,
             'poi_po' => $poiPoMap,
             'ref_103' => $refDoc103Map,
@@ -400,35 +449,86 @@ class SapMb51ImportService
     }
 
     /**
-     * Pencocokan in-memory super cepat menggunakan indexed map hasil preloading.
+     * Pencocokan in-memory super cepat menggunakan indexed map hasil preloading,
+     * dengan prioritas disambiguasi pengiriman parsial (GRS 105 -> Ref DO -> Qty -> PO+Item).
      *
      * @param  array<string, mixed>  $itemData
      * @param  array{
-     *     poi_exact: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: int}>,
-     *     poi_po: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: int}>,
-     *     ref_103: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int}>,
-     *     ref_do: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int}>
+     *     grs_105?: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int, details_by_item: array<int, int>}>,
+     *     poi_exact: array<string, list<array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: int, delivery_order_no: string, quantity: ?float}>>,
+     *     poi_po: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int}>,
+     *     ref_103: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int, details_by_item: array<int, int>}>,
+     *     ref_do: array<string, array{delivery_order_receipt_id: int, delivery_order_receipt_detail_id: ?int, details_by_item: array<int, int>}>
      * }  $lookups
      * @return array{delivery_order_receipt_id: ?int, delivery_order_receipt_detail_id: ?int}|null
      */
     public function matchFast(array $itemData, array $lookups): ?array
     {
-        $poNumber = (string) ($itemData['po_number'] ?? '');
+        $poNumber = trim((string) ($itemData['po_number'] ?? ''));
         $itemNo = (int) ($itemData['item_no'] ?? 0);
-        $refDoc103 = (string) ($itemData['ref_doc_103'] ?? '');
-        $referenceDoNo = (string) ($itemData['reference_do_no'] ?? '');
+        $refDoc103 = trim((string) ($itemData['ref_doc_103'] ?? ''));
+        $referenceDoNo = strtoupper(trim((string) ($itemData['reference_do_no'] ?? '')));
+        $matDoc105 = strtoupper(trim((string) ($itemData['mat_doc_105'] ?? '')));
+        $incomingQty = isset($itemData['quantity']) ? (float) $itemData['quantity'] : null;
 
-        // Prioritas 1: Cocokkan PO Number & Item No
-        if ($poNumber !== '') {
-            if ($itemNo > 0 && isset($lookups['poi_exact'][$poNumber.'_'.$itemNo])) {
-                return $lookups['poi_exact'][$poNumber.'_'.$itemNo];
-            }
-            if (isset($lookups['poi_po'][$poNumber])) {
-                return $lookups['poi_po'][$poNumber];
-            }
+        // Prioritas 0: Cocokkan langsung lewat nomor dokumen GRS 105 (paling akurat untuk pengiriman parsial)
+        if ($matDoc105 !== '' && isset($lookups['grs_105'][$matDoc105])) {
+            $entry = $lookups['grs_105'][$matDoc105];
+
+            return [
+                'delivery_order_receipt_id' => $entry['delivery_order_receipt_id'],
+                'delivery_order_receipt_detail_id' => $itemNo > 0 ? ($entry['details_by_item'][$itemNo] ?? null) : null,
+            ];
         }
 
-        // Prioritas 2: Cocokkan Kode 103 ke DeliveryOrderReceipt.post_103
+        // Prioritas 1: Cocokkan PO Number & Item No, disambiguasi bila ada beberapa DO parsial
+        if ($poNumber !== '' && $itemNo > 0 && ! empty($lookups['poi_exact'][$poNumber.'_'.$itemNo])) {
+            $candidates = $lookups['poi_exact'][$poNumber.'_'.$itemNo];
+
+            // 1a. Cocokkan Nomor DO referensi (mis. DO 63515 vs DO 52136602 pada PO 5300063515 item 20)
+            if ($referenceDoNo !== '') {
+                foreach ($candidates as $cand) {
+                    if ($cand['delivery_order_no'] !== '' && $cand['delivery_order_no'] === $referenceDoNo) {
+                        return [
+                            'delivery_order_receipt_id' => $cand['delivery_order_receipt_id'],
+                            'delivery_order_receipt_detail_id' => $cand['delivery_order_receipt_detail_id'],
+                        ];
+                    }
+                }
+            }
+
+            // 1b. Cocokkan kuantitas tepat jika pengiriman parsial berbeda jumlah (mis. 26 vs 39)
+            if ($incomingQty !== null && $incomingQty > 0 && count($candidates) > 1) {
+                foreach ($candidates as $cand) {
+                    if ($cand['quantity'] !== null && abs($cand['quantity'] - $incomingQty) < 0.001) {
+                        return [
+                            'delivery_order_receipt_id' => $cand['delivery_order_receipt_id'],
+                            'delivery_order_receipt_detail_id' => $cand['delivery_order_receipt_detail_id'],
+                        ];
+                    }
+                }
+            }
+
+            // 1c. Fallback ke kandidat pertama yang cocok PO + Item No
+            $first = $candidates[0];
+
+            return [
+                'delivery_order_receipt_id' => $first['delivery_order_receipt_id'],
+                'delivery_order_receipt_detail_id' => $first['delivery_order_receipt_detail_id'],
+            ];
+        }
+
+        // Prioritas 2: Cocokkan Reference DO ke DeliveryOrderReceipt.delivery_order_no
+        if ($referenceDoNo !== '' && isset($lookups['ref_do'][$referenceDoNo])) {
+            $entry = $lookups['ref_do'][$referenceDoNo];
+
+            return [
+                'delivery_order_receipt_id' => $entry['delivery_order_receipt_id'],
+                'delivery_order_receipt_detail_id' => $itemNo > 0 ? ($entry['details_by_item'][$itemNo] ?? null) : null,
+            ];
+        }
+
+        // Prioritas 3: Cocokkan Kode 103 ke DeliveryOrderReceipt.post_103
         if ($refDoc103 !== '' && isset($lookups['ref_103'][$refDoc103])) {
             $entry = $lookups['ref_103'][$refDoc103];
 
@@ -438,14 +538,9 @@ class SapMb51ImportService
             ];
         }
 
-        // Prioritas 3: Cocokkan Reference DO ke DeliveryOrderReceipt.delivery_order_no
-        if ($referenceDoNo !== '' && isset($lookups['ref_do'][$referenceDoNo])) {
-            $entry = $lookups['ref_do'][$referenceDoNo];
-
-            return [
-                'delivery_order_receipt_id' => $entry['delivery_order_receipt_id'],
-                'delivery_order_receipt_detail_id' => $itemNo > 0 ? ($entry['details_by_item'][$itemNo] ?? null) : null,
-            ];
+        // Prioritas 4: Fallback level PO saja (tanpa detail item)
+        if ($poNumber !== '' && isset($lookups['poi_po'][$poNumber])) {
+            return $lookups['poi_po'][$poNumber];
         }
 
         return null;

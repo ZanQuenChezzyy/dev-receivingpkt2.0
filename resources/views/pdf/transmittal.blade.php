@@ -179,16 +179,18 @@
                 @php
                     $detail = $item->detail;
                     $batchItem = $item->batchItem;
-                    $poNo = optional($detail?->purchaseOrderIssued)->purchase_order_no ?? ($batchItem->po_number ?? '-');
+                    $poNo = filled($batchItem?->po_number)
+                        ? $batchItem->po_number
+                        : (optional($detail?->purchaseOrderIssued)->purchase_order_no ?? '-');
                     $storeArea = optional($detail?->locationReceiving)->name ?? '-';
                     if ($storeArea == '-' || empty($storeArea)) {
                         $storeArea = 'FLOOR-E';
                     }
-                    $itemNo = $detail->item_no ?? ($batchItem->item_no ?? '-');
-                    $matCode = $detail->material_code ?? ($batchItem->material_code ?? '-');
-                    $desc = $detail->description ?? ($batchItem->description ?? '-');
-                    $qty = $detail?->quantity !== null ? $detail->quantity : ($batchItem?->quantity ?? null);
-                    $uoi = $detail->uoi ?? ($batchItem->uom ?? ($batchItem->uoi ?? '-'));
+                    $itemNo = filled($batchItem?->item_no) ? $batchItem->item_no : ($detail->item_no ?? '-');
+                    $matCode = filled($batchItem?->material_code) ? $batchItem->material_code : ($detail->material_code ?? '-');
+                    $desc = filled($batchItem?->description) ? $batchItem->description : ($detail->description ?? '-');
+                    $qty = $batchItem?->quantity !== null ? $batchItem->quantity : ($detail?->quantity ?? null);
+                    $uoi = filled($batchItem?->uom) ? $batchItem->uom : ($detail->uoi ?? ($batchItem->uoi ?? '-'));
                 @endphp
                 <tr>
                     <td class="text-center font-bold" style="color: #475569;">{{ $index + 1 }}</td>
