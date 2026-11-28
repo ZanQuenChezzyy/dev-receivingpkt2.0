@@ -146,11 +146,13 @@
                     @else
                         @php
                             $hasHoliday = $cell['holiday'] !== null;
+                            $isJointLeave = $hasHoliday && (bool) ($cell['holiday']['is_joint_leave'] ?? false);
                             $hasNotes = $cell['notes_count'] > 0;
                             $primaryCategory = $cell['note_categories'][0] ?? null;
 
                             $cellClass = match (true) {
                                 $cell['is_today'] => 'bg-[#F47920] text-white font-extrabold shadow-xs ring-2 ring-[#F47920]/25',
+                                $hasHoliday && $isJointLeave => 'bg-amber-500/14 text-amber-700 dark:bg-amber-500/18 dark:text-amber-300 font-bold hover:bg-amber-500/24',
                                 $hasHoliday => 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400 font-bold hover:bg-rose-500/20',
                                 $hasNotes => 'bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] font-bold hover:bg-[#0054A6]/18',
                                 $cell['is_sunday'] => 'text-rose-500 dark:text-rose-400 font-semibold hover:bg-rose-500/10',
@@ -161,6 +163,7 @@
                                 $cellClass .= ' ring-2 ring-[#0054A6] dark:ring-[#83A2DB]';
                             }
 
+                            $holidayDotClass = $isJointLeave ? 'bg-amber-500' : 'bg-rose-500';
                             $noteDotClass = match ($primaryCategory) {
                                 'cuti' => 'bg-amber-500',
                                 'kegiatan' => 'bg-emerald-500',
@@ -180,7 +183,7 @@
                             @if ($hasHoliday || $hasNotes)
                                 <span class="flex items-center justify-center gap-0.5 mt-0.5">
                                     @if ($hasHoliday)
-                                        <span class="w-1 h-1 rounded-full {{ $cell['is_today'] ? 'bg-white' : 'bg-rose-500' }}"></span>
+                                        <span class="w-1 h-1 rounded-full {{ $cell['is_today'] ? 'bg-white' : $holidayDotClass }}"></span>
                                     @endif
                                     @if ($hasNotes)
                                         <span class="w-1 h-1 rounded-full {{ $cell['is_today'] ? 'bg-amber-200' : $noteDotClass }}"></span>
@@ -323,19 +326,34 @@
                     </div>
                 @endforeach
 
-                {{-- Hari Libur Nasional Indonesia (Dikelompokkan per rentang tanggal berurutan) --}}
+                {{-- Hari Libur Nasional (Merah/Rose) & Cuti Bersama (Amber/Kuning Emas) --}}
                 @foreach ($visibleHolidays as $holiday)
-                    <div class="rounded-xl px-2.5 py-1.5 bg-rose-500/[0.06] dark:bg-rose-500/[0.09] border border-rose-500/15 flex items-center justify-between gap-2">
+                    @php
+                        $isJoint = (bool) ($holiday['is_joint_leave'] ?? false);
+                        $rowClasses = $isJoint
+                            ? 'bg-amber-500/[0.07] dark:bg-amber-500/[0.11] border-amber-500/20'
+                            : 'bg-rose-500/[0.06] dark:bg-rose-500/[0.09] border-rose-500/15';
+                        $dateBadgeClasses = $isJoint
+                            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                            : 'bg-rose-500/15 text-rose-700 dark:text-rose-300';
+                        $nameClasses = $isJoint
+                            ? 'text-amber-800 dark:text-amber-200'
+                            : 'text-rose-800 dark:text-rose-200';
+                        $tagClasses = $isJoint
+                            ? 'text-amber-700/85 dark:text-amber-300/85'
+                            : 'text-rose-600/80 dark:text-rose-300/80';
+                    @endphp
+                    <div class="rounded-xl px-2.5 py-1.5 border flex items-center justify-between gap-2 {{ $rowClasses }}">
                         <div class="flex items-center gap-2 min-w-0">
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300 tabular-nums shrink-0">
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold tabular-nums shrink-0 {{ $dateBadgeClasses }}">
                                 {{ $holiday['range_label'] }}
                             </span>
-                            <span class="text-[11px] font-semibold text-rose-800 dark:text-rose-200 truncate" title="{{ $holiday['name'] }}">
+                            <span class="text-[11px] font-semibold truncate {{ $nameClasses }}" title="{{ $holiday['name'] }}">
                                 {{ $holiday['name'] }}
                             </span>
                         </div>
-                        <span class="text-[9px] font-bold uppercase tracking-wider text-rose-600/80 dark:text-rose-300/80 shrink-0">
-                            {{ $holiday['is_joint_leave'] ? 'Cuti Bersama' : 'Libur' }}
+                        <span class="text-[9px] font-bold uppercase tracking-wider shrink-0 {{ $tagClasses }}">
+                            {{ $isJoint ? 'Cuti Bersama' : 'Libur Nasional' }}
                         </span>
                     </div>
                 @endforeach

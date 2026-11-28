@@ -108,6 +108,11 @@ test('IndonesianHolidayService parses primary API, groups consecutive dates, and
 test('Sekretaris manages calendar notes via native Filament modal actions and Data Master resource while Operator is read-only', function (): void {
     Http::fake([
         IndonesianHolidayService::PRIMARY_FEED_URL => Http::response([
+            '2026-12-24' => [
+                'holiday' => true,
+                'summary' => ['Cuti Bersama Natal'],
+                'description' => ['Cuti bersama'],
+            ],
             '2026-12-25' => [
                 'holiday' => true,
                 'summary' => ['Hari Raya Natal'],
@@ -166,7 +171,10 @@ test('Sekretaris manages calendar notes via native Filament modal actions and Da
         ->assertSee('2–7 Des')
         ->assertSee('Andereyan Muhammat:')
         ->assertSee('Dinas mutasi bahan baku')
-        ->assertSee('Hari Raya Natal');
+        ->assertSee('Hari Raya Natal')
+        ->assertSee('Cuti Bersama Natal')
+        ->assertSeeHtml('bg-amber-500/14')
+        ->assertSeeHtml('bg-rose-500/10');
 
     $saved = CalendarNote::query()->first();
     expect($saved)->not->toBeNull()
