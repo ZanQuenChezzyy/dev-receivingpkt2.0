@@ -68,6 +68,9 @@ test('successful login sets post-login curtain session flag and renders curtain 
     // First authenticated render shows the loading curtain with user name, role, and mythic avatar, and consumes the session flag
     $firstRender = view('filament.components.login-curtain')->render();
     expect($firstRender)->toContain('id="pkt-login-curtain"')
+        ->and($firstRender)->toContain('pkt-curtain-pattern-tile')
+        ->and($firstRender)->toContain('images/pattern/pkt-pattern-navy.png')
+        ->and($firstRender)->toContain('images/pattern/pkt-pattern-orange.png')
         ->and($firstRender)->toContain('Andereyan Curtain')
         ->and($firstRender)->toContain('Menyiapkan ruang kerja Receiving PKT...')
         ->and($firstRender)->toContain('pkt-mythic-avatar--crimson_eclipse')

@@ -32,14 +32,36 @@
         aria-live="polite"
         aria-label="Memuat ruang kerja Receiving PKT"
     >
-        {{-- Secondary Accent Trail Curtain (sweeps up right after primary curtain) --}}
+        {{-- Secondary Accent Trail Curtain (PKT gradient + white PKT pattern sweep) --}}
         <div class="pkt-curtain-trail" aria-hidden="true"></div>
 
         {{-- Primary Architectural Curtain Surface --}}
         <div class="pkt-curtain-panel">
-            {{-- Subtle Corporate Radial Aura & Grid Texture --}}
+            {{-- Subtle Corporate Radial Aura & Official PKT Pattern Background --}}
             <div class="pkt-curtain-ambient" aria-hidden="true"></div>
-            <div class="pkt-curtain-grid" aria-hidden="true"></div>
+            <div class="pkt-curtain-pattern-tile" aria-hidden="true"></div>
+
+            {{-- Architectural Corner PKT Pattern Watermarks --}}
+            <div class="pkt-curtain-watermark pkt-curtain-watermark--tr" aria-hidden="true">
+                <img
+                    src="{{ asset('images/pattern/pkt-pattern-navy.png') }}"
+                    alt=""
+                    class="w-full h-full object-contain dark:hidden opacity-[0.14]"
+                />
+                <img
+                    src="{{ asset('images/pattern/pkt-pattern-white.png') }}"
+                    alt=""
+                    class="w-full h-full object-contain hidden dark:block opacity-[0.09]"
+                />
+            </div>
+
+            <div class="pkt-curtain-watermark pkt-curtain-watermark--bl" aria-hidden="true">
+                <img
+                    src="{{ asset('images/pattern/pkt-pattern-orange.png') }}"
+                    alt=""
+                    class="w-full h-full object-contain opacity-[0.15] dark:opacity-[0.11]"
+                />
+            </div>
 
             {{-- Centerpiece Content --}}
             <div class="pkt-curtain-content">

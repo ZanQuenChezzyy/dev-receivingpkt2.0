@@ -7578,6 +7578,18 @@ html.pkt-curtain-lock body {
     transform: translate3d(0, 0, 0);
     will-change: transform;
     transition: transform 0.68s cubic-bezier(0.76, 0, 0.24, 1) 0.1s;
+    overflow: hidden;
+}
+
+.pkt-curtain-trail::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url('/images/pattern/pkt-pattern-white.png');
+    background-repeat: repeat;
+    background-size: 300px auto;
+    opacity: 0.14;
+    pointer-events: none;
 }
 
 .pkt-curtain-panel {
@@ -7627,24 +7639,63 @@ html.pkt-curtain-lock body {
         radial-gradient(circle at 78% 76%, rgba(244, 121, 32, 0.22) 0%, transparent 50%);
 }
 
-.pkt-curtain-grid {
+@keyframes pkt-curtain-pattern-drift {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 42px -42px;
+    }
+}
+
+.pkt-curtain-pattern-tile {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.45;
-    background-image:
-        linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
-    background-size: 40px 40px;
-    mask-image: radial-gradient(ellipse 68% 60% at 50% 50%, #000 35%, transparent 100%);
-    -webkit-mask-image: radial-gradient(ellipse 68% 60% at 50% 50%, #000 35%, transparent 100%);
+    background-image: url('/images/pattern/pkt-pattern-dark.png');
+    background-repeat: repeat;
+    background-size: 320px auto;
+    opacity: 0.085;
+    mask-image: radial-gradient(ellipse 84% 78% at 50% 50%, #000 42%, rgba(0, 0, 0, 0.35) 100%);
+    -webkit-mask-image: radial-gradient(ellipse 84% 78% at 50% 50%, #000 42%, rgba(0, 0, 0, 0.35) 100%);
+    animation: pkt-curtain-pattern-drift 9s linear infinite;
 }
 
-.dark .pkt-curtain-grid {
-    opacity: 0.35;
-    background-image:
-        linear-gradient(to right, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+.dark .pkt-curtain-pattern-tile {
+    background-image: url('/images/pattern/pkt-pattern-white.png');
+    opacity: 0.075;
+}
+
+.pkt-curtain-watermark {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    width: 18rem;
+    height: 18rem;
+    z-index: 1;
+    transition: transform 0.62s cubic-bezier(0.76, 0, 0.24, 1), opacity 0.45s ease;
+}
+
+@media (min-width: 640px) {
+    .pkt-curtain-watermark {
+        width: 24rem;
+        height: 24rem;
+    }
+}
+
+.pkt-curtain-watermark--tr {
+    top: -4.5rem;
+    right: -4.5rem;
+}
+
+.pkt-curtain-watermark--bl {
+    bottom: -4.5rem;
+    left: -4.5rem;
+}
+
+.pkt-login-curtain.is-lifting .pkt-curtain-watermark {
+    opacity: 0;
+    transform: scale(1.06);
 }
 
 .pkt-curtain-content {
@@ -7764,6 +7815,8 @@ html.pkt-curtain-lock body {
 @media (prefers-reduced-motion: reduce) {
     .pkt-curtain-panel,
     .pkt-curtain-trail,
+    .pkt-curtain-pattern-tile,
+    .pkt-curtain-watermark,
     .pkt-curtain-brand,
     .pkt-curtain-identity,
     .pkt-curtain-progress-wrap,
