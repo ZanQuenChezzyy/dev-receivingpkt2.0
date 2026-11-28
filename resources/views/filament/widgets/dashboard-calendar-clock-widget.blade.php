@@ -1,133 +1,10 @@
 <x-filament-widgets::widget>
-    <div
-        x-data="{
-            tz: @js($timezone),
-            hourMinute: @js($initialHourMinute),
-            second: @js($initialSecond),
-            fullDate: @js($initialFullDate),
-            todayYear: {{ $initialYear }},
-            todayMonth: {{ $initialMonth }},
-            todayDay: {{ $initialDay }},
-            viewYear: {{ $initialYear }},
-            viewMonth: {{ $initialMonth }},
-            timer: null,
-            monthNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
-            dayNames: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
-            init() {
-                this.tick();
-                this.timer = setInterval(() => this.tick(), 1000);
-            },
-            destroy() {
-                if (this.timer) clearInterval(this.timer);
-            },
-            tick() {
-                try {
-                    const now = new Date();
-                    const parts = new Intl.DateTimeFormat('en-GB', {
-                        timeZone: this.tz,
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                        weekday: 'short',
-                        hour12: false,
-                    }).formatToParts(now);
-
-                    const map = {};
-                    parts.forEach((p) => { map[p.type] = p.value; });
-
-                    const y = parseInt(map.year, 10);
-                    const m = parseInt(map.month, 10);
-                    const d = parseInt(map.day, 10);
-
-                    this.hourMinute = `${map.hour}:${map.minute}`;
-                    this.second = map.second;
-                    this.todayYear = y;
-                    this.todayMonth = m;
-                    this.todayDay = d;
-
-                    const weekdayIdx = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-                    this.fullDate = `${this.dayNames[weekdayIdx]}, ${d} ${this.monthNames[m - 1]} ${y}`;
-                } catch (e) {}
-            },
-            prevMonth() {
-                if (this.viewMonth === 1) {
-                    this.viewMonth = 12;
-                    this.viewYear -= 1;
-                } else {
-                    this.viewMonth -= 1;
-                }
-            },
-            nextMonth() {
-                if (this.viewMonth === 12) {
-                    this.viewMonth = 1;
-                    this.viewYear += 1;
-                } else {
-                    this.viewMonth += 1;
-                }
-            },
-            goToday() {
-                this.viewYear = this.todayYear;
-                this.viewMonth = this.todayMonth;
-            },
-            get isViewingCurrentMonth() {
-                return this.viewYear === this.todayYear && this.viewMonth === this.todayMonth;
-            },
-            get viewMonthLabel() {
-                return `${this.monthNames[this.viewMonth - 1]} ${this.viewYear}`;
-            },
-            get calendarCells() {
-                const year = this.viewYear;
-                const month = this.viewMonth;
-                const firstDayJs = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
-                // Mulai hari Senin (Sen = 0 ... Min = 6)
-                const leadingOffset = (firstDayJs + 6) % 7;
-                const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
-                const daysInPrevMonth = new Date(Date.UTC(year, month - 1, 0)).getUTCDate();
-
-                const cells = [];
-
-                for (let i = leadingOffset - 1; i >= 0; i--) {
-                    cells.push({
-                        day: daysInPrevMonth - i,
-                        inMonth: false,
-                        isToday: false,
-                        isSunday: false,
-                    });
-                }
-
-                for (let d = 1; d <= daysInMonth; d++) {
-                    const colIdx = (leadingOffset + d - 1) % 7;
-                    cells.push({
-                        day: d,
-                        inMonth: true,
-                        isToday: year === this.todayYear && month === this.todayMonth && d === this.todayDay,
-                        isSunday: colIdx === 6,
-                    });
-                }
-
-                const trailingCount = (7 - (cells.length % 7)) % 7;
-                for (let t = 1; t <= trailingCount; t++) {
-                    cells.push({
-                        day: t,
-                        inMonth: false,
-                        isToday: false,
-                        isSunday: false,
-                    });
-                }
-
-                return cells;
-            }
-        }"
-        class="pkt-bento-card pkt-bento-calendar relative h-full rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-hidden p-4 sm:p-5 flex flex-col justify-between gap-3.5"
-    >
+    <div class="pkt-bento-card pkt-bento-calendar relative h-full rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-hidden p-4 sm:p-5 flex flex-col justify-between gap-3.5">
         {{-- Top PKT Corporate Accent Strip --}}
         <div class="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#0054A6] via-[#0B67C2] to-[#F47920]"></div>
 
-        {{-- Live Clock & Full Indonesian Date --}}
-        <div class="flex flex-col gap-2">
+        {{-- Section 1: Live Clock & Full Indonesian Date --}}
+        <div class="flex flex-col gap-1.5">
             <div class="flex items-center justify-between gap-2">
                 <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                     <span class="relative flex h-2 w-2">
@@ -137,47 +14,109 @@
                     Kalender &amp; Waktu
                 </span>
 
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD]">
-                    WITA
-                </span>
+                <div class="flex items-center gap-1.5">
+                    @if ($canManageNotes)
+                        <button
+                            type="button"
+                            wire:click="openNoteModal()"
+                            class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F47920] hover:bg-[#e06512] text-white shadow-xs transition-colors cursor-pointer"
+                            title="Tambah catatan jadwal / dinas (Sekretaris)"
+                        >
+                            <x-heroicon-m-plus class="w-3 h-3" />
+                            Catatan
+                        </button>
+                    @endif
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD]">
+                        WITA
+                    </span>
+                </div>
             </div>
 
-            <div class="flex items-baseline justify-between gap-2">
-                <div class="flex items-baseline gap-1 font-mono tabular-nums leading-none">
-                    <span class="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#10141A] dark:text-white" x-text="hourMinute">{{ $initialHourMinute }}</span>
-                    <span class="text-lg font-bold text-[#F47920]" x-text="':' + second">:{{ $initialSecond }}</span>
+            <div
+                wire:ignore
+                x-data="{
+                    tz: @js($timezone),
+                    hourMinute: @js($initialHourMinute),
+                    second: @js($initialSecond),
+                    fullDate: @js($initialFullDate),
+                    timer: null,
+                    monthNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+                    dayNames: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
+                    init() {
+                        this.tick();
+                        this.timer = setInterval(() => this.tick(), 1000);
+                    },
+                    destroy() {
+                        if (this.timer) clearInterval(this.timer);
+                    },
+                    tick() {
+                        try {
+                            const now = new Date();
+                            const parts = new Intl.DateTimeFormat('en-GB', {
+                                timeZone: this.tz,
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: false,
+                            }).formatToParts(now);
+
+                            const map = {};
+                            parts.forEach((p) => { map[p.type] = p.value; });
+
+                            const y = parseInt(map.year, 10);
+                            const m = parseInt(map.month, 10);
+                            const d = parseInt(map.day, 10);
+
+                            this.hourMinute = `${map.hour}:${map.minute}`;
+                            this.second = map.second;
+
+                            const weekdayIdx = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+                            this.fullDate = `${this.dayNames[weekdayIdx]}, ${d} ${this.monthNames[m - 1]} ${y}`;
+                        } catch (e) {}
+                    }
+                }"
+                class="flex flex-col gap-1"
+            >
+                <div class="flex items-baseline justify-between gap-2">
+                    <div class="flex items-baseline gap-1 font-mono tabular-nums leading-none">
+                        <span class="text-3xl font-extrabold tracking-tight text-[#10141A] dark:text-white" x-text="hourMinute">{{ $initialHourMinute }}</span>
+                        <span class="text-base font-bold text-[#F47920]" x-text="':' + second">:{{ $initialSecond }}</span>
+                    </div>
+
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 truncate max-w-[130px]" title="Periode filter aktif">
+                        {{ $filterPeriodLabel }}
+                    </span>
                 </div>
 
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 truncate max-w-[130px]" title="Periode filter aktif">
-                    {{ $filterPeriodLabel }}
-                </span>
-            </div>
-
-            <div class="text-xs font-semibold text-slate-600 dark:text-slate-300" x-text="fullDate">
-                {{ $initialFullDate }}
+                <div class="text-xs font-semibold text-slate-600 dark:text-slate-300" x-text="fullDate">
+                    {{ $initialFullDate }}
+                </div>
             </div>
         </div>
 
-        {{-- Interactive Mini Calendar Grid --}}
+        {{-- Section 2: Interactive Calendar Month Grid (Holidays + Scheduled Notes) --}}
         <div class="pt-3 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-col gap-2">
             <div class="flex items-center justify-between gap-2">
-                <span class="text-xs font-bold text-[#10141A] dark:text-white" x-text="viewMonthLabel">
-                    {{ $filterPeriodLabel }}
+                <span class="text-xs font-bold text-[#10141A] dark:text-white">
+                    {{ $viewMonthLabel }}
                 </span>
 
                 <div class="flex items-center gap-1">
+                    @if (! $isViewingCurrentMonth)
+                        <button
+                            type="button"
+                            wire:click="goToToday"
+                            class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F47920]/12 text-[#F47920] hover:bg-[#F47920] hover:text-white transition-colors cursor-pointer"
+                        >
+                            Hari Ini
+                        </button>
+                    @endif
                     <button
                         type="button"
-                        x-show="!isViewingCurrentMonth"
-                        x-cloak
-                        x-on:click="goToday()"
-                        class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F47920]/12 text-[#F47920] hover:bg-[#F47920] hover:text-white transition-colors cursor-pointer"
-                    >
-                        Hari Ini
-                    </button>
-                    <button
-                        type="button"
-                        x-on:click="prevMonth()"
+                        wire:click="previousMonth"
                         aria-label="Bulan sebelumnya"
                         class="w-6 h-6 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-[#10141A] hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
                     >
@@ -185,7 +124,7 @@
                     </button>
                     <button
                         type="button"
-                        x-on:click="nextMonth()"
+                        wire:click="nextMonth"
                         aria-label="Bulan berikutnya"
                         class="w-6 h-6 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-[#10141A] hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
                     >
@@ -207,19 +146,340 @@
 
             {{-- Calendar Day Grid --}}
             <div class="grid grid-cols-7 gap-1 text-center">
-                <template x-for="(cell, idx) in calendarCells" :key="idx">
-                    <span
-                        x-text="cell.day"
-                        :class="{
-                            'bg-[#F47920] text-white font-extrabold shadow-xs ring-2 ring-[#F47920]/25': cell.isToday,
-                            'text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-100 dark:hover:bg-white/[0.06]': cell.inMonth && !cell.isToday && !cell.isSunday,
-                            'text-rose-500 dark:text-rose-400 font-semibold hover:bg-rose-500/10': cell.inMonth && !cell.isToday && cell.isSunday,
-                            'text-slate-300 dark:text-slate-600 font-medium': !cell.inMonth,
-                        }"
-                        class="h-7 rounded-lg inline-flex items-center justify-center text-[11px] tabular-nums transition-colors select-none"
-                    ></span>
-                </template>
+                @foreach ($calendarCells as $cell)
+                    @if (! $cell['in_month'])
+                        <span class="h-8 rounded-lg inline-flex items-center justify-center text-[11px] tabular-nums text-slate-300 dark:text-slate-600 font-medium select-none">
+                            {{ $cell['day'] }}
+                        </span>
+                    @else
+                        @php
+                            $hasHoliday = $cell['holiday'] !== null;
+                            $hasNotes = $cell['notes_count'] > 0;
+                            $primaryCategory = $cell['note_categories'][0] ?? null;
+
+                            $cellClass = match (true) {
+                                $cell['is_today'] => 'bg-[#F47920] text-white font-extrabold shadow-xs ring-2 ring-[#F47920]/25',
+                                $hasHoliday => 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400 font-bold hover:bg-rose-500/20',
+                                $hasNotes => 'bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] font-bold hover:bg-[#0054A6]/18',
+                                $cell['is_sunday'] => 'text-rose-500 dark:text-rose-400 font-semibold hover:bg-rose-500/10',
+                                default => 'text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-100 dark:hover:bg-white/[0.06]',
+                            };
+
+                            if ($cell['is_selected'] && ! $cell['is_today']) {
+                                $cellClass .= ' ring-2 ring-[#0054A6] dark:ring-[#83A2DB]';
+                            }
+
+                            $noteDotClass = match ($primaryCategory) {
+                                'cuti' => 'bg-amber-500',
+                                'kegiatan' => 'bg-emerald-500',
+                                'catatan' => 'bg-violet-500',
+                                default => 'bg-[#0054A6] dark:bg-[#60A5FA]',
+                            };
+                        @endphp
+
+                        <button
+                            type="button"
+                            wire:click="selectDate('{{ $cell['date'] }}')"
+                            @if ($cell['tooltip'] !== '') title="{{ $cell['tooltip'] }}" @endif
+                            class="relative h-8 rounded-lg inline-flex flex-col items-center justify-center text-[11px] tabular-nums transition-all cursor-pointer select-none {{ $cellClass }}"
+                        >
+                            <span class="leading-none">{{ $cell['day'] }}</span>
+
+                            @if ($hasHoliday || $hasNotes)
+                                <span class="flex items-center justify-center gap-0.5 mt-0.5">
+                                    @if ($hasHoliday)
+                                        <span class="w-1 h-1 rounded-full {{ $cell['is_today'] ? 'bg-white' : 'bg-rose-500' }}"></span>
+                                    @endif
+                                    @if ($hasNotes)
+                                        <span class="w-1 h-1 rounded-full {{ $cell['is_today'] ? 'bg-amber-200' : $noteDotClass }}"></span>
+                                    @endif
+                                </span>
+                            @endif
+                        </button>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Section 3: Catatan Agenda & Hari Libur Nasional Indonesia --}}
+        <div class="pt-3 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-col gap-2">
+            <div class="flex items-center justify-between gap-2">
+                <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400 truncate">
+                    @if ($selectedDateLabel)
+                        Agenda • {{ $selectedDateLabel }}
+                    @else
+                        Catatan &amp; Hari Libur
+                    @endif
+                </span>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                    @if ($selectedDateLabel)
+                        <button
+                            type="button"
+                            wire:click="clearSelectedDate"
+                            class="text-[10px] font-semibold text-[#0054A6] dark:text-[#83A2DB] hover:underline cursor-pointer"
+                        >
+                            Semua Bulan
+                        </button>
+                    @endif
+                    <span class="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Libur
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#0054A6] dark:bg-[#60A5FA] ml-1"></span>Catatan
+                    </span>
+                </div>
+            </div>
+
+            <div class="space-y-1.5 max-h-36 overflow-y-auto pr-0.5">
+                {{-- Catatan Dinas / Agenda dari Sekretaris --}}
+                @foreach ($visibleNotes as $note)
+                    @php
+                        $catStyle = match ($note->category) {
+                            'cuti' => 'bg-amber-500/12 text-amber-700 dark:text-amber-300 border-amber-500/20',
+                            'kegiatan' => 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/20',
+                            'catatan' => 'bg-violet-500/12 text-violet-700 dark:text-violet-300 border-violet-500/20',
+                            default => 'bg-[#0054A6]/10 text-[#0054A6] dark:bg-[#83A2DB]/15 dark:text-[#93C5FD] border-[#0054A6]/20 dark:border-[#83A2DB]/25',
+                        };
+                    @endphp
+                    <div class="group rounded-xl px-2.5 py-2 bg-slate-50/90 dark:bg-white/[0.035] border border-black/[0.05] dark:border-white/[0.07] flex items-start justify-between gap-2">
+                        <div class="flex flex-col min-w-0 gap-0.5 flex-1">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold border tabular-nums {{ $catStyle }}">
+                                    {{ $note->formattedDateRange() }}
+                                </span>
+                                <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                    {{ $note->categoryLabel() }}
+                                </span>
+                            </div>
+                            <div class="text-xs font-bold text-[#10141A] dark:text-white leading-snug">
+                                @if ($note->user)
+                                    <span class="text-[#0054A6] dark:text-[#93C5FD]">{{ $note->user->name }}:</span>
+                                @endif
+                                {{ $note->title }}
+                            </div>
+                            @if (filled($note->notes))
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                                    {{ $note->notes }}
+                                </div>
+                            @endif
+                        </div>
+
+                        @if ($canManageNotes)
+                            <div class="flex items-center gap-0.5 shrink-0">
+                                <button
+                                    type="button"
+                                    wire:click="editNote({{ $note->id }})"
+                                    aria-label="Ubah catatan"
+                                    title="Ubah catatan"
+                                    class="w-6 h-6 rounded-lg inline-flex items-center justify-center text-slate-400 hover:text-[#0054A6] hover:bg-slate-200/70 dark:hover:text-[#93C5FD] dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
+                                >
+                                    <x-heroicon-m-pencil-square class="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                    type="button"
+                                    wire:click="deleteNote({{ $note->id }})"
+                                    wire:confirm="Hapus catatan kalender ini?"
+                                    aria-label="Hapus catatan"
+                                    title="Hapus catatan"
+                                    class="w-6 h-6 rounded-lg inline-flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-500/10 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                                >
+                                    <x-heroicon-m-trash class="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+
+                {{-- Hari Libur Nasional Indonesia (API) --}}
+                @foreach ($visibleHolidays as $dateStr => $holiday)
+                    @php
+                        $hCarbon = \Illuminate\Support\Carbon::parse($dateStr);
+                        $hShortDate = $hCarbon->day.' '.($shortMonths[(int) $hCarbon->month] ?? '');
+                    @endphp
+                    <div class="rounded-xl px-2.5 py-1.5 bg-rose-500/[0.06] dark:bg-rose-500/[0.1] border border-rose-500/15 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300 tabular-nums shrink-0">
+                                {{ $hShortDate }}
+                            </span>
+                            <span class="text-[11px] font-semibold text-rose-800 dark:text-rose-200 truncate" title="{{ $holiday['name'] }}">
+                                {{ $holiday['name'] }}
+                            </span>
+                        </div>
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-rose-600/80 dark:text-rose-300/80 shrink-0">
+                            {{ $holiday['is_joint_leave'] ? 'Cuti Bersama' : 'Libur Nasional' }}
+                        </span>
+                    </div>
+                @endforeach
+
+                @if ($visibleNotes->isEmpty() && $visibleHolidays === [])
+                    <div class="rounded-xl px-3 py-2.5 bg-slate-50/80 dark:bg-white/[0.025] border border-dashed border-black/[0.08] dark:border-white/[0.08] text-[11px] text-slate-500 dark:text-slate-400 text-center">
+                        @if ($selectedDateLabel)
+                            Tidak ada catatan atau hari libur pada {{ $selectedDateLabel }}.
+                        @else
+                            Belum ada catatan agenda maupun hari libur nasional pada bulan ini.
+                        @endif
+                    </div>
+                @endif
             </div>
         </div>
     </div>
+
+    {{-- Modal Tambah / Ubah Catatan Kalender (Khusus Sekretaris & Developer) --}}
+    @if ($canManageNotes && $showNoteModal)
+        @teleport('body')
+            <div
+                class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-950/55 backdrop-blur-xs"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Kelola Catatan Kalender"
+                wire:keydown.escape.window="closeNoteModal"
+            >
+                <div
+                    class="w-full max-w-md rounded-3xl bg-white dark:bg-[#151B24] border border-black/[0.08] dark:border-white/[0.1] shadow-2xl overflow-hidden"
+                    @click.outside="$wire.closeNoteModal()"
+                >
+                    <div class="px-5 py-4 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-[#10141A] dark:text-white">
+                                {{ $editingNoteId ? 'Ubah Catatan Kalender' : 'Tambah Catatan Kalender' }}
+                            </h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                Catatan akan tampil di kalender Halaman Utama untuk seluruh pengguna.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            wire:click="closeNoteModal"
+                            aria-label="Tutup modal"
+                            class="w-8 h-8 rounded-xl inline-flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
+                        >
+                            <x-heroicon-m-x-mark class="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <form wire:submit="saveNote" class="p-5 space-y-3.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                                    Personel Terkait (Opsional)
+                                </label>
+                                <select
+                                    wire:model="noteUserId"
+                                    class="w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#0D131D] text-xs text-slate-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920]"
+                                >
+                                    <option value="">Umum / Seluruh Tim</option>
+                                    @foreach ($assignableUsers as $person)
+                                        <option value="{{ $person->id }}">
+                                            {{ $person->name }}{{ $person->npk ? " ({$person->npk})" : '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('noteUserId')
+                                    <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                                    Kategori
+                                </label>
+                                <select
+                                    wire:model="noteCategory"
+                                    class="w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#0D131D] text-xs text-slate-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920]"
+                                >
+                                    @foreach ($categoryOptions as $catKey => $catLabel)
+                                        <option value="{{ $catKey }}">{{ $catLabel }}</option>
+                                    @endforeach
+                                </select>
+                                @error('noteCategory')
+                                    <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                                Judul Catatan <span class="text-rose-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                wire:model="noteTitle"
+                                placeholder="Contoh: Dinas mutasi bahan baku"
+                                maxlength="140"
+                                required
+                                class="w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#0D131D] text-xs text-slate-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920]"
+                            />
+                            @error('noteTitle')
+                                <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                                    Tanggal Mulai <span class="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    wire:model="noteStartDate"
+                                    required
+                                    class="w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#0D131D] text-xs text-slate-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920]"
+                                />
+                                @error('noteStartDate')
+                                    <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                                    Tanggal Selesai <span class="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    wire:model="noteEndDate"
+                                    required
+                                    class="w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#0D131D] text-xs text-slate-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920]"
+                                />
+                                @error('noteEndDate')
+                                    <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                                Keterangan Tambahan (Opsional)
+                            </label>
+                            <textarea
+                                wire:model="noteDescription"
+                                rows="2"
+                                maxlength="500"
+                                placeholder="Lokasi dinas, pengganti sementara, atau keterangan lain..."
+                                class="w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#0D131D] text-xs text-slate-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F47920]/40 focus:border-[#F47920]"
+                            ></textarea>
+                            @error('noteDescription')
+                                <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="pt-2 flex items-center justify-end gap-2">
+                            <button
+                                type="button"
+                                wire:click="closeNoteModal"
+                                class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] transition-colors cursor-pointer"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                wire:loading.attr="disabled"
+                                class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#F47920] hover:bg-[#e06512] shadow-xs transition-colors cursor-pointer"
+                            >
+                                {{ $editingNoteId ? 'Simpan Perubahan' : 'Simpan Catatan' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endteleport
+    @endif
 </x-filament-widgets::widget>

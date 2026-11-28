@@ -10,6 +10,7 @@ use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -73,6 +74,7 @@ test('DashboardWelcomeBentoWidget and DashboardCalendarClockWidget render greeti
 
     Auth::login($user);
     Filament::setCurrentPanel(Filament::getPanel('admin'));
+    Http::fake(['*' => Http::response([], 200)]);
 
     Livewire::test(DashboardWelcomeBentoWidget::class)
         ->assertSee('Andereyan Bento')
