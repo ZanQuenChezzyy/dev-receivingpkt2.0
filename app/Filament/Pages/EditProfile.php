@@ -20,8 +20,10 @@ use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\Width;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rules\Password;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EditProfile extends BaseEditProfile
 {
@@ -82,7 +84,7 @@ class EditProfile extends BaseEditProfile
 
                                 $avatarUrl = $user?->getFilamentAvatarUrl()
                                     ?? 'https://ui-avatars.com/api/?name='.urlencode($displayName).'&color=FFFFFF&background=F47920';
-                                $coverUrl = $user?->getCoverPhotoUrl();
+                                $coverUrl = $this->resolvePreviewCoverUrl($get('cover_photo_url'), $user);
 
                                 $ringClass = $isExclusiveSelected
                                     ? "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$selected}"
@@ -189,19 +191,22 @@ class EditProfile extends BaseEditProfile
                                             ->columnSpan(['default' => 1, 'md' => 4]),
 
                                         FileUpload::make('cover_photo_url')
-                                            ->label('Foto Sampul (Cover Photo)')
-                                            ->helperText('Disarankan gambar lebar (rasio 16:5 atau 3:1). Kosongkan untuk memakai latar bawaan PKT.')
-                                            ->image()
+                                            ->label('Foto Sampul (Cover Photo / GIF)')
+                                            ->helperText('Mendukung JPG, PNG, WEBP, dan GIF bergerak (maks. 10 MB, disarankan lebar 16:5). Untuk GIF bergerak, langsung simpan tanpa memakai tombol crop agar animasi tetap aktif.')
+                                            ->acceptedFileTypes([
+                                                'image/jpeg',
+                                                'image/png',
+                                                'image/webp',
+                                                'image/gif',
+                                            ])
+                                            ->maxSize(10240)
                                             ->imageEditor()
                                             ->imageEditorAspectRatioOptions(['16:5', '3:1', '16:9'])
-                                            ->imageResizeMode('cover')
-                                            ->imageCropAspectRatio('16:5')
-                                            ->imageResizeTargetWidth('1600')
-                                            ->imageResizeTargetHeight('500')
                                             ->imagePreviewHeight('150')
                                             ->disk('public')
                                             ->directory('cover_upload')
                                             ->visibility('public')
+                                            ->live()
                                             ->columnSpan(['default' => 1, 'md' => 8]),
                                     ]),
 
@@ -444,6 +449,35 @@ class EditProfile extends BaseEditProfile
         UserBadgeRenderer::flushCache();
 
         return $data;
+    }
+
+    protected function resolvePreviewCoverUrl(mixed $coverState, ?User $user): ?string
+    {
+        if (is_array($coverState)) {
+            if ($coverState === []) {
+                return null;
+            }
+
+            $coverState = reset($coverState);
+        }
+
+        if ($coverState instanceof TemporaryUploadedFile) {
+            try {
+                return $coverState->isPreviewable() ? $coverState->temporaryUrl() : $user?->getCoverPhotoUrl();
+            } catch (\Throwable) {
+                return $user?->getCoverPhotoUrl();
+            }
+        }
+
+        if (is_string($coverState) && trim($coverState) !== '') {
+            if (str_starts_with($coverState, 'http://') || str_starts_with($coverState, 'https://')) {
+                return $coverState;
+            }
+
+            return Storage::disk('public')->url($coverState);
+        }
+
+        return null;
     }
 
     protected function getRedirectUrl(): ?string

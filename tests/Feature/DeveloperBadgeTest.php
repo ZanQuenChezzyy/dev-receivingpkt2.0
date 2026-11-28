@@ -6,8 +6,10 @@ use App\Services\UserBadgeRenderer;
 use App\Support\DeveloperBadgeRenderer;
 use Filament\Facades\Filament;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -123,7 +125,7 @@ test('Developer and AVP Receiving can choose and save animated badge style from 
 
     Livewire::test(EditProfile::class)
         ->assertSee('Gaya Badge')
-        ->assertSee('Foto Sampul (Cover Photo)')
+        ->assertSee('Foto Sampul (Cover Photo / GIF)')
         ->assertSee('Sparkling Lightning')
         ->assertSee('Blazing Ember')
         ->assertSee('Solar Aurora')
@@ -195,4 +197,46 @@ test('Regular staff user can customize Classic Clean badge while exclusive anima
         ->assertHasFormErrors(['developer_badge_style']);
 
     expect($staff->fresh()->resolvedDeveloperBadgeStyle())->toBe(User::CLASSIC_BADGE_EMERALD);
+});
+
+test('EditProfile accepts animated GIF cover photos without destructive auto-transform', function (): void {
+    Storage::fake('public');
+
+    $user = User::query()->create([
+        'name' => 'Pengguna GIF',
+        'npk' => '2100199',
+        'email' => 'gif_cover@pupukkaltim.com',
+        'password' => bcrypt('password'),
+        'is_active' => true,
+    ]);
+    $user->assignRole('Admin Sparepart');
+    Auth::login($user);
+
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+    $gifUpload = UploadedFile::fake()->createWithContent(
+        'banner-gerak.gif',
+        "GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+    );
+
+    $component = Livewire::test(EditProfile::class)
+        ->fillForm([
+            'name' => 'Pengguna GIF',
+            'npk' => '2100199',
+            'email' => 'gif_cover@pupukkaltim.com',
+            'cover_photo_url' => $gifUpload,
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $savedPath = $user->fresh()->cover_photo_url;
+    expect($savedPath)->not->toBeNull()
+        ->and($savedPath)->toEndWith('.gif');
+    Storage::disk('public')->assertExists($savedPath);
+
+    /** @var Filament\Forms\Components\FileUpload $coverField */
+    $coverField = $component->instance()->form->getFlatFields()['cover_photo_url'];
+    expect($coverField->getAutomaticallyCropImagesAspectRatio())->toBeNull()
+        ->and($coverField->getAutomaticallyResizeImagesMode())->toBeNull()
+        ->and($coverField->getAcceptedFileTypes())->toContain('image/gif');
 });
