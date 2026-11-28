@@ -38,6 +38,7 @@ beforeEach(function (): void {
     Role::firstOrCreate(['name' => 'Developer', 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => 'AVP Receiving', 'guard_name' => 'web']);
     Role::firstOrCreate(['name' => 'Admin Sparepart', 'guard_name' => 'web']);
+    Role::firstOrCreate(['name' => 'Staff Invoice', 'guard_name' => 'web']);
 });
 
 test('Developer and AVP Receiving users resolve selected animated badge style while other roles get standard none', function (): void {
@@ -49,7 +50,7 @@ test('Developer and AVP Receiving users resolve selected animated badge style wh
         'developer_badge_style' => User::DEVELOPER_BADGE_FLAME,
         'is_active' => true,
     ]);
-    $dev->assignRole('Developer');
+    $dev->assignRole(['Developer', 'Staff Invoice']);
 
     $avp = User::query()->create([
         'name' => 'AVP Receiving User',
@@ -84,6 +85,8 @@ test('Developer and AVP Receiving users resolve selected animated badge style wh
 
     expect($devHtml)->toContain('pkt-dev-badge--flame')
         ->and($devHtml)->toContain('pkt-dev-embers')
+        ->and($devHtml)->toContain('Staff Invoice')
+        ->and(substr_count($devHtml, 'pkt-dev-badge--flame'))->toBe(2)
         ->and($avpHtml)->toContain('pkt-dev-badge--pkt_combo')
         ->and($avpHtml)->toContain('AVP Receiving')
         ->and($staffHtml)->not->toContain('pkt-dev-badge')

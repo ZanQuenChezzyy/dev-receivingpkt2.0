@@ -116,17 +116,10 @@ class DeveloperBadgeRenderer
         }
 
         $badgeStyle = $user->resolvedDeveloperBadgeStyle();
-        $isExclusive = User::isExclusiveBadgeStyle($badgeStyle);
-        $eligibleRoles = array_map('strtolower', User::ANIMATED_BADGE_ROLES);
         $chips = [];
 
         foreach ($roleNames as $roleName) {
-            if ($isExclusive && in_array(strtolower((string) $roleName), $eligibleRoles, true)) {
-                $chips[] = static::render($badgeStyle, $roleName, $size);
-            } else {
-                $classicStyle = $isExclusive ? User::CLASSIC_BADGE_BLUE : $badgeStyle;
-                $chips[] = static::renderClassicRoleBadge($classicStyle, (string) $roleName, $size);
-            }
+            $chips[] = static::render($badgeStyle, (string) $roleName, $size);
         }
 
         return new HtmlString('<div class="inline-flex flex-wrap items-center gap-1.5">'.implode('', $chips).'</div>');
