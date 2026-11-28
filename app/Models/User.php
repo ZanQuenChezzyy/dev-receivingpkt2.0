@@ -39,6 +39,14 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
 
     public const DEVELOPER_BADGE_ARCTIC_PLATINUM = 'arctic_platinum';
 
+    public const DEVELOPER_BADGE_EMERALD_SOVEREIGN = 'emerald_sovereign';
+
+    public const DEVELOPER_BADGE_CRIMSON_ECLIPSE = 'crimson_eclipse';
+
+    public const DEVELOPER_BADGE_AMETHYST_CROWN = 'amethyst_crown';
+
+    public const DEVELOPER_BADGE_ROSE_TITANIUM = 'rose_titanium';
+
     public const DEVELOPER_BADGE_NONE = 'none';
 
     public const CLASSIC_BADGE_BLUE = 'classic_blue';
@@ -86,6 +94,10 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             self::DEVELOPER_BADGE_PKT_COMBO => 'Solar Aurora',
             self::DEVELOPER_BADGE_OBSIDIAN_GOLD => 'Royal Obsidian',
             self::DEVELOPER_BADGE_ARCTIC_PLATINUM => 'Arctic Platinum',
+            self::DEVELOPER_BADGE_EMERALD_SOVEREIGN => 'Emerald Sovereign',
+            self::DEVELOPER_BADGE_CRIMSON_ECLIPSE => 'Crimson Eclipse',
+            self::DEVELOPER_BADGE_AMETHYST_CROWN => 'Amethyst Crown',
+            self::DEVELOPER_BADGE_ROSE_TITANIUM => 'Rose Titanium',
         ];
     }
 

@@ -5069,6 +5069,355 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 .pkt-arctic-stars i:nth-child(3) { top: 20%; left: 74%; animation-delay: 1.35s; background: #F1F5F9; }
 .pkt-arctic-stars i:nth-child(4) { top: 68%; left: 88%; animation-delay: 1.95s; background: #7DD3FC; width: 2.5px; height: 2.5px; }
 
+/* Variant 6: MYTHIC TIER — Emerald Sovereign (Deep Forest Emerald & Liquid Mint Jade) */
+@keyframes pkt-emerald-halo {
+    0%, 100% {
+        box-shadow: 0 0 12px -1px rgba(16, 185, 129, 0.48), 0 0 24px -3px rgba(52, 211, 153, 0.32);
+    }
+    50% {
+        box-shadow: 0 0 16px 0px rgba(52, 211, 153, 0.62), 0 0 28px -2px rgba(5, 150, 105, 0.44);
+    }
+}
+
+.pkt-dev-badge--emerald_sovereign {
+    padding: 2px;
+    animation: pkt-emerald-halo 3.3s ease-in-out infinite;
+}
+
+.pkt-dev-badge--emerald_sovereign .pkt-dev-badge-ring {
+    background: conic-gradient(
+        from 0deg,
+        #022C22 0deg,
+        #059669 58deg,
+        #A7F3D0 112deg,
+        #FFFFFF 136deg,
+        #047857 192deg,
+        #34D399 252deg,
+        #ECFDF5 292deg,
+        #065F46 330deg,
+        #022C22 360deg
+    );
+    animation-duration: 2.4s;
+}
+
+.pkt-dev-badge--emerald_sovereign .pkt-dev-badge-core {
+    background: linear-gradient(125deg, #021F1A 0%, #064E3B 32%, #065F46 56%, #0D6B53 78%, #022C22 100%);
+    background-size: 250% 250%;
+    animation: pkt-aurora-flow 5.4s ease-in-out infinite;
+    color: #ECFDF5;
+    text-shadow: 0 1px 8px rgba(167, 243, 208, 0.4);
+    box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.34), inset 0 -1px 0 rgba(16, 185, 129, 0.3);
+}
+
+.pkt-dev-icon-emerald {
+    color: #6EE7B7;
+    animation: pkt-obsidian-crown-glow 2.5s ease-in-out infinite;
+}
+
+.pkt-emerald-sheen {
+    position: absolute;
+    inset: 2px;
+    z-index: 3;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-emerald-sheen::after {
+    content: "";
+    position: absolute;
+    top: -15%;
+    bottom: -15%;
+    width: 34%;
+    background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.25) 28%, rgba(236, 253, 245, 0.75) 50%, rgba(52, 211, 153, 0.38) 72%, transparent 100%);
+    animation: pkt-aurora-beam 3.1s ease-in-out infinite;
+}
+
+.pkt-emerald-stars {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.pkt-emerald-stars i {
+    position: absolute;
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 1px;
+    background: #ECFDF5;
+    box-shadow: 0 0 6px 1.5px rgba(167, 243, 208, 0.92), 0 0 9px 1.5px rgba(16, 185, 129, 0.72);
+    animation: pkt-aurora-twinkle 2.5s ease-in-out infinite;
+}
+
+.pkt-emerald-stars i:nth-child(1) { top: 18%; left: 18%; animation-delay: 0s; background: #FFFFFF; }
+.pkt-emerald-stars i:nth-child(2) { top: 72%; left: 46%; animation-delay: 0.7s; background: #6EE7B7; width: 3px; height: 3px; }
+.pkt-emerald-stars i:nth-child(3) { top: 20%; left: 76%; animation-delay: 1.35s; background: #A7F3D0; }
+.pkt-emerald-stars i:nth-child(4) { top: 70%; left: 88%; animation-delay: 2.0s; background: #34D399; width: 2.5px; height: 2.5px; }
+
+/* Variant 7: MYTHIC TIER — Crimson Eclipse (Volcanic Black & Molten Ruby Crimson) */
+@keyframes pkt-crimson-halo {
+    0%, 100% {
+        box-shadow: 0 0 12px -1px rgba(225, 29, 72, 0.5), 0 0 24px -3px rgba(244, 63, 94, 0.32);
+    }
+    50% {
+        box-shadow: 0 0 16px 0px rgba(244, 63, 94, 0.65), 0 0 28px -2px rgba(153, 27, 27, 0.48);
+    }
+}
+
+.pkt-dev-badge--crimson_eclipse {
+    padding: 2px;
+    animation: pkt-crimson-halo 3.1s ease-in-out infinite;
+}
+
+.pkt-dev-badge--crimson_eclipse .pkt-dev-badge-ring {
+    background: conic-gradient(
+        from 0deg,
+        #140407 0deg,
+        #991B1B 58deg,
+        #FB7185 112deg,
+        #FFE4E6 138deg,
+        #BE123C 192deg,
+        #1F070C 248deg,
+        #F43F5E 306deg,
+        #140407 360deg
+    );
+    animation-duration: 2.2s;
+}
+
+.pkt-dev-badge--crimson_eclipse .pkt-dev-badge-core {
+    background: linear-gradient(125deg, #120407 0%, #3F0A14 32%, #7F1D1D 58%, #4C0519 80%, #140408 100%);
+    background-size: 250% 250%;
+    animation: pkt-aurora-flow 5.0s ease-in-out infinite;
+    color: #FFF1F2;
+    text-shadow: 0 1px 8px rgba(251, 113, 133, 0.45);
+    box-shadow: inset 0 1px 0 rgba(254, 205, 211, 0.3), inset 0 -1px 0 rgba(225, 29, 72, 0.35);
+}
+
+.pkt-dev-icon-crimson {
+    color: #FDA4AF;
+    animation: pkt-obsidian-crown-glow 2.3s ease-in-out infinite;
+}
+
+.pkt-crimson-sheen {
+    position: absolute;
+    inset: 2px;
+    z-index: 3;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-crimson-sheen::after {
+    content: "";
+    position: absolute;
+    top: -15%;
+    bottom: -15%;
+    width: 34%;
+    background: linear-gradient(90deg, transparent 0%, rgba(225, 29, 72, 0.28) 28%, rgba(255, 241, 242, 0.72) 50%, rgba(251, 113, 133, 0.4) 72%, transparent 100%);
+    animation: pkt-aurora-beam 3.0s ease-in-out infinite;
+}
+
+.pkt-crimson-stars {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.pkt-crimson-stars i {
+    position: absolute;
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 1px;
+    background: #FFF1F2;
+    box-shadow: 0 0 6px 1.5px rgba(253, 164, 175, 0.92), 0 0 9px 1.5px rgba(225, 29, 72, 0.75);
+    animation: pkt-aurora-twinkle 2.4s ease-in-out infinite;
+}
+
+.pkt-crimson-stars i:nth-child(1) { top: 18%; left: 16%; animation-delay: 0.15s; background: #FFFFFF; }
+.pkt-crimson-stars i:nth-child(2) { top: 72%; left: 44%; animation-delay: 0.8s; background: #FDA4AF; width: 3px; height: 3px; }
+.pkt-crimson-stars i:nth-child(3) { top: 20%; left: 74%; animation-delay: 1.4s; background: #FB7185; }
+.pkt-crimson-stars i:nth-child(4) { top: 68%; left: 88%; animation-delay: 1.95s; background: #FFE4E6; width: 2.5px; height: 2.5px; }
+
+/* Variant 8: MYTHIC TIER — Amethyst Crown (Midnight Velvet & Imperial Amethyst Silver) */
+@keyframes pkt-amethyst-halo {
+    0%, 100% {
+        box-shadow: 0 0 12px -1px rgba(168, 85, 247, 0.48), 0 0 24px -3px rgba(216, 180, 254, 0.34);
+    }
+    50% {
+        box-shadow: 0 0 16px 0px rgba(192, 132, 252, 0.64), 0 0 28px -2px rgba(126, 34, 206, 0.46);
+    }
+}
+
+.pkt-dev-badge--amethyst_crown {
+    padding: 2px;
+    animation: pkt-amethyst-halo 3.3s ease-in-out infinite;
+}
+
+.pkt-dev-badge--amethyst_crown .pkt-dev-badge-ring {
+    background: conic-gradient(
+        from 0deg,
+        #140826 0deg,
+        #7E22CE 58deg,
+        #E9D5FF 112deg,
+        #FFFFFF 136deg,
+        #9333EA 192deg,
+        #2E1065 250deg,
+        #C084FC 306deg,
+        #140826 360deg
+    );
+    animation-duration: 2.35s;
+}
+
+.pkt-dev-badge--amethyst_crown .pkt-dev-badge-core {
+    background: linear-gradient(125deg, #110620 0%, #2E1065 32%, #4C1D95 58%, #3B0764 80%, #140826 100%);
+    background-size: 250% 250%;
+    animation: pkt-aurora-flow 5.3s ease-in-out infinite;
+    color: #FAF5FF;
+    text-shadow: 0 1px 8px rgba(233, 213, 255, 0.45);
+    box-shadow: inset 0 1px 0 rgba(233, 213, 255, 0.34), inset 0 -1px 0 rgba(168, 85, 247, 0.32);
+}
+
+.pkt-dev-icon-amethyst {
+    color: #E9D5FF;
+    animation: pkt-arctic-prism-pulse 2.5s ease-in-out infinite;
+}
+
+.pkt-amethyst-sheen {
+    position: absolute;
+    inset: 2px;
+    z-index: 3;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-amethyst-sheen::after {
+    content: "";
+    position: absolute;
+    top: -15%;
+    bottom: -15%;
+    width: 34%;
+    background: linear-gradient(90deg, transparent 0%, rgba(168, 85, 247, 0.28) 28%, rgba(250, 245, 255, 0.78) 50%, rgba(216, 180, 254, 0.4) 72%, transparent 100%);
+    animation: pkt-aurora-beam 3.15s ease-in-out infinite;
+}
+
+.pkt-amethyst-stars {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.pkt-amethyst-stars i {
+    position: absolute;
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 1px;
+    background: #FAF5FF;
+    box-shadow: 0 0 6px 1.5px rgba(233, 213, 255, 0.92), 0 0 9px 1.5px rgba(168, 85, 247, 0.75);
+    animation: pkt-aurora-twinkle 2.5s ease-in-out infinite;
+}
+
+.pkt-amethyst-stars i:nth-child(1) { top: 18%; left: 18%; animation-delay: 0.05s; background: #FFFFFF; }
+.pkt-amethyst-stars i:nth-child(2) { top: 72%; left: 46%; animation-delay: 0.75s; background: #E9D5FF; width: 3px; height: 3px; }
+.pkt-amethyst-stars i:nth-child(3) { top: 20%; left: 76%; animation-delay: 1.35s; background: #D8B4FE; }
+.pkt-amethyst-stars i:nth-child(4) { top: 70%; left: 88%; animation-delay: 2.0s; background: #C084FC; width: 2.5px; height: 2.5px; }
+
+/* Variant 9: MYTHIC TIER — Rose Titanium (Dark Espresso Titanium & Satin Rose Gold) */
+@keyframes pkt-rose-halo {
+    0%, 100% {
+        box-shadow: 0 0 12px -1px rgba(244, 114, 182, 0.46), 0 0 24px -3px rgba(251, 207, 232, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 16px 0px rgba(249, 168, 212, 0.62), 0 0 28px -2px rgba(190, 24, 93, 0.42);
+    }
+}
+
+.pkt-dev-badge--rose_titanium {
+    padding: 2px;
+    animation: pkt-rose-halo 3.4s ease-in-out infinite;
+}
+
+.pkt-dev-badge--rose_titanium .pkt-dev-badge-ring {
+    background: conic-gradient(
+        from 0deg,
+        #1B1115 0deg,
+        #9D174D 58deg,
+        #FBCFE8 112deg,
+        #FFF1F2 138deg,
+        #DB2777 192deg,
+        #26161C 248deg,
+        #F472B6 306deg,
+        #1B1115 360deg
+    );
+    animation-duration: 2.45s;
+}
+
+.pkt-dev-badge--rose_titanium .pkt-dev-badge-core {
+    background: linear-gradient(125deg, #190E13 0%, #3B1826 32%, #6D2143 58%, #471A2E 80%, #1C1116 100%);
+    background-size: 250% 250%;
+    animation: pkt-aurora-flow 5.5s ease-in-out infinite;
+    color: #FDF2F8;
+    text-shadow: 0 1px 8px rgba(251, 207, 232, 0.42);
+    box-shadow: inset 0 1px 0 rgba(251, 207, 232, 0.34), inset 0 -1px 0 rgba(236, 72, 153, 0.32);
+}
+
+.pkt-dev-icon-rose {
+    color: #FBCFE8;
+    animation: pkt-arctic-prism-pulse 2.6s ease-in-out infinite;
+}
+
+.pkt-rose-sheen {
+    position: absolute;
+    inset: 2px;
+    z-index: 3;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-rose-sheen::after {
+    content: "";
+    position: absolute;
+    top: -15%;
+    bottom: -15%;
+    width: 34%;
+    background: linear-gradient(90deg, transparent 0%, rgba(236, 72, 153, 0.25) 28%, rgba(253, 242, 248, 0.78) 50%, rgba(249, 168, 212, 0.4) 72%, transparent 100%);
+    animation: pkt-aurora-beam 3.2s ease-in-out infinite;
+}
+
+.pkt-rose-stars {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.pkt-rose-stars i {
+    position: absolute;
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 1px;
+    background: #FDF2F8;
+    box-shadow: 0 0 6px 1.5px rgba(251, 207, 232, 0.92), 0 0 9px 1.5px rgba(236, 72, 153, 0.7);
+    animation: pkt-aurora-twinkle 2.55s ease-in-out infinite;
+}
+
+.pkt-rose-stars i:nth-child(1) { top: 18%; left: 16%; animation-delay: 0.1s; background: #FFFFFF; }
+.pkt-rose-stars i:nth-child(2) { top: 72%; left: 44%; animation-delay: 0.8s; background: #FBCFE8; width: 3px; height: 3px; }
+.pkt-rose-stars i:nth-child(3) { top: 20%; left: 74%; animation-delay: 1.4s; background: #F9A8D4; }
+.pkt-rose-stars i:nth-child(4) { top: 68%; left: 88%; animation-delay: 2.0s; background: #FCE7F3; width: 2.5px; height: 2.5px; }
+
 /* Variant 4: Standard (Static) */
 .pkt-dev-badge--none {
     padding: 0;
@@ -5194,6 +5543,46 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
         #0C1F3D 360deg
     );
     animation-duration: 2.3s;
+}
+
+.pkt-dev-avatar-ring--emerald_sovereign {
+    padding: 3px;
+    animation: pkt-emerald-halo 3.3s ease-in-out infinite;
+}
+
+.pkt-dev-avatar-ring--emerald_sovereign::before {
+    background: conic-gradient(from 0deg, #022C22 0deg, #059669 58deg, #A7F3D0 112deg, #FFFFFF 136deg, #047857 192deg, #34D399 252deg, #ECFDF5 292deg, #065F46 330deg, #022C22 360deg);
+    animation-duration: 2.4s;
+}
+
+.pkt-dev-avatar-ring--crimson_eclipse {
+    padding: 3px;
+    animation: pkt-crimson-halo 3.1s ease-in-out infinite;
+}
+
+.pkt-dev-avatar-ring--crimson_eclipse::before {
+    background: conic-gradient(from 0deg, #140407 0deg, #991B1B 58deg, #FB7185 112deg, #FFE4E6 138deg, #BE123C 192deg, #1F070C 248deg, #F43F5E 306deg, #140407 360deg);
+    animation-duration: 2.2s;
+}
+
+.pkt-dev-avatar-ring--amethyst_crown {
+    padding: 3px;
+    animation: pkt-amethyst-halo 3.3s ease-in-out infinite;
+}
+
+.pkt-dev-avatar-ring--amethyst_crown::before {
+    background: conic-gradient(from 0deg, #140826 0deg, #7E22CE 58deg, #E9D5FF 112deg, #FFFFFF 136deg, #9333EA 192deg, #2E1065 250deg, #C084FC 306deg, #140826 360deg);
+    animation-duration: 2.35s;
+}
+
+.pkt-dev-avatar-ring--rose_titanium {
+    padding: 3px;
+    animation: pkt-rose-halo 3.4s ease-in-out infinite;
+}
+
+.pkt-dev-avatar-ring--rose_titanium::before {
+    background: conic-gradient(from 0deg, #1B1115 0deg, #9D174D 58deg, #FBCFE8 112deg, #FFF1F2 138deg, #DB2777 192deg, #26161C 248deg, #F472B6 306deg, #1B1115 360deg);
+    animation-duration: 2.45s;
 }
 
 /* =========================================================
@@ -5348,6 +5737,26 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
             0 0 9px -1px rgba(224, 242, 254, 0.58),
             0 0 12px -2px rgba(14, 165, 233, 0.48);
     }
+}
+
+@keyframes pkt-pill-emerald-halo {
+    0%, 100% { box-shadow: 0 0 7px -1px rgba(16, 185, 129, 0.48), 0 0 11px -2px rgba(5, 150, 105, 0.38); }
+    50% { box-shadow: 0 0 9px -1px rgba(52, 211, 153, 0.58), 0 0 12px -2px rgba(16, 185, 129, 0.45); }
+}
+
+@keyframes pkt-pill-crimson-halo {
+    0%, 100% { box-shadow: 0 0 7px -1px rgba(225, 29, 72, 0.5), 0 1px 4px rgba(0, 0, 0, 0.45); }
+    50% { box-shadow: 0 0 9px -1px rgba(244, 63, 94, 0.6), 0 1px 5px rgba(153, 27, 27, 0.45); }
+}
+
+@keyframes pkt-pill-amethyst-halo {
+    0%, 100% { box-shadow: 0 0 7px -1px rgba(168, 85, 247, 0.48), 0 0 11px -2px rgba(126, 34, 206, 0.4); }
+    50% { box-shadow: 0 0 9px -1px rgba(216, 180, 254, 0.58), 0 0 12px -2px rgba(147, 51, 234, 0.48); }
+}
+
+@keyframes pkt-pill-rose-halo {
+    0%, 100% { box-shadow: 0 0 7px -1px rgba(244, 114, 182, 0.48), 0 0 11px -2px rgba(190, 24, 93, 0.38); }
+    50% { box-shadow: 0 0 9px -1px rgba(251, 207, 232, 0.56), 0 0 12px -2px rgba(219, 39, 119, 0.46); }
 }
 
 /* Pill Style 1: Electric (PKT Blue + Cyan Lightning Arc) */
@@ -5612,6 +6021,54 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 .pkt-user-pill--arctic_platinum .pkt-arctic-stars i:nth-child(3) { top: 12%; left: 78%; }
 .pkt-user-pill--arctic_platinum .pkt-arctic-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
 
+/* Pill Style 6: MYTHIC TIER — Emerald Sovereign Table Pill */
+.pkt-user-pill--emerald_sovereign { padding: 2px; animation: pkt-pill-emerald-halo 3.3s ease-in-out infinite; }
+.pkt-user-pill--emerald_sovereign .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #022C22 0deg, #059669 58deg, #A7F3D0 112deg, #FFFFFF 136deg, #047857 192deg, #34D399 252deg, #ECFDF5 292deg, #065F46 330deg, #022C22 360deg); animation-duration: 2.4s; }
+.pkt-user-pill--emerald_sovereign .pkt-user-pill-inner { background: linear-gradient(125deg, #021F1A 0%, #064E3B 32%, #065F46 58%, #0D6B53 80%, #022C22 100%); background-size: 250% 250%; animation: pkt-aurora-flow 5.4s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.28); }
+.pkt-user-pill--emerald_sovereign .pkt-user-pill-name { color: #ECFDF5; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.45); }
+.pkt-user-pill--emerald_sovereign .pkt-user-pill-sub { color: #6EE7B7; }
+.pkt-user-pill--emerald_sovereign .pkt-emerald-stars i { width: 2.5px; height: 2.5px; box-shadow: 0 0 4px 1px rgba(167, 243, 208, 0.9); }
+.pkt-user-pill--emerald_sovereign .pkt-emerald-stars i:nth-child(1) { top: 12%; left: 26%; }
+.pkt-user-pill--emerald_sovereign .pkt-emerald-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
+.pkt-user-pill--emerald_sovereign .pkt-emerald-stars i:nth-child(3) { top: 12%; left: 78%; }
+.pkt-user-pill--emerald_sovereign .pkt-emerald-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
+
+/* Pill Style 7: MYTHIC TIER — Crimson Eclipse Table Pill */
+.pkt-user-pill--crimson_eclipse { padding: 2px; animation: pkt-pill-crimson-halo 3.1s ease-in-out infinite; }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #140407 0deg, #991B1B 58deg, #FB7185 112deg, #FFE4E6 138deg, #BE123C 192deg, #1F070C 248deg, #F43F5E 306deg, #140407 360deg); animation-duration: 2.2s; }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-inner { background: linear-gradient(125deg, #120407 0%, #3F0A14 32%, #7F1D1D 58%, #4C0519 80%, #140408 100%); background-size: 250% 250%; animation: pkt-aurora-flow 5.0s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(254, 205, 211, 0.25); }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-name { color: #FFF1F2; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5); }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-sub { color: #FDA4AF; }
+.pkt-user-pill--crimson_eclipse .pkt-crimson-stars i { width: 2.5px; height: 2.5px; box-shadow: 0 0 4px 1px rgba(253, 164, 175, 0.9); }
+.pkt-user-pill--crimson_eclipse .pkt-crimson-stars i:nth-child(1) { top: 12%; left: 26%; }
+.pkt-user-pill--crimson_eclipse .pkt-crimson-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
+.pkt-user-pill--crimson_eclipse .pkt-crimson-stars i:nth-child(3) { top: 12%; left: 78%; }
+.pkt-user-pill--crimson_eclipse .pkt-crimson-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
+
+/* Pill Style 8: MYTHIC TIER — Amethyst Crown Table Pill */
+.pkt-user-pill--amethyst_crown { padding: 2px; animation: pkt-pill-amethyst-halo 3.3s ease-in-out infinite; }
+.pkt-user-pill--amethyst_crown .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #140826 0deg, #7E22CE 58deg, #E9D5FF 112deg, #FFFFFF 136deg, #9333EA 192deg, #2E1065 250deg, #C084FC 306deg, #140826 360deg); animation-duration: 2.35s; }
+.pkt-user-pill--amethyst_crown .pkt-user-pill-inner { background: linear-gradient(125deg, #110620 0%, #2E1065 32%, #4C1D95 58%, #3B0764 80%, #140826 100%); background-size: 250% 250%; animation: pkt-aurora-flow 5.3s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(233, 213, 255, 0.28); }
+.pkt-user-pill--amethyst_crown .pkt-user-pill-name { color: #FAF5FF; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5); }
+.pkt-user-pill--amethyst_crown .pkt-user-pill-sub { color: #E9D5FF; }
+.pkt-user-pill--amethyst_crown .pkt-amethyst-stars i { width: 2.5px; height: 2.5px; box-shadow: 0 0 4px 1px rgba(233, 213, 255, 0.9); }
+.pkt-user-pill--amethyst_crown .pkt-amethyst-stars i:nth-child(1) { top: 12%; left: 26%; }
+.pkt-user-pill--amethyst_crown .pkt-amethyst-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
+.pkt-user-pill--amethyst_crown .pkt-amethyst-stars i:nth-child(3) { top: 12%; left: 78%; }
+.pkt-user-pill--amethyst_crown .pkt-amethyst-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
+
+/* Pill Style 9: MYTHIC TIER — Rose Titanium Table Pill */
+.pkt-user-pill--rose_titanium { padding: 2px; animation: pkt-pill-rose-halo 3.4s ease-in-out infinite; }
+.pkt-user-pill--rose_titanium .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #1B1115 0deg, #9D174D 58deg, #FBCFE8 112deg, #FFF1F2 138deg, #DB2777 192deg, #26161C 248deg, #F472B6 306deg, #1B1115 360deg); animation-duration: 2.45s; }
+.pkt-user-pill--rose_titanium .pkt-user-pill-inner { background: linear-gradient(125deg, #190E13 0%, #3B1826 32%, #6D2143 58%, #471A2E 80%, #1C1116 100%); background-size: 250% 250%; animation: pkt-aurora-flow 5.5s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(251, 207, 232, 0.28); }
+.pkt-user-pill--rose_titanium .pkt-user-pill-name { color: #FDF2F8; text-shadow: 0 1px 5px rgba(0, 0, 0, 0.5); }
+.pkt-user-pill--rose_titanium .pkt-user-pill-sub { color: #FBCFE8; }
+.pkt-user-pill--rose_titanium .pkt-rose-stars i { width: 2.5px; height: 2.5px; box-shadow: 0 0 4px 1px rgba(251, 207, 232, 0.9); }
+.pkt-user-pill--rose_titanium .pkt-rose-stars i:nth-child(1) { top: 12%; left: 26%; }
+.pkt-user-pill--rose_titanium .pkt-rose-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
+.pkt-user-pill--rose_titanium .pkt-rose-stars i:nth-child(3) { top: 12%; left: 78%; }
+.pkt-user-pill--rose_titanium .pkt-rose-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
+
 /* =========================================================
    H3. MODERN PROFILE PAGE LAYOUT & SELECTABLE BADGE CARDS
    ========================================================= */
@@ -5735,18 +6192,38 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     .pkt-dev-icon-aurora,
     .pkt-dev-icon-obsidian,
     .pkt-dev-icon-arctic,
+    .pkt-dev-icon-emerald,
+    .pkt-dev-icon-crimson,
+    .pkt-dev-icon-amethyst,
+    .pkt-dev-icon-rose,
     .pkt-dev-badge--pkt_combo .pkt-dev-badge-core,
     .pkt-dev-badge--obsidian_gold .pkt-dev-badge-core,
     .pkt-dev-badge--arctic_platinum .pkt-dev-badge-core,
+    .pkt-dev-badge--emerald_sovereign .pkt-dev-badge-core,
+    .pkt-dev-badge--crimson_eclipse .pkt-dev-badge-core,
+    .pkt-dev-badge--amethyst_crown .pkt-dev-badge-core,
+    .pkt-dev-badge--rose_titanium .pkt-dev-badge-core,
     .pkt-user-pill--pkt_combo .pkt-user-pill-inner,
     .pkt-user-pill--obsidian_gold .pkt-user-pill-inner,
     .pkt-user-pill--arctic_platinum .pkt-user-pill-inner,
+    .pkt-user-pill--emerald_sovereign .pkt-user-pill-inner,
+    .pkt-user-pill--crimson_eclipse .pkt-user-pill-inner,
+    .pkt-user-pill--amethyst_crown .pkt-user-pill-inner,
+    .pkt-user-pill--rose_titanium .pkt-user-pill-inner,
     .pkt-aurora-sheen::after,
     .pkt-aurora-stars i,
     .pkt-obsidian-sheen::after,
     .pkt-obsidian-stars i,
     .pkt-arctic-sheen::after,
     .pkt-arctic-stars i,
+    .pkt-emerald-sheen::after,
+    .pkt-emerald-stars i,
+    .pkt-crimson-sheen::after,
+    .pkt-crimson-stars i,
+    .pkt-amethyst-sheen::after,
+    .pkt-amethyst-stars i,
+    .pkt-rose-sheen::after,
+    .pkt-rose-stars i,
     .pkt-dev-embers i,
     .pkt-dev-sheen::after,
     .pkt-dev-avatar-ring,

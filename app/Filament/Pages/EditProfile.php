@@ -449,6 +449,30 @@ class EditProfile extends BaseEditProfile
                                                 'tier_chip' => 'Tier Tertinggi',
                                                 'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
                                             ],
+                                            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => [
+                                                'title' => 'Emerald Sovereign',
+                                                'desc' => 'Tier tertinggi: zamrud hutan gelap berpadu kilau giok mint dan emblem perisai.',
+                                                'tier_chip' => 'Tier Tertinggi',
+                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
+                                            ],
+                                            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => [
+                                                'title' => 'Crimson Eclipse',
+                                                'desc' => 'Tier tertinggi: hitam vulkanik berpadu kilau merah rubi gerhana yang tegas.',
+                                                'tier_chip' => 'Tier Tertinggi',
+                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
+                                            ],
+                                            User::DEVELOPER_BADGE_AMETHYST_CROWN => [
+                                                'title' => 'Amethyst Crown',
+                                                'desc' => 'Tier tertinggi: ungu malam pekat berpadu kilau perak ametis dan bintang kristal.',
+                                                'tier_chip' => 'Tier Tertinggi',
+                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
+                                            ],
+                                            User::DEVELOPER_BADGE_ROSE_TITANIUM => [
+                                                'title' => 'Rose Titanium',
+                                                'desc' => 'Tier tertinggi: titanium gelap berpadu kilau rose gold satin dan emblem berlian.',
+                                                'tier_chip' => 'Tier Tertinggi',
+                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
+                                            ],
                                         ];
 
                                         $options = [];
@@ -474,6 +498,10 @@ class EditProfile extends BaseEditProfile
                                                 $chipColor = match ($key) {
                                                     User::DEVELOPER_BADGE_OBSIDIAN_GOLD => 'bg-gradient-to-r from-[#111827] via-[#92400E] to-[#D97706] text-amber-100 shadow-xs',
                                                     User::DEVELOPER_BADGE_ARCTIC_PLATINUM => 'bg-gradient-to-r from-[#0C2D57] via-[#0284C7] to-[#94A3B8] text-white shadow-xs',
+                                                    User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => 'bg-gradient-to-r from-[#042F2E] via-[#059669] to-[#34D399] text-emerald-50 shadow-xs',
+                                                    User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => 'bg-gradient-to-r from-[#1A080C] via-[#991B1B] to-[#E11D48] text-rose-50 shadow-xs',
+                                                    User::DEVELOPER_BADGE_AMETHYST_CROWN => 'bg-gradient-to-r from-[#1E1038] via-[#7E22CE] to-[#C084FC] text-purple-50 shadow-xs',
+                                                    User::DEVELOPER_BADGE_ROSE_TITANIUM => 'bg-gradient-to-r from-[#26161C] via-[#BE185D] to-[#F9A8D4] text-pink-50 shadow-xs',
                                                     User::DEVELOPER_BADGE_PKT_COMBO => 'bg-gradient-to-r from-[#0054A6] via-[#0B67C2] to-[#F47920] text-white shadow-xs',
                                                     default => 'bg-[#F47920]/15 text-[#F47920] dark:text-orange-300',
                                                 };
@@ -553,6 +581,10 @@ class EditProfile extends BaseEditProfile
                 $btnGradient = match ($mythicKey) {
                     User::DEVELOPER_BADGE_OBSIDIAN_GOLD => 'from-[#111827] via-[#92400E] to-[#D97706]',
                     User::DEVELOPER_BADGE_ARCTIC_PLATINUM => 'from-[#0C2D57] via-[#0284C7] to-[#64748B]',
+                    User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => 'from-[#042F2E] via-[#059669] to-[#10B981]',
+                    User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => 'from-[#1A080C] via-[#991B1B] to-[#E11D48]',
+                    User::DEVELOPER_BADGE_AMETHYST_CROWN => 'from-[#1E1038] via-[#7E22CE] to-[#A855F7]',
+                    User::DEVELOPER_BADGE_ROSE_TITANIUM => 'from-[#26161C] via-[#BE185D] to-[#EC4899]',
                     default => 'from-[#0054A6] via-[#0B67C2] to-[#F47920]',
                 };
                 $buttons[] = '<button type="button" wire:click="claimBadgeGift(\''.$mythicKey.'\')" wire:loading.attr="disabled" '

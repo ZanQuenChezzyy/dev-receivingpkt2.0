@@ -123,7 +123,7 @@ class BadgeMilestoneService
                 'key' => (string) self::MILESTONE_TIER_3,
                 'target' => self::MILESTONE_TIER_3,
                 'title' => 'Misi Tertinggi 50.000 Penerimaan DO',
-                'reward_label' => 'Hadiah Tier Tertinggi: Solar Aurora, Royal Obsidian, & Arctic Platinum',
+                'reward_label' => 'Hadiah Tier Tertinggi: Membuka seluruh koleksi badge tier tertinggi (Solar Aurora, Royal Obsidian, dll.)',
                 'reached' => $hasFullAccess || $doCount >= self::MILESTONE_TIER_3,
                 'completed' => $hasFullAccess || count($claimedMythicBadges) >= count($mythicKeys),
                 'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($doCount / self::MILESTONE_TIER_3) * 100, 1)),

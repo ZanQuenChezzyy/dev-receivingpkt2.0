@@ -36,6 +36,18 @@ class DeveloperBadgeRenderer
             User::DEVELOPER_BADGE_ARCTIC_PLATINUM => '<svg class="pkt-dev-badge-icon pkt-dev-icon-arctic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
                 .'<path d="M12 2L4.5 9.5 12 22l7.5-12.5L12 2zm0 3.1L16.35 9.5 12 16.9 7.65 9.5 12 5.1z" />'
                 .'</svg>',
+            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => '<svg class="pkt-dev-badge-icon pkt-dev-icon-emerald" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+                .'<path d="M12 2l7 4v6c0 5-3.4 9.1-7 10-3.6-.9-7-5-7-10V6l7-4zm0 3.2L8 7.5v4.3c0 3.2 1.8 6 4 6.9 2.2-.9 4-3.7 4-6.9V7.5l-4-2.3z" />'
+                .'</svg>',
+            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<svg class="pkt-dev-badge-icon pkt-dev-icon-crimson" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+                .'<path d="M12 2.5a9.5 9.5 0 1 0 9.5 9.5c0-.66-.07-1.3-.2-1.92a7.2 7.2 0 1 1-7.38-7.38c-.62-.13-1.26-.2-1.92-.2Z" />'
+                .'</svg>',
+            User::DEVELOPER_BADGE_AMETHYST_CROWN => '<svg class="pkt-dev-badge-icon pkt-dev-icon-amethyst" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+                .'<path d="M12 2l2.9 6.6L22 9.3l-5.4 4.7 1.6 7-6.2-3.7L5.8 21l1.6-7L2 9.3l7.1-.7L12 2z" />'
+                .'</svg>',
+            User::DEVELOPER_BADGE_ROSE_TITANIUM => '<svg class="pkt-dev-badge-icon pkt-dev-icon-rose" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+                .'<path d="M6.5 3h11L22 9l-10 12L2 9l4.5-6zm1.4 2L5.2 8.7 12 16.9l6.8-8.2L16.1 5H7.9z" />'
+                .'</svg>',
             default => '<svg class="pkt-dev-badge-icon pkt-dev-icon-aurora" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
                 .'<path d="M12 1.5l2.35 6.15L20.5 10l-6.15 2.35L12 18.5l-2.35-6.15L3.5 10l6.15-2.35L12 1.5zm7 13.5l1.05 2.45L22.5 18.5l-2.45 1.05L19 22l-1.05-2.45L15.5 18.5l2.45-1.05L19 15zM5.5 2l.75 1.75L8 4.5l-1.75.75L5.5 7l-.75-1.75L3 4.5l1.75-.75L5.5 2z" />'
                 .'</svg>',
@@ -46,6 +58,10 @@ class DeveloperBadgeRenderer
             User::DEVELOPER_BADGE_PKT_COMBO => '<span class="pkt-aurora-sheen" aria-hidden="true"></span><span class="pkt-aurora-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_OBSIDIAN_GOLD => '<span class="pkt-obsidian-sheen" aria-hidden="true"></span><span class="pkt-obsidian-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_ARCTIC_PLATINUM => '<span class="pkt-arctic-sheen" aria-hidden="true"></span><span class="pkt-arctic-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => '<span class="pkt-emerald-sheen" aria-hidden="true"></span><span class="pkt-emerald-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-crimson-sheen" aria-hidden="true"></span><span class="pkt-crimson-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_AMETHYST_CROWN => '<span class="pkt-amethyst-sheen" aria-hidden="true"></span><span class="pkt-amethyst-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_ROSE_TITANIUM => '<span class="pkt-rose-sheen" aria-hidden="true"></span><span class="pkt-rose-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             default => '<span class="pkt-dev-sheen" aria-hidden="true"></span>',
         };
 

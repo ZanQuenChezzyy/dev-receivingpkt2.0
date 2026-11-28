@@ -376,19 +376,32 @@ test('regular user unlocks exclusive badges via 1000, 5000, and 50000 DO milesto
             User::DEVELOPER_BADGE_PKT_COMBO,
             User::DEVELOPER_BADGE_OBSIDIAN_GOLD,
             User::DEVELOPER_BADGE_ARCTIC_PLATINUM,
+            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN,
+            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE,
+            User::DEVELOPER_BADGE_AMETHYST_CROWN,
+            User::DEVELOPER_BADGE_ROSE_TITANIUM,
         ])
         ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_PKT_COMBO, doCountOverride: 50000))->toBeTrue()
         ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_OBSIDIAN_GOLD, doCountOverride: 50000))->toBeTrue()
-        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_ARCTIC_PLATINUM, doCountOverride: 50000))->toBeTrue();
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_ARCTIC_PLATINUM, doCountOverride: 50000))->toBeTrue()
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_EMERALD_SOVEREIGN, doCountOverride: 50000))->toBeTrue()
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_CRIMSON_ECLIPSE, doCountOverride: 50000))->toBeTrue()
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_AMETHYST_CROWN, doCountOverride: 50000))->toBeTrue()
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_ROSE_TITANIUM, doCountOverride: 50000))->toBeTrue();
 
     $andre->refresh();
     UserBadgeRenderer::flushCache();
     expect($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_PKT_COMBO))->toBeTrue()
         ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_OBSIDIAN_GOLD))->toBeTrue()
         ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_ARCTIC_PLATINUM))->toBeTrue()
-        ->and($andre->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_ARCTIC_PLATINUM)
-        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-user-pill--arctic_platinum')
-        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-arctic-stars')
-        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_OBSIDIAN_GOLD, 'Developer'))->toContain('pkt-dev-badge--obsidian_gold')
-        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_OBSIDIAN_GOLD, 'Developer'))->toContain('pkt-obsidian-stars');
+        ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_EMERALD_SOVEREIGN))->toBeTrue()
+        ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_CRIMSON_ECLIPSE))->toBeTrue()
+        ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_AMETHYST_CROWN))->toBeTrue()
+        ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_ROSE_TITANIUM))->toBeTrue()
+        ->and($andre->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_ROSE_TITANIUM)
+        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-user-pill--rose_titanium')
+        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-rose-stars')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_EMERALD_SOVEREIGN, 'Developer'))->toContain('pkt-dev-badge--emerald_sovereign')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_CRIMSON_ECLIPSE, 'Developer'))->toContain('pkt-dev-badge--crimson_eclipse')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_AMETHYST_CROWN, 'Developer'))->toContain('pkt-dev-badge--amethyst_crown');
 });
