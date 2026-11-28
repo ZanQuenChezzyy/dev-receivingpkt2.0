@@ -5130,6 +5130,19 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     cursor: not-allowed;
 }
 
+/* Topbar User Menu Hero Header: Explicit Light & Dark Hover Surface */
+.pkt-user-menu-hero {
+    background: transparent;
+}
+
+.pkt-user-menu-hero:hover {
+    background: rgba(15, 23, 42, 0.035);
+}
+
+.dark .pkt-user-menu-hero:hover {
+    background: rgba(255, 255, 255, 0.045);
+}
+
 @media (prefers-reduced-motion: reduce) {
     .pkt-dev-badge,
     .pkt-dev-badge-ring,

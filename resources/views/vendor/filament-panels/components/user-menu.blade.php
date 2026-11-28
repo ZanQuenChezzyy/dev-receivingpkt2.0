@@ -48,6 +48,7 @@
 
 <x-filament::dropdown
     :placement="($position === UserMenuPosition::Topbar) ? 'bottom-end' : 'top'"
+    :width="($position === UserMenuPosition::Topbar) ? 'xs' : null"
     :teleport="true"
     :attributes="
         \Filament\Support\prepare_inherited_attributes($attributes)
@@ -201,49 +202,60 @@
         <a
             href="{{ $memberProfileUrl }}"
             wire:navigate
-            class="group block border-b border-black/[0.06] dark:border-white/[0.08] min-w-[240px] overflow-hidden rounded-t-xl hover:bg-slate-50/70 dark:hover:bg-white/[0.03] transition-colors"
-            title="Lihat profil & log aktivitas saya"
+            class="pkt-user-menu-hero group block border-b border-black/[0.06] dark:border-white/[0.08] overflow-hidden rounded-t-[1.2rem] transition-colors"
         >
-            @if ($userCoverUrl)
-                <div class="relative h-14 w-full overflow-hidden bg-slate-900">
+            {{-- Edge-to-Edge Cover Banner (Custom Image/GIF or PKT Brand Gradient) --}}
+            <div class="relative h-16 w-full overflow-hidden bg-slate-900">
+                @if ($userCoverUrl)
                     <img src="{{ $userCoverUrl }}" alt="Cover" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent"></div>
-                </div>
-            @endif
-            <div @class([
-                'px-3.5 pb-3 flex items-center gap-3',
-                'pt-3' => ! $userCoverUrl,
-                '-mt-5 relative z-10' => (bool) $userCoverUrl,
-            ])>
-                <div @class([
-                    'relative shrink-0 inline-flex items-center justify-center',
-                    "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$developerBadgeStyle}" => $hasAnimatedDevRing,
-                    'ring-2 ring-white dark:ring-[#151B24] rounded-full' => ! $hasAnimatedDevRing && $userCoverUrl,
-                ])>
-                    <img
-                        src="{{ $avatarUrl }}"
-                        alt="{{ e($user->name) }}"
-                        class="w-10 h-10 rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]"
-                    />
-                </div>
-                <div @class([
-                    'flex flex-col min-w-0 flex-1 gap-0.5',
-                    'pt-5' => (bool) $userCoverUrl,
-                ])>
-                    <span class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#F47920] transition-colors truncate">
-                        {{ $user->name }}
-                    </span>
-                    @if (filled($user->npk))
-                        <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
-                            NPK {{ $user->npk }}
-                        </span>
-                    @endif
-                    <div class="mt-0.5 flex items-center justify-between gap-2">
-                        {!! \App\Support\DeveloperBadgeRenderer::render($developerBadgeStyle, $animatedRoleLabel, 'sm') !!}
-                        <span class="text-[10px] font-semibold text-slate-400 group-hover:text-[#F47920] transition-colors shrink-0">
-                            Lihat Profil &rarr;
-                        </span>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/15 to-transparent"></div>
+                @else
+                    <div class="w-full h-full bg-gradient-to-r from-[#0054A6] via-[#0B67C2] to-[#F47920]"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/35 to-transparent"></div>
+                @endif
+
+                <span class="absolute top-2 right-2.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-black/45 text-white/95 backdrop-blur-md border border-white/15 group-hover:bg-[#F47920] group-hover:border-[#F47920] transition-colors">
+                    Lihat Profil
+                    <span aria-hidden="true">&rarr;</span>
+                </span>
+            </div>
+
+            {{-- Avatar Overlapping Cover + Full Identity (No Badge Clipping) --}}
+            <div class="px-4 pb-3.5 relative z-10">
+                <div class="flex items-end gap-3 -mt-6">
+                    <div class="relative shrink-0">
+                        <div @class([
+                            'relative inline-flex items-center justify-center shadow-md',
+                            "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$developerBadgeStyle}" => $hasAnimatedDevRing,
+                            'ring-[3px] ring-white dark:ring-[#151B24] rounded-full' => ! $hasAnimatedDevRing,
+                        ])>
+                            <img
+                                src="{{ $avatarUrl }}"
+                                alt="{{ e($user->name) }}"
+                                class="w-12 h-12 rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]"
+                            />
+                        </div>
+                        @if ($isOnline)
+                            <span class="absolute bottom-0.5 right-0.5 z-20 flex h-3 w-3 items-center justify-center">
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 ring-2 ring-white dark:ring-[#151B24]"></span>
+                            </span>
+                        @endif
                     </div>
+
+                    <div class="flex flex-col min-w-0 flex-1 pt-7 leading-tight">
+                        <span class="text-[13px] font-bold text-slate-900 dark:text-white group-hover:text-[#F47920] transition-colors truncate">
+                            {{ $user->name }}
+                        </span>
+                        @if (filled($user->npk))
+                            <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                NPK {{ $user->npk }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="mt-2.5 flex flex-wrap items-center gap-1.5">
+                    {!! \App\Support\DeveloperBadgeRenderer::renderUserRoles($user, 'sm') !!}
                 </div>
             </div>
         </a>
