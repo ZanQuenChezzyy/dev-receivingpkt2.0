@@ -4,14 +4,29 @@ namespace App\Filament\Pages;
 
 use App\Models\User;
 use Caresome\FilamentAuthDesigner\Pages\Auth\Login as BaseLogin;
+use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class Login extends BaseLogin
 {
+    public function authenticate(): ?LoginResponse
+    {
+        $response = parent::authenticate();
+
+        if ($response !== null) {
+            session()->put('pkt_login_curtain', [
+                'token' => (string) Str::uuid(),
+            ]);
+        }
+
+        return $response;
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema

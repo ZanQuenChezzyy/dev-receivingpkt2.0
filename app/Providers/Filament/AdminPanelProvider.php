@@ -93,6 +93,10 @@ class AdminPanelProvider extends PanelProvider
                     ->sort(20),
             ])
             ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn (): string => view('filament.components.login-curtain')->render()
+            )
+            ->renderHook(
                 PanelsRenderHook::LAYOUT_START,
                 fn (): string => Blade::render('@livewire($component)', ['component' => LeftIconRail::class])
             )
