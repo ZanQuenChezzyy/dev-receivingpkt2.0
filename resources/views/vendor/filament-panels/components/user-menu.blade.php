@@ -43,7 +43,11 @@
     :teleport="true"
     :attributes="
         \Filament\Support\prepare_inherited_attributes($attributes)
-            ->class(['fi-user-menu w-full'])
+            ->class([
+                'fi-user-menu',
+                'w-full' => $position !== UserMenuPosition::Topbar,
+                'w-auto shrink-0' => $position === UserMenuPosition::Topbar,
+            ])
     "
 >
     <x-slot name="trigger">
@@ -51,7 +55,7 @@
             <button
                 aria-label="{{ __('filament-panels::layout.actions.open_user_menu.label') }}"
                 type="button"
-                class="fi-user-menu-trigger transition-transform hover:scale-105 active:scale-95"
+                class="fi-user-menu-trigger inline-flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
             >
                 <div class="relative shrink-0">
                     <img 
@@ -62,7 +66,7 @@
                     @if ($isOnline)
                         <span class="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 ring-1.5 ring-white dark:ring-[#07111e]"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 ring-1.5 ring-white dark:ring-[#151B24]"></span>
                         </span>
                     @endif
                 </div>

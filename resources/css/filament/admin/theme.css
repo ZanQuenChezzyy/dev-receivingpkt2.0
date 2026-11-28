@@ -2911,7 +2911,32 @@ html.dark body {
 
 @media (min-width: 1024px) {
     .pkt-topbar {
+        padding-inline: 1.25rem !important;
+        gap: 0.75rem !important;
+    }
+
+    .pkt-nav-pill {
+        padding: 0.44rem 0.78rem;
+        font-size: 0.8rem;
+    }
+
+    .pkt-topbar-end .fi-global-search-field {
+        max-width: 11.5rem;
+    }
+}
+
+@media (min-width: 1280px) {
+    .pkt-topbar {
         padding-inline: 1.5rem !important;
+    }
+
+    .pkt-nav-pill {
+        padding: 0.5rem 1rem;
+        font-size: 0.8125rem;
+    }
+
+    .pkt-topbar-end .fi-global-search-field {
+        max-width: 14rem;
     }
 }
 
@@ -3128,6 +3153,8 @@ html.dark body {
 }
 
 .pkt-topbar-end .fi-topbar-database-notifications-btn {
+    position: relative !important;
+    overflow: visible !important;
     width: 2.5rem !important;
     height: 2.5rem !important;
     border-radius: 9999px !important;
@@ -3376,10 +3403,15 @@ html.dark body {
     border-bottom-color: rgba(255, 255, 255, 0.06) !important;
 }
 
-/* Tactile Pill Buttons & Tabs */
-.fi-btn {
+/* Tactile Pill Buttons (preserving joined button groups) */
+.fi-btn:not(.fi-btn-group *) {
     border-radius: 9999px !important;
     font-weight: 600 !important;
+}
+
+.fi-btn-group {
+    border-radius: 9999px !important;
+    overflow: hidden;
 }
 
 .fi-badge {
@@ -3387,50 +3419,207 @@ html.dark body {
     font-weight: 600 !important;
 }
 
-.fi-tabs:not(.fi-contained) {
+/* Unified Single-Layer Spring Pill Tabs (Fixes double-layer gray corner bleed) */
+.fi-tabs:not(.fi-contained):not(.fi-vertical) {
     border-radius: 9999px !important;
-    background: rgba(255, 255, 255, 0.85) !important;
-    border: 1px solid rgba(16, 20, 26, 0.06) !important;
+    background: rgba(255, 255, 255, 0.88) !important;
+    border: 1px solid rgba(16, 20, 26, 0.065) !important;
     padding: 0.3rem !important;
     box-shadow: 0 6px 18px -8px rgba(16, 20, 26, 0.08) !important;
 }
 
-.dark .fi-tabs:not(.fi-contained) {
+.dark .fi-tabs:not(.fi-contained):not(.fi-vertical) {
     background: #151B24 !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.45) !important;
 }
 
 .fi-tabs:not(.fi-vertical) .fi-tabs-item {
     border-radius: 9999px !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-active {
+/* Sliding spring indicator IS the single orange pill — zero duplicate layer */
+.fi-tabs-spring-indicator,
+.dark .fi-tabs-spring-indicator {
+    border-radius: 9999px !important;
     background: #F47920 !important;
-    color: #FFFFFF !important;
-    box-shadow: 0 4px 12px -3px rgba(244, 121, 32, 0.45) !important;
+    border: none !important;
+    box-shadow: 0 4px 14px -3px rgba(244, 121, 32, 0.48) !important;
 }
 
-.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-active .fi-tabs-item-label,
-.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-active svg {
+/* Static fallback only when spring indicator is NOT present */
+.fi-tabs:not(:has(.fi-tabs-spring-indicator)):not(.fi-vertical) .fi-tabs-item.fi-active:not([data-optimistic-inactive='true']),
+.fi-tabs:not(:has(.fi-tabs-spring-indicator)):not(.fi-vertical) .fi-tabs-item.fi-optimistic-active,
+.fi-tabs:not(:has(.fi-tabs-spring-indicator)):not(.fi-vertical) .fi-tabs-item[data-optimistic-active='true'] {
+    background: #F47920 !important;
+    border: none !important;
+    box-shadow: 0 4px 14px -3px rgba(244, 121, 32, 0.48) !important;
+}
+
+/* Crisp White Label, Icon, and Translucent Badge on Active Orange Tab */
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-active:not([data-optimistic-inactive='true']),
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-optimistic-active,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item[data-optimistic-active='true'],
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-active:not([data-optimistic-inactive='true']) .fi-tabs-item-label,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-active:not([data-optimistic-inactive='true']) > .fi-icon,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-active:not([data-optimistic-inactive='true']) svg,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-optimistic-active .fi-tabs-item-label,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-optimistic-active > .fi-icon,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-optimistic-active svg,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item[data-optimistic-active='true'] .fi-tabs-item-label,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item[data-optimistic-active='true'] > .fi-icon,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item[data-optimistic-active='true'] svg {
     color: #FFFFFF !important;
 }
 
-/* Crisp Inputs & Modals */
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-active:not([data-optimistic-inactive='true']) .fi-badge,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-optimistic-active .fi-badge,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item[data-optimistic-active='true'] .fi-badge {
+    background: rgba(255, 255, 255, 0.24) !important;
+    color: #FFFFFF !important;
+    border-color: transparent !important;
+}
+
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-active:not([data-optimistic-inactive='true']) .fi-badge *,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item.fi-optimistic-active .fi-badge *,
+.fi-tabs:not(.fi-vertical) .fi-tabs-item[data-optimistic-active='true'] .fi-badge * {
+    color: #FFFFFF !important;
+}
+
+/* Scrollable Tab Arrow Buttons */
+.fi-tabs-arrow-btn {
+    border-radius: 9999px !important;
+    background: #FFFFFF !important;
+    border: 1px solid rgba(16, 20, 26, 0.08) !important;
+    box-shadow: 0 4px 12px -4px rgba(16, 20, 26, 0.14) !important;
+}
+
+.dark .fi-tabs-arrow-btn {
+    background: #151B24 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Crisp Inputs, Selects, Dropdowns, Popovers & Notifications */
 .fi-input-wrp,
 .fi-select-wrp,
-.fi-textarea-wrp {
+.fi-textarea-wrp,
+.fi-fo-date-time-picker-display-text-input-wrp {
     border-radius: 0.875rem !important;
+    background-color: #F8FAFC !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid rgba(16, 20, 26, 0.11) !important;
+    box-shadow: 0 1px 2px rgba(16, 20, 26, 0.03) !important;
 }
 
+.dark .fi-input-wrp,
+.dark .fi-select-wrp,
+.dark .fi-textarea-wrp,
+.dark .fi-fo-date-time-picker-display-text-input-wrp {
+    background-color: #0F141C !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: none !important;
+}
+
+.fi-input-wrp:focus-within,
+.fi-select-wrp:focus-within,
+.fi-textarea-wrp:focus-within,
+.fi-fo-date-time-picker-display-text-input-wrp:focus-within {
+    background-color: #FFFFFF !important;
+    border-color: #F47920 !important;
+    box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.16) !important;
+}
+
+.dark .fi-input-wrp:focus-within,
+.dark .fi-select-wrp:focus-within,
+.dark .fi-textarea-wrp:focus-within,
+.dark .fi-fo-date-time-picker-display-text-input-wrp:focus-within {
+    background-color: #101620 !important;
+    border-color: #F47920 !important;
+    box-shadow: 0 0 0 3px rgba(244, 121, 32, 0.22) !important;
+}
+
+.fi-dropdown-panel,
+.fi-popover,
+.fi-global-search-results-ctn {
+    border-radius: 1.25rem !important;
+    background: #FFFFFF !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid rgba(16, 20, 26, 0.08) !important;
+    box-shadow: 0 20px 50px -12px rgba(16, 20, 26, 0.18), 0 4px 12px -4px rgba(16, 20, 26, 0.06) !important;
+}
+
+.dark .fi-dropdown-panel,
+.dark .fi-popover,
+.dark .fi-global-search-results-ctn {
+    background: #151B24 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 24px 56px -12px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Unified Modals (matching header, content, and footer surfaces) */
 .fi-modal-window {
     border-radius: 1.75rem !important;
     background: #FFFFFF !important;
     border: 1px solid rgba(16, 20, 26, 0.08) !important;
 }
 
-.dark .fi-modal-window {
+.dark .fi-modal-window,
+.dark .fi-modal-header,
+.dark .fi-modal-footer {
+    background-color: #151B24 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.fi-modal:not(.fi-modal-slide-over) .fi-modal-header {
+    border-top-left-radius: 1.75rem !important;
+    border-top-right-radius: 1.75rem !important;
+}
+
+.fi-modal:not(.fi-modal-slide-over) .fi-modal-footer {
+    border-bottom-left-radius: 1.75rem !important;
+    border-bottom-right-radius: 1.75rem !important;
+}
+
+/* Harmonized Mobile Sidebar Drawer & Toast Notifications */
+.fi-sidebar {
+    background: #FFFFFF !important;
+    border-right: 1px solid rgba(16, 20, 26, 0.07) !important;
+}
+
+.dark .fi-sidebar {
     background: #151B24 !important;
-    border-color: rgba(255, 255, 255, 0.09) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.fi-no-notification {
+    border-radius: 1.25rem !important;
+    background: #FFFFFF !important;
+    border: 1px solid rgba(16, 20, 26, 0.08) !important;
+}
+
+.dark .fi-no-notification {
+    background: #151B24 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Cluster Sub-Navigation Sidebar (e.g., Pengiriman Gudang, Akses & Perizinan) */
+.fi-page-sub-navigation-sidebar-ctn {
+    border-radius: 1.5rem !important;
+    background: #FFFFFF !important;
+    border: 1px solid rgba(16, 20, 26, 0.065) !important;
+    padding: 0.75rem !important;
+    box-shadow: 0 10px 28px -12px rgba(16, 20, 26, 0.08) !important;
+}
+
+.dark .fi-page-sub-navigation-sidebar-ctn {
+    background: #151B24 !important;
+    border-color: rgba(255, 255, 255, 0.075) !important;
 }
 
 /* Subtle Clean Footer */
