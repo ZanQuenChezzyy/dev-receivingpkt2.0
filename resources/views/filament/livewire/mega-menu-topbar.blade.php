@@ -66,7 +66,7 @@
                 x-data="{}"
                 x-on:click="$store.sidebar.open()"
                 x-show="! $store.sidebar.isOpen"
-                class="fi-topbar-open-sidebar-btn lg:hidden"
+                class="fi-topbar-open-sidebar-btn hidden sm:inline-flex lg:hidden"
             />
 
             <x-filament::icon-button
@@ -79,7 +79,7 @@
                 x-data="{}"
                 x-on:click="$store.sidebar.close()"
                 x-show="$store.sidebar.isOpen"
-                class="fi-topbar-close-sidebar-btn lg:hidden"
+                class="fi-topbar-close-sidebar-btn hidden sm:inline-flex lg:hidden"
             />
         @endif
 
