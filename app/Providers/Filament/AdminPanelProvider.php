@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Livewire\LeftIconRail;
 use App\Filament\Livewire\MegaMenuTopbar;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\EditProfile;
@@ -13,6 +14,7 @@ use Caresome\FilamentAuthDesigner\Enums\MediaPosition;
 use Caresome\FilamentAuthDesigner\View\AuthDesignerRenderHook;
 use Caresome\FilamentNeobrutalism\NeobrutalismeTheme;
 use Devonab\FilamentEasyFooter\EasyFooterPlugin;
+use Filament\Actions\Action;
 use Filament\Enums\ThemeMode;
 use Filament\Enums\UserMenuPosition;
 use Filament\Http\Middleware\Authenticate;
@@ -20,7 +22,6 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -73,9 +74,22 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->databaseNotifications()
             ->userMenu(position: UserMenuPosition::Topbar)
+            ->userMenuItems([
+                'customize_left_rail' => Action::make('customize_left_rail')
+                    ->label(__('Atur Navigasi Kiri'))
+                    ->icon(Heroicon::OutlinedAdjustmentsHorizontal)
+                    ->alpineClickHandler('$dispatch(\'open-left-rail-settings\')')
+                    ->sort(10),
+                'home_frontend' => Action::make('home_frontend')
+                    ->label(__('Halaman Depan (Beranda)'))
+                    ->url(fn (): string => route('home'))
+                    ->icon(Heroicon::OutlinedArrowTopRightOnSquare)
+                    ->openUrlInNewTab()
+                    ->sort(20),
+            ])
             ->renderHook(
                 PanelsRenderHook::LAYOUT_START,
-                fn (): string => view('filament.components.left-icon-rail')->render()
+                fn (): string => Blade::render('@livewire($component)', ['component' => LeftIconRail::class])
             )
             ->renderHook(
                 'panels::global-search.after',
@@ -102,13 +116,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
             ->pages([
                 Dashboard::class,
-            ])
-            ->navigationItems([
-                NavigationItem::make(fn () => __('Beranda'))
-                    ->url(fn (): string => route('home'))
-                    ->icon(Heroicon::OutlinedHomeModern)
-                    ->activeIcon(Heroicon::HomeModern)
-                    ->sort(-1),
             ])
             ->navigationGroups([
                 NavigationGroup::make(fn () => __('Penerimaan Receiving')),

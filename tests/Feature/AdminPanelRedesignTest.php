@@ -1,7 +1,9 @@
 <?php
 
+use App\Filament\Livewire\LeftIconRail;
 use App\Filament\Livewire\MegaMenuTopbar;
 use App\Models\User;
+use App\Services\LeftRailMenuService;
 use Filament\Enums\UserMenuPosition;
 use Filament\Facades\Filament;
 use Filament\Navigation\NavigationBuilder;
@@ -22,6 +24,8 @@ beforeEach(function (): void {
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('avatar_url')->nullable();
+            $table->json('left_rail_shortcuts')->nullable();
             $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();
@@ -113,7 +117,7 @@ test('MegaMenuTopbar renders structured mega menu categories respecting navigati
         ->assertSee('Data Vendor');
 });
 
-test('Left icon rail blade view renders circular quick links and dual-circle theme toggle', function (): void {
+test('LeftIconRail locks Dashboard at top, moves Beranda to user menu, and saves per-user custom shortcuts', function (): void {
     $user = User::query()->create([
         'name' => 'Developer Rail',
         'npk' => '2100089',
@@ -124,14 +128,52 @@ test('Left icon rail blade view renders circular quick links and dual-circle the
     $user->assignRole('Developer');
     Auth::login($user);
 
-    Filament::setCurrentPanel(Filament::getPanel('admin'));
+    $panel = Filament::getPanel('admin');
+    Filament::setCurrentPanel($panel);
 
-    $html = view('filament.components.left-icon-rail')->render();
+    // Beranda dipindah ke User Menu agar tidak tertukar dengan Dashboard di Rail Kiri
+    $userMenuItems = $panel->getUserMenuItems();
+    expect($userMenuItems)->toHaveKey('home_frontend')
+        ->and($userMenuItems)->toHaveKey('customize_left_rail');
 
-    expect($html)
-        ->toContain('pkt-left-rail')
-        ->toContain('pkt-rail-btn')
-        ->toContain('pkt-rail-theme-pill')
-        ->toContain('Mode Gelap')
-        ->toContain('Mode Terang');
+    $component = Livewire::test(LeftIconRail::class)
+        ->assertSeeHtml('pkt-left-rail')
+        ->assertSeeHtml('pkt-rail-btn')
+        ->assertSeeHtml('pkt-rail-theme-pill')
+        ->assertSee('Mode Gelap')
+        ->assertSee('Mode Terang')
+        ->assertDontSee('Beranda');
+
+    // Buka pengaturan, pastikan Dashboard terkunci & tidak bisa dihapus
+    $component->call('openSettings')
+        ->assertSet('showSettingsModal', true)
+        ->assertSee('Atur Menu Navigasi Kiri')
+        ->assertSee('Terkunci');
+
+    // Mencoba toggle 'dashboard' tidak berpengaruh
+    $beforeToggle = $component->get('selectedKeys');
+    $component->call('toggleShortcut', LeftRailMenuService::DASHBOARD_KEY);
+    expect($component->get('selectedKeys'))->toBe($beforeToggle);
+
+    // Simpan kustomisasi pilihan user dan pastikan tersimpan ke database
+    $service = app(LeftRailMenuService::class);
+    $availableKeys = array_keys($service->availableCustomizableItems());
+    expect(count($availableKeys))->toBeGreaterThanOrEqual(2);
+
+    $chosen = [$availableKeys[1], $availableKeys[0]];
+    $component
+        ->set('selectedKeys', $chosen)
+        ->call('moveShortcutUp', 1)
+        ->call('saveSettings')
+        ->assertSet('showSettingsModal', false);
+
+    // Setelah moveShortcutUp(1), urutan berbalik menjadi [$availableKeys[0], $availableKeys[1]]
+    expect($user->fresh()->left_rail_shortcuts)->toBe([$availableKeys[0], $availableKeys[1]]);
+
+    // Dashboard selalu wajib di indeks 0 pada railLinks
+    $resolved = $service->resolveRailLinks($user->fresh(), url('/admin'));
+    expect($resolved[0]['key'])->toBe(LeftRailMenuService::DASHBOARD_KEY)
+        ->and($resolved[0]['locked'])->toBeTrue()
+        ->and($resolved[1]['key'])->toBe($availableKeys[0])
+        ->and($resolved[2]['key'])->toBe($availableKeys[1]);
 });

@@ -3251,6 +3251,26 @@ html.dark body {
     box-shadow: 0 8px 20px -4px rgba(244, 121, 32, 0.52) !important;
 }
 
+.pkt-rail-settings-btn {
+    border-style: dashed !important;
+    border-color: rgba(0, 84, 166, 0.28) !important;
+    color: #0054A6 !important;
+    background: rgba(255, 255, 255, 0.72) !important;
+    cursor: pointer;
+}
+
+.dark .pkt-rail-settings-btn {
+    border-color: rgba(131, 162, 219, 0.3) !important;
+    color: #83A2DB !important;
+    background: rgba(21, 27, 36, 0.8) !important;
+}
+
+.pkt-rail-settings-btn:hover {
+    border-style: solid !important;
+    border-color: #F47920 !important;
+    color: #F47920 !important;
+}
+
 .pkt-rail-tooltip {
     position: absolute;
     left: calc(100% + 0.65rem);
