@@ -360,10 +360,13 @@ class EditProfile extends BaseEditProfile
                                     ->helperText(function (): string {
                                         /** @var ?User $user */
                                         $user = filament()->auth()->user();
+                                        if ($user?->hasFullExclusiveBadgeAccess()) {
+                                            return 'Anda memiliki hak eksklusif penuh untuk seluruh tema Classic Clean, 6 badge Eksklusif, dan 3 badge Tier Tertinggi. Perubahan langsung terlihat pada pratinjau di atas.';
+                                        }
 
-                                        return $user?->hasFullExclusiveBadgeAccess()
-                                            ? 'Anda memiliki hak eksklusif penuh untuk seluruh tema Classic Clean dan animasi eksklusif. Perubahan langsung terlihat pada pratinjau di atas.'
-                                            : 'Pilih tema warna Classic Clean kapan saja. Badge eksklusif bertanda gembok dapat dibuka dengan menyelesaikan misi penerimaan DO (1.000, 5.000, dan 50.000 DO) atau melalui hak eksklusif dari Developer.';
+                                        $unit = $user ? app(BadgeMilestoneService::class)->resolveMissionProfile($user)['unit_label'] : 'Penerimaan DO';
+
+                                        return "Pilih tema warna Classic Clean kapan saja. 6 badge Eksklusif terbuka di misi 1.000 & 5.000 {$unit}, sedangkan 3 badge Tier Tertinggi terbuka di misi 50.000 {$unit} atau melalui hak eksklusif Developer.";
                                     })
                                     ->default(function (): string {
                                         /** @var ?User $user */
@@ -418,60 +421,66 @@ class EditProfile extends BaseEditProfile
                                             ],
                                         ];
 
+                                        $unitLabel = $user
+                                            ? app(BadgeMilestoneService::class)->resolveMissionProfile($user)['unit_label']
+                                            : 'Penerimaan DO';
+                                        $exclusiveHint = "Misi 1.000 / 5.000 {$unitLabel} atau hak eksklusif Developer";
+                                        $mythicHint = "Misi 50.000 {$unitLabel} atau hak eksklusif Developer";
+
                                         $exclusiveDefinitions = [
                                             User::DEVELOPER_BADGE_ELECTRIC => [
                                                 'title' => 'Sparkling Lightning',
                                                 'desc' => 'Sengatan busur petir biru-cyan menyambar dengan percikan listrik.',
                                                 'tier_chip' => 'Eksklusif',
-                                                'unlock_hint' => 'Misi 1.000 / 5.000 DO atau hak eksklusif Developer',
+                                                'unlock_hint' => $exclusiveHint,
                                             ],
                                             User::DEVELOPER_BADGE_FLAME => [
                                                 'title' => 'Blazing Ember',
                                                 'desc' => 'Lidah api oranye berkobar dengan percikan bara naik berulang.',
                                                 'tier_chip' => 'Eksklusif',
-                                                'unlock_hint' => 'Misi 1.000 / 5.000 DO atau hak eksklusif Developer',
+                                                'unlock_hint' => $exclusiveHint,
+                                            ],
+                                            User::DEVELOPER_BADGE_OBSIDIAN_GOLD => [
+                                                'title' => 'Royal Obsidian',
+                                                'desc' => 'Gradasi perunggu & emas 24K cair dengan kilatan berlian empat sudut.',
+                                                'tier_chip' => 'Eksklusif',
+                                                'unlock_hint' => $exclusiveHint,
+                                            ],
+                                            User::DEVELOPER_BADGE_ARCTIC_PLATINUM => [
+                                                'title' => 'Arctic Platinum',
+                                                'desc' => 'Gradasi biru gletser & perak beku dengan taburan kristal salju turun.',
+                                                'tier_chip' => 'Eksklusif',
+                                                'unlock_hint' => $exclusiveHint,
+                                            ],
+                                            User::DEVELOPER_BADGE_AMETHYST_CROWN => [
+                                                'title' => 'Amethyst Crown',
+                                                'desc' => 'Gradasi indigo & ungu ametis dengan distorsi gelombang warp dan kilau kristal.',
+                                                'tier_chip' => 'Eksklusif',
+                                                'unlock_hint' => $exclusiveHint,
+                                            ],
+                                            User::DEVELOPER_BADGE_ROSE_TITANIUM => [
+                                                'title' => 'Rose Titanium',
+                                                'desc' => 'Gradasi rose gold & sampanye dengan gelombang sutra dan kelopak kilau melayang.',
+                                                'tier_chip' => 'Eksklusif',
+                                                'unlock_hint' => $exclusiveHint,
                                             ],
                                             User::DEVELOPER_BADGE_PKT_COMBO => [
                                                 'title' => 'Solar Aurora',
                                                 'desc' => 'Aliran aurora biru & oranye PKT dengan sapuan cahaya dan kilau bintang.',
                                                 'tier_chip' => 'Tier Tertinggi',
-                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
-                                            ],
-                                            User::DEVELOPER_BADGE_OBSIDIAN_GOLD => [
-                                                'title' => 'Royal Obsidian',
-                                                'desc' => 'Gradasi perunggu & emas 24K cair dengan kilatan berlian empat sudut.',
-                                                'tier_chip' => 'Tier Tertinggi',
-                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
-                                            ],
-                                            User::DEVELOPER_BADGE_ARCTIC_PLATINUM => [
-                                                'title' => 'Arctic Platinum',
-                                                'desc' => 'Gradasi biru gletser & perak beku dengan taburan kristal salju turun.',
-                                                'tier_chip' => 'Tier Tertinggi',
-                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
+                                                'unlock_hint' => $mythicHint,
                                             ],
                                             User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => [
                                                 'title' => 'Emerald Sovereign',
                                                 'desc' => 'Gradasi zamrud & giok teal dengan gelombang pulsa perisai mengembang.',
                                                 'tier_chip' => 'Tier Tertinggi',
-                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
+                                                'unlock_hint' => $mythicHint,
                                             ],
                                             User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => [
                                                 'title' => 'Crimson Eclipse',
                                                 'desc' => 'Gradasi merah rubi & koral gerhana dengan efek glitch dan distorsi kromatik.',
                                                 'tier_chip' => 'Tier Tertinggi',
-                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
-                                            ],
-                                            User::DEVELOPER_BADGE_AMETHYST_CROWN => [
-                                                'title' => 'Amethyst Crown',
-                                                'desc' => 'Gradasi indigo & ungu ametis dengan distorsi gelombang warp dan kilau kristal.',
-                                                'tier_chip' => 'Tier Tertinggi',
-                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
-                                            ],
-                                            User::DEVELOPER_BADGE_ROSE_TITANIUM => [
-                                                'title' => 'Rose Titanium',
-                                                'desc' => 'Gradasi rose gold & sampanye dengan gelombang sutra dan kelopak kilau melayang.',
-                                                'tier_chip' => 'Tier Tertinggi',
-                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
+                                                'unlock_hint' => $mythicHint,
                                             ],
                                         ];
 
@@ -496,12 +505,8 @@ class EditProfile extends BaseEditProfile
 
                                             if ($isUnlocked) {
                                                 $chipColor = match ($key) {
-                                                    User::DEVELOPER_BADGE_OBSIDIAN_GOLD => 'bg-gradient-to-r from-[#111827] via-[#92400E] to-[#D97706] text-amber-100 shadow-xs',
-                                                    User::DEVELOPER_BADGE_ARCTIC_PLATINUM => 'bg-gradient-to-r from-[#0C2D57] via-[#0284C7] to-[#94A3B8] text-white shadow-xs',
-                                                    User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => 'bg-gradient-to-r from-[#042F2E] via-[#059669] to-[#34D399] text-emerald-50 shadow-xs',
-                                                    User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => 'bg-gradient-to-r from-[#1A080C] via-[#991B1B] to-[#E11D48] text-rose-50 shadow-xs',
-                                                    User::DEVELOPER_BADGE_AMETHYST_CROWN => 'bg-gradient-to-r from-[#1E1038] via-[#7E22CE] to-[#C084FC] text-purple-50 shadow-xs',
-                                                    User::DEVELOPER_BADGE_ROSE_TITANIUM => 'bg-gradient-to-r from-[#26161C] via-[#BE185D] to-[#F9A8D4] text-pink-50 shadow-xs',
+                                                    User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => 'bg-gradient-to-r from-[#065F46] via-[#0D9488] to-[#10B981] text-emerald-50 shadow-xs',
+                                                    User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => 'bg-gradient-to-r from-[#881337] via-[#DC2626] to-[#FB7185] text-rose-50 shadow-xs',
                                                     User::DEVELOPER_BADGE_PKT_COMBO => 'bg-gradient-to-r from-[#0054A6] via-[#0B67C2] to-[#F47920] text-white shadow-xs',
                                                     default => 'bg-[#F47920]/15 text-[#F47920] dark:text-orange-300',
                                                 };
@@ -554,7 +559,7 @@ class EditProfile extends BaseEditProfile
                 .'</span>'
                 .'<div>'
                 .'<div class="text-xs font-bold text-[#10141A] dark:text-white">Hak Badge Eksklusif Aktif</div>'
-                .'<div class="text-[11px] text-slate-500 dark:text-slate-400">Seluruh badge animasi eksklusif termasuk tier tertinggi Solar Aurora terbuka penuh tanpa syarat misi DO.</div>'
+                .'<div class="text-[11px] text-slate-500 dark:text-slate-400">Seluruh 6 badge Eksklusif dan 3 badge Tier Tertinggi (Solar Aurora, Emerald Sovereign, Crimson Eclipse) terbuka penuh tanpa syarat misi.</div>'
                 .'</div>'
                 .'</div>'
                 .'<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">Akses Penuh</span>'
@@ -579,12 +584,8 @@ class EditProfile extends BaseEditProfile
             foreach ($progress['claimable_mythic_badges'] as $mythicKey) {
                 $mythicName = User::mythicBadgeOptions()[$mythicKey] ?? $mythicKey;
                 $btnGradient = match ($mythicKey) {
-                    User::DEVELOPER_BADGE_OBSIDIAN_GOLD => 'from-[#111827] via-[#92400E] to-[#D97706]',
-                    User::DEVELOPER_BADGE_ARCTIC_PLATINUM => 'from-[#0C2D57] via-[#0284C7] to-[#64748B]',
-                    User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => 'from-[#042F2E] via-[#059669] to-[#10B981]',
-                    User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => 'from-[#1A080C] via-[#991B1B] to-[#E11D48]',
-                    User::DEVELOPER_BADGE_AMETHYST_CROWN => 'from-[#1E1038] via-[#7E22CE] to-[#A855F7]',
-                    User::DEVELOPER_BADGE_ROSE_TITANIUM => 'from-[#26161C] via-[#BE185D] to-[#EC4899]',
+                    User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => 'from-[#065F46] via-[#0D9488] to-[#10B981]',
+                    User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => 'from-[#881337] via-[#DC2626] to-[#FB7185]',
                     default => 'from-[#0054A6] via-[#0B67C2] to-[#F47920]',
                 };
                 $buttons[] = '<button type="button" wire:click="claimBadgeGift(\''.$mythicKey.'\')" wire:loading.attr="disabled" '
@@ -594,9 +595,9 @@ class EditProfile extends BaseEditProfile
                     .'</button>';
             }
 
-            $giftSubtitle = count($progress['claimable_choice_badges']) === 2 && $progress['claimable_mythic_badges'] === [] && $progress['pending_choice_slots'] === 1
-                ? 'Anda menyelesaikan Misi 1.000 Penerimaan DO. Pilih salah satu badge eksklusif di bawah ini untuk langsung dibuka:'
-                : 'Target misi penerimaan DO telah tercapai. Klik tombol di bawah untuk mengklaim hadiah badge eksklusif Anda:';
+            $giftSubtitle = $progress['pending_choice_slots'] === 1 && $progress['claimable_mythic_badges'] === []
+                ? "Anda menyelesaikan Misi 1.000 {$progress['unit_label']}. Pilih salah satu dari 6 badge Eksklusif di bawah ini untuk langsung dibuka:"
+                : "Target misi {$progress['unit_label']} telah tercapai. Klik tombol di bawah untuk mengklaim hadiah badge Anda:";
 
             $giftBanner = '<div class="mb-4 rounded-2xl p-4 bg-gradient-to-r from-[#F47920]/12 via-amber-500/8 to-[#0054A6]/10 border border-[#F47920]/35 dark:border-[#F47920]/40">'
                 .'<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">'
@@ -619,7 +620,7 @@ class EditProfile extends BaseEditProfile
             $statusPill = match (true) {
                 $milestone['completed'] => '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">Diklaim</span>',
                 $milestone['reached'] => '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F47920]/15 text-[#F47920] dark:text-orange-300">Siap Diambil</span>',
-                default => '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/75 dark:bg-white/[0.08] text-slate-600 dark:text-slate-300 tabular-nums">'.number_format(min($progress['do_count'], $milestone['target']), 0, ',', '.').' / '.number_format($milestone['target'], 0, ',', '.').'</span>',
+                default => '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/75 dark:bg-white/[0.08] text-slate-600 dark:text-slate-300 tabular-nums">'.number_format(min($progress['mission_count'], $milestone['target']), 0, ',', '.').' / '.number_format($milestone['target'], 0, ',', '.').'</span>',
             };
 
             $barColor = match (true) {
@@ -640,16 +641,23 @@ class EditProfile extends BaseEditProfile
                 .'</div>';
         }
 
+        $breakdownBadge = filled($progress['breakdown_text'])
+            ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 tabular-nums">'.e($progress['breakdown_text']).'</span>'
+            : '';
+
         return new HtmlString(
             '<div class="space-y-3">'
             .$giftBanner
             .'<div class="rounded-2xl p-4 bg-white dark:bg-[#111722] border border-black/[0.06] dark:border-white/[0.08]">'
             .'<div class="flex flex-wrap items-center justify-between gap-2 mb-3">'
             .'<div>'
-            .'<div class="text-xs font-bold text-[#10141A] dark:text-white">Misi Pembukaan Badge Eksklusif</div>'
-            .'<div class="text-[11px] text-slate-500 dark:text-slate-400">Selesaikan target penerimaan DO untuk mendapatkan hadiah badge animasi secara bertahap.</div>'
+            .'<div class="text-xs font-bold text-[#10141A] dark:text-white">'.e($progress['mission_title']).'</div>'
+            .'<div class="text-[11px] text-slate-500 dark:text-slate-400">'.e($progress['mission_description']).'</div>'
             .'</div>'
-            .'<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] tabular-nums">Total DO Anda: '.number_format($progress['do_count'], 0, ',', '.').'</span>'
+            .'<div class="flex flex-wrap items-center gap-1.5">'
+            .$breakdownBadge
+            .'<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] tabular-nums">Total: '.number_format($progress['mission_count'], 0, ',', '.').' '.e($progress['unit_label']).'</span>'
+            .'</div>'
             .'</div>'
             .'<div class="grid grid-cols-1 md:grid-cols-3 gap-3">'.implode('', $cards).'</div>'
             .'</div>'

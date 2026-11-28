@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Filament\Pages\EditProfile;
 use App\Models\DeliveryOrderReceipt;
+use App\Models\GrsRdtv;
+use App\Models\InvoicingReceipt;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -17,15 +19,90 @@ class BadgeMilestoneService
 
     public const MILESTONE_TIER_3 = 50000;
 
+    public const TRACK_OPERATOR_DO = 'operator_do';
+
+    public const TRACK_ADMIN_DO_GRS = 'admin_do_grs';
+
+    public const TRACK_STAFF_INVOICE = 'staff_invoice';
+
     /**
-     * Badge pilihan untuk hadiah Misi 1.000 DO (pilih 1) dan Misi 5.000 DO (ambil sisanya).
+     * Daftar role dengan misi Penerimaan DO + Penerbitan GRS/RDTV.
      *
      * @var list<string>
      */
-    public const CHOICE_EXCLUSIVE_BADGES = [
-        User::DEVELOPER_BADGE_ELECTRIC,
-        User::DEVELOPER_BADGE_FLAME,
+    public const ADMIN_DO_GRS_ROLES = [
+        'Admin Chemical',
+        'Admin Sparepart',
+        'Admin Bahan Baku',
+        'Staff Chemical',
+        'Staff Sparepart',
+        'Staff Bahan Baku',
     ];
+
+    /**
+     * Menentukan profil misi pengguna berdasarkan role aktifnya.
+     *
+     * @return array{
+     *     track: string,
+     *     role_label: string,
+     *     mission_title: string,
+     *     mission_description: string,
+     *     unit_label: string
+     * }
+     */
+    public function resolveMissionProfile(User $user): array
+    {
+        $roleNames = [];
+
+        try {
+            $roleNames = $user->roles()->pluck('name')->map(fn ($name): string => (string) $name)->all();
+        } catch (\Throwable) {
+            $roleNames = [];
+        }
+
+        $lowerMap = [];
+        foreach ($roleNames as $roleName) {
+            $lowerMap[strtolower($roleName)] = $roleName;
+        }
+
+        // 1. Admin Chemical / Admin Sparepart / Admin Bahan Baku (DO + GRS/RDTV)
+        foreach (self::ADMIN_DO_GRS_ROLES as $candidate) {
+            $key = strtolower($candidate);
+            if (array_key_exists($key, $lowerMap)) {
+                $displayRole = $lowerMap[$key];
+
+                return [
+                    'track' => self::TRACK_ADMIN_DO_GRS,
+                    'role_label' => $displayRole,
+                    'mission_title' => "Misi {$displayRole} — Penerimaan DO & GRS/RDTV",
+                    'mission_description' => 'Selesaikan penerimaan DO dan penerbitan GRS/RDTV sebanyak-banyaknya untuk membuka hadiah badge eksklusif dan tier tertinggi.',
+                    'unit_label' => 'DO & GRS/RDTV',
+                ];
+            }
+        }
+
+        // 2. Staff Invoice (Penanganan Invoice)
+        if (array_key_exists('staff invoice', $lowerMap)) {
+            return [
+                'track' => self::TRACK_STAFF_INVOICE,
+                'role_label' => $lowerMap['staff invoice'],
+                'mission_title' => 'Misi Staff Invoice — Penanganan Invoice',
+                'mission_description' => 'Tangani dokumen invoice sebagai PIC sebanyak-banyaknya untuk membuka hadiah badge eksklusif dan tier tertinggi.',
+                'unit_label' => 'Invoice Ditangani',
+            ];
+        }
+
+        // 3. Operator & Role Umum Lainnya (Penerimaan DO)
+        $displayRole = $lowerMap['operator'] ?? ($roleNames[0] ?? 'Operator');
+
+        return [
+            'track' => self::TRACK_OPERATOR_DO,
+            'role_label' => $displayRole,
+            'mission_title' => "Misi {$displayRole} — Penerimaan DO",
+            'mission_description' => 'Selesaikan penerimaan DO sebanyak-banyaknya untuk membuka hadiah badge eksklusif dan tier tertinggi.',
+            'unit_label' => 'Penerimaan DO',
+        ];
+    }
 
     /**
      * Menghitung total penerimaan DO yang diselesaikan oleh seorang pengguna (sebagai pembuat atau penerima).
@@ -51,14 +128,106 @@ class BadgeMilestoneService
     }
 
     /**
-     * Mengembalikan status progres misi, daftar hadiah yang siap diklaim, serta detail 3 tier misi.
+     * Menghitung total GRS/RDTV yang diterbitkan oleh seorang pengguna.
+     */
+    public function countUserGrsRdtvs(User $user): int
+    {
+        $userId = (int) $user->getKey();
+        if ($userId <= 0) {
+            return 0;
+        }
+
+        try {
+            if (! Schema::hasTable('grs_rdtvs')) {
+                return 0;
+            }
+
+            return GrsRdtv::query()->where('created_by', $userId)->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
+     * Menghitung total dokumen invoice yang ditangani pengguna sebagai PIC.
+     */
+    public function countUserHandledInvoices(User $user): int
+    {
+        $userId = (int) $user->getKey();
+        if ($userId <= 0) {
+            return 0;
+        }
+
+        try {
+            if (! Schema::hasTable('invoicing_receipts')) {
+                return 0;
+            }
+
+            return InvoicingReceipt::query()->where('pic_id', $userId)->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    /**
+     * Menghitung skor misi sesuai track role pengguna beserta rincian sumbernya.
+     *
+     * @return array{total: int, do_count: int, grs_count: int, invoice_count: int, breakdown_text: ?string}
+     */
+    public function calculateMissionCount(User $user, string $track): array
+    {
+        if ($track === self::TRACK_STAFF_INVOICE) {
+            $invoiceCount = $this->countUserHandledInvoices($user);
+
+            return [
+                'total' => $invoiceCount,
+                'do_count' => 0,
+                'grs_count' => 0,
+                'invoice_count' => $invoiceCount,
+                'breakdown_text' => null,
+            ];
+        }
+
+        $doCount = $this->countUserDeliveryOrderReceipts($user);
+
+        if ($track === self::TRACK_ADMIN_DO_GRS) {
+            $grsCount = $this->countUserGrsRdtvs($user);
+
+            return [
+                'total' => $doCount + $grsCount,
+                'do_count' => $doCount,
+                'grs_count' => $grsCount,
+                'invoice_count' => 0,
+                'breakdown_text' => number_format($doCount, 0, ',', '.').' DO • '.number_format($grsCount, 0, ',', '.').' GRS/RDTV',
+            ];
+        }
+
+        return [
+            'total' => $doCount,
+            'do_count' => $doCount,
+            'grs_count' => 0,
+            'invoice_count' => 0,
+            'breakdown_text' => null,
+        ];
+    }
+
+    /**
+     * Mengembalikan status progres misi sesuai role, daftar hadiah yang siap diklaim, serta detail 3 tier misi.
      *
      * @return array{
+     *     track: string,
+     *     role_label: string,
+     *     mission_title: string,
+     *     mission_description: string,
+     *     unit_label: string,
+     *     mission_count: int,
      *     do_count: int,
+     *     breakdown_text: ?string,
      *     has_full_access: bool,
      *     claimed_badges: list<string>,
      *     pending_choice_slots: int,
      *     claimable_choice_badges: list<string>,
+     *     claimable_mythic_badges: list<string>,
      *     can_claim_solar_aurora: bool,
      *     has_any_pending_gift: bool,
      *     milestones: list<array{
@@ -74,64 +243,89 @@ class BadgeMilestoneService
      */
     public function getProgress(User $user, ?int $doCountOverride = null): array
     {
-        $doCount = $doCountOverride ?? $this->countUserDeliveryOrderReceipts($user);
+        $profile = $this->resolveMissionProfile($user);
+        $metrics = $doCountOverride !== null
+            ? [
+                'total' => $doCountOverride,
+                'do_count' => $doCountOverride,
+                'grs_count' => 0,
+                'invoice_count' => 0,
+                'breakdown_text' => null,
+            ]
+            : $this->calculateMissionCount($user, $profile['track']);
+
+        $missionCount = $metrics['total'];
         $hasFullAccess = $user->hasFullExclusiveBadgeAccess();
         $claimedBadges = $user->claimedExclusiveBadges();
 
-        $claimedChoiceBadges = array_values(array_intersect($claimedBadges, self::CHOICE_EXCLUSIVE_BADGES));
-        $earnedChoiceSlots = match (true) {
-            $doCount >= self::MILESTONE_TIER_2 => 2,
-            $doCount >= self::MILESTONE_TIER_1 => 1,
+        $standardExclusiveKeys = array_keys(User::standardExclusiveBadgeOptions());
+        $claimedStandardBadges = array_values(array_intersect($claimedBadges, $standardExclusiveKeys));
+
+        // Misi 1.000: pilih 1 dari 6 badge Eksklusif; Misi 5.000: buka seluruh 6 badge Eksklusif
+        $earnedStandardSlots = match (true) {
+            $missionCount >= self::MILESTONE_TIER_2 => count($standardExclusiveKeys),
+            $missionCount >= self::MILESTONE_TIER_1 => 1,
             default => 0,
         };
 
         $pendingChoiceSlots = $hasFullAccess
             ? 0
-            : max(0, $earnedChoiceSlots - count($claimedChoiceBadges));
+            : max(0, $earnedStandardSlots - count($claimedStandardBadges));
 
         $claimableChoiceBadges = $pendingChoiceSlots > 0
-            ? array_values(array_diff(self::CHOICE_EXCLUSIVE_BADGES, $claimedChoiceBadges))
+            ? array_values(array_diff($standardExclusiveKeys, $claimedStandardBadges))
             : [];
 
+        // Misi 50.000: buka 3 badge Tier Tertinggi (Solar Aurora, Emerald Sovereign, Crimson Eclipse)
         $mythicKeys = array_keys(User::mythicBadgeOptions());
         $claimedMythicBadges = array_values(array_intersect($claimedBadges, $mythicKeys));
-        $claimableMythicBadges = (! $hasFullAccess && $doCount >= self::MILESTONE_TIER_3)
+        $claimableMythicBadges = (! $hasFullAccess && $missionCount >= self::MILESTONE_TIER_3)
             ? array_values(array_diff($mythicKeys, $claimedMythicBadges))
             : [];
         $canClaimSolarAurora = in_array(User::DEVELOPER_BADGE_PKT_COMBO, $claimableMythicBadges, true);
+
+        $unit = $profile['unit_label'];
+        $mythicNames = implode(', ', User::mythicBadgeOptions());
 
         $milestones = [
             [
                 'key' => (string) self::MILESTONE_TIER_1,
                 'target' => self::MILESTONE_TIER_1,
-                'title' => 'Misi 1.000 Penerimaan DO',
-                'reward_label' => 'Hadiah Pilih 1: Sparkling Lightning atau Blazing Ember',
-                'reached' => $hasFullAccess || $doCount >= self::MILESTONE_TIER_1,
-                'completed' => $hasFullAccess || count($claimedChoiceBadges) >= 1,
-                'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($doCount / self::MILESTONE_TIER_1) * 100, 1)),
+                'title' => 'Misi 1.000 '.$unit,
+                'reward_label' => 'Hadiah Pilih 1 dari 6 badge Eksklusif (Sparkling Lightning, Blazing Ember, Royal Obsidian, Arctic Platinum, Amethyst Crown, atau Rose Titanium)',
+                'reached' => $hasFullAccess || $missionCount >= self::MILESTONE_TIER_1,
+                'completed' => $hasFullAccess || count($claimedStandardBadges) >= 1,
+                'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($missionCount / self::MILESTONE_TIER_1) * 100, 1)),
             ],
             [
                 'key' => (string) self::MILESTONE_TIER_2,
                 'target' => self::MILESTONE_TIER_2,
-                'title' => 'Misi 5.000 Penerimaan DO',
-                'reward_label' => 'Hadiah Sisa: Buka kedua badge (Sparkling Lightning & Blazing Ember)',
-                'reached' => $hasFullAccess || $doCount >= self::MILESTONE_TIER_2,
-                'completed' => $hasFullAccess || count($claimedChoiceBadges) >= 2,
-                'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($doCount / self::MILESTONE_TIER_2) * 100, 1)),
+                'title' => 'Misi 5.000 '.$unit,
+                'reward_label' => 'Hadiah Sisa: Buka seluruh 6 badge Eksklusif yang belum diambil',
+                'reached' => $hasFullAccess || $missionCount >= self::MILESTONE_TIER_2,
+                'completed' => $hasFullAccess || count($claimedStandardBadges) >= count($standardExclusiveKeys),
+                'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($missionCount / self::MILESTONE_TIER_2) * 100, 1)),
             ],
             [
                 'key' => (string) self::MILESTONE_TIER_3,
                 'target' => self::MILESTONE_TIER_3,
-                'title' => 'Misi Tertinggi 50.000 Penerimaan DO',
-                'reward_label' => 'Hadiah Tier Tertinggi: Membuka seluruh koleksi badge tier tertinggi (Solar Aurora, Royal Obsidian, dll.)',
-                'reached' => $hasFullAccess || $doCount >= self::MILESTONE_TIER_3,
+                'title' => 'Misi Tertinggi 50.000 '.$unit,
+                'reward_label' => "Hadiah Tier Tertinggi (3 Badge): {$mythicNames}",
+                'reached' => $hasFullAccess || $missionCount >= self::MILESTONE_TIER_3,
                 'completed' => $hasFullAccess || count($claimedMythicBadges) >= count($mythicKeys),
-                'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($doCount / self::MILESTONE_TIER_3) * 100, 1)),
+                'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($missionCount / self::MILESTONE_TIER_3) * 100, 1)),
             ],
         ];
 
         return [
-            'do_count' => $doCount,
+            'track' => $profile['track'],
+            'role_label' => $profile['role_label'],
+            'mission_title' => $profile['mission_title'],
+            'mission_description' => $profile['mission_description'],
+            'unit_label' => $unit,
+            'mission_count' => $missionCount,
+            'do_count' => $missionCount,
+            'breakdown_text' => $metrics['breakdown_text'],
             'has_full_access' => $hasFullAccess,
             'claimed_badges' => $claimedBadges,
             'pending_choice_slots' => $pendingChoiceSlots,
@@ -165,12 +359,12 @@ class BadgeMilestoneService
                 $this->syncMilestonesAndNotify($user);
             }
         } catch (\Throwable) {
-            // Jangan sampai pengecekan hadiah mengganggu penyimpanan DO utama.
+            // Jangan sampai pengecekan hadiah mengganggu penyimpanan transaksi utama.
         }
     }
 
     /**
-     * Memeriksa apakah user baru mencapai milestone 1.000 / 5.000 / 50.000 DO dan mengirim Gift Notification sekali per tier.
+     * Memeriksa apakah user baru mencapai milestone 1.000 / 5.000 / 50.000 sesuai role dan mengirim Gift Notification sekali per tier.
      *
      * @return list<string> Daftar key milestone yang baru dikirim notifikasinya
      */
@@ -181,7 +375,8 @@ class BadgeMilestoneService
         }
 
         $progress = $this->getProgress($user, $doCountOverride);
-        $doCount = $progress['do_count'];
+        $count = $progress['mission_count'];
+        $unit = $progress['unit_label'];
         $alreadyNotified = is_array($user->badge_milestone_notified)
             ? array_values(array_unique(array_map('strval', $user->badge_milestone_notified)))
             : [];
@@ -189,50 +384,42 @@ class BadgeMilestoneService
         $newlyNotified = [];
         $profileUrl = $this->resolveProfileUrl();
 
-        // Tier 1: 1.000 Penerimaan DO
+        // Tier 1: 1.000
         $tier1Key = (string) self::MILESTONE_TIER_1;
-        if ($doCount >= self::MILESTONE_TIER_1 && ! in_array($tier1Key, $alreadyNotified, true)) {
+        if ($count >= self::MILESTONE_TIER_1 && ! in_array($tier1Key, $alreadyNotified, true)) {
             $alreadyNotified[] = $tier1Key;
             $newlyNotified[] = $tier1Key;
             $this->sendGiftNotification(
                 user: $user,
-                title: 'Hadiah Misi 1.000 Penerimaan DO',
-                body: 'Selamat '.$user->name.'! Anda telah menyelesaikan '.number_format($doCount, 0, ',', '.').' penerimaan DO. Ambil hadiah Anda di Pengaturan Profil untuk memilih badge Sparkling Lightning atau Blazing Ember.',
+                title: "Hadiah Misi 1.000 {$unit}",
+                body: 'Selamat '.$user->name.'! Anda telah mencapai '.number_format($count, 0, ',', '.')." {$unit}. Ambil hadiah di Pengaturan Profil untuk memilih salah satu dari 6 badge Eksklusif.",
                 profileUrl: $profileUrl,
             );
         }
 
-        // Tier 2: 5.000 Penerimaan DO
+        // Tier 2: 5.000
         $tier2Key = (string) self::MILESTONE_TIER_2;
-        if ($doCount >= self::MILESTONE_TIER_2 && ! in_array($tier2Key, $alreadyNotified, true)) {
+        if ($count >= self::MILESTONE_TIER_2 && ! in_array($tier2Key, $alreadyNotified, true)) {
             $alreadyNotified[] = $tier2Key;
             $newlyNotified[] = $tier2Key;
-
-            $remainingNames = array_map(
-                fn (string $key): string => User::exclusiveAnimatedBadgeOptions()[$key] ?? $key,
-                $progress['claimable_choice_badges']
-            );
-            $remainingText = $remainingNames !== []
-                ? implode(' & ', $remainingNames)
-                : 'badge eksklusif tersisa';
-
             $this->sendGiftNotification(
                 user: $user,
-                title: 'Hadiah Misi 5.000 Penerimaan DO',
-                body: 'Selamat '.$user->name.'! Pencapaian '.number_format($doCount, 0, ',', '.').' penerimaan DO membuka hadiah tersisa: '.$remainingText.'. Silakan klaim di Pengaturan Profil.',
+                title: "Hadiah Misi 5.000 {$unit}",
+                body: 'Selamat '.$user->name.'! Pencapaian '.number_format($count, 0, ',', '.')." {$unit} membuka seluruh sisa badge Eksklusif yang belum diambil. Silakan klaim di Pengaturan Profil.",
                 profileUrl: $profileUrl,
             );
         }
 
-        // Tier 3: 50.000 Penerimaan DO (Tier Tertinggi: Solar Aurora, Royal Obsidian, & Arctic Platinum)
+        // Tier 3: 50.000 (Tier Tertinggi: Solar Aurora, Emerald Sovereign, Crimson Eclipse)
         $tier3Key = (string) self::MILESTONE_TIER_3;
-        if ($doCount >= self::MILESTONE_TIER_3 && ! in_array($tier3Key, $alreadyNotified, true)) {
+        if ($count >= self::MILESTONE_TIER_3 && ! in_array($tier3Key, $alreadyNotified, true)) {
             $alreadyNotified[] = $tier3Key;
             $newlyNotified[] = $tier3Key;
+            $mythicList = implode(', ', User::mythicBadgeOptions());
             $this->sendGiftNotification(
                 user: $user,
-                title: 'Hadiah Tier Tertinggi: 50.000 Penerimaan DO',
-                body: 'Pencapaian luar biasa, '.$user->name.'! Anda telah menyelesaikan '.number_format($doCount, 0, ',', '.').' penerimaan DO dan berhak mengklaim seluruh badge tier tertinggi (Solar Aurora, Royal Obsidian, & Arctic Platinum).',
+                title: "Hadiah Tier Tertinggi: 50.000 {$unit}",
+                body: 'Pencapaian luar biasa, '.$user->name.'! Anda telah mencapai '.number_format($count, 0, ',', '.')." {$unit} dan berhak mengklaim 3 badge Tier Tertinggi ({$mythicList}).",
                 profileUrl: $profileUrl,
             );
         }
@@ -251,7 +438,7 @@ class BadgeMilestoneService
     }
 
     /**
-     * Mengklaim hadiah badge eksklusif berdasarkan pencapaian misi DO pengguna.
+     * Mengklaim hadiah badge eksklusif atau tier tertinggi berdasarkan pencapaian misi role pengguna.
      */
     public function claimGiftBadge(User $user, string $badgeStyle, ?int $doCountOverride = null): bool
     {
@@ -266,7 +453,7 @@ class BadgeMilestoneService
         $progress = $this->getProgress($user, $doCountOverride);
 
         $isEligible = match (true) {
-            in_array($badgeStyle, self::CHOICE_EXCLUSIVE_BADGES, true) => in_array($badgeStyle, $progress['claimable_choice_badges'], true),
+            User::isStandardExclusiveBadgeStyle($badgeStyle) => in_array($badgeStyle, $progress['claimable_choice_badges'], true),
             User::isMythicBadgeStyle($badgeStyle) => in_array($badgeStyle, $progress['claimable_mythic_badges'], true),
             default => false,
         };

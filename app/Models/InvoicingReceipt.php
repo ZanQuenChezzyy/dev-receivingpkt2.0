@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\BadgeMilestoneService;
 use Database\Factories\InvoicingReceiptFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -470,6 +471,18 @@ class InvoicingReceipt extends Model
 
     protected static function booted(): void
     {
+        static::created(function (InvoicingReceipt $record): void {
+            if ($record->pic_id) {
+                app(BadgeMilestoneService::class)->syncMilestonesForUsers([$record->pic_id]);
+            }
+        });
+
+        static::updated(function (InvoicingReceipt $record): void {
+            if ($record->wasChanged('pic_id') && $record->pic_id) {
+                app(BadgeMilestoneService::class)->syncMilestonesForUsers([$record->pic_id]);
+            }
+        });
+
         static::saving(function (InvoicingReceipt $record) {
             // Tipe material yang kosong/null otomatis diklasifikasikan ke ZPM jika material Karung, selain itu "Non Stock"
             $record->material_type = self::resolveMaterialType(

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\BadgeMilestoneService;
 use Illuminate\Database\Eloquent\Model;
 
 class GrsRdtv extends Model
@@ -28,6 +29,10 @@ class GrsRdtv extends Model
 
     protected static function booted(): void
     {
+        static::created(function (GrsRdtv $grsRdtv): void {
+            app(BadgeMilestoneService::class)->syncMilestonesForUsers([$grsRdtv->created_by]);
+        });
+
         static::deleting(function (GrsRdtv $grsRdtv) {
             foreach ($grsRdtv->grsRdtvItems()->get() as $item) {
                 $item->delete();

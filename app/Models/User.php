@@ -70,21 +70,37 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     ];
 
     /**
-     * Pilihan gaya animasi badge eksklusif (tier standar eksklusif + tier tertinggi).
+     * Pilihan gaya animasi badge eksklusif (6 Eksklusif + 3 Tier Tertinggi).
      *
      * @return array<string, string>
      */
     public static function exclusiveAnimatedBadgeOptions(): array
     {
         return [
-            self::DEVELOPER_BADGE_ELECTRIC => 'Sparkling Lightning',
-            self::DEVELOPER_BADGE_FLAME => 'Blazing Ember',
+            ...self::standardExclusiveBadgeOptions(),
             ...self::mythicBadgeOptions(),
         ];
     }
 
     /**
-     * Pilihan badge tier tertinggi (setara Solar Aurora — terbuka di Misi 50.000 DO atau hak eksklusif Developer).
+     * Pilihan badge Eksklusif (terbuka di Misi 1.000 & 5.000 atau hak eksklusif Developer).
+     *
+     * @return array<string, string>
+     */
+    public static function standardExclusiveBadgeOptions(): array
+    {
+        return [
+            self::DEVELOPER_BADGE_ELECTRIC => 'Sparkling Lightning',
+            self::DEVELOPER_BADGE_FLAME => 'Blazing Ember',
+            self::DEVELOPER_BADGE_OBSIDIAN_GOLD => 'Royal Obsidian',
+            self::DEVELOPER_BADGE_ARCTIC_PLATINUM => 'Arctic Platinum',
+            self::DEVELOPER_BADGE_AMETHYST_CROWN => 'Amethyst Crown',
+            self::DEVELOPER_BADGE_ROSE_TITANIUM => 'Rose Titanium',
+        ];
+    }
+
+    /**
+     * Pilihan badge Tier Tertinggi — tepat 3 badge tertinggi (terbuka di Misi 50.000 atau hak eksklusif Developer).
      *
      * @return array<string, string>
      */
@@ -92,18 +108,19 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     {
         return [
             self::DEVELOPER_BADGE_PKT_COMBO => 'Solar Aurora',
-            self::DEVELOPER_BADGE_OBSIDIAN_GOLD => 'Royal Obsidian',
-            self::DEVELOPER_BADGE_ARCTIC_PLATINUM => 'Arctic Platinum',
             self::DEVELOPER_BADGE_EMERALD_SOVEREIGN => 'Emerald Sovereign',
             self::DEVELOPER_BADGE_CRIMSON_ECLIPSE => 'Crimson Eclipse',
-            self::DEVELOPER_BADGE_AMETHYST_CROWN => 'Amethyst Crown',
-            self::DEVELOPER_BADGE_ROSE_TITANIUM => 'Rose Titanium',
         ];
     }
 
     public static function isMythicBadgeStyle(string $style): bool
     {
         return array_key_exists($style, self::mythicBadgeOptions());
+    }
+
+    public static function isStandardExclusiveBadgeStyle(string $style): bool
+    {
+        return array_key_exists($style, self::standardExclusiveBadgeOptions());
     }
 
     /**
