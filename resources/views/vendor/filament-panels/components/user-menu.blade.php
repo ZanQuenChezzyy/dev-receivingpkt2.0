@@ -83,7 +83,7 @@
                         />
                     </div>
                     @if ($isOnline)
-                        <span class="absolute -bottom-0.5 -right-0.5 z-20 flex h-2.5 w-2.5 items-center justify-center">
+                        <span class="absolute bottom-0 right-0 z-20 flex h-2.5 w-2.5 items-center justify-center">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 ring-1.5 ring-white dark:ring-[#151B24]"></span>
                         </span>

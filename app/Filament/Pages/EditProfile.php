@@ -125,9 +125,9 @@ class EditProfile extends BaseEditProfile
                                     .'<div class="relative inline-flex items-center justify-center '.$ringClass.' shadow-xl">'
                                     .'<img src="'.e($avatarUrl).'" alt="'.e($displayName).'" class="w-24 h-24 rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]" />'
                                     .'</div>'
-                                    .'<span class="absolute bottom-1 right-1 z-20 flex h-4 w-4 items-center justify-center">'
+                                    .'<span class="absolute bottom-2 right-2 z-20 flex h-3.5 w-3.5 items-center justify-center">'
                                     .'<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>'
-                                    .'<span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 ring-2 ring-white dark:ring-[#151B24]"></span>'
+                                    .'<span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 ring-2 ring-white dark:ring-[#151B24]"></span>'
                                     .'</span>'
                                     .'</div>'
                                     // User Name, Role Badge, NPK, Email, Status
