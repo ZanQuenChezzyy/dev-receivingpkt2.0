@@ -5020,9 +5020,40 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     animation: pkt-dev-sheen-sweep 3.2s ease-in-out infinite;
 }
 
+@keyframes pkt-pill-electric-glow {
+    0%, 100% {
+        box-shadow: 0 0 6px -1px rgba(56, 189, 248, 0.45), 0 1px 3px rgba(0, 84, 166, 0.35);
+    }
+    50% {
+        box-shadow: 0 0 10px 0px rgba(56, 189, 248, 0.62), 0 1px 4px rgba(0, 84, 166, 0.45);
+    }
+}
+
+@keyframes pkt-pill-flame-glow {
+    0%, 100% {
+        box-shadow: 0 0 6px -1px rgba(244, 121, 32, 0.48), 0 1px 3px rgba(234, 88, 12, 0.35);
+    }
+    50% {
+        box-shadow: 0 0 10px 0px rgba(249, 115, 22, 0.65), 0 1px 4px rgba(253, 224, 71, 0.35);
+    }
+}
+
+@keyframes pkt-pill-aurora-halo {
+    0%, 100% {
+        box-shadow:
+            0 0 7px -1px rgba(244, 121, 32, 0.52),
+            0 0 11px -2px rgba(0, 84, 166, 0.48);
+    }
+    50% {
+        box-shadow:
+            0 0 8px -1px rgba(56, 189, 248, 0.55),
+            0 0 12px -2px rgba(244, 121, 32, 0.52);
+    }
+}
+
 /* Pill Style 1: Electric (PKT Blue + Cyan Lightning Arc) */
 .pkt-user-pill--electric {
-    animation: pkt-dev-electric-glow 2.4s ease-in-out infinite;
+    animation: pkt-pill-electric-glow 2.4s ease-in-out infinite;
 }
 
 .pkt-user-pill--electric .pkt-user-pill-border::before {
@@ -5067,7 +5098,7 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 /* Pill Style 2: Flame (PKT Orange + Glowing Fire & Rising Embers) */
 .pkt-user-pill--flame {
-    animation: pkt-dev-flame-glow 1.95s ease-in-out infinite;
+    animation: pkt-pill-flame-glow 1.95s ease-in-out infinite;
 }
 
 .pkt-user-pill--flame .pkt-user-pill-border::before {
@@ -5133,7 +5164,23 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 /* Pill Style 3: MYTHIC TIER — Solar Aurora Table Pill (Pure PKT Blue & Orange) */
 .pkt-user-pill--pkt_combo {
     padding: 2px;
-    animation: pkt-aurora-halo 3.2s ease-in-out infinite;
+    animation: pkt-pill-aurora-halo 3.2s ease-in-out infinite;
+}
+
+.pkt-user-pill--pkt_combo .pkt-aurora-stars i {
+    width: 2.5px;
+    height: 2.5px;
+    box-shadow: 0 0 4px 1px rgba(253, 186, 116, 0.9), 0 0 6px 1px rgba(56, 189, 248, 0.65);
+}
+
+.pkt-user-pill--pkt_combo .pkt-aurora-stars i:nth-child(1) { top: 12%; left: 26%; }
+.pkt-user-pill--pkt_combo .pkt-aurora-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
+.pkt-user-pill--pkt_combo .pkt-aurora-stars i:nth-child(3) { top: 12%; left: 78%; }
+.pkt-user-pill--pkt_combo .pkt-aurora-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
+
+.fi-ta-cell:has(.pkt-user-pill) .fi-ta-text,
+.fi-ta-cell:has(.pkt-user-pill) .fi-ta-text-item {
+    overflow: visible !important;
 }
 
 .pkt-user-pill--pkt_combo .pkt-user-pill-border::before {
