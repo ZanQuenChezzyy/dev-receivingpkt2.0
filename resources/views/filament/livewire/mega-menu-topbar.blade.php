@@ -3,6 +3,7 @@
     x-data="{
         openMenu: null,
         closeTimer: null,
+        mobileSearchOpen: false,
         openOnHover(key) {
             if (this.closeTimer) {
                 clearTimeout(this.closeTimer);
@@ -32,10 +33,19 @@
         closeMenu() {
             this.cancelClose();
             this.openMenu = null;
+        },
+        toggleMobileSearch() {
+            this.mobileSearchOpen = !this.mobileSearchOpen;
+            if (this.mobileSearchOpen) {
+                this.$nextTick(() => {
+                    this.$el.querySelector('.fi-global-search-field input')?.focus();
+                });
+            }
         }
     }"
-    @keydown.escape.window="closeMenu()"
-    @click.outside="closeMenu()"
+    :class="{ 'pkt-mobile-search-open': mobileSearchOpen }"
+    @keydown.escape.window="closeMenu(); mobileSearchOpen = false"
+    @click.outside="closeMenu(); mobileSearchOpen = false"
 >
     @php
         $hasNavigation = filament()->hasNavigation();
@@ -216,7 +226,20 @@
             {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::GLOBAL_SEARCH_BEFORE) }}
 
             @if (filament()->isGlobalSearchEnabled() && filament()->getGlobalSearchPosition() === \Filament\Enums\GlobalSearchPosition::Topbar)
-                @livewire(Filament\Livewire\GlobalSearch::class)
+                <button
+                    type="button"
+                    @click="toggleMobileSearch()"
+                    aria-label="Cari"
+                    title="Pencarian Global"
+                    class="pkt-mobile-search-toggle sm:hidden"
+                >
+                    <x-heroicon-o-magnifying-glass x-show="!mobileSearchOpen" class="w-4 h-4" />
+                    <x-heroicon-m-x-mark x-show="mobileSearchOpen" x-cloak class="w-4 h-4" />
+                </button>
+
+                <div class="pkt-global-search-wrap">
+                    @livewire(Filament\Livewire\GlobalSearch::class)
+                </div>
             @endif
 
             {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::GLOBAL_SEARCH_AFTER) }}

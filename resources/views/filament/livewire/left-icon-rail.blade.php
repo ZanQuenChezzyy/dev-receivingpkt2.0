@@ -97,12 +97,61 @@
             </div>
         </aside>
 
-        <!-- Per-User Left Rail Customization Modal -->
+        <!-- Mobile & Tablet Floating Bottom Capsule Dock (< lg) -->
+        @php
+            $mobileDockLinks = array_slice($railLinks, 0, 5);
+        @endphp
+        <nav
+            aria-label="Navigasi Bawah Mobile"
+            class="pkt-mobile-dock lg:hidden"
+        >
+            <div class="pkt-mobile-dock-pill">
+                @foreach ($mobileDockLinks as $idx => $link)
+                    <a
+                        {{ \Filament\Support\generate_href_html($link['url']) }}
+                        title="{{ $link['label'] }}"
+                        aria-label="{{ $link['label'] }}"
+                        @class([
+                            'pkt-dock-btn',
+                            'pkt-dock-btn-active' => $link['active'],
+                            'hidden sm:inline-flex' => $idx >= 4,
+                        ])
+                    >
+                        <x-filament::icon :icon="$link['icon']" class="w-5 h-5" />
+                    </a>
+                @endforeach
+
+                <!-- Prominent Center/Right Menu Drawer Trigger -->
+                <button
+                    type="button"
+                    x-data="{}"
+                    x-on:click="$store.sidebar.isOpen ? $store.sidebar.close() : $store.sidebar.open()"
+                    title="Semua Menu"
+                    aria-label="Buka Semua Menu"
+                    class="pkt-dock-menu-btn"
+                >
+                    <x-heroicon-o-squares-plus class="w-5 h-5" />
+                </button>
+
+                <!-- Customize Rail Shortcuts Button -->
+                <button
+                    type="button"
+                    wire:click="openSettings"
+                    title="Atur Menu Pintasan"
+                    aria-label="Atur Menu Pintasan"
+                    class="pkt-dock-btn"
+                >
+                    <x-heroicon-o-cog-6-tooth class="w-5 h-5" />
+                </button>
+            </div>
+        </nav>
+
+        <!-- Per-User Left Rail Customization Modal (Responsive Bottom-Sheet on Mobile, Centered Card on Desktop) -->
         @if ($showSettingsModal)
             <div
                 x-data="{}"
                 @keydown.escape.window="$wire.closeSettings()"
-                class="fixed inset-0 z-[99990] flex items-center justify-center p-4 sm:p-6"
+                class="fixed inset-0 z-[99990] flex items-end sm:items-center justify-center p-0 sm:p-6"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="left-rail-settings-title"
@@ -114,7 +163,7 @@
                 ></div>
 
                 <!-- Modal Window -->
-                <div class="relative z-10 w-full max-w-4xl max-h-[88vh] flex flex-col rounded-[28px] bg-white dark:bg-[#151B24] border border-black/[0.08] dark:border-white/[0.09] shadow-2xl overflow-hidden">
+                <div class="relative z-10 w-full max-w-4xl max-h-[92dvh] sm:max-h-[88vh] flex flex-col rounded-t-[28px] sm:rounded-[28px] bg-white dark:bg-[#151B24] border border-black/[0.08] dark:border-white/[0.09] shadow-2xl overflow-hidden">
                     <!-- Header -->
                     <div class="px-6 py-4 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between gap-4 shrink-0">
                         <div class="flex items-center gap-3 min-w-0">

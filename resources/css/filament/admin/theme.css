@@ -3664,4 +3664,274 @@ html.dark body {
     border-top-color: rgba(255, 255, 255, 0.06) !important;
 }
 
+/* =========================================================
+   F. FULL MULTI-DEVICE RESPONSIVE SYSTEM
+      Phone (<640px) | Tablet (640-1023px) | Laptop (1024-1439px) | PC (1440px+)
+   ========================================================= */
+
+/* Floating Mobile & Tablet Bottom Capsule Dock (< 1024px) */
+.pkt-mobile-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    z-index: 38;
+    display: flex;
+    justify-content: center;
+    padding-inline: 0.75rem;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+@media (min-width: 1024px) {
+    .pkt-mobile-dock {
+        display: none !important;
+    }
+}
+
+body.has-filament-modal-open .pkt-mobile-dock {
+    opacity: 0;
+    transform: translateY(1.25rem);
+    pointer-events: none;
+}
+
+.pkt-mobile-dock-pill {
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    border: 1px solid rgba(16, 20, 26, 0.08);
+    box-shadow:
+        0 18px 44px -10px rgba(16, 20, 26, 0.24),
+        0 4px 12px -4px rgba(16, 20, 26, 0.08);
+    max-width: calc(100vw - 1.5rem);
+}
+
+.dark .pkt-mobile-dock-pill {
+    background: rgba(21, 27, 36, 0.92);
+    border-color: rgba(255, 255, 255, 0.11);
+    box-shadow:
+        0 20px 48px -10px rgba(0, 0, 0, 0.72),
+        0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.pkt-dock-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 9999px;
+    color: #475569;
+    background: transparent;
+    transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    flex-shrink: 0;
+}
+
+.pkt-dock-btn:active {
+    transform: scale(0.92);
+}
+
+.dark .pkt-dock-btn {
+    color: #94A3B8;
+}
+
+.pkt-dock-btn-active,
+.dark .pkt-dock-btn-active {
+    background: #F47920 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 6px 16px -4px rgba(244, 121, 32, 0.55);
+}
+
+.pkt-dock-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.875rem;
+    height: 2.875rem;
+    border-radius: 9999px;
+    background: #10141A;
+    color: #FFFFFF;
+    box-shadow: 0 8px 20px -6px rgba(16, 20, 26, 0.45);
+    transition: transform 0.18s ease, background-color 0.18s ease;
+    flex-shrink: 0;
+}
+
+.dark .pkt-dock-menu-btn {
+    background: #0054A6;
+    color: #FFFFFF;
+    box-shadow: 0 8px 20px -6px rgba(0, 84, 166, 0.55);
+}
+
+.pkt-dock-menu-btn:active {
+    transform: scale(0.92);
+}
+
+/* Mobile Search Toggle Circular Button */
+.pkt-mobile-search-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.375rem;
+    height: 2.375rem;
+    border-radius: 9999px;
+    background: #FFFFFF;
+    color: #10141A;
+    border: 1px solid rgba(16, 20, 26, 0.08);
+    box-shadow: 0 4px 12px -4px rgba(16, 20, 26, 0.1);
+    flex-shrink: 0;
+}
+
+.dark .pkt-mobile-search-toggle {
+    background: #151B24;
+    color: #E2E8F0;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Phone Breakpoint (< 640px): Crisp Tactile Mobile Layout */
+@media (max-width: 639px) {
+    .pkt-topbar {
+        min-height: 3.75rem !important;
+        padding-inline: 0.75rem !important;
+        gap: 0.45rem !important;
+    }
+
+    .pkt-topbar-brand img {
+        max-height: 1.75rem !important;
+        width: auto !important;
+    }
+
+    .fi-topbar-open-sidebar-btn,
+    .fi-topbar-close-sidebar-btn {
+        width: 2.375rem !important;
+        height: 2.375rem !important;
+        border-radius: 9999px !important;
+        background: #FFFFFF !important;
+        border: 1px solid rgba(16, 20, 26, 0.08) !important;
+        box-shadow: 0 3px 10px -4px rgba(16, 20, 26, 0.1) !important;
+    }
+
+    .dark .fi-topbar-open-sidebar-btn,
+    .dark .fi-topbar-close-sidebar-btn {
+        background: #151B24 !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .pkt-topbar-end .fi-topbar-database-notifications-btn {
+        width: 2.375rem !important;
+        height: 2.375rem !important;
+    }
+
+    /* Collapse global search into clean drop bar on phones so logo stays uncrowded */
+    .pkt-global-search-wrap {
+        display: none;
+    }
+
+    .pkt-topbar-ctn.pkt-mobile-search-open .pkt-global-search-wrap {
+        display: block;
+        position: fixed;
+        top: 3.75rem;
+        left: 0;
+        right: 0;
+        padding: 0.625rem 0.75rem;
+        background: rgba(230, 234, 239, 0.96);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-bottom: 1px solid rgba(16, 20, 26, 0.08);
+        box-shadow: 0 14px 30px -10px rgba(16, 20, 26, 0.16);
+        z-index: 45;
+    }
+
+    .dark .pkt-topbar-ctn.pkt-mobile-search-open .pkt-global-search-wrap {
+        background: rgba(13, 17, 23, 0.96);
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .fi-main {
+        padding-inline: 0.75rem !important;
+    }
+
+    .fi-header {
+        gap: 0.75rem !important;
+    }
+
+    .fi-header-heading {
+        font-size: 1.375rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .fi-header-actions-ctn {
+        width: 100%;
+        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .fi-wi-stats-overview-stat,
+    .fi-wi-chart,
+    .fi-ta-ctn,
+    .fi-sc-ctn,
+    .fi-section:not(:has(.fi-wi-stats-overview-stat)) {
+        border-radius: 1.25rem !important;
+    }
+
+    .fi-ta-header-toolbar {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .fi-modal:not(.fi-modal-slide-over) .fi-modal-window {
+        border-radius: 1.5rem 1.5rem 0 0 !important;
+        margin-bottom: 0 !important;
+        max-height: 92dvh !important;
+    }
+}
+
+/* Mobile & Tablet Clearance for Floating Bottom Dock (< 1024px) */
+@media (max-width: 1023px) {
+    .fi-main {
+        padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important;
+    }
+
+    .fi-sidebar {
+        border-top-right-radius: 1.75rem;
+        border-bottom-right-radius: 1.75rem;
+    }
+
+    .fi-ta-content-ctn {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Tablet Breakpoint (640px - 1023px) */
+@media (min-width: 640px) and (max-width: 1023px) {
+    .pkt-topbar {
+        padding-inline: 1.125rem !important;
+    }
+
+    .pkt-topbar-end .fi-global-search-field {
+        max-width: 12rem;
+    }
+
+    .fi-main {
+        padding-inline: 1.25rem !important;
+    }
+}
+
+/* Desktop & Ultrawide PC Breakpoint (1440px+) */
+@media (min-width: 1440px) {
+    .fi-body-has-top-navigation .fi-main {
+        max-width: 1920px !important;
+        margin-inline: auto !important;
+        padding-inline: 2rem !important;
+    }
+}
+
+
 
