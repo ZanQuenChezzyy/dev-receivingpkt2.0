@@ -15,9 +15,11 @@ use Illuminate\Support\Facades\Schema;
 
 class BadgeMilestoneService
 {
-    public const MILESTONE_TIER_1 = 1000;
+    public const MILESTONE_EXCLUSIVE_STEP = 5000;
 
-    public const MILESTONE_TIER_2 = 5000;
+    public const MILESTONE_TIER_1 = 5000;
+
+    public const MILESTONE_TIER_2 = 30000;
 
     public const MILESTONE_TIER_3 = 50000;
 
@@ -276,7 +278,24 @@ class BadgeMilestoneService
     }
 
     /**
-     * Mengembalikan status progres misi sesuai role, daftar hadiah yang siap diklaim, serta detail 3 tier misi.
+     * Daftar target milestone kelipatan 5.000 untuk seluruh badge Eksklusif (1 badge setiap 5.000).
+     *
+     * @return list<int>
+     */
+    public function exclusiveMilestoneTargets(): array
+    {
+        $count = count(User::standardExclusiveBadgeOptions());
+        $targets = [];
+
+        for ($i = 1; $i <= $count; $i++) {
+            $targets[] = $i * self::MILESTONE_EXCLUSIVE_STEP;
+        }
+
+        return $targets;
+    }
+
+    /**
+     * Mengembalikan status progres misi sesuai role, daftar hadiah yang siap diklaim, serta detail milestone.
      *
      * @return array{
      *     track: string,
@@ -287,6 +306,9 @@ class BadgeMilestoneService
      *     mission_count: int,
      *     do_count: int,
      *     breakdown_text: ?string,
+     *     exclusive_step: int,
+     *     earned_standard_slots: int,
+     *     total_standard_slots: int,
      *     has_full_access: bool,
      *     claimed_badges: list<string>,
      *     pending_choice_slots: int,
@@ -324,14 +346,11 @@ class BadgeMilestoneService
         $claimedBadges = $user->claimedExclusiveBadges();
 
         $standardExclusiveKeys = array_keys(User::standardExclusiveBadgeOptions());
+        $totalStandardCount = count($standardExclusiveKeys);
         $claimedStandardBadges = array_values(array_intersect($claimedBadges, $standardExclusiveKeys));
 
-        // Misi 1.000: pilih 1 dari 6 badge Eksklusif; Misi 5.000: buka seluruh 6 badge Eksklusif
-        $earnedStandardSlots = match (true) {
-            $missionCount >= self::MILESTONE_TIER_2 => count($standardExclusiveKeys),
-            $missionCount >= self::MILESTONE_TIER_1 => 1,
-            default => 0,
-        };
+        // Setiap kelipatan 5.000 membuka tepat 1 pilihan badge Eksklusif (maksimal 6 badge pada 30.000)
+        $earnedStandardSlots = min($totalStandardCount, intdiv(max(0, $missionCount), self::MILESTONE_EXCLUSIVE_STEP));
 
         $pendingChoiceSlots = $hasFullAccess
             ? 0
@@ -351,25 +370,35 @@ class BadgeMilestoneService
 
         $unit = $profile['unit_label'];
         $mythicNames = implode(', ', User::mythicBadgeOptions());
+        $maxExclusiveTarget = $totalStandardCount * self::MILESTONE_EXCLUSIVE_STEP;
+
+        // Kartu 1 menampilkan target kelipatan 5.000 aktif/berikutnya
+        $claimedStandardCount = count($claimedStandardBadges);
+        $nextSlotNumber = min($totalStandardCount, $claimedStandardCount + 1);
+        $nextStepTarget = $nextSlotNumber * self::MILESTONE_EXCLUSIVE_STEP;
+        $nextStepReached = $hasFullAccess || $missionCount >= $nextStepTarget;
+        $nextStepCompleted = $hasFullAccess || $claimedStandardCount >= $totalStandardCount;
 
         $milestones = [
             [
-                'key' => (string) self::MILESTONE_TIER_1,
-                'target' => self::MILESTONE_TIER_1,
-                'title' => 'Misi 1.000 '.$unit,
-                'reward_label' => 'Hadiah Pilih 1 dari 6 badge Eksklusif (Sparkling Lightning, Blazing Ember, Royal Obsidian, Arctic Platinum, Amethyst Crown, atau Rose Titanium)',
-                'reached' => $hasFullAccess || $missionCount >= self::MILESTONE_TIER_1,
-                'completed' => $hasFullAccess || count($claimedStandardBadges) >= 1,
-                'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($missionCount / self::MILESTONE_TIER_1) * 100, 1)),
+                'key' => (string) $nextStepTarget,
+                'target' => $nextStepTarget,
+                'title' => 'Misi '.number_format($nextStepTarget, 0, ',', '.').' '.$unit,
+                'reward_label' => $nextStepCompleted
+                    ? "Seluruh {$totalStandardCount} slot badge Eksklusif (1 badge per 5.000 {$unit}) telah diklaim."
+                    : "Hadiah Pilih 1 badge Eksklusif (Slot {$nextSlotNumber} dari {$totalStandardCount} — setiap kelipatan 5.000 {$unit} membuka 1 badge).",
+                'reached' => $nextStepReached,
+                'completed' => $nextStepCompleted,
+                'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($missionCount / $nextStepTarget) * 100, 1)),
             ],
             [
-                'key' => (string) self::MILESTONE_TIER_2,
-                'target' => self::MILESTONE_TIER_2,
-                'title' => 'Misi 5.000 '.$unit,
-                'reward_label' => 'Hadiah Sisa: Buka seluruh 6 badge Eksklusif yang belum diambil',
-                'reached' => $hasFullAccess || $missionCount >= self::MILESTONE_TIER_2,
-                'completed' => $hasFullAccess || count($claimedStandardBadges) >= count($standardExclusiveKeys),
-                'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($missionCount / self::MILESTONE_TIER_2) * 100, 1)),
+                'key' => (string) $maxExclusiveTarget,
+                'target' => $maxExclusiveTarget,
+                'title' => 'Koleksi '.number_format($maxExclusiveTarget, 0, ',', '.').' '.$unit,
+                'reward_label' => "Membuka seluruh {$totalStandardCount} badge Eksklusif ({$claimedStandardCount}/{$totalStandardCount} terbuka, 1 badge setiap 5.000 {$unit}).",
+                'reached' => $hasFullAccess || $missionCount >= $maxExclusiveTarget,
+                'completed' => $hasFullAccess || $claimedStandardCount >= $totalStandardCount,
+                'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($missionCount / $maxExclusiveTarget) * 100, 1)),
             ],
             [
                 'key' => (string) self::MILESTONE_TIER_3,
@@ -391,6 +420,9 @@ class BadgeMilestoneService
             'mission_count' => $missionCount,
             'do_count' => $missionCount,
             'breakdown_text' => $metrics['breakdown_text'],
+            'exclusive_step' => self::MILESTONE_EXCLUSIVE_STEP,
+            'earned_standard_slots' => $earnedStandardSlots,
+            'total_standard_slots' => $totalStandardCount,
             'has_full_access' => $hasFullAccess,
             'claimed_badges' => $claimedBadges,
             'pending_choice_slots' => $pendingChoiceSlots,
@@ -449,30 +481,25 @@ class BadgeMilestoneService
         $newlyNotified = [];
         $profileUrl = $this->resolveProfileUrl();
 
-        // Tier 1: 1.000
-        $tier1Key = (string) self::MILESTONE_TIER_1;
-        if ($count >= self::MILESTONE_TIER_1 && ! in_array($tier1Key, $alreadyNotified, true)) {
-            $alreadyNotified[] = $tier1Key;
-            $newlyNotified[] = $tier1Key;
-            $this->sendGiftNotification(
-                user: $user,
-                title: "Hadiah Misi 1.000 {$unit}",
-                body: 'Selamat '.$user->name.'! Anda telah mencapai '.number_format($count, 0, ',', '.')." {$unit}. Ambil hadiah di Pengaturan Profil untuk memilih salah satu dari 6 badge Eksklusif.",
-                profileUrl: $profileUrl,
-            );
-        }
+        // Kelipatan 5.000 (5.000, 10.000, 15.000, 20.000, 25.000, 30.000): masing-masing buka 1 badge Eksklusif
+        $exclusiveTargets = $this->exclusiveMilestoneTargets();
+        $totalExclusiveSlots = count($exclusiveTargets);
 
-        // Tier 2: 5.000
-        $tier2Key = (string) self::MILESTONE_TIER_2;
-        if ($count >= self::MILESTONE_TIER_2 && ! in_array($tier2Key, $alreadyNotified, true)) {
-            $alreadyNotified[] = $tier2Key;
-            $newlyNotified[] = $tier2Key;
-            $this->sendGiftNotification(
-                user: $user,
-                title: "Hadiah Misi 5.000 {$unit}",
-                body: 'Selamat '.$user->name.'! Pencapaian '.number_format($count, 0, ',', '.')." {$unit} membuka seluruh sisa badge Eksklusif yang belum diambil. Silakan klaim di Pengaturan Profil.",
-                profileUrl: $profileUrl,
-            );
+        foreach ($exclusiveTargets as $index => $target) {
+            $milestoneKey = (string) $target;
+            if ($count >= $target && ! in_array($milestoneKey, $alreadyNotified, true)) {
+                $alreadyNotified[] = $milestoneKey;
+                $newlyNotified[] = $milestoneKey;
+                $slotNumber = $index + 1;
+                $formattedTarget = number_format($target, 0, ',', '.');
+
+                $this->sendGiftNotification(
+                    user: $user,
+                    title: "Hadiah Misi {$formattedTarget} {$unit}",
+                    body: 'Selamat '.$user->name.'! Anda telah mencapai '.number_format($count, 0, ',', '.')." {$unit}. Ambil hadiah di Pengaturan Profil untuk memilih 1 badge Eksklusif (Slot {$slotNumber} dari {$totalExclusiveSlots}).",
+                    profileUrl: $profileUrl,
+                );
+            }
         }
 
         // Tier 3: 50.000 (Tier Tertinggi: Solar Aurora, Emerald Sovereign, Crimson Eclipse)

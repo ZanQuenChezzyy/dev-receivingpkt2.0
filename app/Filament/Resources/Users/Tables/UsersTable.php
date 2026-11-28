@@ -89,7 +89,7 @@ class UsersTable
                     })
                     ->tooltip(fn (User $record): string => $record->hasRole('Developer')
                         ? 'Role Developer selalu memiliki hak badge eksklusif.'
-                        : 'Aktifkan agar pengguna ini dapat memakai Sparkling Lightning, Blazing Ember, dan Solar Aurora.'),
+                        : 'Aktifkan agar pengguna ini dapat memakai 6 badge Eksklusif dan 3 badge Tier Tertinggi tanpa syarat misi.'),
 
                 ToggleColumn::make('is_active')
                     ->label('Status Aktif')
