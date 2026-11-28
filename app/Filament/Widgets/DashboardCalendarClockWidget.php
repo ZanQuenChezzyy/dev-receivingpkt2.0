@@ -12,7 +12,6 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
-use Filament\Support\Enums\Size;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -106,63 +105,6 @@ class DashboardCalendarClockWidget extends Widget implements HasActions, HasSche
         if (in_array($tab, ['all', 'notes', 'holidays'], true)) {
             $this->agendaTab = $tab;
         }
-    }
-
-    public function createNoteAction(): Action
-    {
-        return Action::make('createNote')
-            ->label('Catatan')
-            ->icon('heroicon-m-plus')
-            ->size(Size::ExtraSmall)
-            ->color('primary')
-            ->extraAttributes(['class' => '!rounded-full !px-2.5 !py-0.5 !text-[10px] !font-bold'])
-            ->visible(fn (): bool => $this->canManageNotes())
-            ->modalHeading('Tambah Catatan Kalender')
-            ->modalDescription('Catatan akan tampil pada kalender Halaman Utama untuk seluruh pengguna.')
-            ->modalWidth('lg')
-            ->modalSubmitActionLabel('Simpan Catatan')
-            ->fillForm(function (): array {
-                $defaultDate = $this->selectedDate
-                    ?: now()->timezone(config('app.timezone', 'Asia/Makassar'))->toDateString();
-
-                return [
-                    'category' => CalendarNote::CATEGORY_DINAS,
-                    'start_date' => $defaultDate,
-                    'end_date' => $defaultDate,
-                ];
-            })
-            ->schema(fn (): array => CalendarNoteResource::formComponents())
-            ->action(function (array $data): void {
-                if (! $this->canManageNotes() || ! Schema::hasTable('calendar_notes')) {
-                    Notification::make()
-                        ->title('Akses ditolak')
-                        ->body('Hanya Sekretaris yang berhak menambah catatan kalender.')
-                        ->warning()
-                        ->send();
-
-                    return;
-                }
-
-                CalendarNote::query()->create([
-                    'user_id' => $data['user_id'] ?: null,
-                    'title' => trim((string) $data['title']),
-                    'category' => (string) $data['category'],
-                    'start_date' => $data['start_date'],
-                    'end_date' => $data['end_date'],
-                    'notes' => filled($data['notes'] ?? null) ? trim((string) $data['notes']) : null,
-                    'created_by' => Auth::id(),
-                ]);
-
-                $startCarbon = Carbon::parse($data['start_date']);
-                $this->viewYear = (int) $startCarbon->year;
-                $this->viewMonth = (int) $startCarbon->month;
-                $this->selectedDate = null;
-
-                Notification::make()
-                    ->title('Catatan kalender ditambahkan')
-                    ->success()
-                    ->send();
-            });
     }
 
     public function editNoteAction(): Action

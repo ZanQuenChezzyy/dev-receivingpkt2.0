@@ -156,10 +156,9 @@ test('Sekretaris manages calendar notes via native Filament modal actions and Da
     Auth::login($sekretaris);
     expect(CalendarNoteResource::canAccess())->toBeTrue();
 
-    // 2. Sekretaris creates multi-day note via native Filament modal action on DashboardCalendarClockWidget
-    Livewire::test(DashboardCalendarClockWidget::class)
-        ->assertActionVisible('createNote')
-        ->callAction('createNote', data: [
+    // 2. Sekretaris creates multi-day note via Data Master -> Catatan Kalender page
+    Livewire::test(ManageCalendarNotes::class)
+        ->callAction('create', data: [
             'user_id' => $targetUser->id,
             'category' => CalendarNote::CATEGORY_DINAS,
             'title' => 'Dinas mutasi bahan baku',
@@ -168,6 +167,20 @@ test('Sekretaris manages calendar notes via native Filament modal actions and Da
             'notes' => 'Kunjungan koordinasi mutasi bahan baku',
         ])
         ->assertHasNoActionErrors()
+        ->assertSee('Dinas mutasi bahan baku')
+        ->assertSee('Andereyan Muhammat');
+
+    $saved = CalendarNote::query()->first();
+    expect($saved)->not->toBeNull()
+        ->and($saved->user_id)->toBe($targetUser->id)
+        ->and($saved->created_by)->toBe($sekretaris->id)
+        ->and($saved->formattedDateRange())->toBe('2–7 Des');
+
+    // 3. DashboardCalendarClockWidget displays notes & holidays without a Tambah Catatan button
+    Livewire::test(DashboardCalendarClockWidget::class)
+        ->set('viewYear', 2026)
+        ->set('viewMonth', 12)
+        ->assertActionDoesNotExist('createNote')
         ->assertSee('2–7 Des')
         ->assertSee('Andereyan Muhammat:')
         ->assertSee('Dinas mutasi bahan baku')
@@ -176,17 +189,6 @@ test('Sekretaris manages calendar notes via native Filament modal actions and Da
         ->assertSeeHtml('bg-amber-500/14')
         ->assertSeeHtml('bg-rose-500/10');
 
-    $saved = CalendarNote::query()->first();
-    expect($saved)->not->toBeNull()
-        ->and($saved->user_id)->toBe($targetUser->id)
-        ->and($saved->created_by)->toBe($sekretaris->id)
-        ->and($saved->formattedDateRange())->toBe('2–7 Des');
-
-    // 3. Sekretaris can also open Data Master -> Catatan Kalender page
-    Livewire::test(ManageCalendarNotes::class)
-        ->assertSee('Dinas mutasi bahan baku')
-        ->assertSee('Andereyan Muhammat');
-
     // 4. Operator is read-only on widget and denied access to Data Master CalendarNoteResource
     Auth::login($operator);
     expect(CalendarNoteResource::canAccess())->toBeFalse();
@@ -194,7 +196,7 @@ test('Sekretaris manages calendar notes via native Filament modal actions and Da
     Livewire::test(DashboardCalendarClockWidget::class)
         ->set('viewYear', 2026)
         ->set('viewMonth', 12)
-        ->assertActionHidden('createNote')
+        ->assertActionDoesNotExist('createNote')
         ->assertSee('Andereyan Muhammat:')
         ->assertSee('Dinas mutasi bahan baku')
         ->assertSee('Hari Raya Natal')

@@ -15,9 +15,6 @@
                 </span>
 
                 <div class="flex items-center gap-1.5">
-                    @if ($canManageNotes)
-                        {{ $this->createNoteAction }}
-                    @endif
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD]">
                         WITA
                     </span>
