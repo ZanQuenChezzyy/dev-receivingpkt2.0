@@ -345,130 +345,233 @@
                 </div>
             </div>
 
-            <!-- Right: Laser Scanner Gun / Manual Input (5 cols) -->
-            <div class="lg:col-span-5 fi-wi-widget p-6 rounded-2xl bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl border border-gray-200/60 dark:border-gray-800/60 shadow-xs flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center gap-2.5 mb-4">
-                        <div class="p-2 bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 rounded-xl">
-                            <x-heroicon-o-viewfinder-circle class="w-5 h-5" />
+            <!-- Right: Laser Scanner Gun / Manual & Multi-Code Input (5 cols) -->
+            <div
+                x-data="{
+                    detectedCount: 0,
+                    hasInput: false,
+                    isInputFocused: false,
+                    copiedMissing: false,
+                    countCodes(val) {
+                        const raw = String(val || '');
+                        this.hasInput = raw.trim().length > 0;
+                        const tokens = raw.trim().split(/[\r\n,;\t\s]+/).filter(Boolean);
+                        this.detectedCount = new Set(tokens.map(t => t.toUpperCase())).size;
+                    },
+                    async pasteFromClipboard() {
+                        const el = document.getElementById('manual-barcode-input');
+                        try {
+                            if (navigator.clipboard && navigator.clipboard.readText) {
+                                const text = await navigator.clipboard.readText();
+                                if (text) {
+                                    const current = String($wire.manual_input || '').trim();
+                                    const next = current ? (current + '\n' + text.trim()) : text.trim();
+                                    $wire.set('manual_input', next, false);
+                                    if (el) {
+                                        el.value = next;
+                                        el.focus();
+                                    }
+                                    this.countCodes(next);
+                                    return;
+                                }
+                            }
+                        } catch (e) {}
+                        el?.focus();
+                    },
+                    clearInput() {
+                        const el = document.getElementById('manual-barcode-input');
+                        $wire.set('manual_input', '', false);
+                        if (el) {
+                            el.value = '';
+                            el.focus();
+                        }
+                        this.countCodes('');
+                    },
+                    copyMissingCodes(text) {
+                        if (!text) return;
+                        navigator.clipboard?.writeText(text).then(() => {
+                            this.copiedMissing = true;
+                            setTimeout(() => { this.copiedMissing = false; }, 2000);
+                        }).catch(() => {});
+                    }
+                }"
+                x-init="countCodes($wire.manual_input)"
+                @focus-scanner-input.window="countCodes('')"
+                class="lg:col-span-5 fi-wi-widget p-6 rounded-2xl bg-white/75 dark:bg-gray-900/65 backdrop-blur-xl border border-gray-200/70 dark:border-white/[0.08] shadow-xs flex flex-col justify-between gap-4">
+                <div class="space-y-4">
+                    <!-- Card Header -->
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="p-2.5 rounded-xl bg-gradient-to-br from-orange-500/15 to-amber-500/10 dark:from-orange-500/20 dark:to-amber-500/10 text-orange-600 dark:text-orange-400 ring-1 ring-inset ring-orange-500/20 shrink-0">
+                                <x-heroicon-o-viewfinder-circle class="w-5 h-5" />
+                            </div>
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-bold text-gray-900 dark:text-white tracking-tight truncate">
+                                    Scanner &amp; Input Multi-Kode
+                                </h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    Scanner tembak USB/Bluetooth atau tempel daftar kode
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">
-                                Scanner Tembak (USB/Bluetooth) / Input Manual
-                            </h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Cocok untuk handheld terminal atau scanner gun meja
-                            </p>
+
+                        <!-- Live Status / Count Pill -->
+                        <div class="shrink-0 pt-0.5">
+                            <span
+                                x-show="detectedCount > 1"
+                                style="display: none;"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary-50 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 ring-1 ring-inset ring-primary-500/30">
+                                <span class="w-1.5 h-1.5 rounded-full bg-primary-500"></span>
+                                <span x-text="detectedCount + ' kode'"></span>
+                            </span>
+                            <span
+                                x-show="detectedCount <= 1"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ring-1 ring-inset transition-colors"
+                                :class="isInputFocused
+                                    ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-emerald-500/30'
+                                    : 'bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-gray-400 ring-gray-300/60 dark:ring-white/10'">
+                                <span class="w-1.5 h-1.5 rounded-full" :class="isInputFocused ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'"></span>
+                                <span x-text="isInputFocused ? 'Siap Scan' : 'Standby'"></span>
+                            </span>
                         </div>
                     </div>
 
-                    <div class="space-y-4" x-data="{
-                        detectedCount: 0,
-                        countCodes(val) {
-                            const tokens = String(val || '').trim().split(/[\r\n,;\t\s]+/).filter(Boolean);
-                            this.detectedCount = new Set(tokens.map(t => t.toUpperCase())).size;
-                        }
-                    }" x-init="countCodes($wire.manual_input)">
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-1.5">
-                                <label for="manual-barcode-input" class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                    Arahkan Scanner Tembak atau Tempel / Ketik Kode 105 / Kode Material:
-                                </label>
-                                <span
-                                    x-show="detectedCount > 1"
-                                    style="display: none;"
-                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800"
-                                    x-text="detectedCount + ' kode siap diproses'"
-                                ></span>
-                            </div>
-                            <div class="space-y-2">
-                                <textarea
-                                    id="manual-barcode-input"
-                                    rows="4"
-                                    wire:model="manual_input"
-                                    x-on:input="countCodes($event.target.value)"
-                                    x-on:keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); detectedCount = 0; $wire.submitManualScan(); }"
-                                    placeholder="Scan 1 kode atau tempel banyak kode sekaligus (1 kode per baris, spasi, atau koma)&#10;Contoh:&#10;5007761422&#10;5007761420&#10;5007761419"
-                                    class="w-full px-3.5 py-2.5 text-sm font-mono font-medium rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all placeholder:text-gray-400 placeholder:font-sans placeholder:text-xs resize-y leading-relaxed"
-                                    autofocus
-                                ></textarea>
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="text-[11px] text-gray-500 dark:text-gray-400">
-                                        <kbd class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300 font-mono text-[10px]">Enter</kbd> proses &bull;
-                                        <kbd class="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300 font-mono text-[10px]">Shift+Enter</kbd> baris baru
-                                    </span>
+                    <!-- Unified Modern Composer Box -->
+                    <div>
+                        <label for="manual-barcode-input" class="sr-only">
+                            Input Kode GRS 105 atau Kode Material
+                        </label>
+                        <div
+                            class="rounded-2xl border bg-gray-50/75 dark:bg-gray-950/70 transition-all overflow-hidden"
+                            :class="isInputFocused
+                                ? 'border-primary-500/80 dark:border-primary-500/70 ring-4 ring-primary-500/15 shadow-sm'
+                                : 'border-gray-200/90 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'">
+                            <textarea
+                                id="manual-barcode-input"
+                                rows="4"
+                                wire:model="manual_input"
+                                x-on:focus="isInputFocused = true"
+                                x-on:blur="isInputFocused = false"
+                                x-on:input="countCodes($event.target.value)"
+                                x-on:keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); detectedCount = 0; hasInput = false; $wire.submitManualScan(); }"
+                                placeholder="Arahkan scanner tembak atau tempel daftar kode (1 baris per kode)&#10;Contoh: 5007761422, 5007761420, 5007761419..."
+                                class="scanner-composer-scroll block w-full px-4 pt-3.5 pb-2.5 text-[13px] font-mono font-medium bg-transparent border-0 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 placeholder:font-sans placeholder:text-xs resize-none leading-relaxed"
+                                autofocus
+                            ></textarea>
+
+                            <!-- Composer Footer Toolbar -->
+                            <div class="px-3 py-2 bg-white/75 dark:bg-white/[0.025] border-t border-gray-200/70 dark:border-white/[0.06] flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-1.5">
                                     <button
                                         type="button"
-                                        wire:click="submitManualScan"
-                                        x-on:click="detectedCount = 0"
-                                        wire:loading.attr="disabled"
-                                        wire:target="submitManualScan,processScan"
-                                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 rounded-lg shadow-xs transition-colors disabled:opacity-60">
-                                        <span wire:loading.remove wire:target="submitManualScan,processScan" x-text="detectedCount > 1 ? 'Proses ' + detectedCount + ' Kode' : 'Scan / OK'"></span>
-                                        <span wire:loading wire:target="submitManualScan,processScan">Memproses...</span>
+                                        x-on:click="pasteFromClipboard()"
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-gray-100/80 dark:bg-white/[0.06] hover:bg-gray-200/80 dark:hover:bg-white/[0.11] transition-colors">
+                                        <x-heroicon-m-clipboard-document class="w-3.5 h-3.5" />
+                                        Tempel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        x-show="hasInput"
+                                        style="display: none;"
+                                        x-on:click="clearInput()"
+                                        class="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors">
+                                        <x-heroicon-m-x-mark class="w-3.5 h-3.5" />
+                                        Bersihkan
                                     </button>
                                 </div>
+
+                                <button
+                                    type="button"
+                                    wire:click="submitManualScan"
+                                    x-on:click="detectedCount = 0; hasInput = false"
+                                    wire:loading.attr="disabled"
+                                    wire:target="submitManualScan,processScan"
+                                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-500 active:scale-[0.98] rounded-xl shadow-xs transition-all disabled:opacity-60">
+                                    <svg wire:loading wire:target="submitManualScan,processScan" class="animate-spin w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    <x-heroicon-m-arrow-right-circle wire:loading.remove wire:target="submitManualScan,processScan" class="w-4 h-4" />
+                                    <span wire:loading.remove wire:target="submitManualScan,processScan" x-text="detectedCount > 1 ? 'Proses ' + detectedCount + ' Kode' : 'Proses'"></span>
+                                    <span wire:loading wire:target="submitManualScan,processScan">Memproses...</span>
+                                </button>
                             </div>
                         </div>
+                    </div>
 
-                        @if($lastBatchSummary)
-                            <div class="p-3.5 rounded-xl border text-xs space-y-2 {{ ! empty($lastBatchSummary['not_found_codes']) ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/60' : 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60' }}">
-                                <div class="flex items-center justify-between gap-2">
-                                    <div class="font-bold {{ ! empty($lastBatchSummary['not_found_codes']) ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300' }}">
-                                        Ringkasan Input Multi-Kode ({{ $lastBatchSummary['total_codes'] }} kode)
-                                    </div>
-                                    <button
-                                        type="button"
-                                        wire:click="clearBatchSummary"
-                                        class="text-[11px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline">
-                                        Tutup
-                                    </button>
+                    @if($lastBatchSummary)
+                        <div class="p-3.5 rounded-xl border text-xs space-y-2.5 {{ ! empty($lastBatchSummary['not_found_codes']) ? 'bg-amber-50/70 dark:bg-amber-500/[0.08] border-amber-200/80 dark:border-amber-500/25' : 'bg-emerald-50/70 dark:bg-emerald-500/[0.08] border-emerald-200/80 dark:border-emerald-500/25' }}">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="font-semibold {{ ! empty($lastBatchSummary['not_found_codes']) ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-800 dark:text-emerald-300' }}">
+                                    Hasil Multi-Kode ({{ $lastBatchSummary['total_codes'] }} kode)
                                 </div>
-                                <div class="flex flex-wrap gap-1.5 text-[11px]">
-                                    <span class="px-2 py-0.5 rounded-md font-semibold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200">
-                                        Berhasil: {{ count($lastBatchSummary['matched_codes']) }} kode ({{ $lastBatchSummary['added_items'] }} item)
+                                <button
+                                    type="button"
+                                    wire:click="clearBatchSummary"
+                                    class="text-[11px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                    Tutup
+                                </button>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 text-[11px]">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold bg-emerald-100/90 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-200">
+                                    Berhasil: {{ count($lastBatchSummary['matched_codes']) }} ({{ $lastBatchSummary['added_items'] }} item)
+                                </span>
+                                @if(! empty($lastBatchSummary['already_exists_codes']))
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold bg-sky-100/90 dark:bg-sky-500/20 text-sky-800 dark:text-sky-200">
+                                        Sudah ada: {{ count($lastBatchSummary['already_exists_codes']) }}
                                     </span>
-                                    @if(! empty($lastBatchSummary['already_exists_codes']))
-                                        <span class="px-2 py-0.5 rounded-md font-semibold bg-sky-100 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200">
-                                            Sudah ada: {{ count($lastBatchSummary['already_exists_codes']) }} kode
-                                        </span>
-                                    @endif
-                                    @if(! empty($lastBatchSummary['not_found_codes']))
-                                        <span class="px-2 py-0.5 rounded-md font-semibold bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200">
-                                            Tidak ditemukan: {{ count($lastBatchSummary['not_found_codes']) }} kode
-                                        </span>
-                                    @endif
-                                </div>
+                                @endif
                                 @if(! empty($lastBatchSummary['not_found_codes']))
-                                    <div class="text-[11px] text-rose-700 dark:text-rose-300">
-                                        <span class="font-semibold">Belum ada di Master MB51:</span>
-                                        <span class="font-mono break-all">{{ implode(', ', $lastBatchSummary['not_found_codes']) }}</span>
-                                    </div>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-semibold bg-rose-100/90 dark:bg-rose-500/20 text-rose-800 dark:text-rose-200">
+                                        Belum ada: {{ count($lastBatchSummary['not_found_codes']) }}
+                                    </span>
                                 @endif
                             </div>
-                        @endif
+                            @if(! empty($lastBatchSummary['not_found_codes']))
+                                <div class="pt-1 border-t border-amber-200/60 dark:border-amber-500/20 space-y-1.5">
+                                    <div class="flex items-center justify-between gap-2 text-[11px]">
+                                        <span class="font-medium text-rose-700 dark:text-rose-300">Belum ada di Master MB51:</span>
+                                        <button
+                                            type="button"
+                                            x-on:click="copyMissingCodes(@js(implode("\n", $lastBatchSummary['not_found_codes'])))"
+                                            class="text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                                            x-text="copiedMissing ? 'Tersalin' : 'Salin daftar'">
+                                        </button>
+                                    </div>
+                                    <div class="font-mono text-[11px] text-rose-700 dark:text-rose-300 break-all leading-relaxed">
+                                        {{ implode(', ', $lastBatchSummary['not_found_codes']) }}
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
 
-                        <!-- Guide Banner -->
-                        <div class="p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/40 border border-gray-200/70 dark:border-gray-700/60 text-xs space-y-1.5">
-                            <div class="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                                <x-heroicon-m-information-circle class="w-4 h-4 text-primary-500" />
-                                Informasi Format Barcode &amp; Multi-Kode
-                            </div>
-                            <ul class="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1 pl-1 text-[11px]">
-                                <li>Mendukung <strong>Kode GRS 105</strong> (10 digit atau 14 digit seperti <code class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-primary-600 dark:text-primary-400 font-mono">50074772742026</code>) maupun <strong>Kode Material</strong>.</li>
-                                <li>Anda dapat menyalin dan menempel <strong>banyak kode sekaligus</strong> dari Excel (1 kode per baris, koma, atau spasi) lalu tekan <strong>Proses</strong> atau <strong>Enter</strong>.</li>
-                                <li>Jika satu nomor 105 berisi lebih dari 1 item, seluruh item akan <strong>masuk otomatis sekaligus</strong>.</li>
-                            </ul>
+                    <!-- Compact Supported Format Chips -->
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                        <div class="px-3 py-2 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border border-gray-200/70 dark:border-white/[0.06]">
+                            <div class="font-semibold text-gray-700 dark:text-gray-200">Kode GRS 105</div>
+                            <div class="text-gray-500 dark:text-gray-400 font-mono text-[10px] mt-0.5">10 / 14 digit</div>
+                        </div>
+                        <div class="px-3 py-2 rounded-xl bg-gray-50/80 dark:bg-white/[0.03] border border-gray-200/70 dark:border-white/[0.06]">
+                            <div class="font-semibold text-gray-700 dark:text-gray-200">Kode Material</div>
+                            <div class="text-gray-500 dark:text-gray-400 text-[10px] mt-0.5">Tempel dari Excel</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800/80 text-[11px] text-gray-500 dark:text-gray-400 flex items-center justify-between">
-                    <span>Mendukung scanner gun 1 kode maupun tempel banyak kode</span>
+                <!-- Clean Keyboard Footer -->
+                <div class="pt-3 border-t border-gray-100 dark:border-white/[0.06] text-[11px] text-gray-500 dark:text-gray-400 flex items-center justify-between gap-2">
+                    <span class="flex items-center gap-1.5 flex-wrap">
+                        <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-white/[0.07] border border-gray-200 dark:border-white/10 rounded text-gray-700 dark:text-gray-300 font-mono text-[10px]">Enter</kbd>
+                        <span>proses</span>
+                        <span class="text-gray-300 dark:text-gray-600">&bull;</span>
+                        <kbd class="px-1.5 py-0.5 bg-gray-100 dark:bg-white/[0.07] border border-gray-200 dark:border-white/10 rounded text-gray-700 dark:text-gray-300 font-mono text-[10px]">Shift+Enter</kbd>
+                        <span>baris baru</span>
+                    </span>
                     <button
                         type="button"
                         x-on:click="document.getElementById('manual-barcode-input')?.focus()"
-                        class="text-primary-600 dark:text-primary-400 hover:underline">
+                        class="text-primary-600 dark:text-primary-400 hover:underline font-medium shrink-0">
                         Fokus Input
                     </button>
                 </div>
@@ -656,6 +759,27 @@
         .scan-header-form .fi-select-input-value-label,
         .scan-header-form .fi-select-input-btn {
             white-space: nowrap;
+        }
+        #manual-barcode-input:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        .scanner-composer-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(156, 163, 175, 0.35) transparent;
+        }
+        .scanner-composer-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .scanner-composer-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .scanner-composer-scroll::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.35);
+            border-radius: 9999px;
+        }
+        .scanner-composer-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(156, 163, 175, 0.55);
         }
     </style>
     @endpush
