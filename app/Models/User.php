@@ -55,10 +55,10 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public static function developerBadgeOptions(): array
     {
         return [
-            self::DEVELOPER_BADGE_ELECTRIC => 'Listrik (Energi Biru PKT)',
-            self::DEVELOPER_BADGE_FLAME => 'Api (Bara Oranye PKT)',
-            self::DEVELOPER_BADGE_PKT_COMBO => 'Kombinasi PKT (Biru & Oranye)',
-            self::DEVELOPER_BADGE_NONE => 'Standar (Tanpa Animasi)',
+            self::DEVELOPER_BADGE_ELECTRIC => 'Sparkling Lightning',
+            self::DEVELOPER_BADGE_FLAME => 'Blazing Ember',
+            self::DEVELOPER_BADGE_PKT_COMBO => 'Solar Aurora',
+            self::DEVELOPER_BADGE_NONE => 'Classic Clean',
         ];
     }
 

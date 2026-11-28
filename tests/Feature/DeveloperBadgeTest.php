@@ -119,9 +119,10 @@ test('Developer and AVP Receiving can choose and save animated badge style from 
 
     Livewire::test(EditProfile::class)
         ->assertSee('Gaya Badge')
-        ->assertSee('Listrik (Energi Biru PKT)')
-        ->assertSee('Api (Bara Oranye PKT)')
-        ->assertSee('Kombinasi PKT (Biru & Oranye)')
+        ->assertSee('Sparkling Lightning')
+        ->assertSee('Blazing Ember')
+        ->assertSee('Solar Aurora')
+        ->assertSee('Classic Clean')
         ->fillForm([
             'name' => 'AVP PKT',
             'npk' => '2100102',

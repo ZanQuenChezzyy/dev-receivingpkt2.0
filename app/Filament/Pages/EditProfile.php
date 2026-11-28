@@ -258,36 +258,36 @@ class EditProfile extends BaseEditProfile
                                                         User::DEVELOPER_BADGE_ELECTRIC => new HtmlString(
                                                             '<div class="flex flex-col gap-2 py-0.5">'
                                                             .'<div class="flex items-center justify-between gap-2">'
-                                                            .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Listrik (Energi Biru PKT)</span>'
+                                                            .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Sparkling Lightning</span>'
                                                             .'</div>'
-                                                            .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Garis energi biru-cyan berputar dengan kilatan petir berulang.</span>'
+                                                            .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Arus energi biru-cyan berputar dengan kilatan petir berulang.</span>'
                                                             .'<div class="pt-1">'.DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_ELECTRIC, $roleLabel).'</div>'
                                                             .'</div>'
                                                         ),
                                                         User::DEVELOPER_BADGE_FLAME => new HtmlString(
                                                             '<div class="flex flex-col gap-2 py-0.5">'
                                                             .'<div class="flex items-center justify-between gap-2">'
-                                                            .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Api (Bara Oranye PKT)</span>'
+                                                            .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Blazing Ember</span>'
                                                             .'</div>'
-                                                            .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Ikon api berkobar dengan pendaran hangat dan percikan bara naik.</span>'
+                                                            .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Bara api oranye menyala dengan percikan cahaya yang naik berulang.</span>'
                                                             .'<div class="pt-1">'.DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_FLAME, $roleLabel).'</div>'
                                                             .'</div>'
                                                         ),
                                                         User::DEVELOPER_BADGE_PKT_COMBO => new HtmlString(
                                                             '<div class="flex flex-col gap-2 py-0.5">'
                                                             .'<div class="flex items-center justify-between gap-2">'
-                                                            .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Kombinasi PKT (Biru &amp; Oranye)</span>'
+                                                            .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Solar Aurora</span>'
                                                             .'</div>'
-                                                            .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Cincin gradasi biru-oranye PKT berputar dengan sapuan kilau.</span>'
+                                                            .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Cincin gradasi biru dan oranye berputar dengan sapuan kilau.</span>'
                                                             .'<div class="pt-1">'.DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_PKT_COMBO, $roleLabel).'</div>'
                                                             .'</div>'
                                                         ),
                                                         User::DEVELOPER_BADGE_NONE => new HtmlString(
                                                             '<div class="flex flex-col gap-2 py-0.5">'
                                                             .'<div class="flex items-center justify-between gap-2">'
-                                                            .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Standar (Tanpa Animasi)</span>'
+                                                            .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Classic Clean</span>'
                                                             .'</div>'
-                                                            .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Tampilan badge statis rapi tanpa efek gerak.</span>'
+                                                            .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Tampilan statis sederhana tanpa efek gerak.</span>'
                                                             .'<div class="pt-1">'.DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_NONE, $roleLabel).'</div>'
                                                             .'</div>'
                                                         ),
