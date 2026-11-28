@@ -1,7 +1,6 @@
 <x-filament-widgets::widget>
     @php
         $stats = $this->getStatsData();
-        $periodOptions = $this->getPeriodOptions();
         $periodLabel = $this->getPeriodLabel();
         $workloads = $this->getStaffWorkloads();
         $topPicShare = ($stats['total_masuk'] > 0 && $stats['top_pic_count'] > 0)
@@ -9,24 +8,26 @@
             : 0;
     @endphp
 
-    <div class="pkt-bento-card relative rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-hidden p-4 sm:p-5 flex flex-col gap-4">
-        {{-- Subtle PKT Corporate Ambient Glow & Pattern Watermark --}}
-        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(0,84,166,0.07),transparent_46%),radial-gradient(circle_at_100%_100%,rgba(244,121,32,0.08),transparent_48%)] dark:bg-[radial-gradient(circle_at_0%_0%,rgba(0,84,166,0.18),transparent_50%),radial-gradient(circle_at_100%_100%,rgba(244,121,32,0.14),transparent_48%)]"></div>
-        <div class="pointer-events-none absolute -top-10 -right-10 w-44 h-44 select-none overflow-hidden">
-            <img
-                src="{{ asset('images/pattern/pkt-pattern-dark.png') }}"
-                alt=""
-                class="w-full h-full object-contain dark:hidden opacity-[0.06]"
-            />
-            <img
-                src="{{ asset('images/pattern/pkt-pattern-white.png') }}"
-                alt=""
-                class="w-full h-full object-contain hidden dark:block opacity-[0.05]"
-            />
+    <div class="pkt-bento-card relative rounded-[24px] bg-white dark:bg-[#151B24] border border-black/[0.06] dark:border-white/[0.08] shadow-xs overflow-visible p-4 sm:p-5 flex flex-col gap-4">
+        {{-- Subtle PKT Corporate Ambient Glow & Pattern Watermark (clipped internally so Filament Select dropdown never clips) --}}
+        <div class="pointer-events-none absolute inset-0 rounded-[24px] overflow-hidden">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(0,84,166,0.07),transparent_46%),radial-gradient(circle_at_100%_100%,rgba(244,121,32,0.08),transparent_48%)] dark:bg-[radial-gradient(circle_at_0%_0%,rgba(0,84,166,0.18),transparent_50%),radial-gradient(circle_at_100%_100%,rgba(244,121,32,0.14),transparent_48%)]"></div>
+            <div class="absolute -top-10 -right-10 w-44 h-44 select-none overflow-hidden">
+                <img
+                    src="{{ asset('images/pattern/pkt-pattern-dark.png') }}"
+                    alt=""
+                    class="w-full h-full object-contain dark:hidden opacity-[0.06]"
+                />
+                <img
+                    src="{{ asset('images/pattern/pkt-pattern-white.png') }}"
+                    alt=""
+                    class="w-full h-full object-contain hidden dark:block opacity-[0.05]"
+                />
+            </div>
         </div>
 
         {{-- Header Bar & Filter Periode --}}
-        <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="relative z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex flex-col min-w-0 gap-0.5">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0054A6] dark:text-[#83A2DB]">
@@ -51,30 +52,13 @@
                 </h3>
             </div>
 
-            {{-- Filter Periode --}}
-            <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
-                <label
-                    for="widget-invoicing-period-select"
-                    class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0"
-                >
+            {{-- Filter Periode (Native Filament Select Component) --}}
+            <div class="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
+                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
                     Periode
-                </label>
-                <div class="relative flex-1 sm:flex-none sm:min-w-[210px]">
-                    <span class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 dark:text-slate-500">
-                        <x-heroicon-m-calendar-days class="w-4 h-4" />
-                    </span>
-                    <select
-                        id="widget-invoicing-period-select"
-                        wire:model.live="selectedPeriod"
-                        class="w-full appearance-none text-xs font-semibold rounded-xl bg-slate-50/95 dark:bg-[#0F141C] border border-black/[0.09] dark:border-white/[0.1] text-[#10141A] dark:text-white pl-9 pr-8 py-2 focus:ring-2 focus:ring-[#F47920]/30 focus:border-[#F47920] outline-none cursor-pointer transition-colors"
-                    >
-                        @foreach ($periodOptions as $key => $label)
-                            <option value="{{ $key }}" class="bg-white dark:bg-[#151B24] text-[#10141A] dark:text-white">{{ $label }}</option>
-                        @endforeach
-                    </select>
-                    <span class="pointer-events-none absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 dark:text-slate-500">
-                        <x-heroicon-m-chevron-down class="w-4 h-4" />
-                    </span>
+                </span>
+                <div class="flex-1 sm:flex-none sm:w-[230px]">
+                    {{ $this->periodForm }}
                 </div>
             </div>
         </div>

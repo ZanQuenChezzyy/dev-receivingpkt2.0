@@ -5,12 +5,18 @@ namespace App\Filament\Resources\InvoicingReceipts\Widgets;
 use App\Models\InvoicingReceipt;
 use App\Models\User;
 use Carbon\Carbon;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Schema as DatabaseSchema;
 
-class InvoicingOverviewWidget extends Widget
+class InvoicingOverviewWidget extends Widget implements HasSchemas
 {
+    use InteractsWithSchemas;
+
     protected string $view = 'filament.resources.invoicing-receipts.widgets.invoicing-overview-widget';
 
     protected int|string|array $columnSpan = 'full';
@@ -24,6 +30,20 @@ class InvoicingOverviewWidget extends Widget
     public function mount(): void
     {
         $this->selectedPeriod = now()->format('Y-m');
+    }
+
+    public function periodForm(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Select::make('selectedPeriod')
+                    ->hiddenLabel()
+                    ->options(fn (): array => $this->getPeriodOptions())
+                    ->prefixIcon('heroicon-m-calendar-days')
+                    ->native(false)
+                    ->selectablePlaceholder(false)
+                    ->live(),
+            ]);
     }
 
     public function openStaffModal(): void
@@ -180,7 +200,7 @@ class InvoicingOverviewWidget extends Widget
         $baseQuery = $this->getPeriodQuery();
 
         $staffUsers = collect();
-        if (Schema::hasTable('roles') && Schema::hasTable('model_has_roles')) {
+        if (DatabaseSchema::hasTable('roles') && DatabaseSchema::hasTable('model_has_roles')) {
             $staffUsers = User::where('is_active', true)
                 ->whereHas('roles', fn ($q) => $q->where('name', 'Staff Invoice'))
                 ->get();

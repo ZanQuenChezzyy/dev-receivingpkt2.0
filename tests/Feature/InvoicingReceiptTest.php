@@ -1510,6 +1510,14 @@ test('InvoicingOverviewWidget calculates monthly stats correctly and identifies 
         $widget->closeStaffModal();
         expect($widget->showStaffModal)->toBeFalse();
 
+        // Check Livewire rendering uses Filament non-native Select for period selection
+        Livewire\Livewire::test(InvoicingOverviewWidget::class)
+            ->assertSee('Ringkasan Invoice Barang')
+            ->assertSee('Budi Staff')
+            ->assertSeeHtml('fi-select-input')
+            ->set('selectedPeriod', $prevMonth)
+            ->assertSee('Siti Staff');
+
         // Check ListInvoicingReceipts registers the widget
         $page = app(ListInvoicingReceipts::class);
         $headerWidgets = (fn () => $this->getHeaderWidgets())->call($page);
