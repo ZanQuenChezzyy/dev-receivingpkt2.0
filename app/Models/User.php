@@ -35,6 +35,10 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
 
     public const DEVELOPER_BADGE_PKT_COMBO = 'pkt_combo';
 
+    public const DEVELOPER_BADGE_OBSIDIAN_GOLD = 'obsidian_gold';
+
+    public const DEVELOPER_BADGE_ARCTIC_PLATINUM = 'arctic_platinum';
+
     public const DEVELOPER_BADGE_NONE = 'none';
 
     public const CLASSIC_BADGE_BLUE = 'classic_blue';
@@ -58,7 +62,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     ];
 
     /**
-     * Pilihan gaya animasi badge eksklusif (khusus Developer & AVP Receiving).
+     * Pilihan gaya animasi badge eksklusif (tier standar eksklusif + tier tertinggi).
      *
      * @return array<string, string>
      */
@@ -67,8 +71,27 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return [
             self::DEVELOPER_BADGE_ELECTRIC => 'Sparkling Lightning',
             self::DEVELOPER_BADGE_FLAME => 'Blazing Ember',
-            self::DEVELOPER_BADGE_PKT_COMBO => 'Solar Aurora',
+            ...self::mythicBadgeOptions(),
         ];
+    }
+
+    /**
+     * Pilihan badge tier tertinggi (setara Solar Aurora — terbuka di Misi 50.000 DO atau hak eksklusif Developer).
+     *
+     * @return array<string, string>
+     */
+    public static function mythicBadgeOptions(): array
+    {
+        return [
+            self::DEVELOPER_BADGE_PKT_COMBO => 'Solar Aurora',
+            self::DEVELOPER_BADGE_OBSIDIAN_GOLD => 'Royal Obsidian',
+            self::DEVELOPER_BADGE_ARCTIC_PLATINUM => 'Arctic Platinum',
+        ];
+    }
+
+    public static function isMythicBadgeStyle(string $style): bool
+    {
+        return array_key_exists($style, self::mythicBadgeOptions());
     }
 
     /**

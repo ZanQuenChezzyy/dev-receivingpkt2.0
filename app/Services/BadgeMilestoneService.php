@@ -93,10 +93,12 @@ class BadgeMilestoneService
             ? array_values(array_diff(self::CHOICE_EXCLUSIVE_BADGES, $claimedChoiceBadges))
             : [];
 
-        $hasSolarAurora = in_array(User::DEVELOPER_BADGE_PKT_COMBO, $claimedBadges, true);
-        $canClaimSolarAurora = ! $hasFullAccess
-            && $doCount >= self::MILESTONE_TIER_3
-            && ! $hasSolarAurora;
+        $mythicKeys = array_keys(User::mythicBadgeOptions());
+        $claimedMythicBadges = array_values(array_intersect($claimedBadges, $mythicKeys));
+        $claimableMythicBadges = (! $hasFullAccess && $doCount >= self::MILESTONE_TIER_3)
+            ? array_values(array_diff($mythicKeys, $claimedMythicBadges))
+            : [];
+        $canClaimSolarAurora = in_array(User::DEVELOPER_BADGE_PKT_COMBO, $claimableMythicBadges, true);
 
         $milestones = [
             [
@@ -121,9 +123,9 @@ class BadgeMilestoneService
                 'key' => (string) self::MILESTONE_TIER_3,
                 'target' => self::MILESTONE_TIER_3,
                 'title' => 'Misi Tertinggi 50.000 Penerimaan DO',
-                'reward_label' => 'Hadiah Tier Tertinggi: Solar Aurora',
+                'reward_label' => 'Hadiah Tier Tertinggi: Solar Aurora, Royal Obsidian, & Arctic Platinum',
                 'reached' => $hasFullAccess || $doCount >= self::MILESTONE_TIER_3,
-                'completed' => $hasFullAccess || $hasSolarAurora,
+                'completed' => $hasFullAccess || count($claimedMythicBadges) >= count($mythicKeys),
                 'percent' => $hasFullAccess ? 100.0 : min(100.0, round(($doCount / self::MILESTONE_TIER_3) * 100, 1)),
             ],
         ];
@@ -134,8 +136,9 @@ class BadgeMilestoneService
             'claimed_badges' => $claimedBadges,
             'pending_choice_slots' => $pendingChoiceSlots,
             'claimable_choice_badges' => $claimableChoiceBadges,
+            'claimable_mythic_badges' => $claimableMythicBadges,
             'can_claim_solar_aurora' => $canClaimSolarAurora,
-            'has_any_pending_gift' => $claimableChoiceBadges !== [] || $canClaimSolarAurora,
+            'has_any_pending_gift' => $claimableChoiceBadges !== [] || $claimableMythicBadges !== [],
             'milestones' => $milestones,
         ];
     }
@@ -221,7 +224,7 @@ class BadgeMilestoneService
             );
         }
 
-        // Tier 3: 50.000 Penerimaan DO (Tier Tertinggi: Solar Aurora)
+        // Tier 3: 50.000 Penerimaan DO (Tier Tertinggi: Solar Aurora, Royal Obsidian, & Arctic Platinum)
         $tier3Key = (string) self::MILESTONE_TIER_3;
         if ($doCount >= self::MILESTONE_TIER_3 && ! in_array($tier3Key, $alreadyNotified, true)) {
             $alreadyNotified[] = $tier3Key;
@@ -229,7 +232,7 @@ class BadgeMilestoneService
             $this->sendGiftNotification(
                 user: $user,
                 title: 'Hadiah Tier Tertinggi: 50.000 Penerimaan DO',
-                body: 'Pencapaian luar biasa, '.$user->name.'! Anda telah menyelesaikan '.number_format($doCount, 0, ',', '.').' penerimaan DO dan berhak mengambil hadiah badge tier tertinggi: Solar Aurora.',
+                body: 'Pencapaian luar biasa, '.$user->name.'! Anda telah menyelesaikan '.number_format($doCount, 0, ',', '.').' penerimaan DO dan berhak mengklaim seluruh badge tier tertinggi (Solar Aurora, Royal Obsidian, & Arctic Platinum).',
                 profileUrl: $profileUrl,
             );
         }
@@ -262,9 +265,9 @@ class BadgeMilestoneService
 
         $progress = $this->getProgress($user, $doCountOverride);
 
-        $isEligible = match ($badgeStyle) {
-            User::DEVELOPER_BADGE_ELECTRIC, User::DEVELOPER_BADGE_FLAME => in_array($badgeStyle, $progress['claimable_choice_badges'], true),
-            User::DEVELOPER_BADGE_PKT_COMBO => $progress['can_claim_solar_aurora'],
+        $isEligible = match (true) {
+            in_array($badgeStyle, self::CHOICE_EXCLUSIVE_BADGES, true) => in_array($badgeStyle, $progress['claimable_choice_badges'], true),
+            User::isMythicBadgeStyle($badgeStyle) => in_array($badgeStyle, $progress['claimable_mythic_badges'], true),
             default => false,
         };
 

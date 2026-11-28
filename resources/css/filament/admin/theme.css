@@ -4845,6 +4845,230 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 .pkt-aurora-stars i:nth-child(3) { top: 24%; left: 74%; animation-delay: 1.25s; background: #FDBA74; }
 .pkt-aurora-stars i:nth-child(4) { top: 64%; left: 88%; animation-delay: 1.85s; background: #BAE6FD; width: 3px; height: 3px; }
 
+/* Variant 4: MYTHIC TIER — Royal Obsidian (Obsidian Black & Liquid 24K Champagne Gold) */
+@keyframes pkt-obsidian-halo {
+    0%, 100% {
+        box-shadow:
+            0 0 12px -1px rgba(245, 158, 11, 0.48),
+            0 0 24px -3px rgba(253, 230, 138, 0.3),
+            0 2px 10px rgba(0, 0, 0, 0.55);
+    }
+    50% {
+        box-shadow:
+            0 0 16px 0px rgba(251, 191, 36, 0.62),
+            0 0 28px -2px rgba(217, 119, 6, 0.42),
+            0 2px 12px rgba(0, 0, 0, 0.65);
+    }
+}
+
+@keyframes pkt-obsidian-crown-glow {
+    0%, 100% {
+        transform: scale(0.95);
+        filter: drop-shadow(0 0 4px rgba(253, 230, 138, 0.85)) drop-shadow(0 0 8px rgba(217, 119, 6, 0.55));
+    }
+    50% {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 12px rgba(245, 158, 11, 0.85));
+    }
+}
+
+.pkt-dev-badge--obsidian_gold {
+    padding: 2px;
+    animation: pkt-obsidian-halo 3.4s ease-in-out infinite;
+}
+
+.pkt-dev-badge--obsidian_gold .pkt-dev-badge-ring {
+    background: conic-gradient(
+        from 0deg,
+        #0B0F17 0deg,
+        #334155 48deg,
+        #B45309 98deg,
+        #FDE68A 145deg,
+        #FFFFFF 166deg,
+        #D97706 205deg,
+        #111827 265deg,
+        #F59E0B 318deg,
+        #0B0F17 360deg
+    );
+    animation-duration: 2.5s;
+}
+
+.pkt-dev-badge--obsidian_gold .pkt-dev-badge-core {
+    background: linear-gradient(125deg, #07090F 0%, #14171F 28%, #2C2111 54%, #4D3511 76%, #11131A 100%);
+    background-size: 250% 250%;
+    animation: pkt-aurora-flow 5.8s ease-in-out infinite;
+    color: #FEF3C7;
+    text-shadow: 0 1px 7px rgba(245, 158, 11, 0.4);
+    box-shadow: inset 0 1px 0 rgba(253, 230, 138, 0.34), inset 0 -1px 0 rgba(180, 83, 9, 0.35);
+}
+
+.pkt-dev-icon-obsidian {
+    color: #FDE68A;
+    animation: pkt-obsidian-crown-glow 2.6s ease-in-out infinite;
+}
+
+.pkt-obsidian-sheen {
+    position: absolute;
+    inset: 2px;
+    z-index: 3;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-obsidian-sheen::after {
+    content: "";
+    position: absolute;
+    top: -15%;
+    bottom: -15%;
+    width: 34%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(217, 119, 6, 0.25) 28%,
+        rgba(254, 243, 199, 0.72) 50%,
+        rgba(245, 158, 11, 0.35) 72%,
+        transparent 100%
+    );
+    animation: pkt-aurora-beam 3.3s ease-in-out infinite;
+}
+
+.pkt-obsidian-stars {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.pkt-obsidian-stars i {
+    position: absolute;
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 1px;
+    background: #FEF3C7;
+    box-shadow: 0 0 6px 1.5px rgba(253, 230, 138, 0.95), 0 0 9px 1.5px rgba(217, 119, 6, 0.75);
+    animation: pkt-aurora-twinkle 2.6s ease-in-out infinite;
+}
+
+.pkt-obsidian-stars i:nth-child(1) { top: 18%; left: 18%; animation-delay: 0s; background: #FFFFFF; }
+.pkt-obsidian-stars i:nth-child(2) { top: 72%; left: 46%; animation-delay: 0.7s; background: #FDE68A; width: 3px; height: 3px; }
+.pkt-obsidian-stars i:nth-child(3) { top: 20%; left: 76%; animation-delay: 1.4s; background: #FBBF24; }
+.pkt-obsidian-stars i:nth-child(4) { top: 70%; left: 88%; animation-delay: 2.05s; background: #FEF3C7; width: 2.5px; height: 2.5px; }
+
+/* Variant 5: MYTHIC TIER — Arctic Platinum (Deep Arctic Sapphire & Liquid Crystal Platinum) */
+@keyframes pkt-arctic-halo {
+    0%, 100% {
+        box-shadow:
+            0 0 12px -1px rgba(148, 163, 184, 0.5),
+            0 0 24px -3px rgba(56, 189, 248, 0.38),
+            0 2px 10px rgba(2, 132, 199, 0.32);
+    }
+    50% {
+        box-shadow:
+            0 0 16px 0px rgba(224, 242, 254, 0.62),
+            0 0 28px -2px rgba(14, 165, 233, 0.48),
+            0 2px 12px rgba(15, 23, 42, 0.45);
+    }
+}
+
+@keyframes pkt-arctic-prism-pulse {
+    0%, 100% {
+        transform: scale(0.94);
+        filter: drop-shadow(0 0 5px rgba(224, 242, 254, 0.9)) drop-shadow(0 0 9px rgba(56, 189, 248, 0.6));
+    }
+    50% {
+        transform: scale(1.12);
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 1)) drop-shadow(0 0 13px rgba(125, 211, 252, 0.9));
+    }
+}
+
+.pkt-dev-badge--arctic_platinum {
+    padding: 2px;
+    animation: pkt-arctic-halo 3.3s ease-in-out infinite;
+}
+
+.pkt-dev-badge--arctic_platinum .pkt-dev-badge-ring {
+    background: conic-gradient(
+        from 0deg,
+        #0C1F3D 0deg,
+        #0284C7 56deg,
+        #E0F2FE 108deg,
+        #FFFFFF 132deg,
+        #94A3B8 186deg,
+        #38BDF8 242deg,
+        #F8FAFC 288deg,
+        #0369A1 325deg,
+        #0C1F3D 360deg
+    );
+    animation-duration: 2.3s;
+}
+
+.pkt-dev-badge--arctic_platinum .pkt-dev-badge-core {
+    background: linear-gradient(125deg, #071326 0%, #0E294B 30%, #1E3A5F 52%, #334E6E 74%, #0A1D36 100%);
+    background-size: 250% 250%;
+    animation: pkt-aurora-flow 5.4s ease-in-out infinite;
+    color: #F8FAFC;
+    text-shadow: 0 1px 8px rgba(186, 230, 253, 0.45);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36), inset 0 -1px 0 rgba(56, 189, 248, 0.32);
+}
+
+.pkt-dev-icon-arctic {
+    color: #E0F2FE;
+    animation: pkt-arctic-prism-pulse 2.5s ease-in-out infinite;
+}
+
+.pkt-arctic-sheen {
+    position: absolute;
+    inset: 2px;
+    z-index: 3;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-arctic-sheen::after {
+    content: "";
+    position: absolute;
+    top: -15%;
+    bottom: -15%;
+    width: 34%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(148, 163, 184, 0.28) 28%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(125, 211, 252, 0.42) 72%,
+        transparent 100%
+    );
+    animation: pkt-aurora-beam 3.0s ease-in-out infinite;
+}
+
+.pkt-arctic-stars {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.pkt-arctic-stars i {
+    position: absolute;
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 1px;
+    background: #FFFFFF;
+    box-shadow: 0 0 6px 1.5px rgba(224, 242, 254, 0.95), 0 0 9px 1.5px rgba(56, 189, 248, 0.78);
+    animation: pkt-aurora-twinkle 2.4s ease-in-out infinite;
+}
+
+.pkt-arctic-stars i:nth-child(1) { top: 18%; left: 16%; animation-delay: 0.1s; background: #FFFFFF; }
+.pkt-arctic-stars i:nth-child(2) { top: 72%; left: 44%; animation-delay: 0.75s; background: #BAE6FD; width: 3px; height: 3px; }
+.pkt-arctic-stars i:nth-child(3) { top: 20%; left: 74%; animation-delay: 1.35s; background: #F1F5F9; }
+.pkt-arctic-stars i:nth-child(4) { top: 68%; left: 88%; animation-delay: 1.95s; background: #7DD3FC; width: 2.5px; height: 2.5px; }
+
 /* Variant 4: Standard (Static) */
 .pkt-dev-badge--none {
     padding: 0;
@@ -4928,6 +5152,48 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
         #0054A6 360deg
     );
     animation-duration: 2.2s;
+}
+
+.pkt-dev-avatar-ring--obsidian_gold {
+    padding: 3px;
+    animation: pkt-obsidian-halo 3.4s ease-in-out infinite;
+}
+
+.pkt-dev-avatar-ring--obsidian_gold::before {
+    background: conic-gradient(
+        from 0deg,
+        #0B0F17 0deg,
+        #334155 48deg,
+        #B45309 98deg,
+        #FDE68A 145deg,
+        #FFFFFF 166deg,
+        #D97706 205deg,
+        #111827 265deg,
+        #F59E0B 318deg,
+        #0B0F17 360deg
+    );
+    animation-duration: 2.5s;
+}
+
+.pkt-dev-avatar-ring--arctic_platinum {
+    padding: 3px;
+    animation: pkt-arctic-halo 3.3s ease-in-out infinite;
+}
+
+.pkt-dev-avatar-ring--arctic_platinum::before {
+    background: conic-gradient(
+        from 0deg,
+        #0C1F3D 0deg,
+        #0284C7 56deg,
+        #E0F2FE 108deg,
+        #FFFFFF 132deg,
+        #94A3B8 186deg,
+        #38BDF8 242deg,
+        #F8FAFC 288deg,
+        #0369A1 325deg,
+        #0C1F3D 360deg
+    );
+    animation-duration: 2.3s;
 }
 
 /* =========================================================
@@ -5055,6 +5321,32 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
         box-shadow:
             0 0 8px -1px rgba(56, 189, 248, 0.55),
             0 0 12px -2px rgba(244, 121, 32, 0.52);
+    }
+}
+
+@keyframes pkt-pill-obsidian-halo {
+    0%, 100% {
+        box-shadow:
+            0 0 7px -1px rgba(245, 158, 11, 0.48),
+            0 1px 4px rgba(0, 0, 0, 0.45);
+    }
+    50% {
+        box-shadow:
+            0 0 10px -1px rgba(253, 230, 138, 0.55),
+            0 1px 5px rgba(180, 83, 9, 0.42);
+    }
+}
+
+@keyframes pkt-pill-arctic-halo {
+    0%, 100% {
+        box-shadow:
+            0 0 7px -1px rgba(148, 163, 184, 0.48),
+            0 0 11px -2px rgba(56, 189, 248, 0.42);
+    }
+    50% {
+        box-shadow:
+            0 0 9px -1px rgba(224, 242, 254, 0.58),
+            0 0 12px -2px rgba(14, 165, 233, 0.48);
     }
 }
 
@@ -5222,6 +5514,104 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     color: #FDBA74;
 }
 
+/* Pill Style 4: MYTHIC TIER — Royal Obsidian Table Pill (Obsidian Black & 24K Gold) */
+.pkt-user-pill--obsidian_gold {
+    padding: 2px;
+    animation: pkt-pill-obsidian-halo 3.4s ease-in-out infinite;
+}
+
+.pkt-user-pill--obsidian_gold .pkt-user-pill-border::before {
+    background: conic-gradient(
+        from 0deg,
+        #0B0F17 0deg,
+        #334155 48deg,
+        #B45309 98deg,
+        #FDE68A 145deg,
+        #FFFFFF 166deg,
+        #D97706 205deg,
+        #111827 265deg,
+        #F59E0B 318deg,
+        #0B0F17 360deg
+    );
+    animation-duration: 2.5s;
+}
+
+.pkt-user-pill--obsidian_gold .pkt-user-pill-inner {
+    background: linear-gradient(125deg, #07090F 0%, #14171F 28%, #2C2111 56%, #4D3511 80%, #11131A 100%);
+    background-size: 250% 250%;
+    animation: pkt-aurora-flow 5.8s ease-in-out infinite;
+    box-shadow: inset 0 1px 0 rgba(253, 230, 138, 0.28);
+}
+
+.pkt-user-pill--obsidian_gold .pkt-user-pill-name {
+    color: #FFFBEB;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
+}
+
+.pkt-user-pill--obsidian_gold .pkt-user-pill-sub {
+    color: #FDE68A;
+}
+
+.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i {
+    width: 2.5px;
+    height: 2.5px;
+    box-shadow: 0 0 4px 1px rgba(253, 230, 138, 0.9);
+}
+
+.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(1) { top: 12%; left: 26%; }
+.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
+.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(3) { top: 12%; left: 78%; }
+.pkt-user-pill--obsidian_gold .pkt-obsidian-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
+
+/* Pill Style 5: MYTHIC TIER — Arctic Platinum Table Pill (Arctic Sapphire & Platinum Ice) */
+.pkt-user-pill--arctic_platinum {
+    padding: 2px;
+    animation: pkt-pill-arctic-halo 3.3s ease-in-out infinite;
+}
+
+.pkt-user-pill--arctic_platinum .pkt-user-pill-border::before {
+    background: conic-gradient(
+        from 0deg,
+        #0C1F3D 0deg,
+        #0284C7 56deg,
+        #E0F2FE 108deg,
+        #FFFFFF 132deg,
+        #94A3B8 186deg,
+        #38BDF8 242deg,
+        #F8FAFC 288deg,
+        #0369A1 325deg,
+        #0C1F3D 360deg
+    );
+    animation-duration: 2.3s;
+}
+
+.pkt-user-pill--arctic_platinum .pkt-user-pill-inner {
+    background: linear-gradient(125deg, #071326 0%, #0E294B 30%, #1E3A5F 54%, #334E6E 78%, #0A1D36 100%);
+    background-size: 250% 250%;
+    animation: pkt-aurora-flow 5.4s ease-in-out infinite;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.pkt-user-pill--arctic_platinum .pkt-user-pill-name {
+    color: #F8FAFC;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+}
+
+.pkt-user-pill--arctic_platinum .pkt-user-pill-sub {
+    color: #BAE6FD;
+}
+
+.pkt-user-pill--arctic_platinum .pkt-arctic-stars i {
+    width: 2.5px;
+    height: 2.5px;
+    box-shadow: 0 0 4px 1px rgba(224, 242, 254, 0.92), 0 0 6px 1px rgba(56, 189, 248, 0.65);
+}
+
+.pkt-user-pill--arctic_platinum .pkt-arctic-stars i:nth-child(1) { top: 12%; left: 26%; }
+.pkt-user-pill--arctic_platinum .pkt-arctic-stars i:nth-child(2) { top: 82%; left: 54%; width: 2.5px; height: 2.5px; }
+.pkt-user-pill--arctic_platinum .pkt-arctic-stars i:nth-child(3) { top: 12%; left: 78%; }
+.pkt-user-pill--arctic_platinum .pkt-arctic-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
+
 /* =========================================================
    H3. MODERN PROFILE PAGE LAYOUT & SELECTABLE BADGE CARDS
    ========================================================= */
@@ -5343,10 +5733,20 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     .pkt-dev-icon-bolt,
     .pkt-dev-icon-combo,
     .pkt-dev-icon-aurora,
+    .pkt-dev-icon-obsidian,
+    .pkt-dev-icon-arctic,
     .pkt-dev-badge--pkt_combo .pkt-dev-badge-core,
+    .pkt-dev-badge--obsidian_gold .pkt-dev-badge-core,
+    .pkt-dev-badge--arctic_platinum .pkt-dev-badge-core,
     .pkt-user-pill--pkt_combo .pkt-user-pill-inner,
+    .pkt-user-pill--obsidian_gold .pkt-user-pill-inner,
+    .pkt-user-pill--arctic_platinum .pkt-user-pill-inner,
     .pkt-aurora-sheen::after,
     .pkt-aurora-stars i,
+    .pkt-obsidian-sheen::after,
+    .pkt-obsidian-stars i,
+    .pkt-arctic-sheen::after,
+    .pkt-arctic-stars i,
     .pkt-dev-embers i,
     .pkt-dev-sheen::after,
     .pkt-dev-avatar-ring,

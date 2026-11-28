@@ -366,18 +366,29 @@ test('regular user unlocks exclusive badges via 1000, 5000, and 50000 DO milesto
         ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_PKT_COMBO))->toBeFalse()
         ->and($service->claimGiftBadge($andre, User::DEVELOPER_BADGE_PKT_COMBO, doCountOverride: 5000))->toBeFalse();
 
-    // 4. Mencapai 50.000 DO: dapat notifikasi hadiah tier tertinggi Solar Aurora
+    // 4. Mencapai 50.000 DO: dapat notifikasi hadiah tier tertinggi (Solar Aurora, Royal Obsidian, & Arctic Platinum)
     expect($service->syncMilestonesAndNotify($andre, doCountOverride: 50000))->toBe(['50000'])
         ->and(DB::table('notifications')->where('notifiable_id', $andre->id)->count())->toBe(3);
 
     $progress50k = $service->getProgress($andre->fresh(), doCountOverride: 50000);
     expect($progress50k['can_claim_solar_aurora'])->toBeTrue()
-        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_PKT_COMBO, doCountOverride: 50000))->toBeTrue();
+        ->and($progress50k['claimable_mythic_badges'])->toBe([
+            User::DEVELOPER_BADGE_PKT_COMBO,
+            User::DEVELOPER_BADGE_OBSIDIAN_GOLD,
+            User::DEVELOPER_BADGE_ARCTIC_PLATINUM,
+        ])
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_PKT_COMBO, doCountOverride: 50000))->toBeTrue()
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_OBSIDIAN_GOLD, doCountOverride: 50000))->toBeTrue()
+        ->and($service->claimGiftBadge($andre->fresh(), User::DEVELOPER_BADGE_ARCTIC_PLATINUM, doCountOverride: 50000))->toBeTrue();
 
     $andre->refresh();
     UserBadgeRenderer::flushCache();
     expect($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_PKT_COMBO))->toBeTrue()
-        ->and($andre->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_PKT_COMBO)
-        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-user-pill--pkt_combo')
-        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-aurora-stars');
+        ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_OBSIDIAN_GOLD))->toBeTrue()
+        ->and($andre->canUseBadgeStyle(User::DEVELOPER_BADGE_ARCTIC_PLATINUM))->toBeTrue()
+        ->and($andre->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_ARCTIC_PLATINUM)
+        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-user-pill--arctic_platinum')
+        ->and(UserBadgeRenderer::render($andre))->toContain('pkt-arctic-stars')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_OBSIDIAN_GOLD, 'Developer'))->toContain('pkt-dev-badge--obsidian_gold')
+        ->and(DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_OBSIDIAN_GOLD, 'Developer'))->toContain('pkt-obsidian-stars');
 });

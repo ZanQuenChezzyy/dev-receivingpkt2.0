@@ -437,6 +437,18 @@ class EditProfile extends BaseEditProfile
                                                 'tier_chip' => 'Tier Tertinggi',
                                                 'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
                                             ],
+                                            User::DEVELOPER_BADGE_OBSIDIAN_GOLD => [
+                                                'title' => 'Royal Obsidian',
+                                                'desc' => 'Tier tertinggi: hitam obsidian pekat berpadu kilau emas 24K dan emblem mahkota.',
+                                                'tier_chip' => 'Tier Tertinggi',
+                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
+                                            ],
+                                            User::DEVELOPER_BADGE_ARCTIC_PLATINUM => [
+                                                'title' => 'Arctic Platinum',
+                                                'desc' => 'Tier tertinggi: safir biru arktik berpadu bingkai perak platinum dan kilau kristal.',
+                                                'tier_chip' => 'Tier Tertinggi',
+                                                'unlock_hint' => 'Misi 50.000 DO atau hak eksklusif Developer',
+                                            ],
                                         ];
 
                                         $options = [];
@@ -456,12 +468,15 @@ class EditProfile extends BaseEditProfile
 
                                         foreach ($exclusiveDefinitions as $key => $meta) {
                                             $isUnlocked = (bool) $user?->canUseBadgeStyle($key);
-                                            $isMythic = $key === User::DEVELOPER_BADGE_PKT_COMBO;
+                                            $isMythic = User::isMythicBadgeStyle($key);
 
                                             if ($isUnlocked) {
-                                                $chipColor = $isMythic
-                                                    ? 'bg-gradient-to-r from-[#0054A6] via-[#0B67C2] to-[#F47920] text-white shadow-xs'
-                                                    : 'bg-[#F47920]/15 text-[#F47920] dark:text-orange-300';
+                                                $chipColor = match ($key) {
+                                                    User::DEVELOPER_BADGE_OBSIDIAN_GOLD => 'bg-gradient-to-r from-[#111827] via-[#92400E] to-[#D97706] text-amber-100 shadow-xs',
+                                                    User::DEVELOPER_BADGE_ARCTIC_PLATINUM => 'bg-gradient-to-r from-[#0C2D57] via-[#0284C7] to-[#94A3B8] text-white shadow-xs',
+                                                    User::DEVELOPER_BADGE_PKT_COMBO => 'bg-gradient-to-r from-[#0054A6] via-[#0B67C2] to-[#F47920] text-white shadow-xs',
+                                                    default => 'bg-[#F47920]/15 text-[#F47920] dark:text-orange-300',
+                                                };
                                                 $chipText = $hasFullAccess ? $meta['tier_chip'] : ($isMythic ? 'Tier Tertinggi • Terbuka' : 'Terbuka via Misi');
                                                 $statusChip = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold '.$chipColor.'">'.$chipText.'</span>';
                                                 $lockedNote = '';
@@ -533,15 +548,21 @@ class EditProfile extends BaseEditProfile
                     .'</button>';
             }
 
-            if ($progress['can_claim_solar_aurora']) {
-                $buttons[] = '<button type="button" wire:click="claimBadgeGift(\''.User::DEVELOPER_BADGE_PKT_COMBO.'\')" wire:loading.attr="disabled" '
-                    .'class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r from-[#0054A6] via-[#0B67C2] to-[#F47920] text-white shadow-md hover:opacity-95 transition-opacity cursor-pointer">'
+            foreach ($progress['claimable_mythic_badges'] as $mythicKey) {
+                $mythicName = User::mythicBadgeOptions()[$mythicKey] ?? $mythicKey;
+                $btnGradient = match ($mythicKey) {
+                    User::DEVELOPER_BADGE_OBSIDIAN_GOLD => 'from-[#111827] via-[#92400E] to-[#D97706]',
+                    User::DEVELOPER_BADGE_ARCTIC_PLATINUM => 'from-[#0C2D57] via-[#0284C7] to-[#64748B]',
+                    default => 'from-[#0054A6] via-[#0B67C2] to-[#F47920]',
+                };
+                $buttons[] = '<button type="button" wire:click="claimBadgeGift(\''.$mythicKey.'\')" wire:loading.attr="disabled" '
+                    .'class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-gradient-to-r '.$btnGradient.' text-white shadow-md hover:opacity-95 transition-opacity cursor-pointer">'
                     .'<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5l2.35 6.15L20.5 10l-6.15 2.35L12 18.5l-2.35-6.15L3.5 10l6.15-2.35L12 1.5z" /></svg>'
-                    .'Ambil Hadiah Solar Aurora'
+                    .'Ambil '.e($mythicName)
                     .'</button>';
             }
 
-            $giftSubtitle = count($progress['claimable_choice_badges']) === 2 && ! $progress['can_claim_solar_aurora'] && $progress['pending_choice_slots'] === 1
+            $giftSubtitle = count($progress['claimable_choice_badges']) === 2 && $progress['claimable_mythic_badges'] === [] && $progress['pending_choice_slots'] === 1
                 ? 'Anda menyelesaikan Misi 1.000 Penerimaan DO. Pilih salah satu badge eksklusif di bawah ini untuk langsung dibuka:'
                 : 'Target misi penerimaan DO telah tercapai. Klik tombol di bawah untuk mengklaim hadiah badge eksklusif Anda:';
 
