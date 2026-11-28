@@ -3928,6 +3928,13 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     border-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Hide mobile search toggle icon button on Tablet, Laptop, and PC (full search pill is visible) */
+@media (min-width: 640px) {
+    .pkt-mobile-search-toggle {
+        display: none !important;
+    }
+}
+
 /* Always display Brand Logo cleanly across Phone, Tablet, and Desktop */
 .pkt-topbar-brand {
     display: flex !important;
