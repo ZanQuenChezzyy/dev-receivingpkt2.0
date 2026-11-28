@@ -96,9 +96,14 @@ class SapMb51ImportService
             throw new \RuntimeException('Tidak ada data material valid yang dapat diimpor dari file tersebut.');
         }
 
-        // Preload item MB51 yang sudah ada di database agar unggahan rentang tanggal tumpang tindih tidak menduplikasi data
+        // Preload Material Document (mat_doc_105) yang sudah pernah diupload sebelumnya di Master MB51
+        // agar Material Document lama tidak pernah masuk ulang ke Master MB51.
         $existingByKey = [];
-        $uploadedMatDocs = array_values(array_unique(array_filter(array_column($parsedItems, 'mat_doc_105'))));
+        $existingMatDocs = [];
+        $uploadedMatDocs = array_values(array_unique(array_filter(array_map(
+            fn (mixed $doc): string => trim((string) $doc),
+            array_column($parsedItems, 'mat_doc_105'),
+        ))));
 
         foreach (array_chunk($uploadedMatDocs, 500) as $docChunk) {
             $existingRows = WarehouseDeliveryBatchItem::query()
@@ -108,6 +113,11 @@ class SapMb51ImportService
                 ->get();
 
             foreach ($existingRows as $existingRow) {
+                $docKey = strtoupper(trim((string) $existingRow->mat_doc_105));
+                if ($docKey !== '') {
+                    $existingMatDocs[$docKey] = true;
+                }
+
                 $key = $existingRow->logicalKey();
                 if (! isset($existingByKey[$key])) {
                     $existingByKey[$key] = $existingRow;
@@ -121,6 +131,7 @@ class SapMb51ImportService
         $newRows = [];
         $newTotalValue = 0.0;
         $skippedDuplicates = 0;
+        $skippedMatDocs = [];
         $toEnrich = [];
 
         foreach ($parsedItems as $itemData) {
@@ -131,8 +142,15 @@ class SapMb51ImportService
             $itemData['delivery_order_receipt_id'] = $match['delivery_order_receipt_id'] ?? null;
             $itemData['delivery_order_receipt_detail_id'] = $match['delivery_order_receipt_detail_id'] ?? null;
 
-            if (isset($existingByKey[$logicalKey])) {
-                $toEnrich[] = [$existingByKey[$logicalKey], $itemData];
+            $docKey = strtoupper(trim((string) ($itemData['mat_doc_105'] ?? '')));
+
+            if (($docKey !== '' && isset($existingMatDocs[$docKey])) || isset($existingByKey[$logicalKey])) {
+                if (isset($existingByKey[$logicalKey])) {
+                    $toEnrich[] = [$existingByKey[$logicalKey], $itemData];
+                }
+                if ($docKey !== '') {
+                    $skippedMatDocs[$docKey] = true;
+                }
                 $skippedDuplicates++;
 
                 continue;
@@ -150,14 +168,18 @@ class SapMb51ImportService
             });
         }
 
+        $skippedDocCount = count($skippedMatDocs);
+
         if ($newRows === []) {
-            throw new \RuntimeException("Seluruh {$skippedDuplicates} baris data pada file ini sudah terdaftar di Master MB51 sebelumnya (tidak ada data baru untuk diimpor).");
+            throw new \RuntimeException(
+                "Seluruh {$skippedDocCount} Material Document ({$skippedDuplicates} baris) pada file ini sudah pernah diupload ke Master MB51 sebelumnya, sehingga tidak dimasukkan ulang."
+            );
         }
 
-        return DB::transaction(function () use ($batchTitle, $startDate, $endDate, $fileName, $filePath, $uploadedBy, $newRows, $newTotalValue, $skippedDuplicates, $params) {
+        return DB::transaction(function () use ($batchTitle, $startDate, $endDate, $fileName, $filePath, $uploadedBy, $newRows, $newTotalValue, $skippedDuplicates, $skippedDocCount, $params) {
             $notes = trim((string) ($params['notes'] ?? ''));
             if ($skippedDuplicates > 0) {
-                $dupNote = "{$skippedDuplicates} baris duplikat dari batch sebelumnya dilewati otomatis.";
+                $dupNote = "{$skippedDocCount} Material Document ({$skippedDuplicates} baris) yang sudah pernah diupload sebelumnya dilewati otomatis.";
                 $notes = $notes !== '' ? "{$notes}\n{$dupNote}" : $dupNote;
             }
 

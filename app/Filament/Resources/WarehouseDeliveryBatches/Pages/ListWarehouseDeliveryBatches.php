@@ -74,7 +74,7 @@ class ListWarehouseDeliveryBatches extends ListRecords
                         ->disk('local')
                         ->directory('temp-mb51-uploads')
                         ->required()
-                        ->helperText('File hasil ekspor transaksi MB51 dari SAP. Baris ringkasan (footer totals) akan otomatis dibersihkan oleh sistem.')
+                        ->helperText('File hasil ekspor transaksi MB51 dari SAP. Baris ringkasan (footer totals) dibersihkan otomatis dan Material Document yang sudah pernah diupload sebelumnya tidak akan dimasukkan ulang.')
                         ->storeFiles(),
 
                     Textarea::make('notes')
@@ -100,7 +100,7 @@ class ListWarehouseDeliveryBatches extends ListRecords
                         ]);
 
                         $body = "Berhasil mengimpor {$batch->total_items} data material baru ke dalam batch '{$batch->batch_title}'.";
-                        if (filled($batch->notes) && str_contains($batch->notes, 'duplikat')) {
+                        if (filled($batch->notes) && str_contains($batch->notes, 'dilewati otomatis')) {
                             $body .= ' '.$batch->notes;
                         }
 

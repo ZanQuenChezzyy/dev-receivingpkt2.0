@@ -320,11 +320,11 @@ CSV;
     ]);
     @unlink($path2);
 
-    // Hanya 1 item baru yang diimpor ke Batch 2; 2 item duplikat dilewati otomatis
+    // Hanya 1 item baru yang diimpor ke Batch 2; 1 Material Document (2 baris) yang sudah ada dilewati otomatis
     expect($batch2->total_items)->toBe(1)
         ->and($batch2->items()->count())->toBe(1)
         ->and(WarehouseDeliveryBatchItem::count())->toBe(3)
-        ->and($batch2->notes)->toContain('2 baris duplikat');
+        ->and($batch2->notes)->toContain('1 Material Document (2 baris)');
 
     // Item 50 lama otomatis diperkaya dengan ref_doc_103, storage_location, dan qty=23
     $enrichedItem50 = WarehouseDeliveryBatchItem::where('item_no', '50')->firstOrFail();
@@ -335,4 +335,55 @@ CSV;
     // Item 60 tetap berstatus delivered & tidak berubah transmittal_id
     expect($existingItem60->fresh()->status)->toBe('delivered')
         ->and($existingItem60->fresh()->warehouse_transmittal_id)->toBe(99);
+});
+
+test('sap mb51 service rejects re-uploading file when all Material Documents already exist in Master MB51', function () {
+    $user = User::create([
+        'name' => 'Tester MatDoc Validation',
+        'email' => 'matdoc_val@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    $csv = <<<'CSV'
+Posting Date,Material,Material Description,Item,Purchase Order,Reference Document,Material Document,Qty in Un. of Entry,Unit of Entry,Amount in LC,Storage Location
+2026-11-20,6008854,GASKET SW,50,5300067194,5007730001,5007761453,23,EA,1200000,3P01
+CSV;
+
+    $path1 = tempnam(sys_get_temp_dir(), 'mb51_dup1_').'.csv';
+    file_put_contents($path1, $csv);
+
+    $service = new SapMb51ImportService;
+    $service->import([
+        'file_path' => $path1,
+        'file_name' => 'first.csv',
+        'start_date' => '2026-11-01',
+        'end_date' => '2026-11-24',
+        'uploaded_by' => $user->id,
+    ]);
+    @unlink($path1);
+
+    // Upload ulang Material Document 5007761453 (meski ada baris item lain di bawah MatDoc yang sama) -> harus ditolak tanpa membuat batch baru
+    $csv2 = <<<'CSV'
+Posting Date,Material,Material Description,Item,Purchase Order,Reference Document,Material Document,Qty in Un. of Entry,Unit of Entry,Amount in LC,Storage Location
+2026-11-20,6008854,GASKET SW,50,5300067194,5007730001,5007761453,23,EA,1200000,3P01
+2026-11-20,6079965,GASKET SPW,60,5300067194,5007730001,5007761453,4,EA,500000,3P01
+CSV;
+
+    $path2 = tempnam(sys_get_temp_dir(), 'mb51_dup2_').'.csv';
+    file_put_contents($path2, $csv2);
+
+    try {
+        expect(fn () => $service->import([
+            'file_path' => $path2,
+            'file_name' => 'second.csv',
+            'start_date' => '2026-11-01',
+            'end_date' => '2026-11-28',
+            'uploaded_by' => $user->id,
+        ]))->toThrow(RuntimeException::class, 'sudah pernah diupload ke Master MB51');
+    } finally {
+        @unlink($path2);
+    }
+
+    expect(WarehouseDeliveryBatch::count())->toBe(1)
+        ->and(WarehouseDeliveryBatchItem::count())->toBe(1);
 });
