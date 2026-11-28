@@ -56,17 +56,14 @@
                 <div class="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-5 min-w-0">
                     <!-- Avatar + Online Dot -->
                     <div class="relative shrink-0 -mt-14 sm:-mt-16 z-10">
-                        <div @class([
-                            'relative inline-flex items-center justify-center shadow-xl',
-                            "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$badgeStyle}" => $hasAnimatedRing,
-                            'ring-4 ring-white dark:ring-[#151B24] rounded-full' => ! $hasAnimatedRing,
-                        ])>
-                            <img
-                                src="{{ $avatarUrl }}"
-                                alt="{{ e($member->name) }}"
-                                class="w-24 h-24 rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]"
-                            />
-                        </div>
+                        {!! \App\Support\DeveloperBadgeRenderer::renderAvatar(
+                            avatarUrl: $avatarUrl,
+                            alt: $member->name,
+                            style: $badgeStyle,
+                            imgClasses: 'w-24 h-24',
+                            size: 'lg',
+                            fallbackRingClasses: 'ring-4 ring-white dark:ring-[#151B24] rounded-full shadow-xl',
+                        ) !!}
                         @if ($isOnline)
                             <span class="absolute bottom-2 right-2 z-20 flex h-3.5 w-3.5 items-center justify-center" title="Sedang Online">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

@@ -163,7 +163,7 @@ class UserBadgeRenderer
             User::DEVELOPER_BADGE_OBSIDIAN_GOLD => '<span class="pkt-obsidian-sheen" aria-hidden="true"></span><span class="pkt-obsidian-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_ARCTIC_PLATINUM => '<span class="pkt-arctic-sheen" aria-hidden="true"></span><span class="pkt-arctic-stars pkt-fx-frost" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => '<span class="pkt-emerald-sheen pkt-fx-sonar" aria-hidden="true"><i></i><i></i></span><span class="pkt-emerald-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
-            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-crimson-sheen pkt-fx-glitch-bars" aria-hidden="true"><i></i><i></i><i></i></span><span class="pkt-crimson-stars" aria-hidden="true"><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-crimson-scanlines" aria-hidden="true"></span><span class="pkt-crimson-sheen pkt-fx-glitch-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="pkt-crimson-stars" aria-hidden="true"><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_AMETHYST_CROWN => '<span class="pkt-amethyst-sheen pkt-fx-warp" aria-hidden="true"><i></i><i></i></span><span class="pkt-amethyst-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_ROSE_TITANIUM => '<span class="pkt-rose-sheen pkt-fx-silk" aria-hidden="true"><i></i><i></i></span><span class="pkt-rose-stars pkt-fx-petals" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             default => '<span class="pkt-user-pill-sheen" aria-hidden="true"></span>',
@@ -179,11 +179,19 @@ class UserBadgeRenderer
             .'</span>';
 
         $mythicAura = match ($validStyle) {
+            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-mythic-aura pkt-mythic-aura--crimson_eclipse" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_PKT_COMBO,
-            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN,
-            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-mythic-aura pkt-mythic-aura--'.$validStyle.'" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => '<span class="pkt-mythic-aura pkt-mythic-aura--'.$validStyle.'" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>',
             default => '',
         };
+
+        $isMythic = User::isMythicBadgeStyle($validStyle);
+        $pillAvatarWrapClass = $isMythic
+            ? 'pkt-pill-avatar-mythic pkt-pill-avatar-mythic--'.$validStyle
+            : '';
+        $pillAvatarFx = $isMythic
+            ? '<span class="pkt-pill-avatar-fx pkt-pill-avatar-fx--'.$validStyle.'" aria-hidden="true"><i></i><i></i></span>'
+            : '';
 
         return '
             <div class="pkt-user-pill pkt-user-pill--'.$validStyle.' w-36 sm:w-44 max-w-full h-9 shrink-0">
@@ -191,12 +199,15 @@ class UserBadgeRenderer
                 '.$fxLayer.'
                 '.$mythicAura.'
                 <div class="pkt-user-pill-inner">
-                    <div class="relative shrink-0">
-                        <img
-                            src="'.$avatarUrl.'"
-                            alt="'.e($user->name).'"
-                            class="w-7 h-7 rounded-full object-cover relative z-10 ring-1 ring-white/50 dark:ring-white/20 shadow-xs"
-                        />
+                    <div class="relative shrink-0 '.$pillAvatarWrapClass.'">
+                        <span class="pkt-pill-avatar-clip">
+                            <img
+                                src="'.$avatarUrl.'"
+                                alt="'.e($user->name).'"
+                                class="w-7 h-7 pkt-pill-avatar-img rounded-full object-cover relative z-10 ring-1 ring-white/50 dark:ring-white/20 shadow-xs"
+                            />
+                            '.$pillAvatarFx.'
+                        </span>
                         '.$onlineDot.'
                     </div>
                     <div class="flex flex-col text-left leading-none min-w-0 flex-1 overflow-hidden">

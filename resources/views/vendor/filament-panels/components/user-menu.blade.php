@@ -70,19 +70,14 @@
                 ])
             >
                 <div class="relative shrink-0 inline-flex items-center justify-center">
-                    <div @class([
-                        'relative inline-flex items-center justify-center',
-                        "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$developerBadgeStyle}" => $hasAnimatedDevRing,
-                    ])>
-                        <img
-                            src="{{ $avatarUrl }}"
-                            alt="{{ e($user?->name) }}"
-                            @class([
-                                'w-9 h-9 rounded-full object-cover shadow-xs relative z-10',
-                                'ring-2 ring-slate-200 dark:ring-white/10' => ! $hasAnimatedDevRing,
-                            ])
-                        />
-                    </div>
+                    {!! \App\Support\DeveloperBadgeRenderer::renderAvatar(
+                        avatarUrl: $avatarUrl,
+                        alt: (string) ($user?->name ?? 'User'),
+                        style: $developerBadgeStyle,
+                        imgClasses: 'w-9 h-9 shadow-xs',
+                        size: 'sm',
+                        fallbackRingClasses: 'ring-2 ring-slate-200 dark:ring-white/10 rounded-full',
+                    ) !!}
                     @if ($isOnline)
                         <span class="absolute bottom-0 right-0 z-20 flex h-2.5 w-2.5 items-center justify-center">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -224,17 +219,14 @@
             <div class="px-4 pb-3.5 relative z-10">
                 <div class="flex items-start gap-3">
                     <div class="relative shrink-0 -mt-6">
-                        <div @class([
-                            'relative inline-flex items-center justify-center shadow-md',
-                            "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$developerBadgeStyle}" => $hasAnimatedDevRing,
-                            'ring-[3px] ring-white dark:ring-[#151B24] rounded-full' => ! $hasAnimatedDevRing,
-                        ])>
-                            <img
-                                src="{{ $avatarUrl }}"
-                                alt="{{ e($user->name) }}"
-                                class="w-12 h-12 rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]"
-                            />
-                        </div>
+                        {!! \App\Support\DeveloperBadgeRenderer::renderAvatar(
+                            avatarUrl: $avatarUrl,
+                            alt: (string) $user->name,
+                            style: $developerBadgeStyle,
+                            imgClasses: 'w-12 h-12',
+                            size: 'md',
+                            fallbackRingClasses: 'ring-[3px] ring-white dark:ring-[#151B24] rounded-full shadow-md',
+                        ) !!}
                         @if ($isOnline)
                             <span class="absolute bottom-0.5 right-0.5 z-20 flex h-3 w-3 items-center justify-center">
                                 <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 ring-2 ring-white dark:ring-[#151B24]"></span>

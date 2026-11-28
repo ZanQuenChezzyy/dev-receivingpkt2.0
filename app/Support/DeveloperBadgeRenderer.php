@@ -60,16 +60,16 @@ class DeveloperBadgeRenderer
             User::DEVELOPER_BADGE_OBSIDIAN_GOLD => '<span class="pkt-obsidian-sheen" aria-hidden="true"></span><span class="pkt-obsidian-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_ARCTIC_PLATINUM => '<span class="pkt-arctic-sheen" aria-hidden="true"></span><span class="pkt-arctic-stars pkt-fx-frost" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => '<span class="pkt-emerald-sheen pkt-fx-sonar" aria-hidden="true"><i></i><i></i></span><span class="pkt-emerald-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
-            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-crimson-sheen pkt-fx-glitch-bars" aria-hidden="true"><i></i><i></i><i></i></span><span class="pkt-crimson-stars" aria-hidden="true"><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-crimson-scanlines" aria-hidden="true"></span><span class="pkt-crimson-sheen pkt-fx-glitch-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="pkt-crimson-stars" aria-hidden="true"><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_AMETHYST_CROWN => '<span class="pkt-amethyst-sheen pkt-fx-warp" aria-hidden="true"><i></i><i></i></span><span class="pkt-amethyst-stars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_ROSE_TITANIUM => '<span class="pkt-rose-sheen pkt-fx-silk" aria-hidden="true"><i></i><i></i></span><span class="pkt-rose-stars pkt-fx-petals" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
             default => '<span class="pkt-dev-sheen" aria-hidden="true"></span>',
         };
 
         $mythicAura = match ($resolvedStyle) {
+            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-mythic-aura pkt-mythic-aura--crimson_eclipse" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>',
             User::DEVELOPER_BADGE_PKT_COMBO,
-            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN,
-            User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => '<span class="pkt-mythic-aura pkt-mythic-aura--'.$resolvedStyle.'" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>',
+            User::DEVELOPER_BADGE_EMERALD_SOVEREIGN => '<span class="pkt-mythic-aura pkt-mythic-aura--'.$resolvedStyle.'" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>',
             default => '',
         };
 
@@ -136,6 +136,49 @@ class DeveloperBadgeRenderer
                 'avatar_ring' => 'ring-2 ring-amber-500/45 dark:ring-amber-400/45',
             ],
         };
+    }
+
+    /**
+     * Merender foto profil (avatar) dengan cincin animasi eksklusif dan efek Tier Tertinggi
+     * yang menyatu hingga ke permukaan foto dan meluas keluar bingkai (khusus Solar Aurora,
+     * Emerald Sovereign, dan Crimson Eclipse).
+     */
+    public static function renderAvatar(
+        string $avatarUrl,
+        string $alt,
+        string $style,
+        string $imgClasses = 'w-24 h-24',
+        string $size = 'lg',
+        string $fallbackRingClasses = 'ring-4 ring-white dark:ring-[#151B24] rounded-full shadow-lg',
+    ): string {
+        $safeUrl = e($avatarUrl);
+        $safeAlt = e($alt);
+        $safeSize = in_array($size, ['sm', 'md', 'lg'], true) ? $size : 'lg';
+
+        if (User::isMythicBadgeStyle($style)) {
+            $auraCount = $style === User::DEVELOPER_BADGE_CRIMSON_ECLIPSE ? 8 : 6;
+            $auraDots = str_repeat('<i></i>', $auraCount);
+
+            return '<span class="pkt-mythic-avatar pkt-mythic-avatar--'.$style.' pkt-mythic-avatar--'.$safeSize.'">'
+                .'<span class="pkt-dev-avatar-ring pkt-dev-avatar-ring--'.$style.' shadow-xl">'
+                .'<span class="pkt-avatar-photo-wrap">'
+                .'<img src="'.$safeUrl.'" alt="'.$safeAlt.'" class="'.$imgClasses.' pkt-avatar-photo-img rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]" />'
+                .'<span class="pkt-avatar-photo-fx pkt-avatar-photo-fx--'.$style.'" aria-hidden="true"><i></i><i></i><i></i></span>'
+                .'</span>'
+                .'</span>'
+                .'<span class="pkt-avatar-mythic-fx pkt-avatar-mythic-fx--'.$style.'" aria-hidden="true">'.$auraDots.'</span>'
+                .'</span>';
+        }
+
+        if (User::isExclusiveBadgeStyle($style)) {
+            return '<span class="relative inline-flex items-center justify-center pkt-dev-avatar-ring pkt-dev-avatar-ring--'.$style.' shadow-xl">'
+                .'<img src="'.$safeUrl.'" alt="'.$safeAlt.'" class="'.$imgClasses.' rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]" />'
+                .'</span>';
+        }
+
+        return '<span class="relative inline-flex items-center justify-center '.$fallbackRingClasses.'">'
+            .'<img src="'.$safeUrl.'" alt="'.$safeAlt.'" class="'.$imgClasses.' rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]" />'
+            .'</span>';
     }
 
     /**

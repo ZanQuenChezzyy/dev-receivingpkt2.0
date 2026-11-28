@@ -5296,94 +5296,191 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 .pkt-emerald-stars i:nth-child(3) { top: 18%; left: 76%; animation-delay: 1.1s; background: #6EE7B7; }
 .pkt-emerald-stars i:nth-child(4) { top: 72%; left: 88%; animation-delay: 1.65s; width: 2.5px; height: 2.5px; }
 
-/* Variant 7: MYTHIC TIER — Crimson Eclipse (Vivid Scarlet Ruby & Coral + Cyber Glitch & Chromatic Distortion) */
+/* Variant 7: MYTHIC TIER — Crimson Eclipse (Grand Blood-Eclipse + High-Impact Cyber Glitch & Chromatic Distortion) */
 @keyframes pkt-crimson-halo {
-    0%, 100% {
-        box-shadow: 0 0 12px -1px rgba(225, 29, 72, 0.58), 0 0 24px -3px rgba(244, 63, 94, 0.38);
+    0%, 32%, 40%, 70%, 84%, 100% {
+        transform: translate3d(0, 0, 0) skewX(0deg);
+        box-shadow:
+            0 0 14px 0px rgba(225, 29, 72, 0.72),
+            0 0 28px -2px rgba(255, 23, 68, 0.48),
+            0 0 42px -4px rgba(136, 19, 55, 0.42);
     }
-    50% {
-        box-shadow: 0 0 16px 0px rgba(251, 113, 133, 0.72), 0 0 28px -2px rgba(220, 38, 38, 0.52);
+    35% {
+        transform: translate3d(-1.5px, 0, 0) skewX(-3deg);
+        box-shadow:
+            -3.5px 0 0 rgba(0, 229, 255, 0.85),
+            3.5px 0 0 rgba(255, 23, 68, 0.92),
+            0 0 22px 2px rgba(255, 23, 68, 0.82);
+    }
+    37% {
+        transform: translate3d(1.5px, 0, 0) skewX(2.5deg);
+        box-shadow:
+            3px 0 0 rgba(253, 224, 71, 0.78),
+            -3px 0 0 rgba(0, 229, 255, 0.78),
+            0 0 20px 1px rgba(244, 63, 94, 0.78);
+    }
+    73% {
+        transform: translate3d(-2px, -0.5px, 0) skewX(-5deg);
+        box-shadow:
+            -4.5px 0 0 rgba(0, 229, 255, 0.95),
+            4.5px 0 0 rgba(255, 23, 68, 0.98),
+            0 0 28px 2px rgba(255, 23, 68, 0.9),
+            0 0 44px -2px rgba(251, 113, 133, 0.65);
+    }
+    76% {
+        transform: translate3d(2.5px, 0.5px, 0) skewX(4.5deg);
+        box-shadow:
+            4px 0 0 rgba(0, 229, 255, 0.9),
+            -4px 0 0 rgba(253, 224, 71, 0.85),
+            0 0 24px 2px rgba(225, 29, 72, 0.88);
+    }
+    79% {
+        transform: translate3d(-1.5px, 0, 0) skewX(-3.5deg);
+        box-shadow:
+            -3px 0 0 rgba(255, 255, 255, 0.88),
+            3px 0 0 rgba(255, 23, 68, 0.95),
+            0 0 30px 2px rgba(251, 113, 133, 0.78);
+    }
+    82% {
+        transform: translate3d(1px, 0, 0) skewX(2deg);
+        box-shadow:
+            -2.5px 0 0 rgba(0, 229, 255, 0.82),
+            2.5px 0 0 rgba(255, 23, 68, 0.9),
+            0 0 20px 1px rgba(225, 29, 72, 0.8);
     }
 }
 
 @keyframes pkt-fx-glitch-jitter {
-    0%, 82%, 88%, 92%, 100% {
+    0%, 32%, 39%, 70%, 85%, 100% {
         transform: translate3d(0, 0, 0) skewX(0deg);
-        text-shadow: 0 1px 6px rgba(127, 29, 29, 0.5);
+        text-shadow: 0 1px 8px rgba(76, 5, 25, 0.7), 0 0 10px rgba(255, 42, 85, 0.55);
+    }
+    34% {
+        transform: translate3d(-2px, 0, 0) skewX(-6deg);
+        text-shadow: -3px 0 #00E5FF, 3px 0 #FDE047;
+    }
+    36% {
+        transform: translate3d(2px, 0, 0) skewX(5deg);
+        text-shadow: 3px 0 #00E5FF, -3px 0 #FF2A55;
+    }
+    72% {
+        transform: translate3d(-3px, -0.5px, 0) skewX(-9deg);
+        text-shadow: -3.5px 0 #00E5FF, 3.5px 0 #FDE047, 0 0 12px #FFFFFF;
+    }
+    75% {
+        transform: translate3d(3px, 0.5px, 0) skewX(8deg);
+        text-shadow: 3.5px 0 #7DD3FC, -3.5px 0 #FF1744;
+    }
+    78% {
+        transform: translate3d(-2px, 0.5px, 0) skewX(-6deg);
+        text-shadow: -2.5px 0 #FFFFFF, 2.5px 0 #FB7185, 0 0 10px #FF1744;
+    }
+    81% {
+        transform: translate3d(2px, -0.5px, 0) skewX(6deg);
+        text-shadow: -3px 0 #00E5FF, 3px 0 #FDE047;
     }
     83% {
-        transform: translate3d(-2px, 0, 0) skewX(-6deg);
-        text-shadow: -2.5px 0 #38BDF8, 2.5px 0 #FDE047;
-    }
-    85% {
-        transform: translate3d(2px, -0.5px, 0) skewX(5deg);
-        text-shadow: 2.5px 0 #7DD3FC, -2.5px 0 #FDBA74;
-    }
-    87% {
-        transform: translate3d(-1px, 0.5px, 0) skewX(-3deg);
-        text-shadow: -1.5px 0 #FFFFFF, 1.5px 0 #FB7185;
-    }
-    90% {
-        transform: translate3d(1.5px, 0, 0) skewX(4deg);
-        text-shadow: -2px 0 #38BDF8, 2px 0 #FDE047;
+        transform: translate3d(-1px, 0, 0) skewX(-3deg);
+        text-shadow: 2px 0 #00E5FF, -2px 0 #FF1744;
     }
 }
 
 @keyframes pkt-fx-glitch-slice {
-    0%, 78%, 85%, 90%, 100% {
+    0%, 28%, 38%, 68%, 84%, 100% {
         opacity: 0;
-        transform: translateX(-120%);
+        transform: translateX(-125%) scaleY(1);
     }
-    80% {
-        opacity: 0.95;
-        transform: translateX(0%);
+    31% {
+        opacity: 0.92;
+        transform: translateX(8%) scaleY(1.3);
     }
-    83% {
-        opacity: 0.7;
-        transform: translateX(65%);
+    35% {
+        opacity: 0.6;
+        transform: translateX(68%) scaleY(0.8);
     }
-    88% {
-        opacity: 0.9;
-        transform: translateX(-15%);
+    71% {
+        opacity: 1;
+        transform: translateX(-6%) scaleY(1.6);
+    }
+    75% {
+        opacity: 0.85;
+        transform: translateX(48%) scaleY(1.1);
+    }
+    79% {
+        opacity: 0.98;
+        transform: translateX(-22%) scaleY(1.8);
+    }
+    82% {
+        opacity: 0.72;
+        transform: translateX(82%) scaleY(0.9);
+    }
+}
+
+@keyframes pkt-crimson-scan-scroll {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 0 12px;
     }
 }
 
 .pkt-dev-badge--crimson_eclipse {
-    padding: 2px;
-    animation: pkt-crimson-halo 3.0s ease-in-out infinite;
+    padding: 2.25px;
+    animation: pkt-crimson-halo 2.6s steps(1, end) infinite;
 }
 
 .pkt-dev-badge--crimson_eclipse .pkt-dev-badge-ring {
     background: conic-gradient(
         from 0deg,
-        #991B1B 0deg,
-        #EF4444 58deg,
-        #FDA4AF 115deg,
-        #FFFFFF 136deg,
-        #E11D48 192deg,
-        #B91C1C 252deg,
-        #FB7185 308deg,
-        #991B1B 360deg
+        #4C0519 0deg,
+        #FF1744 48deg,
+        #FDA4AF 94deg,
+        #FFFFFF 114deg,
+        #00E5FF 126deg,
+        #E11D48 178deg,
+        #991B1B 235deg,
+        #FDE047 268deg,
+        #FF2A55 305deg,
+        #4C0519 360deg
     );
-    animation-duration: 2.0s;
+    animation-duration: 1.55s;
 }
 
 .pkt-dev-badge--crimson_eclipse .pkt-dev-badge-core {
-    background: linear-gradient(125deg, #881337 0%, #BE123C 28%, #DC2626 56%, #E11D48 80%, #991B1B 100%);
-    background-size: 250% 250%;
-    animation: pkt-aurora-flow 4.8s ease-in-out infinite;
+    background: linear-gradient(125deg, #4C0519 0%, #9F1239 24%, #DC2626 48%, #FF1744 68%, #BE123C 86%, #6B0825 100%);
+    background-size: 270% 270%;
+    animation: pkt-aurora-flow 3.6s ease-in-out infinite;
     color: #FFFFFF;
-    box-shadow: inset 0 1px 0 rgba(254, 205, 211, 0.42), inset 0 -1px 0 rgba(153, 27, 27, 0.45);
+    box-shadow: inset 0 1px 0 rgba(255, 228, 230, 0.55), inset 0 -1px 0 rgba(255, 23, 68, 0.55);
 }
 
 .pkt-dev-badge--crimson_eclipse .pkt-dev-badge-text,
 .pkt-user-pill--crimson_eclipse .pkt-user-pill-name {
-    animation: pkt-fx-glitch-jitter 3.2s steps(1, end) infinite;
+    animation: pkt-fx-glitch-jitter 2.6s steps(1, end) infinite;
 }
 
 .pkt-dev-icon-crimson {
-    color: #FFE4E6;
-    animation: pkt-fx-glitch-jitter 3.2s steps(1, end) infinite;
+    color: #FFF1F2;
+    filter: drop-shadow(0 0 5px rgba(255, 42, 85, 0.95));
+    animation: pkt-fx-glitch-jitter 2.6s steps(1, end) infinite;
+}
+
+.pkt-crimson-scanlines {
+    position: absolute;
+    inset: 2px;
+    z-index: 3;
+    border-radius: 9999px;
+    pointer-events: none;
+    opacity: 0.34;
+    background-image: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.42) 0px,
+        rgba(0, 0, 0, 0.42) 1px,
+        transparent 1px,
+        transparent 3px
+    );
+    animation: pkt-crimson-scan-scroll 0.9s linear infinite;
 }
 
 .pkt-crimson-sheen {
@@ -5400,18 +5497,20 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     left: 0;
     width: 100%;
     height: 2px;
-    background: linear-gradient(90deg, transparent 0%, #38BDF8 22%, #FFFFFF 50%, #FDE047 78%, transparent 100%);
-    animation: pkt-fx-glitch-slice 3.2s steps(2, end) infinite;
+    background: linear-gradient(90deg, transparent 0%, #00E5FF 18%, #FFFFFF 48%, #FF1744 70%, #FDE047 86%, transparent 100%);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.85), 0 0 10px rgba(255, 23, 68, 0.9);
+    animation: pkt-fx-glitch-slice 2.6s steps(2, end) infinite;
 }
 
-.pkt-crimson-sheen i:nth-child(1) { top: 26%; animation-delay: 0s; }
-.pkt-crimson-sheen i:nth-child(2) { top: 54%; height: 2.5px; animation-delay: 0.12s; }
-.pkt-crimson-sheen i:nth-child(3) { top: 76%; height: 1.5px; animation-delay: 1.6s; }
+.pkt-crimson-sheen i:nth-child(1) { top: 20%; animation-delay: 0s; }
+.pkt-crimson-sheen i:nth-child(2) { top: 44%; height: 3px; animation-delay: 0.08s; }
+.pkt-crimson-sheen i:nth-child(3) { top: 68%; height: 2px; animation-delay: 0.95s; }
+.pkt-crimson-sheen i:nth-child(4) { top: 84%; height: 1.5px; animation-delay: 1.65s; }
 
 .pkt-crimson-stars {
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 4;
     pointer-events: none;
     overflow: hidden;
     border-radius: 9999px;
@@ -5419,15 +5518,16 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 .pkt-crimson-stars i {
     position: absolute;
-    width: 3px;
-    height: 3px;
-    background: #FFE4E6;
-    box-shadow: 0 0 6px 1px #FFFFFF;
-    animation: pkt-aurora-twinkle 2.1s ease-in-out infinite;
+    width: 4px;
+    height: 4px;
+    background: #FFFFFF;
+    box-shadow: -2px 0 0 #00E5FF, 2px 0 0 #FF1744, 0 0 8px 2px rgba(255, 42, 85, 0.95);
+    animation: pkt-aurora-twinkle 1.65s steps(2, end) infinite;
 }
 
-.pkt-crimson-stars i:nth-child(1) { top: 18%; left: 20%; }
-.pkt-crimson-stars i:nth-child(2) { bottom: 18%; right: 16%; animation-delay: 1.0s; }
+.pkt-crimson-stars i:nth-child(1) { top: 16%; left: 18%; }
+.pkt-crimson-stars i:nth-child(2) { bottom: 16%; right: 16%; animation-delay: 0.6s; }
+.pkt-crimson-stars i:nth-child(3) { top: 48%; left: 56%; width: 3px; height: 3px; animation-delay: 1.15s; }
 
 /* Variant 8: MYTHIC TIER — Amethyst Crown (Royal Indigo & Orchid Violet + Liquid Warp Wave Distortion) */
 @keyframes pkt-amethyst-halo {
@@ -5780,12 +5880,12 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 .pkt-dev-avatar-ring--crimson_eclipse {
     padding: 3px;
-    animation: pkt-crimson-halo 3.0s ease-in-out infinite;
+    animation: pkt-crimson-halo 2.6s steps(1, end) infinite;
 }
 
 .pkt-dev-avatar-ring--crimson_eclipse::before {
-    background: conic-gradient(from 0deg, #991B1B 0deg, #EF4444 58deg, #FDA4AF 115deg, #FFFFFF 136deg, #E11D48 192deg, #B91C1C 252deg, #FB7185 308deg, #991B1B 360deg);
-    animation-duration: 2.0s;
+    background: conic-gradient(from 0deg, #4C0519 0deg, #FF1744 48deg, #FDA4AF 94deg, #FFFFFF 114deg, #00E5FF 126deg, #E11D48 178deg, #991B1B 235deg, #FDE047 268deg, #FF2A55 305deg, #4C0519 360deg);
+    animation-duration: 1.55s;
 }
 
 .pkt-dev-avatar-ring--amethyst_crown {
@@ -5968,8 +6068,18 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 }
 
 @keyframes pkt-pill-crimson-halo {
-    0%, 100% { box-shadow: 0 0 7px -1px rgba(225, 29, 72, 0.5), 0 1px 4px rgba(0, 0, 0, 0.45); }
-    50% { box-shadow: 0 0 9px -1px rgba(244, 63, 94, 0.6), 0 1px 5px rgba(153, 27, 27, 0.45); }
+    0%, 34%, 40%, 72%, 84%, 100% {
+        box-shadow: 0 0 9px -1px rgba(225, 29, 72, 0.65), 0 0 14px -2px rgba(255, 23, 68, 0.48);
+    }
+    36% {
+        box-shadow: -2.5px 0 0 rgba(0, 229, 255, 0.85), 2.5px 0 0 rgba(255, 23, 68, 0.92), 0 0 12px 0 rgba(255, 23, 68, 0.72);
+    }
+    75% {
+        box-shadow: -3.5px 0 0 rgba(0, 229, 255, 0.92), 3.5px 0 0 rgba(255, 23, 68, 0.95), 0 0 15px 1px rgba(255, 42, 85, 0.78);
+    }
+    79% {
+        box-shadow: 3px 0 0 rgba(253, 224, 71, 0.82), -3px 0 0 rgba(0, 229, 255, 0.85), 0 0 13px 0 rgba(225, 29, 72, 0.75);
+    }
 }
 
 @keyframes pkt-pill-amethyst-halo {
@@ -6111,7 +6221,10 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 
 .fi-ta-cell:has(.pkt-user-pill),
 .fi-ta-cell:has(.pkt-user-pill) .fi-ta-text,
-.fi-ta-cell:has(.pkt-user-pill) .fi-ta-text-item {
+.fi-ta-cell:has(.pkt-user-pill) .fi-ta-text-item,
+.fi-ta-cell:has(.pkt-mythic-avatar),
+.fi-ta-cell:has(.pkt-mythic-avatar) .fi-ta-text,
+.fi-ta-cell:has(.pkt-mythic-avatar) .fi-ta-text-item {
     overflow: visible !important;
 }
 
@@ -6221,11 +6334,11 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 .pkt-user-pill--emerald_sovereign .pkt-emerald-stars i:nth-child(3) { top: 12%; left: 78%; }
 .pkt-user-pill--emerald_sovereign .pkt-emerald-stars i:nth-child(4) { top: 82%; left: 90%; width: 2px; height: 2px; }
 
-/* Pill Style 7: MYTHIC TIER — Crimson Eclipse Table Pill (Vivid Ruby Scarlet & Coral + Glitch) */
-.pkt-user-pill--crimson_eclipse { padding: 2px; animation: pkt-pill-crimson-halo 3.0s ease-in-out infinite; }
-.pkt-user-pill--crimson_eclipse .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #991B1B 0deg, #EF4444 58deg, #FDA4AF 115deg, #FFFFFF 136deg, #E11D48 192deg, #B91C1C 252deg, #FB7185 308deg, #991B1B 360deg); animation-duration: 2.0s; }
-.pkt-user-pill--crimson_eclipse .pkt-user-pill-inner { background: linear-gradient(125deg, #881337 0%, #BE123C 28%, #DC2626 56%, #E11D48 80%, #991B1B 100%); background-size: 250% 250%; animation: pkt-aurora-flow 4.8s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(254, 205, 211, 0.36); }
-.pkt-user-pill--crimson_eclipse .pkt-user-pill-name { color: #FFFFFF; text-shadow: 0 1px 5px rgba(127, 29, 29, 0.55); }
+/* Pill Style 7: MYTHIC TIER — Crimson Eclipse Table Pill (Grand Blood-Eclipse + Glitch) */
+.pkt-user-pill--crimson_eclipse { padding: 2px; animation: pkt-pill-crimson-halo 2.6s steps(1, end) infinite; }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-border::before { background: conic-gradient(from 0deg, #4C0519 0deg, #FF1744 48deg, #FDA4AF 94deg, #FFFFFF 114deg, #00E5FF 126deg, #E11D48 178deg, #991B1B 235deg, #FDE047 268deg, #FF2A55 305deg, #4C0519 360deg); animation-duration: 1.55s; }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-inner { background: linear-gradient(125deg, #4C0519 0%, #9F1239 24%, #DC2626 48%, #FF1744 68%, #BE123C 86%, #6B0825 100%); background-size: 270% 270%; animation: pkt-aurora-flow 3.6s ease-in-out infinite; box-shadow: inset 0 1px 0 rgba(255, 228, 230, 0.5); }
+.pkt-user-pill--crimson_eclipse .pkt-user-pill-name { color: #FFFFFF; text-shadow: 0 1px 6px rgba(76, 5, 25, 0.65); }
 .pkt-user-pill--crimson_eclipse .pkt-user-pill-sub { color: #FFE4E6; }
 
 /* Pill Style 8: MYTHIC TIER — Amethyst Crown Table Pill (Royal Indigo & Orchid Violet + Warp) */
@@ -6508,157 +6621,264 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     animation: pkt-mythic-crystal-levitate-b 2.8s ease-in-out infinite 1.1s;
 }
 
-/* 3. CRIMSON ECLIPSE — Breakout Chromatic Eclipse Tear Rings & Shattered Glitch Shards */
+/* 3. CRIMSON ECLIPSE — Grand Breakout Chromatic Tear Silhouettes, Blood-Eclipse Shockwave & Glitch Shards */
 @keyframes pkt-mythic-eclipse-tear-left {
-    0%, 72%, 82%, 88%, 100% {
+    0%, 30%, 38%, 68%, 84%, 100% {
         opacity: 0;
         transform: translate3d(0, 0, 0) skewX(0deg);
     }
-    74% {
-        opacity: 0.92;
-        transform: translate3d(-7px, -2px, 0) skewX(-10deg);
+    33% {
+        opacity: 0.88;
+        transform: translate3d(-7px, -1.5px, 0) skewX(-9deg);
     }
-    77% {
-        opacity: 0.55;
-        transform: translate3d(-4px, 1px, 0) skewX(6deg);
+    36% {
+        opacity: 0.5;
+        transform: translate3d(-4px, 1px, 0) skewX(5deg);
     }
-    80% {
-        opacity: 0.95;
-        transform: translate3d(-9px, -1px, 0) skewX(-12deg);
+    71% {
+        opacity: 1;
+        transform: translate3d(-11px, -3px, 0) skewX(-14deg);
     }
-    85% {
-        opacity: 0.8;
-        transform: translate3d(-5px, 2px, 0) skewX(-6deg);
+    75% {
+        opacity: 0.65;
+        transform: translate3d(-6px, 2px, 0) skewX(8deg);
+    }
+    78% {
+        opacity: 1;
+        transform: translate3d(-13px, -1px, 0) skewX(-16deg);
+    }
+    81% {
+        opacity: 0.82;
+        transform: translate3d(-7px, 2px, 0) skewX(-8deg);
     }
 }
 
 @keyframes pkt-mythic-eclipse-tear-right {
-    0%, 72%, 82%, 88%, 100% {
+    0%, 30%, 38%, 68%, 84%, 100% {
         opacity: 0;
         transform: translate3d(0, 0, 0) skewX(0deg);
     }
-    74% {
-        opacity: 0.9;
-        transform: translate3d(7px, 2px, 0) skewX(10deg);
+    33% {
+        opacity: 0.88;
+        transform: translate3d(7px, 1.5px, 0) skewX(9deg);
     }
-    77% {
+    36% {
         opacity: 0.5;
-        transform: translate3d(4px, -1px, 0) skewX(-6deg);
+        transform: translate3d(4px, -1px, 0) skewX(-5deg);
     }
-    80% {
-        opacity: 0.95;
-        transform: translate3d(9px, 1px, 0) skewX(12deg);
+    71% {
+        opacity: 1;
+        transform: translate3d(11px, 3px, 0) skewX(14deg);
     }
-    85% {
-        opacity: 0.78;
-        transform: translate3d(5px, -2px, 0) skewX(6deg);
+    75% {
+        opacity: 0.65;
+        transform: translate3d(6px, -2px, 0) skewX(-8deg);
+    }
+    78% {
+        opacity: 1;
+        transform: translate3d(13px, 1px, 0) skewX(16deg);
+    }
+    81% {
+        opacity: 0.82;
+        transform: translate3d(7px, -2px, 0) skewX(8deg);
+    }
+}
+
+@keyframes pkt-mythic-eclipse-shockwave {
+    0% {
+        opacity: 0.92;
+        transform: scale(1, 1);
+    }
+    55% {
+        opacity: 0.45;
+        transform: scale(1.16, 1.55);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.26, 1.82);
+    }
+}
+
+@keyframes pkt-mythic-eclipse-shockwave-pill {
+    0% {
+        opacity: 0.82;
+        transform: scale(1, 1);
+    }
+    55% {
+        opacity: 0.36;
+        transform: scale(1.08, 1.34);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.13, 1.5);
     }
 }
 
 @keyframes pkt-mythic-glitch-shard-burst {
-    0%, 66%, 80%, 92%, 100% {
+    0%, 26%, 38%, 62%, 82%, 94%, 100% {
         opacity: 0;
-        transform: translate3d(0, 0, 0) scaleX(0.4);
+        transform: translate3d(0, 0, 0) scaleX(0.35);
     }
-    68% {
-        opacity: 1;
-        transform: translate3d(-8px, -4px, 0) scaleX(1.35);
-    }
-    72% {
-        opacity: 0.85;
-        transform: translate3d(7px, -6px, 0) scaleX(0.95);
-    }
-    76% {
+    29% {
         opacity: 0.95;
-        transform: translate3d(-5px, -8px, 0) scaleX(1.2);
+        transform: translate3d(-10px, -6px, 0) scaleX(1.3);
     }
-    86% {
+    34% {
+        opacity: 0.78;
+        transform: translate3d(8px, -8px, 0) scaleX(1.05);
+    }
+    65% {
+        opacity: 1;
+        transform: translate3d(-12px, -7px, 0) scaleX(1.55);
+    }
+    70% {
+        opacity: 0.92;
+        transform: translate3d(11px, -10px, 0) scaleX(1.1);
+    }
+    75% {
+        opacity: 1;
+        transform: translate3d(-8px, -12px, 0) scaleX(1.45);
+    }
+    87% {
         opacity: 0.9;
-        transform: translate3d(9px, -5px, 0) scaleX(1.3);
+        transform: translate3d(13px, -7px, 0) scaleX(1.4);
     }
 }
 
 @keyframes pkt-mythic-glitch-shard-burst-low {
-    0%, 66%, 80%, 92%, 100% {
+    0%, 26%, 38%, 62%, 82%, 94%, 100% {
         opacity: 0;
-        transform: translate3d(0, 0, 0) scaleX(0.4);
+        transform: translate3d(0, 0, 0) scaleX(0.35);
     }
-    68% {
-        opacity: 1;
-        transform: translate3d(8px, 4px, 0) scaleX(1.35);
-    }
-    72% {
-        opacity: 0.82;
-        transform: translate3d(-6px, 6px, 0) scaleX(0.9);
-    }
-    76% {
+    29% {
         opacity: 0.95;
-        transform: translate3d(6px, 8px, 0) scaleX(1.25);
+        transform: translate3d(10px, 6px, 0) scaleX(1.3);
     }
-    86% {
-        opacity: 0.88;
-        transform: translate3d(-9px, 5px, 0) scaleX(1.25);
+    34% {
+        opacity: 0.78;
+        transform: translate3d(-8px, 8px, 0) scaleX(1.05);
+    }
+    65% {
+        opacity: 1;
+        transform: translate3d(12px, 7px, 0) scaleX(1.55);
+    }
+    70% {
+        opacity: 0.92;
+        transform: translate3d(-10px, 10px, 0) scaleX(1.1);
+    }
+    75% {
+        opacity: 1;
+        transform: translate3d(9px, 12px, 0) scaleX(1.45);
+    }
+    87% {
+        opacity: 0.9;
+        transform: translate3d(-13px, 7px, 0) scaleX(1.4);
+    }
+}
+
+@keyframes pkt-mythic-crimson-pixel-warp {
+    0%, 24%, 44%, 66%, 88%, 100% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) scale(0.4) rotate(45deg);
+    }
+    28% {
+        opacity: 1;
+        transform: translate3d(10px, -9px, 0) scale(1.25) rotate(45deg);
+    }
+    38% {
+        opacity: 0.9;
+        transform: translate3d(14px, 4px, 0) scale(0.9) rotate(45deg);
+    }
+    70% {
+        opacity: 1;
+        transform: translate3d(-12px, -8px, 0) scale(1.35) rotate(45deg);
+    }
+    78% {
+        opacity: 0.95;
+        transform: translate3d(12px, 9px, 0) scale(1.1) rotate(45deg);
     }
 }
 
 .pkt-mythic-aura--crimson_eclipse i:nth-child(1) {
-    inset: -1.5px;
+    inset: -2px;
     border-radius: 9999px;
-    border: 1.5px solid transparent;
-    border-left-color: #38BDF8;
-    border-top-color: rgba(56, 189, 248, 0.72);
-    filter: drop-shadow(-3px 0 6px rgba(56, 189, 248, 0.85));
-    animation: pkt-mythic-eclipse-tear-left 2.8s steps(1, end) infinite;
+    border: 2px solid transparent;
+    border-left-color: #00E5FF;
+    border-top-color: rgba(0, 229, 255, 0.85);
+    filter: drop-shadow(-4px 0 7px rgba(0, 229, 255, 0.95));
+    animation: pkt-mythic-eclipse-tear-left 2.6s steps(1, end) infinite;
 }
 
 .pkt-mythic-aura--crimson_eclipse i:nth-child(2) {
-    inset: -1.5px;
+    inset: -2px;
     border-radius: 9999px;
-    border: 1.5px solid transparent;
-    border-right-color: #FF2A55;
-    border-bottom-color: rgba(255, 42, 85, 0.78);
-    filter: drop-shadow(3px 0 6px rgba(255, 42, 85, 0.92));
-    animation: pkt-mythic-eclipse-tear-right 2.8s steps(1, end) infinite;
+    border: 2px solid transparent;
+    border-right-color: #FF1744;
+    border-bottom-color: rgba(255, 42, 85, 0.9);
+    filter: drop-shadow(4px 0 8px rgba(255, 23, 68, 0.98));
+    animation: pkt-mythic-eclipse-tear-right 2.6s steps(1, end) infinite;
 }
 
 .pkt-mythic-aura--crimson_eclipse i:nth-child(3) {
-    top: -4px;
-    left: 14%;
-    width: 18px;
-    height: 3px;
-    background: linear-gradient(90deg, #38BDF8 0%, #FFFFFF 50%, #FF2A55 100%);
-    box-shadow: 0 0 6px rgba(255, 42, 85, 0.95);
-    animation: pkt-mythic-glitch-shard-burst 2.8s steps(2, end) infinite;
+    inset: -1px;
+    border-radius: 9999px;
+    border: 1.5px solid rgba(255, 42, 85, 0.85);
+    box-shadow: 0 0 12px rgba(255, 23, 68, 0.65), inset 0 0 6px rgba(253, 224, 71, 0.35);
+    animation: pkt-mythic-eclipse-shockwave 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.pkt-user-pill--crimson_eclipse .pkt-mythic-aura--crimson_eclipse i:nth-child(3) {
+    animation-name: pkt-mythic-eclipse-shockwave-pill;
 }
 
 .pkt-mythic-aura--crimson_eclipse i:nth-child(4) {
     top: -5px;
-    right: 10%;
-    width: 14px;
-    height: 2.5px;
-    background: linear-gradient(90deg, #FDE047 0%, #FB7185 55%, #FFFFFF 100%);
-    box-shadow: 0 0 6px rgba(251, 113, 133, 0.95);
-    animation: pkt-mythic-glitch-shard-burst 3.1s steps(2, end) infinite 0.55s;
+    left: 10%;
+    width: 24px;
+    height: 3.5px;
+    background: linear-gradient(90deg, #00E5FF 0%, #FFFFFF 45%, #FF1744 100%);
+    box-shadow: 0 0 8px rgba(255, 23, 68, 0.98), -2px 0 6px rgba(0, 229, 255, 0.85);
+    animation: pkt-mythic-glitch-shard-burst 2.4s steps(2, end) infinite;
 }
 
 .pkt-mythic-aura--crimson_eclipse i:nth-child(5) {
-    bottom: -4px;
-    left: 18%;
-    width: 16px;
-    height: 2.5px;
-    background: linear-gradient(90deg, #FF2A55 0%, #FFFFFF 45%, #38BDF8 100%);
-    box-shadow: 0 0 6px rgba(56, 189, 248, 0.85);
-    animation: pkt-mythic-glitch-shard-burst-low 2.9s steps(2, end) infinite 0.25s;
+    top: -6px;
+    right: 8%;
+    width: 18px;
+    height: 3px;
+    background: linear-gradient(90deg, #FDE047 0%, #FF2A55 55%, #FFFFFF 100%);
+    box-shadow: 0 0 8px rgba(251, 113, 133, 0.98);
+    animation: pkt-mythic-glitch-shard-burst 2.7s steps(2, end) infinite 0.45s;
 }
 
 .pkt-mythic-aura--crimson_eclipse i:nth-child(6) {
     bottom: -5px;
-    right: 12%;
-    width: 15px;
+    left: 14%;
+    width: 22px;
     height: 3px;
-    background: linear-gradient(90deg, #FFFFFF 0%, #FF2A55 60%, #FDE047 100%);
-    box-shadow: 0 0 6px rgba(225, 29, 72, 0.95);
-    animation: pkt-mythic-glitch-shard-burst-low 3.2s steps(2, end) infinite 1.15s;
+    background: linear-gradient(90deg, #FF1744 0%, #FFFFFF 45%, #00E5FF 100%);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.92);
+    animation: pkt-mythic-glitch-shard-burst-low 2.5s steps(2, end) infinite 0.2s;
+}
+
+.pkt-mythic-aura--crimson_eclipse i:nth-child(7) {
+    bottom: -6px;
+    right: 10%;
+    width: 19px;
+    height: 3.5px;
+    background: linear-gradient(90deg, #FFFFFF 0%, #FF1744 58%, #FDE047 100%);
+    box-shadow: 0 0 8px rgba(225, 29, 72, 0.98);
+    animation: pkt-mythic-glitch-shard-burst-low 2.8s steps(2, end) infinite 0.95s;
+}
+
+.pkt-mythic-aura--crimson_eclipse i:nth-child(8) {
+    top: 32%;
+    right: -6px;
+    width: 7px;
+    height: 7px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FF1744 55%, #00E5FF 100%);
+    box-shadow: -2px 0 0 #00E5FF, 2px 0 0 #FF1744, 0 0 10px rgba(255, 23, 68, 0.95);
+    animation: pkt-mythic-crimson-pixel-warp 2.6s steps(1, end) infinite;
 }
 
 /* Table Pill Tuning: Keep breakout particles crisp & compact inside table rows */
@@ -6682,8 +6902,536 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     height: 8px;
 }
 
-.pkt-user-pill .pkt-mythic-aura--crimson_eclipse i:nth-child(n+3) {
+.pkt-user-pill .pkt-mythic-aura--crimson_eclipse i:nth-child(n+4):nth-child(-n+7) {
+    height: 2.5px;
+}
+
+.pkt-user-pill .pkt-mythic-aura--crimson_eclipse i:nth-child(8) {
+    width: 5px;
+    height: 5px;
+    right: -4px;
+}
+
+/* =========================================================
+   H2.6. MYTHIC TIER PROFILE PHOTO (AVATAR) EFFECTS
+         Exclusively for Solar Aurora, Emerald Sovereign & Crimson Eclipse
+   ========================================================= */
+.pkt-mythic-avatar {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    overflow: visible !important;
+    isolation: isolate;
+}
+
+.pkt-avatar-photo-wrap {
+    position: relative;
+    display: block;
+    border-radius: 9999px;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.pkt-avatar-photo-fx {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-avatar-photo-fx i {
+    position: absolute;
+    display: block;
+    pointer-events: none;
+}
+
+.pkt-avatar-mythic-fx {
+    position: absolute;
+    inset: 0;
+    z-index: 16;
+    border-radius: 9999px;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.pkt-avatar-mythic-fx i {
+    position: absolute;
+    display: block;
+    pointer-events: none;
+}
+
+/* --- A. SOLAR AURORA PROFILE PHOTO FX --- */
+@keyframes pkt-avatar-aurora-orbit {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    50% {
+        transform: rotate(180deg) scale(1.06);
+    }
+    100% {
+        transform: rotate(360deg) scale(1);
+    }
+}
+
+@keyframes pkt-avatar-aurora-sheen {
+    0% {
+        transform: translateX(-160%) skewX(-22deg);
+    }
+    45%, 100% {
+        transform: translateX(220%) skewX(-22deg);
+    }
+}
+
+.pkt-avatar-photo-fx--pkt_combo i:nth-child(1) {
+    top: -15%;
+    bottom: -15%;
+    width: 48%;
+    background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.36) 28%, rgba(255, 255, 255, 0.62) 50%, rgba(244, 121, 32, 0.42) 72%, transparent 100%);
+    animation: pkt-avatar-aurora-sheen 3.2s ease-in-out infinite;
+}
+
+.pkt-avatar-photo-fx--pkt_combo i:nth-child(2) {
+    inset: 0;
+    border-radius: 9999px;
+    box-shadow: inset 0 0 12px rgba(56, 189, 248, 0.52), inset 0 -4px 12px rgba(244, 121, 32, 0.55);
+}
+
+.pkt-avatar-mythic-fx--pkt_combo i:nth-child(1) {
+    inset: -5px;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    border-top-color: rgba(56, 189, 248, 0.92);
+    border-left-color: rgba(0, 84, 166, 0.58);
+    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.88));
+    animation: pkt-avatar-aurora-orbit 3.4s linear infinite;
+}
+
+.pkt-avatar-mythic-fx--pkt_combo i:nth-child(2) {
+    inset: -5px;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    border-bottom-color: rgba(253, 186, 116, 0.95);
+    border-right-color: rgba(244, 121, 32, 0.68);
+    filter: drop-shadow(0 0 6px rgba(244, 121, 32, 0.9));
+    animation: pkt-avatar-aurora-orbit 3.4s linear infinite reverse;
+}
+
+.pkt-avatar-mythic-fx--pkt_combo i:nth-child(n+3) {
+    width: 10px;
+    height: 10px;
+    clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+}
+
+.pkt-avatar-mythic-fx--pkt_combo i:nth-child(3) {
+    top: -6px;
+    left: 6%;
+    background: linear-gradient(135deg, #FFFFFF 0%, #7DD3FC 60%, #0054A6 100%);
+    filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.95));
+    animation: pkt-mythic-solar-star-up 2.5s ease-out infinite;
+}
+
+.pkt-avatar-mythic-fx--pkt_combo i:nth-child(4) {
+    top: -4px;
+    right: 2%;
+    width: 11px;
+    height: 11px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FDBA74 55%, #F47920 100%);
+    filter: drop-shadow(0 0 5px rgba(244, 121, 32, 0.95));
+    animation: pkt-mythic-solar-star-up 2.8s ease-out infinite 0.8s;
+}
+
+.pkt-avatar-mythic-fx--pkt_combo i:nth-child(5) {
+    bottom: -4px;
+    left: 2%;
+    width: 9px;
+    height: 9px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FDE047 55%, #F47920 100%);
+    filter: drop-shadow(0 0 5px rgba(253, 186, 116, 0.95));
+    animation: pkt-mythic-solar-star-down 2.6s ease-out infinite 0.4s;
+}
+
+.pkt-avatar-mythic-fx--pkt_combo i:nth-child(6) {
+    bottom: -6px;
+    right: 8%;
+    width: 9px;
+    height: 9px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #BAE6FD 55%, #0284C7 100%);
+    filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.95));
+    animation: pkt-mythic-solar-star-down 2.9s ease-out infinite 1.3s;
+}
+
+/* --- B. EMERALD SOVEREIGN PROFILE PHOTO FX --- */
+@keyframes pkt-avatar-emerald-shield {
+    0% {
+        opacity: 0.9;
+        transform: scale(1);
+    }
+    65% {
+        opacity: 0.35;
+        transform: scale(1.22);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.34);
+    }
+}
+
+@keyframes pkt-avatar-emerald-pulse {
+    0%, 100% {
+        opacity: 0.35;
+    }
+    50% {
+        opacity: 0.78;
+    }
+}
+
+.pkt-avatar-photo-fx--emerald_sovereign i:nth-child(1) {
+    inset: 0;
+    border-radius: 9999px;
+    box-shadow: inset 0 0 14px rgba(52, 211, 153, 0.65), inset 0 0 4px rgba(167, 243, 208, 0.85);
+    animation: pkt-avatar-emerald-pulse 2.4s ease-in-out infinite;
+}
+
+.pkt-avatar-photo-fx--emerald_sovereign i:nth-child(2) {
+    top: 50%;
+    left: 50%;
+    width: 44%;
+    height: 44%;
+    border-radius: 9999px;
+    border: 1.5px solid rgba(167, 243, 208, 0.75);
+    animation: pkt-fx-sonar-expand 2.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.pkt-avatar-mythic-fx--emerald_sovereign i:nth-child(1),
+.pkt-avatar-mythic-fx--emerald_sovereign i:nth-child(2) {
+    inset: -2px;
+    border-radius: 9999px;
+    border: 1.75px solid rgba(52, 211, 153, 0.86);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.62), inset 0 0 6px rgba(167, 243, 208, 0.4);
+    animation: pkt-avatar-emerald-shield 2.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.pkt-avatar-mythic-fx--emerald_sovereign i:nth-child(2) {
+    border-color: rgba(167, 243, 208, 0.8);
+    animation-delay: 1.25s;
+}
+
+.pkt-avatar-mythic-fx--emerald_sovereign i:nth-child(n+3) {
+    width: 8px;
+    height: 11px;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    background: linear-gradient(180deg, #FFFFFF 0%, #A7F3D0 38%, #10B981 100%);
+    filter: drop-shadow(0 0 5px rgba(52, 211, 153, 0.95));
+}
+
+.pkt-avatar-mythic-fx--emerald_sovereign i:nth-child(3) {
+    top: -6px;
+    left: 2%;
+    animation: pkt-mythic-crystal-levitate-a 2.3s ease-in-out infinite;
+}
+
+.pkt-avatar-mythic-fx--emerald_sovereign i:nth-child(4) {
+    top: -5px;
+    right: 2%;
+    width: 7px;
+    height: 10px;
+    animation: pkt-mythic-crystal-levitate-a 2.6s ease-in-out infinite 0.65s;
+}
+
+.pkt-avatar-mythic-fx--emerald_sovereign i:nth-child(5) {
+    bottom: -5px;
+    left: 4%;
+    width: 7px;
+    height: 10px;
+    animation: pkt-mythic-crystal-levitate-b 2.4s ease-in-out infinite 0.35s;
+}
+
+.pkt-avatar-mythic-fx--emerald_sovereign i:nth-child(6) {
+    bottom: -6px;
+    right: 4%;
+    animation: pkt-mythic-crystal-levitate-b 2.7s ease-in-out infinite 1.05s;
+}
+
+/* --- C. CRIMSON ECLIPSE PROFILE PHOTO FX (EXTRA GLITCHY & GRAND) --- */
+@keyframes pkt-avatar-crimson-img-glitch {
+    0%, 31%, 39%, 69%, 85%, 100% {
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: none;
+    }
+    33% {
+        transform: translate3d(-2px, 0, 0) scale(1.03);
+        filter: contrast(1.28) saturate(1.45) drop-shadow(-2.5px 0 0 rgba(0, 229, 255, 0.85)) drop-shadow(2.5px 0 0 rgba(255, 23, 68, 0.9));
+    }
+    36% {
+        transform: translate3d(2px, 0, 0) scale(1.02);
+        filter: contrast(1.22) saturate(1.35) hue-rotate(-10deg);
+    }
+    71% {
+        transform: translate3d(-3px, -1px, 0) scale(1.05) skewX(-5deg);
+        filter: contrast(1.4) saturate(1.65) drop-shadow(-3.5px 0 0 rgba(0, 229, 255, 0.95)) drop-shadow(3.5px 0 0 rgba(255, 23, 68, 0.98));
+    }
+    74% {
+        transform: translate3d(3px, 1px, 0) scale(1.04) skewX(4deg);
+        filter: contrast(1.35) saturate(1.5) hue-rotate(-16deg) drop-shadow(3px 0 0 rgba(0, 229, 255, 0.9)) drop-shadow(-3px 0 0 rgba(253, 224, 71, 0.85));
+    }
+    78% {
+        transform: translate3d(-2px, 1px, 0) scale(1.03) skewX(-3deg);
+        filter: brightness(1.2) contrast(1.3) drop-shadow(-2px 0 0 #FFFFFF) drop-shadow(2.5px 0 0 rgba(255, 23, 68, 0.95));
+    }
+    82% {
+        transform: translate3d(1.5px, 0, 0) scale(1.01);
+        filter: contrast(1.18) saturate(1.3);
+    }
+}
+
+@keyframes pkt-avatar-crimson-shock {
+    0% {
+        opacity: 0.92;
+        transform: scale(1);
+    }
+    58% {
+        opacity: 0.42;
+        transform: scale(1.25);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.38);
+    }
+}
+
+.pkt-mythic-avatar--crimson_eclipse .pkt-avatar-photo-img {
+    animation: pkt-avatar-crimson-img-glitch 2.6s steps(1, end) infinite;
+}
+
+.pkt-avatar-photo-fx--crimson_eclipse {
+    background-image: repeating-linear-gradient(
+        0deg,
+        rgba(76, 5, 25, 0.24) 0px,
+        rgba(76, 5, 25, 0.24) 1px,
+        transparent 1px,
+        transparent 3px
+    );
+    box-shadow: inset 0 0 14px rgba(255, 23, 68, 0.58), inset 0 0 5px rgba(0, 229, 255, 0.35);
+}
+
+.pkt-avatar-photo-fx--crimson_eclipse i {
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, #00E5FF 16%, #FFFFFF 48%, #FF1744 74%, transparent 100%);
+    box-shadow: 0 0 8px rgba(255, 23, 68, 0.95);
+    animation: pkt-fx-glitch-slice 2.6s steps(2, end) infinite;
+}
+
+.pkt-avatar-photo-fx--crimson_eclipse i:nth-child(1) { top: 24%; animation-delay: 0s; }
+.pkt-avatar-photo-fx--crimson_eclipse i:nth-child(2) { top: 54%; height: 4px; animation-delay: 0.1s; }
+.pkt-avatar-photo-fx--crimson_eclipse i:nth-child(3) { top: 78%; height: 2.5px; animation-delay: 1.15s; }
+
+.pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(1) {
+    inset: -3px;
+    border-radius: 9999px;
+    border: 2.5px solid transparent;
+    border-left-color: #00E5FF;
+    border-top-color: rgba(0, 229, 255, 0.88);
+    filter: drop-shadow(-4px 0 7px rgba(0, 229, 255, 0.95));
+    animation: pkt-mythic-eclipse-tear-left 2.6s steps(1, end) infinite;
+}
+
+.pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(2) {
+    inset: -3px;
+    border-radius: 9999px;
+    border: 2.5px solid transparent;
+    border-right-color: #FF1744;
+    border-bottom-color: rgba(255, 42, 85, 0.92);
+    filter: drop-shadow(4px 0 8px rgba(255, 23, 68, 0.98));
+    animation: pkt-mythic-eclipse-tear-right 2.6s steps(1, end) infinite;
+}
+
+.pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(3) {
+    inset: -2px;
+    border-radius: 9999px;
+    border: 1.75px solid rgba(255, 23, 68, 0.88);
+    box-shadow: 0 0 12px rgba(255, 23, 68, 0.72), inset 0 0 6px rgba(253, 224, 71, 0.35);
+    animation: pkt-avatar-crimson-shock 2.3s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(4) {
+    top: -4px;
+    left: -4px;
+    width: 24px;
+    height: 3.5px;
+    background: linear-gradient(90deg, #00E5FF 0%, #FFFFFF 45%, #FF1744 100%);
+    box-shadow: 0 0 8px rgba(255, 23, 68, 0.95);
+    animation: pkt-mythic-glitch-shard-burst 2.4s steps(2, end) infinite;
+}
+
+.pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(5) {
+    top: 8%;
+    right: -8px;
+    width: 20px;
+    height: 3px;
+    background: linear-gradient(90deg, #FDE047 0%, #FF1744 55%, #FFFFFF 100%);
+    box-shadow: 0 0 8px rgba(251, 113, 133, 0.95);
+    animation: pkt-mythic-glitch-shard-burst 2.6s steps(2, end) infinite 0.35s;
+}
+
+.pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(6) {
+    bottom: 6%;
+    left: -8px;
+    width: 22px;
+    height: 3px;
+    background: linear-gradient(90deg, #FF1744 0%, #FFFFFF 45%, #00E5FF 100%);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.92);
+    animation: pkt-mythic-glitch-shard-burst-low 2.5s steps(2, end) infinite 0.15s;
+}
+
+.pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(7) {
+    bottom: -5px;
+    right: -4px;
+    width: 20px;
+    height: 3.5px;
+    background: linear-gradient(90deg, #FFFFFF 0%, #FF1744 55%, #FDE047 100%);
+    box-shadow: 0 0 8px rgba(225, 29, 72, 0.95);
+    animation: pkt-mythic-glitch-shard-burst-low 2.7s steps(2, end) infinite 0.8s;
+}
+
+.pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(8) {
+    top: 44%;
+    right: -8px;
+    width: 8px;
+    height: 8px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FF1744 55%, #00E5FF 100%);
+    box-shadow: -2.5px 0 0 #00E5FF, 2.5px 0 0 #FF1744, 0 0 10px rgba(255, 23, 68, 0.95);
+    animation: pkt-mythic-crimson-pixel-warp 2.6s steps(1, end) infinite;
+}
+
+/* Compact Avatar Size Scaling for Topbar (sm) & Dropdown/UsersTable (md) */
+.pkt-mythic-avatar--sm .pkt-avatar-mythic-fx--pkt_combo i:nth-child(1),
+.pkt-mythic-avatar--sm .pkt-avatar-mythic-fx--pkt_combo i:nth-child(2) {
+    inset: -3px;
+    border-width: 1.5px;
+}
+
+.pkt-mythic-avatar--sm .pkt-avatar-mythic-fx--pkt_combo i:nth-child(n+3) {
+    width: 6px;
+    height: 6px;
+}
+
+.pkt-mythic-avatar--sm .pkt-avatar-mythic-fx--emerald_sovereign i:nth-child(n+3) {
+    width: 5px;
+    height: 7px;
+}
+
+.pkt-mythic-avatar--sm .pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(n+4):nth-child(-n+7) {
+    width: 12px;
     height: 2px;
+}
+
+.pkt-mythic-avatar--sm .pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(8) {
+    width: 5px;
+    height: 5px;
+    right: -4px;
+}
+
+.pkt-mythic-avatar--md .pkt-avatar-mythic-fx--pkt_combo i:nth-child(1),
+.pkt-mythic-avatar--md .pkt-avatar-mythic-fx--pkt_combo i:nth-child(2) {
+    inset: -4px;
+}
+
+.pkt-mythic-avatar--md .pkt-avatar-mythic-fx--pkt_combo i:nth-child(n+3) {
+    width: 8px;
+    height: 8px;
+}
+
+.pkt-mythic-avatar--md .pkt-avatar-mythic-fx--emerald_sovereign i:nth-child(n+3) {
+    width: 6px;
+    height: 8.5px;
+}
+
+.pkt-mythic-avatar--md .pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(n+4):nth-child(-n+7) {
+    width: 15px;
+    height: 2.5px;
+}
+
+.pkt-mythic-avatar--md .pkt-avatar-mythic-fx--crimson_eclipse i:nth-child(8) {
+    width: 6px;
+    height: 6px;
+    right: -5px;
+}
+
+/* --- D. TABLE PILL MINI-AVATAR MYTHIC FX (w-7 h-7 inside UserBadgeRenderer) --- */
+.pkt-pill-avatar-clip {
+    position: relative;
+    display: block;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.pkt-pill-avatar-fx {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.pkt-pill-avatar-fx i {
+    position: absolute;
+    display: block;
+    pointer-events: none;
+}
+
+.pkt-pill-avatar-mythic--pkt_combo .pkt-pill-avatar-clip {
+    box-shadow: 0 0 0 1.5px rgba(56, 189, 248, 0.85), 0 0 8px rgba(244, 121, 32, 0.8);
+}
+
+.pkt-pill-avatar-fx--pkt_combo i:nth-child(1) {
+    top: -15%;
+    bottom: -15%;
+    width: 55%;
+    background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.45), rgba(255, 255, 255, 0.7), rgba(244, 121, 32, 0.45), transparent);
+    animation: pkt-avatar-aurora-sheen 2.8s ease-in-out infinite;
+}
+
+.pkt-pill-avatar-mythic--emerald_sovereign .pkt-pill-avatar-clip {
+    box-shadow: 0 0 0 1.5px rgba(52, 211, 153, 0.9), 0 0 8px rgba(16, 185, 129, 0.78);
+}
+
+.pkt-pill-avatar-fx--emerald_sovereign i:nth-child(1) {
+    inset: 0;
+    border-radius: 9999px;
+    box-shadow: inset 0 0 7px rgba(167, 243, 208, 0.85);
+    animation: pkt-avatar-emerald-pulse 2.2s ease-in-out infinite;
+}
+
+.pkt-pill-avatar-mythic--crimson_eclipse .pkt-pill-avatar-clip {
+    box-shadow: -1.5px 0 0 rgba(0, 229, 255, 0.85), 1.5px 0 0 rgba(255, 23, 68, 0.95), 0 0 8px rgba(255, 23, 68, 0.85);
+}
+
+.pkt-pill-avatar-mythic--crimson_eclipse .pkt-pill-avatar-img {
+    animation: pkt-avatar-crimson-img-glitch 2.6s steps(1, end) infinite;
+}
+
+.pkt-pill-avatar-fx--crimson_eclipse i:nth-child(1),
+.pkt-pill-avatar-fx--crimson_eclipse i:nth-child(2) {
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, #00E5FF 0%, #FFFFFF 50%, #FF1744 100%);
+    animation: pkt-fx-glitch-slice 2.6s steps(2, end) infinite;
+}
+
+.pkt-pill-avatar-fx--crimson_eclipse i:nth-child(1) { top: 30%; animation-delay: 0s; }
+.pkt-pill-avatar-fx--crimson_eclipse i:nth-child(2) { top: 68%; animation-delay: 0.14s; }
+
+/* Ensure topbar user trigger doesn't clip mythic avatar aura */
+.fi-user-menu-trigger.pkt-dev-avatar-trigger {
+    overflow: visible !important;
 }
 
 /* =========================================================
@@ -6857,7 +7605,13 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
     .pkt-user-pill-border::before,
     .pkt-user-pill-sheen::after,
     .pkt-user-pill-embers i,
-    .pkt-mythic-aura i {
+    .pkt-crimson-scanlines,
+    .pkt-mythic-aura i,
+    .pkt-avatar-photo-img,
+    .pkt-avatar-photo-fx i,
+    .pkt-avatar-mythic-fx i,
+    .pkt-pill-avatar-img,
+    .pkt-pill-avatar-fx i {
         animation: none !important;
     }
 }

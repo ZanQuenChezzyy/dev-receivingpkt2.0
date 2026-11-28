@@ -48,9 +48,14 @@ class UserProfileFormSupport
         $avatarUrl = static::resolvePreviewAvatarUrl($get('avatar_url'), $user, $displayName);
         $coverUrl = static::resolvePreviewCoverUrl($get('cover_photo_url'), $user);
 
-        $ringClass = $isExclusiveSelected
-            ? "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$selected}"
-            : 'ring-4 ring-white dark:ring-[#151B24] rounded-full shadow-lg';
+        $avatarHtml = DeveloperBadgeRenderer::renderAvatar(
+            avatarUrl: $avatarUrl,
+            alt: $displayName,
+            style: $selected,
+            imgClasses: 'w-24 h-24',
+            size: 'lg',
+            fallbackRingClasses: 'ring-4 ring-white dark:ring-[#151B24] rounded-full shadow-lg',
+        );
 
         $roleBadgeHtml = DeveloperBadgeRenderer::render($selected, $roleLabel, 'md');
 
@@ -79,9 +84,7 @@ class UserProfileFormSupport
             .'<div class="px-5 sm:px-7 pt-4 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-5">'
             .'<div class="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-5 min-w-0">'
             .'<div class="relative shrink-0 -mt-14 sm:-mt-16 z-10">'
-            .'<div class="relative inline-flex items-center justify-center '.$ringClass.' shadow-xl">'
-            .'<img src="'.e($avatarUrl).'" alt="'.e($displayName).'" class="w-24 h-24 rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]" />'
-            .'</div>'
+            .$avatarHtml
             .'<span class="absolute bottom-2 right-2 z-20 flex h-3.5 w-3.5 items-center justify-center">'
             .'<span class="animate-ping absolute inline-flex h-full w-full rounded-full '.($isActive ? 'bg-emerald-400' : 'bg-rose-400').' opacity-75"></span>'
             .'<span class="relative inline-flex rounded-full h-3.5 w-3.5 '.($isActive ? 'bg-emerald-500' : 'bg-rose-500').' ring-2 ring-white dark:ring-[#151B24]"></span>'
@@ -339,7 +342,7 @@ class UserProfileFormSupport
             ],
             User::DEVELOPER_BADGE_CRIMSON_ECLIPSE => [
                 'title' => 'Crimson Eclipse',
-                'desc' => 'Merah rubi gerhana dengan pecahan distorsi glitch dan korona kromatik yang menembus tepi badge.',
+                'desc' => 'Merah rubi gerhana dengan distorsi glitch intens, scanline kromatik, gelombang kejut keluar badge, hingga efek glitch pada foto profil.',
                 'tier_chip' => 'Tier Tertinggi',
                 'unlock_hint' => $mythicHint,
             ],

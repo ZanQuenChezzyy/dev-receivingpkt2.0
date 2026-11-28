@@ -38,17 +38,22 @@ class UsersTable
                         $avatarUrl = $record->avatar_url
                             ? asset('storage/'.$record->avatar_url)
                             : 'https://ui-avatars.com/api/?name='.urlencode($initials).'&color=FFFFFF&background=030712';
+                        $badgeStyle = $record->resolvedDeveloperBadgeStyle();
+                        $avatarHtml = DeveloperBadgeRenderer::renderAvatar(
+                            avatarUrl: $avatarUrl,
+                            alt: $record->name,
+                            style: $badgeStyle,
+                            imgClasses: 'w-10 h-10',
+                            size: 'md',
+                            fallbackRingClasses: 'ring-1 ring-gray-300/40 dark:ring-white/20 rounded-full shadow-sm',
+                        );
 
                         return '
-                            <div class="flex items-center gap-3 min-w-[16rem]">
+                            <div class="flex items-center gap-3 min-w-[16rem] py-0.5">
                                 <!-- Avatar -->
-                                <img
-                                    src="'.$avatarUrl.'"
-                                    alt="Avatar User"
-                                    class="w-10 h-10 rounded-lg object-cover
-                                        ring-1 ring-gray-300/40 dark:ring-white/20
-                                        shadow-sm"
-                                />
+                                <div class="shrink-0">
+                                    '.$avatarHtml.'
+                                </div>
 
                                 <!-- User Info -->
                                 <div class="flex flex-col leading-tight">
