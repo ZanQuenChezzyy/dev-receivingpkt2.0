@@ -5032,13 +5032,22 @@ body.has-filament-modal-open .pkt-mobile-shortcuts-sheet {
 /* =========================================================
    H3. MODERN PROFILE PAGE LAYOUT & SELECTABLE BADGE CARDS
    ========================================================= */
+.pkt-profile-hero-card {
+    overflow: hidden !important;
+}
+
 .pkt-profile-hero-card .fi-section-content-ctn,
 .pkt-profile-hero-card .fi-section-content,
 .pkt-profile-hero-card .fi-in-entry-wrp,
-.pkt-profile-hero-card .fi-in-text {
+.pkt-profile-hero-card .fi-in-entry,
+.pkt-profile-hero-card .fi-in-entry-content-ctn,
+.pkt-profile-hero-card .fi-in-text,
+.pkt-profile-hero-card .fi-in-text-item {
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
 }
 
 .pkt-profile-hero-card .fi-grid {

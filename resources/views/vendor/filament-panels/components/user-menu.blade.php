@@ -68,18 +68,20 @@
                     'pkt-dev-avatar-trigger' => $hasAnimatedDevRing,
                 ])
             >
-                <div @class([
-                    'relative shrink-0 inline-flex items-center justify-center',
-                    "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$developerBadgeStyle}" => $hasAnimatedDevRing,
-                ])>
-                    <img
-                        src="{{ $avatarUrl }}"
-                        alt="{{ e($user?->name) }}"
-                        @class([
-                            'w-9 h-9 rounded-full object-cover shadow-xs relative z-10',
-                            'ring-2 ring-slate-200 dark:ring-white/10' => ! $hasAnimatedDevRing,
-                        ])
-                    />
+                <div class="relative shrink-0 inline-flex items-center justify-center">
+                    <div @class([
+                        'relative inline-flex items-center justify-center',
+                        "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$developerBadgeStyle}" => $hasAnimatedDevRing,
+                    ])>
+                        <img
+                            src="{{ $avatarUrl }}"
+                            alt="{{ e($user?->name) }}"
+                            @class([
+                                'w-9 h-9 rounded-full object-cover shadow-xs relative z-10',
+                                'ring-2 ring-slate-200 dark:ring-white/10' => ! $hasAnimatedDevRing,
+                            ])
+                        />
+                    </div>
                     @if ($isOnline)
                         <span class="absolute -bottom-0.5 -right-0.5 z-20 flex h-2.5 w-2.5 items-center justify-center">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

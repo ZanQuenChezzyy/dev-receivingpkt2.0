@@ -117,22 +117,26 @@ class EditProfile extends BaseEditProfile
                                     .'<div class="relative w-full h-36 sm:h-48 overflow-hidden bg-slate-900">'
                                     .$coverHtml
                                     .'</div>'
-                                    // Profile Identity Row
-                                    .'<div class="px-5 sm:px-7 pb-6 pt-0 flex flex-col md:flex-row md:items-end justify-between gap-5">'
-                                    .'<div class="flex flex-col sm:flex-row items-center sm:items-end gap-4 min-w-0 -mt-12 sm:-mt-14 relative z-10">'
-                                    .'<div class="relative inline-flex items-center justify-center shrink-0 '.$ringClass.'">'
+                                    // Profile Identity Strip (Generous Vertical Breathing Room, Avatar Overlaps Cleanly)
+                                    .'<div class="px-5 sm:px-7 pt-4 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-5">'
+                                    .'<div class="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-5 min-w-0">'
+                                    // Outer relative wrapper so online indicator is NEVER clipped by animated avatar ring
+                                    .'<div class="relative shrink-0 -mt-14 sm:-mt-16 z-10">'
+                                    .'<div class="relative inline-flex items-center justify-center '.$ringClass.' shadow-xl">'
                                     .'<img src="'.e($avatarUrl).'" alt="'.e($displayName).'" class="w-24 h-24 rounded-full object-cover relative z-10 bg-white dark:bg-[#151B24]" />'
+                                    .'</div>'
                                     .'<span class="absolute bottom-1 right-1 z-20 flex h-4 w-4 items-center justify-center">'
                                     .'<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>'
                                     .'<span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 ring-2 ring-white dark:ring-[#151B24]"></span>'
                                     .'</span>'
                                     .'</div>'
-                                    .'<div class="flex flex-col items-center sm:items-start text-center sm:text-left min-w-0 pb-0.5">'
+                                    // User Name, Role Badge, NPK, Email, Status
+                                    .'<div class="flex flex-col items-center sm:items-start text-center sm:text-left min-w-0 gap-1.5">'
                                     .'<div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">'
                                     .'<h2 class="text-lg sm:text-xl font-bold text-[#10141A] dark:text-white tracking-tight leading-tight">'.e($displayName).'</h2>'
                                     .$roleBadgeHtml
                                     .'</div>'
-                                    .'<div class="mt-1.5 flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">'
+                                    .'<div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-2.5 gap-y-1 text-xs text-slate-500 dark:text-slate-400">'
                                     .'<span class="font-mono font-semibold text-slate-700 dark:text-slate-300">NPK '.e($displayNpk).'</span>'
                                     .'<span class="text-slate-300 dark:text-slate-600">&bull;</span>'
                                     .'<span class="break-all">'.e($displayEmail).'</span>'
@@ -141,9 +145,9 @@ class EditProfile extends BaseEditProfile
                                     .'</div>'
                                     .'</div>'
                                     .'</div>'
-                                    // Live Table Pill Preview (Right Side)
-                                    .'<div class="flex flex-col items-center md:items-end gap-1.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-black/[0.06] dark:border-white/[0.08]">'
-                                    .'<span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Tampilan di Tabel Sistem</span>'
+                                    // Framed Live Table Pill Preview (Right Side)
+                                    .'<div class="flex flex-col items-center md:items-end gap-1.5 shrink-0 px-3.5 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.07]">'
+                                    .'<span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tampilan di Tabel Sistem</span>'
                                     .$userPillHtml
                                     .'</div>'
                                     .'</div>'
