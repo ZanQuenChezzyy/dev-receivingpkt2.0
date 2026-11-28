@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Filament\Pages\MemberProfile;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -123,37 +122,19 @@ class UserBadgeRenderer
     }
 
     /**
-     * Membungkus badge dengan pemicu navigasi ke Profil & Log Aktivitas user.
-     * Menggunakan <span role="link"> agar tetap valid secara HTML di dalam sel tabel Filament yang memiliki recordUrl <a>.
+     * Membungkus badge dengan penanda kelas CSS aman agar tidak terhapus oleh Str::sanitizeHtml() milik Filament TextColumn.
+     * Navigasi ke /admin/member-profile/{id} ditangani oleh listener capture-phase global di panel admin.
      */
     protected static function wrapWithProfileTrigger(User $user, string $pillHtml): string
     {
-        $profileUrl = static::resolveProfileUrl($user);
-        if (! $profileUrl) {
+        $userId = (int) $user->getKey();
+        if ($userId <= 0) {
             return $pillHtml;
         }
 
-        $escapedUrl = e($profileUrl);
         $tooltip = e('Lihat profil & aktivitas '.$user->name);
-        $onClick = "event.preventDefault(); event.stopPropagation(); const url = this.dataset.profileUrl; if (event.ctrlKey || event.metaKey) { window.open(url, '_blank'); } else if (window.Livewire && typeof window.Livewire.navigate === 'function') { window.Livewire.navigate(url); } else { window.location.href = url; }";
-        $onAuxClick = "if (event.button === 1) { event.preventDefault(); event.stopPropagation(); window.open(this.dataset.profileUrl, '_blank'); }";
-        $onKeyDown = "if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }";
 
-        return '<span role="link" tabindex="0" data-profile-url="'.$escapedUrl.'" onclick="'.$onClick.'" onauxclick="'.$onAuxClick.'" onkeydown="'.$onKeyDown.'" class="inline-flex align-middle max-w-full cursor-pointer rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F47920]" title="'.$tooltip.'">'.$pillHtml.'</span>';
-    }
-
-    protected static function resolveProfileUrl(User $user): ?string
-    {
-        $userId = $user->getKey();
-        if (! filled($userId)) {
-            return null;
-        }
-
-        try {
-            return MemberProfile::getUrl(['user' => $userId]);
-        } catch (\Throwable) {
-            return url('/admin/member-profile/'.$userId);
-        }
+        return '<span class="pkt-member-badge-trigger pkt-member-uid-'.$userId.' inline-flex align-middle max-w-full cursor-pointer rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F47920]" title="'.$tooltip.'">'.$pillHtml.'</span>';
     }
 
     /**

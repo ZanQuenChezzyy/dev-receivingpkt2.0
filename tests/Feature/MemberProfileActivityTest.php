@@ -14,6 +14,7 @@ use Filament\Facades\Filament;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -161,13 +162,16 @@ test('UserBadgeRenderer renders clickable profile trigger by default and respect
     $clickableStaffHtml = UserBadgeRenderer::render($staff);
     $staticDevHtml = UserBadgeRenderer::render($dev, 'Developer', null, clickable: false);
 
-    expect($clickableDevHtml)->toContain('role="link"')
-        ->and($clickableDevHtml)->toContain('member-profile/'.$dev->id)
-        ->and($clickableDevHtml)->toContain('event.stopPropagation()')
-        ->and($clickableStaffHtml)->toContain('role="link"')
-        ->and($clickableStaffHtml)->toContain('member-profile/'.$staff->id)
-        ->and($staticDevHtml)->not->toContain('data-profile-url=')
-        ->and($staticDevHtml)->not->toContain('role="link"');
+    // Pastikan atribut trigger tetap utuh setelah melewati Filament Str::sanitizeHtml()
+    $sanitizedDevHtml = Str::sanitizeHtml($clickableDevHtml);
+    $sanitizedStaffHtml = Str::sanitizeHtml($clickableStaffHtml);
+
+    expect($sanitizedDevHtml)->toContain('pkt-member-badge-trigger')
+        ->and($sanitizedDevHtml)->toContain('pkt-member-uid-'.$dev->id)
+        ->and($sanitizedStaffHtml)->toContain('pkt-member-badge-trigger')
+        ->and($sanitizedStaffHtml)->toContain('pkt-member-uid-'.$staff->id)
+        ->and($staticDevHtml)->not->toContain('pkt-member-badge-trigger')
+        ->and($staticDevHtml)->not->toContain('pkt-member-uid-');
 });
 
 test('any authenticated user can view another user profile and filter their real system activity logs', function (): void {

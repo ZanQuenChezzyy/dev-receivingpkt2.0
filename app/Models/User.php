@@ -114,7 +114,11 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
      */
     public function canCustomizeAnimatedBadge(): bool
     {
-        return $this->hasAnyRole(self::ANIMATED_BADGE_ROLES);
+        try {
+            return $this->hasAnyRole(self::ANIMATED_BADGE_ROLES);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**

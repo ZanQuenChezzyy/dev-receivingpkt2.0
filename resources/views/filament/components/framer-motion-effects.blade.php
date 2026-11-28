@@ -442,6 +442,61 @@
             }
         }
 
+        // =========================================================
+        // 6. Global Capture-Phase Click Handler for User Badges
+        //    Routes clicks on any .pkt-member-badge-trigger (across all
+        //    tables & relation managers) to /admin/member-profile/{id}
+        //    before parent table row <a> or Livewire handlers fire.
+        // =========================================================
+        if (!window.__pktMemberBadgeClickInit) {
+            window.__pktMemberBadgeClickInit = true;
+
+            const memberProfileBaseUrl = @js(rtrim(url('/admin/member-profile'), '/'));
+
+            const resolveMemberProfileUrl = (el) => {
+                if (!(el instanceof Element)) return null;
+                const trigger = el.closest('.pkt-member-badge-trigger');
+                if (!trigger) return null;
+
+                const classAttr = typeof trigger.className === 'string'
+                    ? trigger.className
+                    : (trigger.getAttribute('class') || '');
+                const match = classAttr.match(/\bpkt-member-uid-(\d+)\b/);
+                if (!match) return null;
+
+                return `${memberProfileBaseUrl}/${match[1]}`;
+            };
+
+            document.addEventListener('click', (e) => {
+                if (!(e.target instanceof Element)) return;
+                const url = resolveMemberProfileUrl(e.target);
+                if (!url) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                    window.open(url, '_blank');
+                } else if (window.Livewire && typeof window.Livewire.navigate === 'function') {
+                    window.Livewire.navigate(url);
+                } else {
+                    window.location.href = url;
+                }
+            }, true);
+
+            document.addEventListener('auxclick', (e) => {
+                if (e.button !== 1 || !(e.target instanceof Element)) return;
+                const url = resolveMemberProfileUrl(e.target);
+                if (!url) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                window.open(url, '_blank');
+            }, true);
+        }
+
         function runAll() {
             initStatsSpringPhysics();
             initStatsCounter();
