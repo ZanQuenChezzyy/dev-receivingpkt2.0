@@ -1,6 +1,8 @@
 <?php
 
 use App\Filament\Pages\ScanWarehouseTransmittal;
+use App\Filament\Resources\WarehouseTransmittals\Pages\EditWarehouseTransmittal;
+use App\Filament\Resources\WarehouseTransmittals\RelationManagers\ItemsRelationManager;
 use App\Models\DeliveryOrderReceipt;
 use App\Models\DeliveryOrderReceiptDetail;
 use App\Models\PurchaseOrderIssued;
@@ -8,6 +10,7 @@ use App\Models\User;
 use App\Models\WarehouseDeliveryBatch;
 use App\Models\WarehouseDeliveryBatchItem;
 use App\Models\WarehouseDestination;
+use App\Models\WarehouseTransmittal;
 use App\Models\WarehouseTransmittalItem;
 use App\Services\SapMb51ImportService;
 use Filament\Facades\Filament;
@@ -75,9 +78,20 @@ beforeEach(function (): void {
             $table->unsignedBigInteger('delivery_order_receipt_id');
             $table->unsignedBigInteger('purchase_order_issued_id')->nullable();
             $table->integer('item_no')->default(10);
+            $table->string('material_code')->nullable();
+            $table->string('description')->nullable();
             $table->decimal('quantity', 15, 2)->default(1);
             $table->decimal('total_amount_snapshot', 18, 2)->default(0);
             $table->unsignedBigInteger('warehouse_destination_id')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    if (! Schema::hasTable('material_issue_details')) {
+        Schema::create('material_issue_details', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('delivery_order_receipt_detail_id')->nullable();
+            $table->decimal('diserahkan', 15, 3)->default(0);
             $table->timestamps();
         });
     }
@@ -124,6 +138,7 @@ beforeEach(function (): void {
             $table->decimal('quantity', 15, 2)->default(1);
             $table->string('uom')->default('EA');
             $table->decimal('amount', 18, 2)->default(0);
+            $table->string('reference_do_no')->nullable();
             $table->string('storage_text')->nullable();
             $table->string('status')->default('pending');
             $table->unsignedBigInteger('delivery_order_receipt_id')->nullable();
@@ -224,4 +239,96 @@ test('ScanWarehouseTransmittal marks ALL items of a multi-item GRS 105 as delive
 
     expect(WarehouseDeliveryBatchItem::query()->where('mat_doc_105', '5007150563')->where('status', 'delivered')->count())->toBe(4)
         ->and(WarehouseTransmittalItem::query()->count())->toBe(4);
+});
+
+test('WarehouseTransmittal ItemsRelationManager searches across DO, PO, MatDoc 105, Material No, and Description without SQL errors', function (): void {
+    $user = User::query()->create([
+        'name' => 'Admin Search Transmittal',
+        'npk' => '2100010',
+        'email' => 'search_transmittal@pupukkaltim.com',
+        'password' => bcrypt('password'),
+        'is_active' => true,
+    ]);
+    $user->assignRole('Developer');
+
+    $this->actingAs($user);
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+    $warehouse = WarehouseDestination::query()->create(['name' => 'Gudang 2']);
+    $transmittal = WarehouseTransmittal::query()->create([
+        'transmittal_no' => 'TR-WH-2026-0034',
+        'warehouse_destination_id' => $warehouse->id,
+        'tanggal' => '2026-11-28',
+        'created_by' => $user->id,
+    ]);
+
+    $batch = WarehouseDeliveryBatch::query()->create([
+        'batch_title' => 'Batch Test Search',
+        'start_date' => '2026-11-28',
+        'end_date' => '2026-11-28',
+        'total_items' => 2,
+        'uploaded_by' => $user->id,
+    ]);
+
+    $po1 = PurchaseOrderIssued::query()->create(['purchase_order_no' => '5300077678', 'item_no' => 10]);
+    $do1 = DeliveryOrderReceipt::query()->create(['delivery_order_no' => 'SJ-7678-ALPHA', 'status' => 'GRS']);
+    $detail1 = DeliveryOrderReceiptDetail::query()->create([
+        'delivery_order_receipt_id' => $do1->id,
+        'purchase_order_issued_id' => $po1->id,
+        'item_no' => 10,
+        'material_code' => '6047678',
+        'description' => 'BEARING BALL SKF 6308',
+        'quantity' => 5,
+    ]);
+    $batchItem1 = WarehouseDeliveryBatchItem::query()->create([
+        'warehouse_delivery_batch_id' => $batch->id,
+        'po_number' => '5300077678',
+        'mat_doc_105' => '5007678111',
+        'material_code' => '6047678',
+        'description' => 'BEARING BALL SKF 6308',
+        'reference_do_no' => 'SJ-7678-ALPHA',
+        'status' => 'delivered',
+        'delivery_order_receipt_id' => $do1->id,
+        'delivery_order_receipt_detail_id' => $detail1->id,
+        'warehouse_transmittal_id' => $transmittal->id,
+    ]);
+
+    $batchItem2 = WarehouseDeliveryBatchItem::query()->create([
+        'warehouse_delivery_batch_id' => $batch->id,
+        'po_number' => '5300099999',
+        'mat_doc_105' => '5009999222',
+        'material_code' => '7099999',
+        'description' => 'VALVE GATE CARBON STEEL',
+        'reference_do_no' => 'SJ-9999-BETA',
+        'status' => 'delivered',
+        'warehouse_transmittal_id' => $transmittal->id,
+    ]);
+
+    $item1 = WarehouseTransmittalItem::query()->create([
+        'warehouse_transmittal_id' => $transmittal->id,
+        'warehouse_delivery_batch_item_id' => $batchItem1->id,
+        'delivery_order_receipt_detail_id' => $detail1->id,
+    ]);
+    $item2 = WarehouseTransmittalItem::query()->create([
+        'warehouse_transmittal_id' => $transmittal->id,
+        'warehouse_delivery_batch_item_id' => $batchItem2->id,
+        'delivery_order_receipt_detail_id' => null,
+    ]);
+
+    Livewire::test(ItemsRelationManager::class, [
+        'ownerRecord' => $transmittal,
+        'pageClass' => EditWarehouseTransmittal::class,
+    ])
+        ->searchTable('7678')
+        ->assertCanSeeTableRecords([$item1])
+        ->assertCanNotSeeTableRecords([$item2])
+        ->searchTable('SJ-9999-BETA')
+        ->assertCanSeeTableRecords([$item2])
+        ->assertCanNotSeeTableRecords([$item1])
+        ->searchTable('5007678111')
+        ->assertCanSeeTableRecords([$item1])
+        ->assertCanNotSeeTableRecords([$item2])
+        ->searchTable('VALVE GATE')
+        ->assertCanSeeTableRecords([$item2])
+        ->assertCanNotSeeTableRecords([$item1]);
 });
