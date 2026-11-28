@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Users\Tables;
 
 use App\Filament\Pages\MemberProfile;
 use App\Models\User;
+use App\Services\UserBadgeRenderer;
 use App\Support\DeveloperBadgeRenderer;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -71,6 +72,24 @@ class UsersTable
                     ->url(fn (User $record): string => MemberProfile::getUrl(['user' => $record->getKey()]))
                     ->html()
                     ->wrap(),
+
+                ToggleColumn::make('has_exclusive_badge')
+                    ->label('Badge Eksklusif')
+                    ->onColor('warning')
+                    ->visible(fn (): bool => (bool) Auth::user()?->hasRole('Developer'))
+                    ->getStateUsing(fn (User $record): bool => $record->canCustomizeAnimatedBadge())
+                    ->disabled(fn (User $record): bool => $record->hasRole('Developer'))
+                    ->updateStateUsing(function (User $record, bool $state): void {
+                        if ($record->hasRole('Developer')) {
+                            return;
+                        }
+
+                        $record->forceFill(['has_exclusive_badge' => $state])->save();
+                        UserBadgeRenderer::flushCache();
+                    })
+                    ->tooltip(fn (User $record): string => $record->hasRole('Developer')
+                        ? 'Role Developer selalu memiliki hak badge eksklusif.'
+                        : 'Aktifkan agar pengguna ini dapat memakai Sparkling Lightning, Blazing Ember, dan Solar Aurora.'),
 
                 ToggleColumn::make('is_active')
                     ->label('Status Aktif')

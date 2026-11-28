@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Builder;
 class UserBadgeRenderer
 {
     /**
-     * Cache per-request gaya badge Developer per user_id untuk mencegah query role berulang di tabel.
+     * Cache per-request gaya badge per kombinasi user_id & atribut gaya untuk mencegah query role berulang di tabel.
      *
-     * @var array<int, string>
+     * @var array<string, string>
      */
     private static array $developerStyleCache = [];
 
@@ -192,13 +192,19 @@ class UserBadgeRenderer
     }
 
     /**
-     * Mengambil gaya badge Developer milik user dengan cache per-request agar hemat query.
+     * Mengambil gaya badge milik user dengan cache per-request agar hemat query.
      */
     protected static function resolveCachedDeveloperStyle(User $user): string
     {
         $userId = (int) $user->getKey();
-        if ($userId > 0 && array_key_exists($userId, static::$developerStyleCache)) {
-            return static::$developerStyleCache[$userId];
+        $rawStyle = (string) ($user->getAttributes()['developer_badge_style'] ?? '');
+        $rawExclusive = array_key_exists('has_exclusive_badge', $user->getAttributes())
+            ? var_export($user->getAttributes()['has_exclusive_badge'], true)
+            : 'unset';
+        $cacheKey = "{$userId}|{$rawStyle}|{$rawExclusive}";
+
+        if ($userId > 0 && array_key_exists($cacheKey, static::$developerStyleCache)) {
+            return static::$developerStyleCache[$cacheKey];
         }
 
         $style = method_exists($user, 'resolvedDeveloperBadgeStyle')
@@ -206,7 +212,7 @@ class UserBadgeRenderer
             : User::DEVELOPER_BADGE_NONE;
 
         if ($userId > 0) {
-            static::$developerStyleCache[$userId] = $style;
+            static::$developerStyleCache[$cacheKey] = $style;
         }
 
         return $style;

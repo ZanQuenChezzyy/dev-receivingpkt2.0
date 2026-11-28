@@ -12,6 +12,7 @@ use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -67,6 +68,17 @@ class UserForm
                                     ->helperText('Jika dinonaktifkan, user tidak dapat login dan tidak muncul di daftar pilihan.')
                                     ->default(true)
                                     ->required(),
+
+                                Toggle::make('has_exclusive_badge')
+                                    ->label('Hak Badge Eksklusif')
+                                    ->helperText('Izinkan pengguna ini memilih gaya animasi eksklusif (Sparkling Lightning, Blazing Ember, Solar Aurora).')
+                                    ->onColor('warning')
+                                    ->visible(fn (): bool => (bool) Auth::user()?->hasRole('Developer'))
+                                    ->disabled(fn (?User $record): bool => (bool) $record?->hasRole('Developer'))
+                                    ->afterStateHydrated(function (Toggle $component, ?User $record): void {
+                                        $component->state($record ? $record->canCustomizeAnimatedBadge() : false);
+                                    })
+                                    ->dehydrated(fn (?User $record): bool => (bool) Auth::user()?->hasRole('Developer') && ! (bool) $record?->hasRole('Developer')),
                             ]),
                     ])
                     ->columnSpan([

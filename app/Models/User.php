@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'avatar_url', 'cover_photo_url', 'npk', 'is_active', 'left_rail_shortcuts', 'developer_badge_style'])]
+#[Fillable(['name', 'email', 'password', 'avatar_url', 'cover_photo_url', 'npk', 'is_active', 'left_rail_shortcuts', 'developer_badge_style', 'has_exclusive_badge'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasAvatar
 {
@@ -110,14 +110,25 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     }
 
     /**
-     * Memeriksa apakah pengguna memiliki role yang berhak memakai gaya animasi badge eksklusif.
+     * Memeriksa apakah pengguna berhak memakai gaya animasi badge eksklusif.
+     * - Role Developer selalu memiliki hak eksklusif.
+     * - Jika kolom has_exclusive_badge diatur secara eksplisit oleh Developer (true/false), nilai tersebut yang berlaku.
+     * - Jika masih null, mengikuti daftar role bawaan (ANIMATED_BADGE_ROLES).
      */
     public function canCustomizeAnimatedBadge(): bool
     {
         try {
+            if ($this->hasRole('Developer')) {
+                return true;
+            }
+
+            if (array_key_exists('has_exclusive_badge', $this->attributes) && $this->attributes['has_exclusive_badge'] !== null) {
+                return (bool) $this->has_exclusive_badge;
+            }
+
             return $this->hasAnyRole(self::ANIMATED_BADGE_ROLES);
         } catch (\Throwable) {
-            return false;
+            return (bool) ($this->attributes['has_exclusive_badge'] ?? false);
         }
     }
 
@@ -138,10 +149,14 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
      */
     public function primaryAnimatedBadgeRole(): ?string
     {
-        foreach (self::ANIMATED_BADGE_ROLES as $roleName) {
-            if ($this->hasRole($roleName)) {
-                return $roleName;
+        try {
+            foreach (self::ANIMATED_BADGE_ROLES as $roleName) {
+                if ($this->hasRole($roleName)) {
+                    return $roleName;
+                }
             }
+        } catch (\Throwable) {
+            return null;
         }
 
         return null;
@@ -187,6 +202,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'has_exclusive_badge' => 'boolean',
             'left_rail_shortcuts' => 'array',
         ];
     }

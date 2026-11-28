@@ -293,7 +293,7 @@ class EditProfile extends BaseEditProfile
 
                                         return $user?->canCustomizeAnimatedBadge()
                                             ? 'Anda dapat memilih seluruh tema Classic Clean maupun gaya animasi eksklusif. Perubahan langsung terlihat pada pratinjau di atas.'
-                                            : 'Pilih tema warna Classic Clean untuk badge Anda di seluruh tabel dan profil. Gaya animasi bertanda gembok bersifat eksklusif untuk Developer & AVP Receiving.';
+                                            : 'Pilih tema warna Classic Clean untuk badge Anda di seluruh tabel dan profil. Gaya animasi bertanda gembok hanya dapat dibuka dengan hak eksklusif dari Developer.';
                                     })
                                     ->default(function (): string {
                                         /** @var ?User $user */
@@ -382,11 +382,11 @@ class EditProfile extends BaseEditProfile
                                         foreach ($exclusiveDefinitions as $key => $meta) {
                                             $statusChip = $canCustomize
                                                 ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F47920]/15 text-[#F47920] dark:text-orange-300">Eksklusif</span>'
-                                                : '<span class="pkt-badge-locked-chip inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/90 dark:bg-white/[0.1] text-slate-600 dark:text-slate-300" title="Khusus Developer & AVP Receiving">'.$lockIcon.'Terkunci</span>';
+                                                : '<span class="pkt-badge-locked-chip inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/90 dark:bg-white/[0.1] text-slate-600 dark:text-slate-300" title="Memerlukan hak eksklusif dari Developer">'.$lockIcon.'Terkunci</span>';
 
                                             $lockedNote = $canCustomize
                                                 ? ''
-                                                : '<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">'.$lockIcon.'Khusus Developer &amp; AVP Receiving</span>';
+                                                : '<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">'.$lockIcon.'Memerlukan hak eksklusif dari Developer</span>';
 
                                             $previewLabel = $canCustomize ? $roleLabel : 'Eksklusif';
 

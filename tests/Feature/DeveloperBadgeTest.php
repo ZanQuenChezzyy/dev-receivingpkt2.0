@@ -26,6 +26,7 @@ beforeEach(function (): void {
             $table->string('cover_photo_url')->nullable();
             $table->json('left_rail_shortcuts')->nullable();
             $table->string('developer_badge_style', 30)->nullable()->default('electric');
+            $table->boolean('has_exclusive_badge')->nullable()->default(null);
             $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();
@@ -165,7 +166,7 @@ test('Regular staff user can customize Classic Clean badge while exclusive anima
         ->assertSee('Blazing Ember')
         ->assertSee('Solar Aurora')
         ->assertSee('Terkunci')
-        ->assertSee('Khusus Developer & AVP Receiving')
+        ->assertSee('Memerlukan hak eksklusif dari Developer')
         ->fillForm([
             'name' => 'Staff Biasa',
             'npk' => '2100103',
@@ -239,4 +240,57 @@ test('EditProfile accepts animated GIF cover photos without destructive auto-tra
     expect($coverField->getAutomaticallyCropImagesAspectRatio())->toBeNull()
         ->and($coverField->getAutomaticallyResizeImagesMode())->toBeNull()
         ->and($coverField->getAcceptedFileTypes())->toContain('image/gif');
+});
+
+test('Developer can grant and revoke exclusive animated badge access for any user', function (): void {
+    $staff = User::query()->create([
+        'name' => 'Staf Pilihan',
+        'npk' => '2100301',
+        'email' => 'staf_eksklusif@pupukkaltim.com',
+        'password' => bcrypt('password'),
+        'developer_badge_style' => User::DEVELOPER_BADGE_NONE,
+        'is_active' => true,
+    ]);
+    $staff->assignRole('Staff Invoice');
+
+    // Awalnya belum punya hak eksklusif
+    expect($staff->canCustomizeAnimatedBadge())->toBeFalse()
+        ->and($staff->isDeveloperBadgeAnimated())->toBeFalse();
+
+    // Developer mengaktifkan hak badge eksklusif untuk user ini
+    $staff->forceFill(['has_exclusive_badge' => true])->save();
+    $staff->refresh();
+
+    expect($staff->canCustomizeAnimatedBadge())->toBeTrue();
+
+    Auth::login($staff);
+    Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+    Livewire::test(EditProfile::class)
+        ->assertDontSee('Memerlukan hak eksklusif dari Developer')
+        ->fillForm([
+            'name' => 'Staf Pilihan',
+            'npk' => '2100301',
+            'email' => 'staf_eksklusif@pupukkaltim.com',
+            'developer_badge_style' => User::DEVELOPER_BADGE_PKT_COMBO,
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $staff->refresh();
+    UserBadgeRenderer::flushCache();
+    expect($staff->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_PKT_COMBO)
+        ->and($staff->isDeveloperBadgeAnimated())->toBeTrue()
+        ->and(UserBadgeRenderer::render($staff))->toContain('pkt-user-pill--pkt_combo')
+        ->and(DeveloperBadgeRenderer::renderUserRoles($staff)->toHtml())->toContain('pkt-dev-badge--pkt_combo');
+
+    // Developer mencabut kembali hak eksklusif -> langsung kembali ke Classic Clean
+    $staff->forceFill(['has_exclusive_badge' => false])->save();
+    $staff->refresh();
+    UserBadgeRenderer::flushCache();
+
+    expect($staff->canCustomizeAnimatedBadge())->toBeFalse()
+        ->and($staff->resolvedDeveloperBadgeStyle())->toBe(User::DEVELOPER_BADGE_NONE)
+        ->and($staff->isDeveloperBadgeAnimated())->toBeFalse()
+        ->and(UserBadgeRenderer::render($staff))->not->toContain('pkt-user-pill--');
 });
