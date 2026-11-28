@@ -186,14 +186,14 @@
         <div class="fi-wi-widget p-6 rounded-2xl bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl border border-gray-200/60 dark:border-gray-800/60 shadow-xs">
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <!-- Form Inputs -->
-                <div class="flex-1">
+                <div class="flex-1 min-w-0 scan-header-form">
                     <form wire:submit.prevent>
                         {{ $this->form }}
                     </form>
                 </div>
 
                 <!-- Transmittal Badge & Control -->
-                <div class="lg:w-96 flex flex-col justify-center items-start lg:items-end gap-2 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 pt-4 lg:pt-0 lg:pl-6">
+                <div class="lg:w-72 xl:w-80 shrink-0 flex flex-col justify-center items-start lg:items-end gap-2 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800 pt-4 lg:pt-0 lg:pl-6">
                     <div class="flex items-center justify-between w-full lg:justify-end gap-2">
                         <span class="text-xs font-semibold tracking-wider text-gray-500 dark:text-gray-400 uppercase">
                             Nomor Transmittal
@@ -652,6 +652,10 @@
         }
         #qr-reader__scan_region {
             border-radius: 0.75rem;
+        }
+        .scan-header-form .fi-select-input-value-label,
+        .scan-header-form .fi-select-input-btn {
+            white-space: nowrap;
         }
     </style>
     @endpush

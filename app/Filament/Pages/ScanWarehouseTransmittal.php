@@ -85,13 +85,14 @@ class ScanWarehouseTransmittal extends Page implements HasForms
         return $schema
             ->statePath('data')
             ->components([
-                Grid::make(['default' => 1, 'sm' => 2])->schema([
+                Grid::make(['default' => 1, 'sm' => 12])->schema([
                     DatePicker::make('tanggal')
                         ->label('Tanggal Transmittal')
                         ->default(now()->toDateString())
                         ->required()
                         ->native(false)
                         ->live()
+                        ->columnSpan(['default' => 1, 'sm' => 4])
                         ->afterStateUpdated(function () {
                             $this->forceNewTransmittal = false;
                             $this->syncTransmittalState();
@@ -104,6 +105,7 @@ class ScanWarehouseTransmittal extends Page implements HasForms
                         ->required()
                         ->searchable()
                         ->live()
+                        ->columnSpan(['default' => 1, 'sm' => 8])
                         ->afterStateUpdated(function () {
                             $this->forceNewTransmittal = false;
                             $this->syncTransmittalState();
