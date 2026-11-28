@@ -222,8 +222,8 @@
 
             {{-- Avatar Overlapping Cover + Full Identity (No Badge Clipping) --}}
             <div class="px-4 pb-3.5 relative z-10">
-                <div class="flex items-end gap-3 -mt-6">
-                    <div class="relative shrink-0">
+                <div class="flex items-start gap-3">
+                    <div class="relative shrink-0 -mt-6">
                         <div @class([
                             'relative inline-flex items-center justify-center shadow-md',
                             "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$developerBadgeStyle}" => $hasAnimatedDevRing,
@@ -242,7 +242,7 @@
                         @endif
                     </div>
 
-                    <div class="flex flex-col min-w-0 flex-1 pt-7 leading-tight">
+                    <div class="flex flex-col min-w-0 flex-1 pt-1.5 leading-tight">
                         <span class="text-[13px] font-bold text-slate-900 dark:text-white group-hover:text-[#F47920] transition-colors truncate">
                             {{ $user->name }}
                         </span>
@@ -254,7 +254,7 @@
                     </div>
                 </div>
 
-                <div class="mt-2.5 flex flex-wrap items-center gap-1.5">
+                <div class="mt-3 flex flex-wrap items-center gap-1.5">
                     {!! \App\Support\DeveloperBadgeRenderer::renderUserRoles($user, 'sm') !!}
                 </div>
             </div>

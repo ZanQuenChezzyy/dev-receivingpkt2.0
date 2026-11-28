@@ -5,11 +5,13 @@
 @source '../../../../app/Filament/**/*';
 @source '../../../../app/Livewire/**/*';
 @source '../../../../app/Services/**/*';
+@source '../../../../app/Support/**/*';
 @source '../../../../resources/views/chezzy/**/*';
 @source '../../../../resources/views/auth/**/*';
 @source '../../../../resources/views/filament/**/*';
 @source '../../../../resources/views/components/filament/**/*';
 @source '../../../../resources/views/livewire/**/*';
+@source '../../../../resources/views/vendor/**/*';
 @source '../../../../vendor/devonab/filament-easy-footer/resources/views/**/*';
 
 /* =========================================================
