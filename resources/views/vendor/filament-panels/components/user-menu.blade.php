@@ -38,10 +38,10 @@
     $animatedRoleLabel = $hasCustomAnimatedRole && method_exists($user, 'primaryAnimatedBadgeRole')
         ? ($user->primaryAnimatedBadgeRole() ?? $roleName)
         : $roleName;
-    $developerBadgeStyle = $hasCustomAnimatedRole && method_exists($user, 'resolvedDeveloperBadgeStyle')
+    $developerBadgeStyle = $user && method_exists($user, 'resolvedDeveloperBadgeStyle')
         ? $user->resolvedDeveloperBadgeStyle()
         : \App\Models\User::DEVELOPER_BADGE_NONE;
-    $hasAnimatedDevRing = $hasCustomAnimatedRole && $developerBadgeStyle !== \App\Models\User::DEVELOPER_BADGE_NONE;
+    $hasAnimatedDevRing = $hasCustomAnimatedRole && \App\Models\User::isExclusiveBadgeStyle($developerBadgeStyle);
 @endphp
 
 {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::USER_MENU_BEFORE) }}
@@ -239,13 +239,7 @@
                         </span>
                     @endif
                     <div class="mt-0.5 flex items-center justify-between gap-2">
-                        @if ($hasCustomAnimatedRole)
-                            {!! \App\Support\DeveloperBadgeRenderer::render($developerBadgeStyle, $animatedRoleLabel, 'sm') !!}
-                        @else
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD]">
-                                {{ $roleName }}
-                            </span>
-                        @endif
+                        {!! \App\Support\DeveloperBadgeRenderer::render($developerBadgeStyle, $animatedRoleLabel, 'sm') !!}
                         <span class="text-[10px] font-semibold text-slate-400 group-hover:text-[#F47920] transition-colors shrink-0">
                             Lihat Profil &rarr;
                         </span>

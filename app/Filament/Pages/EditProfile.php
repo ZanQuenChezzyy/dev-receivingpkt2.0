@@ -69,9 +69,12 @@ class EditProfile extends BaseEditProfile
                                 $canCustomize = (bool) $user?->canCustomizeAnimatedBadge();
                                 $roleLabel = $user?->primaryAnimatedBadgeRole()
                                     ?? ($user?->roles->first()?->name ?? 'User');
-                                $selected = $canCustomize
-                                    ? (string) ($get('developer_badge_style') ?: ($user?->resolvedDeveloperBadgeStyle() ?? User::DEVELOPER_BADGE_ELECTRIC))
-                                    : User::DEVELOPER_BADGE_NONE;
+                                $rawSelected = (string) ($get('developer_badge_style') ?: ($user?->resolvedDeveloperBadgeStyle() ?? User::DEVELOPER_BADGE_NONE));
+                                $selected = (! $canCustomize && User::isExclusiveBadgeStyle($rawSelected))
+                                    ? User::DEVELOPER_BADGE_NONE
+                                    : (array_key_exists($rawSelected, User::developerBadgeOptions()) ? $rawSelected : User::DEVELOPER_BADGE_NONE);
+
+                                $isExclusiveSelected = $canCustomize && User::isExclusiveBadgeStyle($selected);
 
                                 $displayName = trim((string) ($get('name') ?: ($user?->name ?? 'Pengguna')));
                                 $displayNpk = trim((string) ($get('npk') ?: ($user?->npk ?? '-')));
@@ -81,15 +84,11 @@ class EditProfile extends BaseEditProfile
                                     ?? 'https://ui-avatars.com/api/?name='.urlencode($displayName).'&color=FFFFFF&background=F47920';
                                 $coverUrl = $user?->getCoverPhotoUrl();
 
-                                $ringClass = $canCustomize && $selected !== User::DEVELOPER_BADGE_NONE
+                                $ringClass = $isExclusiveSelected
                                     ? "pkt-dev-avatar-ring pkt-dev-avatar-ring--{$selected}"
                                     : 'ring-4 ring-white dark:ring-[#151B24] rounded-full shadow-lg';
 
-                                $roleBadgeHtml = $canCustomize
-                                    ? DeveloperBadgeRenderer::render($selected, $roleLabel, 'md')
-                                    : '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] ring-1 ring-inset ring-[#0054A6]/20 dark:ring-[#83A2DB]/25">'
-                                        .e($roleLabel)
-                                        .'</span>';
+                                $roleBadgeHtml = DeveloperBadgeRenderer::render($selected, $roleLabel, 'md');
 
                                 $previewUser = $user ? clone $user : null;
                                 if ($previewUser) {
@@ -97,7 +96,7 @@ class EditProfile extends BaseEditProfile
                                     $previewUser->npk = $displayNpk !== '-' ? $displayNpk : null;
                                 }
                                 $userPillHtml = $previewUser
-                                    ? UserBadgeRenderer::render($previewUser, $roleLabel, $canCustomize ? $selected : User::DEVELOPER_BADGE_NONE, clickable: false)
+                                    ? UserBadgeRenderer::render($previewUser, $roleLabel, $selected, clickable: false)
                                     : '';
 
                                 $statusBadge = $user?->is_active
@@ -279,56 +278,172 @@ class EditProfile extends BaseEditProfile
                             ]),
 
                         Tab::make('Gaya Badge')
-                            ->icon('heroicon-o-bolt')
-                            ->visible(fn (): bool => (bool) filament()->auth()->user()?->canCustomizeAnimatedBadge())
+                            ->icon('heroicon-o-swatch')
                             ->schema([
                                 Radio::make('developer_badge_style')
-                                    ->label('Pilih Gaya Animasi Badge')
-                                    ->helperText('Perubahan gaya langsung terlihat pada kartu profil di atas dan berlaku pada seluruh tabel, cincin avatar, serta menu profil.')
-                                    ->default(User::DEVELOPER_BADGE_ELECTRIC)
+                                    ->label('Pilih Gaya Badge Profil & Tabel')
+                                    ->helperText(function (): string {
+                                        /** @var ?User $user */
+                                        $user = filament()->auth()->user();
+
+                                        return $user?->canCustomizeAnimatedBadge()
+                                            ? 'Anda dapat memilih seluruh tema Classic Clean maupun gaya animasi eksklusif. Perubahan langsung terlihat pada pratinjau di atas.'
+                                            : 'Pilih tema warna Classic Clean untuk badge Anda di seluruh tabel dan profil. Gaya animasi bertanda gembok bersifat eksklusif untuk Developer & AVP Receiving.';
+                                    })
+                                    ->default(function (): string {
+                                        /** @var ?User $user */
+                                        $user = filament()->auth()->user();
+
+                                        return $user?->resolvedDeveloperBadgeStyle() ?? User::DEVELOPER_BADGE_NONE;
+                                    })
                                     ->live()
-                                    ->columns(['default' => 1, 'sm' => 2])
+                                    ->columns(['default' => 1, 'sm' => 2, 'lg' => 3])
                                     ->extraAttributes(['class' => 'pkt-profile-radio-grid'])
+                                    ->disableOptionWhen(function (string $value): bool {
+                                        /** @var ?User $user */
+                                        $user = filament()->auth()->user();
+
+                                        return ! (bool) $user?->canCustomizeAnimatedBadge()
+                                            && User::isExclusiveBadgeStyle($value);
+                                    })
                                     ->options(function (): array {
                                         /** @var ?User $user */
                                         $user = filament()->auth()->user();
-                                        $roleLabel = $user?->primaryAnimatedBadgeRole() ?? 'Developer';
+                                        $canCustomize = (bool) $user?->canCustomizeAnimatedBadge();
+                                        $roleLabel = $user?->primaryAnimatedBadgeRole()
+                                            ?? ($user?->roles->first()?->name ?? 'User');
 
-                                        return [
-                                            User::DEVELOPER_BADGE_ELECTRIC => new HtmlString(
-                                                '<div class="flex flex-col gap-2 py-0.5">'
-                                                .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Sparkling Lightning</span>'
-                                                .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Arus energi biru-cyan berputar dengan kilatan petir berulang.</span>'
-                                                .'<div class="pt-1">'.DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_ELECTRIC, $roleLabel).'</div>'
-                                                .'</div>'
-                                            ),
-                                            User::DEVELOPER_BADGE_FLAME => new HtmlString(
-                                                '<div class="flex flex-col gap-2 py-0.5">'
-                                                .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Blazing Ember</span>'
-                                                .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Bara api oranye menyala dengan percikan cahaya yang naik berulang.</span>'
-                                                .'<div class="pt-1">'.DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_FLAME, $roleLabel).'</div>'
-                                                .'</div>'
-                                            ),
-                                            User::DEVELOPER_BADGE_PKT_COMBO => new HtmlString(
-                                                '<div class="flex flex-col gap-2 py-0.5">'
-                                                .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Solar Aurora</span>'
-                                                .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Cincin gradasi biru dan oranye berputar dengan sapuan kilau.</span>'
-                                                .'<div class="pt-1">'.DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_PKT_COMBO, $roleLabel).'</div>'
-                                                .'</div>'
-                                            ),
-                                            User::DEVELOPER_BADGE_NONE => new HtmlString(
-                                                '<div class="flex flex-col gap-2 py-0.5">'
-                                                .'<span class="font-bold text-sm text-[#10141A] dark:text-white">Classic Clean</span>'
-                                                .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Tampilan statis sederhana tanpa efek gerak.</span>'
-                                                .'<div class="pt-1">'.DeveloperBadgeRenderer::render(User::DEVELOPER_BADGE_NONE, $roleLabel).'</div>'
-                                                .'</div>'
-                                            ),
+                                        $lockIcon = '<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">'
+                                            .'<path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clip-rule="evenodd" />'
+                                            .'</svg>';
+
+                                        $classicDefinitions = [
+                                            User::DEVELOPER_BADGE_NONE => [
+                                                'title' => 'Classic Amber',
+                                                'desc' => 'Nuansa oranye-amber hangat bawaan sistem.',
+                                            ],
+                                            User::CLASSIC_BADGE_BLUE => [
+                                                'title' => 'Classic Cobalt',
+                                                'desc' => 'Biru korporat PKT yang tegas dan rapi.',
+                                            ],
+                                            User::CLASSIC_BADGE_EMERALD => [
+                                                'title' => 'Classic Emerald',
+                                                'desc' => 'Hijau zamrud lembut yang sejuk di mata.',
+                                            ],
+                                            User::CLASSIC_BADGE_VIOLET => [
+                                                'title' => 'Classic Violet',
+                                                'desc' => 'Aksen ungu-indigo modern untuk tampilan bersih.',
+                                            ],
+                                            User::CLASSIC_BADGE_ROSE => [
+                                                'title' => 'Classic Rose',
+                                                'desc' => 'Sentuhan koral-merah muda yang halus.',
+                                            ],
+                                            User::CLASSIC_BADGE_SLATE => [
+                                                'title' => 'Classic Slate',
+                                                'desc' => 'Minimalis monokrom abu-abu netral.',
+                                            ],
                                         ];
+
+                                        $exclusiveDefinitions = [
+                                            User::DEVELOPER_BADGE_ELECTRIC => [
+                                                'title' => 'Sparkling Lightning',
+                                                'desc' => 'Arus energi biru-cyan berputar dengan kilatan petir.',
+                                            ],
+                                            User::DEVELOPER_BADGE_FLAME => [
+                                                'title' => 'Blazing Ember',
+                                                'desc' => 'Bara api oranye menyala dengan percikan cahaya.',
+                                            ],
+                                            User::DEVELOPER_BADGE_PKT_COMBO => [
+                                                'title' => 'Solar Aurora',
+                                                'desc' => 'Cincin gradasi biru-oranye berputar dengan kilau.',
+                                            ],
+                                        ];
+
+                                        $options = [];
+
+                                        foreach ($classicDefinitions as $key => $meta) {
+                                            $options[$key] = new HtmlString(
+                                                '<div class="flex flex-col gap-2 py-0.5">'
+                                                .'<div class="flex items-center justify-between gap-2">'
+                                                .'<span class="font-bold text-sm text-[#10141A] dark:text-white">'.e($meta['title']).'</span>'
+                                                .'<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/70 dark:bg-white/[0.08] text-slate-600 dark:text-slate-300">Classic Clean</span>'
+                                                .'</div>'
+                                                .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">'.e($meta['desc']).'</span>'
+                                                .'<div class="pt-1">'.DeveloperBadgeRenderer::render($key, $roleLabel).'</div>'
+                                                .'</div>'
+                                            );
+                                        }
+
+                                        foreach ($exclusiveDefinitions as $key => $meta) {
+                                            $statusChip = $canCustomize
+                                                ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F47920]/15 text-[#F47920] dark:text-orange-300">Eksklusif</span>'
+                                                : '<span class="pkt-badge-locked-chip inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/90 dark:bg-white/[0.1] text-slate-600 dark:text-slate-300" title="Khusus Developer & AVP Receiving">'.$lockIcon.'Terkunci</span>';
+
+                                            $lockedNote = $canCustomize
+                                                ? ''
+                                                : '<span class="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">'.$lockIcon.'Khusus Developer &amp; AVP Receiving</span>';
+
+                                            $previewLabel = $canCustomize ? $roleLabel : 'Eksklusif';
+
+                                            $options[$key] = new HtmlString(
+                                                '<div class="flex flex-col gap-2 py-0.5">'
+                                                .'<div class="flex items-center justify-between gap-2">'
+                                                .'<span class="font-bold text-sm text-[#10141A] dark:text-white">'.e($meta['title']).'</span>'
+                                                .$statusChip
+                                                .'</div>'
+                                                .'<span class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">'.e($meta['desc']).'</span>'
+                                                .'<div class="pt-1 flex items-center gap-2">'.DeveloperBadgeRenderer::render($key, $previewLabel).'</div>'
+                                                .$lockedNote
+                                                .'</div>'
+                                            );
+                                        }
+
+                                        return $options;
                                     })
-                                    ->in(array_keys(User::developerBadgeOptions())),
+                                    ->in(function (): array {
+                                        /** @var ?User $user */
+                                        $user = filament()->auth()->user();
+
+                                        return array_keys($user?->allowedBadgeOptions() ?? User::classicCleanBadgeOptions());
+                                    }),
                             ]),
                     ]),
             ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        /** @var ?User $user */
+        $user = $this->getUser();
+        if ($user) {
+            $data['developer_badge_style'] = $user->resolvedDeveloperBadgeStyle();
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        /** @var ?User $user */
+        $user = $this->getUser();
+        if ($user && ! $user->canCustomizeAnimatedBadge()) {
+            $chosen = (string) ($data['developer_badge_style'] ?? User::DEVELOPER_BADGE_NONE);
+            if (! array_key_exists($chosen, User::classicCleanBadgeOptions())) {
+                $data['developer_badge_style'] = User::DEVELOPER_BADGE_NONE;
+            }
+        }
+
+        UserBadgeRenderer::flushCache();
+
+        return $data;
     }
 
     protected function getRedirectUrl(): ?string

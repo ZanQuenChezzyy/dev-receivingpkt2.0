@@ -4,7 +4,7 @@
         $isOwnProfile = (int) filament()->auth()->id() === (int) $member->getKey();
         $canCustomize = $member->canCustomizeAnimatedBadge();
         $badgeStyle = $member->resolvedDeveloperBadgeStyle();
-        $hasAnimatedRing = $canCustomize && $badgeStyle !== \App\Models\User::DEVELOPER_BADGE_NONE;
+        $hasAnimatedRing = $canCustomize && \App\Models\User::isExclusiveBadgeStyle($badgeStyle);
         $roleLabel = $member->primaryAnimatedBadgeRole() ?? ($member->roles->first()?->name ?? 'User');
         $avatarUrl = $member->getFilamentAvatarUrl()
             ?? 'https://ui-avatars.com/api/?name='.urlencode($member->name).'&color=FFFFFF&background=F47920';

@@ -137,12 +137,13 @@ test('Developer and AVP Receiving can choose and save animated badge style from 
     expect($avp->fresh()->developer_badge_style)->toBe(User::DEVELOPER_BADGE_FLAME);
 });
 
-test('Regular staff user does not see Gaya Badge tab on EditProfile page', function (): void {
+test('Regular staff user can customize Classic Clean badge while exclusive animated badges appear locked and cannot be saved', function (): void {
     $staff = User::query()->create([
         'name' => 'Staff Biasa',
         'npk' => '2100103',
         'email' => 'staff_profile_badge@pupukkaltim.com',
         'password' => bcrypt('password'),
+        'developer_badge_style' => User::DEVELOPER_BADGE_ELECTRIC,
         'is_active' => true,
     ]);
     $staff->assignRole('Admin Sparepart');
@@ -151,5 +152,44 @@ test('Regular staff user does not see Gaya Badge tab on EditProfile page', funct
     Filament::setCurrentPanel(Filament::getPanel('admin'));
 
     Livewire::test(EditProfile::class)
-        ->assertDontSee('Gaya Badge');
+        ->assertSee('Gaya Badge')
+        ->assertSee('Classic Amber')
+        ->assertSee('Classic Cobalt')
+        ->assertSee('Classic Emerald')
+        ->assertSee('Sparkling Lightning')
+        ->assertSee('Blazing Ember')
+        ->assertSee('Solar Aurora')
+        ->assertSee('Terkunci')
+        ->assertSee('Khusus Developer & AVP Receiving')
+        ->fillForm([
+            'name' => 'Staff Biasa',
+            'npk' => '2100103',
+            'email' => 'staff_profile_badge@pupukkaltim.com',
+            'developer_badge_style' => User::CLASSIC_BADGE_EMERALD,
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $freshStaff = $staff->fresh();
+    expect($freshStaff->developer_badge_style)->toBe(User::CLASSIC_BADGE_EMERALD)
+        ->and($freshStaff->resolvedDeveloperBadgeStyle())->toBe(User::CLASSIC_BADGE_EMERALD)
+        ->and($freshStaff->isDeveloperBadgeAnimated())->toBeFalse();
+
+    UserBadgeRenderer::flushCache();
+    expect(UserBadgeRenderer::render($freshStaff))->toContain('pkt-classic-pill--classic_emerald')
+        ->and(DeveloperBadgeRenderer::renderUserRoles($freshStaff)->toHtml())->toContain('pkt-classic-badge--classic_emerald')
+        ->and(DeveloperBadgeRenderer::renderUserRoles($freshStaff)->toHtml())->not->toContain('pkt-dev-badge');
+
+    // Mencoba menyimpan badge eksklusif oleh staf biasa harus ditolak oleh validasi form
+    Livewire::test(EditProfile::class)
+        ->fillForm([
+            'name' => 'Staff Biasa',
+            'npk' => '2100103',
+            'email' => 'staff_profile_badge@pupukkaltim.com',
+            'developer_badge_style' => User::DEVELOPER_BADGE_FLAME,
+        ])
+        ->call('save')
+        ->assertHasFormErrors(['developer_badge_style']);
+
+    expect($staff->fresh()->resolvedDeveloperBadgeStyle())->toBe(User::CLASSIC_BADGE_EMERALD);
 });

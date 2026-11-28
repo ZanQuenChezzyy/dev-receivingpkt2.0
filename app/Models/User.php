@@ -37,8 +37,18 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
 
     public const DEVELOPER_BADGE_NONE = 'none';
 
+    public const CLASSIC_BADGE_BLUE = 'classic_blue';
+
+    public const CLASSIC_BADGE_EMERALD = 'classic_emerald';
+
+    public const CLASSIC_BADGE_VIOLET = 'classic_violet';
+
+    public const CLASSIC_BADGE_ROSE = 'classic_rose';
+
+    public const CLASSIC_BADGE_SLATE = 'classic_slate';
+
     /**
-     * Daftar role yang berhak memakai & mengatur animasi badge khusus.
+     * Daftar role yang berhak memakai & mengatur animasi badge eksklusif.
      *
      * @var list<string>
      */
@@ -48,26 +58,75 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     ];
 
     /**
-     * Pilihan gaya animasi badge khusus pengguna dengan role Developer atau AVP Receiving.
+     * Pilihan gaya animasi badge eksklusif (khusus Developer & AVP Receiving).
+     *
+     * @return array<string, string>
+     */
+    public static function exclusiveAnimatedBadgeOptions(): array
+    {
+        return [
+            self::DEVELOPER_BADGE_ELECTRIC => 'Sparkling Lightning',
+            self::DEVELOPER_BADGE_FLAME => 'Blazing Ember',
+            self::DEVELOPER_BADGE_PKT_COMBO => 'Solar Aurora',
+        ];
+    }
+
+    /**
+     * Pilihan gaya Classic Clean yang dapat dikustomisasi oleh seluruh pengguna.
+     *
+     * @return array<string, string>
+     */
+    public static function classicCleanBadgeOptions(): array
+    {
+        return [
+            self::DEVELOPER_BADGE_NONE => 'Classic Amber',
+            self::CLASSIC_BADGE_BLUE => 'Classic Cobalt',
+            self::CLASSIC_BADGE_EMERALD => 'Classic Emerald',
+            self::CLASSIC_BADGE_VIOLET => 'Classic Violet',
+            self::CLASSIC_BADGE_ROSE => 'Classic Rose',
+            self::CLASSIC_BADGE_SLATE => 'Classic Slate',
+        ];
+    }
+
+    /**
+     * Seluruh pilihan gaya badge (eksklusif + Classic Clean).
      *
      * @return array<string, string>
      */
     public static function developerBadgeOptions(): array
     {
         return [
-            self::DEVELOPER_BADGE_ELECTRIC => 'Sparkling Lightning',
-            self::DEVELOPER_BADGE_FLAME => 'Blazing Ember',
-            self::DEVELOPER_BADGE_PKT_COMBO => 'Solar Aurora',
-            self::DEVELOPER_BADGE_NONE => 'Classic Clean',
+            ...self::exclusiveAnimatedBadgeOptions(),
+            ...self::classicCleanBadgeOptions(),
         ];
     }
 
     /**
-     * Memeriksa apakah pengguna memiliki role yang berhak mengatur animasi badge.
+     * Memeriksa apakah sebuah gaya badge termasuk kategori animasi eksklusif.
+     */
+    public static function isExclusiveBadgeStyle(string $style): bool
+    {
+        return array_key_exists($style, self::exclusiveAnimatedBadgeOptions());
+    }
+
+    /**
+     * Memeriksa apakah pengguna memiliki role yang berhak memakai gaya animasi badge eksklusif.
      */
     public function canCustomizeAnimatedBadge(): bool
     {
         return $this->hasAnyRole(self::ANIMATED_BADGE_ROLES);
+    }
+
+    /**
+     * Daftar opsi gaya badge yang boleh dipilih & disimpan oleh pengguna ini.
+     *
+     * @return array<string, string>
+     */
+    public function allowedBadgeOptions(): array
+    {
+        return $this->canCustomizeAnimatedBadge()
+            ? self::developerBadgeOptions()
+            : self::classicCleanBadgeOptions();
     }
 
     /**
@@ -85,27 +144,32 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     }
 
     /**
-     * Mengembalikan gaya badge animasi aktif milik pengguna.
+     * Mengembalikan gaya badge aktif milik pengguna (mendukung Classic Clean untuk semua user
+     * dan animasi eksklusif khusus Developer & AVP Receiving).
      */
     public function resolvedDeveloperBadgeStyle(): string
     {
-        if (! $this->canCustomizeAnimatedBadge()) {
-            return self::DEVELOPER_BADGE_NONE;
-        }
-
         $style = trim((string) ($this->developer_badge_style ?? ''));
 
-        if ($style !== '' && array_key_exists($style, self::developerBadgeOptions())) {
+        if ($this->canCustomizeAnimatedBadge()) {
+            if ($style !== '' && array_key_exists($style, self::developerBadgeOptions())) {
+                return $style;
+            }
+
+            return self::DEVELOPER_BADGE_ELECTRIC;
+        }
+
+        if ($style !== '' && array_key_exists($style, self::classicCleanBadgeOptions())) {
             return $style;
         }
 
-        return self::DEVELOPER_BADGE_ELECTRIC;
+        return self::DEVELOPER_BADGE_NONE;
     }
 
     public function isDeveloperBadgeAnimated(): bool
     {
         return $this->canCustomizeAnimatedBadge()
-            && $this->resolvedDeveloperBadgeStyle() !== self::DEVELOPER_BADGE_NONE;
+            && self::isExclusiveBadgeStyle($this->resolvedDeveloperBadgeStyle());
     }
 
     /**

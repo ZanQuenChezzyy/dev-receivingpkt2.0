@@ -44,23 +44,28 @@ class UserBadgeRenderer
             ? $overrideDeveloperStyle
             : static::resolveCachedDeveloperStyle($user);
 
-        if ($developerStyle !== User::DEVELOPER_BADGE_NONE) {
+        if (User::isExclusiveBadgeStyle($developerStyle)) {
             $pillHtml = static::renderAnimatedDeveloperPill($user, $avatarUrl, $onlineDot, $developerStyle);
 
             return $clickable ? static::wrapWithProfileTrigger($user, $pillHtml) : $pillHtml;
         }
 
+        $classicPalette = static::classicPillPalette($developerStyle);
+        $safeStyle = array_key_exists($developerStyle, User::classicCleanBadgeOptions())
+            ? $developerStyle
+            : User::DEVELOPER_BADGE_NONE;
+
         $npkText = ! empty($user->npk)
-            ? '<span class="text-[10px] font-mono font-medium text-amber-700/90 dark:text-amber-400/90 tracking-wide mt-0.5 leading-none block truncate" title="'.e($user->npk).'">'.e($user->npk).'</span>'
+            ? '<span class="text-[10px] font-mono font-medium '.$classicPalette['npk'].' tracking-wide mt-0.5 leading-none block truncate" title="'.e($user->npk).'">'.e($user->npk).'</span>'
             : '';
 
         $pillHtml = '
-            <div class="inline-flex items-center gap-2 pl-1.5 pr-2.5 w-36 sm:w-44 max-w-full h-9 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/25 dark:border-amber-400/20 backdrop-blur-md shadow-xs transition-all duration-200 hover:scale-[1.02] hover:bg-amber-500/15 hover:border-amber-500/40 overflow-hidden shrink-0">
+            <div class="pkt-classic-pill pkt-classic-pill--'.$safeStyle.' inline-flex items-center gap-2 pl-1.5 pr-2.5 w-36 sm:w-44 max-w-full h-9 rounded-2xl '.$classicPalette['container'].' backdrop-blur-md shadow-xs transition-all duration-200 hover:scale-[1.02] overflow-hidden shrink-0">
                 <div class="relative shrink-0">
                     <img
                         src="'.$avatarUrl.'"
                         alt="'.e($user->name).'"
-                        class="w-7 h-7 rounded-full object-cover ring-1 ring-amber-500/30 dark:ring-amber-400/40 shadow-xs"
+                        class="w-7 h-7 rounded-full object-cover ring-1 '.$classicPalette['ring'].' shadow-xs"
                     />
                     '.$onlineDot.'
                 </div>
@@ -74,6 +79,47 @@ class UserBadgeRenderer
         ';
 
         return $clickable ? static::wrapWithProfileTrigger($user, $pillHtml) : $pillHtml;
+    }
+
+    /**
+     * Palet warna Classic Clean untuk pill pengguna di tabel sistem.
+     *
+     * @return array{container: string, ring: string, npk: string}
+     */
+    protected static function classicPillPalette(string $style): array
+    {
+        return match ($style) {
+            User::CLASSIC_BADGE_BLUE => [
+                'container' => 'bg-[#0054A6]/10 dark:bg-[#60A5FA]/10 border border-[#0054A6]/25 dark:border-[#60A5FA]/25 hover:bg-[#0054A6]/15 hover:border-[#0054A6]/40',
+                'ring' => 'ring-[#0054A6]/35 dark:ring-[#60A5FA]/40',
+                'npk' => 'text-[#0054A6]/90 dark:text-sky-300/90',
+            ],
+            User::CLASSIC_BADGE_EMERALD => [
+                'container' => 'bg-emerald-500/10 dark:bg-emerald-400/10 border border-emerald-500/25 dark:border-emerald-400/20 hover:bg-emerald-500/15 hover:border-emerald-500/40',
+                'ring' => 'ring-emerald-500/35 dark:ring-emerald-400/40',
+                'npk' => 'text-emerald-700/90 dark:text-emerald-300/90',
+            ],
+            User::CLASSIC_BADGE_VIOLET => [
+                'container' => 'bg-violet-500/10 dark:bg-violet-400/10 border border-violet-500/25 dark:border-violet-400/20 hover:bg-violet-500/15 hover:border-violet-500/40',
+                'ring' => 'ring-violet-500/35 dark:ring-violet-400/40',
+                'npk' => 'text-violet-700/90 dark:text-violet-300/90',
+            ],
+            User::CLASSIC_BADGE_ROSE => [
+                'container' => 'bg-rose-500/10 dark:bg-rose-400/10 border border-rose-500/25 dark:border-rose-400/20 hover:bg-rose-500/15 hover:border-rose-500/40',
+                'ring' => 'ring-rose-500/35 dark:ring-rose-400/40',
+                'npk' => 'text-rose-700/90 dark:text-rose-300/90',
+            ],
+            User::CLASSIC_BADGE_SLATE => [
+                'container' => 'bg-slate-500/10 dark:bg-slate-400/10 border border-slate-400/30 dark:border-slate-400/25 hover:bg-slate-500/15 hover:border-slate-500/45',
+                'ring' => 'ring-slate-400/40 dark:ring-slate-400/40',
+                'npk' => 'text-slate-600/90 dark:text-slate-300/90',
+            ],
+            default => [
+                'container' => 'bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/25 dark:border-amber-400/20 hover:bg-amber-500/15 hover:border-amber-500/40',
+                'ring' => 'ring-amber-500/30 dark:ring-amber-400/40',
+                'npk' => 'text-amber-700/90 dark:text-amber-400/90',
+            ],
+        };
     }
 
     /**

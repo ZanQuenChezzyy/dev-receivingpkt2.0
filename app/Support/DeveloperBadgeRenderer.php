@@ -8,27 +8,20 @@ use Illuminate\Support\HtmlString;
 class DeveloperBadgeRenderer
 {
     /**
-     * Merender HTML badge khusus role Developer sesuai gaya animasi pilihan pengguna.
+     * Merender HTML badge role sesuai gaya pilihan pengguna (eksklusif animasi atau Classic Clean).
      */
     public static function render(string $style, string $label = 'Developer', string $size = 'sm'): string
     {
-        $resolvedStyle = in_array($style, array_keys(User::developerBadgeOptions()), true)
+        $resolvedStyle = array_key_exists($style, User::developerBadgeOptions())
             ? $style
-            : User::DEVELOPER_BADGE_ELECTRIC;
+            : User::DEVELOPER_BADGE_NONE;
+
+        if (! User::isExclusiveBadgeStyle($resolvedStyle)) {
+            return static::renderClassicRoleBadge($resolvedStyle, $label, $size);
+        }
 
         $escapedLabel = e($label);
         $sizeClass = $size === 'md' ? 'pkt-dev-badge--md' : 'pkt-dev-badge--sm';
-
-        if ($resolvedStyle === User::DEVELOPER_BADGE_NONE) {
-            return '<span class="pkt-dev-badge pkt-dev-badge--none '.$sizeClass.'">'
-                .'<span class="pkt-dev-badge-core">'
-                .'<svg class="pkt-dev-badge-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">'
-                .'<path fill-rule="evenodd" d="M6.28 5.22a.75.75 0 0 1 0 1.06L2.56 10l3.72 3.72a.75.75 0 0 1-1.06 1.06L.97 10.53a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Zm7.44 0a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L17.44 10l-3.72-3.72a.75.75 0 0 1 0-1.06ZM11.377 2.011a.75.75 0 0 1 .612.867l-2.5 14.5a.75.75 0 0 1-1.478-.255l2.5-14.5a.75.75 0 0 1 .866-.612Z" clip-rule="evenodd" />'
-                .'</svg>'
-                .'<span class="pkt-dev-badge-text">'.$escapedLabel.'</span>'
-                .'</span>'
-                .'</span>';
-        }
 
         $iconSvg = match ($resolvedStyle) {
             User::DEVELOPER_BADGE_FLAME => '<svg class="pkt-dev-badge-icon pkt-dev-icon-flame" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">'
@@ -57,7 +50,62 @@ class DeveloperBadgeRenderer
     }
 
     /**
-     * Merender daftar seluruh role milik seorang User (role Developer memakai badge animasi pilihan akun tersebut).
+     * Merender badge role bergaya Classic Clean (statis rapi dengan palet warna pilihan pengguna).
+     */
+    public static function renderClassicRoleBadge(string $style, string $label, string $size = 'sm'): string
+    {
+        $palette = static::classicRolePalette($style);
+        $sizeClasses = $size === 'md' ? 'px-3 py-1 text-xs gap-1.5' : 'px-2.5 py-0.5 text-xs gap-1.5';
+        $safeStyle = array_key_exists($style, User::classicCleanBadgeOptions()) ? $style : User::DEVELOPER_BADGE_NONE;
+
+        return '<span class="pkt-classic-badge pkt-classic-badge--'.$safeStyle.' inline-flex items-center rounded-full font-semibold ring-1 ring-inset '.$sizeClasses.' '.$palette['badge'].'">'
+            .'<span class="w-1.5 h-1.5 rounded-full shrink-0 '.$palette['dot'].'" aria-hidden="true"></span>'
+            .'<span>'.e($label).'</span>'
+            .'</span>';
+    }
+
+    /**
+     * @return array{badge: string, dot: string, avatar_ring: string}
+     */
+    public static function classicRolePalette(string $style): array
+    {
+        return match ($style) {
+            User::CLASSIC_BADGE_BLUE => [
+                'badge' => 'bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] ring-[#0054A6]/25 dark:ring-[#83A2DB]/30',
+                'dot' => 'bg-[#0054A6] dark:bg-[#60A5FA]',
+                'avatar_ring' => 'ring-2 ring-[#0054A6]/45 dark:ring-[#60A5FA]/50',
+            ],
+            User::CLASSIC_BADGE_EMERALD => [
+                'badge' => 'bg-emerald-500/10 dark:bg-emerald-400/15 text-emerald-700 dark:text-emerald-300 ring-emerald-500/25 dark:ring-emerald-400/30',
+                'dot' => 'bg-emerald-500 dark:bg-emerald-400',
+                'avatar_ring' => 'ring-2 ring-emerald-500/45 dark:ring-emerald-400/50',
+            ],
+            User::CLASSIC_BADGE_VIOLET => [
+                'badge' => 'bg-violet-500/10 dark:bg-violet-400/15 text-violet-700 dark:text-violet-300 ring-violet-500/25 dark:ring-violet-400/30',
+                'dot' => 'bg-violet-500 dark:bg-violet-400',
+                'avatar_ring' => 'ring-2 ring-violet-500/45 dark:ring-violet-400/50',
+            ],
+            User::CLASSIC_BADGE_ROSE => [
+                'badge' => 'bg-rose-500/10 dark:bg-rose-400/15 text-rose-700 dark:text-rose-300 ring-rose-500/25 dark:ring-rose-400/30',
+                'dot' => 'bg-rose-500 dark:bg-rose-400',
+                'avatar_ring' => 'ring-2 ring-rose-500/45 dark:ring-rose-400/50',
+            ],
+            User::CLASSIC_BADGE_SLATE => [
+                'badge' => 'bg-slate-500/10 dark:bg-slate-400/15 text-slate-700 dark:text-slate-200 ring-slate-500/25 dark:ring-slate-400/30',
+                'dot' => 'bg-slate-500 dark:bg-slate-400',
+                'avatar_ring' => 'ring-2 ring-slate-400/50 dark:ring-slate-400/45',
+            ],
+            default => [
+                'badge' => 'bg-amber-500/12 dark:bg-amber-400/15 text-amber-800 dark:text-amber-300 ring-amber-500/25 dark:ring-amber-400/30',
+                'dot' => 'bg-[#F47920] dark:bg-amber-400',
+                'avatar_ring' => 'ring-2 ring-amber-500/45 dark:ring-amber-400/45',
+            ],
+        };
+    }
+
+    /**
+     * Merender daftar seluruh role milik seorang User (memakai animasi eksklusif untuk Developer/AVP
+     * atau palet Classic Clean pilihan pengguna).
      */
     public static function renderUserRoles(User $user, string $size = 'sm'): HtmlString
     {
@@ -68,16 +116,16 @@ class DeveloperBadgeRenderer
         }
 
         $badgeStyle = $user->resolvedDeveloperBadgeStyle();
+        $isExclusive = User::isExclusiveBadgeStyle($badgeStyle);
         $eligibleRoles = array_map('strtolower', User::ANIMATED_BADGE_ROLES);
         $chips = [];
 
         foreach ($roleNames as $roleName) {
-            if (in_array(strtolower((string) $roleName), $eligibleRoles, true)) {
+            if ($isExclusive && in_array(strtolower((string) $roleName), $eligibleRoles, true)) {
                 $chips[] = static::render($badgeStyle, $roleName, $size);
             } else {
-                $chips[] = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0054A6]/10 dark:bg-[#83A2DB]/15 text-[#0054A6] dark:text-[#93C5FD] ring-1 ring-inset ring-[#0054A6]/20 dark:ring-[#83A2DB]/25">'
-                    .e($roleName)
-                    .'</span>';
+                $classicStyle = $isExclusive ? User::CLASSIC_BADGE_BLUE : $badgeStyle;
+                $chips[] = static::renderClassicRoleBadge($classicStyle, (string) $roleName, $size);
             }
         }
 
