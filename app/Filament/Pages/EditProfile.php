@@ -97,7 +97,7 @@ class EditProfile extends BaseEditProfile
                                     $previewUser->npk = $displayNpk !== '-' ? $displayNpk : null;
                                 }
                                 $userPillHtml = $previewUser
-                                    ? UserBadgeRenderer::render($previewUser, $roleLabel, $canCustomize ? $selected : User::DEVELOPER_BADGE_NONE)
+                                    ? UserBadgeRenderer::render($previewUser, $roleLabel, $canCustomize ? $selected : User::DEVELOPER_BADGE_NONE, clickable: false)
                                     : '';
 
                                 $statusBadge = $user?->is_active

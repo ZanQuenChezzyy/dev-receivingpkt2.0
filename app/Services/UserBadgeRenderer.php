@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Filament\Pages\MemberProfile;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -16,9 +17,10 @@ class UserBadgeRenderer
 
     /**
      * Render the custom user badge HTML (Avatar + Online Dot + Name + NPK).
-     * Untuk user dengan role Developer, pill otomatis menggunakan animasi pilihan di Profil.
+     * Untuk user dengan role Developer / AVP Receiving, pill otomatis menggunakan animasi pilihan di Profil.
+     * Secara default badge dapat diklik untuk membuka halaman Profil & Log Aktivitas user tersebut.
      */
-    public static function render(?User $user, string $placeholder = 'Belum Ada', ?string $overrideDeveloperStyle = null): string
+    public static function render(?User $user, string $placeholder = 'Belum Ada', ?string $overrideDeveloperStyle = null, bool $clickable = true): string
     {
         if (! $user) {
             return '
@@ -43,14 +45,16 @@ class UserBadgeRenderer
             : static::resolveCachedDeveloperStyle($user);
 
         if ($developerStyle !== User::DEVELOPER_BADGE_NONE) {
-            return static::renderAnimatedDeveloperPill($user, $avatarUrl, $onlineDot, $developerStyle);
+            $pillHtml = static::renderAnimatedDeveloperPill($user, $avatarUrl, $onlineDot, $developerStyle);
+
+            return $clickable ? static::wrapWithProfileTrigger($user, $pillHtml) : $pillHtml;
         }
 
         $npkText = ! empty($user->npk)
             ? '<span class="text-[10px] font-mono font-medium text-amber-700/90 dark:text-amber-400/90 tracking-wide mt-0.5 leading-none block truncate" title="'.e($user->npk).'">'.e($user->npk).'</span>'
             : '';
 
-        return '
+        $pillHtml = '
             <div class="inline-flex items-center gap-2 pl-1.5 pr-2.5 w-36 sm:w-44 max-w-full h-9 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/25 dark:border-amber-400/20 backdrop-blur-md shadow-xs transition-all duration-200 hover:scale-[1.02] hover:bg-amber-500/15 hover:border-amber-500/40 overflow-hidden shrink-0">
                 <div class="relative shrink-0">
                     <img
@@ -68,6 +72,42 @@ class UserBadgeRenderer
                 </div>
             </div>
         ';
+
+        return $clickable ? static::wrapWithProfileTrigger($user, $pillHtml) : $pillHtml;
+    }
+
+    /**
+     * Membungkus badge dengan pemicu navigasi ke Profil & Log Aktivitas user.
+     * Menggunakan <span role="link"> agar tetap valid secara HTML di dalam sel tabel Filament yang memiliki recordUrl <a>.
+     */
+    protected static function wrapWithProfileTrigger(User $user, string $pillHtml): string
+    {
+        $profileUrl = static::resolveProfileUrl($user);
+        if (! $profileUrl) {
+            return $pillHtml;
+        }
+
+        $escapedUrl = e($profileUrl);
+        $tooltip = e('Lihat profil & aktivitas '.$user->name);
+        $onClick = "event.preventDefault(); event.stopPropagation(); const url = this.dataset.profileUrl; if (event.ctrlKey || event.metaKey) { window.open(url, '_blank'); } else if (window.Livewire && typeof window.Livewire.navigate === 'function') { window.Livewire.navigate(url); } else { window.location.href = url; }";
+        $onAuxClick = "if (event.button === 1) { event.preventDefault(); event.stopPropagation(); window.open(this.dataset.profileUrl, '_blank'); }";
+        $onKeyDown = "if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }";
+
+        return '<span role="link" tabindex="0" data-profile-url="'.$escapedUrl.'" onclick="'.$onClick.'" onauxclick="'.$onAuxClick.'" onkeydown="'.$onKeyDown.'" class="inline-flex align-middle max-w-full cursor-pointer rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F47920]" title="'.$tooltip.'">'.$pillHtml.'</span>';
+    }
+
+    protected static function resolveProfileUrl(User $user): ?string
+    {
+        $userId = $user->getKey();
+        if (! filled($userId)) {
+            return null;
+        }
+
+        try {
+            return MemberProfile::getUrl(['user' => $userId]);
+        } catch (\Throwable) {
+            return url('/admin/member-profile/'.$userId);
+        }
     }
 
     /**

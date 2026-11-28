@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Filament\Pages\MemberProfile;
 use App\Models\User;
 use App\Support\DeveloperBadgeRenderer;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -49,7 +51,7 @@ class UsersTable
 
                                 <!-- User Info -->
                                 <div class="flex flex-col leading-tight">
-                                    <span class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                    <span class="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-[#F47920] transition-colors">
                                         '.e($record->name).'
                                     </span>
                                     <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -60,11 +62,13 @@ class UsersTable
                             ';
                     })
                     ->html()
+                    ->url(fn (User $record): string => MemberProfile::getUrl(['user' => $record->getKey()]))
                     ->searchable(['name', 'email']),
 
                 TextColumn::make('roles.name')
                     ->label(__('user.role'))
                     ->state(fn (User $record) => DeveloperBadgeRenderer::renderUserRoles($record))
+                    ->url(fn (User $record): string => MemberProfile::getUrl(['user' => $record->getKey()]))
                     ->html()
                     ->wrap(),
 
@@ -81,6 +85,11 @@ class UsersTable
             ])
             ->recordActions([
                 ActionGroup::make([
+                    Action::make('view_profile')
+                        ->label('Lihat Profil & Aktivitas')
+                        ->icon(Heroicon::UserCircle)
+                        ->url(fn (User $record): string => MemberProfile::getUrl(['user' => $record->getKey()]))
+                        ->outlined(),
                     EditAction::make()
                         ->label(__('user.edit_user'))
                         ->icon(Heroicon::PencilSquare)

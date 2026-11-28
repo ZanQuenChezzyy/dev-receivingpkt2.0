@@ -196,11 +196,17 @@
     @if ($position === UserMenuPosition::Topbar && $user)
         @php
             $userCoverUrl = method_exists($user, 'getCoverPhotoUrl') ? $user->getCoverPhotoUrl() : null;
+            $memberProfileUrl = \App\Filament\Pages\MemberProfile::getUrl(['user' => $user->getKey()]);
         @endphp
-        <div class="border-b border-black/[0.06] dark:border-white/[0.08] min-w-[240px] overflow-hidden rounded-t-xl">
+        <a
+            href="{{ $memberProfileUrl }}"
+            wire:navigate
+            class="group block border-b border-black/[0.06] dark:border-white/[0.08] min-w-[240px] overflow-hidden rounded-t-xl hover:bg-slate-50/70 dark:hover:bg-white/[0.03] transition-colors"
+            title="Lihat profil & log aktivitas saya"
+        >
             @if ($userCoverUrl)
                 <div class="relative h-14 w-full overflow-hidden bg-slate-900">
-                    <img src="{{ $userCoverUrl }}" alt="Cover" class="w-full h-full object-cover" />
+                    <img src="{{ $userCoverUrl }}" alt="Cover" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                     <div class="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent"></div>
                 </div>
             @endif
@@ -224,7 +230,7 @@
                     'flex flex-col min-w-0 flex-1 gap-0.5',
                     'pt-5' => (bool) $userCoverUrl,
                 ])>
-                    <span class="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    <span class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#F47920] transition-colors truncate">
                         {{ $user->name }}
                     </span>
                     @if (filled($user->npk))
@@ -232,7 +238,7 @@
                             NPK {{ $user->npk }}
                         </span>
                     @endif
-                    <div class="mt-0.5">
+                    <div class="mt-0.5 flex items-center justify-between gap-2">
                         @if ($hasCustomAnimatedRole)
                             {!! \App\Support\DeveloperBadgeRenderer::render($developerBadgeStyle, $animatedRoleLabel, 'sm') !!}
                         @else
@@ -240,10 +246,13 @@
                                 {{ $roleName }}
                             </span>
                         @endif
+                        <span class="text-[10px] font-semibold text-slate-400 group-hover:text-[#F47920] transition-colors shrink-0">
+                            Lihat Profil &rarr;
+                        </span>
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
     @endif
 
     @if ($hasProfileHeader)
