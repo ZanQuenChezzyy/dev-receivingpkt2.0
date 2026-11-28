@@ -3593,6 +3593,50 @@ html.dark body {
     box-shadow: 0 24px 56px -12px rgba(0, 0, 0, 0.7) !important;
 }
 
+/* System-Wide Global Search Results Panel Polish */
+.fi-global-search-results-ctn {
+    width: min(30rem, calc(100vw - 1.5rem)) !important;
+    max-height: min(72dvh, 36rem) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+}
+
+.fi-global-search-result-group-header {
+    font-size: 0.6875rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    color: #0054A6 !important;
+    background: rgba(0, 84, 166, 0.05) !important;
+    padding: 0.55rem 1rem !important;
+}
+
+.dark .fi-global-search-result-group-header {
+    color: #83A2DB !important;
+    background: rgba(131, 162, 219, 0.08) !important;
+}
+
+.fi-global-search-result-link {
+    padding: 0.65rem 1rem !important;
+    transition: background-color 0.14s ease !important;
+}
+
+.fi-global-search-result-link:hover,
+.fi-global-search-result-link:focus-visible {
+    background: rgba(244, 121, 32, 0.09) !important;
+    outline: none !important;
+}
+
+.dark .fi-global-search-result-link:hover,
+.dark .fi-global-search-result-link:focus-visible {
+    background: rgba(244, 121, 32, 0.16) !important;
+}
+
+.fi-global-search-result-link:hover .fi-global-search-result-heading,
+.fi-global-search-result-link:focus-visible .fi-global-search-result-heading {
+    color: #F47920 !important;
+}
+
 /* Unified Modals (matching header, content, and footer surfaces) */
 .fi-modal-window {
     border-radius: 1.75rem !important;

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\GlobalSearch\SystemGlobalSearchProvider;
 use App\Filament\Livewire\LeftIconRail;
 use App\Filament\Livewire\MegaMenuTopbar;
 use App\Filament\Pages\Dashboard;
@@ -56,6 +57,10 @@ class AdminPanelProvider extends PanelProvider
             ->font('Plus Jakarta Sans')
             ->topNavigation()
             ->topbarLivewireComponent(MegaMenuTopbar::class)
+            ->globalSearch(SystemGlobalSearchProvider::class)
+            ->globalSearchDebounce('350ms')
+            ->globalSearchKeyBindings(['mod+k'])
+            ->globalSearchFieldKeyBindingSuffix()
             ->maxContentWidth(Width::Full)
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login(Login::class)
