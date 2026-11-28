@@ -41,7 +41,7 @@ class CalendarNote extends Model
     public static function categoryOptions(): array
     {
         return [
-            self::CATEGORY_DINAS => 'Dinas Luar',
+            self::CATEGORY_DINAS => 'Dinas',
             self::CATEGORY_CUTI => 'Cuti / Izin',
             self::CATEGORY_KEGIATAN => 'Kegiatan / Rapat',
             self::CATEGORY_CATATAN => 'Catatan Umum',
